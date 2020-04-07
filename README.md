@@ -9,4 +9,5 @@ The backend resides in backend/ directory.
 Start backend by running:
 
     cd backend
-    pipenv run python app.py
+    pipenv install
+    pipenv run python routes.py
