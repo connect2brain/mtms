@@ -15,3 +15,7 @@ Start frontend by running:
     cd frontend
     npm install
     npm run serve
+
+## Sandbox
+
+Sandbox is used to store experimental scripts, drafts, etc.
