@@ -2,6 +2,12 @@
 
 This folder contains links to datasets that can be used for eeg simulation.
 
+## Known issues
+
+* Resting-State TMS dataset does not exist in githut and thus cannot be downloaded with datalad. 
+
+* Openneuro CLI does not run due to unknown incompatibility. 
+
 ## Dataset download
 
 A script called `dataset_download.sh` is provided. It relies on a tools called `datalad` and `git-annex` to download datasets.
