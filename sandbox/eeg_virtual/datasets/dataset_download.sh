@@ -4,11 +4,14 @@ set -e
 
 OPENNEURO=openneuro
 GITANNEX=git-annex
+DATALAD=datalad
 
 # First check for openneuro command
 #command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "The '$OPENNEURO' tool was not found. Install it with 'npm install -g openneuro-cli'."; exit 1; }
 
 command -v "$GITANNEX" >/dev/null 2>&1 || { echo >&2 "The '$GITANNEX' tool was not found. Install instructions in README.md."; exit 1; }
+
+command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "The '$DATALAD' tool was not found. Install with `pip install datalad`."; exit 1; }
 
 # Print usage 
 usage() {  
@@ -56,12 +59,19 @@ else
 fi
 
 case "$DATASET" in
-	"forrestgump")
+	forrestgump)
 		echo "Downloading dataset into folder 'forrestgump'"
 		#openneuro download --snapshot 1.3.0 ds000113 forrestgump/ && echo "Success" && exit
-		
+		$DATALAD install --get-data --source https://github.com/OpenNeuroDatasets/ds000113.git forrestgump && echo "Success." && exit
 		echo "Something went wrong"
 		exit 1
+		;;
+	restingstatetms)
+		echo "Downloading dataset into folder 'restingstatetms'"
+		$DATALAD install --get-data --source https://github.com/OpenNeuroDatasets/ds001832.git restingstatetms && echo "Success." && exit
+		echo "Something went wrong"
+		exit 1
+		;;
 esac
 
 echo "Could not find dataset called '$DATASET'"
