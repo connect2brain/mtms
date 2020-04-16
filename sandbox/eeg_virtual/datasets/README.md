@@ -4,6 +4,8 @@ This folder contains links to datasets that can be used for eeg simulation.
 
 ## Known issues
 
+* Embarrasingly the Forrest Gump dataset does not actually containt EEG data.
+
 * Resting-State TMS dataset does not exist in githut and thus cannot be downloaded with datalad. 
 
 * Openneuro CLI does not run due to unknown incompatibility. 
