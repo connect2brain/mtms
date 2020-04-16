@@ -14,6 +14,30 @@ This folder contains links to datasets that can be used for eeg simulation.
 
 A script called `dataset_download.sh` is provided. It relies on a tools called `datalad` and `git-annex` to download datasets.
 
+### Install openneuro-cli
+
+Datasets can be downloaded manually from Openneuro.org, or using their Command Line Interface tool `openneuro-cli`.
+
+Prerequisite: NodeJS (version 10 or higher) and `npm`
+
+To install `openneuro-cli` globally:
+
+	npm install -g openneuro-cli
+
+First, login to openneuro.org using your browser and generate an API key: [https://openneuro.org/keygen] (only works when you are logged in).
+
+Then, login using command line:
+
+	openneuro login
+
+Select openneuro.org and paste in the API key you created.
+
+Usage example:
+
+	openneuro download --snapshot 1.3.0 ds000113 forrestgump/
+
+
+
 ### Install git-annex
 
 MacOS: 
@@ -42,18 +66,6 @@ or
 
 ## Manual download
 
-Datasets can be downloaded manually from Openneuro.org, or using their Command Line Interface tool `openneuro-cli`.
-
-Prerequisite: NodeJS (version 10 or higher) and `npm`
-
-To install `openneuro-cli` globally:
-
-	npm install -g openneuro-cli
-
-Usage example:
-
-	openneuro download --snapshot 1.3.0 ds000113 forrestgump/
-
 ## Dataset descriptions
 
 ### "Forrest Gump"
@@ -79,5 +91,15 @@ https://openneuro.org/datasets/ds001832/versions/1.0.1
 License: CC0
 
 Alkhasli et al., 2019: Modulation of fronto-striatal functional connectivity using transcranial magnetic stimulation.
+
+### Effects of ON/OFF deep brain stimulation on cognitive control in treatment-resistant depression (EEG)
+
+https://openneuro.org/datasets/ds001784/versions/1.1.2
+
+DOI: [10.18112/openneuro.ds001784.v1.1.2](https://dx.doi.org/10.18112/openneuro.ds001784.v1.1.2)
+
+License: CC0
+
+Effects of ON/OFF deep brain stimulation on cognitive control in treatment-resistant depression (EEG)
 
 

@@ -7,7 +7,7 @@ GITANNEX=git-annex
 DATALAD=datalad
 
 # First check for openneuro command
-#command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "The '$OPENNEURO' tool was not found. Install it with 'npm install -g openneuro-cli'."; exit 1; }
+command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "The '$OPENNEURO' tool was not found. Install it with 'npm install -g openneuro-cli'."; exit 1; }
 
 command -v "$GITANNEX" >/dev/null 2>&1 || { echo >&2 "The '$GITANNEX' tool was not found. Install instructions in README.md."; exit 1; }
 
@@ -33,6 +33,15 @@ Available datasets:
 -------------------
     forrestgump
       "Forrest Gump" BIDS EEG dataset from Openneuro.org
+    restingstatetms
+    	"Resting State TMS" dataset from Openneuro.org
+    tesaexample
+      Example TMS-EEG dataset from TESA/EEGLAB.
+    hypnosis
+      "Hypnosis TMS-EEG dataset" from osf.io.
+    dbseeg
+      Deep brain stimulation in treatment resistant depression (EEG)
+
 END
 }
 
@@ -68,7 +77,17 @@ case "$DATASET" in
 		;;
 	restingstatetms)
 		echo "Downloading dataset into folder 'restingstatetms'"
-		$DATALAD install --get-data --source https://github.com/OpenNeuroDatasets/ds001832.git restingstatetms && echo "Success." && exit
+		$OPENNEURO download --snapshot 1.0.1 ds001832 restingstatetms/ && echo "Success." && exit
+		#$DATALAD install --get-data --source https://github.com/OpenNeuroDatasets/ds001832.git restingstatetms && echo "Success." && exit
+		echo "Error: Manual download required. Go to https://openneuro.org/datasets/ds001832/versions/1.0.1." && exit 1
+		;;
+	hypnosis)
+		echo "Downloading dataset into folder 'hypnosis'"
+		echo "Error: Manual download required. Go to https://osf.io/m6ky2/." && exit 1
+		;;
+	dbseeg)
+		echo "Downloading dataset into folder 'dbseeg'"
+		datalad install --get-data --source https://github.com/OpenNeuroDatasets/ds001784.git dbseeg && echo "Success." && exit
 		echo "Something went wrong"
 		exit 1
 		;;
