@@ -40,7 +40,7 @@ def get_eeg_data():
     #   or such, and serve the contents of the buffer.
     try:
         message = consumer.consume()
-        return json.loads(message.value)
+        return message.value
     except pykafka.exceptions.SocketDisconnectedError as e:
         sys.stderr.write("[ERROR] Kafka socket disconnected. Reason: '{}'".format(e))
         return {'error': "Socket disconnected. Reason: '{}'".format(e)}, 500
