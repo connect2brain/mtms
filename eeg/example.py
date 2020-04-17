@@ -1,6 +1,19 @@
+import sys
 import json
 from mne.io import concatenate_raws, read_raw_edf
+import pykafka
 from pykafka import KafkaClient
+
+# Set up Kafka client.
+
+# TODO: Let user specify host and topic name from command line.
+try:
+    client = KafkaClient(hosts="127.0.0.1:9092")
+except pykafka.exceptions.NoBrokersAvailableError as e:
+    sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.")
+    sys.exit(1)
+
+topic = client.topics['eeg_data']
 
 # Read the data.
 
@@ -14,12 +27,6 @@ raw = concatenate_raws(raws)
 
 data, times = raw.get_data(return_times=True)
 n_chs, n_timepoints = data.shape
-
-# Set up Kafka client.
-
-# TODO: Let user specify host and topic name from command line.
-client = KafkaClient(hosts="127.0.0.1:9092")
-topic = client.topics['eeg_data']
 
 with topic.get_sync_producer() as producer:
     i = 0
