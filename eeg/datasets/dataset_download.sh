@@ -31,6 +31,8 @@ list_datasets() {
 	cat <<-END
 Available datasets:
 -------------------
+    eegbci
+       "EEG-BCI" dataset from MNE datasets.
     forrestgump
       "Forrest Gump" BIDS EEG dataset from Openneuro.org
     restingstatetms
@@ -68,6 +70,12 @@ else
 fi
 
 case "$DATASET" in
+	eegbci)
+		echo "Downloading dataset into folder 'MNE-eegbci-data/files/eegmmidb/1.0.0'"
+		pipenv run src/download_mne.py --subject 1 --runs 1-15 eegbci && echo "Success." && exit
+		echo "Something went wrong"
+		exit 1
+		;;
 	forrestgump)
 		echo "Downloading dataset into folder 'forrestgump'"
 		#openneuro download --snapshot 1.3.0 ds000113 forrestgump/ && echo "Success" && exit
