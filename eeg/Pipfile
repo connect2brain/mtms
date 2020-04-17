@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 mne = "*"
 pykafka = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.6"
