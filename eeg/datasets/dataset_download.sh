@@ -7,11 +7,11 @@ GITANNEX=git-annex
 DATALAD=datalad
 
 # First check for openneuro command
-command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "The '$OPENNEURO' tool was not found. Install it with 'npm install -g openneuro-cli'."; exit 1; }
+command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$OPENNEURO' was not found. It is needed for some of the datasets. Install it with 'npm install -g openneuro-cli'."; }
 
-command -v "$GITANNEX" >/dev/null 2>&1 || { echo >&2 "The '$GITANNEX' tool was not found. Install instructions in README.md."; exit 1; }
+command -v "$GITANNEX" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$GITANNEX' was not found. It is needed for some of the datasets. Install instructions in README.md."; }
 
-command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "The '$DATALAD' tool was not found. Install with `pip install datalad`."; exit 1; }
+command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$DATALAD' was not found. It is needed for some of the datasets. Install with `pip install datalad`."; }
 
 # Print usage 
 usage() {  
@@ -32,13 +32,17 @@ list_datasets() {
 Available datasets:
 -------------------
     eegbci
-       "EEG-BCI" dataset from MNE datasets.
+       "EEG-BCI" dataset from MNE datasets. 
+       https://mne.tools/stable/overview/datasets_index.html#eegbci-motor-imagery
     restingstatetms
-    	"Resting State TMS" dataset from Openneuro.org
+    	"Resting State TMS" dataset from Openneuro.org. 
+	https://dx.doi.org/10.18112/openneuro.ds001832.v1.0.1
     hypnosis
-      "Hypnosis TMS-EEG dataset" from osf.io.
+      "Hypnosis TMS-EEG dataset" from osf.io. 
+      https://dx.doi.org/10.17605/OSF.IO/E2PKT
     dbseeg
-      Deep brain stimulation in treatment resistant depression (EEG)
+      Deep brain stimulation in treatment resistant depression (EEG). 
+      https://dx.doi.org/10.18112/openneuro.ds001784.v1.1.2
 
 END
 }

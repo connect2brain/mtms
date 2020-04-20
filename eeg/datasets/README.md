@@ -2,17 +2,9 @@
 
 This folder contains links to datasets that can be used for eeg simulation.
 
-## Known issues
-
-* Embarrasingly the Forrest Gump dataset does not actually containt EEG data.
-
-* Resting-State TMS dataset does not exist in githut and thus cannot be downloaded with datalad. 
-
-* Openneuro CLI does not run due to unknown incompatibility. 
-
 ## Dataset download
 
-A script called `dataset_download.sh` is provided. It relies on a tools called `datalad` and `git-annex` to download datasets.
+A script called `dataset_download.sh` is provided. It pertially relies on tools called `openneuro-cli`,  `datalad` and `git-annex` to download datasets. 
 
 ### Install openneuro-cli
 
@@ -36,9 +28,9 @@ Usage example:
 
 	openneuro download --snapshot 1.3.0 ds000113 forrestgump/
 
-
-
 ### Install git-annex
+
+Git annex can be used to download some datasets from, for example, github. 
 
 MacOS: 
 
@@ -52,6 +44,8 @@ Others: See [git-annex.branchable.com/install/](https://git-annex.branchable.com
 
 ### Install Datalad
 
+Datalad is another automated tool that can download datasets.
+
 MacOS:
 
 	pip install datalad
@@ -63,43 +57,5 @@ Linux (Debian/Ubuntu):
 or
 
 	sudo apt-get install datalad
-
-## Manual download
-
-## Dataset descriptions
-
-### "Forrest Gump"
-
-DOI: [10.18112/openneuro.ds000113.v1.3.0](https://dx.doi.org/10.18112/openneuro.ds000113.v1.3.0)
-
-https://openneuro.org/datasets/ds000113/versions/1.3.0
-
-License: Not stated
-
-This dataset contains high-resolution functional magnetic resonance (fMRI) data from 
-20 participants recorded at high field strength (7 Tesla) during prolonged stimulation 
-with an auditory feature film ("Forrest Gump''). In addition, a comprehensive set of 
-auxiliary data (T1w, T2w, DTI, susceptibility-weighted image, angiography) as well as 
-measurements to assess technical and physiological noise components have been acquired. 
-
-### Resting State - TMS
-
-DOI: [10.18112/openneuro.ds001832.v1.0.1](https://dx.doi.org/10.18112/openneuro.ds001832.v1.0.1)
-
-https://openneuro.org/datasets/ds001832/versions/1.0.1
-
-License: CC0
-
-Alkhasli et al., 2019: Modulation of fronto-striatal functional connectivity using transcranial magnetic stimulation.
-
-### Effects of ON/OFF deep brain stimulation on cognitive control in treatment-resistant depression (EEG)
-
-https://openneuro.org/datasets/ds001784/versions/1.1.2
-
-DOI: [10.18112/openneuro.ds001784.v1.1.2](https://dx.doi.org/10.18112/openneuro.ds001784.v1.1.2)
-
-License: CC0
-
-Effects of ON/OFF deep brain stimulation on cognitive control in treatment-resistant depression (EEG)
 
 

@@ -19,6 +19,8 @@ Make sure that you have Python 3.6 installed on your system.
 	sh dataset_download.sh eegbci
 	cd ..
 
+See datasets/README.md for more detailed instructions.
+
 ## Send data over Kafka (example)
 
 	pipenv run python send_eeg_over_kafka.py datasets/MNE-eegbci-data/files/eegmmidb/1.0.0/S001/S001R01.edf S001R02.edf S001R03.edf
