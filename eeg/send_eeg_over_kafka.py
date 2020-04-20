@@ -100,7 +100,7 @@ if __name__ == "__main__":
             if min(extracted_vals_int) < 0 or max(extracted_vals_int) > 255:
                 raise argparse.ArgumentTypeError("IP address needs to be of form 'x.x.x.x', where each x is 0..255.")
 
-            return ".".join(extracted_vals_int)
+            return ".".join(str(x) for x in extracted_vals_int)
 
         except TypeError as e:
             raise argparse.ArgumentTypeError("Error parsing ip address.")
