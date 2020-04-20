@@ -4,7 +4,9 @@ This folder contains links to datasets that can be used for eeg simulation.
 
 ## Dataset download
 
-A script called `dataset_download.sh` is provided. It pertially relies on tools called `openneuro-cli`,  `datalad` and `git-annex` to download datasets. 
+A script called `dataset_download.sh` is provided. It partially relies on tools called `openneuro-cli`,  `datalad` and `git-annex` to download datasets.
+
+Note that if setting up openneuro-cli, using the instructions below, is not complete, the script crashes when attempting to use openneuro-cli for downloading.
 
 ### Install openneuro-cli
 
@@ -16,13 +18,17 @@ To install `openneuro-cli` globally:
 
 	npm install -g openneuro-cli
 
-First, login to openneuro.org using your browser and generate an API key: [https://openneuro.org/keygen] (only works when you are logged in).
+Then, set up openneuro-cli by doing the following steps:
 
-Then, login using command line:
+1. Login to openneuro.org using your browser
+
+2. Generate an API key: [https://openneuro.org/keygen] (only works when you are logged in).
+
+3. Login using command line:
 
 	openneuro login
 
-Select openneuro.org and paste in the API key you created.
+4. Select openneuro.org and paste in the API key you created.
 
 Usage example:
 
@@ -57,5 +63,3 @@ Linux (Debian/Ubuntu):
 or
 
 	sudo apt-get install datalad
-
-
