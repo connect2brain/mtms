@@ -19,7 +19,7 @@ if __name__ == "__main__":
             if int_from > int_to:
                 raise argparse.ArgumentTypeError("'to' value cannot be smaller than 'from' value")
 
-            return int_from, int_to
+            return range(int_from, int_to+1)
         except TypeError as e:
             raise argparse.ArgumentTypeError("'{}' is not a valid range of type 'a-b'".format(input_str))
 
@@ -51,14 +51,13 @@ if __name__ == "__main__":
         from mne.datasets import eegbci
         if not dryrun:
             try:
-                raw_fnames = eegbci.load_data(subject, range(*runs), path=current_dir, update_path=False)
-                print("raw_fnames = {}".format(raw_fnames))
+                raw_fnames = eegbci.load_data(subject, runs, path=current_dir, update_path=False)
+                print("Downloaded files:\n{}".format("\n".join(raw_fnames)))
             except urllib.error.HTTPError as e:
                 sys.stderr.write("[ERROR] Could not find dataset. Error message: '{}'.\n".format(e))
                 sys.exit(1)
         else:
-            raw_fnames = ['dryrun']
-            print("raw_fnames = {}".format(raw_fnames))
+            print("Dry-run: Nothing downloaded.")
 
     else:
         sys.stderr.write("[ERROR] Dataset with name '{}' not recognized.\n".format(dataset))
