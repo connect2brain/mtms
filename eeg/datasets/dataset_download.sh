@@ -11,7 +11,7 @@ command -v "$OPENNEURO" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$OP
 
 command -v "$GITANNEX" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$GITANNEX' was not found. It is needed for some of the datasets. Install instructions in README.md."; }
 
-command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$DATALAD' was not found. It is needed for some of the datasets. Install with `pip install datalad`."; }
+command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$DATALAD' was not found. It is needed for some of the datasets. Install with 'pip install datalad'."; }
 
 # Print usage 
 usage() {  
