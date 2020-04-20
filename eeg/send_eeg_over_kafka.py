@@ -128,7 +128,7 @@ if __name__ == "__main__":
         elif os.path.isfile(os.path.join(active_path, path)):
             datafiles.append(os.path.abspath(os.path.join(active_path, path)))
         else:
-            sys.stderr.write("[ERROR] Could not find datafile '{}'. Aborting.\n".format(filepath))
+            sys.stderr.write("[ERROR] Could not find datafile '{}'. Aborting.\n".format(path))
             sys.exit(1)
 
     main(datafiles, kafka_ip=args.ip, kafka_port=args.port, kafka_topic=args.topic)
