@@ -1,14 +1,16 @@
-import sys
-import os
-import time
-import dotenv
-dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 import argparse
 import json
+import os
+import sys
+import time
+
+import dotenv
 from mne.io import concatenate_raws, read_raw_edf
+import numpy as np
 import pykafka
 from pykafka import KafkaClient
 
+dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 
 
 def get_kafka_client(ip=None, port=None):
@@ -33,6 +35,48 @@ def get_kafka_client(ip=None, port=None):
         return client
     except pykafka.exceptions.NoBrokersAvailableError as e:
         return None
+
+
+def stream_data(data, topic, fs):
+    """Streams data to a given Kafka topic. Publishes the data in one sample
+    packets as a JSON map with two keys: 'data' for the content, and 'time'
+    for a timestamp for the packet.
+
+    Parameters
+    ----------
+    data : arr_like
+        A list of JSON-serializable items.
+    topic : Topic
+        A pykafka Topic object for the target topic.
+    fs : number
+        The sampling frequency in Hz.
+    """
+    T = 1 / fs
+    start_time = time.time()
+    try:
+        with topic.get_sync_producer() as producer:
+            t_next = time.time()
+            for i in range(len(data)):
+                producer.produce(json.dumps({
+                    'data': data[i].tolist(),
+                    'time': t_next,
+                }).encode())
+
+                t_next = t_next + T
+                t_wait = t_next - time.time()
+                time.sleep(max(t_wait, 0))
+
+                if i % fs == 0:
+                    print("[INFO] {} samples published in {:.2f} seconds".format(i, time.time() - start_time))
+                if t_wait < 0:
+                    print("[WARN] Publisher cannot keep up with data flow at sample {}, delay in seconds: {:.4f}.".format(i, abs(t_wait)))
+    except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
+        sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.".format(e))
+        producer.stop()
+        sys.exit(1)
+
+    end_time = time.time()
+    print("[INFO] Sent {}x{} data in {:.2f} seconds.".format(*data.shape, end_time - start_time))
 
 
 def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
@@ -66,26 +110,14 @@ def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
     raw = concatenate_raws(raws)
 
     data, times = raw.get_data(return_times=True)
-    n_chs, n_timepoints = data.shape
+    data = np.transpose(data)
+    fs = raw.info['sfreq']
+
+    # TODO: Publish metadata (EEG channel names, sampling frequency,
+    #   something else from raw.info?)
 
     print("[INFO] Starting to send data")
-    start_time = time.time()
-    try:
-        with topic.get_sync_producer() as producer:
-            for row in data:
-                # TODO: Instead of publishing data as fast as possible, simulate the
-                #   time properties of the original recording.
-                #
-                # TODO: Publish metadata (EEG channel names, sampling frequency,
-                #   something else from raw.info?)
-                producer.produce(json.dumps(row.tolist()).encode())
-    except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
-        sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.".format(e))
-        producer.stop()
-        sys.exit(1)
-
-    end_time = time.time()
-    print("[INFO] Sent {}x{} data in {:.2f} seconds.".format(*data.shape, end_time-start_time))
+    stream_data(data, topic, fs)
 
 
 if __name__ == "__main__":
