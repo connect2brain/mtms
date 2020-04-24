@@ -62,8 +62,8 @@ def stream_data(data, topic, fs):
                 sent_on_time = False
 
                 # Wait until it is time to send the data
-                while now < t_next:
-                    now = time.time()
+                if now < t_next:
+                    time.sleep(t_next - now)
                     sent_on_time = True   # Set to True when we need to wait to send data
 
                 # Send data
