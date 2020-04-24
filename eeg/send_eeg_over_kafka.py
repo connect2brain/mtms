@@ -17,7 +17,7 @@ import queue
 dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 
 
-def get_kafka_client(ip=None, port=None):
+def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
     """Initializes and returns a KafkaClient.
 
     Parameters
@@ -35,36 +35,74 @@ def get_kafka_client(ip=None, port=None):
     try:
         client = KafkaClient(hosts="{ip}:{port}".format(
             ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'), 
-            port=(port or os.getenv("KAFKA_PORT") or '9092')))
+            port=(port or os.getenv("KAFKA_PORT") or '9092'),
+            zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
+            use_greenlets=use_greenlets))
         return client
     except pykafka.exceptions.NoBrokersAvailableError as e:
         return None
 
 
-def send_data(topic, data_q, msg_q):
+def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkafka=True):
     """Asynchronously sends out a single piece of pre-formatted data.
 
     Parameters
     ----------
-    topic : str_like
-        Kafka topic to use
     data_q : multiprocessing.Queue
         A queue where to read data from
     msg_q : multiprocessing.Queue
         A queue where to write status messages etc.
+    print_delivery_reports : Bool
+        If True a summary of delivery reports is written to stdout
     """
+    # Set up Kafka client.
+    sys.stdout.write("[INFO] send_data(): setting up Kafka client connection")
+    client = get_kafka_client()
+    if client is None:
+        sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
+        return
 
+    topic = client.topics[os.getenv("KAFKA_TOPIC") or 'eeg_data']
+ 
     try:
-        with topic.get_producer() as producer:
+        with topic.get_producer(sync=False, 
+            delivery_reports=print_delivery_reports, 
+            linger_ms=linger_ms,
+            use_rdkafka=use_rdkafka) as producer:
             sys.stdout.write("[INFO] send_data() ready to receive data.\n")
 
+            count = 0
             while True:   # Run until stopped
                 data = data_q.get()
                 if data is None:
                     msg_q.put(time.time())
                     break
                 msg_q.put(time.time())
-                producer.produce(data)
+                #producer.produce(data)
+                producer.produce(bytes(data))
+
+                if print_delivery_reports:
+                    # Process delivery messages
+                    if count % 100 == 0:
+                        success = 0
+                        failed = 0
+                        while True:
+                            try:
+                                msg, exc = producer.get_delivery_report(block=False)
+                                if exc is not None:
+                                    #sys.stdout.write("Failed to deliver msg {}: {}".format(
+                                    #    msg.partition_key, repr(exc)))
+                                    failed += 1
+                                else:
+                                    #sys.stdout.write("Successfully delivered msg {}".format(
+                                    #    msg.partition_key))
+                                    success += 1
+                            except queue.Empty:
+                                break
+                            finally:
+                                sys.stdout.write("S{}F{}".format(success, failed))
+
+                count += 1
     except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
         sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.\n".format(e))
         producer.stop()
@@ -98,7 +136,7 @@ def tick_out_data(data, time_interval, data_q, msg_q):
                     'time': next_t - start_time,
                 }).encode()
 
-        time.sleep(min(next_t - time.time()), 0)   # Wait for next send time
+        time.sleep(max(next_t - time.time(), 0))   # Wait for next send time
         msg_q.put(time.time())
         data_q.put(data_str)
 
@@ -107,8 +145,42 @@ def tick_out_data(data, time_interval, data_q, msg_q):
     sys.stdout.write("[INFO] tick_out_data() exiting.\n")
 
 
+def receive_data(msg_q, use_rdkafka=True):
+    """Listens for data from the given Kafka topic.
 
-def stream_data_mp(data, topic, fs, senders=1):
+    Parameters
+    ----------
+    msg_q : multiprocessing.Queue
+        A queue where to write status messages etc.
+    """
+    # Set up Kafka client.
+    sys.stdout.write("[INFO] receive_data(): setting up Kafka client connection")
+    client = get_kafka_client()
+    if client is None:
+        sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
+        return
+
+    # Select Kafka topic
+    topic = client.topics[(os.getenv("KAFKA_TOPIC") or 'eeg_data')]
+    offset = topic.latest_available_offsets()
+
+    sys.stdout.write("[INFO] receive_data() starting to listen for data.\n")
+    consumer = topic.get_balanced_consumer(
+        consumer_group=b"benchmark",
+        auto_commit_enable=True,
+        auto_offset_reset=pykafka.common.OffsetType.LATEST,
+        reset_offset_on_start=True,
+        use_rdkafka=use_rdkafka)
+
+    for i, msg in enumerate(consumer):
+        if msg is not None:
+            msg_q.put(time.time())
+        if i % 100 == 0:
+            consumer.commit_offsets()
+    sys.stdout.write("[INFO] receive_data() exiting.\n")
+
+
+def stream_data_mp(data, fs, senders=1):
     """This is a multiprocessing version of stream_data.
     Streams data to a given Kafka topic. Publishes the data in one sample
     packets as a JSON map with two keys: 'data' for the content, and 'time'
@@ -118,80 +190,108 @@ def stream_data_mp(data, topic, fs, senders=1):
     ----------
     data : arr_like
         A list of JSON-serializable items.
-    topic : Topic
-        A pykafka Topic object for the target topic.
     fs : number
         The sampling frequency in Hz.
     """
     T = 1 / fs
 
     data_q = Queue()
+    listener_msg_q = Queue()
     sender_msg_q = Queue()
     ticker_msg_q = Queue()
-    sender = Process(target=send_data, args=(topic, data_q, sender_msg_q))
+    listener = Process(target=receive_data, args=(listener_msg_q, ), kwargs={"use_rdkafka": False})
+    sender = Process(target=send_data, args=(data_q, sender_msg_q), kwargs={"use_rdkafka": False})
     ticker = Process(target=tick_out_data, args=(data, T, data_q, ticker_msg_q))
 
-    sender.start()
-    ticker.start()
+    try:
+        listener.start()
+        sender.start()
+        ticker.start()
 
-    start_time = time.time()
+        start_time = time.time()
 
-    ticker_msgs = []
-    sender_msgs = []
+        listener_msgs = []
+        ticker_msgs = []
+        sender_msgs = []
 
-    sys.stdout.write("Started")
-    sys.stdout.flush()
-    timed_out_times = 10
-    cntr = 0
-    prev = time.time()
+        sys.stdout.write("Started")
+        sys.stdout.flush()
+        timed_out_times = 10
+        cntr = 0
+        prev = time.time()
 
-    while timed_out_times > 0:
-        now = time.time()
-        timed_out = 2
-        
-        if now-prev > 1.0:
-            sys.stdout.write('|{}'.format(len(ticker_msgs)-len(sender_msgs)))
-            sys.stdout.flush()
+        while timed_out_times > 0:
+            now = time.time()
+            timed_out = 3
+            
+            if now-prev > 0.5:
+                mdiff = len(ticker_msgs)-len(sender_msgs)
+                sys.stdout.write('{}'.format('+' if mdiff > 0 else '-' if mdiff < 0 else '.'))
+                sys.stdout.flush()
+                prev = now
 
-        try:
-            ticker_msgs.append(ticker_msg_q.get(True, timeout=T))
-        except queue.Empty:
-            timed_out -= 1
+            try:
+                ticker_msgs.append(ticker_msg_q.get(True, timeout=T))
+            except queue.Empty:
+                timed_out -= 1
 
-        try:
-            sender_msgs.append(sender_msg_q.get(True, timeout=T))
-        except queue.Empty:
-            timed_out -= 1
+            try:
+                sender_msgs.append(sender_msg_q.get(True, timeout=T))
+            except queue.Empty:
+                timed_out -= 1
 
-        if timed_out == 0:
-            timed_out_times -= 1
-        else:
-            timed_out_times = 10
+            try:
+                listener_msgs.append(listener_msg_q.get(True, timeout=T))
+            except queue.Empty:
+                timed_out -= 1
 
-        prev = now
+            if timed_out == 0:
+                timed_out_times -= 1
+            else:
+                timed_out_times = 10
 
-    sys.stdout.write("|Ended.\n")
-    end_time = time.time()
+
+        sys.stdout.write("|Ended.\n")
+        end_time = time.time()
+
+    except KeyboardInterrupt as e:
+        print("[INFO] Keyboard interrupt received. Stopping child processes.")
+        ticker.terminate()
+        sender.terminate()
+        listener.terminate()
+
+        sys.exit(1)
+
+    else:
+        sender.terminate()
+        ticker.terminate()
+        listener.terminate()
     
-    sender.terminate()
-    ticker.terminate()
 
     print("[INFO] Sent {}x{} data in {:.2f} seconds.".format(*data.shape, end_time - start_time))
     print("[INFO] Received {} status messages from ticker.".format(len(ticker_msgs)))
     print("[INFO] Received {} status messages from sender.".format(len(sender_msgs)))
+    print("[INFO] Received {} status messages from listener.".format(len(listener_msgs)))
     print("[INFO] It took {:.2f} s to tick out data.".format(ticker_msgs[-1]-ticker_msgs[0]))
     print("[INFO] It took {:.2f} s to send data.".format(sender_msgs[-1]-sender_msgs[0]))
+    print("[INFO] It took {:.2f} s to receive data.".format(listener_msgs[-1]-listener_msgs[0]))
     print("[INFO] First packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[0]-ticker_msgs[0])))
     print("[INFO] Last packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[-1]-ticker_msgs[-1])))
+    print("[INFO] First packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[0]-sender_msgs[0])))
+    print("[INFO] Last packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[-1]-sender_msgs[-1])))
     dts = [(y - x) for x, y in zip(ticker_msgs, sender_msgs)]
     print("[INFO] Average time delay between ticking and sending was {:.2f} ms.".format(1000*sum(dts)/len(dts)))
     print("[INFO] Maximum time delay between ticking and sending was {:.2f} ms.".format(1000*max(dts)))
     print("[INFO] Minimum time delay between ticking and sending was {:.2f} ms.".format(1000*min(dts)))
+    dts2 = [(y - x) for x, y in zip(sender_msgs, listener_msgs)]
+    print("[INFO] Average time delay between sending and receiving was {:.2f} ms.".format(1000*sum(dts2)/len(dts2)))
+    print("[INFO] Maximum time delay between sending and receiving was {:.2f} ms.".format(1000*max(dts2)))
+    print("[INFO] Minimum time delay between sending and receiving was {:.2f} ms.".format(1000*min(dts2)))
 
     print("[INFO] Saving data to timing.csv.")
     with open("timing.csv", "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerows(list(zip(ticker_msgs, sender_msgs)))
+        writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
 
 
     #print("[INFO] {} packets out of {} were sent late.".format(sum([1 for x in times_log if x < 0]), len(times_log)))
@@ -212,17 +312,6 @@ def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
     kafka_topic : str
         The Kafka topic where to send the data.
     """
-
-    # Set up Kafka client.
-    print("[INFO] Setting up Kafka client connection")
-    client = get_kafka_client(ip=kafka_ip, port=kafka_port)
-    if client is None:
-        sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
-        sys.exit(1)
-
-    # Select Kafka topic
-    topic = client.topics[(kafka_topic or os.getenv("KAFKA_TOPIC") or 'eeg_data')]
-
     # Read the data on at a time
     print("[INFO] Preloading data")
     raws = [read_raw_edf(f, preload=True) for f in datafiles]
@@ -238,7 +327,7 @@ def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
     #   something else from raw.info?)
 
     print("[INFO] Starting to send data")
-    stream_data_mp(data, topic, fs)
+    stream_data_mp(data, fs)
 
 
 if __name__ == "__main__":
