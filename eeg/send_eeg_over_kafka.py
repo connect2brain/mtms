@@ -98,9 +98,7 @@ def tick_out_data(data, time_interval, data_q, msg_q):
                     'time': next_t - start_time,
                 }).encode()
 
-        now = time.time()
-        while now - next_t < 0:
-            now = time.time()   # Wait for next send time
+        time.sleep(min(next_t - time.time()), 0)   # Wait for next send time
         msg_q.put(time.time())
         data_q.put(data_str)
 
