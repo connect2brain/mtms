@@ -54,22 +54,31 @@ def stream_data(data, topic, fs):
     T = 1 / fs
     start_time = time.time()
     try:
-        with topic.get_sync_producer() as producer:
+        with topic.get_producer() as producer:
             t_next = time.time()
             for i in range(len(data)):
+                # Store current time
+                now = time.time()
+                sent_on_time = False
+
+                # Wait until it is time to send the data
+                while now < t_next:
+                    now = time.time()
+                    sent_on_time = True   # Set to True when we need to wait to send data
+
+                # Send data
                 producer.produce(json.dumps({
                     'data': data[i].tolist(),
                     'time': t_next,
                 }).encode())
 
-                t_next = t_next + T
-                t_wait = t_next - time.time()
-                time.sleep(max(t_wait, 0))
+                # Store next send time
+                t_next += T
 
                 if i % fs == 0:
                     print("[INFO] {} samples published in {:.2f} seconds".format(i, time.time() - start_time))
-                if t_wait < 0:
-                    print("[WARN] Publisher cannot keep up with data flow at sample {}, delay in seconds: {:.4f}.".format(i, abs(t_wait)))
+                if not sent_on_time:
+                    print("[WARN] Publisher cannot keep up with data flow at sample {}, delay in seconds: {:.4f}.".format(i, abs(now-(t_next-T))))
     except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
         sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.".format(e))
         producer.stop()
