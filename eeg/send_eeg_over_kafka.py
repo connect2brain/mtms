@@ -56,10 +56,11 @@ def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkaf
         If True a summary of delivery reports is written to stdout
     """
     # Set up Kafka client.
-    sys.stdout.write("[INFO] send_data(): setting up Kafka client connection")
+    sys.stdout.write("[INFO] send_data(): setting up Kafka client connection.\n")
     client = get_kafka_client()
     if client is None:
         sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
+        msg_q.put(None)   # Send None to indicate the end
         return
 
     topic = client.topics[os.getenv("KAFKA_TOPIC") or 'eeg_data']
@@ -108,6 +109,7 @@ def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkaf
         producer.stop()
 
     sys.stdout.write("[INFO] send_data() exiting.\n")
+    msg_q.put(None)   # Send None to indicate the end
 
 
 def tick_out_data(data, time_interval, data_q, msg_q):
@@ -143,6 +145,7 @@ def tick_out_data(data, time_interval, data_q, msg_q):
         next_t += time_interval
 
     sys.stdout.write("[INFO] tick_out_data() exiting.\n")
+    msg_q.put(None)   # Send None to indicate the end
 
 
 def receive_data(msg_q, use_rdkafka=True):
@@ -154,10 +157,11 @@ def receive_data(msg_q, use_rdkafka=True):
         A queue where to write status messages etc.
     """
     # Set up Kafka client.
-    sys.stdout.write("[INFO] receive_data(): setting up Kafka client connection")
+    sys.stdout.write("[INFO] receive_data(): setting up Kafka client connection.\n")
     client = get_kafka_client()
     if client is None:
         sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
+        msg_q.put(None)   # Send None to indicate the end
         return
 
     # Select Kafka topic
@@ -172,12 +176,23 @@ def receive_data(msg_q, use_rdkafka=True):
         reset_offset_on_start=True,
         use_rdkafka=use_rdkafka)
 
-    for i, msg in enumerate(consumer):
-        if msg is not None:
-            msg_q.put(time.time())
-        if i % 100 == 0:
-            consumer.commit_offsets()
+    try:
+        consumer.start()
+        while True:
+            #msg = consumer.consume()
+            for msg in consumer:
+                if msg is not None:
+                    msg_q.put(time.time())
+            
+        consumer.commit_offsets()
+        consumer.stop()
+
+    except pykafka.exceptions.ConsumerStoppedException as e:
+        sys.stderr.write("[ERROR] Kafka consumer stopped unexpectedly.")
+        msg_q.put(None)
+
     sys.stdout.write("[INFO] receive_data() exiting.\n")
+    msg_q.put(None)   # Send None to indicate the end
 
 
 def stream_data_mp(data, fs, senders=1):
@@ -199,8 +214,8 @@ def stream_data_mp(data, fs, senders=1):
     listener_msg_q = Queue()
     sender_msg_q = Queue()
     ticker_msg_q = Queue()
-    listener = Process(target=receive_data, args=(listener_msg_q, ), kwargs={"use_rdkafka": False})
-    sender = Process(target=send_data, args=(data_q, sender_msg_q), kwargs={"use_rdkafka": False})
+    listener = Process(target=receive_data, args=(listener_msg_q, ), kwargs={"use_rdkafka": True})
+    sender = Process(target=send_data, args=(data_q, sender_msg_q), kwargs={"use_rdkafka": True})
     ticker = Process(target=tick_out_data, args=(data, T, data_q, ticker_msg_q))
 
     try:
@@ -216,13 +231,16 @@ def stream_data_mp(data, fs, senders=1):
 
         sys.stdout.write("Started")
         sys.stdout.flush()
-        timed_out_times = 10
+        ticker_ended = False
+        sender_ended = False
+        listener_ended = False
+        listener_timed_out = False
+        timeout_time = 0.25
         cntr = 0
         prev = time.time()
 
-        while timed_out_times > 0:
+        while ((not ticker_ended) or (not sender_ended) or (not listener_timed_out or not listener_ended)):
             now = time.time()
-            timed_out = 3
             
             if now-prev > 0.5:
                 mdiff = len(ticker_msgs)-len(sender_msgs)
@@ -230,68 +248,103 @@ def stream_data_mp(data, fs, senders=1):
                 sys.stdout.flush()
                 prev = now
 
-            try:
-                ticker_msgs.append(ticker_msg_q.get(True, timeout=T))
-            except queue.Empty:
-                timed_out -= 1
+            if not ticker_ended:
+                try:
+                    msg = ticker_msg_q.get(True, timeout=timeout_time)
+                    if msg is None:
+                        #ticker_ended = True
+                        pass
+                    else:
+                        ticker_msgs.append(msg)
+                except queue.Empty:
+                    pass
+
+            if not sender_ended:
+                try:
+                    msg = sender_msg_q.get(True, timeout=timeout_time)
+                    if msg is None:
+                        #sender_ended = True
+                        pass
+                    else:
+                        sender_msgs.append(msg)
+                except queue.Empty:
+                    pass
 
             try:
-                sender_msgs.append(sender_msg_q.get(True, timeout=T))
+                msg = listener_msg_q.get(True, timeout=timeout_time)
+                if msg is None:
+                    pass
+                    #listener_ended = True
+                else:
+                    listener_msgs.append(msg)
+                    listener_timed_out = False
             except queue.Empty:
-                timed_out -= 1
-
-            try:
-                listener_msgs.append(listener_msg_q.get(True, timeout=T))
-            except queue.Empty:
-                timed_out -= 1
-
-            if timed_out == 0:
-                timed_out_times -= 1
-            else:
-                timed_out_times = 10
-
-
-        sys.stdout.write("|Ended.\n")
-        end_time = time.time()
-
+                listener_timed_out = True
+        
     except KeyboardInterrupt as e:
+        sys.stdout.write("|Stopped.\n")
         print("[INFO] Keyboard interrupt received. Stopping child processes.")
         ticker.terminate()
         sender.terminate()
         listener.terminate()
 
-        sys.exit(1)
-
     else:
+        sys.stdout.write("|Ended.\n")
         sender.terminate()
         ticker.terminate()
         listener.terminate()
     
+    finally:
+        end_time = time.time()
+
 
     print("[INFO] Sent {}x{} data in {:.2f} seconds.".format(*data.shape, end_time - start_time))
     print("[INFO] Received {} status messages from ticker.".format(len(ticker_msgs)))
     print("[INFO] Received {} status messages from sender.".format(len(sender_msgs)))
     print("[INFO] Received {} status messages from listener.".format(len(listener_msgs)))
-    print("[INFO] It took {:.2f} s to tick out data.".format(ticker_msgs[-1]-ticker_msgs[0]))
-    print("[INFO] It took {:.2f} s to send data.".format(sender_msgs[-1]-sender_msgs[0]))
-    print("[INFO] It took {:.2f} s to receive data.".format(listener_msgs[-1]-listener_msgs[0]))
-    print("[INFO] First packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[0]-ticker_msgs[0])))
-    print("[INFO] Last packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[-1]-ticker_msgs[-1])))
-    print("[INFO] First packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[0]-sender_msgs[0])))
-    print("[INFO] Last packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[-1]-sender_msgs[-1])))
-    dts = [(y - x) for x, y in zip(ticker_msgs, sender_msgs)]
-    print("[INFO] Average time delay between ticking and sending was {:.2f} ms.".format(1000*sum(dts)/len(dts)))
-    print("[INFO] Maximum time delay between ticking and sending was {:.2f} ms.".format(1000*max(dts)))
-    print("[INFO] Minimum time delay between ticking and sending was {:.2f} ms.".format(1000*min(dts)))
-    dts2 = [(y - x) for x, y in zip(sender_msgs, listener_msgs)]
-    print("[INFO] Average time delay between sending and receiving was {:.2f} ms.".format(1000*sum(dts2)/len(dts2)))
-    print("[INFO] Maximum time delay between sending and receiving was {:.2f} ms.".format(1000*max(dts2)))
-    print("[INFO] Minimum time delay between sending and receiving was {:.2f} ms.".format(1000*min(dts2)))
 
-    print("[INFO] Saving data to timing.csv.")
-    with open("timing.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
+    if (len(ticker_msgs) > 0):
+        print("[INFO] It took {:.2f} s to tick out data.".format(ticker_msgs[-1]-ticker_msgs[0]))
+    if (len(sender_msgs) > 0):
+        print("[INFO] It took {:.2f} s to send data.".format(sender_msgs[-1]-sender_msgs[0]))
+    if (len(listener_msgs) > 0):
+        print("[INFO] It took {:.2f} s to receive data.".format(listener_msgs[-1]-listener_msgs[0]))
+    
+    if (len(ticker_msgs) > 0 and len(sender_msgs) > 0):
+        print("[INFO] First packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[0]-ticker_msgs[0])))
+        print("[INFO] Last packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[-1]-ticker_msgs[-1])))
+    else:
+        print("[INFO] Not enough ticker and/or sender messages.")
+    if (len(sender_msgs) > 0 and len(listener_msgs) > 0):
+        print("[INFO] First packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[0]-sender_msgs[0])))
+        print("[INFO] Last packet was received {:.2f} ms later than sent out.".format(1000*(listener_msgs[-1]-sender_msgs[-1])))
+    else:
+        print("[INFO] Not enough sender or listener messages.")
+
+    if (len(ticker_msgs) > 0 and len(sender_msgs) > 0):
+        dts = [(y - x) for x, y in zip(ticker_msgs, sender_msgs)]
+        print("[INFO] Average time delay between ticking and sending was {:.2f} ms.".format(1000*sum(dts)/len(dts)))
+        print("[INFO] Maximum time delay between ticking and sending was {:.2f} ms.".format(1000*max(dts)))
+        print("[INFO] Minimum time delay between ticking and sending was {:.2f} ms.".format(1000*min(dts)))
+    else:
+        print("[INFO] Not enough ticker and/or sender messages.")
+
+    if (len(sender_msgs) > 0 and len(listener_msgs) > 0):
+        dts2 = [(y - x) for x, y in zip(sender_msgs, listener_msgs)]
+        print("[INFO] Average time delay between sending and receiving was {:.2f} ms.".format(1000*sum(dts2)/len(dts2)))
+        print("[INFO] Maximum time delay between sending and receiving was {:.2f} ms.".format(1000*max(dts2)))
+        print("[INFO] Minimum time delay between sending and receiving was {:.2f} ms.".format(1000*min(dts2)))
+    else:
+        print("[INFO] Not enough sender and/or listener messages.")
+
+
+    if (len(ticker_msgs) > 0 and len(sender_msgs) > 0 and len(listener_msgs) > 0):
+        print("[INFO] Saving data to timing.csv.")
+        with open("timing.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
+    else:
+        print("[INFO] Not enough data. Skipping save.")
 
 
     #print("[INFO] {} packets out of {} were sent late.".format(sum([1 for x in times_log if x < 0]), len(times_log)))
