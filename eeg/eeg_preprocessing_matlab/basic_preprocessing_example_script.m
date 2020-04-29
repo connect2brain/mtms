@@ -3,7 +3,7 @@
 % with the Brainvision system. 
 
 % Data: 
-% The script assumes the data in the EEGLAB data format. An example script
+% The script assumes the data in the EEGLAB data format. An example data
 % is provided in the C2B project folder. 
 
 % Dependencies: 
