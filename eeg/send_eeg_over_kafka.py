@@ -339,8 +339,8 @@ def stream_data_mp(data, fs, senders=1):
 
 
     if (len(ticker_msgs) > 0 and len(sender_msgs) > 0 and len(listener_msgs) > 0):
-        print("[INFO] Saving data to timing.csv.")
-        with open("timing.csv", "w", newline="") as f:
+        print("[INFO] Saving data to output/timing.csv.")
+        with open("output/timing.csv", "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
     else:
