@@ -13,6 +13,7 @@
 # *****************************************************
 
 DATASET_PATH='datasets'
+EDF_TEST_FILE='MNE-eegbci-data/files/eegmmidb/1.0.0/S001/S001R01.edf'
 KAFKA_IP='127.0.0.1'
 KAFKA_PORT='9092'
 KAFKA_TOPIC='eeg_data'
