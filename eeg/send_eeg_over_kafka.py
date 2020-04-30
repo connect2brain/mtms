@@ -3,12 +3,16 @@ import json
 import os
 import sys
 import time
+import csv
 
 import dotenv
 from mne.io import concatenate_raws, read_raw_edf
 import numpy as np
 import pykafka
 from pykafka import KafkaClient
+
+from multiprocessing import Process, Queue, Pool
+import queue
 
 dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 
@@ -37,8 +41,78 @@ def get_kafka_client(ip=None, port=None):
         return None
 
 
-def stream_data(data, topic, fs):
-    """Streams data to a given Kafka topic. Publishes the data in one sample
+def send_data(topic, data_q, msg_q):
+    """Asynchronously sends out a single piece of pre-formatted data.
+
+    Parameters
+    ----------
+    topic : str_like
+        Kafka topic to use
+    data_q : multiprocessing.Queue
+        A queue where to read data from
+    msg_q : multiprocessing.Queue
+        A queue where to write status messages etc.
+    """
+
+    try:
+        with topic.get_producer() as producer:
+            sys.stdout.write("[INFO] send_data() ready to receive data.\n")
+
+            while True:   # Run until stopped
+                data = data_q.get()
+                if data is None:
+                    msg_q.put(time.time())
+                    break
+                msg_q.put(time.time())
+                producer.produce(data)
+    except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
+        sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.\n".format(e))
+        producer.stop()
+
+    sys.stdout.write("[INFO] send_data() exiting.\n")
+
+
+def tick_out_data(data, time_interval, data_q, msg_q):
+    """Ticks out data with given time interval.
+
+    Parameters
+    ----------
+    data : arr_like
+        A list of JSON-serializable items.
+    time_interval : float
+        Time interval between data sends.
+    data_q : multiprocessing.Queue
+        Queue where to send data to.
+    msg_q : multiprocessing.Queue
+        Queue where to send status messages.
+    """
+    sys.stdout.write("[INFO] Ticking out data every {:.2f} ms.\n".format(1000.0*time_interval))
+    sys.stdout.write("[INFO] tick_out_data() starting to send data.\n")
+
+    start_time = time.time()
+    next_t = start_time
+
+    for row in range(len(data)):
+        data_str = json.dumps({
+                    'data': data[row].tolist(),
+                    'time': next_t - start_time,
+                }).encode()
+
+        now = time.time()
+        while now - next_t < 0:
+            now = time.time()   # Wait for next send time
+        msg_q.put(time.time())
+        data_q.put(data_str)
+
+        next_t += time_interval
+
+    sys.stdout.write("[INFO] tick_out_data() exiting.\n")
+
+
+
+def stream_data_mp(data, topic, fs, senders=1):
+    """This is a multiprocessing version of stream_data.
+    Streams data to a given Kafka topic. Publishes the data in one sample
     packets as a JSON map with two keys: 'data' for the content, and 'time'
     for a timestamp for the packet.
 
@@ -52,40 +126,78 @@ def stream_data(data, topic, fs):
         The sampling frequency in Hz.
     """
     T = 1 / fs
+
+    data_q = Queue()
+    sender_msg_q = Queue()
+    ticker_msg_q = Queue()
+    sender = Process(target=send_data, args=(topic, data_q, sender_msg_q))
+    ticker = Process(target=tick_out_data, args=(data, T, data_q, ticker_msg_q))
+
+    sender.start()
+    ticker.start()
+
     start_time = time.time()
-    try:
-        with topic.get_producer() as producer:
-            t_next = time.time()
-            for i in range(len(data)):
-                # Store current time
-                now = time.time()
-                sent_on_time = False
 
-                # Wait until it is time to send the data
-                if now < t_next:
-                    time.sleep(t_next - now)
-                    sent_on_time = True   # Set to True when we need to wait to send data
+    ticker_msgs = []
+    sender_msgs = []
 
-                # Send data
-                producer.produce(json.dumps({
-                    'data': data[i].tolist(),
-                    'time': t_next,
-                }).encode())
+    sys.stdout.write("Started")
+    sys.stdout.flush()
+    timed_out_times = 10
+    cntr = 0
+    prev = time.time()
 
-                # Store next send time
-                t_next += T
+    while timed_out_times > 0:
+        now = time.time()
+        timed_out = 2
 
-                if i % fs == 0:
-                    print("[INFO] {} samples published in {:.2f} seconds".format(i, time.time() - start_time))
-                if not sent_on_time:
-                    print("[WARN] Publisher cannot keep up with data flow at sample {}, delay in seconds: {:.4f}.".format(i, abs(now-(t_next-T))))
-    except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
-        sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.".format(e))
-        producer.stop()
-        sys.exit(1)
+        if now-prev > 1.0:
+            sys.stdout.write('|{}'.format(len(ticker_msgs)-len(sender_msgs)))
+            sys.stdout.flush()
 
+        try:
+            ticker_msgs.append(ticker_msg_q.get(True, timeout=T))
+        except queue.Empty:
+            timed_out -= 1
+
+        try:
+            sender_msgs.append(sender_msg_q.get(True, timeout=T))
+        except queue.Empty:
+            timed_out -= 1
+
+        if timed_out == 0:
+            timed_out_times -= 1
+        else:
+            timed_out_times = 10
+
+        prev = now
+
+    sys.stdout.write("|Ended.\n")
     end_time = time.time()
+
+    sender.terminate()
+    ticker.terminate()
+
     print("[INFO] Sent {}x{} data in {:.2f} seconds.".format(*data.shape, end_time - start_time))
+    print("[INFO] Received {} status messages from ticker.".format(len(ticker_msgs)))
+    print("[INFO] Received {} status messages from sender.".format(len(sender_msgs)))
+    print("[INFO] It took {:.2f} s to tick out data.".format(ticker_msgs[-1]-ticker_msgs[0]))
+    print("[INFO] It took {:.2f} s to send data.".format(sender_msgs[-1]-sender_msgs[0]))
+    print("[INFO] First packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[0]-ticker_msgs[0])))
+    print("[INFO] Last packet was sent {:.2f} ms later than ticked out.".format(1000*(sender_msgs[-1]-ticker_msgs[-1])))
+    dts = [(y - x) for x, y in zip(ticker_msgs, sender_msgs)]
+    print("[INFO] Average time delay between ticking and sending was {:.2f} ms.".format(1000*sum(dts)/len(dts)))
+    print("[INFO] Maximum time delay between ticking and sending was {:.2f} ms.".format(1000*max(dts)))
+    print("[INFO] Minimum time delay between ticking and sending was {:.2f} ms.".format(1000*min(dts)))
+
+    print("[INFO] Saving data to timing.csv.")
+    with open("timing.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(list(zip(ticker_msgs, sender_msgs)))
+
+
+    #print("[INFO] {} packets out of {} were sent late.".format(sum([1 for x in times_log if x < 0]), len(times_log)))
+    #print("[INFO] On average, packet was sent {:.1f} ms late.".format(1000*sum([-x for x in times_log if x < 0])/sum([1 for x in times_log if x < 0])))
 
 
 def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
@@ -121,12 +233,14 @@ def main(datafiles, kafka_ip=None, kafka_port=None, kafka_topic=None):
     data, times = raw.get_data(return_times=True)
     data = np.transpose(data)
     fs = raw.info['sfreq']
+    print(f"[INFO] Frequency = {fs}.")
+    print(f"[INFO] Cycle time = {1.0/fs}.")
 
     # TODO: Publish metadata (EEG channel names, sampling frequency,
     #   something else from raw.info?)
 
     print("[INFO] Starting to send data")
-    stream_data(data, topic, fs)
+    stream_data_mp(data, topic, fs)
 
 
 if __name__ == "__main__":
