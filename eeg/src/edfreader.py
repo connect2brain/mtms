@@ -131,6 +131,17 @@ class EDFReader(Reader):
             self._edf_len = 0
             self._edf_iter = None
 
+    def reset(self):
+        """Resets the data to the beginning.
+
+        Notes
+        -----
+        Call 'connect()' before this command.
+        """
+        if self._edf_iter is not None:
+            # Delete the iterator
+            self._edf_iter = None
+
     def read(self):
         """Reads a single line from EDF file.
 
