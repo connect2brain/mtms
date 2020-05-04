@@ -5,7 +5,9 @@ import numpy as np
 import pytest
 
 def test_cyclic_buffer():
-    """Tests CyclicBuffer class."""
+    """Tests CyclicBuffer class.
+
+    """
     from cyclic_buffer import CyclicBuffer
 
     buffer = CyclicBuffer(4, 2)
