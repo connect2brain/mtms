@@ -85,3 +85,36 @@ def test_cyclic_buffer():
 
     assert nan_equal(datapoint, [9., 10.])
     assert nan_equal(timestamp, 0.5)
+
+    ## Test wrong input
+
+    with pytest.raises(ValueError):
+        buffer.append([[11, 12], [3, 4]], 0.5)   # Wrong data shape
+    with pytest.raises(ValueError):
+        buffer.append([13, 13], [0.6, 0.7])   # Wrong timestamp length
+    with pytest.raises(ValueError):
+        buffer.append([[15, 16], [17, 18]], [0.8, 0.9])   # Wrong timestamp length
+    with pytest.raises(AssertionError):
+        buffer.append([19, 20, 21], 1.0)   # Wrong data input length
+    with pytest.raises(AssertionError):
+        buffer.append([22, 23], 0.4)   # Timestamp smaller than already registered timestamp
+
+    ## Test buffer overloading
+    for i, ts in enumerate(np.arange(0.6, 100000, 0.1)):
+        buffer.append([2*i, 2*i+1], ts)
+
+    data, timestamps = buffer.get_buffer()
+    assert np.array_equal(data, [
+        [2*(i-3), 2*(i-3)+1],
+        [2*(i-2), 2*(i-2)+1],
+        [2*(i-1), 2*(i-1)+1],
+        [2*i, 2*i+1],
+    ])
+    assert np.allclose(timestamps, [
+        ts-(3*0.1), ts-(2*0.1), ts-(1*0.1), ts
+    ])
+
+
+    
+
+>>>>>>> Stashed changes
