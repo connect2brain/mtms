@@ -49,7 +49,7 @@ class EDFReader(Reader):
         -----
         If reader will be disconnected after changing the file.
         """
-        if self.connected():
+        if self.connected:
             self.disconnect()
 
         edf_path = pathlib.Path(edf_file)
