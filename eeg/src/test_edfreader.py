@@ -4,7 +4,11 @@ import os
 import dotenv
 import logging
 import pytest
+
 dotenv.load_dotenv()
+
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(root_path, "src"))   # NOTE: This should work even if tests scripts are moved
 
 
 def test_edfreader():
@@ -13,7 +17,8 @@ def test_edfreader():
     from readersender import (ReaderSender, Reader)
     from edfreader import EDFReader
 
-    test_edf_file = os.path.join("..", os.getenv('DATASET_PATH'), os.getenv('EDF_TEST_FILE'))
+    
+    test_edf_file = os.path.join(root_path, os.getenv('EDF_TEST_FILE', 'datasets/test.edf'))
     if not os.path.isfile(test_edf_file):
         raise FileNotFoundError("File '{}' not found. Cannot test reading EDF. Perhaps you need to set 'DATASET_PATH' and 'EDF_TEST_FILE' in .env.".format(test_edf_file))
 
