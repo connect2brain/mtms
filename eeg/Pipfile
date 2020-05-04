@@ -10,7 +10,7 @@ pytest = "*"
 mne = "*"
 pykafka = "*"
 python-dotenv = "*"
-readersender = {file = "https://github.com/juusokorhonen/readersender/releases/download/v1.0.0.dev20200430-02/readersender-1.0.0.dev20200430.tar.gz"}
+readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
 
 [requires]
 python_version = "3.6"
