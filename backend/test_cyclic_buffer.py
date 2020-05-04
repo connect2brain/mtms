@@ -4,6 +4,13 @@
 import numpy as np
 import pytest
 
+def nan_equal(a,b):
+    try:
+        np.testing.assert_equal(a,b)
+    except AssertionError:
+        return False
+    return True
+
 def test_cyclic_buffer():
     """Tests CyclicBuffer class."""
     from cyclic_buffer import CyclicBuffer
@@ -18,13 +25,13 @@ def test_cyclic_buffer():
 
     data, timestamps = buffer.get_buffer()
 
-    assert np.array_equal(data, [
-        [0., 0.],
+    assert nan_equal(data, [
+        [np.nan, np.nan],
         [1., 2.],
         [3., 4.],
         [5., 6.],
     ])
-    assert np.array_equal(timestamps, [0, 0.1, 0.2, 0.3])
+    assert nan_equal(timestamps, [np.nan, 0.1, 0.2, 0.3])
 
     ## Test appending more than the maximum number of values
 
@@ -33,13 +40,13 @@ def test_cyclic_buffer():
 
     data, timestamps = buffer.get_buffer()
 
-    assert np.array_equal(data, [
+    assert nan_equal(data, [
         [3., 4.],
         [5., 6.],
         [7., 8.],
         [9., 10.],
     ])
-    assert np.array_equal(timestamps, [0.2, 0.3, 0.4, 0.5])
+    assert nan_equal(timestamps, [0.2, 0.3, 0.4, 0.5])
 
     ## Test getting a timerange of values
 
@@ -47,11 +54,11 @@ def test_cyclic_buffer():
 
     data, timestamps = buffer.get_timerange(0.2, 0.3)
 
-    assert np.array_equal(data, [
+    assert nan_equal(data, [
         [3., 4.],
         [5., 6.],
     ])
-    assert np.array_equal(timestamps, [0.2, 0.3])
+    assert nan_equal(timestamps, [0.2, 0.3])
 
     # Empty result
 
@@ -64,17 +71,17 @@ def test_cyclic_buffer():
 
     data, timestamps = buffer.get_timerange(0.1, 0.6)
 
-    assert np.array_equal(data, [
+    assert nan_equal(data, [
         [3., 4.],
         [5., 6.],
         [7., 8.],
         [9., 10.],
     ])
-    assert np.array_equal(timestamps, [0.2, 0.3, 0.4, 0.5])
+    assert nan_equal(timestamps, [0.2, 0.3, 0.4, 0.5])
 
     ## Test getting the latest datapoint
 
     datapoint, timestamp = buffer.get_latest()
 
-    assert np.array_equal(datapoint, [9., 10.])
-    assert np.array_equal(timestamp, 0.5)
+    assert nan_equal(datapoint, [9., 10.])
+    assert nan_equal(timestamp, 0.5)

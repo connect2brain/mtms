@@ -9,7 +9,7 @@ class CyclicBuffer:
 
     Supports various get operations and appending to the end.
 
-    The buffer is initialized with zero values and zeroes for timestamps."""
+    The buffer is initialized with NaN values and timestamps."""
 
     def __init__(self, length, dim):
         """Initialize a buffer with a given length and data dimensionality.
@@ -24,8 +24,8 @@ class CyclicBuffer:
         """
         self._length = length
         self._dim = dim
-        self._data = np.zeros((length, dim))
-        self._timestamps = np.zeros(length)
+        self._data = np.full((length, dim), np.nan)
+        self._timestamps = np.full(length, np.nan)
         self._i = 0
 
     def append(self, value, timestamp):
@@ -43,7 +43,8 @@ class CyclicBuffer:
             A timestamp attached to the value.
         """
         assert len(value) == self._dim
-        assert timestamp >= self._timestamps[self._i - 1]
+        if not np.isnan(self._timestamps[self._i - 1]):
+            assert timestamp >= self._timestamps[self._i - 1]
 
         self._data[self._i] = value
         self._timestamps[self._i] = timestamp
@@ -74,6 +75,5 @@ class CyclicBuffer:
             The start and end timestamps, respectively.
         """
         data, timestamps = self.get_buffer()
-        i0 = np.searchsorted(timestamps, t0)
-        i1 = np.searchsorted(timestamps, t1, side='right')
-        return data[i0:i1], timestamps[i0:i1]
+        inds = np.logical_and(timestamps >= t0, timestamps <= t1)
+        return data[inds], timestamps[inds]
