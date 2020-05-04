@@ -38,7 +38,7 @@ def test_edfreader():
     data_len = reader.data_len
     assert data_len > 0
 
-    data_f = reader.data_frequency
+    data_f = reader.sampling_frequency
     assert data_f > 0
 
     for _ in range(data_len):
@@ -58,7 +58,7 @@ def test_edfreader():
         reader.data_len
 
     with pytest.raises(RuntimeError):
-        reader.data_frequency
+        reader.sampling_frequency
 
     # Test reading the same data again
     reader.connect()
@@ -67,7 +67,7 @@ def test_edfreader():
     data_len = reader.data_len
     assert data_len > 0
 
-    data_f = reader.data_frequency
+    data_f = reader.sampling_frequency
     assert data_f > 0
 
     # Read in a bit of data

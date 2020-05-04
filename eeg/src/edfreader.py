@@ -27,7 +27,7 @@ class EDFReader(Reader):
         self._edf_path = edf_path
 
         self._edf_data = None
-        self._edf_fs = 0
+        self._edf_sampling_frequency = 0
         self._edf_len = 0
         self._edf_iter = None
 
@@ -59,7 +59,7 @@ class EDFReader(Reader):
         self._edf_path = edf_path
 
         self._edf_data = None
-        self._edf_fs = 0
+        self._edf_sampling_frequency = 0
         self._edf_len = 0
         self._edf_iter = None
 
@@ -81,11 +81,11 @@ class EDFReader(Reader):
 
     @property
     @only_connected(action='raise')
-    def data_frequency(self):
+    def sampling_frequency(self):
         """Returns the frequency of the loaded EDF file.
 
         """
-        return self._edf_fs
+        return self._edf_sampling_frequency
 
     @property
     def connected(self):
@@ -104,10 +104,10 @@ class EDFReader(Reader):
         raw = mne.io.read_raw_edf(self._edf_path, preload=True)
         data = raw.get_data(return_times=False)
         self._edf_data = np.transpose(data)
-        self._edf_fs = raw.info['sfreq']
+        self._edf_sampling_frequency = raw.info['sfreq']
         self._edf_len = len(self._edf_data)
         self._edf_iter = None
-        self.log(f"Frequency = {self._edf_fs}; Cycle time = {1.0 / self._edf_fs}.",
+        self.log(f"Frequency = {self._edf_sampling_frequency}; Cycle time = {1.0 / self._edf_sampling_frequency}.",
                  logging.INFO)
 
     @only_connected()
