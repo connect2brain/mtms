@@ -83,7 +83,7 @@ class EDFReader(Reader):
     @property
     @only_connected(action='raise')
     def sampling_frequency(self):
-        """Return the frequency of the loaded EDF file.
+        """Return the sampling frequency of the loaded EDF file.
 
         """
         return self._edf_sampling_frequency

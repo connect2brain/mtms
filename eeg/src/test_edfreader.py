@@ -18,10 +18,10 @@ def test_edfreader():
     from readersender import (ReaderSender, Reader)
     from edfreader import EDFReader
 
-    
+
     test_edf_file = os.path.join(root_path, os.getenv('EDF_TEST_FILE', 'datasets/test.edf'))
     if not os.path.isfile(test_edf_file):
-        raise FileNotFoundError("File '{}' not found. Cannot test reading EDF. Perhaps you need to set 'DATASET_PATH' and 'EDF_TEST_FILE' in .env.".format(test_edf_file))
+        raise FileNotFoundError("File '{}' not found. Cannot test reading EDF. Perhaps 'EDF_TEST_FILE' is set incorrectly in .env.".format(test_edf_file))
 
     reader = EDFReader(edf_file=test_edf_file, logger=logging.getLogger('test_edfreader'))
     assert isinstance(reader, EDFReader)
