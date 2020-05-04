@@ -12,7 +12,7 @@ class EDFReader(Reader):
     """A Reader class the read EDF data files row-by-row.
     """
     def __init__(self, edf_file, *args, **kwargs):
-        """Initializes an EDFReader with given file.
+        """Initialize an EDFReader with given file.
 
         Parameters
         ----------
@@ -33,13 +33,14 @@ class EDFReader(Reader):
 
     @property
     def edf_file(self):
-        """The EDF file attached to this reader.
+        """Return the EDF file attached to this reader.
+
         """
         return str(self._edf_path)
 
     @edf_file.setter
     def edf_file(self, edf_file):
-        """Sets the EDF file to read.
+        """Set the EDF file to read.
 
         Parameters
         ----------
@@ -66,7 +67,7 @@ class EDFReader(Reader):
     @property
     @only_connected(action='raise')
     def data(self):
-        """Returns the loaded EDF data.
+        """Return the loaded EDF data.
 
         """
         return self._edf_data
@@ -74,7 +75,7 @@ class EDFReader(Reader):
     @property
     @only_connected(action='raise')
     def data_len(self):
-        """Returns the size of the loaded EDF file.
+        """Return the size of the loaded EDF file.
 
         """
         return self._edf_len
@@ -82,21 +83,21 @@ class EDFReader(Reader):
     @property
     @only_connected(action='raise')
     def sampling_frequency(self):
-        """Returns the frequency of the loaded EDF file.
+        """Return the frequency of the loaded EDF file.
 
         """
         return self._edf_sampling_frequency
 
     @property
     def connected(self):
-        """Checks if EDF file is read to memory.
+        """Check if EDF file is read to memory.
 
         """
         return self._edf_data is not None
 
     @only_disconnected()
     def connect(self):
-        """Reads the EDF file to memory.
+        """Read the EDF file to memory.
 
         """
         # Read the data on at a time
@@ -112,7 +113,7 @@ class EDFReader(Reader):
 
     @only_connected()
     def disconnect(self):
-        """Deletes the EDF file from memory.
+        """Delete the EDF file from memory.
 
         """
         self._edf_data = None
@@ -122,7 +123,7 @@ class EDFReader(Reader):
 
     @only_connected()
     def reset(self):
-        """Resets the data to the beginning.
+        """Reset the data to the beginning.
 
         """
         if self._edf_iter is not None:
@@ -131,12 +132,16 @@ class EDFReader(Reader):
 
     @only_connected(action='raise')
     def read(self):
-        """Reads a single line from EDF file.
+        """Read a single line from EDF file.
 
         Yields
         ------
         np.array
             A single line from EDF file.
+
+        Notes
+        -----
+        Returns None if all data have been read.
         """
         if self._edf_iter is None:
             # Initialize an iterator
