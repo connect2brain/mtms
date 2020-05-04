@@ -114,7 +114,3 @@ def test_cyclic_buffer():
         ts-(3*0.1), ts-(2*0.1), ts-(1*0.1), ts
     ])
 
-
-    
-
->>>>>>> Stashed changes
