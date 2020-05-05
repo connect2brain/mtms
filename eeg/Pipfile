@@ -4,11 +4,13 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+pytest = "*"
 
 [packages]
 mne = "*"
 pykafka = "*"
 python-dotenv = "*"
+readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
 
 [requires]
 python_version = "3.6"
