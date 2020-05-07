@@ -2,6 +2,14 @@
 % This is an example script for cleaning standard TMS-EEG data recorded
 % with the Brainvision system. 
 
+
+% Data: 
+% 
+% The script assumes the data in the EEGLAB data format. An example dataset
+% is provided in the C2B project folder. 
+% 
+% //tw-nbe.org.aalto.fi/project/c2b-shared/SW_development/TMS_EEG_testset.set
+
 % Depedencies:
 % 
 % 1. Matlab, tested with R2018b
