@@ -33,11 +33,11 @@ disp('Shell 1 started: Initiating the script...')
 % Show MATLAB the locations of the required toolboxes:
 
 % Path to Fastica package 
-fastica_path = '/my/path/to/fastica/FastICA_25';
+fastica_path = '/Users/tpmutane/Documents/5HzPackage/FastICA_25'; %'/my/path/to/fastica/FastICA_25'
 addpath(fastica_path);
 
 % Path to EEGLAB toolbox:
-eeglab_path = '/my/path/to/eeglab/eeglab2019_0/';
+eeglab_path = '/Users/tpmutane/Documents/5HzPackage/eeglab2019_0/';% '/my/path/to/eeglab/eeglab2019_0/';
 
 addpath(eeglab_path);
 eeglab;
@@ -54,7 +54,7 @@ disp('Cell 2 started: Loading the data...')
 % on c2b-shared project folder: 
 % //tw-nbe.org.aalto.fi/project/c2b-shared/SW_development/TMS_EEG_testset.set
 
-data_path = 'my/path/to/EEG/data/folder/';
+data_path = '/Users/tpmutane/Documents/Temporary data'; %'Path/to/EEG/data/folder/';
 
 % Load the data to matlab
 EEG = pop_loadset('filename','TMS_EEG_testset.set','filepath',data_path);
@@ -233,7 +233,7 @@ disp('-------------------------------------------------------------------')
 
 %% 9. Detrend the epochs:
 
-disp('Cell 9: Detrending the epochs...');
+disp('Cell 9: Detrending the epochs');
 
 % Fit and remove the slow drifts using a  linear model:
 
@@ -258,14 +258,12 @@ figure; pop_plottopo(EEG, [1:62] , 'orig epochs', 0, 'ydir',1);
 % Uncomment to remove channels:
 %list_of_bad_channels = {'POz'}; EEG = pop_select( EEG, 'nochannel',list_of_bad_channels );
 
-disp('Cell 10 a ended')
+disp('Cell 1 ended')
 disp('-------------------------------------------------------------------')
 
 
 
 %% 10 b.
-
-disp('Cell 10 b started: Check the data for bad trials. Click any contaminated trials to turn them yellow. In the end click "reject"')
 
 % Inspect and remove bad trials as earlier
 
@@ -276,30 +274,14 @@ EEG = eeg_checkset( EEG );
 
 pop_eegplot( EEG, 1, 1, 1);
 
-disp('Finalize Cell 10 b by clicking "reject" when you have identified the bad trials.')
-disp('-------------------------------------------------------------------')
-
-
 %EEG = pop_rejepoch( EEG, 4,0);
 
 %% 11. Select only EEG channels:
 
-
-disp('Cell 11 started: Removing EOG channels...')
-
-
 % Unselect the EOG channels
 EEG = pop_select( EEG, 'nochannel',{'EOG1' 'EOG2'}); 
 
-disp('Cell 11 ended')
-disp('-------------------------------------------------------------------')
-
-
-
 %% 12. Average reference:
-
-disp('Cell 12: Go to average reference:')
-
 
 % Move to average reference:
 EEG = pop_reref( EEG, []);
@@ -308,16 +290,7 @@ EEG = pop_reref( EEG, []);
 figure; pop_timtopo(EEG, [-100  200], [20  40  60  80], 'ERP data and scalp maps of orig epochs');
 figure; pop_plottopo(EEG, [1:61] , 'orig epochs', 0, 'ydir',1);
 
-disp('Cell 12 ended')
-disp('-------------------------------------------------------------------')
-
-
-
 %% 13. Simple bandpass filtering of the data:
-
-
-disp('Cell 13: Bandpass filter at 1-80 Hz...')
-
 
 figure;
 EEG = pop_eegfiltnew(EEG, 'locutoff',1,'hicutoff',80,'plotfreqz',1);
@@ -325,23 +298,12 @@ EEG = pop_eegfiltnew(EEG, 'locutoff',1,'hicutoff',80,'plotfreqz',1);
 % Visually inspect the data:
 figure; pop_timtopo(EEG, [-100  200], [20  40  60  80], 'ERP data and scalp maps of orig epochs');
 
-disp('Cell 13 ended')
-disp('-------------------------------------------------------------------')
-
 
 %%  14.  Finally Snip of the terminals of the time interval that are not interesting.
 
-disp('Cell 14: Snipping of the fist and last 500 ms of the epochs to remove possible edge effects')
-
 EEG = pop_select( EEG, 'time', [-1 1] );
 
-disp('Cell 14 ended')
-disp('-------------------------------------------------------------------')
-
-
 %% 15. Visualize the final result:
-
-disp('Cell 15: Visualizng the final results...')
 
 % Visually inspect the final data:
 figure; pop_timtopo(EEG, [-100  200], [20  40  60  80], 'ERP data and scalp maps of orig epochs');
@@ -351,7 +313,3 @@ figure; pop_plottopo(EEG, [1:61] , 'orig epochs', 0, 'ydir',1); clear EEG_plot;
 
 figure; pop_newtimef( EEG, 1, 59, [-1500  1499], [3         0.5] , 'topovec', 59, 'elocs', ...
     EEG.chanlocs, 'chaninfo', EEG.chaninfo, 'caption', 'Oz', 'baseline',[0], 'freqs', [[4 50]], 'plotphase', 'off', 'padratio', 1);
-
-disp('Cell 15 ended')
-disp('-------------------------------------------------------------------')
-
