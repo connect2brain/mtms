@@ -73,7 +73,7 @@ disp('Cell 3 started:  Finding the theoretical channel locations...')
 % Useful for at least visualization and for some spatial filtering methods
 % that are not used here. 
 
-EEG=pop_chanedit(EEG, 'lookup',[eeglab_path,'/plugins/dipfit/standard_BESA/standard-10-5-cap385.elp'],...
+EEG=pop_chanedit(EEG, 'lookup',fullfile(eeglab_path,'plugins','dipfit','standard_BESA','standard-10-5-cap385.elp'),...
     'settype',{'' 'EEG'},'settype',{'1:62' 'EEG'},'changefield',{63 'type' 'EOG'},'changefield',{64 'type' 'EOG'});
 
 disp('Cell 3 ended')
