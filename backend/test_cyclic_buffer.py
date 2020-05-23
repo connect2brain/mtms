@@ -12,6 +12,11 @@ def test_cyclic_buffer():
 
     buffer = CyclicBuffer(4, 2)
 
+    ## Test that no warning is raised when getting timerange from empty buffer
+    with pytest.warns(None) as record:
+        _, _ = buffer.get_timerange(0, 1)
+    assert not record
+
     ## Test appending fewer than the maximum number of values
 
     buffer.append([1, 2], 0.1)
@@ -26,7 +31,7 @@ def test_cyclic_buffer():
         [3., 4.],
         [5., 6.],
     ])
-    np.testing.assert_equal(timestamps, [np.nan, 0.1, 0.2, 0.3])
+    np.testing.assert_equal(timestamps, [-np.inf, 0.1, 0.2, 0.3])
 
     ## Test appending more than the maximum number of values
 
