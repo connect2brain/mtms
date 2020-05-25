@@ -1,12 +1,12 @@
-import sys
 import json
 import time
 
-from app import app
-from flask import current_app, request
+from flask import Blueprint, current_app, request
+
+eeg_data_server = Blueprint('eeg_data_server', __name__)
 
 # TODO: Document the API endpoint
-@app.route('/eeg_data')
+@eeg_data_server.route('/eeg_data')
 def get_eeg_data():
     args_from = float(request.args.get('from', -60))
     args_to = float(request.args.get('to', 0))

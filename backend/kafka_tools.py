@@ -46,14 +46,14 @@ def get_kafka_consumer(client=None, topic=None, reset_offset=False):
     KafkaConsumer or None
         An initialized KafkaConsumer on success, or None in case of failure.
     """
-    try:
-        client = client or get_kafka_client()
-        topic = client.topics[(topic or os.getenv("KAFKA_TOPIC") or 'eeg_data')]
-        consumer = topic.get_simple_consumer(
-            consumer_timeout_ms=1000,
-            auto_offset_reset=pykafka.common.OffsetType.LATEST,
-            reset_offset_on_start=reset_offset,
-        )
-        return consumer
-    except pykafka.exceptions.NoBrokersAvailableError as e:
+    client = client or get_kafka_client()
+    if client is None:
         return None
+
+    topic = client.topics[(topic or os.getenv("KAFKA_TOPIC") or 'eeg_data')]
+    consumer = topic.get_simple_consumer(
+        consumer_timeout_ms=1000,
+        auto_offset_reset=pykafka.common.OffsetType.LATEST,
+        reset_offset_on_start=reset_offset,
+    )
+    return consumer
