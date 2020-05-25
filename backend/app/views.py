@@ -18,8 +18,8 @@ def get_eeg_data():
     )
     timestamps_relative = [t - t0 for t in timestamps]
 
-    result = {
-        'data': data.tolist(),
-        'timestamps': timestamps_relative,
-    }
+    result = [
+        {'data': data, 'timestamp': timestamp}
+        for data, timestamp in zip(data.tolist(), timestamps_relative)
+    ]
     return json.dumps(result), 200, {'content-type': 'application/json'}
