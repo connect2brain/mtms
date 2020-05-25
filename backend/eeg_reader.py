@@ -45,8 +45,10 @@ class EegReader(Thread):
         """
         message = None
         try:
+            logging.info("Attempting to read a message from the queue")
             raw_message = self.consumer.consume()
             if raw_message is not None:
+                logging.info("Read a message from the queue")
                 message = json.loads(raw_message.value)
         except pykafka.exceptions.SocketDisconnectedError as e:
             sys.stderr.write("[ERROR] Kafka socket disconnected. Reason: '{}'".format(e))
@@ -63,7 +65,6 @@ class EegReader(Thread):
         while True:
             message = self._read_message()
             if message is not None:
-                logging.info("Read a message from the queue")
                 self.buffer.append(message['data'], message['time'])
             else:
                 time.sleep(1.0 / self.sampling_frequency)
