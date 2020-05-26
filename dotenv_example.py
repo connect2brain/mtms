@@ -12,6 +12,9 @@
 # 
 # *****************************************************
 
+# Buffer length in samples
+BACKEND_EEG_BUFFER_LENGTH = 1024
+
 EDF_TEST_FILE='datasets/MNE-eegbci-data/files/eegmmidb/1.0.0/S001/S001R01.edf'
 KAFKA_IP='127.0.0.1'
 KAFKA_PORT='9092'
