@@ -9,7 +9,7 @@ class CyclicBuffer:
 
     Supports various get operations and appending to the end.
 
-    The buffer is initialized with NaN values and timestamps.
+    The buffer is initialized with NaN values and -inf timestamps.
     """
 
     def __init__(self, length, dim):
@@ -26,7 +26,7 @@ class CyclicBuffer:
         self._length = length
         self._dim = dim
         self._data = np.full((length, dim), np.nan)
-        self._timestamps = np.full(length, np.nan)
+        self._timestamps = np.full(length, -np.inf)
         self._i = 0
 
     def append(self, value, timestamp):
