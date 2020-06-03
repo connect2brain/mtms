@@ -129,13 +129,12 @@ def tick_out_data(data, time_interval, data_q, msg_q):
     sys.stdout.write("[INFO] Ticking out data every {:.2f} ms.\n".format(1000.0*time_interval))
     sys.stdout.write("[INFO] tick_out_data() starting to send data.\n")
 
-    start_time = time.time()
-    next_t = start_time
+    next_t = time.time()
 
     for row in range(len(data)):
         data_str = json.dumps({
                     'data': data[row].tolist(),
-                    'time': next_t - start_time,
+                    'time': next_t,
                 }).encode()
 
         time.sleep(max(next_t - time.time(), 0))   # Wait for next send time
