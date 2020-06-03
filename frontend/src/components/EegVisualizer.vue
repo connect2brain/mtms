@@ -20,13 +20,15 @@
 import axios from "axios";
 import * as d3 from "d3";
 
+const eegChannels = 64;
+
 export default {
   name: "EegVisualizer",
   data: function () {
     return {
       eegData: [],
       channel: 0,
-      channels: [...Array(64).keys()],
+      channels: [...Array(eegChannels).keys()],
       requestTime: 0,
       errors: [],
       minTime: -25,
@@ -34,15 +36,21 @@ export default {
     }
   },
   props: {
-    width: String,
-    height: String
+    width: {
+      type: Number,
+      default: 640
+    },
+    height: {
+      type: Number,
+      default: 480
+    }
   },
   methods: {
     loadData: function() {
       this.requestStartTime = Date.now()
 
-      // TODO: URL hard-coded for now, change to obtain host and port via config
-      axios.get("http://localhost:5000/eeg_data", {
+      axios.get(process.env.VUE_APP_BACKEND_URL ||
+		"http://localhost:5000/eeg_data", {
 	params: {
 	  from: this.minTime
 	}})
@@ -55,7 +63,7 @@ export default {
 	})
     },
     updateGraph: function() {
-      var margin = {
+      const margin = {
 	top: 50,
 	right: 50,
 	bottom: 30,
@@ -63,7 +71,7 @@ export default {
       }
 
       // Re-initialize the SVG element
-      var svg = d3.select("#area")
+      const svg = d3.select("#area")
       svg.selectAll("*").remove();
 
       if (this.eegData.length == 0) {
@@ -71,22 +79,22 @@ export default {
       }
 
       // Create x- and y-scale
-      var channelData = this.eegData.map(x => x.data[this.channel])
-      var yMax = Math.max(Math.abs(Math.min(...channelData)),
-                           Math.abs(Math.max(...channelData)))
+      const channelData = this.eegData.map(x => x.data[this.channel])
+      const yMax = Math.max(Math.abs(Math.min(...channelData)),
+                            Math.abs(Math.max(...channelData)))
 
-      var xScale = d3.scaleLinear()
+      const xScale = d3.scaleLinear()
 	.domain([this.minTime, 0])
 	.range([margin.left, this.width - margin.right]);
-      var xAxisY0 = margin.top + (this.height - margin.top - margin.bottom) / 2;
+      const xAxisY0 = margin.top + (this.height - margin.top - margin.bottom) / 2;
 
-      var yScale = d3.scaleLinear()
+      const yScale = d3.scaleLinear()
 	.domain([-yMax, yMax])
 	.range([margin.top, this.height - margin.bottom]);
-      var yAxisX0 = this.width - margin.right;
+      const yAxisX0 = this.width - margin.right;
 
       // Draw the data
-      var line = d3.line()
+      const line = d3.line()
 	  .x(d => { return xScale(d.timestamp); })
 	  .y(d => { return yScale(d.data[this.channel]); })
 
@@ -117,10 +125,12 @@ export default {
   },
   mounted: function() {
     this.loadData();
-
-    setInterval(() => {
+    this.intervalTimer = setInterval(() => {
       this.loadData();
     }, this.updateInterval)
+  },
+  beforeDestroy() {
+    clearInterval(this.intervalTimer);
   }
 };
 </script>
