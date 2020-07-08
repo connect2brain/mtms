@@ -14,7 +14,7 @@ from pykafka import KafkaClient
 from multiprocessing import Process, Queue, Pool
 import queue
 
-dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
+dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
 
 def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
