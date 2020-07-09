@@ -8,9 +8,9 @@ pytest = "*"
 
 [packages]
 mne = "*"
-pykafka = "*"
 python-dotenv = "*"
 readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
+confluent-kafka = "*"
 
 [requires]
 python_version = "3.6"

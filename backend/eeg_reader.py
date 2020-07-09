@@ -3,10 +3,6 @@ import logging
 import time
 from threading import Thread
 
-import pykafka.exceptions
-
-from kafka_tools import get_kafka_consumer
-
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
@@ -46,12 +42,10 @@ class EegReader(Thread):
         message = None
         try:
             logging.info("Polling Kafka for new messages")
-            raw_message = self.consumer.consume()
+            raw_message = self.consumer.poll(timeout=1.0)
             if raw_message is not None:
                 logging.info("Reading a message from Kafka")
-                message = json.loads(raw_message.value)
-        except pykafka.exceptions.SocketDisconnectedError as e:
-            sys.stderr.write("[ERROR] Kafka socket disconnected. Reason: '{}'".format(e))
+                message = json.loads(raw_message.value())
         except json.decoder.JSONDecodeError as e:
             sys.stderr.write("[ERROR] Error decoding JSON message from Kafka. Reason: '{}'\n".format(e))
 
@@ -68,3 +62,6 @@ class EegReader(Thread):
                 self.buffer.append(message['data'], message['time'])
             else:
                 time.sleep(1.0 / self.sampling_frequency)
+
+    def kill(self):
+        self.consumer.close()

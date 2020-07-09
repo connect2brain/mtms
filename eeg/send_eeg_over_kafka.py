@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import socket
 import sys
 import time
 import csv
@@ -8,8 +9,7 @@ import csv
 import dotenv
 from mne.io import concatenate_raws, read_raw_edf
 import numpy as np
-import pykafka
-from pykafka import KafkaClient
+from confluent_kafka import Consumer, Producer, KafkaException
 
 from multiprocessing import Process, Queue, Pool
 import queue
@@ -17,8 +17,8 @@ import queue
 dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 
 
-def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
-    """Initializes and returns a KafkaClient.
+def get_kafka_consumer(ip=None, port=None, topic=None, auto_offset_reset='latest', enable_auto_commit=False):
+    """Initializes and returns a Kafka Consumer with a subscription to a topic.
 
     Parameters
     ----------
@@ -26,24 +26,68 @@ def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=Fal
         A valid IP address of the Kafka server.
     port : str or int
         The port of the Kafka server.
+    topic : str
+        The name of the Kafka topic to subscribe to.
+    auto_offset_reset : str
+        The value of auto.offset.reset parameter for the Kafka Consumer.
+        Defaults to 'latest', resetting the offset to the beginning of the
+        topic.
+    enable_auto_commit : boolean
+        Indicates if offsets are committed automatically to the broker.
+        Defaults to False.
 
     Returns
     -------
-    KafkaClient or None
-        An initialized KafkaClient on success, or None in case of failure.
+    Consumer or None
+        An initialized Consumer on success, or None in case of failure.
     """
-    try:
-        client = KafkaClient(hosts="{ip}:{port}".format(
-            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'), 
-            port=(port or os.getenv("KAFKA_PORT") or '9092'),
-            zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
-            use_greenlets=use_greenlets))
-        return client
-    except pykafka.exceptions.NoBrokersAvailableError as e:
-        return None
+    hosts = "{ip}:{port}".format(
+        ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
+        port=(port or os.getenv("KAFKA_PORT") or '9092'))
+
+    conf = {'bootstrap.servers': hosts,
+            'group.id': b"benchmark",
+            'auto.offset.reset': auto_offset_reset,
+            'enable.auto.commit': enable_auto_commit,
+    }
+
+    sys.stdout.write("[INFO] Connecting to Kafka broker at {}.\n".format(hosts))
+    consumer = Consumer(conf)
+    consumer.subscribe([topic or os.getenv("KAFKA_TOPIC") or 'eeg_data'])
+    return consumer
 
 
-def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkafka=True):
+def get_kafka_producer(ip=None, port=None):
+    """Initializes and returns a Kafka producer to produce messages.
+
+    Parameters
+    ----------
+    ip : str
+        A valid IP address of the Kafka server.
+    port : str or int
+        The port of the Kafka server.
+    topic : str
+        The name of the Kafka topic to produce messages to.
+
+    Returns
+    -------
+    Consumer or None
+        An initialized Consumer on success, or None in case of failure.
+    """
+    hosts = "{ip}:{port}".format(
+        ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
+        port=(port or os.getenv("KAFKA_PORT") or '9092'))
+
+    conf = {'bootstrap.servers': hosts,
+            'client.id': socket.gethostname(),
+    }
+
+    sys.stdout.write("[INFO] Connecting to Kafka broker at {}.\n".format(hosts))
+    producer = Producer(conf)
+    return producer
+
+
+def send_data(data_q, msg_q, print_delivery_reports=False):
     """Asynchronously sends out a single piece of pre-formatted data.
 
     Parameters
@@ -55,56 +99,48 @@ def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkaf
     print_delivery_reports : Bool
         If True a summary of delivery reports is written to stdout
     """
-    # Set up Kafka client.
-    sys.stdout.write("[INFO] send_data(): setting up Kafka client connection.\n")
-    client = get_kafka_client()
-    if client is None:
+    topic = os.getenv("KAFKA_TOPIC") or 'eeg_data'
+    producer = get_kafka_producer()
+    if producer is None:
         sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
-        msg_q.put(None)   # Send None to indicate the end
-        return
+        sys.exit(1)
 
-    topic = client.topics[os.getenv("KAFKA_TOPIC") or 'eeg_data']
- 
     try:
-        with topic.get_producer(sync=False, 
-            delivery_reports=print_delivery_reports, 
-            linger_ms=linger_ms,
-            use_rdkafka=use_rdkafka) as producer:
-            sys.stdout.write("[INFO] send_data() ready to receive data.\n")
+        sys.stdout.write("[INFO] send_data() ready to receive data.\n")
 
-            count = 0
-            while True:   # Run until stopped
-                data = data_q.get()
-                if data is None:
-                    msg_q.put(time.time())
-                    break
+        count = 0
+        while True:   # Run until stopped
+            data = data_q.get()
+            if data is None:
                 msg_q.put(time.time())
-                #producer.produce(data)
-                producer.produce(bytes(data))
+                break
+            msg_q.put(time.time())
 
-                if print_delivery_reports:
-                    # Process delivery messages
-                    if count % 100 == 0:
-                        success = 0
-                        failed = 0
-                        while True:
-                            try:
-                                msg, exc = producer.get_delivery_report(block=False)
-                                if exc is not None:
-                                    #sys.stdout.write("Failed to deliver msg {}: {}".format(
-                                    #    msg.partition_key, repr(exc)))
-                                    failed += 1
-                                else:
-                                    #sys.stdout.write("Successfully delivered msg {}".format(
-                                    #    msg.partition_key))
-                                    success += 1
-                            except queue.Empty:
-                                break
-                            finally:
-                                sys.stdout.write("S{}F{}".format(success, failed))
+            producer.produce(topic, value=data)
+
+            if print_delivery_reports:
+                # Process delivery messages
+                if count % 100 == 0:
+                    success = 0
+                    failed = 0
+                    while True:
+                        try:
+                            msg, exc = producer.get_delivery_report(block=False)
+                            if exc is not None:
+                                #sys.stdout.write("Failed to deliver msg {}: {}".format(
+                                #    msg.partition_key, repr(exc)))
+                                failed += 1
+                            else:
+                                #sys.stdout.write("Successfully delivered msg {}".format(
+                                #    msg.partition_key))
+                                success += 1
+                        except queue.Empty:
+                            break
+                        finally:
+                            sys.stdout.write("S{}F{}".format(success, failed))
 
                 count += 1
-    except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
+    except KafkaException as e:
         sys.stderr.write("[ERROR] Error sending to Kafka. Message: '{}'.\n".format(e))
         producer.stop()
 
@@ -116,7 +152,7 @@ def tick_out_data(data, time_interval, data_q, msg_q):
     """Ticks out data with given time interval.
 
     Parameters
-    ----------
+-    ----------
     data : arr_like
         A list of JSON-serializable items.
     time_interval : float
@@ -147,7 +183,7 @@ def tick_out_data(data, time_interval, data_q, msg_q):
     msg_q.put(None)   # Send None to indicate the end
 
 
-def receive_data(msg_q, use_rdkafka=True):
+def receive_data(msg_q):
     """Listens for data from the given Kafka topic.
 
     Parameters
@@ -155,38 +191,21 @@ def receive_data(msg_q, use_rdkafka=True):
     msg_q : multiprocessing.Queue
         A queue where to write status messages etc.
     """
-    # Set up Kafka client.
-    sys.stdout.write("[INFO] receive_data(): setting up Kafka client connection.\n")
-    client = get_kafka_client()
-    if client is None:
+    consumer = get_kafka_consumer()
+    if consumer is None:
         sys.stderr.write("[ERROR] Kafka broker was not found. Make sure that Kafka is installed and running.\n")
-        msg_q.put(None)   # Send None to indicate the end
-        return
-
-    # Select Kafka topic
-    topic = client.topics[(os.getenv("KAFKA_TOPIC") or 'eeg_data')]
-    offset = topic.latest_available_offsets()
+        sys.exit(1)
 
     sys.stdout.write("[INFO] receive_data() starting to listen for data.\n")
-    consumer = topic.get_balanced_consumer(
-        consumer_group=b"benchmark",
-        auto_commit_enable=True,
-        auto_offset_reset=pykafka.common.OffsetType.LATEST,
-        reset_offset_on_start=True,
-        use_rdkafka=use_rdkafka)
-
     try:
-        consumer.start()
         while True:
-            #msg = consumer.consume()
-            for msg in consumer:
-                if msg is not None:
-                    msg_q.put(time.time())
-            
-        consumer.commit_offsets()
-        consumer.stop()
+            msg = consumer.poll(timeout=1.0)
+            if msg is not None:
+                msg_q.put(time.time())
 
-    except pykafka.exceptions.ConsumerStoppedException as e:
+        consumer.close()
+
+    except (KafkaException, RuntimeError) as e:
         sys.stderr.write("[ERROR] Kafka consumer stopped unexpectedly.")
         msg_q.put(None)
 
@@ -213,8 +232,8 @@ def stream_data_mp(data, fs, senders=1):
     listener_msg_q = Queue()
     sender_msg_q = Queue()
     ticker_msg_q = Queue()
-    listener = Process(target=receive_data, args=(listener_msg_q, ), kwargs={"use_rdkafka": True})
-    sender = Process(target=send_data, args=(data_q, sender_msg_q), kwargs={"use_rdkafka": True})
+    listener = Process(target=receive_data, args=(listener_msg_q, ))
+    sender = Process(target=send_data, args=(data_q, sender_msg_q))
     ticker = Process(target=tick_out_data, args=(data, T, data_q, ticker_msg_q))
 
     try:
@@ -240,7 +259,7 @@ def stream_data_mp(data, fs, senders=1):
 
         while ((not ticker_ended) or (not sender_ended) or (not listener_timed_out or not listener_ended)):
             now = time.time()
-            
+
             if now-prev > 0.5:
                 mdiff = len(ticker_msgs)-len(sender_msgs)
                 sys.stdout.write('{}'.format('+' if mdiff > 0 else '-' if mdiff < 0 else '.'))
@@ -279,7 +298,7 @@ def stream_data_mp(data, fs, senders=1):
                     listener_timed_out = False
             except queue.Empty:
                 listener_timed_out = True
-        
+
     except KeyboardInterrupt as e:
         sys.stdout.write("|Stopped.\n")
         print("[INFO] Keyboard interrupt received. Stopping child processes.")

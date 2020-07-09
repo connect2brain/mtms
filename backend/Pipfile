@@ -8,10 +8,10 @@ pytest = "*"
 
 [packages]
 flask = "*"
-pykafka = "*"
 numpy = "*"
 python-dotenv = "*"
 flask-cors = "*"
+confluent-kafka = "*"
 
 [requires]
 python_version = "3.6"
