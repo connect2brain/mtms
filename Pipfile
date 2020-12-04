@@ -8,10 +8,12 @@ pytest = "*"
 
 [packages]
 flask = "*"
-pykafka = "*"
-numpy = "*"
-python-dotenv = "*"
 flask-cors = "*"
+numpy = "*"
+mne = "*"
+readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
+python-dotenv = "*"
+pykafka = "*"
 
 [requires]
 python_version = "3.6"
