@@ -1,46 +1,21 @@
 import argparse
+import csv
 import json
 import os
+import queue
 import sys
 import time
-import csv
+from multiprocessing import Process, Queue, Pool
 
 import dotenv
-from mne.io import concatenate_raws, read_raw_edf
 import numpy as np
 import pykafka
+from mne.io import concatenate_raws, read_raw_edf
 from pykafka import KafkaClient
 
-from multiprocessing import Process, Queue, Pool
-import queue
+from kafka.util import get_kafka_client
 
 dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
-
-
-def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
-    """Initializes and returns a KafkaClient.
-
-    Parameters
-    ----------
-    ip : str
-        A valid IP address of the Kafka server.
-    port : str or int
-        The port of the Kafka server.
-
-    Returns
-    -------
-    KafkaClient or None
-        An initialized KafkaClient on success, or None in case of failure.
-    """
-    try:
-        client = KafkaClient(hosts="{ip}:{port}".format(
-            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'), 
-            port=(port or os.getenv("KAFKA_PORT") or '9092'),
-            zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
-            use_greenlets=use_greenlets))
-        return client
-    except pykafka.exceptions.NoBrokersAvailableError as e:
-        return None
 
 
 def send_data(data_q, msg_q, print_delivery_reports=True, linger_ms=0, use_rdkafka=True):

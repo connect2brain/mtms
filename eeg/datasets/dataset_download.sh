@@ -18,7 +18,9 @@ check_datalad() {
 	command -v "$DATALAD" >/dev/null 2>&1 || { echo >&2 "Warning. The command '$DATALAD' was not found. It is needed for some of the datasets. Install with 'pip install datalad'."; return 1; }
 }
 
-# Print usage 
+# Print usage
+#
+# XXX: Using these command line options doesn't work very well when the script is used via Makefile.
 usage() {  
 	cat <<-END
 Usage: $0 [-h | -l | dataset]
