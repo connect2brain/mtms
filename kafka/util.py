@@ -6,7 +6,7 @@ from pykafka import KafkaClient
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
-def get_kafka_client(ip=None, port=None):
+def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
     """Initializes and returns a KafkaClient.
 
     Parameters
@@ -23,8 +23,10 @@ def get_kafka_client(ip=None, port=None):
     """
     try:
         client = KafkaClient(hosts="{ip}:{port}".format(
-            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'), 
-            port=(port or os.getenv("KAFKA_PORT") or '9092')))
+            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
+            port=(port or os.getenv("KAFKA_PORT") or '9092'),
+            zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
+            use_greenlets=use_greenlets))
         return client
     except pykafka.exceptions.NoBrokersAvailableError as e:
         return None

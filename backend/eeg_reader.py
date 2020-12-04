@@ -5,7 +5,7 @@ from threading import Thread
 
 import pykafka.exceptions
 
-from kafka_tools import get_kafka_consumer
+from kafka.util import get_kafka_consumer
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
