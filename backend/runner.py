@@ -6,10 +6,10 @@ import sys
 
 import dotenv
 
-from app import create_app
-from cyclic_buffer import CyclicBuffer
-from eeg_reader import EegReader
-from kafka_tools import get_kafka_consumer
+from .app import create_app
+from .cyclic_buffer import CyclicBuffer
+from .eeg_reader import EegReader
+from kafka.util import get_kafka_consumer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
