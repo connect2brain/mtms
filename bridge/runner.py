@@ -9,7 +9,7 @@ from queue import Queue
 
 import dotenv
 
-import db.topics as topics
+from db.topics import TopicDb
 from .mtms_connection import MtmsConnection
 from kafka.topic_queue import TopicQueue
 
@@ -32,8 +32,9 @@ mtms = MtmsConnection(
     vi_name=vi_name,
 )
 
-# Create queue for new data in parameter-containing topics
-topics, control_names = topics.get_parameter_topics()
+# Create queue for new data in parameter topics
+topic_db = TopicDb()
+topics, control_names = topic_db.get_parameter_topics()
 
 topic_queue = TopicQueue(topics)
 
