@@ -5,39 +5,32 @@ import os
 import sys
 
 import dotenv
+from flask import Flask
+from flask_cors import CORS
 
 from .app import create_app
-from .cyclic_buffer import CyclicBuffer
-from .eeg_reader import EegReader
-from kafka.util import get_kafka_consumer
+from .eeg.server import EegServer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
 eeg_buffer_length = int(os.getenv("BACKEND_EEG_BUFFER_LENGTH", 8192))
-# TODO: Sender should publish these via Kafka.
-sampling_frequency = 160
-n_channels = 64
-
-# Set up Kafka consumer.
-consumer = get_kafka_consumer(topic='eeg_data')
-if consumer is None:
-    sys.stderr.write("[ERROR] Could not initialize Kafka consumer.")
-    sys.exit(1)
 
 # Create app
-app = create_app()
+app = Flask(__name__)
 
-# Initialize buffer for EEG data, store in app
-app.eeg_buffer = CyclicBuffer(eeg_buffer_length, n_channels)
+# Enable cross-origin resource sharing
+#
+# NB: This is here so that we are able to make XMLHttpRequests from an
+#   independent frontend server during the development phase. Later on,
+#   we can re-think how we want the frontend and backend to interact.
+CORS(app)
 
-# Set up EEG reader, store in app
-app.eeg_reader = EegReader(
-    name='eeg_reader',
-    consumer=consumer,
-    buffer=app.eeg_buffer,
-    sampling_frequency=sampling_frequency,
+# Create server for EEG data
+eeg_server = EegServer(
+    app=app,
+    eeg_buffer_length=eeg_buffer_length,
 )
-app.eeg_reader.start()
 
+# Run app
 if __name__ == '__main__':
     app.run()
