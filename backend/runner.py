@@ -19,7 +19,7 @@ sampling_frequency = 160
 n_channels = 64
 
 # Set up Kafka consumer.
-consumer = get_kafka_consumer(reset_offset=True)
+consumer = get_kafka_consumer(topic='eeg_data')
 if consumer is None:
     sys.stderr.write("[ERROR] Could not initialize Kafka consumer.")
     sys.exit(1)

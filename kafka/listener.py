@@ -30,7 +30,7 @@ class KafkaListener(Thread):
         self._callback = callback
 
         self._thread_name = 'kafka_push_consumer_' + topic
-        self._consumer = get_kafka_consumer(topic=topic, reset_offset=True)
+        self._consumer = get_kafka_consumer(topic=topic)
         self.daemon = True
 
     def _read_value(self):

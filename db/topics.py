@@ -37,7 +37,8 @@ class TopicDb:
         dict
             A dictionary with topic names as keys and ActiveX control names as values.
         """
-        record = self._run_query("select name, activex_control_name from topics where type='parameter';")
+        query = "select name, activex_control_name from topics where type='parameter';"
+        record = self._run_query(query)
 
         topics = []
         control_names = {}
@@ -46,3 +47,23 @@ class TopicDb:
             control_names[name] = activex_control_name
 
         return topics, control_names
+
+    def is_topic_latched(self, topic):
+        """Return true if the topic is latched.
+
+        Latching means that a new consumer of the topic will receive the latest message that has been
+        produced into the topic at the time when the consumer is created.
+
+        Parameters
+        ----------
+        topic : str
+            The name of the topic.
+
+        Returns
+        -------
+        boolean
+            True if the topic is latched, False otherwise.
+        """
+        query = "select latch from topics where name='{}';".format(topic)
+        record = self._run_query(query)
+        return record[0][0]

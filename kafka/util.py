@@ -4,6 +4,8 @@ import os
 import pykafka
 from pykafka import KafkaClient
 
+from db.topics import TopicDb
+
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
 def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
@@ -22,16 +24,18 @@ def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=Fal
         An initialized KafkaClient on success, or None in case of failure.
     """
     try:
-        client = KafkaClient(hosts="{ip}:{port}".format(
-            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
-            port=(port or os.getenv("KAFKA_PORT") or '9092'),
+        client = KafkaClient(
+            hosts="{ip}:{port}".format(
+                ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
+                port=(port or os.getenv("KAFKA_PORT") or '9092')
+            ),
             zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
-            use_greenlets=use_greenlets))
+            use_greenlets=use_greenlets)
         return client
     except pykafka.exceptions.NoBrokersAvailableError as e:
         return None
 
-def get_kafka_consumer(client=None, topic=None, reset_offset=False):
+def get_kafka_consumer(client=None, topic=None):
     """Initializes and returns a KafkaConsumer.
 
     Parameters
@@ -40,8 +44,6 @@ def get_kafka_consumer(client=None, topic=None, reset_offset=False):
         A KafkaClient object used for fetching the consumer.
     topic : str
         The name of the Kafka topic.
-    reset_offset : boolean
-        Indicates if the offset should be reset to the beginning of the topic.
 
     Returns
     -------
@@ -52,10 +54,18 @@ def get_kafka_consumer(client=None, topic=None, reset_offset=False):
     if client is None:
         return None
 
-    topic = client.topics[(topic or os.getenv("KAFKA_TOPIC") or 'eeg_data')]
-    consumer = topic.get_simple_consumer(
+    consumer = client.topics[topic].get_simple_consumer(
         consumer_timeout_ms=1000,
         auto_offset_reset=pykafka.common.OffsetType.LATEST,
-        reset_offset_on_start=reset_offset,
+        reset_offset_on_start=True,
     )
+
+    # Reset offset to the last message if the topic is latched.
+    topic_db = TopicDb()
+    if topic_db.is_topic_latched(topic):
+        previous_offset = lambda offset : offset - 1 if offset > 0 else pykafka.common.OffsetType.EARLIEST
+        offsets = [(p, previous_offset(op.last_offset_consumed))
+                    for p, op in consumer._partitions.items()]
+        consumer.reset_offsets(offsets)
+
     return consumer
