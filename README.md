@@ -19,9 +19,16 @@ Make sure that you have Python 3.6 installed on your system.
 
 After installing, ensure that:
 
-1. If using a Windows system, %KAFKA_HOME% points to the top-level directory in
+1. If using Windows, %KAFKA_HOME% points to the top-level directory in
    which Kafka is installed, and %ZOOKEEPER_HOME% points to the top-level directory
    of Zookeeper installation.
+
+### Running in Windows
+
+If using Windows, additional tools are required for Makefiles to work:
+
+1. Make for Windows (part of GnuWin software)
+2. Cygwin, cmder or a similar shell that supports Bash-style scripting.
 
 ## Makefile
 

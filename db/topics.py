@@ -1,28 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import csv
+import sqlite3
 
-def get_parameter_topics():
-    """Return parameter-containing topics and corresponding ActiveX control names.
+class TopicDb:
+    _DATABASE_LOCATION = "db/topics.db"
 
-    Returns
-    -------
-    array_like
-        An array of topic names.
-    dict
-        A dictionary with topic names as keys and corresponding ActiveX control names as values.
-    """
-    control_names = {}
-    topics = []
-    # XXX: Consider using SQLite database instead of csv file if the structure becomes more complicated.
-    with open('db/parameter_topics.csv', mode='r') as csv_file:
-        csv_reader = csv.DictReader(csv_file, delimiter=';', quotechar='"')
-        for row in csv_reader:
-            topic = row['topic']
-            control_name = row['control_name']
+    def _run_query(self, query):
+        """Query the topic database with a given query, return the query result.
 
-            topics.append(topic)
-            control_names[topic] = control_name
+        Parameters
+        ----------
+        query : str
+            The query string.
 
-    return topics, control_names
+        Returns
+        -------
+        array_like
+            An array of the query result rows.
+        """
+        connection = sqlite3.connect(self._DATABASE_LOCATION)
+        cursor = connection.cursor()
+        cursor.execute(query)
+        record = cursor.fetchall()
+        connection.close()
+
+        return record
+
+    def get_parameter_topics(self):
+        """Return topics of the type 'parameter' and their ActiveX control names.
+
+        Returns
+        -------
+        array_like
+            An array of topic names.
+        dict
+            A dictionary with topic names as keys and ActiveX control names as values.
+        """
+        record = self._run_query("select name, activex_control_name from topics where type='parameter';")
+
+        topics = []
+        control_names = {}
+        for name, activex_control_name in record:
+            topics.append(name)
+            control_names[name] = activex_control_name
+
+        return topics, control_names
