@@ -8,6 +8,9 @@ help:                 ## Show this help.
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 .PHONY: help
 
+install-frontend:     ## Install frontend.
+	cd frontend && npm install
+
 run-zookeeper-win:    ## Run Zookeeper in Windows.
 	scripts\run-zookeeper.bat
 .PHONY: run-zookeeper-win
@@ -27,6 +30,10 @@ run-frontend:         ## Run frontend.
 install-frontend:     ## Install frontend.
 	cd frontend && npm install
 .PHONY: install-frontend
+
+run-kafka-bridge:     ## Run Kafka-LabVIEW bridge.
+	pipenv run python -m bridge.runner
+.PHONY: run-kafka-bridge
 
 download-data:        ## Download EEG data.
                       ## Use DATASET environment variable to specify the dataset.

@@ -14,6 +14,7 @@ mne = "*"
 readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
 python-dotenv = "*"
 pykafka = "*"
+pywin32 = "*"
 
 [requires]
 python_version = "3.6"
