@@ -36,7 +36,7 @@ real-time.
 Defined for topics of `parameter` type, which are passed to mTMS software. Contains the name of the ActiveX
 control for setting the parameter value in mTMS software.
 
-#### Latch (not implemented)
+#### Latch
 
 Either `0` or `1`, `0` indicating that latching is disabled for the topic, and `1` indicating that it is enabled.
 

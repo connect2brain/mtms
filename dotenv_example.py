@@ -18,7 +18,6 @@ BACKEND_EEG_BUFFER_LENGTH = 1024
 # Kafka settings
 KAFKA_IP='127.0.0.1'
 KAFKA_PORT='9092'
-KAFKA_TOPIC='eeg_data'
 
 # MTMS application
 MTMS_APP_NAME='MTMSActiveXServer'
