@@ -37,7 +37,7 @@ class EegListener(Thread):
         self.daemon = True
 
         # Set up Kafka consumer.
-        self.consumer = get_kafka_consumer(topic=topic, reset_offset=True)
+        self.consumer = get_kafka_consumer(topic=topic)
         if self.consumer is None:
             sys.stderr.write("[ERROR] Could not initialize Kafka consumer.")
             sys.exit(1)

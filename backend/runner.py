@@ -5,11 +5,13 @@ import os
 import sys
 
 import dotenv
+
 from flask import Flask
 from flask_cors import CORS
+from flask_socketio import SocketIO
 
-from .app import create_app
 from .eeg.server import EegServer
+from .parameter.server import ParameterServer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
@@ -25,12 +27,26 @@ app = Flask(__name__)
 #   we can re-think how we want the frontend and backend to interact.
 CORS(app)
 
+# XXX: async_mode='eventlet' is preferred by flask_socketio package, but it causes
+#   emitting from background threads to not work. Therefore, settling for the
+#   second-most-preferable option 'gevent'. Monkey-patching eventlet package has been
+#   proposed as a workaround, but it seems to break Kafka libraries.
+#
+#   See https://github.com/miguelgrinberg/python-socketio/issues/99 for details.
+#
+socketio = SocketIO(app, async_mode='gevent')
+
 # Create server for EEG data
 eeg_server = EegServer(
     app=app,
     eeg_buffer_length=eeg_buffer_length,
 )
 
+# Create server for parameters
+parameter_server = ParameterServer(
+    socketio=socketio,
+)
+
 # Run app
 if __name__ == '__main__':
-    app.run()
+    socketio.run(app)

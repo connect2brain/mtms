@@ -15,6 +15,10 @@ readersender = {editable = true,git = "https://github.com/juusokorhonen/readerse
 python-dotenv = "*"
 pykafka = "*"
 pywin32 = "*"
+flask-socketio = "*"
+python-socketio = {extras = ["client"], version = "*"}
+gevent = "*"
+gevent-websocket = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.8"
