@@ -5,6 +5,7 @@ import time
 
 from flask_socketio import emit
 from kafka.listener import KafkaListener
+from kafka.util import get_kafka_producer
 
 from db.topics import TopicDb
 
@@ -37,7 +38,7 @@ class ParameterServer:
         self._setup_listeners()
 
         socketio.on_event('connect', self._send_parameters_on_connect, namespace=self._PARAMETER_NAMESPACE)
-        # TODO: Event for putting a new parameter value to Kafka not implemented yet.
+        socketio.on_event(self._UPDATE_PARAMETER_EVENT, self._put_parameter_to_kafka, namespace=self._PARAMETER_NAMESPACE)
 
     def _setup_listeners(self):
         """Setup up a Kafka listener for each topic.
@@ -102,3 +103,10 @@ class ParameterServer:
             topic=topic,
             broadcast=True
         )
+
+    def _put_parameter_to_kafka(self, data):
+        topic = data['topic']
+        value = data['value']
+
+        producer = get_kafka_producer(topic=topic)
+        producer.produce(bytes(value, encoding='utf8'))

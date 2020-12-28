@@ -22,3 +22,11 @@ def update_parameter(data):
     print("Value updated for parameter '{}': {}".format(topic, value))
 
 print('my sid is', sio.sid)
+
+while True:
+    topic, value = input("").split()
+    data = {
+        'topic': topic,
+        'value': value,
+    }
+    sio.emit('update_parameter', data, namespace='/parameters')

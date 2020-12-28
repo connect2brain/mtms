@@ -69,3 +69,31 @@ def get_kafka_consumer(client=None, topic=None):
         consumer.reset_offsets(offsets)
 
     return consumer
+
+def get_kafka_producer(client=None, topic=None):
+    """Initializes and returns a KafkaProducer.
+
+    Parameters
+    ----------
+    client : KafkaClient
+        A KafkaClient object used for fetching the consumer.
+    topic : str
+        The name of the Kafka topic.
+
+    Returns
+    -------
+    KafkaProducer or None
+        An initialized KafkaProducer on success, or None in case of failure.
+    """
+    client = client or get_kafka_client()
+    if client is None:
+        return None
+
+    client = get_kafka_client()
+
+    producer = client.topics[topic].get_producer(
+        sync=False,
+        delivery_reports=True,
+        linger_ms=0,
+    )
+    return producer
