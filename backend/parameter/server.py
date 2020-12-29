@@ -109,4 +109,4 @@ class ParameterServer:
         value = data['value']
 
         producer = get_kafka_producer(topic=topic)
-        producer.produce(bytes(value, encoding='utf8'))
+        producer.produce(bytes(str(value), encoding='utf8'))

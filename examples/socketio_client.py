@@ -27,6 +27,6 @@ while True:
     topic, value = input("").split()
     data = {
         'topic': topic,
-        'value': value,
+        'value': int(value),
     }
     sio.emit('update_parameter', data, namespace='/parameters')
