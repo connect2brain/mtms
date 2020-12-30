@@ -34,7 +34,12 @@ mtms = MtmsConnection(
 
 # Create queue for new data in parameter topics
 topic_db = TopicDb()
-topics, control_names = topic_db.get_parameter_topics()
+
+parameter_topics = topic_db.get_topics_by_type('parameter')
+command_topics = topic_db.get_topics_by_type('command')
+
+topics = parameter_topics + command_topics
+control_names = topic_db.get_control_names_for_topics(topics)
 
 topic_queue = TopicQueue(topics)
 
@@ -42,15 +47,19 @@ while True:
     data = topic_queue.get()
     topic = data['topic']
     value = data['value']
-    try:
-        value = int(value)
-        control_name = control_names[topic]
-        mtms.set_value(
-            control_name=control_name,
-            value=value,
-        )
-    except ValueError as e:
-        logging.error("Invalid numeric value in topic '{topic}'. Reason: '{error}'".format(
-            topic=topic,
-            error=e
-        ))
+    if topic in parameter_topics:
+        try:
+            value = int(value)
+        except ValueError as e:
+            logging.error("Invalid numeric value in topic '{topic}'. Reason: '{error}'".format(
+                topic=topic,
+                error=e
+            ))
+    else:
+        value = True
+
+    control_name = control_names[topic]
+    mtms.set_value(
+        control_name=control_name,
+        value=value,
+    )
