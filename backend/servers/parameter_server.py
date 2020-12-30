@@ -20,6 +20,7 @@ class ParameterServer:
     """
 
     _PARAMETER_NAMESPACE = '/parameters'
+    _PARAMETER_TOPIC_TYPE = 'parameter'
     _UPDATE_PARAMETER_EVENT = 'update_parameter'
 
     def __init__(self, socketio=None):
@@ -34,7 +35,7 @@ class ParameterServer:
         self._socketio = socketio
 
         topic_db = TopicDb()
-        self._parameter_topics, _ = topic_db.get_parameter_topics()
+        self._parameter_topics = topic_db.get_topics_by_type(self._PARAMETER_TOPIC_TYPE)
         self._setup_listeners()
 
         socketio.on_event('connect', self._send_parameters_on_connect, namespace=self._PARAMETER_NAMESPACE)

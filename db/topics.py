@@ -27,26 +27,50 @@ class TopicDb:
 
         return record
 
-    def get_parameter_topics(self):
-        """Return topics of the type 'parameter' and their ActiveX control names.
+    def get_topics_by_type(self, type):
+        """Return topics of the desired type.
+
+        Parameters
+        ----------
+        type : str
+            The type of the topics to be returned.
 
         Returns
         -------
         array_like
             An array of topic names.
-        dict
-            A dictionary with topic names as keys and ActiveX control names as values.
         """
-        query = "select name, activex_control_name from topics where type='parameter';"
+        query = "select name from topics where type='{}';".format(type)
         record = self._run_query(query)
 
         topics = []
+        for row in record:
+            topics.append(row[0])
+
+        return topics
+
+    def get_control_names_for_topics(self, topics):
+        """Return activex control names for an array of topics.
+
+        Parameters
+        ----------
+        topics : array_like
+            An array of topics for which the control names are returned.
+
+        Returns
+        -------
+        dict
+            A dictionary with topic names as keys and ActiveX control names as values.
+        """
+        topics_str = ', '.join(['\'' + topic + '\'' for topic in topics])
+        query = "select name, activex_control_name from topics where name in ({});".format(topics_str)
+        record = self._run_query(query)
+
         control_names = {}
         for name, activex_control_name in record:
-            topics.append(name)
             control_names[name] = activex_control_name
 
-        return topics, control_names
+        return control_names
 
     def is_topic_latched(self, topic):
         """Return true if the topic is latched.

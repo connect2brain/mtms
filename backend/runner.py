@@ -12,6 +12,7 @@ from flask_socketio import SocketIO
 
 from .servers.eeg_server import EegServer
 from .servers.parameter_server import ParameterServer
+from .servers.command_server import CommandServer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
@@ -44,6 +45,11 @@ eeg_server = EegServer(
 
 # Create server for parameters
 parameter_server = ParameterServer(
+    socketio=socketio,
+)
+
+# Create server for commands
+command_server = CommandServer(
     socketio=socketio,
 )
 

@@ -6,7 +6,7 @@
 #
 # Run by:
 #
-#     pipenv run python -m examples.socketio_client
+#     pipenv run python -m backend.examples.parameter_client
 #
 # Connects to the parameter server in the backend and prints the parameter values when they are updated.
 
