@@ -17,16 +17,16 @@ sio.connect('http://localhost:5000', namespaces=['/parameters'])
 
 @sio.event(namespace='/parameters')
 def update_parameter(data):
-    topic = data['topic']
+    name = data['name']
     value = data['value']
-    print("Value updated for parameter '{}': {}".format(topic, value))
+    print("Value updated for parameter '{}': {}".format(name, value))
 
 print('my sid is', sio.sid)
 
 while True:
-    topic, value = input("").split()
+    name, value = input("").split()
     data = {
-        'topic': topic,
+        'name': name,
         'value': int(value),
     }
     sio.emit('update_parameter', data, namespace='/parameters')

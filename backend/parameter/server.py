@@ -34,11 +34,11 @@ class ParameterServer:
         self._socketio = socketio
 
         topic_db = TopicDb()
-        self._topics, _ = topic_db.get_parameter_topics()
+        self._parameter_topics, _ = topic_db.get_parameter_topics()
         self._setup_listeners()
 
         socketio.on_event('connect', self._send_parameters_on_connect, namespace=self._PARAMETER_NAMESPACE)
-        socketio.on_event(self._UPDATE_PARAMETER_EVENT, self._put_parameter_to_kafka, namespace=self._PARAMETER_NAMESPACE)
+        socketio.on_event(self._UPDATE_PARAMETER_EVENT, self._set_parameter_to_kafka, namespace=self._PARAMETER_NAMESPACE)
 
     def _setup_listeners(self):
         """Setup up a Kafka listener for each topic.
@@ -48,7 +48,7 @@ class ParameterServer:
             KafkaListener(
                 topic=topic,
                 callback=self._get_parameter_from_kafka,
-            ) for topic in self._topics
+            ) for topic in self._parameter_topics
         ]
 
         for listener in self._listeners:
@@ -67,7 +67,7 @@ class ParameterServer:
         """
         value = self._parameters[topic]
         data = {
-            'topic': topic,
+            'name': topic,
             'value': value,
         }
         if broadcast:
@@ -80,7 +80,7 @@ class ParameterServer:
 
         Called when a new client connects.
         """
-        for topic in self._topics:
+        for topic in self._parameter_topics:
             self._send_parameter(
                 topic=topic,
                 broadcast=False
@@ -104,9 +104,10 @@ class ParameterServer:
             broadcast=True
         )
 
-    def _put_parameter_to_kafka(self, data):
-        topic = data['topic']
+    def _set_parameter_to_kafka(self, data):
+        name = data['name']
         value = data['value']
+        assert name in self._parameter_topics, "{} is not a valid parameter name".format(name)
 
-        producer = get_kafka_producer(topic=topic)
+        producer = get_kafka_producer(topic=name)
         producer.produce(bytes(str(value), encoding='utf8'))
