@@ -5,6 +5,8 @@ CREATE TABLE topics (
     latch int
 );
 
+/* Parameters */
+
 --Intensity
 INSERT INTO topics (name, type, activex_control_name, latch)
   VALUES ('intensity', 'parameter', 'New Intensity', 1);
@@ -16,6 +18,22 @@ INSERT INTO topics (name, type, activex_control_name, latch)
 --Number of stimuli
 INSERT INTO topics (name, type, activex_control_name, latch)
   VALUES ('number_of_stimuli', 'parameter', 'New Number of stimuli', 1);
+
+/* Commands */
+
+--Recharge
+INSERT INTO topics (name, type, activex_control_name, latch)
+  VALUES ('recharge', 'command', 'Recharge', 0);
+
+--Stimulate
+INSERT INTO topics (name, type, activex_control_name, latch)
+  VALUES ('stimulate', 'command', 'Stimulate', 0);
+
+--Abort
+INSERT INTO topics (name, type, activex_control_name, latch)
+  VALUES ('abort', 'command', 'Abort stimulation', 0);
+
+/* Data */
 
 --EEG data
 INSERT INTO topics (name, type, latch)
