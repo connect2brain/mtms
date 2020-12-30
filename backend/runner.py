@@ -10,8 +10,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_socketio import SocketIO
 
-from .eeg.server import EegServer
-from .parameter.server import ParameterServer
+from .servers.eeg_server import EegServer
+from .servers.parameter_server import ParameterServer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 

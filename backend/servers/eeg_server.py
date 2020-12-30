@@ -6,8 +6,8 @@ import time
 
 from flask import request
 
-from .cyclic_buffer import CyclicBuffer
-from .eeg_listener import EegListener
+from .eeg.cyclic_buffer import CyclicBuffer
+from .eeg.eeg_listener import EegListener
 
 class EegServer():
     """A server for EEG data.
