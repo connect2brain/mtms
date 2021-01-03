@@ -11,8 +11,9 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from .servers.eeg_server import EegServer
-from .servers.parameter_server import ParameterServer
 from .servers.command_server import CommandServer
+from .servers.parameter_server import ParameterServer
+from .servers.state_server import StateServer
 
 dotenv.load_dotenv()   # Load configuration from env vars and .env -file
 
@@ -50,6 +51,11 @@ parameter_server = ParameterServer(
 
 # Create server for commands
 command_server = CommandServer(
+    socketio=socketio,
+)
+
+# Create server for state
+state_server = StateServer(
     socketio=socketio,
 )
 
