@@ -3,7 +3,7 @@
 
 from queue import Queue
 
-from .listener import KafkaListener
+from kafka.listener import KafkaListener
 
 class TopicQueue():
     """A helper class that pushes new data from several topics into a single queue.

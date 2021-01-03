@@ -34,6 +34,10 @@ run-kafka-win:          ## Run Kafka in Windows.
 	scripts\run-kafka.bat
 .PHONY: run-kafka-win
 
+run-kafka-listener-win: ## Listen to Kafka topic in Windows.
+	scripts\kafka-listener.bat $(TOPIC)
+.PHONY: run-kafka-listener-win
+
 run-backend:            ## Run backend.
 	pipenv run python -m backend.runner
 .PHONY: run-backend

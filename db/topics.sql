@@ -33,6 +33,16 @@ INSERT INTO topics (name, type, activex_control_name, latch)
 INSERT INTO topics (name, type, activex_control_name, latch)
   VALUES ('abort', 'command', 'Abort stimulation', 0);
 
+/* State */
+
+--Recharging
+INSERT INTO topics (name, type, activex_control_name, latch)
+  VALUES ('recharging', 'state', 'Recharging', 1);
+
+--Stimulating
+INSERT INTO topics (name, type, activex_control_name, latch)
+  VALUES ('stimulating', 'state', 'Stimulating', 1);
+
 /* Data */
 
 --EEG data

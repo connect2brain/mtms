@@ -2,39 +2,40 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import os
 import sys
 import time
 from queue import Queue
 
-import dotenv
-
 from db.topics import TopicDb
+from kafka.util import get_kafka_producer
 from .mtms_connection import MtmsConnection
-from kafka.topic_queue import TopicQueue
-
+from .topic_queue import TopicQueue
+from .activex_listener import ActiveXListener
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-dotenv.load_dotenv()   # Load configuration from env vars and .env -file
-
-app_name = os.getenv('MTMS_APP_NAME', "MTMSActiveXServer")
-app_location = os.getenv('MTMS_APP_LOCATION')
-app_filename = os.getenv('MTMS_APP_FILENAME')
-vi_name = os.getenv('MTMS_VI_NAME', "mTMS ActiveX Server.vi")
-
-# Initialize ActiveX connection
-mtms = MtmsConnection(
-    app_name=app_name,
-    app_location=app_location,
-    app_filename=app_filename,
-    vi_name=vi_name,
-)
-
-# Create queue for new data in parameter topics
+# Initialization
+mtms = MtmsConnection()
 topic_db = TopicDb()
+polling_interval = 1
 
+# Communicate from LabVIEW to Kafka
+state_topics = topic_db.get_topics_by_type('state')
+state_control_names = topic_db.get_control_names_for_topics(state_topics)
+
+activex_listeners = {}
+for topic in state_topics:
+    producer = get_kafka_producer(topic=topic)
+    callback = lambda value, producer=producer: producer.produce(bytes(str(value), encoding='utf8'))
+
+    control_name = state_control_names[topic]
+    listener = ActiveXListener(control_name=control_name, callback=callback, polling_interval=polling_interval)
+
+    listener.start()
+    activex_listeners[topic] = listener
+
+# Communicate from Kafka to LabVIEW
 parameter_topics = topic_db.get_topics_by_type('parameter')
 command_topics = topic_db.get_topics_by_type('command')
 
