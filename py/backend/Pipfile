@@ -8,10 +8,10 @@ pytest = "*"
 
 [packages]
 flask = "*"
-pykafka = "*"
-numpy = "*"
-python-dotenv = "*"
 flask-cors = "*"
-
-[requires]
-python_version = "3.6"
+numpy = "*"
+pykafka = "*"
+flask-socketio = "*"
+python-socketio = {extras = ["client"], version = "*"}
+gevent = "*"
+gevent-websocket = "*"

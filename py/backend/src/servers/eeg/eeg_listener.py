@@ -1,20 +1,22 @@
 import json
 import logging
+import sys
 import time
 from threading import Thread
 
 import pykafka.exceptions
 
-from kafka_tools import get_kafka_consumer
+from py.common.kafka.util import get_kafka_consumer
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-class EegReader(Thread):
-    """A reader for EEG data, running in a thread.
+# XXX: Unify with KafkaListener, which implements most of the same functionality.
+class EegListener(Thread):
+    """A listener for EEG data, running in a thread.
 
     """
-    def __init__(self, name=None, consumer=None,
+    def __init__(self, name=None, topic=None,
                  buffer=None, sampling_frequency=None):
         """Initialize the reader.
 
@@ -22,8 +24,8 @@ class EegReader(Thread):
         ----------
         name : str
             The name of the thread.
-        consumer : KafkaConsumer
-            The Kafka consumer used to read new data.
+        topic : str
+            The topic for reading new data.
         buffer : CyclicBuffer
             The buffer into which new data are appended.
         sampling_frequency : float
@@ -31,10 +33,15 @@ class EegReader(Thread):
         """
         Thread.__init__(self)
         self.name = name
-        self.consumer = consumer
         self.buffer = buffer
         self.sampling_frequency = sampling_frequency
         self.daemon = True
+
+        # Set up Kafka consumer.
+        self.consumer = get_kafka_consumer(topic=topic)
+        if self.consumer is None:
+            sys.stderr.write("[ERROR] Could not initialize Kafka consumer.")
+            sys.exit(1)
 
     def _read_message(self):
         """Read one message from Kafka, return the de-serialized message.
