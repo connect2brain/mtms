@@ -19,5 +19,9 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+asyncapi:
+	@$(SPHINXBUILD) -b asyncapi "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
 github:
+	@make asyncapi
 	@make html
