@@ -2,66 +2,65 @@
 
 ## Initial set up for git
 
-Note that to deploy with Git Bash in Windows requires an installation of *rsync* which does not come by default.
+Note that to deploy with Git Bash in Windows requires an installation of _rsync_ which does not come by default.
 
-	cd docs/
-	git clone git@github.com:connect2brain/project-louhi-docs.git public
+    cd docs/
+    git clone git@github.com:connect2brain/project-louhi-docs.git public
 
 ## AsyncAPI generator setup
 
-	npm install -g @asyncapi/generator openapi-sampler
+    npm install -g @asyncapi/generator openapi-sampler
 
 ## Python setup
 
 ### Full Python set-up using pyenv, virtualenv, and pip-tools
 
-	pyenv install -s 3.8.5
-	pyenv local 3.8.5
-	pip install virtualenv   # Install virtualenv (globally)
-	virtualenv venv    # Create virtualenv in folder called venv
-	source venv/bin/activate   # Activate the virtualenv
-	pip install pip-tools   
-	pip-compile requirements.in   # Create requirements.txt
-	pip-sync   # Install packages
+    pyenv install -s 3.8.5
+    pyenv local 3.8.5
+    pip install virtualenv   # Install virtualenv (globally)
+    virtualenv venv    # Create virtualenv in folder called venv
+    source venv/bin/activate   # Activate the virtualenv
+    pip install pip-tools
+    pip-compile requirements.in   # Create requirements.txt
+    pip-sync   # Install packages
 
 ### (Windows) Full set-up using pyenv, virtualenv, and pip-tools
 
-	pyenv install 3.8.5
-	pyenv local 3.8.5
-	pip install virtualenv   # Install virtualenv (globally)
-	virtualenv venv    # Create virtualenv in folder called venv
-	source venv/Scripts/activate   # Activate the virtualenv
-	pip install pip-tools   
-	pip-compile requirements.in   # Create requirements.txt
-	pip-sync   # Install packages
+    pyenv install 3.8.5
+    pyenv local 3.8.5
+    pip install virtualenv   # Install virtualenv (globally)
+    virtualenv venv    # Create virtualenv in folder called venv
+    source venv/Scripts/activate   # Activate the virtualenv
+    pip install pip-tools
+    pip-compile requirements.in   # Create requirements.txt
+    pip-sync   # Install packages
 
 ### Set-up with only virtualenv
 
-	python -v   # Check version is 3.8.5 or compatible
-	pip install virtualenv   # Install virtualenv
-	virtualenv venv   # Create virtualenv folder called venv
-	source venv/bin/activate    # Activte the virtualenv
-	pip install -r requirements.txt
+    python -v   # Check version is 3.8.5 or compatible
+    pip install virtualenv   # Install virtualenv
+    virtualenv venv   # Create virtualenv folder called venv
+    source venv/bin/activate    # Activte the virtualenv
+    pip install -r requirements.txt
 
 ### Updating Python packages
 
-	pip-compile --upgrade
+    pip-compile --upgrade
 
 ### Installing Python packages
 
-	echo "package" >> requirements.in
-	pip-sync
+    echo "package" >> requirements.in
+    pip-sync
 
 ## Generating documentation
 
-	make asyncapi
-	make html
+    make asyncapi
+    make html
 
 or
 
-	make github
+    make github
 
-or 
+or
 
-	./deploy.sh   # unix-like
-
+    ./deploy.sh   # unix-like
