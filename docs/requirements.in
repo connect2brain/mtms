@@ -2,4 +2,3 @@ sphinx
 gendocs
 sphinx-rtd-theme
 cookiecutter
-asyncapi_sphinx_ext

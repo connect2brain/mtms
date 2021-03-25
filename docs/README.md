@@ -7,7 +7,14 @@ Note that to deploy with Git Bash in Windows requires an installation of *rsync*
 	cd docs/
 	git clone git@github.com:connect2brain/project-louhi-docs.git public
 
-### Full set-up using pyenv, virtualenv, and pip-tools
+## AsyncAPI generator setup
+
+	npm install -g @asyncapi/generator
+
+
+## Python setup
+
+### Full Python set-up using pyenv, virtualenv, and pip-tools
 
 	pyenv install -s 3.8.5
 	pyenv local 3.8.5
@@ -20,14 +27,14 @@ Note that to deploy with Git Bash in Windows requires an installation of *rsync*
 
 ### (Windows) Full set-up using pyenv, virtualenv, and pip-tools
 
-		pyenv install 3.8.5
-		pyenv local 3.8.5
-		pip install virtualenv   # Install virtualenv (globally)
-		virtualenv venv    # Create virtualenv in folder called venv
-		source venv/Scripts/activate   # Activate the virtualenv
-		pip install pip-tools   
-		pip-compile requirements.in   # Create requirements.txt
-		pip-sync   # Install packages
+	pyenv install 3.8.5
+	pyenv local 3.8.5
+	pip install virtualenv   # Install virtualenv (globally)
+	virtualenv venv    # Create virtualenv in folder called venv
+	source venv/Scripts/activate   # Activate the virtualenv
+	pip install pip-tools   
+	pip-compile requirements.in   # Create requirements.txt
+	pip-sync   # Install packages
 
 ### Set-up with only virtualenv
 
@@ -37,11 +44,11 @@ Note that to deploy with Git Bash in Windows requires an installation of *rsync*
 	source venv/bin/activate    # Activte the virtualenv
 	pip install -r requirements.txt
 
-### Updating packages
+### Updating Python packages
 
 	pip-compile --upgrade
 
-### Installing packages
+### Installing Python packages
 
 	echo "package" >> requirements.in
 	pip-sync
