@@ -138,4 +138,5 @@ dmypy.json
 cython_debug/
 
 # Ouput folder
-public/*
+public
+build/*
