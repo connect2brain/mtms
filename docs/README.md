@@ -3,7 +3,7 @@
 ## Initial set up for git
 
 	cd docs/
-	git submodule update --init --recursive
+	git clone git@github.com:connect2brain/project-louhi-docs.git public
 
 ### Full set-up using pyenv, virtualenv, and pip-tools
 
