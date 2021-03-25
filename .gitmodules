@@ -1,4 +1,0 @@
-[submodule "docs/public"]
-	path = docs/public
-	url = git@github.com:connect2brain/project-louhi-docs.git
-	branch = main
