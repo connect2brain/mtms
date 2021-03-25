@@ -49,11 +49,16 @@ git pull
 git reset --hard origin/clean
 git rebase origin/main
 
+echo "Making html."
 cd ..
 make github
 rsync -r ./build/html/ ./public
 
+echo "Pushing to remote repo."
+cd $OUTPUT
 git add .
 git commit -m "$MESSAGE"
 git push origin main
+cd ..
 
+echo "Update successful!"
