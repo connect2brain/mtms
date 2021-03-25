@@ -45,9 +45,13 @@ then
 
 fi
 
+git pull
 git reset --hard origin/clean
+git rebase origin/main
 
-rsync -r ../build/html/ .
+cd ..
+make github
+rsync -r ./build/html/ ./public
 
 git add .
 git commit -m "$MESSAGE"
