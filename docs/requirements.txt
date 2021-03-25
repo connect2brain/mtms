@@ -8,6 +8,8 @@ alabaster==0.7.12
     # via sphinx
 arrow==1.0.3
     # via jinja2-time
+asyncapi-sphinx-ext==1.0.2
+    # via -r requirements.in
 babel==2.9.0
     # via sphinx
 binaryornot==0.4.4
@@ -83,6 +85,7 @@ sphinx-rtd-theme==0.5.1
 sphinx==3.5.3
     # via
     #   -r requirements.in
+    #   asyncapi-sphinx-ext
     #   gendocs
     #   recommonmark
     #   sphinx-rtd-theme
