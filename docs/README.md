@@ -9,8 +9,7 @@ Note that to deploy with Git Bash in Windows requires an installation of *rsync*
 
 ## AsyncAPI generator setup
 
-	npm install -g @asyncapi/generator
-
+	npm install -g @asyncapi/generator openapi-sampler
 
 ## Python setup
 
@@ -52,3 +51,17 @@ Note that to deploy with Git Bash in Windows requires an installation of *rsync*
 
 	echo "package" >> requirements.in
 	pip-sync
+
+## Generating documentation
+
+	make asyncapi
+	make html
+
+or
+
+	make github
+
+or 
+
+	./deploy.sh   # unix-like
+
