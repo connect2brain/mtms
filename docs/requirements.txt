@@ -41,6 +41,8 @@ jinja2==2.11.3
     #   cookiecutter
     #   jinja2-time
     #   sphinx
+markdown==3.3.4
+    # via sphinx-markdown-tables
 markupsafe==1.1.1
     # via
     #   cookiecutter
@@ -74,6 +76,8 @@ six==1.15.0
     #   python-dateutil
 snowballstemmer==2.1.0
     # via sphinx
+sphinx-markdown-tables==0.0.15
+    # via -r requirements.in
 sphinx-rtd-theme==0.5.1
     # via -r requirements.in
 sphinx==3.5.3
