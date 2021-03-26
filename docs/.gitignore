@@ -140,4 +140,4 @@ cython_debug/
 # Ouput folder
 build/*
 public
-source/api/*
+source/asyncapi.md

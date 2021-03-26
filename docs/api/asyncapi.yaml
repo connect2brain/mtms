@@ -11,7 +11,6 @@ channels:
   command/stimulate_now:
     publish:
       message:
-        description: Request an immediate stimulation
         $ref: '#/components/messages/stimulate_now_msg'
 components:
   messages:
