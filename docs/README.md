@@ -61,6 +61,23 @@ or
 
     make github
 
-or
+If you receive the error "Error: "[...]/project-louhi/docs/source" is in a git repository with unstaged changes. Please commit your changes before proceeding or add proper directory to .gitignore file. You can also use the --force-write flag to skip this rule (not recommended)."
+
+    ASYNCAPIBUILDOPTS=--force-write make asyncapi
+
+## Deploying documentation
 
     ./deploy.sh   # unix-like
+
+## Running documentation locally
+
+### Install NodeJS dependencies
+
+    nvm use node   # If using NVM
+    npm install node-static
+
+### Running documentation server
+
+    node doc-server.js
+
+Browse to http://localhost:5000
