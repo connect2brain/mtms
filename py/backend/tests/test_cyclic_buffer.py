@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import numpy as np
 import pytest
+import sys
+
+sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
 def test_cyclic_buffer():
     """Tests CyclicBuffer class.
 
     """
-    from cyclic_buffer import CyclicBuffer
+    from servers.eeg.cyclic_buffer import CyclicBuffer
 
     buffer = CyclicBuffer(4, 2)
 
