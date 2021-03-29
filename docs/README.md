@@ -5,7 +5,7 @@
 Note that to deploy with Git Bash in Windows requires an installation of _rsync_ which does not come by default.
 
     cd docs/
-    git clone git@github.com:connect2brain/project-louhi-docs.git public
+    git clone https://github.com/connect2brain/project-louhi-docs public
 
 ## AsyncAPI generator setup
 
