@@ -30,7 +30,8 @@ Note that to deploy with Git Bash in Windows requires an installation of _rsync_
     pyenv local 3.8.5
     pip install virtualenv   # Install virtualenv (globally)
     virtualenv venv    # Create virtualenv in folder called venv
-    source venv/Scripts/activate   # Activate the virtualenv
+    source venv/Scripts/activate   # Activate the virtualenv (MacOS/Unix/Linux)
+    venv\Scripts\activate.bat   # Microsoft Windows
     pip install pip-tools
     pip-compile requirements.in   # Create requirements.txt
     pip-sync   # Install packages
