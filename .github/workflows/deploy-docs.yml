@@ -21,4 +21,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
-        run: cd docs && sh deploy.sh
+        run: cd docs && sudo sh deploy.sh
