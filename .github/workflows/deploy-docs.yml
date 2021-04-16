@@ -13,6 +13,12 @@ jobs:
       - name: Clone the repository for the docs
         run: cd docs && git clone https://github.com/connect2brain/project-louhi-docs public
 
+      - name: Install Node dependencies
+        run: npm install -g @asyncapi/generator openapi-sampler
+
+      - name: Install Python dependencies
+        run: pip install pip-tools && pip-compile requirements.in && pip-sync
+
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
         run: cd docs && sh deploy.sh
