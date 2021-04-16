@@ -12,4 +12,4 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
-        run: sh docs/deploy.sh
+        run: cd docs && sh deploy.sh
