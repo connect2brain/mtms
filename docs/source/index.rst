@@ -12,6 +12,7 @@ Welcome to Project Louhi's documentation!
 
    page1
    page2
+   asyncapi
 
 
 
