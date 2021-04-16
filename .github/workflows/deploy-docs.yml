@@ -17,7 +17,7 @@ jobs:
         run: sudo npm install -g @asyncapi/generator openapi-sampler
 
       - name: Install Python dependencies
-        run: cd docs && sudo pip install pip-tools && pip-compile requirements.in && sudo pip-sync
+        run: cd docs && sudo pip install pip-tools && pip-compile requirements.in && sudo pip install -r requirements.txt
 
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
