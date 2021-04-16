@@ -11,7 +11,7 @@ ASYNCAPIBUILD ?= ag
 APISOURCEFILE  = api/asyncapi.yaml
 APIBUILDDIR   = source
 APITEMPLATE   = https://github.com/asyncapi/markdown-template
-ASYNCAPIBUILDOPTS ?= 
+ASYNCAPIBUILDOPTS ?= --force-write
 
 # Put it first so that "make" without argument is like "make help".
 help:
