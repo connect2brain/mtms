@@ -20,9 +20,8 @@ jobs:
         run: cd docs && sudo pip install pip-tools && pip-compile requirements.in && sudo pip install -r requirements.txt
 
       - name: Set up Git identity
-        run: git config --global user.email "invalid@example.com" && \
+        run: git config --global user.email "" && \
              git config --global user.name "project-louhi"
-
 
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
