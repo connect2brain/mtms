@@ -19,6 +19,11 @@ jobs:
       - name: Install Python dependencies
         run: cd docs && sudo pip install pip-tools && pip-compile requirements.in && sudo pip install -r requirements.txt
 
+      - name: Set up Git identity
+        run: git config --global user.email "invalid@example.com" && \
+             git config --global user.name "project-louhi"
+
+
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
         run: cd docs && sh deploy.sh
