@@ -10,6 +10,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Clone the repository for the docs
+        run: cd docs && git clone https://github.com/connect2brain/project-louhi-docs public
+
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
         run: cd docs && sh deploy.sh
