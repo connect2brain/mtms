@@ -25,5 +25,5 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build and deploy the documentation
         run: cd docs && sh deploy.sh
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+#        with:
+#          repo_token: ${{ secrets.GITHUB_TOKEN }}
