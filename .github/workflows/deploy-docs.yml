@@ -26,4 +26,4 @@ jobs:
       - name: Build and deploy the documentation
         run: cd docs && sh deploy.sh
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.DOCS_TOKEN }}
