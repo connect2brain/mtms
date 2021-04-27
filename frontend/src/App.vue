@@ -12,7 +12,10 @@
 
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Segoe UI";
+  src: local("Segoe UI"),
+   url(./fonts/segoeui.ttf) format("truetype");
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
