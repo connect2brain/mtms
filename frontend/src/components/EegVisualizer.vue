@@ -3,15 +3,15 @@
     <div id="container">
       <svg id="area" :height="height" :width="width"></svg>
       <select v-model="channel">
-        <option v-for="channel in channels"
-                v-bind:key="channel"
-                v-bind:value="channel">
+        <option
+          v-for="channel in channels"
+          v-bind:key="channel"
+          v-bind:value="channel"
+        >
           Channel {{ channel + 1 }}
         </option>
       </select>
-      <p>
-        The latest backend call took {{ requestTime / 1000 }} seconds.
-      </p>
+      <p>The latest backend call took {{ requestTime / 1000 }} seconds.</p>
     </div>
   </div>
 </template>
@@ -24,7 +24,7 @@ const eegChannels = 64;
 
 export default {
   name: "EegVisualizer",
-  data: function () {
+  data: function() {
     return {
       eegData: [],
       channel: 0,
@@ -33,7 +33,7 @@ export default {
       errors: [],
       minTime: -25,
       updateInterval: 1000
-    }
+    };
   },
   props: {
     width: {
@@ -47,72 +47,89 @@ export default {
   },
   methods: {
     loadData: function() {
-      this.requestStartTime = Date.now()
+      this.requestStartTime = Date.now();
 
-      axios.get(process.env.VUE_APP_BACKEND_URL ||
-		"http://localhost:5000/eeg_data", {
-	params: {
-	  from: this.minTime
-	}})
-	.then(response => {
-	  this.requestTime = Date.now() - this.requestStartTime;
-	  this.eegData = response.data;
-	})
-	.catch(e => {
-	  this.errors.push(e)
-	})
+      axios
+        .get(
+          process.env.VUE_APP_BACKEND_URL || "http://localhost:5000/eeg_data",
+          {
+            params: {
+              from: this.minTime
+            }
+          }
+        )
+        .then(response => {
+          this.requestTime = Date.now() - this.requestStartTime;
+          this.eegData = response.data;
+        })
+        .catch(e => {
+          this.errors.push(e);
+        });
     },
     updateGraph: function() {
       const margin = {
-	top: 50,
-	right: 50,
-	bottom: 30,
-	left: 40
-      }
+        top: 50,
+        right: 50,
+        bottom: 30,
+        left: 40
+      };
 
       // Re-initialize the SVG element
-      const svg = d3.select("#area")
+      const svg = d3.select("#area");
       svg.selectAll("*").remove();
 
       if (this.eegData.length == 0) {
-	return;
+        return;
       }
 
       // Create x- and y-scale
-      const channelData = this.eegData.map(x => x.data[this.channel])
-      const yMax = Math.max(Math.abs(Math.min(...channelData)),
-                            Math.abs(Math.max(...channelData)))
+      const channelData = this.eegData.map(x => x.data[this.channel]);
+      const yMax = Math.max(
+        Math.abs(Math.min(...channelData)),
+        Math.abs(Math.max(...channelData))
+      );
 
-      const xScale = d3.scaleLinear()
-	.domain([this.minTime, 0])
-	.range([margin.left, this.width - margin.right]);
-      const xAxisY0 = margin.top + (this.height - margin.top - margin.bottom) / 2;
+      const xScale = d3
+        .scaleLinear()
+        .domain([this.minTime, 0])
+        .range([margin.left, this.width - margin.right]);
+      const xAxisY0 =
+        margin.top + (this.height - margin.top - margin.bottom) / 2;
 
-      const yScale = d3.scaleLinear()
-	.domain([-yMax, yMax])
-	.range([margin.top, this.height - margin.bottom]);
+      const yScale = d3
+        .scaleLinear()
+        .domain([-yMax, yMax])
+        .range([margin.top, this.height - margin.bottom]);
       const yAxisX0 = this.width - margin.right;
 
       // Draw the data
-      const line = d3.line()
-	  .x(d => { return xScale(d.timestamp); })
-	  .y(d => { return yScale(d.data[this.channel]); })
+      const line = d3
+        .line()
+        .x(d => {
+          return xScale(d.timestamp);
+        })
+        .y(d => {
+          return yScale(d.data[this.channel]);
+        });
 
-      svg.append("g")
-	.append("path")
-	.datum(this.eegData)
-	.attr("class", "line")
-	.attr("d", line);
+      svg
+        .append("g")
+        .append("path")
+        .datum(this.eegData)
+        .attr("class", "line")
+        .attr("d", line);
 
       // Draw x-axis
-      svg.append("g")
-	.attr("transform", "translate(0, " + xAxisY0 + ")")
-	.call(d3.axisBottom(xScale));
+      svg
+        .append("g")
+        .attr("transform", "translate(0, " + xAxisY0 + ")")
+        .call(d3.axisBottom(xScale));
 
       // Draw y-axis
-      svg.append("g")
-	.attr("transform", "translate(" + yAxisX0 + ", 0)")
-	.call(d3.axisRight(yScale));
+      svg
+        .append("g")
+        .attr("transform", "translate(" + yAxisX0 + ", 0)")
+        .call(d3.axisRight(yScale));
     }
   },
   watch: {
@@ -127,7 +144,7 @@ export default {
     this.loadData();
     this.intervalTimer = setInterval(() => {
       this.loadData();
-    }, this.updateInterval)
+    }, this.updateInterval);
   },
   beforeDestroy() {
     clearInterval(this.intervalTimer);
@@ -152,8 +169,8 @@ a {
   color: #42b983;
 }
 .line {
-    fill: none;
-    stroke: #ffab00;
-    stroke-width: 3;
+  fill: none;
+  stroke: #ffab00;
+  stroke-width: 3;
 }
 </style>
