@@ -5,12 +5,19 @@ import SocketIO from "socket.io-client";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
+import { faCommentAlt } from "@fortawesome/free-solid-svg-icons";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
+import { faEye } from "@fortawesome/free-solid-svg-icons";
+import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { faFolder } from "@fortawesome/free-solid-svg-icons";
+import { faMinus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faSquare } from "@fortawesome/free-solid-svg-icons";
 
 import App from "./App.vue";
 import router from "./router";
 
-library.add(faCircle);
+library.add(faEye, faEyeSlash, faFolder, faCircle, faCommentAlt, faPlus, faMinus, faSquare)
 
 Vue.component("font-awesome-icon", FontAwesomeIcon);
 

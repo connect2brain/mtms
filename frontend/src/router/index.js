@@ -2,6 +2,7 @@ import Vue from "vue";
 import VueRouter from "vue-router";
 import Home from "@/views/Home.vue";
 import Eeg from "@/views/Eeg.vue";
+import Planner from "@/views/Planner.vue";
 import Tms from "@/views/Tms.vue";
 import About from "@/views/About.vue";
 
@@ -17,6 +18,11 @@ const routes = [
     path: "/eeg",
     name: "Eeg",
     component: Eeg
+  },
+  {
+    path: "/planner",
+    name: "Planner",
+    component: Planner
   },
   {
     path: "/tms",
