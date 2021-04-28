@@ -1,8 +1,10 @@
 <template>
   <span>
-    <span v-on:dblclick="edit()" v-show="!editing">
+    <span v-on:dblclick="edit()" v-show="!editing && value.trim() != ''">
       {{ value }}
     </span>
+    <div class="empty-clickable-area" v-on:dblclick="edit()" v-show="!editing && value.trim() == ''">
+    </div>
     <input
       type="text"
       ref="renameInput"
@@ -29,12 +31,14 @@ export default {
     },
     finished: {
       type: Function
+    },
+    allowEmpty: {
+      type: Boolean
     }
   },
   methods: {
     edit() {
       this.editing = true;
-      console.log(this.$refs.renameInput);
 
       // Set focus to the input field and select the text.
       this.$nextTick(() => {
@@ -45,7 +49,11 @@ export default {
     },
 
     changed() {
-      this.$emit("changed", this.newValue);
+      if (!this.allowEmpty && this.newValue.trim() == "") {
+        this.newValue = this.value;
+      } else {
+        this.$emit("changed", this.newValue);
+      }
       this.editing = false;
     }
   }
@@ -53,4 +61,8 @@ export default {
 </script>
 
 <style scoped>
+.empty-clickable-area {
+  height: 14px;
+  width: 170px;
+}
 </style>

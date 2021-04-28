@@ -35,13 +35,13 @@
           </td>
           <td class="name-column">
             <font-awesome-icon icon="square" class="target-square" />
-            <Editable :value="row.name" v-on:changed="rename(row, $event)" />
+            <Editable :value="row.name" v-on:changed="rename(row, $event)" :allowEmpty="false" />
           </td>
           <td class="type-column">
             {{ row.type }}
           </td>
           <td class="comment-column">
-            {{ row.comment }}
+            <Editable :value="row.comment" v-on:changed="change_comment(row, $event)" :allowEmpty="true" />
           </td>
         </tr>
       </table>
@@ -83,8 +83,7 @@ export default {
         name: "Target-" + Math.floor(Math.random() * 200),
         type: "Target",
         comment: "",
-        position: self.position,
-        edit: false
+        position: self.position
       });
     },
     toggle_visible(row) {
@@ -92,6 +91,9 @@ export default {
     },
     rename(row, newName) {
       row.name = newName;
+    },
+    change_comment(row, newComment) {
+      row.comment = newComment;
     }
   }
 };
@@ -101,7 +103,7 @@ export default {
 $visibility-column-width: 25px;
 $name-column-width: 200px;
 $type-column-width: 100px;
-$comment-column-width: 100px;
+$comment-column-width: 300px;
 
 $total-width: $visibility-column-width + $name-column-width + $type-column-width +
   $comment-column-width;
