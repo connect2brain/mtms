@@ -13,7 +13,7 @@
         </th>
         <th class="comment-column">
           <font-awesome-icon icon="comment-alt" />
-          Comments
+          Comment
         </th>
       </tr>
     </table>
@@ -35,21 +35,14 @@
           </td>
           <td class="name-column">
             <font-awesome-icon icon="square" class="target-square" />
-            <span v-on:dblclick="edit_name(row)" v-show="!row.edit">
-              {{ row.name }}
-            </span>
-            <input
-              type="text"
-              ref="renameInput"
-              :data-key="row.name"
-              v-model="row.name"
-              v-show="row.edit"
-              v-on:blur="rename(row)"
-              v-on:keyup.enter="rename(row)"
-            />
+            <Editable :value="row.name" v-on:changed="rename(row, $event)" />
           </td>
-          <td class="type-column"></td>
-          <td class="comment-column"></td>
+          <td class="type-column">
+            {{ row.type }}
+          </td>
+          <td class="comment-column">
+            {{ row.comment }}
+          </td>
         </tr>
       </table>
     </div>
@@ -67,6 +60,8 @@
 </template>
 
 <script>
+import Editable from "@/components/Editable.vue";
+
 export default {
   data() {
     return {
@@ -77,36 +72,26 @@ export default {
     };
   },
 
+  components: {
+    Editable
+  },
+
   methods: {
     add_point() {
       this.points.push({
-        position: self.position,
-        name: "Target-" + Math.floor(Math.random() * 200),
         visible: false,
+        name: "Target-" + Math.floor(Math.random() * 200),
+        type: "Target",
+        comment: "",
+        position: self.position,
         edit: false
       });
     },
     toggle_visible(row) {
       row.visible = !row.visible;
     },
-    edit_name(row) {
-      row.edit = true;
-
-      // Set focus to the input field and select the text.
-      this.$nextTick(() => {
-        const inputFields = this.$refs.renameInput.filter(
-          el => el.getAttribute("data-key") === row.name
-        );
-        if (inputFields.length > 1) {
-          throw "Found several rows with the same name";
-        }
-        const inputField = inputFields[0];
-        inputField.focus();
-        inputField.select();
-      });
-    },
-    rename(row) {
-      row.edit = false;
+    rename(row, newName) {
+      row.name = newName;
     }
   }
 };
