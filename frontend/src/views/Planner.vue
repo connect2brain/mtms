@@ -109,9 +109,9 @@ export default {
 
 <style scoped lang="scss">
 $visibility-column-width: 25px;
-$name-column-width: 200px;
-$type-column-width: 100px;
-$comment-column-width: 300px;
+$name-column-width: 150px;
+$type-column-width: 50px;
+$comment-column-width: 150px;
 
 $total-width: $visibility-column-width + $name-column-width + $type-column-width +
   $comment-column-width;
