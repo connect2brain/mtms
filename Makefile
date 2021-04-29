@@ -16,6 +16,10 @@ test-backend:           ## Run backend tests.
 	docker-compose -p test build backend && docker-compose -p test run backend pipenv run pytest
 .PHONY: test-backend
 
+integration-tests:      ## Run integration tests.
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml run tester
+.PHONY: integration-tests
+
 download-data:          ## Download EEG data.
                         ## Use DATASET environment variable to specify the dataset.
                         ## See eeg/datasets/README.md for more detailed instructions.

@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  tester:
+    build:
+      context: .
+      dockerfile: py/integration_tests/Dockerfile
+    depends_on:
+      - backend
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      - BACKEND_HOST=backend
+    volumes:
+      - ./py/integration_tests:/code/py/integration_tests
+    networks:
+      - backend
