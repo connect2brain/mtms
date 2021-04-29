@@ -86,12 +86,8 @@ export default {
 
   methods: {
     add_point() {
-      this.points.push({
-        visible: false,
-        name: "Target-" + Math.floor(Math.random() * 200),
-        type: "Target",
-        comment: "",
-        position: self.position
+      this.$socket.emit('point.add', {
+        'position': this.position
       });
     },
     toggle_visible(row) {
@@ -102,6 +98,22 @@ export default {
     },
     change_comment(row, newComment) {
       row.comment = newComment;
+    }
+  },
+
+  sockets: {
+    'Set cross focal point'(data) {
+      this.position = data.position.slice(0, 3);
+    },
+
+    'point.add'(data) {
+      this.points.push({
+        visible: data.visible,
+        name: data.name,
+        type: data.type,
+        comment: data.comment,
+        position: data.position
+      });
     }
   }
 };
