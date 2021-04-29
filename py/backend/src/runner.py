@@ -37,14 +37,7 @@ app = Flask(__name__)
 CORS(app)
 #cors = CORS(app,resources={r"/*":{"origins":"*"}})
 
-# XXX: async_mode='eventlet' is preferred by flask_socketio package, but it causes
-#   emitting from background threads to not work. Therefore, settling for the
-#   second-most-preferable option 'gevent'. Monkey-patching eventlet package has been
-#   proposed as a workaround, but it seems to break Kafka libraries.
-#
-#   See https://github.com/miguelgrinberg/python-socketio/issues/99 for details.
-#
-socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins='*')
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 # Create server for EEG data
 eeg_server = EegServer(

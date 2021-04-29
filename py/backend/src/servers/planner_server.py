@@ -49,7 +49,7 @@ class PlannerServer:
             topic=self._COMMAND_ADD_POINT,
             callback=self._point_added,
         )
-        self._add_point_listener.start()
+        self._socketio.start_background_task(target=lambda: self._add_point_listener.run(socketio.sleep))
 
         self.id_ = 0
 

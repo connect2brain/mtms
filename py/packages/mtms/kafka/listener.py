@@ -3,6 +3,7 @@
 
 import logging
 import sys
+import time
 from threading import Thread
 
 import pykafka.exceptions
@@ -62,12 +63,26 @@ class KafkaListener(Thread):
 
         return value
 
-    def run(self):
+    def run(self, sleep=time.sleep, sleep_time=0.1):
         """Read messages from Kafka and call the callback function with the new data.
 
+        Parameters
+        ----------
+        sleep : callable
+            The sleep function used to wait a set amount of time between two consecutive
+            runs of the listener.
+
+            Defaults to time.sleep, but allows custom sleep functions. The reason for that
+            is that Socket.IO requires using its own sleep function for emitting to work
+            from threads.
+        sleep_time : number
+            The time in seconds that is waited between consecutive runs of the listener.
+
+            Defaults to 0.1 seconds.
         """
         logging.info("Starting thread " + self._thread_name)
         while True:
             value = self._read_value()
             if value is not None:
                 self._callback(self._topic, value)
+            sleep(sleep_time)
