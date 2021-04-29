@@ -6,9 +6,20 @@
       <router-link to="/tms">TMS</router-link> |
       <router-link to="/about">About</router-link>
     </div>
+    <health-check />
     <router-view />
   </div>
 </template>
+
+<script>
+import HealthCheck from "./components/HealthCheck.vue";
+
+export default {
+  components: {
+    HealthCheck
+  }
+};
+</script>
 
 <style>
 #app {
