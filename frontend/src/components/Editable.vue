@@ -64,6 +64,17 @@ export default {
 </script>
 
 <style scoped>
+input {
+  width: 80%;
+  color: #707070;
+  font-size: 14px;
+  border: none;
+}
+
+input:focus {
+  outline: none;
+}
+
 .empty-clickable-area {
   height: 14px;
   width: 170px;
