@@ -3,8 +3,11 @@
     <span v-on:dblclick="edit()" v-show="!editing && value.trim() != ''">
       {{ value }}
     </span>
-    <div class="empty-clickable-area" v-on:dblclick="edit()" v-show="!editing && value.trim() == ''">
-    </div>
+    <div
+      class="empty-clickable-area"
+      v-on:dblclick="edit()"
+      v-show="!editing && value.trim() == ''"
+    ></div>
     <input
       type="text"
       ref="renameInput"
@@ -21,8 +24,8 @@ export default {
   name: "Editable",
   data: function() {
     return {
-        editing: false,
-        newValue: this.value
+      editing: false,
+      newValue: this.value
     };
   },
   props: {

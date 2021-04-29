@@ -35,13 +35,21 @@
           </td>
           <td class="name-column">
             <font-awesome-icon icon="square" class="target-square" />
-            <Editable :value="row.name" v-on:changed="rename(row, $event)" :allowEmpty="false" />
+            <Editable
+              :value="row.name"
+              v-on:changed="rename(row, $event)"
+              :allowEmpty="false"
+            />
           </td>
           <td class="type-column">
             {{ row.type }}
           </td>
           <td class="comment-column">
-            <Editable :value="row.comment" v-on:changed="change_comment(row, $event)" :allowEmpty="true" />
+            <Editable
+              :value="row.comment"
+              v-on:changed="change_comment(row, $event)"
+              :allowEmpty="true"
+            />
           </td>
         </tr>
       </table>

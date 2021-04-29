@@ -17,7 +17,16 @@ import { faSquare } from "@fortawesome/free-solid-svg-icons";
 import App from "./App.vue";
 import router from "./router";
 
-library.add(faEye, faEyeSlash, faFolder, faCircle, faCommentAlt, faPlus, faMinus, faSquare)
+library.add(
+  faEye,
+  faEyeSlash,
+  faFolder,
+  faCircle,
+  faCommentAlt,
+  faPlus,
+  faMinus,
+  faSquare
+);
 
 Vue.component("font-awesome-icon", FontAwesomeIcon);
 
