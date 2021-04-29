@@ -28,3 +28,7 @@ stream-data:            ## Stream EEG data via Kafka.
                         ## Example: make stream-data DATASET_FILE=eeg/datasets/MNE-eegbci-data/files/eegmmidb/1.0.0/S001/S001R01.edf
 	pipenv run python -m eeg.send_eeg_over_kafka $(DATASET_FILE)
 .PHONY: stream-data
+
+listen:                 ## Listen to Kafka topic, specified in TOPIC environment variable.
+	docker-compose exec kafka /opt/bitnami/kafka/bin/kafka-console-consumer.sh --topic $(TOPIC) --bootstrap-server kafka:9092
+.PHONY: listen
