@@ -23,12 +23,12 @@
         <tr v-for="row in points" :key="row.id" :row="row">
           <td class="visibility-column">
             <font-awesome-icon
-              v-if="row.visible"
+              v-show="row.visible"
               v-on:click="toggle_visible(row)"
               icon="eye"
             />
             <font-awesome-icon
-              v-if="!row.visible"
+              v-show="!row.visible"
               v-on:click="toggle_visible(row)"
               icon="eye-slash"
             />
