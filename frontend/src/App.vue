@@ -22,13 +22,15 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss">
+@import "styles/_colors.scss";
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: $default-font-color;
 }
 
 #nav {
@@ -37,11 +39,11 @@ export default {
 
 #nav a {
   font-weight: bold;
-  color: #2c3e50;
+  color: $default-font-color;
 }
 
 #nav a.router-link-exact-active {
-  color: #42b983;
+  color: $navigator-active-link-font-color;
 }
 
 /* As a default, input elements use their own font. Instead, make the elements inherit
@@ -69,16 +71,16 @@ input {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border: 1px solid #707070;
+  background: $lighter-gray;
+  border: 1px solid $dark-gray;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #707070;
+  background: $dark-gray;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #606060;
+  background: $darker-gray;
 }
 </style>

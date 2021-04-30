@@ -108,6 +108,8 @@ export default {
 </script>
 
 <style scoped lang="scss">
+@import "../styles/_colors.scss";
+
 $visibility-column-width: 25px;
 $name-column-width: 150px;
 $type-column-width: 50px;
@@ -133,23 +135,23 @@ td {
 }
 
 th {
-  background: #f4f4f4;
+  background: $lighter-gray;
 
-  color: #707070;
+  color: $dark-gray;
   font-weight: normal;
   font-size: 12px;
 
-  border-bottom: 1px solid #707070;
-  border-top: 1px solid #707070;
+  border-bottom: 1px solid $dark-gray;
+  border-top: 1px solid $dark-gray;
 }
 
 td {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid $light-gray;
 }
 
 td,
 input {
-  color: #707070;
+  color: $dark-gray;
   font-size: 14px;
 }
 
@@ -158,7 +160,7 @@ input {
 }
 
 .row-selected {
-  background-color: #e2e2e2;
+  background-color: $light-gray;
 }
 
 .visibility-column {
@@ -178,7 +180,7 @@ input {
 }
 
 #actions {
-  color: #707070;
+  color: $dark-gray;
   font-size: 18px;
 }
 
