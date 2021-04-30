@@ -60,7 +60,10 @@
       <font-awesome-icon icon="minus" class="fa-fw" />
     </div>
 
-    <div>
+    <!-- XXX: Keep the position display here for debugging purposes during the
+              development, but remove later.
+    -->
+    <div v-if="position !== undefined">
       Current position: ({{ position[0].toFixed(0) }},
       {{ position[1].toFixed(0) }}, {{ position[2].toFixed(0) }})
     </div>
@@ -74,7 +77,7 @@ export default {
   data() {
     return {
       isConnected: false,
-      position: [0, 0, 0],
+      position: undefined,
       points: [],
       selectedRows: []
     };
@@ -86,9 +89,16 @@ export default {
 
   methods: {
     add_point() {
-      this.$socket.emit('point.add', {
-        'position': this.position
-      });
+      if (this.position !== undefined) {
+        this.$socket.emit("point.add", {
+          position: this.position
+        });
+      } else {
+        /* XXX: Once we have a mechanism for showing user-visible errors, have this
+                error shown to the user, instead, and also change the error message
+                so that it makes sense to the user. */
+        throw "Position is undefined.";
+      }
     },
     toggle_visible(row) {
       row.visible = !row.visible;
@@ -102,11 +112,11 @@ export default {
   },
 
   sockets: {
-    'Set cross focal point'(data) {
+    "Set cross focal point"(data) {
       this.position = data.position.slice(0, 3);
     },
 
-    'point.add'(data) {
+    "point.add"(data) {
       this.points.push({
         visible: data.visible,
         name: data.name,
