@@ -75,3 +75,9 @@ INSERT INTO topics (name, type, latch)
 --EEG data
 INSERT INTO topics (name, type, latch)
   VALUES ('eeg_data', 'stream', 0);
+
+/* Planner */
+
+--Add point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.add', 'command', 0);

@@ -14,6 +14,7 @@ from mtms.db.topic_db import TopicDb
 from servers.eeg_server import EegServer
 from servers.command_server import CommandServer
 from servers.parameter_server import ParameterServer
+from servers.planner_server import PlannerServer
 from servers.state_server import StateServer
 
 backend_port = int(os.getenv("BACKEND_PORT"))
@@ -71,6 +72,12 @@ state_server = StateServer(
     kafka=kafka,
     socketio=socketio,
     topic_db=topic_db,
+)
+
+# Create server for planner
+planner_server = PlannerServer(
+    kafka=kafka,
+    socketio=socketio
 )
 
 # Run app
