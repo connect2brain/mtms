@@ -48,15 +48,15 @@ export default {
   sockets: {
     // Fired when the server updates the state.
     update_state(data) {
-      var stateVariable = data["state_variable"];
-      var rawValue = String.fromCharCode.apply(
+      const stateVariable = data["state_variable"];
+      const rawValue = String.fromCharCode.apply(
         null,
         new Uint8Array(data["value"])
       );
 
-      var value = rawValue == "True";
+      const value = rawValue == "True";
 
-      var updated = false;
+      const updated = false;
       switch (stateVariable) {
         case "stimulating":
           updated = value != this.stimulating;
@@ -75,13 +75,13 @@ export default {
 
     // Fired when the server updates the parameters.
     update_parameter(data) {
-      var parameterName = data["name"];
-      var rawValue = String.fromCharCode.apply(
+      const parameterName = data["name"];
+      const rawValue = String.fromCharCode.apply(
         null,
         new Uint8Array(data["value"])
       );
 
-      var value = parseInt(rawValue);
+      const value = parseInt(rawValue);
 
       this.parameters[parameterName] = value;
       this.latestMessage =
