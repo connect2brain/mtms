@@ -69,7 +69,7 @@ export default {
       }
 
       if (updated) {
-        this.latestMessage = "State updated: " + stateVariable + " = " + value;
+        this.latestMessage = `State updated: ${stateVariable} = ${value}`;
       }
     },
 
@@ -85,7 +85,7 @@ export default {
 
       this.parameters[parameterName] = value;
       this.latestMessage =
-        "Parameter updated: " + parameterName + " = " + value;
+        `Parameter updated: ${parameterName} = ${value}`;
     }
   },
 
