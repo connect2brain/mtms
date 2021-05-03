@@ -7,6 +7,11 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
+ASYNCAPIBUILD ?= ag
+APISOURCEFILE  = api/asyncapi.yaml
+APIBUILDDIR   = source
+APITEMPLATE   = https://github.com/asyncapi/markdown-template
+ASYNCAPIBUILDOPTS ?= 
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -19,5 +24,9 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
+asyncapi: 
+	@$(ASYNCAPIBUILD) "$(APISOURCEFILE)" "$(APITEMPLATE)" -o "$(APIBUILDDIR)" $(ASYNCAPIBUILDOPTS) 
+	
 github:
+	@make asyncapi
 	@make html
