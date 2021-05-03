@@ -122,13 +122,13 @@ export default {
       // Draw x-axis
       svg
         .append("g")
-        .attr("transform", "translate(0, " + xAxisY0 + ")")
+        .attr("transform", `translate(0, ${xAxisY0})`)
         .call(d3.axisBottom(xScale));
 
       // Draw y-axis
       svg
         .append("g")
-        .attr("transform", "translate(" + yAxisX0 + ", 0)")
+        .attr("transform", `translate(${yAxisX0}, 0)`)
         .call(d3.axisRight(yScale));
     }
   },
