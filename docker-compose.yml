@@ -11,14 +11,14 @@ services:
   #   that everything stored in Kafka is lost. This is good enough for development at this stage,
   #   but change the behavior later to retain the data.
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
+    image: 'bitnami/zookeeper:3.7.0-debian-10-r30'
     environment:
       - ZOO_PORT_NUMBER=${ZOOKEEPER_PORT}
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
       - kafka
   kafka:
-    image: 'bitnami/kafka:latest'
+    image: 'bitnami/kafka:2.8.0-debian-10-r8'
     environment:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:${KAFKA_PORT}
