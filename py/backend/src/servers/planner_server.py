@@ -76,7 +76,13 @@ class PlannerServer:
         ----------
         data : dict
             The data sent from the front-end with the command. Should consist of
-            'position' key.
+            'position' key, with a value that consists of a list of three numbers.
+
+            An example:
+
+            {
+                'position': [1.0, 2.0, 3.0],
+            }
         """
         self.id_ += 1
         value = {
@@ -101,7 +107,21 @@ class PlannerServer:
         topic : str
             The name of the topic in which the command is sent.
         data : str
-            A json dict consisting of the attributes of the new point.
+            A json dict consisting of the attributes of the new point. The dict should
+            consist of the keys 'visible', 'name', 'type', 'comment', and 'position'.
+
+            An example:
+
+            {
+                'visible': False,
+                'name': "Target-1",
+                'type': "Target",
+                'comment': "This is a comment.",
+                'position': [1.0, 2.0, 3.0],
+            }
         """
+        # TODO: The format and the content of the received message needs to be checked.
+        #       A natural place for those checks would be inside Kafka listener, so this
+        #       function can then assume a valid message.
         data = json.loads(data)
         self._socketio.emit(topic, data)
