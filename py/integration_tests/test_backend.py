@@ -8,7 +8,7 @@ import pytest
 import socketio
 
 # XXX: The roundtrip max time cannot be set much lower than this for the tests to pass consistently. Why is that?
-ROUNDTRIP_MAX_TIME = 10.0
+ROUNDTRIP_MAX_TIME = 30.0
 
 @pytest.mark.asyncio
 async def test_backend():
