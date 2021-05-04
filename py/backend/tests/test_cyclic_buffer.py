@@ -6,15 +6,17 @@ import numpy as np
 import pytest
 import sys
 
+from numpy.typing import ArrayLike
+
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
-def test_cyclic_buffer():
+def test_cyclic_buffer() -> None:
     """Tests CyclicBuffer class.
 
     """
     from servers.eeg.cyclic_buffer import CyclicBuffer
 
-    buffer = CyclicBuffer(4, 2)
+    buffer: CyclicBuffer = CyclicBuffer(4, 2)
 
     ## Test that no warning is raised when getting timerange from empty buffer
     with pytest.warns(None) as record:
@@ -27,6 +29,8 @@ def test_cyclic_buffer():
     buffer.append([3, 4], 0.2)
     buffer.append([5, 6], 0.3)
 
+    data: ArrayLike
+    timestamps: ArrayLike
     data, timestamps = buffer.get_buffer()
 
     np.testing.assert_equal(data, [
@@ -85,6 +89,7 @@ def test_cyclic_buffer():
 
     ## Test getting the latest datapoint
 
+    timestamp: float
     datapoint, timestamp = buffer.get_latest()
 
     np.testing.assert_equal(datapoint, [9., 10.])
@@ -104,6 +109,8 @@ def test_cyclic_buffer():
         buffer.append([22, 23], 0.4)   # Timestamp smaller than already registered timestamp
 
     ## Test buffer overloading
+    i: int
+    ts: float
     for i, ts in enumerate(np.arange(0.6, 100000, 0.1)):
         buffer.append([2*i, 2*i+1], ts)
 
@@ -117,4 +124,3 @@ def test_cyclic_buffer():
     assert np.allclose(timestamps, [
         ts-(3*0.1), ts-(2*0.1), ts-(1*0.1), ts
     ])
-
