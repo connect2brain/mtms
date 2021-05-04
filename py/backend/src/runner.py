@@ -17,17 +17,17 @@ from servers.parameter_server import ParameterServer
 from servers.planner_server import PlannerServer
 from servers.state_server import StateServer
 
-backend_port = int(os.getenv("BACKEND_PORT"))
-eeg_buffer_length = int(os.getenv("BACKEND_EEG_BUFFER_LENGTH", 8192))
+backend_port: int = int(os.getenv("BACKEND_PORT"))
+eeg_buffer_length: int = int(os.getenv("BACKEND_EEG_BUFFER_LENGTH", 8192))
 
 # Create connection to Kafka
-kafka = Kafka()
+kafka: Kafka = Kafka()
 
 # Create connection to database
-topic_db = TopicDb()
+topic_db: TopicDb = TopicDb()
 
 # Create app
-app = Flask(__name__)
+app: Flask = Flask(__name__)
 
 # Enable cross-origin resource sharing
 #
@@ -44,38 +44,38 @@ CORS(app)
 #
 #   See https://github.com/miguelgrinberg/python-socketio/issues/99 for details.
 #
-socketio = SocketIO(app, async_mode='gevent', cors_allowed_origins='*')
+socketio: SocketIO = SocketIO(app, async_mode='gevent', cors_allowed_origins='*')
 
 # Create server for EEG data
-eeg_server = EegServer(
+eeg_server: EegServer = EegServer(
     kafka=kafka,
     app=app,
     eeg_buffer_length=eeg_buffer_length,
 )
 
 # Create server for parameters
-parameter_server = ParameterServer(
+parameter_server: ParameterServer = ParameterServer(
     kafka=kafka,
     socketio=socketio,
     topic_db=topic_db,
 )
 
 # Create server for commands
-command_server = CommandServer(
+command_server: CommandServer = CommandServer(
     kafka=kafka,
     socketio=socketio,
     topic_db=topic_db,
 )
 
 # Create server for state
-state_server = StateServer(
+state_server: StateServer = StateServer(
     kafka=kafka,
     socketio=socketio,
     topic_db=topic_db,
 )
 
 # Create server for planner
-planner_server = PlannerServer(
+planner_server: PlannerServer = PlannerServer(
     kafka=kafka,
     socketio=socketio
 )
