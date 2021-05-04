@@ -3,8 +3,13 @@ import logging
 import sys
 import time
 from threading import Thread
+from typing import Any
 
+from pykafka.simpleconsumer import SimpleConsumer
 import pykafka.exceptions
+
+from mtms.kafka.kafka import Kafka, KafkaMessageType
+from .cyclic_buffer import CyclicBuffer
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
@@ -14,41 +19,43 @@ class EegListener(Thread):
     """A listener for EEG data, running in a thread.
 
     """
-    def __init__(self, kafka=None, name=None, topic=None,
-                 buffer=None, sampling_frequency=None):
+
+    def __init__(self, kafka: Kafka, name: str, topic: str,
+                 buffer: CyclicBuffer, sampling_frequency: float) -> None:
         """Initialize the reader.
 
         Parameters
         ----------
-        kafka : Kafka
+        kafka
             A Kafka object to communicate with Kafka.
-        name : str
+        name
             The name of the thread.
-        topic : str
+        topic
             The topic for reading new data.
-        buffer : CyclicBuffer
+        buffer
             The buffer into which new data are appended.
-        sampling_frequency : float
+        sampling_frequency 
             The sampling frequency for EEG data.
         """
         Thread.__init__(self)
-        self.kafka = kafka
-        self.name = name
-        self.buffer = buffer
-        self.sampling_frequency = sampling_frequency
-        self.daemon = True
-        self.consumer = self.kafka.get_consumer(topic=topic)
+        self.kafka: Kafka = kafka
+        self.name: str = name
+        self.buffer: CyclicBuffer = buffer
+        self.sampling_frequency: float = sampling_frequency
+        self.daemon: bool = True
+        self.consumer: SimpleConsumer = self.kafka.get_consumer(topic=topic)
 
-    def _read_message(self):
+    def _read_message(self) -> KafkaMessageType:
         """Read one message from Kafka, return the de-serialized message.
 
         Notes
         -----
         Returns None if there are no new messages.
         """
-        message = None
+        message: KafkaMessageType = None
         try:
             logging.info("Polling Kafka for new messages")
+            # TODO: Add type annotation when Kafka library is changed.
             raw_message = self.consumer.consume()
             if raw_message is not None:
                 logging.info("Reading a message from Kafka")
@@ -60,13 +67,13 @@ class EegListener(Thread):
 
         return message
 
-    def run(self):
+    def run(self) -> None:
         """Read EEG messages from Kafka and append them to the buffer.
 
         """
         logging.info("Starting " + self.name)
         while True:
-            message = self._read_message()
+            message: KafkaMessageType = self._read_message()
             if message is not None:
                 self.buffer.append(message['data'], message['time'])
             else:

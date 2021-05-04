@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from typing import Any, Dict, Union
 
 import pykafka
 from pykafka import KafkaClient
@@ -8,11 +9,12 @@ from pykafka import KafkaClient
 from mtms.db.topic_db import TopicDb
 from .listener import KafkaListener
 
+KafkaMessageType = Union[Dict[Any, Any], None]
+
 class Kafka:
     """A class for communicating with Kafka.
 
     """
-
     def __init__(self, ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
         """Initialize the object.
 
