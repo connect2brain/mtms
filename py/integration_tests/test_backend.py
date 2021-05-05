@@ -2,33 +2,34 @@
 # -*- coding: utf-8 -*-
 
 import os
+from typing import Dict
 
 import asyncio
 import pytest
 import socketio
 
 # XXX: The roundtrip max time cannot be set much lower than this for the tests to pass consistently. Why is that?
-ROUNDTRIP_MAX_TIME = 10.0
+ROUNDTRIP_MAX_TIME: float = 10.0
 
 @pytest.mark.asyncio
-async def test_backend():
+async def test_backend() -> None:
     """Test integration between backend and Kafka.
 
     """
     global ROUNDTRIP_MAX_TIME
 
-    host = os.getenv("BACKEND_HOST")
-    port = os.getenv("BACKEND_PORT")
+    host: str = os.getenv("BACKEND_HOST")
+    port: str = os.getenv("BACKEND_PORT")
 
-    parameters = {}
-    state = {}
+    parameters: Dict[str, float] = {}
+    state: Dict[str, float] = {}
 
     # Use asyncio-based AsyncClient instead of thread-based Client so that the execution of the script is
     # terminated properly if an assertion fails. With Client, some hanging threads will remain, and they
     # prevent the script from terminating.
-    sio = socketio.AsyncClient()
+    sio: socketio.AsyncClient = socketio.AsyncClient()
 
-    connected = asyncio.Event()
+    connected: asyncio.Event = asyncio.Event()
 
     @sio.event
     async def connect():
@@ -36,20 +37,20 @@ async def test_backend():
 
     @sio.event()
     def update_parameter(data):
-        name = data['name']
-        value = data['value']
+        name: str = data['name']
+        value: float = data['value']
 
-        parameters[name] = int(value)
+        parameters[name] = float(value)
 
     @sio.event()
     def update_state(data):
         state_variable = data['state_variable']
         value = data['value']
 
-        state[state_variable] = int(value)
+        state[state_variable] = float(value)
 
     async def send_parameter(name, value):
-        data = {
+        data: Dict[str, Any] = {
             'name': name,
             'value': value,
         }
