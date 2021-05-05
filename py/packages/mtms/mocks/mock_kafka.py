@@ -1,74 +1,87 @@
 import os
 import time
 import queue
+from queue import Queue
 from threading import Thread
+from typing import Any, Callable, Optional, Union
+
+# TODO: Be more explicit and stringent about the allowed message types:
+#       should they always be JSON dicts?
+KafkaMessage = Union[str, dict]
+
+Topic = str
+
+KafkaCallback = Callable[[Topic, KafkaMessage], None]
+
+class Consumer:
+    def __init__(self, queue: Queue) -> None:
+        self.queue: Queue = queue
+
+    def consume(self) -> Optional[KafkaMessage]:
+        msg: Optional[KafkaMessage] = None
+        try:
+            msg = self.queue.get(block=False)
+        except queue.Empty:
+            pass
+
+        return msg
+
+class Producer:
+    def __init__(self, queue: Queue) -> None:
+        self.queue: Queue = queue
+
+    def produce(self, msg: KafkaMessage) -> None:
+        self.queue.put(msg)
+
+class KafkaListener(Thread):
+    def __init__(self, topic: Topic, callback: KafkaCallback, consumer: Consumer) -> None:
+        self.topic: Topic = topic
+        self.callback: KafkaCallback = callback
+        self.consumer: Consumer = consumer
+
+        Thread.__init__(self)
+        self.daemon: bool = True
+
+    def run(self) -> None:
+        while True:
+            msg: Optional[KafkaMessage] = self.consumer.consume()
+            if msg is not None:
+                self.callback(self.topic, msg)
 
 class MockKafka:
     """A class for mocking communication with Kafka.
 
     """
 
-    def __init__(self):
-        self.queues = {}
+    def __init__(self) -> None:
+        self.queues: Dict[Topic, Queue] = {}
 
-    def reset_consumer(self, consumer=None):
+    def reset_consumer(self, consumer: Consumer) -> None:
         pass
 
-    def get_consumer(self, topic=None):
-        queues = self.queues
+    def get_consumer(self, topic: Topic) -> Consumer:
+        queues: Dict[Topic, Queue] = self.queues
 
         if topic not in queues:
-            queues[topic] = queue.Queue()
+            queues[topic] = Queue()
 
-        class Consumer:
-            def __init__(self):
-                self.topic = topic
-
-            def consume(self):
-                msg = None
-                try:
-                    msg = queues[self.topic].get(block=False)
-                except queue.Empty:
-                    pass
-
-                return msg
-
-        consumer = Consumer()
+        consumer: Consumer = Consumer(queue=queues[topic])
         return consumer
 
-    def get_producer(self, topic=None):
-        queues = self.queues
+    def get_producer(self, topic: Topic) -> Producer:
+        queues: Dict[Topic, Queue] = self.queues
 
         if topic not in queues:
-            queues[topic] = queue.Queue()
+            queues[topic] = Queue()
 
-        class Producer:
-            def __init__(self):
-                self.topic = topic
-
-            def produce(self, msg):
-                queues[self.topic].put(msg)
-
-        producer = Producer()
+        producer: Producer = Producer(queue=queues[topic])
         return producer
 
-    def get_listener(self, topic=None, callback=None):
-        queues = self.queues
-        consumer = self.get_consumer(topic)
-
-        class KafkaListener(Thread):
-            def __init__(self):
-                self.topic = topic
-                self.callback = callback
-
-                Thread.__init__(self)
-                self.daemon = True
-
-            def run(self):
-                while True:
-                    value = consumer.consume()
-                    if value is not None:
-                        self.callback(self.topic, value)
-
-        listener = KafkaListener()
+    def get_listener(self, topic: Topic, callback: KafkaCallback) -> KafkaListener:
+        consumer: Consumer = self.get_consumer(topic)
+        listener: kafkaListener = KafkaListener(
+            topic=topic,
+            callback=callback,
+            consumer=consumer
+        )
         return listener
