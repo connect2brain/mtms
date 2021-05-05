@@ -1,58 +1,60 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from typing import List
+
 import sqlite3
+from sqlite3 import Connection, Cursor, Row
 
 class TopicDb:
     """A class to interface with the topic database.
 
     """
-    _DATABASE_FILENAME = "db/topics.db"
+    _DATABASE_FILENAME: str = "db/topics.db"
 
-    def _run_query(self, query):
+    def _run_query(self, query: str) -> List[Row]:
         """Query the topic database with a given query, return the query result.
 
         Parameters
         ----------
-        query : str
+        query
             The query string.
 
         Returns
         -------
-        array_like
             An array of the query result rows.
         """
-        connection = sqlite3.connect(self._DATABASE_FILENAME)
-        cursor = connection.cursor()
+        connection: Connection = sqlite3.connect(self._DATABASE_FILENAME)
+        cursor: Cursor = connection.cursor()
         cursor.execute(query)
-        record = cursor.fetchall()
+        record: List[Row] = cursor.fetchall()
         connection.close()
 
         return record
 
-    def get_topics_by_type(self, type):
+    def get_topics_by_type(self, type: str) -> List[str]:
         """Return topics of the desired type.
 
         Parameters
         ----------
-        type : str
+        type
             The type of the topics to be returned.
 
         Returns
         -------
-        array_like
             An array of topic names.
         """
-        query = "select name from topics where type='{}';".format(type)
-        record = self._run_query(query)
+        query: str = "select name from topics where type='{}';".format(type)
+        record: List[Row] = self._run_query(query)
 
-        topics = []
+        topics: List[str] = []
+        row: Row
         for row in record:
             topics.append(row[0])
 
         return topics
 
-    def is_topic_latched(self, topic):
+    def is_topic_latched(self, topic: str) -> bool:
         """Return true if the topic is latched.
 
         Latching means that a new consumer of the topic will receive the latest message that has been
@@ -60,14 +62,13 @@ class TopicDb:
 
         Parameters
         ----------
-        topic : str
+        topic
             The name of the topic.
 
         Returns
         -------
-        boolean
             True if the topic is latched, False otherwise.
         """
-        query = "select latch from topics where name='{}';".format(topic)
-        record = self._run_query(query)
+        query: str = "select latch from topics where name='{}';".format(topic)
+        record: List[Row] = self._run_query(query)
         return record[0][0]
