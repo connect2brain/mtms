@@ -24,5 +24,5 @@ RUN pipenv install -e py/packages
 
 # Run
 
-# TODO: Does not exist yet.
+# TODO: runner.py takes the data files as parameters, pass them here.
 CMD [ "pipenv", "run", "python", "py/eeg/runner.py"]
