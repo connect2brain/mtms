@@ -21,16 +21,6 @@ class EegSimulator:
 
     """
 
-    def __init__(self, kafka: Kafka) -> None:
-        """Initialize the EEG simulator.
-
-        Parameters
-        ----------
-        kafka
-            A Kafka object to communicate with Kafka.
-        """
-        self._kafka: Kafka = kafka
-
     def send_data(self, data_q: Queue, msg_q: Queue) -> None:
         """Asynchronously sends out a single piece of pre-formatted data.
 
@@ -41,7 +31,9 @@ class EegSimulator:
         msg_q
             A queue where to write status messages etc.
         """
-        producer: Producer = self._kafka.get_producer(topic='eeg_data')
+        kafka = Kafka()
+
+        producer: Producer = kafka.get_producer(topic='eeg_data')
         try:
             logging.info("send_data() ready to receive data.")
 
@@ -129,7 +121,9 @@ class EegSimulator:
         msg_q
             A queue where to write status messages etc.
         """
-        consumer: BalancedConsumer = self._kafka.get_balanced_consumer(
+        kafka = Kafka()
+
+        consumer: BalancedConsumer = kafka.get_balanced_consumer(
             topic='eeg_data',
             consumer_group=b"benchmark",
             auto_commit_enable=True,
