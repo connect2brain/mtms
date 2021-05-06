@@ -24,5 +24,6 @@ RUN pipenv install -e py/packages
 
 # Run
 
-# TODO: runner.py takes the data files as parameters, pass them here.
-CMD [ "pipenv", "run", "python", "py/eeg/runner.py"]
+# Sleep forever here to allow the user to control the EEG service by separately executing
+# commands ínside the container.
+CMD ["sleep", "infinity"]
