@@ -54,4 +54,6 @@ if __name__ == "__main__":
     #   something else from raw.info?)
 
     logging.info("Starting to send data")
-    eeg_simulator.stream_data_mp(data, fs)
+    success = eeg_simulator.stream_data_mp(data, fs)
+
+    sys.exit(0 if success else 1)

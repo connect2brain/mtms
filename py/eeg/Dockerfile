@@ -4,6 +4,7 @@ WORKDIR /code
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
+  sqlite3 \
   dos2unix
 
 # Python dependencies
@@ -23,6 +24,16 @@ COPY py/packages py/packages
 RUN pipenv install -e py/packages
 
 # Run
+
+# Copy and initialize database
+
+COPY db db
+
+RUN dos2unix db/init-db.sh
+
+RUN chmod 755 db/init-db.sh
+
+RUN db/init-db.sh
 
 # Sleep forever here to allow the user to control the EEG service by separately executing
 # commands ínside the container.
