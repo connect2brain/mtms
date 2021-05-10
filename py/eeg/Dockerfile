@@ -23,7 +23,17 @@ COPY py/packages py/packages
 
 RUN pipenv install -e py/packages
 
-# Run
+# Integration tests
+
+COPY py/eeg/integration-tests.sh .
+
+COPY third-party/wait-for-it/wait-for-it.sh .
+
+RUN dos2unix integration-tests.sh
+
+RUN dos2unix wait-for-it.sh
+
+RUN chmod +x ./integration-tests.sh ./wait-for-it.sh
 
 # Copy and initialize database
 

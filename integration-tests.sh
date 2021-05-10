@@ -10,14 +10,23 @@ cleanup () {
 }
 trap 'cleanup' HUP INT QUIT PIPE TERM
 
-docker-compose --env-file .env.test -p test -f docker-compose.yml -f docker-compose.test.yml build tester
+printf "Starting all services\n"
+docker-compose --env-file .env.test -p test -f docker-compose.yml up -d
 
-docker-compose --env-file .env.test -p test -f docker-compose.yml -f docker-compose.test.yml up --exit-code-from tester tester
-EXIT_CODE=$?
+# Run within-service integration tests that depend on the other services running.
+printf "Running tests for EEG service\n"
+docker-compose --env-file .env.test -p test -f docker-compose.yml exec eeg ./integration-tests.sh
+EXIT_CODE_EEG=$?
 
-docker-compose --env-file .env.test -p test -f docker-compose.yml -f docker-compose.test.yml down
+# Run tester service that simulates the user interaction with the system.
+printf "Running tests for user interaction\n"
+docker-compose --env-file .env.test -p test -f docker-compose.yml -f docker-compose.tester.yml up --exit-code-from tester tester
+EXIT_CODE_TESTER=$?
 
-if [ $EXIT_CODE -eq 0 ] ; then
+printf "Shutting down all services\n"
+docker-compose --env-file .env.test -p test -f docker-compose.yml -f docker-compose.tester.yml down
+
+if [ $EXIT_CODE_EEG -eq 0 ] && [ $EXIT_CODE_TESTER -eq 0 ] ; then
   printf "${GREEN}Tests passed${NC}\n"
 else
   printf "${RED}Tests failed${NC}\n"

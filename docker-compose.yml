@@ -30,6 +30,7 @@ services:
       - zookeeper
     networks:
       - kafka
+  # Needs to match the value of BACKEND_HOST environment variable.
   backend:
     build:
       context: .
@@ -49,7 +50,7 @@ services:
       - kafka
     networks:
       - kafka
-      - backend
+      - ${BACKEND_HOST}
   eeg:
     build:
       context: .
@@ -63,7 +64,10 @@ services:
     volumes:
       - ./py/eeg:/code/py/eeg
       - ./py/packages:/code/py/packages
+      # TODO: Clean-up eeg/datasets, maybe have a single path under the root directory
+      #       for all datasets instead?
       - ./eeg/datasets:/code/eeg/datasets
+      - ./datasets:/code/datasets
     depends_on:
       - kafka
     networks:
@@ -97,6 +101,6 @@ services:
     volumes:
       - ./frontend/src:/app/src
     depends_on:
-      - backend
+      - ${BACKEND_HOST}
     networks:
-      - backend
+      - ${BACKEND_HOST}
