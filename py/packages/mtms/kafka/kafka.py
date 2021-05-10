@@ -128,13 +128,18 @@ class Kafka:
         )
         return producer
 
-    def get_listener(self, topic=None, callback=None):
+    def get_listener(self, topic=None, callback=None, delay=0.1):
         """Initializes and returns a KafkaListener.
 
         Parameters
         ----------
         topic : str
             The name of the Kafka topic.
+        callback : callable
+            The function that is called when a new message is received.
+        delay : float
+            The delay (in seconds) between two consecutive runs of the listener.
+            Defaults to 0.1 seconds.
 
         Returns
         -------
@@ -145,5 +150,6 @@ class Kafka:
             kafka=self,
             topic=topic,
             callback=callback,
+            delay=delay,
         )
         return listener
