@@ -9,19 +9,17 @@ RUN apt-get update && \
 
 # Python dependencies
 
-COPY py/eeg/Pipfile .
-
-COPY py/eeg/Pipfile.lock .
-
-RUN pip install pipenv
-
-RUN pipenv install --deploy --ignore-pipfile
-
-# Internal packages
+# Poetry is installed using pip, which is not the recommended way. However, it suits our
+# Docker workflow better, as it requires fewer steps and doesn't need modifying PATH manually.
+RUN pip install poetry
 
 COPY py/packages py/packages
 
-RUN pipenv install -e py/packages
+COPY py/eeg/pyproject.toml .
+
+COPY py/eeg/poetry.lock .
+
+RUN poetry install
 
 # Integration tests
 
