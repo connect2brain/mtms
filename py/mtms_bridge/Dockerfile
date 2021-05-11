@@ -9,19 +9,17 @@ RUN apt-get update && \
 
 # Python dependencies
 
-COPY py/backend/Pipfile .
-
-COPY py/backend/Pipfile.lock .
-
-RUN pip install pipenv
-
-RUN pipenv install --deploy --ignore-pipfile
-
-# Internal packages
+# Poetry is installed using pip, which is not the recommended way. However, it suits our
+# Docker workflow better, as it requires fewer steps and doesn't need modifying PATH manually.
+RUN pip install poetry
 
 COPY py/packages py/packages
 
-RUN pipenv install -e py/packages
+COPY py/mtms_bridge/pyproject.toml .
+
+COPY py/mtms_bridge/poetry.lock .
+
+RUN poetry install
 
 # Copy and initialize database
 
@@ -35,4 +33,4 @@ RUN db/init-db.sh
 
 # Run
 
-CMD [ "pipenv", "run", "python", "py/mtms_bridge/src/python_runner.py"]
+CMD [ "poetry", "run", "python", "py/mtms_bridge/src/python_runner.py"]
