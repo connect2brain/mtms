@@ -24,5 +24,5 @@ access a topic that does not exist, it will be created implicitly.
 Here is how to run the script from Windows command line:
 
     kafka-topics.bat --create --bootstrap-server 127.0.0.1:8082 --topic eeg_raw --replication-factor 1 --partitions 1
-    pipenv install
-    pipenv run python publish_eeg.py
+    poetry install
+    poetry run python publish_eeg.py
