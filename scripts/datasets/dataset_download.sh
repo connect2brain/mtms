@@ -73,7 +73,7 @@ fi
 case "$DATASET" in
 	eegbci)
 		echo "Downloading dataset into folder 'MNE-eegbci-data/files/eegmmidb/1.0.0'"
-		pipenv run python download_mne.py --subject 1 --runs 1-14 eegbci && echo "Success." && exit
+		poetry run python download_mne.py --subject 1 --runs 1-14 eegbci && echo "Success." && exit
 		echo "Something went wrong."
 		exit 1
 		;;
