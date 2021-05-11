@@ -19,7 +19,7 @@ authors = [
 [tool.poetry.dependencies]
 python = "^3.8"
 mne = "^0.23.0"
-pykafka = "^2.8.0"
+confluent-kafka = "^1.6.1"
 
 # The path specified here comes from Dockerfile.
 mtms = { path = "/code/py/packages/", develop = true }
