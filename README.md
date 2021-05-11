@@ -77,8 +77,7 @@ pip install python-dotenv
 
 NB: Cmder needs to be run as the administrator for these commands to work.
 
-NB: Python-dotenv is needed when running the mTMS bridge in LabVIEW, which does not use pipenv.
-The Python packages needed by the other components of the software are installed using pipenv.
+NB: Python-dotenv is needed for running the mTMS bridge in LabVIEW.
 
 - Initialize the environment variables by doing the following changes to `.env` file in project-louhi
 directory:
