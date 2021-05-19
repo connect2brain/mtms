@@ -31,6 +31,18 @@ RUN chmod 755 db/init-db.sh
 
 RUN db/init-db.sh
 
+# Entrypoint
+
+COPY py/backend/docker-entrypoint.sh .
+
+COPY third-party/wait-for-it/wait-for-it.sh .
+
+RUN dos2unix docker-entrypoint.sh
+
+RUN dos2unix wait-for-it.sh
+
+RUN chmod +x ./docker-entrypoint.sh ./wait-for-it.sh
+
 # Run
 
-CMD [ "poetry", "run", "python", "py/backend/src/runner.py"]
+CMD ["./docker-entrypoint.sh"]

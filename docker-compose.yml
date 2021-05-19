@@ -30,6 +30,7 @@ services:
       - zookeeper
     networks:
       - kafka
+  # Needs to match the value of INIT_HOST environment variable.
   init:
     build:
       context: .
