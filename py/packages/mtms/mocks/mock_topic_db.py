@@ -23,7 +23,7 @@ class MockTopicDb:
 
     _LATCHED_TOPICS: List[Topic] = ['intensity']
 
-    def get_topics_by_type(self, type: TopicType) -> List[Topic]:
+    def get_topics(self, type: TopicType) -> List[Topic]:
         return self._TOPICS[type] if type in self._TOPICS else []
 
     def is_topic_latched(self, topic: Topic) -> bool:

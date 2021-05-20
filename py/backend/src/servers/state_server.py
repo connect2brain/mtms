@@ -32,7 +32,7 @@ class StateServer:
         self._socketio: SocketIO = socketio
         self._topic_db: TopicDb = topic_db
 
-        self._state_topics: List[str] = self._topic_db.get_topics_by_type(self._STATE_TOPIC_TYPE)
+        self._state_topics: List[str] = self._topic_db.get_topics(type=self._STATE_TOPIC_TYPE)
         self._setup_listeners()
 
     def _setup_listeners(self) -> None:

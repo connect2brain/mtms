@@ -23,8 +23,8 @@ class ParameterCommandSender(Thread):
         """
         self._kafka = kafka
         self._server = server
-        self._parameter_topics = topic_db.get_topics_by_type('parameter')
-        self._command_topics = topic_db.get_topics_by_type('command')
+        self._parameter_topics = topic_db.get_topics(type='parameter')
+        self._command_topics = topic_db.get_topics(type='command')
 
         self._connected = False
 

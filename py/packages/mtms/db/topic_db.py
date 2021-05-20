@@ -32,19 +32,25 @@ class TopicDb:
 
         return record
 
-    def get_topics_by_type(self, type: str) -> List[str]:
+    def get_topics(self, type: str = None) -> List[str]:
         """Return topics of the desired type.
 
         Parameters
         ----------
         type
-            The type of the topics to be returned.
+            The type of the topics to be returned. If not given, return
+            all topics.
 
         Returns
         -------
             An array of topic names.
         """
-        query: str = "select name from topics where type='{}';".format(type)
+        query: str
+        if type is None:
+            query = "select name from topics;"
+        else:
+            query = "select name from topics where type='{}';".format(type)
+
         record: List[Row] = self._run_query(query)
 
         topics: List[str] = []

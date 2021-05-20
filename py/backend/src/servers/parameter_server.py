@@ -39,7 +39,7 @@ class ParameterServer:
         self._socketio: SocketIO = socketio
         self._topic_db: TopicDb = topic_db
 
-        self._parameter_topics: List[str] = self._topic_db.get_topics_by_type(self._PARAMETER_TOPIC_TYPE)
+        self._parameter_topics: List[str] = self._topic_db.get_topics(type=self._PARAMETER_TOPIC_TYPE)
         self._setup_listeners()
 
         socketio.on_event('connect', self._send_parameters_on_connect)
