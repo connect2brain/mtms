@@ -26,13 +26,6 @@ class Consumer:
 
         return msg
 
-class Producer:
-    def __init__(self, queue: Queue) -> None:
-        self.queue: Queue = queue
-
-    def produce(self, msg: KafkaMessage) -> None:
-        self.queue.put(msg)
-
 class KafkaListener(Thread):
     def __init__(self, topic: Topic, callback: KafkaCallback, consumer: Consumer) -> None:
         self.topic: Topic = topic
@@ -68,14 +61,14 @@ class MockKafka:
         consumer: Consumer = Consumer(queue=queues[topic])
         return consumer
 
-    def get_producer(self, topic: Topic) -> Producer:
+    def produce(self, topic: Topic, value: Any) -> None:
         queues: Dict[Topic, Queue] = self.queues
 
+        # TBD: Does not simulate Confluent Kafka's demand for creating the topics in advance.
         if topic not in queues:
             queues[topic] = Queue()
 
-        producer: Producer = Producer(queue=queues[topic])
-        return producer
+        self.queues[topic].put(value)
 
     def get_listener(self, topic: Topic, callback: KafkaCallback) -> KafkaListener:
         consumer: Consumer = self.get_consumer(topic)

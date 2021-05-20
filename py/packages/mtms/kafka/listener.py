@@ -6,8 +6,6 @@ import sys
 import time
 from threading import Thread
 
-import pykafka.exceptions
-
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
@@ -54,15 +52,15 @@ class KafkaListener(Thread):
         """
         value = None
         try:
-            raw_message = self._consumer.consume()
+            raw_message = self._consumer.poll(timeout=0)
             if raw_message is not None:
-                value = raw_message.value
+                value = raw_message.value()
                 logging.info("A new message received in topic '{topic}', value: {value}".format(
                     topic=self._topic,
                     value=value,
                 ))
-        except pykafka.exceptions.SocketDisconnectedError as e:
-            sys.stderr.write("[ERROR] Kafka socket disconnected. Reason: '{}'".format(e))
+        except Error as e:
+            sys.stderr.write("[ERROR] Kafka related error: '{}'".format(e))
 
         return value
 

@@ -6,7 +6,6 @@ from typing import Any, Dict
 
 import flask_socketio
 from flask_socketio import SocketIO
-from pykafka.producer import Producer
 
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
@@ -137,7 +136,7 @@ class ParameterServer:
         value: float = data['value']
         assert name in self._parameter_topics, "{} is not a valid parameter name".format(name)
 
-        # XXX: Recreating the producer each time is slow with PyKafka, revisit after changing
-        #   the Kafka library to a faster one.
-        producer: Producer = self._kafka.get_producer(topic=name)
-        producer.produce(bytes(str(value), encoding='utf8'))
+        self._kafka.produce(
+            topic=name,
+            value=bytes(str(value), encoding='utf8')
+        )

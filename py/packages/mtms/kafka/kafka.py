@@ -1,13 +1,15 @@
 import logging
 import os
 import time
+import socket
 
-import pykafka
-from pykafka import KafkaClient
-from pykafka.balancedconsumer import BalancedConsumer
+from confluent_kafka import Consumer, Producer
 
 from mtms.db.topic_db import TopicDb
 from .listener import KafkaListener
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
 class Kafka:
     """A class for communicating with Kafka.
@@ -24,24 +26,21 @@ class Kafka:
         port : str or int
             The port of the Kafka server.
         """
-        self.ip = ip or os.getenv("KAFKA_IP") or '127.0.0.1'
-        self.port = port or os.getenv("KAFKA_PORT") or '9092'
         self.zookeeper_hosts = zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")
 
-        self.client = None
-        while self.client is None:
-            try:
-                self.client = KafkaClient(
-                    hosts="{ip}:{port}".format(
-                        ip=self.ip,
-                        port=self.port,
-                    ),
-                    zookeeper_hosts=(zookeeper_hosts or os.getenv("ZOOKEEPER_HOSTS")),
-                    use_greenlets=use_greenlets
-                )
-            except pykafka.exceptions.NoBrokersAvailableError as e:
-                logging.info("Kafka is not available, retrying in 1 s...")
-                time.sleep(1)
+        self.hosts = "{ip}:{port}".format(
+            ip=(ip or os.getenv("KAFKA_IP") or '127.0.0.1'),
+            port=(port or os.getenv("KAFKA_PORT") or '9092')
+        )
+
+        # Initialize producer
+        conf = {
+            'bootstrap.servers': self.hosts,
+            'client.id': socket.gethostname(),
+        }
+
+        logging.info("[INFO] Connecting to Kafka broker at {}.\n".format(self.hosts))
+        self.producer = Producer(conf)
 
     def reset_consumer(self, consumer=None):
         """Reset consumer to read the last message in the topic. If the topic is latched, reset consumer to
@@ -52,21 +51,10 @@ class Kafka:
         consumer : KafkaConsumer
             The consumer to reset.
         """
-        # Reset to the latest message.
-        offsets = [(p, pykafka.common.OffsetType.LATEST)
-                   for p, op in consumer._partitions.items()]
-        consumer.reset_offsets(offsets)
-
-        # Move backwards by one message if the topic is latched.
-        topic = consumer.topic.name.decode('utf-8')
-        topic_db = TopicDb()
-        is_latched = topic_db.is_topic_latched(topic)
-
-        if is_latched:
-            previous_offset = lambda offset: offset - 1 if offset > 0 else pykafka.common.OffsetType.EARLIEST
-            offsets = [(p, previous_offset(op.last_offset_consumed))
-                       for p, op in consumer._partitions.items()]
-            consumer.reset_offsets(offsets)
+        # TBD: This was removed when Kafka library was changed. Rewrite an implementation
+        #      for this and add test, as the tests don't seem to break even if this function
+        #      doesn't exist.
+        pass
 
     def get_consumer(self, topic=None):
         """Initializes and returns a KafkaConsumer.
@@ -81,52 +69,32 @@ class Kafka:
         KafkaConsumer
             An initialized KafkaConsumer.
         """
-        consumer = self.client.topics[topic].get_simple_consumer(
-            consumer_timeout_ms=1000,
-        )
+        conf = {
+            'bootstrap.servers': self.hosts,
+            'group.id': "group",
+        }
+        consumer = Consumer(conf)
+        consumer.subscribe([topic])
+
         self.reset_consumer(consumer=consumer)
         return consumer
 
-    def get_balanced_consumer(self, topic: str, **kwargs):
-        """Initializes and returns a BalancedConsumer.
-
-        Parameters
-        ----------
-        topic
-            The name of the Kafka topic.
-        kwargs
-            Additional keyword arguments that are passed to Pykafka.
-
-        Returns
-        -------
-        KafkaConsumer
-            An initialized KafkaConsumer.
-        """
-        consumer: BalancedConsumer = self.client.topics[topic].get_balanced_consumer(
-            consumer_timeout_ms=1000,
-            **kwargs,
-        )
-        return consumer
-
-    def get_producer(self, topic=None):
-        """Initializes and returns a KafkaProducer.
+    def produce(self, *args, **kwargs):
+        """Produce a message to a given topic.
 
         Parameters
         ----------
         topic : str
             The name of the Kafka topic.
 
-        Returns
-        -------
-        KafkaProducer
-            An initialized KafkaProducer.
         """
-        producer = self.client.topics[topic].get_producer(
-            sync=False,
-            delivery_reports=True,
-            linger_ms=0,
-        )
-        return producer
+        self.producer.produce(*args, **kwargs)
+
+    def flush(self):
+        """Flush awaiting events.
+
+        """
+        self.producer.flush()
 
     def get_listener(self, topic=None, callback=None, delay=0.1):
         """Initializes and returns a KafkaListener.
