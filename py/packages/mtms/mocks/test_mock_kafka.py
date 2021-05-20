@@ -15,14 +15,16 @@ def test_mock_kafka():
     kafka = MockKafka()
 
     consumer = kafka.get_consumer(topic='test')
-    producer = kafka.get_producer(topic='test')
 
     # Test consuming when the topic is empty.
     value = consumer.consume()
     assert value is None
 
     # Test producing and consuming a single message.
-    producer.produce(123)
+    kafka.produce(
+        topic='test',
+        value=123,
+    )
     value = consumer.consume()
 
     assert value == 123
@@ -32,8 +34,14 @@ def test_mock_kafka():
     assert value is None
 
     # Test the order of two messages.
-    producer.produce(124)
-    producer.produce(125)
+    kafka.produce(
+        topic='test',
+        value=124,
+    )
+    kafka.produce(
+        topic='test',
+        value=125,
+    )
 
     value = consumer.consume()
     assert value == 124
@@ -43,10 +51,14 @@ def test_mock_kafka():
 
     # Test producing into two topics.
     consumer_2 = kafka.get_consumer(topic='test2')
-    producer_2 = kafka.get_producer(topic='test2')
-
-    producer.produce(999)
-    producer_2.produce('')
+    kafka.produce(
+        topic='test',
+        value=999,
+    )
+    kafka.produce(
+        topic='test2',
+        value='',
+    )
 
     value = consumer.consume()
     assert value == 999
@@ -67,8 +79,10 @@ def test_mock_kafka():
     listener = kafka.get_listener(topic='test_listener', callback=callback)
     listener.start()
 
-    producer = kafka.get_producer(topic='test_listener')
-    producer.produce(12)
+    kafka.produce(
+        topic='test_listener',
+        value=12,
+    )
 
     time.sleep(1)
 

@@ -35,8 +35,10 @@ def test_state_server(mocker) -> None:
     assert len(broadcasted) == 0
 
     # Produce a value for a state variable in Kafka.
-    producer: Producer = kafka.get_producer('error_code')
-    producer.produce(11)
+    kafka.produce(
+        topic='error_code',
+        value=11,
+    )
 
     time.sleep(1)
 
@@ -51,8 +53,10 @@ def test_state_server(mocker) -> None:
     }
 
     # Produce a value for a parameter variable in Kafka.
-    producer = kafka.get_producer('intensity')
-    producer.produce(123)
+    kafka.produce(
+        topic='intensity',
+        value=123,
+    )
 
     time.sleep(1)
 

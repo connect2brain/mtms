@@ -7,7 +7,6 @@ from functools import partial
 from typing import Any, Dict, List, Tuple, TypedDict
 
 from flask_socketio import SocketIO
-from pykafka.producer import Producer
 
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
@@ -115,10 +114,10 @@ class PlannerServer:
             'position': data['position'],
         }
 
-        # XXX: Recreating the producer for each command is slow with PyKafka, revisit after changing
-        #   the Kafka library to a faster one.
-        producer: Producer = self._kafka.get_producer(topic="point.add")
-        producer.produce(bytes(json.dumps(value), encoding='utf8'))
+        self._kafka.produce(
+            topic=self._COMMAND_ADD_POINT,
+            value=bytes(json.dumps(value), encoding='utf8')
+        )
 
     def _point_added(self, topic: str, data: str):
         """When a command is received from Kafka to add a new point, pass that command onto the

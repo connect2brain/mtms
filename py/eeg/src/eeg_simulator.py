@@ -7,10 +7,7 @@ import threading
 from multiprocessing import Process, Queue, Pool
 from typing import Any, List
 
-import pykafka
-from pykafka.balancedconsumer import BalancedConsumer
-from pykafka.simpleconsumer import SimpleConsumer
-from pykafka.producer import Producer
+from confluent_kafka import Consumer
 
 from mtms.kafka.kafka import Kafka
 
@@ -36,11 +33,12 @@ class EegSimulator:
 
         kafka = Kafka()
 
-        producer: Producer = kafka.get_producer(topic='eeg_data')
         try:
             logging.info("send_data() ready to receive data.")
 
             count = 0
+            success = 0
+            failed = 0
             while True:   # Run until the end of stream
                 data = data_q.get()
                 if data is None:
@@ -48,27 +46,30 @@ class EegSimulator:
                     break
                 msg_q.put(time.time())
 
-                producer.produce(bytes(data))
+                def acked(err, msg):
+                    nonlocal success
+                    nonlocal failed
+                    if err is None:
+                        success += 1
+                    else:
+                        failed += 1
+
+                kafka.produce(
+                    topic='eeg_data',
+                    value=bytes(data),
+                    callback=acked,
+                )
+                kafka.flush()
 
                 # Process delivery messages
                 if count % 100 == 0:
+                    logging.info("Successfully delivered {} messages, failed to deliver {} messages.".format(success, failed))
                     success = 0
                     failed = 0
-                    while True:
-                        try:
-                            msg, exc = producer.get_delivery_report(block=False)
-                            if exc is not None:
-                                failed += 1
-                            else:
-                                success += 1
-                        except queue.Empty:
-                            break
-                    logging.info("Successfully delivered {} messages, failed to deliver {} messages.".format(success, failed))
 
                 count += 1
-        except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
+        except Exception as e:
             logging.error("Error sending to Kafka. Message: '{}'.".format(e))
-            producer.stop()
 
         logging.info("send_data() exiting.")
         msg_q.put(None)   # Send None to indicate the end to the main thread
@@ -127,30 +128,23 @@ class EegSimulator:
 
         kafka = Kafka()
 
-        # TODO: BalancedConsumer was used here previously, but it didn't work.
-        #       Change it back and fix?
-        consumer: SimpleConsumer = kafka.get_consumer(
+        consumer: Consumer = kafka.get_consumer(
             topic='eeg_data',
         )
 
         logging.info("receive_data() starting to listen for data.")
         try:
-            consumer.start()
             # TODO: Add a mechanism for breaking this loop once all messages have been
             #       received. That will probably need re-thinking the content of Kafka
             #       topics, as the current 'eeg_data' only serves to transmit raw data
             #       and not metadata, such as the end of stream.
             while True:
-                #msg = consumer.consume()
-                for msg in consumer:
-                    if msg is not None:
-                        msg_q.put(time.time())
+                msg = consumer.poll(timeout=0.1)
+                if msg is not None:
+                    msg_q.put(time.time())
 
-            consumer.commit_offsets()
-            consumer.stop()
-
-        except pykafka.exceptions.ConsumerStoppedException as e:
-            logging.error("Kafka consumer stopped unexpectedly.")
+        except Exception as e:
+            logging.error("Kafka consumer stopped unexpectedly: {}".format(e))
             msg_q.put(None)
 
         logging.info("receive_data() exiting.")
@@ -341,4 +335,5 @@ class EegSimulator:
             logging.error("No messages were received from Kafka.")
             return False
 
+        logging.info("Done.")
         return True
