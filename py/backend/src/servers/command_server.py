@@ -32,7 +32,7 @@ class CommandServer:
         self._socketio: SocketIO = socketio
         self._topic_db: TopicDb = topic_db
 
-        self._commands: List[str] = self._topic_db.get_topics_by_type(self._COMMAND_TOPIC_TYPE)
+        self._commands: List[str] = self._topic_db.get_topics(type=self._COMMAND_TOPIC_TYPE)
 
         socketio.on_event(self._COMMAND_EVENT, self._send_command)
 

@@ -3,6 +3,7 @@ import os
 import time
 import socket
 
+from confluent_kafka.admin import AdminClient
 from confluent_kafka import Consumer, Producer
 
 from mtms.db.topic_db import TopicDb
@@ -95,6 +96,15 @@ class Kafka:
 
         """
         self.producer.flush()
+
+    def create_admin_client(self):
+        """Create and return an admin client for Kafka.
+
+        """
+        admin_client: AdminClient = AdminClient({
+            'bootstrap.servers': self.hosts
+        })
+        return admin_client
 
     def get_listener(self, topic=None, callback=None, delay=0.1):
         """Initializes and returns a KafkaListener.
