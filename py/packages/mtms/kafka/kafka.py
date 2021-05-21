@@ -4,6 +4,7 @@ import time
 
 import pykafka
 from pykafka import KafkaClient
+from pykafka.balancedconsumer import BalancedConsumer
 
 from mtms.db.topic_db import TopicDb
 from .listener import KafkaListener
@@ -84,6 +85,27 @@ class Kafka:
             consumer_timeout_ms=1000,
         )
         self.reset_consumer(consumer=consumer)
+        return consumer
+
+    def get_balanced_consumer(self, topic: str, **kwargs):
+        """Initializes and returns a BalancedConsumer.
+
+        Parameters
+        ----------
+        topic
+            The name of the Kafka topic.
+        kwargs
+            Additional keyword arguments that are passed to Pykafka.
+
+        Returns
+        -------
+        KafkaConsumer
+            An initialized KafkaConsumer.
+        """
+        consumer: BalancedConsumer = self.client.topics[topic].get_balanced_consumer(
+            consumer_timeout_ms=1000,
+            **kwargs,
+        )
         return consumer
 
     def get_producer(self, topic=None):
