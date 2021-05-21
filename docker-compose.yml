@@ -50,6 +50,24 @@ services:
     networks:
       - kafka
       - backend
+  eeg:
+    build:
+      context: .
+      dockerfile: py/eeg/Dockerfile
+    restart: always
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      - KAFKA_IP=kafka
+      - KAFKA_PORT=${KAFKA_PORT}
+    volumes:
+      - ./py/eeg:/code/py/eeg
+      - ./py/packages:/code/py/packages
+      - ./eeg/datasets:/code/eeg/datasets
+    depends_on:
+      - kafka
+    networks:
+      - kafka
   mtms_bridge:
     build:
       context: .
