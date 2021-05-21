@@ -13,11 +13,7 @@ from mtms.kafka.kafka import Kafka
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-kafka: Kafka = Kafka()
-
-eeg_simulator: EegSimulator = EegSimulator(
-    kafka=kafka,
-)
+eeg_simulator: EegSimulator = EegSimulator()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = "Send EEG data over Kafka")
