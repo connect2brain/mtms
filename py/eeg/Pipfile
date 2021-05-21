@@ -9,8 +9,4 @@ pytest = "*"
 [packages]
 mne = "*"
 pykafka = "*"
-python-dotenv = "*"
 readersender = {editable = true,git = "https://github.com/juusokorhonen/readersender.git"}
-
-[requires]
-python_version = "3.6"

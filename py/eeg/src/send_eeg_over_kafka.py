@@ -5,6 +5,7 @@ import sys
 import time
 import csv
 
+# TODO: No need to use dotenv here: Docker will pass the environment variables instead.
 import dotenv
 from mne.io import concatenate_raws, read_raw_edf
 import numpy as np
@@ -16,7 +17,7 @@ import queue
 
 dotenv.load_dotenv('.env', verbose=False)   # Load configuration from env vars and .env -file
 
-
+# TODO: Use our mtms.kafka package, which implements the same functionality.
 def get_kafka_client(ip=None, port=None, zookeeper_hosts=None, use_greenlets=False):
     """Initializes and returns a KafkaClient.
 
