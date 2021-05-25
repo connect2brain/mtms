@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import json
+import logging
 import time
 from typing import List, Tuple, TypedDict
 
-from flask import Flask, request
+import flask_socketio
+from flask_socketio import SocketIO
 from numpy.typing import ArrayLike
 
 from mtms.kafka.kafka import Kafka
@@ -25,19 +27,20 @@ class EegServer():
     """
     _EEG_TOPIC: str = 'eeg_data'
 
-    def __init__(self, kafka: Kafka, app: Flask, eeg_buffer_length: int) -> None:
+    def __init__(self, kafka: Kafka, socketio: SocketIO, eeg_buffer_length: int) -> None:
         """Initialize the EEG server.
 
         Parameters
         ----------
         kafka
             A Kafka object to communicate with Kafka.
-        app
-            The Flask application that the endpoint is added to.
+        socketio
+            A SocketIO object to which the event listeners are added.
         eeg_buffer_length
             The length of the buffer for EEG data, in samples.
         """
         self._kafka: Kafka = kafka
+        self._socketio: SocketIO = socketio
         self._eeg_buffer_length: int = eeg_buffer_length
 
         # TODO: Sender should publish these via Kafka.
@@ -46,28 +49,27 @@ class EegServer():
 
         self._initialize_eeg_listener()
 
-        # TODO: Document the API endpoint, modify to use Socket.IO. Improve type annotation
-        #       for return value after switching to Socket.IO.
-        @app.route('/eeg_data')
-        def get_eeg_data() -> Tuple[str, int, dict]:
-            args_from: float = float(request.args.get('from', -60))
-            args_to: float = float(request.args.get('to', 0))
+        socketio.on_event('eeg_data', self._send_eeg_data)
 
-            t0: float = time.time()
+    def _send_eeg_data(self, params) -> None:
+        args_from: float = float(params.get('from', -60))
+        args_to: float = float(params.get('to', 0))
 
-            data: ArrayLike
-            timestamps: ArrayLike
-            data, timestamps = self._eeg_buffer.get_timerange(
-                t0 + args_from,
-                t0 + args_to,
-            )
-            timestamps_relative: ArrayLike = [t - t0 for t in timestamps]
+        t0: float = time.time()
 
-            result: EegData = [
-                {'data': data, 'timestamp': timestamp}
-                for data, timestamp in zip(data.tolist(), timestamps_relative)
-            ]
-            return json.dumps(result), 200, {'content-type': 'application/json'}
+        data: ArrayLike
+        timestamps: ArrayLike
+        data, timestamps = self._eeg_buffer.get_timerange(
+            t0 + args_from,
+            t0 + args_to,
+        )
+        timestamps_relative: ArrayLike = [t - t0 for t in timestamps]
+
+        result: EegData = [
+            {'data': data, 'timestamp': timestamp}
+            for data, timestamp in zip(data.tolist(), timestamps_relative)
+        ]
+        flask_socketio.emit('eeg_data', result)
 
     def _initialize_eeg_listener(self) -> None:
         """Initialize the EEG listener.

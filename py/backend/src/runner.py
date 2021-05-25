@@ -49,7 +49,7 @@ socketio: SocketIO = SocketIO(app, async_mode='gevent', cors_allowed_origins='*'
 # Create server for EEG data
 eeg_server: EegServer = EegServer(
     kafka=kafka,
-    app=app,
+    socketio=socketio,
     eeg_buffer_length=eeg_buffer_length,
 )
 
