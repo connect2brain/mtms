@@ -17,7 +17,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import * as d3 from "d3";
 
 const eegChannels = 64;
@@ -45,26 +44,19 @@ export default {
       default: 480
     }
   },
+  sockets: {
+    eeg_data(data) {
+      this.requestTime = Date.now() - this.requestStartTime;
+      this.eegData = data;
+    }
+  },
   methods: {
     loadData: function() {
       this.requestStartTime = Date.now();
-
-      axios
-        .get(
-          process.env.VUE_APP_BACKEND_URL || "http://localhost:5000/eeg_data",
-          {
-            params: {
-              from: this.minTime
-            }
-          }
-        )
-        .then(response => {
-          this.requestTime = Date.now() - this.requestStartTime;
-          this.eegData = response.data;
-        })
-        .catch(e => {
-          this.errors.push(e);
-        });
+      this.$socket.emit("eeg_data", {
+        from: this.minTime,
+        to: 0
+      });
     },
     updateGraph: function() {
       const margin = {
