@@ -3,6 +3,7 @@ import logging
 import time
 import csv
 import queue
+import threading
 from multiprocessing import Process, Queue, Pool
 from typing import Any, List
 
@@ -31,6 +32,8 @@ class EegSimulator:
         msg_q
             A queue where to write status messages etc.
         """
+        threading.current_thread().name = "send_data"
+
         kafka = Kafka()
 
         producer: Producer = kafka.get_producer(topic='eeg_data')
@@ -38,7 +41,7 @@ class EegSimulator:
             logging.info("send_data() ready to receive data.")
 
             count = 0
-            while True:   # Run until stopped
+            while True:   # Run until the end of stream
                 data = data_q.get()
                 if data is None:
                     msg_q.put(time.time())
@@ -55,24 +58,20 @@ class EegSimulator:
                         try:
                             msg, exc = producer.get_delivery_report(block=False)
                             if exc is not None:
-                                #logging.info("Failed to deliver msg {}: {}".format(
-                                #    msg.partition_key, repr(exc)))
                                 failed += 1
                             else:
-                                #logging.info("Successfully delivered msg {}".format(
-                                #    msg.partition_key))
                                 success += 1
                         except queue.Empty:
                             break
-                        finally:
-                            logging.info("S{}F{}".format(success, failed))
+                    logging.info("Successfully delivered {} messages, failed to deliver {} messages.".format(success, failed))
+
                 count += 1
         except (pykafka.exceptions.SocketDisconnectedError, pykafka.exceptions.LeaderNotAvailable) as e:
             logging.error("Error sending to Kafka. Message: '{}'.".format(e))
             producer.stop()
 
         logging.info("send_data() exiting.")
-        msg_q.put(None)   # Send None to indicate the end
+        msg_q.put(None)   # Send None to indicate the end to the main thread
 
     def tick_out_data(self,
             data: List[Any],
@@ -92,6 +91,8 @@ class EegSimulator:
         msg_q
             Queue where to send status messages.
         """
+        threading.current_thread().name = "tick_out_data"
+
         logging.info("Ticking out data every {:.2f} ms.".format(1000.0*time_interval))
         logging.info("tick_out_data() starting to send data.")
 
@@ -110,7 +111,8 @@ class EegSimulator:
             next_t += time_interval
 
         logging.info("tick_out_data() exiting.")
-        msg_q.put(None)   # Send None to indicate the end
+        msg_q.put(None)   # Send None to indicate the end to the main thread
+        data_q.put(None)   # Send None to indicate the end to the sender
 
 
     def receive_data(self, msg_q: Queue) -> None:
@@ -121,19 +123,23 @@ class EegSimulator:
         msg_q
             A queue where to write status messages etc.
         """
+        threading.current_thread().name = "receive_data"
+
         kafka = Kafka()
 
-        consumer: BalancedConsumer = kafka.get_balanced_consumer(
+        # TODO: BalancedConsumer was used here previously, but it didn't work.
+        #       Change it back and fix?
+        consumer: SimpleConsumer = kafka.get_consumer(
             topic='eeg_data',
-            consumer_group=b"benchmark",
-            auto_commit_enable=True,
-            auto_offset_reset=pykafka.common.OffsetType.LATEST,
-            reset_offset_on_start=True,
         )
 
         logging.info("receive_data() starting to listen for data.")
         try:
             consumer.start()
+            # TODO: Add a mechanism for breaking this loop once all messages have been
+            #       received. That will probably need re-thinking the content of Kafka
+            #       topics, as the current 'eeg_data' only serves to transmit raw data
+            #       and not metadata, such as the end of stream.
             while True:
                 #msg = consumer.consume()
                 for msg in consumer:
@@ -150,7 +156,10 @@ class EegSimulator:
         logging.info("receive_data() exiting.")
         msg_q.put(None)   # Send None to indicate the end
 
-    def stream_data_mp(self, data: List[Any], fs: int, senders: int = 1) -> None:
+    def stream_data_mp(self,
+            data: List[Any],
+            fs: int,
+            store_data: bool = False) -> bool:
         """This is a multiprocessing version of stream_data.
         Streams data to a given Kafka topic. Publishes the data in one sample
         packets as a JSON map with two keys: 'data' for the content, and 'time'
@@ -162,6 +171,12 @@ class EegSimulator:
             A list of JSON-serializable items.
         fs
             The sampling frequency in Hz.
+        store_data
+            A boolean indicating if the timing data from the streaming is stored.
+
+        Returns
+        -------
+            A boolean indicating if the streaming was successful.
         """
         T = 1 / fs
 
@@ -188,12 +203,20 @@ class EegSimulator:
             ticker_ended = False
             sender_ended = False
             listener_ended = False
-            listener_timed_out = False
             timeout_time = 0.25
             cntr = 0
             prev = time.time()
 
-            while not ticker_ended or not sender_ended or not listener_timed_out or not listener_ended:
+            # TODO: The current stopping condition for the streaming is that all messages
+            # have been sent to Kafka. This likely causes some messages to not have been
+            # received by the listener by the time we get out of this loop, but that's the
+            # best that we can do robustly as long as there is no explicit "end of stream"
+            # message in Kafka. Fix this later.
+            while not sender_ended:
+                listener_timed_out = False
+                sender_timed_out = False
+                ticker_timed_out = False
+
                 now = time.time()
 
                 if now-prev > 0.5:
@@ -203,46 +226,51 @@ class EegSimulator:
 
                 if not ticker_ended:
                     try:
-                        msg = ticker_msg_q.get(True, timeout=timeout_time)
+                        msg = ticker_msg_q.get(block=False)
                         if msg is None:
-                            #ticker_ended = True
-                            pass
+                            ticker_ended = True
                         else:
                             ticker_msgs.append(msg)
                     except queue.Empty:
-                        pass
+                        ticker_timed_out = True
 
                 if not sender_ended:
                     try:
-                        msg = sender_msg_q.get(True, timeout=timeout_time)
+                        msg = sender_msg_q.get(block=False)
                         if msg is None:
-                            #sender_ended = True
-                            pass
+                            sender_ended = True
                         else:
                             sender_msgs.append(msg)
                     except queue.Empty:
-                        pass
+                        sender_timed_out = True
 
-                try:
-                    msg = listener_msg_q.get(True, timeout=timeout_time)
-                    if msg is None:
-                        pass
-                        #listener_ended = True
-                    else:
-                        listener_msgs.append(msg)
-                        listener_timed_out = False
-                except queue.Empty:
-                    listener_timed_out = True
+                # XXX: Currently, the listener doesn't receive the information about the
+                #      end of stream, therefore listener_ended is semantically different
+                #      from sender_ended and ticker_ended: in contrast to the latter two,
+                #      listener_ended is set to True only when something fails. Change
+                #      the semantics to match with each other.
+                if not listener_ended:
+                    try:
+                        msg = listener_msg_q.get(block=False)
+                        if msg is None:
+                            listener_ended = True
+                        else:
+                            listener_msgs.append(msg)
+                    except queue.Empty:
+                        listener_timed_out = True
+
+                if ticker_timed_out and sender_timed_out and listener_timed_out:
+                    time.sleep(timeout_time)
 
         except KeyboardInterrupt as e:
-            logging.info("|Stopped.\n")
+            logging.info("Stopped.")
             logging.info("Keyboard interrupt received. Stopping child processes.")
             ticker.terminate()
             sender.terminate()
             listener.terminate()
 
         else:
-            logging.info("|Ended.\n")
+            logging.info("Ended.")
             sender.terminate()
             ticker.terminate()
             listener.terminate()
@@ -290,13 +318,27 @@ class EegSimulator:
         else:
             logging.info("Not enough sender and/or listener messages.")
 
-        if len(ticker_msgs) > 0 and len(sender_msgs) > 0 and len(listener_msgs) > 0:
-            logging.info("Saving data to output/timing.csv.")
-            with open("output/timing.csv", "w", newline="") as f:
-                writer = csv.writer(f)
-                writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
-        else:
-            logging.info("Not enough data. Skipping save.")
+        if store_data:
+            if len(ticker_msgs) > 0 and len(sender_msgs) > 0 and len(listener_msgs) > 0:
+                logging.info("Saving data to output/timing.csv.")
+                with open("output/timing.csv", "w", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerows(list(zip(ticker_msgs, sender_msgs, listener_msgs)))
+            else:
+                logging.info("Not enough data. Skipping save.")
 
-        #logging.info("{} packets out of {} were sent late.".format(sum([1 for x in times_log if x < 0]), len(times_log)))
-        #logging.info("On average, packet was sent {:.1f} ms late.".format(1000*sum([-x for x in times_log if x < 0])/sum([1 for x in times_log if x < 0])))
+        # TODO: A couple of conditions for determining if the streaming was successful,
+        #       not exhaustive yet.
+        if len(ticker_msgs) == 0:
+            logging.error("No messages were ticked for sending.")
+            return False
+
+        if len(sender_msgs) == 0:
+            logging.error("No messages were sent to Kafka.")
+            return False
+
+        if len(listener_msgs) == 0:
+            logging.error("No messages were received from Kafka.")
+            return False
+
+        return True
