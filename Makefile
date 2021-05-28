@@ -13,7 +13,7 @@ reset-env:              ## Reset environment variables.
 .PHONY: reset-env
 
 test-backend:           ## Run backend tests.
-	docker-compose -p test build backend && docker-compose -p test run backend pipenv run pytest
+	docker-compose -p test build backend && docker-compose -p test run backend poetry run pytest
 .PHONY: test-backend
 
 integration-tests:      ## Run integration tests.
