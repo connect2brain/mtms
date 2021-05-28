@@ -9,8 +9,8 @@ from flask import Flask, request
 from numpy.typing import ArrayLike
 
 from mtms.kafka.kafka import Kafka
+from mtms.kafka.listener import KafkaListener
 from .eeg.cyclic_buffer import CyclicBuffer
-from .eeg.eeg_listener import EegListener
 
 class EegDataPoint(TypedDict):
     data: ArrayLike
@@ -77,11 +77,14 @@ class EegServer():
             self._eeg_buffer_length,
             self._n_channels,
         )
-        self._eeg_listener: EegListener = EegListener(
-            kafka=self._kafka,
-            name='eeg_listener',
+        def callback(topic, raw_message):
+            message = json.loads(raw_message)
+            self._eeg_buffer.append(message['data'], message['time'])
+
+        delay = 1.0 / self._sampling_frequency
+        self._eeg_listener: KafkaListener = self._kafka.get_listener(
             topic=self._EEG_TOPIC,
-            buffer=self._eeg_buffer,
-            sampling_frequency=self._sampling_frequency,
+            callback=callback,
+            delay=delay
         )
         self._eeg_listener.start()
