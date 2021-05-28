@@ -8,13 +8,15 @@ RUN apt-get update && \
 
 # Python dependencies
 
-COPY py/integration_tests/Pipfile .
+# Poetry is installed using pip, which is not the recommended way. However, it suits our
+# Docker workflow better, as it requires fewer steps and doesn't need modifying PATH manually.
+RUN pip install poetry
 
-COPY py/integration_tests/Pipfile.lock .
+COPY py/integration_tests/pyproject.toml .
 
-RUN pip install pipenv
+COPY py/integration_tests/poetry.lock .
 
-RUN pipenv install --deploy --ignore-pipfile
+RUN poetry install
 
 # Entrypoint
 
