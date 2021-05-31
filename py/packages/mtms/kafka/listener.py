@@ -3,6 +3,7 @@
 
 import logging
 import sys
+import time
 from threading import Thread
 
 import pykafka.exceptions
@@ -14,7 +15,7 @@ class KafkaListener(Thread):
     """A wrapper around KafkaConsumer that pushes the data produced into the given topic to a callback.
 
     """
-    def __init__(self, kafka=None, topic=None, callback=None):
+    def __init__(self, kafka=None, topic=None, callback=None, delay=None):
         """Initialize the listener.
 
         Parameters
@@ -25,11 +26,14 @@ class KafkaListener(Thread):
             The topic name.
         callback : function
             The function that is called when new data are produced in the topic.
+        delay : float
+            The delay (in seconds) between two consecutive runs of the listener.
         """
         Thread.__init__(self)
         self._kafka = kafka
         self._topic = topic
         self._callback = callback
+        self._delay = delay
 
         self._thread_name = 'kafka_listener_' + topic
         self._consumer = self._kafka.get_consumer(topic=topic)
@@ -71,3 +75,4 @@ class KafkaListener(Thread):
             value = self._read_value()
             if value is not None:
                 self._callback(self._topic, value)
+            time.sleep(self._delay)

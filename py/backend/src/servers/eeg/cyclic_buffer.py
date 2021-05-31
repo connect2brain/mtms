@@ -3,6 +3,9 @@
 
 import numpy as np
 
+from typing import Tuple
+from numpy.typing import ArrayLike
+
 class CyclicBuffer:
     """A buffer that stores a fixed number of the previous values,
     with a numeric timestamp attached to each value.
@@ -12,32 +15,32 @@ class CyclicBuffer:
     The buffer is initialized with NaN values and -inf timestamps.
     """
 
-    def __init__(self, length, dim):
+    def __init__(self, length: int, dim: int) -> None:
         """Initialize a buffer with a given length and data dimensionality.
 
         Parameters
         ----------
-        length : int
+        length
             The maximum number of values stored in the buffer.
-        dim : int
+        dim
             The dimensionality of each value, i.e., the number of elements
             that the value consists of.
         """
-        self._length = length
-        self._dim = dim
-        self._data = np.full((length, dim), np.nan)
-        self._timestamps = np.full(length, -np.inf)
-        self._i = 0
+        self._length: int = length
+        self._dim: int = dim
+        self._data: ArrayLike = np.full((length, dim), np.nan)
+        self._timestamps: ArrayLike = np.full(length, -np.inf)
+        self._i: int = 0
 
-    def append(self, value, timestamp):
+    def append(self, value: ArrayLike, timestamp: float) -> None:
         """Append a value with a numeric timestamp.
 
         Parameters
         ----------
-        value: array_like
+        value
             An array of the length that equals the dimensionality of the
             buffer.
-        timestamp: float
+        timestamp
             A timestamp attached to the value.
 
         Notes
@@ -53,49 +56,46 @@ class CyclicBuffer:
         self._timestamps[self._i] = timestamp
         self._i = (self._i + 1) % self._length
 
-    def get_latest(self):
+    def get_latest(self) -> Tuple[float, float]:
         """Return the latest datapoint and timestamp appended.
 
         Returns
         -------
-        float
             The value of the latest datapoint.
-        float
+
             The timestamp of the latest datapoint.
         """
         return self._data[self._i - 1], self._timestamps[self._i - 1]
 
-    def get_buffer(self):
+    def get_buffer(self) -> Tuple[ArrayLike, ArrayLike]:
         """Return all data and timestamps stored in the buffer.
 
         Returns
         -------
-        ndarray
             A float array of the data values.
-        ndarray
+
             A float array of the corresponding timestamps.
 
         Notes
         -----
         The data are returned in an increasing time order.
         """
-        inds = np.concatenate([np.arange(self._i, self._length),
-                               np.arange(0, self._i)])
+        inds: ArrayLike = np.concatenate([np.arange(self._i, self._length),
+                                          np.arange(0, self._i)])
         return self._data[inds], self._timestamps[inds]
 
-    def get_timerange(self, t0, t1):
+    def get_timerange(self, t0: float, t1: float) -> Tuple[ArrayLike, ArrayLike]:
         """Return the data and their timestamps between two given timestamps.
 
         Parameters
         ----------
-        t0, t1: float
+        t0, t1
             The start and end timestamps, respectively.
 
         Returns
         -------
-        ndarray
             A float array of the data values.
-        ndarray
+
             A float array of the corresponding timestamps.
 
         Notes
@@ -103,6 +103,8 @@ class CyclicBuffer:
         The endpoints of the time range are included.
         The result is returned in an increasing time order.
         """
+        data: ArrayLike
+        timestamps: ArrayLike
         data, timestamps = self.get_buffer()
-        inds = np.logical_and(timestamps >= t0, timestamps <= t1)
+        inds: ArrayLike = np.logical_and(timestamps >= t0, timestamps <= t1)
         return data[inds], timestamps[inds]

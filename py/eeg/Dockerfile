@@ -15,11 +15,23 @@ RUN pip install poetry
 
 COPY py/packages py/packages
 
-COPY py/backend/pyproject.toml .
+COPY py/eeg/pyproject.toml .
 
-COPY py/backend/poetry.lock .
+COPY py/eeg/poetry.lock .
 
 RUN poetry install
+
+# Integration tests
+
+COPY py/eeg/integration-tests.sh .
+
+COPY third-party/wait-for-it/wait-for-it.sh .
+
+RUN dos2unix integration-tests.sh
+
+RUN dos2unix wait-for-it.sh
+
+RUN chmod +x ./integration-tests.sh ./wait-for-it.sh
 
 # Copy and initialize database
 
@@ -31,6 +43,6 @@ RUN chmod 755 db/init-db.sh
 
 RUN db/init-db.sh
 
-# Run
-
-CMD [ "poetry", "run", "python", "py/backend/src/runner.py"]
+# Sleep forever here to allow the user to control the EEG service by separately executing
+# commands ínside the container.
+CMD ["sleep", "infinity"]

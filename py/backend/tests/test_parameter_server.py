@@ -6,6 +6,9 @@ import os
 import pytest
 import sys
 import time
+from typing import Any, Dict, List
+
+from pykafka.producer import Producer
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
@@ -15,23 +18,23 @@ from mtms.mocks.mock_socket_io import MockSocketIO
 
 from servers.parameter_server import ParameterServer
 
-def test_parameter_server(mocker):
+def test_parameter_server(mocker) -> None:
     """Tests ParameterServer class.
 
     """
 
     # Set up ParameterServer.
-    broadcasted = []
+    broadcasted: List[str] = []
 
-    kafka = MockKafka()
-    socketio = MockSocketIO(broadcasted=broadcasted)
-    topic_db = MockTopicDb()
+    kafka: MockKafka = MockKafka()
+    socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
+    topic_db: MockTopicDb = MockTopicDb()
 
-    server = ParameterServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: ParameterServer = ParameterServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
 
     # Patch SocketIO's emit function with our own, used when a new client connects.
-    emitted_on_connect = []
-    def emit_on_connect(event, data):
+    emitted_on_connect: List[Dict[str, Any]] = []
+    def emit_on_connect(event: str, data: Dict[str, Any]):
         emitted_on_connect.append({
             'event': event,
             'data': data,
@@ -46,7 +49,7 @@ def test_parameter_server(mocker):
     assert len(broadcasted) == 0
 
     # Initialize a parameter in Kafka by producing a value for it.
-    producer = kafka.get_producer('intensity')
+    producer: Producer = kafka.get_producer('intensity')
     producer.produce(123)
 
     time.sleep(1)

@@ -5,6 +5,7 @@ import os
 import pytest
 import sys
 import time
+from typing import List
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
@@ -14,19 +15,19 @@ from mtms.mocks.mock_socket_io import MockSocketIO
 
 from servers.state_server import StateServer
 
-def test_state_server(mocker):
+def test_state_server(mocker) -> None:
     """Tests StateServer class.
 
     """
 
     # Set up StateServer.
-    broadcasted = []
+    broadcasted: List[str] = []
 
-    kafka = MockKafka()
-    socketio = MockSocketIO(broadcasted=broadcasted)
-    topic_db = MockTopicDb()
+    kafka: MockKafka = MockKafka()
+    socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
+    topic_db: MockTopicDb = MockTopicDb()
 
-    server = StateServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: StateServer = StateServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
 
     # Test that connecting to the state server does not broadcast anything.
     socketio.simulate_event('connect')
@@ -34,7 +35,7 @@ def test_state_server(mocker):
     assert len(broadcasted) == 0
 
     # Produce a value for a state variable in Kafka.
-    producer = kafka.get_producer('error_code')
+    producer: Producer = kafka.get_producer('error_code')
     producer.produce(11)
 
     time.sleep(1)

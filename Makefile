@@ -13,7 +13,7 @@ reset-env:              ## Reset environment variables.
 .PHONY: reset-env
 
 test-backend:           ## Run backend tests.
-	docker-compose -p test build backend && docker-compose -p test run backend pipenv run pytest
+	docker-compose -p test build backend && docker-compose -p test run backend poetry run pytest
 .PHONY: test-backend
 
 integration-tests:      ## Run integration tests.
@@ -30,7 +30,7 @@ download-data:          ## Download EEG data.
 stream-data:            ## Stream EEG data via Kafka.
                         ## Use DATASET_FILE environment variable to specify the dataset file.
                         ## Example: make stream-data DATASET_FILE=eeg/datasets/MNE-eegbci-data/files/eegmmidb/1.0.0/S001/S001R01.edf
-	pipenv run python -m eeg.send_eeg_over_kafka $(DATASET_FILE)
+	docker-compose exec eeg poetry run python py/eeg/src/runner.py $(DATASET_FILE)
 .PHONY: stream-data
 
 listen:                 ## Listen to Kafka topic, specified in TOPIC environment variable.

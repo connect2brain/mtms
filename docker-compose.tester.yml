@@ -1,6 +1,7 @@
 version: '2'
 
 services:
+  # This service simulates the user and its interactions with the system.
   tester:
     build:
       context: .
@@ -9,8 +10,6 @@ services:
       - backend
     env_file:
       - ${ENV_FILE}
-    environment:
-      - BACKEND_HOST=backend
     volumes:
       - ./py/integration_tests:/code/py/integration_tests
     networks:
