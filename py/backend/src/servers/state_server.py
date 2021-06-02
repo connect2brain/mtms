@@ -41,7 +41,8 @@ class StateServer:
         """
         topic: str
         self._listeners: List[KafkaListener] = [
-            self._kafka.get_listener(
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=self._update_state,
             ) for topic in self._state_topics

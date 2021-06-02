@@ -51,7 +51,8 @@ class ParameterServer:
         """
         topic: str
         self._listeners: List[KafkaListener] = [
-            self._kafka.get_listener(
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=self._get_parameter_from_kafka,
             ) for topic in self._parameter_topics

@@ -5,6 +5,8 @@ import logging
 from functools import partial
 from threading import Thread
 
+from mtms.kafka.listener import KafkaListener
+
 class ParameterCommandSender(Thread):
     """A class for sending parameters and commands to LabVIEW.
 
@@ -30,14 +32,16 @@ class ParameterCommandSender(Thread):
 
         # Initialize listener for each topic.
         self._parameter_listeners = [
-            self._kafka.get_listener(
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=partial(self._send, 'parameter'),
             ) for topic in self._parameter_topics
         ]
 
         self._command_listeners = [
-            self._kafka.get_listener(
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=partial(self._send, 'command'),
             ) for topic in self._command_topics

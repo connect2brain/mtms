@@ -27,7 +27,11 @@ def test_command_server() -> None:
     socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
     topic_db: MockTopicDb = MockTopicDb()
 
-    server: CommandServer = CommandServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: CommandServer = CommandServer(
+        kafka=kafka,
+        socketio=socketio,
+        topic_db=topic_db,
+    )
 
     # Test that connecting to the command server does not broadcast anything.
     socketio.simulate_event('connect')
@@ -38,6 +42,8 @@ def test_command_server() -> None:
     socketio.simulate_event('command', 'stimulate')
 
     consumer = kafka.get_consumer('stimulate')
-    value = consumer.consume()
+
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
 
     assert value == b'stimulate'

@@ -10,14 +10,14 @@ def test_mock_kafka():
     """Tests MockKafka class.
 
     """
-    from mtms.mocks.mock_kafka import MockKafka
+    from mtms.mocks.mock_kafka import MockKafka, MockKafkaListener
 
     kafka = MockKafka()
 
     consumer = kafka.get_consumer(topic='test')
 
     # Test consuming when the topic is empty.
-    value = consumer.consume()
+    value = consumer.poll()
     assert value is None
 
     # Test producing and consuming a single message.
@@ -25,13 +25,14 @@ def test_mock_kafka():
         topic='test',
         value=123,
     )
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
 
     assert value == 123
 
     # Test consuming again after the message has been consumed.
-    value = consumer.consume()
-    assert value is None
+    message = consumer.poll()
+    assert message is None
 
     # Test the order of two messages.
     kafka.produce(
@@ -43,10 +44,12 @@ def test_mock_kafka():
         value=125,
     )
 
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 124
 
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 125
 
     # Test producing into two topics.
@@ -60,10 +63,12 @@ def test_mock_kafka():
         value='',
     )
 
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 999
 
-    value_2 = consumer_2.consume()
+    message_2 = consumer_2.poll()
+    value_2 = consumer.message_to_value(message_2)
     assert value_2 == ''
 
     # Test KafkaListener.
@@ -76,7 +81,11 @@ def test_mock_kafka():
         nonlocal callback_called
         callback_called = True
 
-    listener = kafka.get_listener(topic='test_listener', callback=callback)
+    listener = MockKafkaListener(
+        kafka=kafka,
+        topic='test_listener',
+        callback=callback,
+    )
     listener.start()
 
     kafka.produce(

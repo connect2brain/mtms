@@ -64,7 +64,8 @@ class PlannerServer:
         )
 
         # A Kafka listener for adding a new point.
-        self._add_point_listener: KafkaListener = self._kafka.get_listener(
+        self._add_point_listener: KafkaListener = KafkaListener(
+            kafka=self._kafka,
             topic=self._COMMAND_ADD_POINT,
             callback=self._point_added,
         )

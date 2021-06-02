@@ -7,9 +7,7 @@ import threading
 from multiprocessing import Process, Queue, Pool
 from typing import Any, List
 
-from confluent_kafka import Consumer
-
-from mtms.kafka.kafka import Kafka
+from mtms.kafka.kafka import Kafka, KafkaConsumer
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
@@ -33,43 +31,39 @@ class EegSimulator:
 
         kafka = Kafka()
 
-        try:
-            logging.info("send_data() ready to receive data.")
+        logging.info("send_data() ready to receive data.")
 
-            count = 0
-            success = 0
-            failed = 0
-            while True:   # Run until the end of stream
-                data = data_q.get()
-                if data is None:
-                    msg_q.put(time.time())
-                    break
+        count = 0
+        success = 0
+        failed = 0
+        while True:   # Run until the end of stream
+            data = data_q.get()
+            if data is None:
                 msg_q.put(time.time())
+                break
+            msg_q.put(time.time())
 
-                def acked(err, msg):
-                    nonlocal success
-                    nonlocal failed
-                    if err is None:
-                        success += 1
-                    else:
-                        failed += 1
+            def acked(err, msg):
+                nonlocal success
+                nonlocal failed
+                if err is None:
+                    success += 1
+                else:
+                    failed += 1
 
-                kafka.produce(
-                    topic='eeg_data',
-                    value=bytes(data),
-                    callback=acked,
-                )
-                kafka.flush()
+            kafka.produce(
+                topic='eeg_data',
+                value=bytes(data),
+                callback=acked,
+            )
 
-                # Process delivery messages
-                if count % 100 == 0:
-                    logging.info("Successfully delivered {} messages, failed to deliver {} messages.".format(success, failed))
-                    success = 0
-                    failed = 0
+            # Process delivery messages
+            if count % 100 == 0:
+                logging.info("Successfully delivered {} messages, failed to deliver {} messages.".format(success, failed))
+                success = 0
+                failed = 0
 
-                count += 1
-        except Exception as e:
-            logging.error("Error sending to Kafka. Message: '{}'.".format(e))
+            count += 1
 
         logging.info("send_data() exiting.")
         msg_q.put(None)   # Send None to indicate the end to the main thread
@@ -128,8 +122,9 @@ class EegSimulator:
 
         kafka = Kafka()
 
-        consumer: Consumer = kafka.get_consumer(
+        consumer: KafkaConsumer = kafka.get_consumer(
             topic='eeg_data',
+            timeout=0.1,
         )
 
         logging.info("receive_data() starting to listen for data.")
@@ -139,7 +134,7 @@ class EegSimulator:
             #       topics, as the current 'eeg_data' only serves to transmit raw data
             #       and not metadata, such as the end of stream.
             while True:
-                msg = consumer.poll(timeout=0.1)
+                msg = consumer.poll()
                 if msg is not None:
                     msg_q.put(time.time())
 

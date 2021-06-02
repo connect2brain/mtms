@@ -28,7 +28,11 @@ def test_parameter_server(mocker) -> None:
     socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
     topic_db: MockTopicDb = MockTopicDb()
 
-    server: ParameterServer = ParameterServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: ParameterServer = ParameterServer(
+        kafka=kafka,
+        socketio=socketio,
+        topic_db=topic_db,
+    )
 
     # Patch SocketIO's emit function with our own, used when a new client connects.
     emitted_on_connect: List[Dict[str, Any]] = []
