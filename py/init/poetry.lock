@@ -14,10 +14,63 @@ json = ["jsonschema", "requests", "pyrsistent (==0.16.1)", "pyrsistent"]
 protobuf = ["protobuf", "requests"]
 schema-registry = ["requests"]
 
+[[package]]
+name = "kazoo"
+version = "2.5.0"
+description = "Higher Level Zookeeper Client"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+six = "*"
+
+[package.extras]
+test = ["six", "coverage", "mock", "nose", "flake8"]
+
+[[package]]
+name = "pykafka"
+version = "2.8.0"
+description = "Full-Featured Pure-Python Kafka Client"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+kazoo = "2.5.0"
+six = ">=1.5"
+tabulate = "*"
+
+[package.extras]
+all = ["six (>=1.5)", "kazoo (==2.5.0)", "tabulate", "lz4 (==2.1.0)", "lz4tools (==1.3.1.2)", "pytest (==3.8.1)", "pytest-cov", "python-snappy", "mock", "unittest2", "xxhash (==1.2.0)", "lz4 (==0.10.1)", "lz4tools (==1.3.1.2)", "xxhash (==1.0.1)", "gevent (==1.3)"]
+docs = ["sphinx", "lz4 (==2.1.0)", "lz4tools (==1.3.1.2)", "pytest (==3.8.1)", "pytest-cov", "python-snappy", "mock", "unittest2", "xxhash (==1.2.0)"]
+gevent = ["gevent (==1.3)"]
+lint = ["pep8", "pyflakes"]
+test = ["lz4 (==2.1.0)", "lz4tools (==1.3.1.2)", "pytest (==3.8.1)", "pytest-cov", "python-snappy", "mock", "unittest2", "xxhash (==1.2.0)"]
+
+[[package]]
+name = "six"
+version = "1.16.0"
+description = "Python 2 and 3 compatibility utilities"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+
+[[package]]
+name = "tabulate"
+version = "0.8.9"
+description = "Pretty-print tabular data"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+widechars = ["wcwidth"]
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "42e5fc0d22e8ff23ab3bc58c6584f533d63cc9ba1233627d0e49c83a60614c50"
+content-hash = "7676a326fd81e652565974172bdefc71862940bc0cadd324057302f9947be54a"
 
 [metadata.files]
 confluent-kafka = [
@@ -41,4 +94,20 @@ confluent-kafka = [
     {file = "confluent_kafka-1.7.0-cp39-cp39-manylinux2010_x86_64.whl", hash = "sha256:33c32de2357ddcd3f8a98a96591c69c7ada76215e051ed5dbb17b763921f376a"},
     {file = "confluent_kafka-1.7.0-cp39-cp39-win32.whl", hash = "sha256:955de681f2bc7241d580ebb43d7516f825950518bfaf2c8e6bc3c88d22be4f08"},
     {file = "confluent_kafka-1.7.0-cp39-cp39-win_amd64.whl", hash = "sha256:9f5ff838f2ca87e467aa992f9fcb8bbdd222097690fe6b15aa733025a1613532"},
+]
+kazoo = [
+    {file = "kazoo-2.5.0-py2.py3-none-any.whl", hash = "sha256:a5fa2e400c5068cfee9e86b35cf0dab8232b574152d8e3590d823b3e2426ab5e"},
+    {file = "kazoo-2.5.0.tar.gz", hash = "sha256:8db774f7bdece7d0dc7decb21539ff0852e42c2ffe1c28d7f1ff6f9292a1c3a4"},
+]
+pykafka = [
+    {file = "pykafka-2.8.0-py3.6-linux-x86_64.egg", hash = "sha256:6b075909a52cb0c95325bc16ab797bbcdbb37386652ea460705ed4472ce91459"},
+    {file = "pykafka-2.8.0.tar.gz", hash = "sha256:f0bbd394ae6970042a587c99fe4dc0966e67787249d963d4ce2f810dc9490577"},
+]
+six = [
+    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
+    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+]
+tabulate = [
+    {file = "tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4"},
+    {file = "tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7"},
 ]

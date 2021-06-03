@@ -18,6 +18,7 @@ authors = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pykafka = "^2.8.0"
 confluent-kafka = "^1.7.0"
 
 # The path specified here comes from Dockerfile.

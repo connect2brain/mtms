@@ -18,6 +18,7 @@ authors = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pykafka = "^2.8.0"
 confluent-kafka = "^1.6.1"
 setuptools = "^56.2.0"
 
