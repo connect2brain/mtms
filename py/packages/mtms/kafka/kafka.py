@@ -65,18 +65,17 @@ class KafkaConsumer:
     def poll(self) -> Optional[KafkaMessage]:
         """Poll one new message from Kafka. Return None if there are no new messages.
 
-        Parameters
-        ----------
-        timeout
-            Timeout in seconds when polling for a new message. Defaults to 0, that is, timeouts
-            instantly if there are no new messages.
         """
         msg: Optional[KafkaMessage]
         if self._kafka_library == "confluent-kafka":
             msg = self._consumer.poll(timeout=self._timeout)
 
         elif self._kafka_library == "pykafka":
-            msg = self._consumer.consume()
+            # In pykafka, a timeout of zero is a special case that needs to be handled using 'block' keyword
+            # argument while consuming a message, and not consumer_timeout_ms parameter when creating the consumer;
+            # when consumer_timeout_ms is set to 0 in pykafka, it actually causes no timeout to be used at all.
+            block: bool = self._timeout != 0
+            msg = self._consumer.consume(block=block)
 
         else:
             assert False
