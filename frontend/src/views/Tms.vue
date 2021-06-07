@@ -56,7 +56,7 @@ export default {
 
       const value = rawValue == "True";
 
-      const updated = false;
+      let updated = false;
       switch (stateVariable) {
         case "stimulating":
           updated = value != this.stimulating;
