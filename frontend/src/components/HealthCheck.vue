@@ -16,7 +16,7 @@ export default {
   name: "HealthCheck",
   data: function() {
     return {
-      isConnected: true
+      isConnected: false
     };
   },
 
