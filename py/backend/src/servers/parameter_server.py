@@ -6,7 +6,6 @@ from typing import Any, Dict
 
 import flask_socketio
 from flask_socketio import SocketIO
-from pykafka.producer import Producer
 
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
@@ -40,7 +39,7 @@ class ParameterServer:
         self._socketio: SocketIO = socketio
         self._topic_db: TopicDb = topic_db
 
-        self._parameter_topics: List[str] = self._topic_db.get_topics_by_type(self._PARAMETER_TOPIC_TYPE)
+        self._parameter_topics: List[str] = self._topic_db.get_topics(type=self._PARAMETER_TOPIC_TYPE)
         self._setup_listeners()
 
         socketio.on_event('connect', self._send_parameters_on_connect)
@@ -52,7 +51,8 @@ class ParameterServer:
         """
         topic: str
         self._listeners: List[KafkaListener] = [
-            self._kafka.get_listener(
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=self._get_parameter_from_kafka,
             ) for topic in self._parameter_topics
@@ -137,7 +137,7 @@ class ParameterServer:
         value: float = data['value']
         assert name in self._parameter_topics, "{} is not a valid parameter name".format(name)
 
-        # XXX: Recreating the producer each time is slow with PyKafka, revisit after changing
-        #   the Kafka library to a faster one.
-        producer: Producer = self._kafka.get_producer(topic=name)
-        producer.produce(bytes(str(value), encoding='utf8'))
+        self._kafka.produce(
+            topic=name,
+            value=bytes(str(value), encoding='utf8')
+        )

@@ -8,8 +8,6 @@ import sys
 import time
 from typing import Any, Dict, List
 
-from pykafka.producer import Producer
-
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
 from mtms.mocks.mock_kafka import MockKafka
@@ -30,7 +28,11 @@ def test_parameter_server(mocker) -> None:
     socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
     topic_db: MockTopicDb = MockTopicDb()
 
-    server: ParameterServer = ParameterServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: ParameterServer = ParameterServer(
+        kafka=kafka,
+        socketio=socketio,
+        topic_db=topic_db,
+    )
 
     # Patch SocketIO's emit function with our own, used when a new client connects.
     emitted_on_connect: List[Dict[str, Any]] = []
@@ -49,8 +51,10 @@ def test_parameter_server(mocker) -> None:
     assert len(broadcasted) == 0
 
     # Initialize a parameter in Kafka by producing a value for it.
-    producer: Producer = kafka.get_producer('intensity')
-    producer.produce(123)
+    kafka.produce(
+        topic='intensity',
+        value=123,
+    )
 
     time.sleep(1)
 
@@ -79,8 +83,10 @@ def test_parameter_server(mocker) -> None:
     }
 
     # Initialize another parameter in Kafka.
-    producer = kafka.get_producer('iti')
-    producer.produce(500)
+    kafka.produce(
+        topic='iti',
+        value=500,
+    )
 
     time.sleep(1)
 

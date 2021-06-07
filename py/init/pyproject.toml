@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "backend"
+name = "init"
 version = "0.0.1"
-description = ""
+description = "Initialize the system. Run after Kafka is up and before other services are run."
 
 # A required field, add other authors as needed.
 authors = [
@@ -18,18 +18,8 @@ authors = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-confluent-kafka = "^1.6.1"
-Flask = "^1.1.2"
-Flask-Cors = "^3.0.10"
-numpy = "^1.20.2"
 pykafka = "^2.8.0"
-pytest = "^6.2.4"
-pytest-mock = "^3.6.1"
-Flask-SocketIO = "^5.0.1"
-python-socketio = "^5.2.1"
-gevent = "^21.1.2"
-gevent-websocket = "^0.10.1"
-setuptools = "^56.2.0"
+confluent-kafka = "^1.7.0"
 
 # The path specified here comes from Dockerfile.
 mtms = { path = "/code/py/packages/", develop = true }

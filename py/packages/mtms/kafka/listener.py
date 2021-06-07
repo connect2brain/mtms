@@ -6,8 +6,6 @@ import sys
 import time
 from threading import Thread
 
-import pykafka.exceptions
-
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
@@ -15,7 +13,7 @@ class KafkaListener(Thread):
     """A wrapper around KafkaConsumer that pushes the data produced into the given topic to a callback.
 
     """
-    def __init__(self, kafka=None, topic=None, callback=None, delay=None):
+    def __init__(self, kafka=None, topic=None, callback=None, delay=0.1, verbose=True):
         """Initialize the listener.
 
         Parameters
@@ -23,27 +21,36 @@ class KafkaListener(Thread):
         kafka : Kafka
             A connection to Kafka.
         topic : str
-            The topic name.
-        callback : function
-            The function that is called when new data are produced in the topic.
+            The name of the Kafka topic.
+        callback : callable
+            The function that is called when new data are produced into the topic.
         delay : float
             The delay (in seconds) between two consecutive runs of the listener.
+            Defaults to 0.1 seconds.
+        verbose : boolean
+            If True, logs every new message received. Otherwise logs only every 100th
+            message. Defaults to True.
         """
         Thread.__init__(self)
         self._kafka = kafka
         self._topic = topic
         self._callback = callback
         self._delay = delay
+        self._verbose = verbose
 
         self._thread_name = 'kafka_listener_' + topic
-        self._consumer = self._kafka.get_consumer(topic=topic)
+        self._consumer = self._kafka.get_consumer(
+            topic=topic,
+            timeout=0,
+        )
+        self._msgs_received = 0
         self.daemon = True
 
     def reset(self):
         """Reset the listener to re-read the last message in the topic.
 
         """
-        self._kafka.reset_consumer(consumer=self._consumer)
+        self._consumer.reset()
 
     def _read_value(self):
         """Read one message from Kafka, return the value.
@@ -53,16 +60,19 @@ class KafkaListener(Thread):
         Returns None if there are no new messages.
         """
         value = None
-        try:
-            raw_message = self._consumer.consume()
-            if raw_message is not None:
-                value = raw_message.value
+        raw_message = self._consumer.poll()
+        if raw_message is not None:
+            value = self._consumer.message_to_value(raw_message)
+            if self._verbose:
                 logging.info("A new message received in topic '{topic}', value: {value}".format(
                     topic=self._topic,
                     value=value,
                 ))
-        except pykafka.exceptions.SocketDisconnectedError as e:
-            sys.stderr.write("[ERROR] Kafka socket disconnected. Reason: '{}'".format(e))
+            else:
+                self._msgs_received += 1
+                if self._msgs_received == 100:
+                    self._msgs_received = 0
+                    logging.info("100 new messages have been received in topic '{}'".format(self._topic))
 
         return value
 

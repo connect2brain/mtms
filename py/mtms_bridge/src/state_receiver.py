@@ -22,7 +22,7 @@ class StateReceiver(Thread):
         """
         self._kafka = kafka
         self._server = server
-        self._state_topics = topic_db.get_topics_by_type('state')
+        self._state_topics = topic_db.get_topics(type='state')
 
         self._producers = {}
         for topic in self._state_topics:

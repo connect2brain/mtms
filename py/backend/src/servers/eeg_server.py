@@ -81,10 +81,14 @@ class EegServer():
             message = json.loads(raw_message)
             self._eeg_buffer.append(message['data'], message['time'])
 
-        delay = 1.0 / self._sampling_frequency
-        self._eeg_listener: KafkaListener = self._kafka.get_listener(
+        delay: float = 1.0 / self._sampling_frequency
+        self._eeg_listener: KafkaListener = KafkaListener(
+            kafka=self._kafka,
             topic=self._EEG_TOPIC,
             callback=callback,
-            delay=delay
+            delay=delay,
+
+            # Be less verbose here due to the plentitude of EEG messages.
+            verbose=False,
         )
         self._eeg_listener.start()

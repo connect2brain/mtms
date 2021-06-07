@@ -30,6 +30,23 @@ services:
       - zookeeper
     networks:
       - kafka
+  # Needs to match the value of INIT_HOST environment variable.
+  init:
+    build:
+      context: .
+      dockerfile: py/init/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      - KAFKA_IP=kafka
+      - KAFKA_PORT=${KAFKA_PORT}
+    volumes:
+      - ./py/init:/code/py/init
+      - ./py/packages:/code/py/packages
+    depends_on:
+      - kafka
+    networks:
+      - kafka
   # Needs to match the value of BACKEND_HOST environment variable.
   backend:
     build:

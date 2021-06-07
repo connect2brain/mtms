@@ -7,7 +7,7 @@ authors = ["Olli-Pekka Kahilakoski <olli-pekka.kahilakoski@aalto.fi>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 websocket-client = "^0.59.0"
-pykafka = "^2.8.0"
+confluent-kafka = "^1.6.1"
 
 [tool.poetry.dev-dependencies]
 

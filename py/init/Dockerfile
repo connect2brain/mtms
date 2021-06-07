@@ -4,6 +4,7 @@ WORKDIR /code
 
 RUN apt-get update && \
   apt-get install -y --no-install-recommends \
+  netcat \
   sqlite3 \
   dos2unix
 
@@ -15,9 +16,9 @@ RUN pip install poetry
 
 COPY py/packages py/packages
 
-COPY py/backend/pyproject.toml .
+COPY py/init/pyproject.toml .
 
-COPY py/backend/poetry.lock .
+COPY py/init/poetry.lock .
 
 RUN poetry install
 
@@ -33,7 +34,7 @@ RUN db/init-db.sh
 
 # Entrypoint
 
-COPY py/backend/docker-entrypoint.sh .
+COPY py/init/docker-entrypoint.sh .
 
 COPY third-party/wait-for-it/wait-for-it.sh .
 

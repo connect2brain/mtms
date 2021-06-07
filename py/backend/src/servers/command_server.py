@@ -4,7 +4,6 @@
 from typing import List
 
 from flask_socketio import SocketIO
-from pykafka.producer import Producer
 
 from mtms.kafka.kafka import Kafka
 from mtms.db.topic_db import TopicDb
@@ -33,7 +32,7 @@ class CommandServer:
         self._socketio: SocketIO = socketio
         self._topic_db: TopicDb = topic_db
 
-        self._commands: List[str] = self._topic_db.get_topics_by_type(self._COMMAND_TOPIC_TYPE)
+        self._commands: List[str] = self._topic_db.get_topics(type=self._COMMAND_TOPIC_TYPE)
 
         socketio.on_event(self._COMMAND_EVENT, self._send_command)
 
@@ -47,7 +46,7 @@ class CommandServer:
         """
         assert command in self._commands, "{} is not a valid command".format(command)
 
-        # XXX: Recreating the producer for each command is slow with PyKafka, revisit after changing
-        #   the Kafka library to a faster one.
-        producer: Producer = self._kafka.get_producer(topic=command)
-        producer.produce(bytes(str(command), encoding='utf8'))
+        self._kafka.produce(
+            topic=command,
+            value=bytes(str(command), encoding='utf8')
+        )
