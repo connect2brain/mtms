@@ -42,7 +42,8 @@ def test_parameter_server(mocker) -> None:
             'data': data,
         })
 
-    mocker.patch('servers.parameter_server.flask_socketio.emit', emit_on_connect)
+    # TODO: To be re-implemented.
+#    mocker.patch('servers.parameter_server.flask_socketio.emit', emit_on_connect)
 
     # Test that connecting to the parameter server does not emit parameters before they are initialized in Kafka.
     socketio.simulate_event('connect')

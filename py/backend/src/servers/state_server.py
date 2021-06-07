@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask_socketio import emit, SocketIO
-from typing import List
+from typing import Any, Dict, List
+
+from socketio import AsyncServer
 
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
@@ -16,7 +17,7 @@ class StateServer:
     _STATE_TOPIC_TYPE: str = 'state'
     _UPDATE_STATE_EVENT: str = 'update_state'
 
-    def __init__(self, kafka: Kafka, socketio: SocketIO, topic_db: TopicDb) -> None:
+    def __init__(self, kafka: Kafka, socketio: AsyncServer, topic_db: TopicDb) -> None:
         """Initialize the state server.
 
         Parameters
@@ -24,33 +25,29 @@ class StateServer:
         kafka
             A Kafka object to communicate with Kafka.
         socketio
-            A SocketIO object to which the event listeners are added.
+            An AsyncServer object to which the event listeners are added.
         topic_db
             A TopicDb object to communicate with the topic database.
         """
         self._kafka: Kafka = kafka
-        self._socketio: SocketIO = socketio
+        self._socketio: AsyncServer = socketio
         self._topic_db: TopicDb = topic_db
 
         self._state_topics: List[str] = self._topic_db.get_topics(type=self._STATE_TOPIC_TYPE)
-        self._setup_listeners()
+        self._setup_background_tasks()
 
-    def _setup_listeners(self) -> None:
-        """Setup up a Kafka listener for each topic.
+    def _setup_background_tasks(self) -> None:
+        """Setup the background tasks, namely, a Kafka listener for each topic.
 
         """
         topic: str
-        self._listeners: List[KafkaListener] = [
+        self.background_tasks: List[KafkaListener] = [
             KafkaListener(
                 kafka=self._kafka,
                 topic=topic,
                 callback=self._update_state,
             ) for topic in self._state_topics
         ]
-
-        listener: KafkaListener
-        for listener in self._listeners:
-            listener.start()
 
     def _update_state(self, topic: str, value: float) -> None:
         """Broadcast the new state to all connected clients.

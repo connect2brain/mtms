@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# TODO: Type hints are mostly missing from this file.
+
+import asyncio
 import logging
 import sys
 import time
 from threading import Thread
+from typing import Callable
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-class KafkaListener(Thread):
+class KafkaListener():
     """A wrapper around KafkaConsumer that pushes the data produced into the given topic to a callback.
 
     """
@@ -31,20 +35,17 @@ class KafkaListener(Thread):
             If True, logs every new message received. Otherwise logs only every 100th
             message. Defaults to True.
         """
-        Thread.__init__(self)
         self._kafka = kafka
         self._topic = topic
         self._callback = callback
         self._delay = delay
         self._verbose = verbose
 
-        self._thread_name = 'kafka_listener_' + topic
         self._consumer = self._kafka.get_consumer(
             topic=topic,
             timeout=0,
         )
         self._msgs_received = 0
-        self.daemon = True
 
     def reset(self):
         """Reset the listener to re-read the last message in the topic.
@@ -76,13 +77,13 @@ class KafkaListener(Thread):
 
         return value
 
-    def run(self):
+    async def run(self):
         """Read messages from Kafka and call the callback function with the new data.
 
         """
-        logging.info("Starting thread " + self._thread_name)
+        asyncio.Task.current_task().name = "kafka-listener-{}".format(self._topic)
         while True:
             value = self._read_value()
             if value is not None:
-                self._callback(self._topic, value)
-            time.sleep(self._delay)
+                await self._callback(self._topic, value)
+            await asyncio.sleep(self._delay)

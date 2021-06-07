@@ -6,7 +6,7 @@ import json
 from functools import partial
 from typing import Any, Dict, List, Tuple, TypedDict
 
-from flask_socketio import SocketIO
+from socketio import AsyncServer
 
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
@@ -37,7 +37,7 @@ class PlannerServer:
 
     _COMMAND_ADD_POINT: str = 'point.add'
 
-    def __init__(self, kafka: Kafka, socketio: SocketIO) -> None:
+    def __init__(self, kafka: Kafka, socketio: AsyncServer) -> None:
         """Initialize the planner server.
 
         Parameters
@@ -45,41 +45,50 @@ class PlannerServer:
         kafka
             A Kafka object to communicate with Kafka.
         socketio
-            A SocketIO object to which the event listeners are added.
+            An AsyncServer object to which the event listeners are added.
         """
-        self._socketio: SocketIO = socketio
+        self._socketio: AsyncServer = socketio
         self._kafka: Kafka = kafka
 
         # Socket.IO event handlers
 
-        socketio.on_event(
+        socketio.on(
             'from_neuronavigation',
             self._handle_neuronavigation_message,
         )
 
         # A handler for adding a new point in the front-end.
-        socketio.on_event(
+        socketio.on(
             self._COMMAND_ADD_POINT,
             self._add_point
         )
 
-        # A Kafka listener for adding a new point.
-        self._add_point_listener: KafkaListener = KafkaListener(
-            kafka=self._kafka,
-            topic=self._COMMAND_ADD_POINT,
-            callback=self._point_added,
-        )
-        self._add_point_listener.start()
-
         self.id_: int = 0
 
-    def _handle_neuronavigation_message(self, msg: NeuroNavigationMessage) -> None:
+        self._setup_background_tasks()
+
+    def _setup_background_tasks(self):
+        """Setup the background tasks, namely, a task for listening for a Kafka command
+        to add a new point.
+
+        """
+        self.background_tasks: List[KafkaListener] = [
+            KafkaListener(
+                kafka=self._kafka,
+                topic=self._COMMAND_ADD_POINT,
+                callback=self._point_added,
+            ),
+        ]
+
+    def _handle_neuronavigation_message(self, client_id: str, msg: NeuroNavigationMessage) -> None:
         """A handler for messages from neuronavigation.
 
         Broadcasts the message received from neuronavigation.
 
         Parameters
         ----------
+        client_id
+            The client id, provided by the AsyncServer.
         msg
             The message received from neuronavigation, see type NeuroNavigationMessage for the structure.
         """

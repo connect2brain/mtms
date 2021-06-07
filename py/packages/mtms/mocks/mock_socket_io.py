@@ -28,8 +28,8 @@ class MockSocketIO:
         self.event_handlers: Dict[Event, EventHandler] = {}
         self.broadcasted: List[SocketIOData] = broadcasted
 
-    def on_event(self, event: Event, handler: EventHandler) -> None:
-        """Register a new event handler. Mocks 'on_event' function in SocketIO.
+    def on(self, event: Event, handler: EventHandler) -> None:
+        """Register a new event handler. Mocks 'on' function in AsyncServer.
 
         """
         self.event_handlers[event] = handler
