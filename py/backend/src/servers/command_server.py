@@ -3,7 +3,7 @@
 
 from typing import List
 
-from flask_socketio import SocketIO
+from socketio import AsyncServer
 
 from mtms.kafka.kafka import Kafka
 from mtms.db.topic_db import TopicDb
@@ -16,7 +16,7 @@ class CommandServer:
     _COMMAND_EVENT: str = 'command'
     _COMMAND_TOPIC_TYPE: str = 'command'
 
-    def __init__(self, kafka: Kafka, socketio: SocketIO, topic_db: TopicDb) -> None:
+    def __init__(self, kafka: Kafka, socketio: AsyncServer, topic_db: TopicDb) -> None:
         """Initialize the command server.
 
         Parameters
@@ -24,17 +24,17 @@ class CommandServer:
         kafka
             A Kafka object to communicate with Kafka.
         socketio
-            A SocketIO object to which the event listeners are added.
+            An AsyncServer object to which the event listeners are added.
         topic_db
             A TopicDb object to communicate with the topic database.
         """
         self._kafka: Kafka = kafka
-        self._socketio: SocketIO = socketio
+        self._socketio: AsyncServer = socketio
         self._topic_db: TopicDb = topic_db
 
         self._commands: List[str] = self._topic_db.get_topics(type=self._COMMAND_TOPIC_TYPE)
 
-        socketio.on_event(self._COMMAND_EVENT, self._send_command)
+        socketio.on(self._COMMAND_EVENT, self._send_command)
 
     def _send_command(self, command: str) -> None:
         """Send a command via Kafka.
