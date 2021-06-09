@@ -1,0 +1,8 @@
+# A simple .dockerignore for Python.
+#
+
+.git
+.gitignore
+Dockerfile
+**/__pycache__
+**/*.pyc
