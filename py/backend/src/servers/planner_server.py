@@ -60,7 +60,7 @@ class PlannerServer:
         # A handler for adding a new point in the front-end.
         socketio.on(
             event=self._COMMAND_ADD_POINT,
-            handler=self._add_point,
+            handler=self._handle_add_point,
         )
 
         self.id_: int = 0
@@ -80,7 +80,7 @@ class PlannerServer:
             ),
         ]
 
-    def _handle_neuronavigation_message(self, client_id: str, msg: NeuroNavigationMessage) -> None:
+    async def _handle_neuronavigation_message(self, client_id: str, msg: NeuroNavigationMessage) -> None:
         """A handler for messages from neuronavigation.
 
         Broadcasts the message received from neuronavigation.
@@ -96,14 +96,16 @@ class PlannerServer:
         logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
         # TODO: Consider broadcasting only the messages of interest.
-        self._socketio.emit('from_neuronavigation', msg)
+        await self._socketio.emit('from_neuronavigation', msg)
 
-    def _add_point(self, data: AddPointData) -> None:
+    def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
         initial values for the point and pass the message to create a point to Kafka.
 
         Parameters
         ----------
+        client_id
+            The client id, provided by the AsyncServer.
         data
             The data sent from the front-end with the command. Should consist of
             'position' key, with a value that consists of a list of three floats.
@@ -116,6 +118,8 @@ class PlannerServer:
                 'position': [1.0, 2.0, 3.0],
             }
         """
+        logging.info("Received a command from the front-end to add a new point")
+
         self.id_ += 1
         value: PointAddedData = {
             'visible': False,
@@ -130,7 +134,7 @@ class PlannerServer:
             value=bytes(json.dumps(value), encoding='utf8')
         )
 
-    def _point_added(self, topic: str, data: str):
+    async def _point_added(self, topic: str, data: str):
         """When a command is received from Kafka to add a new point, pass that command onto the
         front-end.
 
@@ -156,4 +160,4 @@ class PlannerServer:
         #       A natural place for those checks would be inside Kafka listener, so this
         #       function can then assume a valid message.
         data: PointAddedData = json.loads(data)
-        self._socketio.emit(topic, data)
+        await self._socketio.emit(topic, data)
