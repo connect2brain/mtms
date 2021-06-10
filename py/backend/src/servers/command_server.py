@@ -34,7 +34,10 @@ class CommandServer:
 
         self._commands: List[str] = self._topic_db.get_topics(type=self._COMMAND_TOPIC_TYPE)
 
-        socketio.on(self._COMMAND_EVENT, self._send_command)
+        socketio.on(
+            event=self._COMMAND_EVENT,
+            handler=self._send_command,
+        )
 
     def _send_command(self, command: str) -> None:
         """Send a command via Kafka.

@@ -53,14 +53,14 @@ class PlannerServer:
         # Socket.IO event handlers
 
         socketio.on(
-            'from_neuronavigation',
-            self._handle_neuronavigation_message,
+            event='from_neuronavigation',
+            handler=self._handle_neuronavigation_message,
         )
 
         # A handler for adding a new point in the front-end.
         socketio.on(
-            self._COMMAND_ADD_POINT,
-            self._add_point
+            event=self._COMMAND_ADD_POINT,
+            handler=self._add_point,
         )
 
         self.id_: int = 0
