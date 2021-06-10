@@ -24,12 +24,12 @@
           <td class="visibility-column">
             <font-awesome-icon
               v-show="row.visible"
-              v-on:click="toggle_visible(row)"
+              v-on:click="toggleVisible(row)"
               icon="eye"
             />
             <font-awesome-icon
               v-show="!row.visible"
-              v-on:click="toggle_visible(row)"
+              v-on:click="toggleVisible(row)"
               icon="eye-slash"
             />
           </td>
@@ -47,7 +47,7 @@
           <td class="comment-column">
             <Editable
               :value="row.comment"
-              v-on:changed="change_comment(row, $event)"
+              v-on:changed="changeComment(row, $event)"
               :allowEmpty="true"
             />
           </td>
@@ -56,7 +56,7 @@
     </div>
 
     <div id="actions">
-      <font-awesome-icon icon="plus" class="fa-fw" v-on:click="add_point()" />
+      <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
       <font-awesome-icon icon="minus" class="fa-fw" />
     </div>
 
@@ -88,7 +88,7 @@ export default {
   },
 
   methods: {
-    add_point() {
+    addPoint() {
       if (this.position !== undefined) {
         this.$socket.emit("point.add", {
           position: this.position
@@ -100,16 +100,16 @@ export default {
         throw "Position is undefined.";
       }
     },
-    toggle_visible(row) {
+    toggleVisible(row) {
       row.visible = !row.visible;
     },
     rename(row, newName) {
       row.name = newName;
     },
-    change_comment(row, newComment) {
+    changeComment(row, newComment) {
       row.comment = newComment;
     },
-    change_position(newPosition) {
+    changePosition(newPosition) {
       this.position = newPosition;
     }
   },
@@ -121,7 +121,7 @@ export default {
 
       if (topic == "Set cross focal point") {
         const newPosition = data.position.slice(0, 3);
-        this.change_position(newPosition);
+        this.changePosition(newPosition);
       }
     },
 
