@@ -65,17 +65,19 @@ class ParameterServer:
             ) for topic in self._parameter_topics
         ]
 
-    async def _send_parameter(self, topic: str, broadcast: bool) -> None:
+    async def _send_parameter(self, client_id: str = None, topic: str) -> None:
         """Send the parameter value in the given topic to one or several Socket.IO clients.
         If the topic is not listed in the topic database, do nothing.
 
         Parameters
         ----------
+        client_id
+            The client id. If provided, the value is sent only to the client with that id.
+            If not provided, the parameter value is sent to all clients.
+
+            Defaults to None.
         topic
             The topic which contains the parameter to be sent.
-        broadcast
-            If True, the parameter value is sent to all clients. If False, the value is sent
-            only to the client in the context.
         """
         if topic not in self._parameters:
             return None
@@ -85,14 +87,13 @@ class ParameterServer:
             'name': topic,
             'value': value,
         }
-        if broadcast:
-            await self._socketio.emit(self._UPDATE_PARAMETER_EVENT, data)
-        else:
-            # TODO: To be implemented.
-            pass
-            #flask_socketio.emit(self._UPDATE_PARAMETER_EVENT, data)
+        await self._socketio.emit(
+            event=self._UPDATE_PARAMETER_EVENT,
+            data=data,
+            to=client_id,
+        )
 
-    async def _send_parameters_on_connect(self, sid: str, environment: Dict[str, Any]) -> None:
+    async def _send_parameters_on_connect(self, client_id: str, environment: Dict[str, Any]) -> None:
         """Send all parameters to the connected Socket.IO client.
 
         Called when a new client connects.
@@ -107,8 +108,8 @@ class ParameterServer:
         topic: str
         for topic in self._parameter_topics:
             await self._send_parameter(
+                client_id=client_id,
                 topic=topic,
-                broadcast=False,
             )
 
     # TODO: Function naming in this class needs to be rethought -- it's a bit unclear
@@ -128,7 +129,6 @@ class ParameterServer:
         self._parameters[topic] = value
         await self._send_parameter(
             topic=topic,
-            broadcast=True
         )
 
     def _set_parameter_to_kafka(self, client_id: str, data: Dict[str, Any]):
