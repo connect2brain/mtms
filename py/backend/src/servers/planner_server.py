@@ -26,14 +26,15 @@ class PointAddedData(TypedDict):
     comment: str
     position: Position
 
+class NeuroNavigationMessage(TypedDict):
+    topic: str
+    data: Any
+
 class PlannerServer:
     """A backend server for the planner.
 
     """
 
-    _NEURONAVIGATION_TOPICS: List[str] = [
-        'Set cross focal point',
-    ]
     _COMMAND_ADD_POINT: str = 'point.add'
 
     def __init__(self, kafka: Kafka, socketio: SocketIO) -> None:
@@ -49,13 +50,12 @@ class PlannerServer:
         self._socketio: SocketIO = socketio
         self._kafka: Kafka = kafka
 
-        # Handlers for messages sent from neuronavigation.
-        topic: str
-        for topic in self._NEURONAVIGATION_TOPICS:
-            socketio.on_event(
-                topic,
-                partial(self._handle_neuronavigation_message, topic),
-            )
+        # Socket.IO event handlers
+
+        socketio.on_event(
+            'from_neuronavigation',
+            self._handle_neuronavigation_message,
+        )
 
         # A handler for adding a new point in the front-end.
         socketio.on_event(
@@ -73,20 +73,21 @@ class PlannerServer:
 
         self.id_: int = 0
 
-    def _handle_neuronavigation_message(self, topic: str, data: Dict[Any, Any]) -> None:
+    def _handle_neuronavigation_message(self, msg: NeuroNavigationMessage) -> None:
         """A handler for messages from neuronavigation.
+
+        Broadcasts the message received from neuronavigation.
 
         Parameters
         ----------
-        topic
-            The topic in which the message is sent.
-        data
-            A dict consisting of the message.
+        msg
+            The message received from neuronavigation, see type NeuroNavigationMessage for the structure.
         """
-        # XXX: For now, broadcast the message with Socket.IO. Later, ensure that neuronavigation
-        #   does not receive the message twice: first from its internal communication, and then
-        #   from Socket.IO.
-        self._socketio.emit(topic, data)
+        topic: str = msg['topic']
+        logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
+
+        # TODO: Consider broadcasting only the messages of interest.
+        self._socketio.emit('from_neuronavigation', msg)
 
     def _add_point(self, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the

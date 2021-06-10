@@ -108,12 +108,21 @@ export default {
     },
     change_comment(row, newComment) {
       row.comment = newComment;
+    },
+    change_position(newPosition) {
+      this.position = newPosition;
     }
   },
 
   sockets: {
-    "Set cross focal point"(data) {
-      this.position = data.position.slice(0, 3);
+    from_neuronavigation(msg) {
+      const topic = msg["topic"];
+      const data = msg["data"];
+
+      if (topic == "Set cross focal point") {
+        const newPosition = data.position.slice(0, 3);
+        this.change_position(newPosition);
+      }
     },
 
     "point.add"(data) {
