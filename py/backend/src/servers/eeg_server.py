@@ -46,7 +46,10 @@ class EegServer():
         self._sampling_frequency: int = 160
         self._n_channels: int = 64
 
-        socketio.on('eeg_data', self._send_eeg_data)
+        socketio.on(
+            event='eeg_data',
+            handler=self._send_eeg_data,
+        )
 
         self._setup_background_tasks()
 

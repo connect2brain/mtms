@@ -41,8 +41,14 @@ class ParameterServer:
 
         self._parameter_topics: List[str] = self._topic_db.get_topics(type=self._PARAMETER_TOPIC_TYPE)
 
-        socketio.on('connect', self._send_parameters_on_connect)
-        socketio.on(self._UPDATE_PARAMETER_EVENT, self._set_parameter_to_kafka)
+        socketio.on(
+            event='connect',
+            handler=self._send_parameters_on_connect,
+        )
+        socketio.on(
+            event=self._UPDATE_PARAMETER_EVENT,
+            handler=self._set_parameter_to_kafka,
+        )
 
         self._setup_background_tasks()
 
