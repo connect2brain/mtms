@@ -30,7 +30,7 @@ python-socketio = "^5.2.1"
 gevent = "^21.1.2"
 gevent-websocket = "^0.10.1"
 setuptools = "^56.2.0"
-uvicorn = "^0.14.0"
+uvicorn = {extras = ["standard"], version = "^0.14.0"}
 nest-asyncio = "^1.5.1"
 
 # The path specified here comes from Dockerfile.
