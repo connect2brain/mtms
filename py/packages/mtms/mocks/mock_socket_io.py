@@ -27,6 +27,8 @@ class MockSocketIO:
         """
         self.event_handlers: Dict[Event, EventHandler] = {}
         self.broadcasted: List[SocketIOData] = broadcasted
+        self.client_id: str = 'test_client'
+        self.environment: Dict[str, Any] = {}
 
     def on(self, event: Event, handler: EventHandler) -> None:
         """Register a new event handler. Mocks 'on' function in AsyncServer.
@@ -46,13 +48,19 @@ class MockSocketIO:
         })
 
     def simulate_event(self, event: Event, data: Optional[SocketIOData] = None) -> None:
-        """Simulate a client sending an event. Support both self-containing events,
-        such as 'connect', and events with attached data, such as the event 'command'
-        with the data 'stimulate'.
+        """Simulate a client sending an event. Support both special events, such as 'connect',
+        and events with and without attached data, such as the event 'command' with the data 'stimulate'.
 
         """
         if event in self.event_handlers.keys():
-            if data is None:
-                self.event_handlers[event]()
+            if event == 'connect':
+                # A special case: send environment as a keyword argument to 'connect' handler.
+                self.event_handlers[event](
+                    client_id=self.client_id,
+                    environment=self.environment,
+                )
             else:
-                self.event_handlers[event](data)
+                self.event_handlers[event](
+                    client_id=self.client_id,
+                    data=data,
+                )
