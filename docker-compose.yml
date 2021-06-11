@@ -81,11 +81,6 @@ services:
     volumes:
       - ./py/eeg:/code/py/eeg
       - ./py/packages:/code/py/packages
-      # TODO: There are two directories for EEG data: the upper is for downloaded example
-      #       EEG data and the lower for EEG data used in tests. Maybe have a single path
-      #       under the root directory for all datasets instead?
-      - ./scripts/datasets:/code/eeg/datasets
-      - ./datasets:/code/datasets
     depends_on:
       - kafka
     networks:
