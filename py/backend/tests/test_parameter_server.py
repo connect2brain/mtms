@@ -1,31 +1,40 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
+import asyncio
 import os
-import pytest
 import sys
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
+
+import pytest
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
+from mtms.kafka.listener import KafkaListener
 from mtms.mocks.mock_kafka import MockKafka
 from mtms.mocks.mock_topic_db import MockTopicDb
 from mtms.mocks.mock_socket_io import MockSocketIO
 
 from servers.parameter_server import ParameterServer
 
-def test_parameter_server(mocker) -> None:
+SocketIOData = Union[str, dict]
+
+@pytest.mark.asyncio
+async def test_parameter_server(mocker) -> None:
     """Tests ParameterServer class.
 
     """
 
     # Set up ParameterServer.
-    broadcasted: List[str] = []
+    broadcasted: List[SocketIOData] = []
+    sent_to_specific_client: List[SocketIOData] = []
 
     kafka: MockKafka = MockKafka()
-    socketio: MockSocketIO = MockSocketIO(broadcasted=broadcasted)
+    socketio: MockSocketIO = MockSocketIO(
+        broadcasted=broadcasted,
+        sent_to_specific_client=sent_to_specific_client,
+    )
     topic_db: MockTopicDb = MockTopicDb()
 
     server: ParameterServer = ParameterServer(
@@ -34,21 +43,14 @@ def test_parameter_server(mocker) -> None:
         topic_db=topic_db,
     )
 
-    # Patch SocketIO's emit function with our own, used when a new client connects.
-    emitted_on_connect: List[Dict[str, Any]] = []
-    def emit_on_connect(event: str, data: Dict[str, Any]):
-        emitted_on_connect.append({
-            'event': event,
-            'data': data,
-        })
-
-    # TODO: To be re-implemented.
-#    mocker.patch('servers.parameter_server.flask_socketio.emit', emit_on_connect)
+    task: KafkaListener
+    for task in server.background_tasks:
+        asyncio.create_task(task.run())
 
     # Test that connecting to the parameter server does not emit parameters before they are initialized in Kafka.
-    socketio.simulate_event('connect')
+    await socketio.simulate_event('connect')
 
-    assert len(emitted_on_connect) == 0
+    assert len(sent_to_specific_client) == 0
     assert len(broadcasted) == 0
 
     # Initialize a parameter in Kafka by producing a value for it.
@@ -57,7 +59,7 @@ def test_parameter_server(mocker) -> None:
         value=123,
     )
 
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Test that the parameter value is broadcast to all clients.
     assert len(broadcasted) == 1
@@ -70,12 +72,12 @@ def test_parameter_server(mocker) -> None:
     }
 
     # Test that connecting to the parameter server now emits the parameter value to the client.
-    assert len(emitted_on_connect) == 0
+    assert len(sent_to_specific_client) == 0
 
-    socketio.simulate_event('connect')
+    await socketio.simulate_event('connect')
 
-    assert len(emitted_on_connect) == 1
-    assert emitted_on_connect[0] == {
+    assert len(sent_to_specific_client) == 1
+    assert sent_to_specific_client[0] == {
         'event': 'update_parameter',
         'data': {
             'name': 'intensity',
@@ -89,7 +91,7 @@ def test_parameter_server(mocker) -> None:
         value=500,
     )
 
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Test that the parameter value is broadcast to all clients.
     assert len(broadcasted) == 2
@@ -102,9 +104,9 @@ def test_parameter_server(mocker) -> None:
     }
 
     # Test that connecting to the parameter server now emits both parameters.
-    emitted_on_connect.clear()
+    sent_to_specific_client.clear()
 
-    socketio.simulate_event('connect')
+    await socketio.simulate_event('connect')
 
-    assert len(emitted_on_connect) == 2
-    assert {e['data']['name'] for e in emitted_on_connect} == {'intensity', 'iti'}
+    assert len(sent_to_specific_client) == 2
+    assert {e['data']['name'] for e in sent_to_specific_client} == {'intensity', 'iti'}

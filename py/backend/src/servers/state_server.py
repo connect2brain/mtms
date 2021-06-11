@@ -49,7 +49,7 @@ class StateServer:
             ) for topic in self._state_topics
         ]
 
-    def _update_state(self, topic: str, value: float) -> None:
+    async def _update_state(self, topic: str, value: float) -> None:
         """Broadcast the new state to all connected clients.
 
         Called when a Kafka listener triggers.
@@ -65,4 +65,7 @@ class StateServer:
             'state_variable': topic,
             'value': value,
         }
-        self._socketio.emit(self._UPDATE_STATE_EVENT, data)
+        await self._socketio.emit(
+            event=self._UPDATE_STATE_EVENT,
+            data=data
+        )
