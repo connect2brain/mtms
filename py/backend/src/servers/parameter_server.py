@@ -65,7 +65,7 @@ class ParameterServer:
             ) for topic in self._parameter_topics
         ]
 
-    async def _send_parameter(self, client_id: str = None, topic: str) -> None:
+    async def _send_parameter(self, topic: str, client_id: str = None) -> None:
         """Send the parameter value in the given topic to one or several Socket.IO clients.
         If the topic is not listed in the topic database, do nothing.
 
@@ -108,8 +108,8 @@ class ParameterServer:
         topic: str
         for topic in self._parameter_topics:
             await self._send_parameter(
-                client_id=client_id,
                 topic=topic,
+                client_id=client_id,
             )
 
     # TODO: Function naming in this class needs to be rethought -- it's a bit unclear
