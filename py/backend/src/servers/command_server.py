@@ -39,17 +39,22 @@ class CommandServer:
             handler=self._send_command,
         )
 
-    def _send_command(self, command: str) -> None:
+    def _send_command(self, client_id: str, data: str) -> None:
         """Send a command via Kafka.
 
         Parameters
         ----------
-        command
+        client_id
+            The client id, provided by the AsyncServer.
+        data
             The command to be sent, also the name of the Kafka topic in which the command is published.
         """
-        assert command in self._commands, "{} is not a valid command".format(command)
+        # XXX: Sending the plain command as the data of the message is not very clean, at least it
+        #      should be wrapped inside a JSON dict or such. One example of the uncleanliness is below,
+        #      where the generic-sounding variable "data" is implicitly assumed to be very specific.
+        assert data in self._commands, "{} is not a valid command".format(data)
 
         self._kafka.produce(
-            topic=command,
-            value=bytes(str(command), encoding='utf8')
+            topic=data,
+            value=bytes(str(data), encoding='utf8')
         )
