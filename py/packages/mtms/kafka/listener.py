@@ -81,7 +81,7 @@ class KafkaListener():
         """Read messages from Kafka and call the callback function with the new data.
 
         """
-        asyncio.Task.current_task().name = "kafka-listener-{}".format(self._topic)
+        asyncio.current_task().name = "kafka-listener-{}".format(self._topic)
         while True:
             value = self._read_value()
             if value is not None:
