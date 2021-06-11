@@ -34,6 +34,7 @@ KafkaTopic = str
 ProduceError = Optional[str]
 ProduceCallback = Callable[[ProduceError, KafkaMessage], None]
 Producer = Union[confluent_kafka.Producer, pykafka.producer.Producer]
+Consumer = Union[confluent_kafka.Consumer, pykafka.simpleconsumer.SimpleConsumer]
 
 class KafkaConsumer:
     """A class for consuming Kafka messages.
@@ -41,7 +42,7 @@ class KafkaConsumer:
     """
 
     def __init__(self,
-            consumer: Union[confluent_kafka.Consumer, pykafka.simpleconsumer.SimpleConsumer],
+            consumer: Consumer,
             kafka_library: str,
             timeout: float) -> None:
         """Initialize the Kafka consumer.
@@ -58,7 +59,7 @@ class KafkaConsumer:
         assert kafka_library in ["confluent-kafka", "pykafka"], \
             "Unknown Kafka library: {}".format(kafka_library)
 
-        self._consumer: Union[confluent_kafka.Consumer, pykafka.simpleconsumer.SimpleConsumer] = consumer
+        self._consumer: Consumer = consumer
         self._kafka_library: str = kafka_library
         self._timeout: float = timeout
 
