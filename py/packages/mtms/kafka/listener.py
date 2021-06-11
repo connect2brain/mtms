@@ -82,8 +82,12 @@ class KafkaListener():
 
         """
         asyncio.current_task().name = "kafka-listener-{}".format(self._topic)
-        while True:
-            value = self._read_value()
-            if value is not None:
-                await self._callback(self._topic, value)
-            await asyncio.sleep(self._delay)
+        try:
+            while True:
+                value = self._read_value()
+                if value is not None:
+                    await self._callback(self._topic, value)
+                await asyncio.sleep(self._delay)
+        except asyncio.CancelledError as e:
+            logging.info("Cancelled task {}".format(asyncio.current_task().name))
+            raise e
