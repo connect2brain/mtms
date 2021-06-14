@@ -7,6 +7,16 @@ RUN apt-get update && \
   sqlite3 \
   dos2unix
 
+# Datasets
+
+# TODO: There are two directories for EEG data: the upper is for downloaded example
+#       EEG data and the lower for EEG data used in tests. Maybe have a single path
+#       under the root directory for all datasets instead?
+
+COPY scripts/datasets eeg/datasets
+
+COPY datasets datasets
+
 # Python dependencies
 
 # Poetry is installed using pip, which is not the recommended way. However, it suits our
