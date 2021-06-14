@@ -1,3 +1,4 @@
+import inspect
 import os
 import time
 import queue
@@ -11,12 +12,14 @@ SocketIOData = Union[str, dict]
 
 EventHandler = Callable[[SocketIOData], None]
 
+ClientId = str
+
 class MockSocketIO:
     """A class for mocking SocketIO class.
 
     """
 
-    def __init__(self, broadcasted: List[SocketIOData] = []) -> None:
+    def __init__(self, broadcasted: List[SocketIOData] = [], sent_to_specific_client: List[SocketIOData] = []) -> None:
         """Initialize the mock object.
 
         Parameters
@@ -24,35 +27,68 @@ class MockSocketIO:
         broadcasted
             A list for storing data broadcasted by SocketIO. If not given, the
             data is stored into a dummy list, not accessible from outside.
+        sent_to_specific_client
+            A list for storing data sent to the particular client who creates the object. If not given, the
+            data is stored into a dummy list, not accessible from outside.
         """
         self.event_handlers: Dict[Event, EventHandler] = {}
-        self.broadcasted: List[SocketIOData] = broadcasted
 
-    def on_event(self, event: Event, handler: EventHandler) -> None:
-        """Register a new event handler. Mocks 'on_event' function in SocketIO.
+        self.broadcasted: List[SocketIOData] = broadcasted
+        self.sent_to_specific_client: List[SocketIOData] = sent_to_specific_client
+
+        self.client_id: ClientId = 'test_client'
+        self.environment: Dict[str, Any] = {}
+
+    def on(self, event: Event, handler: EventHandler) -> None:
+        """Register a new event handler. Mocks 'on' function in AsyncServer.
 
         """
         self.event_handlers[event] = handler
 
-    def emit(self, event: Event, data: SocketIOData) -> None:
+    async def emit(self, event: Event, data: SocketIOData, to: ClientId = None) -> None:
         """Emit an event with the accompanying data. Mocks 'emit' function in SocketIO.
 
-        XXX: SocketIO object's 'emit' function broadcasts the data to all clients,
-          therefore the data is appended to a list named 'broadcasted'.
         """
-        self.broadcasted.append({
-            'event': event,
-            'data': data,
-        })
+        if to is None:
+            self.broadcasted.append({
+                'event': event,
+                'data': data,
+            })
+        else:
+            self.sent_to_specific_client.append({
+                'event': event,
+                'data': data,
+            })
 
-    def simulate_event(self, event: Event, data: Optional[SocketIOData] = None) -> None:
-        """Simulate a client sending an event. Support both self-containing events,
-        such as 'connect', and events with attached data, such as the event 'command'
-        with the data 'stimulate'.
+    async def simulate_event(self, event: Event, data: Optional[SocketIOData] = None) -> None:
+        """Simulate a client sending an event. Support both special events, such as 'connect',
+        and events with and without attached data, such as the event 'command' with the data 'stimulate'.
 
         """
         if event in self.event_handlers.keys():
-            if data is None:
-                self.event_handlers[event]()
+            handler = self.event_handlers[event]
+
+            # 'Connect' event is a special case: when connecting, the environment is sent as a
+            # keyword argument to the handler of the new connection.
+            if event == 'connect':
+                if inspect.iscoroutinefunction(handler):
+                    await handler(
+                        client_id=self.client_id,
+                        environment=self.environment,
+                    )
+                else:
+                    handler(
+                        client_id=self.client_id,
+                        environment=self.environment,
+                    )
             else:
-                self.event_handlers[event](data)
+                if inspect.iscoroutinefunction(handler):
+                    await handler(
+                        client_id=self.client_id,
+                        data=data,
+                    )
+                else:
+                    handler(
+                        client_id=self.client_id,
+                        data=data,
+                    )
