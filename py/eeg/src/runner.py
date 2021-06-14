@@ -46,14 +46,14 @@ if __name__ == "__main__":
 
     data, times = raw.get_data(return_times=True)
     data = np.transpose(data)
-    fs = raw.info['sfreq']
-    logging.info(f"Frequency = {fs}.")
-    logging.info(f"Cycle time = {1.0/fs}.")
+    sampling_frequency = raw.info['sfreq']
+    logging.info(f"Frequency = {sampling_frequency}.")
+    logging.info(f"Cycle time = {1.0 / sampling_frequency}.")
 
     # TODO: Publish metadata (EEG channel names, sampling frequency,
     #   something else from raw.info?)
 
     logging.info("Starting to send data")
-    success = eeg_simulator.stream_data_mp(data, fs)
+    success = eeg_simulator.stream_data_mp(data, sampling_frequency)
 
     sys.exit(0 if success else 1)
