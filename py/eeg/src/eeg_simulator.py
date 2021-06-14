@@ -147,7 +147,7 @@ class EegSimulator:
 
     def stream_data_mp(self,
             data: List[Any],
-            fs: int,
+            sampling_frequency: int,
             store_data: bool = False) -> bool:
         """This is a multiprocessing version of stream_data.
         Streams data to a given Kafka topic. Publishes the data in one sample
@@ -158,7 +158,7 @@ class EegSimulator:
         ----------
         data
             A list of JSON-serializable items.
-        fs
+        sampling_frequency
             The sampling frequency in Hz.
         store_data
             A boolean indicating if the timing data from the streaming is stored.
@@ -167,7 +167,7 @@ class EegSimulator:
         -------
             A boolean indicating if the streaming was successful.
         """
-        T = 1 / fs
+        sampling_period = 1 / sampling_frequency
 
         data_q = Queue()
         listener_msg_q = Queue()
@@ -175,7 +175,7 @@ class EegSimulator:
         ticker_msg_q = Queue()
         listener = Process(target=self.receive_data, args=(listener_msg_q, ))
         sender = Process(target=self.send_data, args=(data_q, sender_msg_q))
-        ticker = Process(target=self.tick_out_data, args=(data, T, data_q, ticker_msg_q))
+        ticker = Process(target=self.tick_out_data, args=(data, sampling_period, data_q, ticker_msg_q))
 
         try:
             listener.start()
