@@ -63,7 +63,7 @@ class PlannerServer:
             handler=self._handle_add_point,
         )
 
-        self.id_: int = 0
+        self._points: List[PointAddedData] = []
 
         self._setup_background_tasks()
 
@@ -96,7 +96,10 @@ class PlannerServer:
         logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
         # TODO: Consider broadcasting only the messages of interest.
-        await self._socketio.emit('from_neuronavigation', msg)
+        await self._socketio.emit(
+            event='from_neuronavigation',
+            data=msg,
+        )
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
@@ -120,10 +123,10 @@ class PlannerServer:
         """
         logging.info("Received a command from the front-end to add a new point")
 
-        self.id_ += 1
+        target_i: int = len(self._points) + 1
         value: PointAddedData = {
             'visible': False,
-            'name': "Target-" + str(self.id_),
+            'name': "Target-{}".format(target_i),
             'type': "Target",
             'comment': "",
             'position': data['position'],
@@ -135,8 +138,8 @@ class PlannerServer:
         )
 
     async def _point_added(self, topic: str, data: str):
-        """When a command is received from Kafka to add a new point, pass that command onto the
-        front-end.
+        """Handle the command received from Kafka to add a new point, specifically, pass the
+        command on to the front-end and neuronavigation.
 
         Parameters
         ----------
@@ -160,4 +163,31 @@ class PlannerServer:
         #       A natural place for those checks would be inside Kafka listener, so this
         #       function can then assume a valid message.
         data: PointAddedData = json.loads(data)
-        await self._socketio.emit(topic, data)
+
+        # Update backend
+        self._points.append(data)
+
+        # Update frontend
+        await self._socketio.emit(
+            event=topic,
+            data=data,
+        )
+
+        # Update neuronavigation
+        id: int = len(self._points) - 1
+        coord: Position = data['position']
+
+        marker_data = {
+            'ball_id': id,
+            'coord': coord,
+            'size': 2,
+            'colour': (1.0, 1.0, 0.0),
+        }
+        msg = {
+            "topic": "Add marker",
+            "data": marker_data,
+        }
+        await self._socketio.emit(
+            event="to_neuronavigation",
+            data=msg,
+        )
