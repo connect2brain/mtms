@@ -19,6 +19,9 @@ Position = Tuple[float, float, float]
 class AddPointData(TypedDict):
     position: Position
 
+class RemovePointData(TypedDict):
+    name: str
+
 class PointAddedData(TypedDict):
     visible: bool
     name: str
@@ -36,6 +39,7 @@ class PlannerServer:
     """
 
     _COMMAND_ADD_POINT: str = 'point.add'
+    _COMMAND_REMOVE_POINT: str = 'point.remove'
 
     def __init__(self, kafka: Kafka, socketio: AsyncServer) -> None:
         """Initialize the planner server.
@@ -61,6 +65,12 @@ class PlannerServer:
         socketio.on(
             event=self._COMMAND_ADD_POINT,
             handler=self._handle_add_point,
+        )
+
+        # A handler for removing a point in the front-end.
+        socketio.on(
+            event=self._COMMAND_REMOVE_POINT,
+            handler=self._handle_remove_point,
         )
 
         self._points: List[PointAddedData] = []
@@ -135,6 +145,31 @@ class PlannerServer:
         self._kafka.produce(
             topic=self._COMMAND_ADD_POINT,
             value=bytes(json.dumps(value), encoding='utf8')
+        )
+
+    def _handle_remove_point(self, client_id: str, data: RemovePointData) -> None:
+        """When a command is received from the front-end to remove a point, pass the
+        message to remove a point to Kafka.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end with the command.
+            See type RemovePointData for the specification.
+
+            An example:
+
+            {
+                'name': "Target-1",
+            }
+        """
+        logging.info("Received a command from the front-end to remove a point")
+
+        self._kafka.produce(
+            topic=self._COMMAND_REMOVE_POINT,
+            value=bytes(json.dumps(data), encoding='utf8')
         )
 
     async def _point_added(self, topic: str, data: str):

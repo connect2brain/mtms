@@ -63,7 +63,7 @@
 
     <div id="actions">
       <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
-      <font-awesome-icon icon="minus" class="fa-fw" />
+      <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
     </div>
 
     <!-- XXX: Keep the position display here for debugging purposes during the
@@ -105,6 +105,14 @@ export default {
                 so that it makes sense to the user. */
         throw "Position is undefined.";
       }
+    },
+    removePoint() {
+      const selectedPoints = this.points.filter((point) => point.selected);
+      selectedPoints.forEach((point) => {
+        this.$socket.emit("point.remove", {
+          name: point['name']
+        });
+      });
     },
     toggleVisible(row) {
       row.visible = !row.visible;
