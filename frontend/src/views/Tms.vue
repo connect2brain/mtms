@@ -84,8 +84,7 @@ export default {
       const value = parseInt(rawValue);
 
       this.parameters[parameterName] = value;
-      this.latestMessage =
-        `Parameter updated: ${parameterName} = ${value}`;
+      this.latestMessage = `Parameter updated: ${parameterName} = ${value}`;
     }
   },
 

@@ -20,16 +20,22 @@
 
     <div class="canvas">
       <table>
-        <tr v-for="row in points" :key="row.id" :row="row">
+        <tr
+          v-for="row in points"
+          :key="row.id"
+          :row="row"
+          v-on:click="toggleSelect(row)"
+          v-bind:class="{ selected: row.selected }"
+        >
           <td class="visibility-column">
             <font-awesome-icon
               v-show="row.visible"
-              v-on:click="toggleVisible(row)"
+              v-on:click.stop.prevent="toggleVisible(row)"
               icon="eye"
             />
             <font-awesome-icon
               v-show="!row.visible"
-              v-on:click="toggleVisible(row)"
+              v-on:click.stop.prevent="toggleVisible(row)"
               icon="eye-slash"
             />
           </td>
@@ -111,6 +117,9 @@ export default {
     },
     changePosition(newPosition) {
       this.position = newPosition;
+    },
+    toggleSelect(row) {
+      row.selected = !row.selected;
     }
   },
 
@@ -131,7 +140,8 @@ export default {
         name: data.name,
         type: data.type,
         comment: data.comment,
-        position: data.position
+        position: data.position,
+        selected: false
       });
     }
   }
@@ -190,7 +200,7 @@ input {
   border-width: 0px;
 }
 
-.row-selected {
+.selected {
   background-color: $light-gray;
 }
 
