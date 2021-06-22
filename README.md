@@ -9,8 +9,10 @@ This project contains the git repository for development of the mTMS system in C
 - Clone the repository by running:
 
 ```
-git clone https://github.com/okahilak/invesalius3 --branch add-backend-communication-to-tms-mode
+git clone --recurse-submodules https://github.com/connect2brain/project-louhi
 ```
+
+which clones InVesalius3 into `project-louhi/invesalius3` directory.
 
 - Note that you need 64-bit version of Python 3.7 to be able to easily install all the required
 Python libraries. One way of achieving this is to install Python 3.7 from
@@ -34,12 +36,6 @@ https://github.com/invesalius/invesalius3/wiki/Running-InVesalius-3-in-Windows
 NB: If Visual Studio Community Edition is installed for setting up InVesalius properly,
 one set of installation options that seems to work is: Python, Node.js, .NET, C++, and
 Universal Windows.
-
-- Install additional libraries needed by InVesalius-mTMS communication by running:
-
-```
-C:\Python37\Scripts\pip install python-socketio requests
-```
 
 #### Installing GNU tools
 
@@ -100,10 +96,10 @@ that there are no errors in the logs:
 where `[container]` is one of the following: `zookeeper`, `kafka`, `backend`,
 `frontend`, `mtms_bridge`.
 
-- Start InVesalius by running the following in InVesalius repository:
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-C:\Python37\python app.py
+C:\Python37\python app.py --remote-host localhost:5000
 ```
 
 ## Debian and Ubuntu
@@ -117,8 +113,10 @@ Tested using Ubuntu 20.04.
 - Clone the repository by running:
 
 ```
-git clone https://github.com/okahilak/invesalius3 --branch add-backend-communication-to-tms-mode
+git clone --recurse-submodules https://github.com/connect2brain/project-louhi
 ```
+
+which clones InVesalius3 into `project-louhi/invesalius3` directory.
 
 - Set up the software by following the instructions on the following page:
 
@@ -146,10 +144,10 @@ that there are no errors in the logs:
 where `[container]` is one of the following: `zookeeper`, `kafka`, `backend`,
 `frontend`, `mtms_bridge`.
 
-- Start InVesalius by running the following in InVesalius repository:
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-python3 app.py
+python3 app.py --remote-host localhost:5000
 ```
 
 ## Examples
@@ -189,16 +187,16 @@ have been updated in Kafka.
 
 ### Example: Changing parameter values in InVesalius
 
-- Start InVesalius by running the following in InVesalius repository:
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-python3 app.py
+python3 app.py --remote-host localhost:5000
 ```
 
 or (if you are running Windows):
 
 ```
-C:\Python37\python app.py
+C:\Python37\python app.py --remote-host localhost:5000
 ```
 
 - Enable TMS mode in InVesalius (Mode -> Navigation Mode -> Transcranial Magnetic Stimulation Mode).

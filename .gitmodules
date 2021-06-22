@@ -1,0 +1,3 @@
+[submodule "invesalius3"]
+	path = invesalius3
+	url = https://github.com/connect2brain/invesalius3
