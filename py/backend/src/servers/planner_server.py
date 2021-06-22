@@ -4,7 +4,7 @@
 import logging
 import json
 from functools import partial
-from typing import Any, Dict, List, Tuple, TypedDict
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from socketio import AsyncServer
 
@@ -14,7 +14,7 @@ from mtms.kafka.listener import KafkaListener
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
-Position = Tuple[float, float, float]
+Position = Optional[Tuple[float, float, float]]
 
 class AddPointData(TypedDict):
     position: Position
@@ -38,6 +38,9 @@ class PlannerServer:
 
     """
 
+    _SOCKETIO_UPDATE_PLANNER: str = 'planner.update'
+    _SOCKETIO_UPDATE_POSITION: str = 'position.update'
+
     _COMMAND_ADD_POINT: str = 'point.add'
     _COMMAND_REMOVE_POINT: str = 'point.remove'
 
@@ -53,6 +56,9 @@ class PlannerServer:
         """
         self._socketio: AsyncServer = socketio
         self._kafka: Kafka = kafka
+
+        self._position: Position = None
+        self._added_points_total: int = 0
 
         # Socket.IO event handlers
 
@@ -103,13 +109,12 @@ class PlannerServer:
             The message received from neuronavigation, see type NeuroNavigationMessage for the structure.
         """
         topic: str = msg['topic']
+        data: Any = msg['data']
         logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
-        # TODO: Consider broadcasting only the messages of interest.
-        await self._socketio.emit(
-            event='from_neuronavigation',
-            data=msg,
-        )
+        if topic == "Set cross focal point":
+            position: Position = data['position'][0:3]
+            await self._update_position(position)
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
@@ -133,10 +138,10 @@ class PlannerServer:
         """
         logging.info("Received a command from the front-end to add a new point")
 
-        target_i: int = len(self._points) + 1
+        self._added_points_total += 1
         value: PointAddedData = {
             'visible': False,
-            'name': "Target-{}".format(target_i),
+            'name': "Target-{}".format(self._added_points_total),
             'type': "Target",
             'comment': "",
             'position': data['position'],
@@ -172,7 +177,27 @@ class PlannerServer:
             value=bytes(json.dumps(data), encoding='utf8')
         )
 
-    async def _point_added(self, topic: str, data: str):
+    async def _update_planner(self) -> None:
+        """Update new planner state to the frontend.
+
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_PLANNER,
+            data=self._points,
+        )
+
+    async def _update_position(self, position: Position) -> None:
+        """Update the position to the frontend.
+
+        """
+        self._position = position
+
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_POSITION,
+            data=self._position,
+        )
+
+    async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
         command on to the front-end and neuronavigation.
 
@@ -203,10 +228,7 @@ class PlannerServer:
         self._points.append(data)
 
         # Update frontend
-        await self._socketio.emit(
-            event=topic,
-            data=data,
-        )
+        await self._update_planner()
 
         # Update neuronavigation
         id: int = len(self._points) - 1
