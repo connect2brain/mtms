@@ -137,11 +137,15 @@ export default {
   },
 
   sockets: {
-    "position.update"(newPosition) {
-      this.position = newPosition;
+    connect() {
+      this.$socket.emit("planner.new_client", {});
     },
 
-    "planner.update"(points) {
+    "planner.position"(position) {
+      this.position = position;
+    },
+
+    "planner.points"(points) {
       this.points = points;
     }
   }

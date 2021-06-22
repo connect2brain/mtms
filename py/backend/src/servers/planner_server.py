@@ -38,8 +38,9 @@ class PlannerServer:
 
     """
 
-    _SOCKETIO_UPDATE_PLANNER: str = 'planner.update'
-    _SOCKETIO_UPDATE_POSITION: str = 'position.update'
+    _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
+    _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
+    _SOCKETIO_NEW_CLIENT: str = 'planner.new_client'
 
     _COMMAND_ADD_POINT: str = 'point.add'
     _COMMAND_REMOVE_POINT: str = 'point.remove'
@@ -79,6 +80,12 @@ class PlannerServer:
             handler=self._handle_remove_point,
         )
 
+        # A handler for a new front-end client.
+        socketio.on(
+            event=self._SOCKETIO_NEW_CLIENT,
+            handler=self._handle_new_client,
+        )
+
         self._points: List[PointAddedData] = []
 
         self._setup_background_tasks()
@@ -113,8 +120,8 @@ class PlannerServer:
         logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
         if topic == "Set cross focal point":
-            position: Position = data['position'][0:3]
-            await self._update_position(position)
+            self._position = data['position'][0:3]
+            await self._update_position()
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
@@ -177,25 +184,54 @@ class PlannerServer:
             value=bytes(json.dumps(data), encoding='utf8')
         )
 
-    async def _update_planner(self) -> None:
-        """Update new planner state to the frontend.
+    async def _handle_new_client(self, client_id: str, _) -> None:
+        """When a new client connects, send all needed data to the client, i.e., the points
+        and the position.
 
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        """
+        logging.info("A new client connected with the id {}".format(client_id))
+
+        await self._update_points(
+            client_id=client_id,
+        )
+        await self._update_position(
+            client_id=client_id,
+        )
+
+    async def _update_points(self, client_id: str = None) -> None:
+        """Update planner points to the frontend.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the points are sent only to the client with that id.
+            If not provided (the default), the points are broadcast to all clients.
         """
         await self._socketio.emit(
-            event=self._SOCKETIO_UPDATE_PLANNER,
+            event=self._SOCKETIO_UPDATE_POINTS,
             data=self._points,
+            client_id=client_id,
         )
 
-    async def _update_position(self, position: Position) -> None:
-        """Update the position to the frontend.
+    async def _update_position(self, client_id: str = None) -> None:
+        """Update the position, if defined, to the frontend.
 
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the position is sent only to the client with that id.
+            If not provided (the default), the position is broadcast to all clients.
         """
-        self._position = position
-
-        await self._socketio.emit(
-            event=self._SOCKETIO_UPDATE_POSITION,
-            data=self._position,
-        )
+        if self._position is not None:
+            await self._socketio.emit(
+                event=self._SOCKETIO_UPDATE_POSITION,
+                data=self._position,
+                client_id=client_id,
+            )
 
     async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
@@ -228,7 +264,7 @@ class PlannerServer:
         self._points.append(data)
 
         # Update frontend
-        await self._update_planner()
+        await self._update_points()
 
         # Update neuronavigation
         id: int = len(self._points) - 1
