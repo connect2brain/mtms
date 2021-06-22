@@ -27,8 +27,7 @@ export default {
 
 #app {
   font-family: "Segoe UI";
-  src: local("Segoe UI"),
-   url(./fonts/segoeui.ttf) format("truetype");
+  src: local("Segoe UI"), url(./fonts/segoeui.ttf) format("truetype");
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
