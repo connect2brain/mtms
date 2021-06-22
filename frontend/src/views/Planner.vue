@@ -25,7 +25,7 @@
           :key="row.id"
           :row="row"
           v-on:click="toggleSelect(row)"
-          v-bind:class="{ selected: row.selected }"
+          v-bind:class="{ selected: isSelected(row) }"
         >
           <td class="visibility-column">
             <font-awesome-icon
@@ -85,7 +85,7 @@ export default {
       isConnected: false,
       position: undefined,
       points: [],
-      selectedRows: []
+      selectedPointsByName: []
     };
   },
 
@@ -123,34 +123,26 @@ export default {
     changeComment(row, newComment) {
       row.comment = newComment;
     },
-    changePosition(newPosition) {
-      this.position = newPosition;
-    },
     toggleSelect(row) {
-      row.selected = !row.selected;
+      const toggledName = row.name;
+      if (this.selectedPointsByName.includes(toggledName)) {
+        this.selectedPointsByName = this.selectedPointsByName.filter((name) => name !== toggledName);
+      } else {
+        this.selectedPointsByName.push(toggledName);
+      }
+    },
+    isSelected(row) {
+      return this.selectedPointsByName.includes(row.name);
     }
   },
 
   sockets: {
-    from_neuronavigation(msg) {
-      const topic = msg["topic"];
-      const data = msg["data"];
-
-      if (topic == "Set cross focal point") {
-        const newPosition = data.position.slice(0, 3);
-        this.changePosition(newPosition);
-      }
+    "position.update"(newPosition) {
+      this.position = newPosition;
     },
 
-    "point.add"(data) {
-      this.points.push({
-        visible: data.visible,
-        name: data.name,
-        type: data.type,
-        comment: data.comment,
-        position: data.position,
-        selected: false
-      });
+    "planner.update"(points) {
+      this.points = points;
     }
   }
 };
