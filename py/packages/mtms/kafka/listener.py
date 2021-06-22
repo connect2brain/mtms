@@ -88,6 +88,11 @@ class KafkaListener():
                 if value is not None:
                     await self._callback(self._topic, value)
                 await asyncio.sleep(self._delay)
+
         except asyncio.CancelledError as e:
             logging.info("Cancelled task {}".format(asyncio.current_task().name))
             raise e
+
+        # General exception handling is needed here so that exceptions within asyncio coroutines are logged properly.
+        except Exception as e:
+            logging.exception(e)
