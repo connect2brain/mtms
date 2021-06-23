@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from socketio import AsyncServer
 
+from mtms.util.util import drop_unique
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
 
@@ -100,6 +101,11 @@ class PlannerServer:
                 kafka=self._kafka,
                 topic=self._COMMAND_ADD_POINT,
                 callback=self._point_added,
+            ),
+            KafkaListener(
+                kafka=self._kafka,
+                topic=self._COMMAND_REMOVE_POINT,
+                callback=self._point_removed,
             ),
         ]
 
@@ -233,6 +239,27 @@ class PlannerServer:
                 client_id=client_id,
             )
 
+    async def _send_to_neuronavigation(self, topic: str, data: Any) -> None:
+        """Given a topic and data of any type, send a message to neuronavigation in that topic
+        and passing on the given data.
+
+        Parameters
+        ----------
+        topic
+            The topic for the internal communication that the neuronavigation software does. E.g.,
+            "Add marker".
+        data
+            Any data that will be sent in the given topic.
+
+        """
+        await self._socketio.emit(
+            event="to_neuronavigation",
+            data={
+                "topic": topic,
+                "data": data,
+            }
+        )
+
     async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
         command on to the front-end and neuronavigation.
@@ -276,11 +303,51 @@ class PlannerServer:
             'size': 2,
             'colour': (1.0, 1.0, 0.0),
         }
-        msg = {
-            "topic": "Add marker",
-            "data": marker_data,
+        await self._send_to_neuronavigation(
+            topic="Add marker",
+            data=marker_data
+        )
+
+    async def _point_removed(self, topic: str, data: str) -> None:
+        """Handle the command received from Kafka to remove a point.
+
+        Parameters
+        ----------
+        topic
+            The name of the topic in which the command is sent.
+        data
+            A json dict consisting of the attributes of the new point. The dict should
+            consist of the key 'name'.
+
+            An example:
+
+            {
+                'name': "Target-1",
+            }
+        """
+        data: RemovePointData = json.loads(data)
+
+        # Update backend
+        index: int = drop_unique(self._points, lambda point: point['name'] == data['name'])
+
+        # Update frontend
+        await self._update_points()
+
+        # Update neuronavigation
+        #
+        # XXX: Sending the index of the removed point to neuronavigation and hoping that it
+        #      matches the indexing of markers there is somewhat brittle: for instance, it fails
+        #      if for any reason there are several clients controlling the neuronavigation,
+        #      or if neuronavigation itself adds or removes markers. Ideally, we could explicitly
+        #      (re-)send the points that we want to show to neuronavigation. However, that would
+        #      need changes in the APIs that neuronavigation provides.
+        #
+        marker_data = {
+            # XXX: The value is actually not an 'index' but a list of indices.
+            #      However, we are following the naming used in InVesalius.
+            'index': [index],
         }
-        await self._socketio.emit(
-            event="to_neuronavigation",
-            data=msg,
+        await self._send_to_neuronavigation(
+            topic="Remove marker",
+            data=marker_data
         )
