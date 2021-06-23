@@ -24,7 +24,7 @@ download-data:          ## Download EEG data.
                         ## Use DATASET environment variable to specify the dataset.
                         ## See eeg/datasets/README.md for more detailed instructions.
                         ## Example: make download-data DATASET=eegbci
-	cd eeg/datasets && sh dataset_download.sh $(DATASET)
+	cd scripts/datasets && sh dataset_download.sh $(DATASET)
 .PHONY: download-data
 
 stream-data:            ## Stream EEG data via Kafka.
