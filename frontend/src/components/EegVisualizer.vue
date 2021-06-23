@@ -45,7 +45,7 @@ export default {
     }
   },
   sockets: {
-    eeg_data(data) {
+    receive_eeg_data(data) {
       this.requestTime = Date.now() - this.requestStartTime;
       this.eegData = data;
     }
@@ -53,7 +53,7 @@ export default {
   methods: {
     loadData: function() {
       this.requestStartTime = Date.now();
-      this.$socket.emit("eeg_data", {
+      this.$socket.emit("request_eeg_data", {
         from: this.minTime,
         to: 0
       });
