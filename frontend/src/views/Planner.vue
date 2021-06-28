@@ -107,7 +107,7 @@ export default {
       }
     },
     removePoint() {
-      const selectedPoints = this.points.filter((point) => point.selected);
+      const selectedPoints = this.points.filter((point) => this.selectedPointsByName.includes(point["name"]));
       selectedPoints.forEach((point) => {
         this.$socket.emit("point.remove", {
           name: point['name']
