@@ -60,6 +60,7 @@ class PlannerServer:
         self._kafka: Kafka = kafka
 
         self._position: Position = None
+        self._neuronavigation_project_open: bool = False
         self._added_points_total: int = 0
 
         # Socket.IO event handlers
@@ -125,9 +126,18 @@ class PlannerServer:
         data: Any = msg['data']
         logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
+        # Triggered when the cross is moved around in neuronavigation. React by updating the new cross
+        # position to the frontend.
         if topic == "Set cross focal point":
             self._position = data['position'][0:3]
             await self._update_position()
+
+        # Triggered when a project is opened in neuronavigation. React by sending the current points to
+        # neuronavigation so that they can be shown in the project.
+        elif topic == "Enable state project":
+            self._neuronavigation_project_open = data['state']
+            if self._neuronavigation_project_open:
+                await self._update_neuronavigation()
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
