@@ -66,6 +66,16 @@
       <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
     </div>
 
+    <!-- Show a circle indicating if the coil is at the target or not. -->
+    <p v-if="isCoilAtTarget">
+      <font-awesome-icon icon="circle" class="coil-at-target" />
+      Coil at the target
+    </p>
+    <p v-else>
+      <font-awesome-icon icon="circle" class="coil-not-at-target" />
+      Coil not at the target
+    </p>
+
     <!-- XXX: Keep the position display here for debugging purposes during the
               development, but remove later.
     -->
@@ -82,7 +92,7 @@ import Editable from "@/components/Editable.vue";
 export default {
   data() {
     return {
-      isConnected: false,
+      isCoilAtTarget: false,
       position: undefined,
       points: [],
       selectedPointsByName: []
@@ -147,6 +157,10 @@ export default {
 
     "planner.points"(points) {
       this.points = points;
+    },
+
+    "planner.coil_at_target"(state) {
+      this.isCoilAtTarget = state;
     }
   }
 };
@@ -230,6 +244,14 @@ input {
 }
 
 .target-square {
+  color: red;
+}
+
+.coil-at-target {
+  color: green;
+}
+
+.coil-not-at-target {
   color: red;
 }
 </style>
