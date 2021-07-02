@@ -260,6 +260,29 @@ class PlannerServer:
             }
         )
 
+    async def _update_neuronavigation(self) -> None:
+        """Send all points to neuronavigation to display them.
+
+        """
+        markers = []
+
+        for id, point in enumerate(self._points):
+            coord: Position = point['position']
+            marker_data = {
+                'ball_id': id,
+                'coord': coord,
+                'size': 2,
+                'colour': (1.0, 1.0, 0.0),
+            }
+            markers.append(marker_data)
+
+        await self._send_to_neuronavigation(
+            topic="Set markers",
+            data={
+                "markers": markers,
+            }
+        )
+
     async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
         command on to the front-end and neuronavigation.
@@ -294,19 +317,7 @@ class PlannerServer:
         await self._update_points()
 
         # Update neuronavigation
-        id: int = len(self._points) - 1
-        coord: Position = data['position']
-
-        marker_data = {
-            'ball_id': id,
-            'coord': coord,
-            'size': 2,
-            'colour': (1.0, 1.0, 0.0),
-        }
-        await self._send_to_neuronavigation(
-            topic="Add marker",
-            data=marker_data
-        )
+        await self._update_neuronavigation()
 
     async def _point_removed(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to remove a point.
@@ -334,20 +345,4 @@ class PlannerServer:
         await self._update_points()
 
         # Update neuronavigation
-        #
-        # XXX: Sending the index of the removed point to neuronavigation and hoping that it
-        #      matches the indexing of markers there is somewhat brittle: for instance, it fails
-        #      if for any reason there are several clients controlling the neuronavigation,
-        #      or if neuronavigation itself adds or removes markers. Ideally, we could explicitly
-        #      (re-)send the points that we want to show to neuronavigation. However, that would
-        #      need changes in the APIs that neuronavigation provides.
-        #
-        marker_data = {
-            # XXX: The value is actually not an 'index' but a list of indices.
-            #      However, we are following the naming used in InVesalius.
-            'index': [index],
-        }
-        await self._send_to_neuronavigation(
-            topic="Remove marker",
-            data=marker_data
-        )
+        await self._update_neuronavigation()
