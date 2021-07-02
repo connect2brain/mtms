@@ -22,9 +22,12 @@ EegData = List[EegDataPoint]
 class EegServer():
     """A server for EEG data.
 
-    Reads data from a Kafka topic and serves it at /eeg_data endpoint.
+    Read data from a Kafka topic and serve it using Socket.IO.
     """
-    _EEG_TOPIC: str = 'eeg_data'
+    _KAFKA_TOPIC_EEG: str = 'eeg_data'
+
+    _SOCKETIO_EVENT_REQUEST_EEG_DATA: str = 'request_eeg_data'
+    _SOCKETIO_EVENT_RECEIVE_EEG_DATA: str = 'receive_eeg_data'
 
     def __init__(self, kafka: Kafka, socketio: AsyncServer, eeg_buffer_length: int) -> None:
         """Initialize the EEG server.
@@ -47,14 +50,14 @@ class EegServer():
         self._n_channels: int = 64
 
         socketio.on(
-            event='eeg_data',
-            handler=self._send_eeg_data,
+            event=self._SOCKETIO_EVENT_REQUEST_EEG_DATA,
+            handler=self._request_eeg_data,
         )
 
         self._setup_background_tasks()
 
-    def _send_eeg_data(self, client_id: str, params: Dict[str, Any]) -> None:
-        """Return EEG data on request.
+    async def _request_eeg_data(self, client_id: str, params: Dict[str, Any]) -> None:
+        """Send EEG data on request.
 
         Parameters
         ----------
@@ -83,7 +86,11 @@ class EegServer():
             {'data': data, 'timestamp': timestamp}
             for data, timestamp in zip(data.tolist(), timestamps_relative)
         ]
-        return result
+        await self._socketio.emit(
+            event=self._SOCKETIO_EVENT_RECEIVE_EEG_DATA,
+            data=result,
+            client_id=client_id,
+        )
 
     def _setup_background_tasks(self) -> None:
         """Setup the background tasks, namely, a task for listening to Kafka topic for new EEG data.
@@ -102,7 +109,7 @@ class EegServer():
         self.background_tasks: List[KafkaListener] = [
             KafkaListener(
                 kafka=self._kafka,
-                topic=self._EEG_TOPIC,
+                topic=self._KAFKA_TOPIC_EEG,
                 callback=callback,
                 delay=delay,
 
