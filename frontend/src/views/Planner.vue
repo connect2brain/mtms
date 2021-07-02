@@ -1,12 +1,15 @@
 <template>
-  <div id="planner" class="noselect">
+  <div v-if="loading">
+    Loading...
+  </div>
+  <div v-else id="planner" class="noselect">
     <table>
       <tr>
         <th class="visibility-column">
           <font-awesome-icon icon="eye" />
         </th>
         <th class="name-column">
-          Name
+          asdf
         </th>
         <th class="type-column">
           Type
@@ -92,6 +95,7 @@ import Editable from "@/components/Editable.vue";
 export default {
   data() {
     return {
+      loading: true,
       isCoilAtTarget: false,
       position: undefined,
       points: [],
@@ -101,6 +105,10 @@ export default {
 
   components: {
     Editable
+  },
+
+  created() {
+    this.$socket.emit("planner.request_state", {});
   },
 
   methods: {
@@ -147,10 +155,6 @@ export default {
   },
 
   sockets: {
-    connect() {
-      this.$socket.emit("planner.new_client", {});
-    },
-
     "planner.position"(position) {
       this.position = position;
     },
@@ -161,6 +165,10 @@ export default {
 
     "planner.coil_at_target"(state) {
       this.isCoilAtTarget = state;
+    },
+
+    "planner.state_sent"() {
+      this.loading = false;
     }
   }
 };

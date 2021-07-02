@@ -42,7 +42,8 @@ class PlannerServer:
     _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
-    _SOCKETIO_NEW_CLIENT: str = 'planner.new_client'
+    _SOCKETIO_REQUEST_STATE: str = 'planner.request_state'
+    _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
     _COMMAND_ADD_POINT: str = 'point.add'
     _COMMAND_REMOVE_POINT: str = 'point.remove'
@@ -84,10 +85,10 @@ class PlannerServer:
             handler=self._handle_remove_point,
         )
 
-        # A handler for a new front-end client.
+        # A handler for a new state request.
         socketio.on(
-            event=self._SOCKETIO_NEW_CLIENT,
-            handler=self._handle_new_client,
+            event=self._SOCKETIO_REQUEST_STATE,
+            handler=self._handle_state_request,
         )
 
         self._points: List[PointAddedData] = []
@@ -208,8 +209,8 @@ class PlannerServer:
             value=bytes(json.dumps(data), encoding='utf8')
         )
 
-    async def _handle_new_client(self, client_id: str, _) -> None:
-        """When a new client connects, send all needed data to the client, i.e., the points
+    async def _handle_state_request(self, client_id: str, _) -> None:
+        """When the state is requested by the client, send all needed data, e.g., the points
         and the position.
 
         Parameters
@@ -217,7 +218,7 @@ class PlannerServer:
         client_id
             The client id, provided by the AsyncServer.
         """
-        logging.info("A new client connected with the id {}".format(client_id))
+        logging.info("Planner state requested by the client with the id {}".format(client_id))
 
         await self._update_points(
             client_id=client_id,
@@ -226,6 +227,11 @@ class PlannerServer:
             client_id=client_id,
         )
         await self._update_coil_at_target(
+            client_id=client_id,
+        )
+        await self._socketio.emit(
+            event=self._SOCKETIO_STATE_SENT,
+#            data=self._points,
             client_id=client_id,
         )
 
