@@ -17,7 +17,7 @@ test-backend:           ## Run backend tests.
 .PHONY: test-backend
 
 integration-tests:      ## Run integration tests.
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml run tester
+	sh integration-tests.sh
 .PHONY: integration-tests
 
 download-data:          ## Download EEG data.
