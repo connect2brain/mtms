@@ -23,10 +23,15 @@ class AddPointData(TypedDict):
 class RemovePointData(TypedDict):
     name: str
 
-Fiducial = Literal['LEI', 'REI', 'NAI']
+FiducialName = Literal['LE', 'RE', 'NA']
+FiducialType = Literal['image', 'tracker']
+
+class Fiducial(TypedDict):
+    name: FiducialName
+    type: FiducialType
 
 class SetFiducialData(TypedDict):
-    fiducial_name: Fiducial
+    fiducial: Fiducial
 
 class PointAddedData(TypedDict):
     visible: bool
@@ -36,7 +41,7 @@ class PointAddedData(TypedDict):
     position: Position
 
 class FiducialSet(TypedDict):
-    fiducial_name: Fiducial
+    fiducial: Fiducial
     position: Position
 
 class NeuroNavigationMessage(TypedDict):
@@ -78,7 +83,12 @@ class PlannerServer:
         self._position: Position = None
         self._neuronavigation_project_open: bool = False
         self._coil_at_target: bool = False
-        self._fiducials: Dict[Fiducial, Position] = {}
+
+        self._fiducials_set: Dict[FiducialType, Dict[FiducialName, bool]] = {
+            "image": {},
+            "tracker": {},
+        }
+
         self._added_points_total: int = 0
 
         # Socket.IO event handlers
@@ -244,24 +254,32 @@ class PlannerServer:
         client_id
             The client id, provided by the AsyncServer.
         data
-            The data sent from the front-end with the fiducial data. Should consist of
-            'position' key, with a value that consists of a list of three floats.
+            The data sent from the front-end with the fiducial data.
 
             See type SetFiducialData for the specification.
 
             An example:
 
             {
-                'fiducial_name': "LEI",
+                'fiducial': {
+                    'name': "LE",
+                    'type': "image",
+                }
             }
         """
         logging.info("Received a command from the front-end to set a fiducial")
 
+        fiducial = data['fiducial']
+
         value: FiducialSet = {
-            'fiducial_name': data['fiducial_name'],
+            'fiducial': fiducial,
 
             # XXX: Note that when adding a point, the position makes a round-trip to the front-end,
             #      whereas here the backend sets the position directly. The logic should be unified.
+            #
+            # XXX: Note also that this is unused if a tracker fiducial is being set. Should it be removed in that case?
+            #      Also consider renaming to 'image_position' to distinguish it from tracker position.
+            #
             'position': self._position,
         }
 
@@ -386,19 +404,35 @@ class PlannerServer:
             }
         )
 
-    async def _send_fiducials_to_neuronavigation(self) -> None:
-        """Send all fiducials to neuronavigation.
+    async def _send_fiducial_to_neuronavigation(self,
+            fiducial_type: FiducialType,
+            fiducial_name: FiducialName,
+            position: Position) -> None:
+        """Send fiducial to neuronavigation.
 
         """
-        for fiducial_name, position in self._fiducials.items():
+        if fiducial_type == "image":
 
             await self._send_to_neuronavigation(
-                topic="Set fiducial",
+                topic="Set image fiducial",
                 data={
                     "fiducial_name": fiducial_name,
                     "coord": position,
                 }
             )
+
+        elif fiducial_type == "tracker":
+
+            # XXX: 'position' is unused if fiducial type is tracker.
+            await self._send_to_neuronavigation(
+                topic="Set tracker fiducial",
+                data={
+                    "fiducial_name": fiducial_name,
+                }
+            )
+
+        else:
+            assert False, "Unknown fiducial type: {}".format(fiducial_type)
 
     async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
@@ -478,23 +512,33 @@ class PlannerServer:
             An example:
 
             {
-                'fiducial_name': "LEI",
+                'fiducial': {
+                    'name': "LE",
+                    'type': "image",
+                },
                 'position': [1.0, 2.0, 3.0],
             }
         """
         data: FiducialSet = json.loads(data)
 
-        fiducial_name = data['fiducial_name']
+        fiducial = data['fiducial']
         position = data['position']
 
+        fiducial_type = fiducial['type']
+        fiducial_name = fiducial['name']
+
         # Update backend
-        self._fiducials[fiducial_name] = position
+        self._fiducials_set[fiducial_type][fiducial_name] = True
 
         # Update neuronavigation
-        await self._send_fiducials_to_neuronavigation()
+        await self._send_fiducial_to_neuronavigation(
+            fiducial_type=fiducial_type,
+            fiducial_name=fiducial_name,
+            position=position,
+        )
 
         # Broadcast a confirmation that the fiducial has been set.
         await self._socketio.emit(
             event=self._SOCKETIO_FIDUCIAL_SET,
-            data=fiducial_name,
+            data=fiducial,
         )

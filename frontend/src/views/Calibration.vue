@@ -65,23 +65,45 @@ export default {
   data() {
     return {
       stage: 0,
-      fiducial_name: null,
+      current_fiducial: null,
       waiting_for_fiducial: null
     };
   },
 
   created() {
-    this.STAGE_TO_FIDUCIAL_NAME = {
-      1: "LEI",
-      2: "REI",
-      3: "NAI"
+    this.STAGE_TO_FIDUCIAL = {
+      0: null,
+      1: {
+        name: "LE",
+        type: "image"
+      },
+      2: {
+        name: "RE",
+        type: "image"
+      },
+      3: {
+        name: "NA",
+        type: "image"
+      },
+      4: {
+        name: "LE",
+        type: "tracker"
+      },
+      5: {
+        name: "RE",
+        type: "tracker"
+      },
+      6: {
+        name: "NA",
+        type: "tracker"
+      }
     };
   },
 
   methods: {
     setStage(newStage) {
       this.stage = newStage;
-      this.fiducial_name = this.STAGE_TO_FIDUCIAL_NAME[newStage] || null;
+      this.current_fiducial = this.STAGE_TO_FIDUCIAL[newStage];
     },
 
     previous() {
@@ -89,19 +111,21 @@ export default {
     },
 
     next() {
-      if (this.fiducial_name !== null) {
+      if (this.current_fiducial !== null) {
         this.$socket.emit("calibration.set_fiducial", {
-          fiducial_name: this.fiducial_name
+          fiducial: this.current_fiducial
         });
-        this.waiting_for_fiducial = this.fiducial_name;
+        this.waiting_for_fiducial = this.current_fiducial;
       }
       this.setStage(this.stage + 1);
     }
   },
 
   sockets: {
-    "calibration.fiducial_set"(fiducial_name) {
-      if (this.waiting_for_fiducial === fiducial_name) {
+    "calibration.fiducial_set"(fiducial) {
+      if (this.waiting_for_fiducial["name"] === fiducial["name"] &&
+          this.waiting_for_fiducial["type"] === fiducial["type"]) {
+
         this.waiting_for_fiducial = null;
       }
     }
