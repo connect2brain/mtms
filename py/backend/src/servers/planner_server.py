@@ -4,7 +4,7 @@
 import logging
 import json
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
 
 from socketio import AsyncServer
 
@@ -23,11 +23,20 @@ class AddPointData(TypedDict):
 class RemovePointData(TypedDict):
     name: str
 
+Fiducial = Literal['LEI', 'REI', 'NAI']
+
+class SetFiducialData(TypedDict):
+    fiducial_name: Fiducial
+
 class PointAddedData(TypedDict):
     visible: bool
     name: str
     type: str
     comment: str
+    position: Position
+
+class FiducialSet(TypedDict):
+    fiducial_name: Fiducial
     position: Position
 
 class NeuroNavigationMessage(TypedDict):
@@ -45,8 +54,13 @@ class PlannerServer:
     _SOCKETIO_REQUEST_STATE: str = 'planner.request_state'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
-    _COMMAND_ADD_POINT: str = 'point.add'
-    _COMMAND_REMOVE_POINT: str = 'point.remove'
+    # XXX: Should there be another server for calibration-related functions?
+    _SOCKETIO_SET_FIDUCIAL: str = 'calibration.set_fiducial'
+    _SOCKETIO_FIDUCIAL_SET: str = 'calibration.fiducial_set'
+
+    _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
+    _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
+    _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
 
     def __init__(self, kafka: Kafka, socketio: AsyncServer) -> None:
         """Initialize the planner server.
@@ -64,6 +78,7 @@ class PlannerServer:
         self._position: Position = None
         self._neuronavigation_project_open: bool = False
         self._coil_at_target: bool = False
+        self._fiducials: Dict[Fiducial, Position] = {}
         self._added_points_total: int = 0
 
         # Socket.IO event handlers
@@ -75,13 +90,13 @@ class PlannerServer:
 
         # A handler for adding a new point in the front-end.
         socketio.on(
-            event=self._COMMAND_ADD_POINT,
+            event=self._KAFKA_COMMAND_ADD_POINT,
             handler=self._handle_add_point,
         )
 
         # A handler for removing a point in the front-end.
         socketio.on(
-            event=self._COMMAND_REMOVE_POINT,
+            event=self._KAFKA_COMMAND_REMOVE_POINT,
             handler=self._handle_remove_point,
         )
 
@@ -89,6 +104,12 @@ class PlannerServer:
         socketio.on(
             event=self._SOCKETIO_REQUEST_STATE,
             handler=self._handle_state_request,
+        )
+
+        # A handler for setting a fiducial.
+        socketio.on(
+            event=self._SOCKETIO_SET_FIDUCIAL,
+            handler=self._handle_set_fiducial,
         )
 
         self._points: List[PointAddedData] = []
@@ -103,13 +124,18 @@ class PlannerServer:
         self.background_tasks: List[KafkaListener] = [
             KafkaListener(
                 kafka=self._kafka,
-                topic=self._COMMAND_ADD_POINT,
+                topic=self._KAFKA_COMMAND_ADD_POINT,
                 callback=self._point_added,
             ),
             KafkaListener(
                 kafka=self._kafka,
-                topic=self._COMMAND_REMOVE_POINT,
+                topic=self._KAFKA_COMMAND_REMOVE_POINT,
                 callback=self._point_removed,
+            ),
+            KafkaListener(
+                kafka=self._kafka,
+                topic=self._KAFKA_COMMAND_SET_FIDUCIAL,
+                callback=self._fiducial_set,
             ),
         ]
 
@@ -180,7 +206,7 @@ class PlannerServer:
         }
 
         self._kafka.produce(
-            topic=self._COMMAND_ADD_POINT,
+            topic=self._KAFKA_COMMAND_ADD_POINT,
             value=bytes(json.dumps(value), encoding='utf8')
         )
 
@@ -205,8 +231,43 @@ class PlannerServer:
         logging.info("Received a command from the front-end to remove a point")
 
         self._kafka.produce(
-            topic=self._COMMAND_REMOVE_POINT,
+            topic=self._KAFKA_COMMAND_REMOVE_POINT,
             value=bytes(json.dumps(data), encoding='utf8')
+        )
+
+    def _handle_set_fiducial(self, client_id: str, data: SetFiducialData) -> None:
+        """When a command is received from the front-end to set a fiducial, pass the
+        message to Kafka.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end with the fiducial data. Should consist of
+            'position' key, with a value that consists of a list of three floats.
+
+            See type SetFiducialData for the specification.
+
+            An example:
+
+            {
+                'fiducial_name': "LEI",
+            }
+        """
+        logging.info("Received a command from the front-end to set a fiducial")
+
+        value: FiducialSet = {
+            'fiducial_name': data['fiducial_name'],
+
+            # XXX: Note that when adding a point, the position makes a round-trip to the front-end,
+            #      whereas here the backend sets the position directly. The logic should be unified.
+            'position': self._position,
+        }
+
+        self._kafka.produce(
+            topic=self._KAFKA_COMMAND_SET_FIDUCIAL,
+            value=bytes(json.dumps(value), encoding='utf8')
         )
 
     async def _handle_state_request(self, client_id: str, _) -> None:
@@ -325,6 +386,20 @@ class PlannerServer:
             }
         )
 
+    async def _send_fiducials_to_neuronavigation(self) -> None:
+        """Send all fiducials to neuronavigation.
+
+        """
+        for fiducial_name, position in self._fiducials.items():
+
+            await self._send_to_neuronavigation(
+                topic="Set fiducial",
+                data={
+                    "fiducial_name": fiducial_name,
+                    "coord": position,
+                }
+            )
+
     async def _point_added(self, topic: str, data: str) -> None:
         """Handle the command received from Kafka to add a new point, specifically, pass the
         command on to the front-end and neuronavigation.
@@ -388,3 +463,38 @@ class PlannerServer:
 
         # Update neuronavigation
         await self._update_neuronavigation()
+
+    async def _fiducial_set(self, topic: str, data: str) -> None:
+        """Handle the command received from Kafka to set a fiducial.
+
+        Parameters
+        ----------
+        topic
+            The name of the topic in which the command is sent.
+        data
+            A json dict consisting of the attributes of the fiducial. The dict should
+            consist of the keys 'fiducial_name' and 'position'.
+
+            An example:
+
+            {
+                'fiducial_name': "LEI",
+                'position': [1.0, 2.0, 3.0],
+            }
+        """
+        data: FiducialSet = json.loads(data)
+
+        fiducial_name = data['fiducial_name']
+        position = data['position']
+
+        # Update backend
+        self._fiducials[fiducial_name] = position
+
+        # Update neuronavigation
+        await self._send_fiducials_to_neuronavigation()
+
+        # Broadcast a confirmation that the fiducial has been set.
+        await self._socketio.emit(
+            event=self._SOCKETIO_FIDUCIAL_SET,
+            data=fiducial_name,
+        )
