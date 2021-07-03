@@ -148,6 +148,10 @@ export default {
       } else {
         this.selectedPointsByName.push(toggledName);
       }
+
+      this.$socket.emit("planner.points.selected", {
+        names: this.selectedPointsByName
+      });
     },
     isSelected(row) {
       return this.selectedPointsByName.includes(row.name);
