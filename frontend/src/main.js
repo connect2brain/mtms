@@ -12,6 +12,7 @@ import { faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import { faFolder } from "@fortawesome/free-solid-svg-icons";
 import { faMinus } from "@fortawesome/free-solid-svg-icons";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faRedo } from "@fortawesome/free-solid-svg-icons";
 import { faSquare } from "@fortawesome/free-solid-svg-icons";
 
 import App from "./App.vue";
@@ -25,6 +26,7 @@ library.add(
   faCommentAlt,
   faPlus,
   faMinus,
+  faRedo,
   faSquare
 );
 

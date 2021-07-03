@@ -5,12 +5,12 @@
       <p>Registering the value...</p>
     </div>
     <div v-show="waiting_for_fiducial === null">
-      <div v-show="stage === 0">
+      <div v-show="stage === 0 && !finished">
         <img alt="Head shape" src="../assets/calibration.svg" />
         <p>Start calibration.</p>
       </div>
 
-      <div v-show="stage === 1">
+      <div v-show="stage === 1 && !finished">
         <img
           alt="Head shape, left ear highlighted"
           src="../assets/left_ear.svg"
@@ -18,7 +18,7 @@
         <p>Select the left ear in the brain image.</p>
       </div>
 
-      <div v-show="stage === 2">
+      <div v-show="stage === 2 && !finished">
         <img
           alt="Head shape, right ear highlighted"
           src="../assets/right_ear.svg"
@@ -26,12 +26,12 @@
         <p>Select the right ear in the brain image.</p>
       </div>
 
-      <div v-show="stage === 3">
+      <div v-show="stage === 3 && !finished">
         <img alt="Head shape, nasion highlighted" src="../assets/nasion.svg" />
         <p>Select the nasion in the brain image.</p>
       </div>
 
-      <div v-show="stage === 4">
+      <div v-show="stage === 4 && !finished">
         <img
           alt="Head shape, left ear highlighted"
           src="../assets/left_ear.svg"
@@ -39,7 +39,7 @@
         <p>Point the tracker to the left ear.</p>
       </div>
 
-      <div v-show="stage === 5">
+      <div v-show="stage === 5 && !finished">
         <img
           alt="Head shape, right ear highlighted"
           src="../assets/right_ear.svg"
@@ -47,15 +47,21 @@
         <p>Point the tracker to the right ear.</p>
       </div>
 
-      <div v-show="stage === 6">
+      <div v-show="stage === 6 && !finished">
         <img alt="Head shape, nasion highlighted" src="../assets/nasion.svg" />
         <p>Point the tracker to the nasion.</p>
       </div>
 
-      <a v-show="stage > 0" v-on:click="previous()" class="previous round"
+      <div v-show="finished">
+        <img alt="Head shape" src="../assets/calibration.svg" />
+        <p>Done.</p>
+        <font-awesome-icon icon="redo" class="fa-fw" v-on:click="redo()" />
+      </div>
+
+      <a v-show="stage > 0 && !finished" v-on:click="previous()" class="previous round"
         >&#8249;</a
       >
-      <a v-on:click="next()" class="next round">&#8250;</a>
+      <a v-show="!finished" v-on:click="next()" class="next round">&#8250;</a>
     </div>
   </div>
 </template>
@@ -65,6 +71,7 @@ export default {
   data() {
     return {
       stage: 0,
+      finished: false,
       current_fiducial: null,
       waiting_for_fiducial: null
     };
@@ -98,6 +105,7 @@ export default {
         type: "tracker"
       }
     };
+    this.MAX_STAGE = Math.max(...Object.keys(this.STAGE_TO_FIDUCIAL));
   },
 
   methods: {
@@ -117,7 +125,17 @@ export default {
         });
         this.waiting_for_fiducial = this.current_fiducial;
       }
-      this.setStage(this.stage + 1);
+
+      if (this.stage < this.MAX_STAGE) {
+        this.setStage(this.stage + 1);
+      } else {
+        this.finished = true;
+      }
+    },
+
+    redo() {
+      this.setStage(0);
+      this.finished = false;
     }
   },
 
