@@ -66,6 +66,7 @@ class PlannerServer:
     #
     # XXX: Should there be another server for calibration-related functions? (e.g., 'calibration.fiducial_set' below)
     #
+    _SOCKETIO_UPDATE_NAVIGATING: str = 'planner.navigating'
     _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
@@ -101,6 +102,7 @@ class PlannerServer:
         self._position: Position = None
         self._neuronavigation_project_open: bool = False
         self._coil_at_target: bool = False
+        self._navigating: bool = False
 
         self._fiducials_set: Dict[FiducialType, Dict[FiducialName, bool]] = {
             "image": {},
@@ -121,20 +123,23 @@ class PlannerServer:
             #
             'point.add': self._handle_add_point,
 
-            # Remove a point in the front-end.
+            # Remove a point in the front-end
             'point.remove': self._handle_remove_point,
 
-            # Front-end requesting state.
+            # Front-end requesting state
             'planner.request_state': self._handle_state_request,
 
-            # A fiducial is set in the front-end.
+            # A fiducial is set in the front-end
             'calibration.set_fiducial': self._handle_set_fiducial,
 
-            # Toggle selecting a point in the front-end.
+            # Toggle selecting a point in the front-end
             'planner.point.toggle_select': self._handle_point_toggle_selected,
 
-            # Set a point as target in the front-end.
+            # Toggle a point as target in the front-end
             'planner.point.toggle_target': self._handle_point_toggle_target,
+
+            # Toggle navigation in the front-end
+            'planner.toggle_navigating': self._handle_toggle_navigating,
         }
 
         for event, handler in self._SOCKETIO_EVENT_HANDLERS.items():
@@ -347,6 +352,34 @@ class PlannerServer:
         # Update frontend
         await self._update_points()
 
+    async def _handle_toggle_navigating(self, client_id: str) -> None:
+        """When a command is received from the front-end to toggle navigating, pass on
+        the message to neuronavigation.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        """
+        logging.info("Received a command from the front-end to toggle navigation")
+
+        # Update backend
+        self._navigating = not self._navigating
+
+        # Update neuronavigation
+        #
+        # TODO: Not implemented yet, but will probably end up with something like this:
+        #
+        # await self._send_to_neuronavigation(
+        #     topic="Set navigating",
+        #     data={
+        #         "navigating": self._navigating,
+        #     }
+        # )
+
+        # Update frontend
+        await self._update_navigating()
+
     def _handle_set_fiducial(self, client_id: str, data: SetFiducialData) -> None:
         """When a command is received from the front-end to set a fiducial, pass the
         message to Kafka.
@@ -410,9 +443,11 @@ class PlannerServer:
         await self._update_coil_at_target(
             client_id=client_id,
         )
+        await self._update_navigating(
+            client_id=client_id,
+        )
         await self._socketio.emit(
             event=self._SOCKETIO_STATE_SENT,
-#            data=self._points,
             client_id=client_id,
         )
 
@@ -446,6 +481,21 @@ class PlannerServer:
                 data=self._position,
                 client_id=client_id,
             )
+
+    async def _update_navigating(self, client_id: str = None) -> None:
+        """Update the navigating state to the frontend.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the position is sent only to the client with that id.
+            If not provided (the default), the position is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_NAVIGATING,
+            data=self._navigating,
+            client_id=client_id,
+        )
 
     async def _update_coil_at_target(self, client_id: str = None) -> None:
         """Update the indicator for coil being at the target.

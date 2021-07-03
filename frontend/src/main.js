@@ -5,6 +5,7 @@ import SocketIO from "socket.io-client";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
+import { faArrowAltCircleRight } from "@fortawesome/free-solid-svg-icons";
 import { faBullseye } from "@fortawesome/free-solid-svg-icons";
 import { faCommentAlt } from "@fortawesome/free-solid-svg-icons";
 import { faCircle } from "@fortawesome/free-solid-svg-icons";
@@ -20,6 +21,7 @@ import App from "./App.vue";
 import router from "./router";
 
 library.add(
+  faArrowAltCircleRight,
   faBullseye,
   faEye,
   faEyeSlash,
