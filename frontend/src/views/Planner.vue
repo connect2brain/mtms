@@ -67,7 +67,7 @@
     <div id="actions">
       <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
       <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
-      <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="setAsTarget()" />
+      <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="toggleTarget()" />
     </div>
 
     <!-- Show a circle indicating if the coil is at the target or not. -->
@@ -134,10 +134,10 @@ export default {
         });
       });
     },
-    setAsTarget() {
+    toggleTarget() {
       const selectedPoints = this.getSelectedPoints();
       if (selectedPoints.length === 1) {
-        this.$socket.emit("planner.point.set_as_target", {
+        this.$socket.emit("planner.point.toggle_target", {
           name: selectedPoints[0]["name"]
         });
       } else {

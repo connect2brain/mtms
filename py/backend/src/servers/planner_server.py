@@ -134,7 +134,7 @@ class PlannerServer:
             'planner.point.toggle_select': self._handle_point_toggle_selected,
 
             # Set a point as target in the front-end.
-            'planner.point.set_as_target': self._handle_point_set_as_target,
+            'planner.point.toggle_target': self._handle_point_toggle_target,
         }
 
         for event, handler in self._SOCKETIO_EVENT_HANDLERS.items():
@@ -309,9 +309,9 @@ class PlannerServer:
         # Update frontend
         await self._update_points()
 
-    async def _handle_point_set_as_target(self, client_id: str, data: PointSelectedData) -> None:
-        """When a command is received from the front-end to select points, pass the
-        message to neuronavigation.
+    async def _handle_point_toggle_target(self, client_id: str, data: PointSelectedData) -> None:
+        """When a command is received from the front-end to toggle a target point, pass on
+        the message to neuronavigation.
 
         Parameters
         ----------
@@ -328,7 +328,7 @@ class PlannerServer:
                 'name': "Target-1",
             }
         """
-        logging.info("Received a command from the front-end to set a point as target")
+        logging.info("Received a command from the front-end to toggle a point as target")
 
         name: str = data['name']
 
@@ -336,7 +336,10 @@ class PlannerServer:
         #
         point: Point
         for point in self._points:
-            point['target'] = point['name'] == name
+            if point['name'] == name:
+                point['target'] = not point['target']
+            else:
+                point['target'] = False
 
         # Update neuronavigation
         await self._update_neuronavigation()
