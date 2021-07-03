@@ -43,7 +43,7 @@
             />
           </td>
           <td class="name-column">
-            <font-awesome-icon icon="square" class="target-square" />
+            <font-awesome-icon icon="square" class="non-target-square" />
             <Editable
               :value="row.name"
               v-on:changed="rename(row, $event)"
@@ -256,7 +256,11 @@ input {
 }
 
 .target-square {
-  color: red;
+  color: $target-color;
+}
+
+.non-target-square {
+  color: $non-target-color;
 }
 
 .coil-at-target {
