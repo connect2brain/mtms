@@ -4,7 +4,7 @@
 import logging
 import json
 from functools import partial
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypedDict
 
 from socketio import AsyncServer
 
@@ -53,14 +53,16 @@ class PlannerServer:
 
     """
 
+    # Socket.IO events sent by the planner.
+    #
+    # TODO: Whether the event is sent or received by the planner should be reflected by the event name.
+    #
+    # XXX: Should there be another server for calibration-related functions? (e.g., 'calibration.fiducial_set' below)
+    #
     _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
-    _SOCKETIO_REQUEST_STATE: str = 'planner.request_state'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
-
-    # XXX: Should there be another server for calibration-related functions?
-    _SOCKETIO_SET_FIDUCIAL: str = 'calibration.set_fiducial'
     _SOCKETIO_FIDUCIAL_SET: str = 'calibration.fiducial_set'
 
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
@@ -91,36 +93,30 @@ class PlannerServer:
 
         self._added_points_total: int = 0
 
-        # Socket.IO event handlers
+        # Set up Socket.IO event handlers
 
-        socketio.on(
-            event='from_neuronavigation',
-            handler=self._handle_neuronavigation_message,
-        )
+        self._SOCKETIO_EVENT_HANDLERS: Dict[str, Callable] = {
+            # Neuronavigation sends a message.
+            'from_neuronavigation': self._handle_neuronavigation_message,
 
-        # A handler for adding a new point in the front-end.
-        socketio.on(
-            event=self._KAFKA_COMMAND_ADD_POINT,
-            handler=self._handle_add_point,
-        )
+            # Add a new point in the front-end.
+            'point.add': self._handle_add_point,
 
-        # A handler for removing a point in the front-end.
-        socketio.on(
-            event=self._KAFKA_COMMAND_REMOVE_POINT,
-            handler=self._handle_remove_point,
-        )
+            # Remove a point in the front-end.
+            'point.remove': self._handle_remove_point,
 
-        # A handler for a new state request.
-        socketio.on(
-            event=self._SOCKETIO_REQUEST_STATE,
-            handler=self._handle_state_request,
-        )
+            # Front-end requesting state.
+            'planner.request_state': self._handle_state_request,
 
-        # A handler for setting a fiducial.
-        socketio.on(
-            event=self._SOCKETIO_SET_FIDUCIAL,
-            handler=self._handle_set_fiducial,
-        )
+            # A fiducial is set in the front-end.
+            'calibration.set_fiducial': self._handle_set_fiducial,
+        }
+
+        for event, handler in self._SOCKETIO_EVENT_HANDLERS.items():
+            socketio.on(
+                event=event,
+                handler=handler,
+            )
 
         self._points: List[PointAddedData] = []
 
