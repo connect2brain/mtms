@@ -43,7 +43,7 @@
             />
           </td>
           <td class="name-column">
-            <font-awesome-icon icon="square" class="non-target-square" />
+            <font-awesome-icon icon="square" class="square" v-bind:class="{ target: row.target }" />
             <Editable
               :value="row.name"
               v-on:changed="rename(row, $event)"
@@ -67,6 +67,7 @@
     <div id="actions">
       <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
       <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
+      <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="setAsTarget()" />
     </div>
 
     <!-- Show a circle indicating if the coil is at the target or not. -->
@@ -131,6 +132,16 @@ export default {
           name: point['name']
         });
       });
+    },
+    setAsTarget() {
+      if (this.selectedPointsByName.length === 1) {
+        this.$socket.emit("planner.point.set_as_target", {
+          name: this.selectedPointsByName[0]
+        });
+      } else {
+        // TODO: Add some kind of an indicator to the user that the number of selected
+        //       points is something else than one.
+      }
     },
     toggleVisible(row) {
       row.visible = !row.visible;
@@ -255,12 +266,12 @@ input {
   font-size: 18px;
 }
 
-.target-square {
-  color: $target-color;
+.square {
+  color: $non-target-color;
 }
 
-.non-target-square {
-  color: $non-target-color;
+.target {
+  color: $target-color;
 }
 
 .coil-at-target {
