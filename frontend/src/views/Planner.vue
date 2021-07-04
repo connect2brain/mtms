@@ -23,25 +23,29 @@
 
     <!-- Targets -->
     <div v-show="tab == 'targets'">
-      <table>
-        <tr>
-          <th class="visibility-column">
-            <font-awesome-icon icon="eye" />
-          </th>
-          <th class="name-column">
-            Name
-          </th>
-          <th class="type-column">
-            Type
-          </th>
-          <th class="comment-column">
-            <font-awesome-icon icon="comment-alt" />
-            Comment
-          </th>
-        </tr>
-      </table>
       <div class="canvas">
         <table>
+          <tr>
+            <th class="visibility-column">
+              <font-awesome-icon icon="eye" />
+            </th>
+            <th class="name-column">
+              Name
+            </th>
+            <th class="type-column">
+              Type
+            </th>
+            <th class="comment-column">
+              <font-awesome-icon icon="comment-alt" />
+              Comment
+            </th>
+          </tr>
+          <!-- XXX: When the planner is scrolled, the table header scrolls along. Ideally, it would remain
+                    in place. However, if a separate table is created to form the header, the alignments of
+                    the columns mismatch. There's a similar problem with Sequence tab.
+
+                    See https://stackoverflow.com/questions/21168521/table-fixed-header-and-scrollable-body
+                    for a potential solution. -->
           <tr
             v-for="row in points"
             :key="row.id"
@@ -86,31 +90,28 @@
 
     <!-- Sequence -->
     <div v-show="tab == 'sequence'">
-      <table>
-        <tr>
-          <th class="visibility-column">
-            <font-awesome-icon icon="eye" />
-          </th>
-          <th class="number-column">
-            #
-          </th>
-          <th class="name-column">
-            Name
-          </th>
-          <th class="intensity-column">
-            Intensity
-          </th>
-          <th class="isi-column">
-            ISI
-          </th>
-          <th class="mode-duration-column">
-            Mode Duration
-          </th>
-        </tr>
-      </table>
-
       <div class="canvas">
         <table>
+          <tr>
+            <th class="visibility-column">
+              <font-awesome-icon icon="eye" />
+            </th>
+            <th class="number-column">
+              #
+            </th>
+            <th class="name-column">
+              Name
+            </th>
+            <th class="intensity-column">
+              Intensity
+            </th>
+            <th class="isi-column">
+              ISI
+            </th>
+            <th class="mode-duration-column">
+              Mode Duration
+            </th>
+          </tr>
           <tr
             v-for="row in targetPoints"
             :key="row.id"
