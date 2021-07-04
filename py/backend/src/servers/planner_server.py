@@ -368,14 +368,10 @@ class PlannerServer:
 
         # Update neuronavigation
         #
-        # TODO: Not implemented yet, but will probably end up with something like this:
-        #
-        # await self._send_to_neuronavigation(
-        #     topic="Set navigating",
-        #     data={
-        #         "navigating": self._navigating,
-        #     }
-        # )
+        topic = "Start navigation" if self._navigating else "Stop navigation"
+        await self._send_to_neuronavigation(
+            topic=topic,
+        )
 
         # Update frontend
         await self._update_navigating()
@@ -512,7 +508,7 @@ class PlannerServer:
             client_id=client_id,
         )
 
-    async def _send_to_neuronavigation(self, topic: str, data: Any) -> None:
+    async def _send_to_neuronavigation(self, topic: str, data: Any = None) -> None:
         """Given a topic and data of any type, send a message to neuronavigation in that topic
         and passing on the given data.
 
