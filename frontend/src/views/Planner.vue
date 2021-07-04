@@ -3,65 +3,156 @@
     Loading...
   </div>
   <div v-else id="planner" class="noselect">
-    <table>
-      <tr>
-        <th class="visibility-column">
-          <font-awesome-icon icon="eye" />
-        </th>
-        <th class="name-column">
-          Name
-        </th>
-        <th class="type-column">
-          Type
-        </th>
-        <th class="comment-column">
-          <font-awesome-icon icon="comment-alt" />
-          Comment
-        </th>
-      </tr>
-    </table>
+    <!-- Tab bar -->
+    <div>
+      <button
+        class="tab-link"
+        v-bind:class="{ 'active-tab': tab == 'targets' }"
+        v-on:click="openTab('targets')">
 
-    <div class="canvas">
+        Targets
+      </button>
+      <button
+        class="tab-link"
+        v-bind:class="{ 'active-tab': tab == 'sequence' }"
+        v-on:click="openTab('sequence')">
+
+        Sequence
+      </button>
+    </div>
+
+    <!-- Targets -->
+    <div v-show="tab == 'targets'">
       <table>
-        <tr
-          v-for="row in points"
-          :key="row.id"
-          :row="row"
-          v-on:click="toggleSelect(row)"
-          v-bind:class="{ selected: isSelected(row) }"
-        >
-          <td class="visibility-column">
-            <font-awesome-icon
-              v-show="row.visible"
-              v-on:click.stop.prevent="toggleVisible(row)"
-              icon="eye"
-            />
-            <font-awesome-icon
-              v-show="!row.visible"
-              v-on:click.stop.prevent="toggleVisible(row)"
-              icon="eye-slash"
-            />
-          </td>
-          <td class="name-column">
-            <font-awesome-icon icon="square" class="square" v-bind:class="{ target: row.target }" />
-            <Editable
-              :value="row.name"
-              v-on:changed="rename(row, $event)"
-              :allowEmpty="false"
-            />
-          </td>
-          <td class="type-column">
-            {{ row.type }}
-          </td>
-          <td class="comment-column">
-            <Editable
-              :value="row.comment"
-              v-on:changed="changeComment(row, $event)"
-              :allowEmpty="true"
-            />
-          </td>
+        <tr>
+          <th class="visibility-column">
+            <font-awesome-icon icon="eye" />
+          </th>
+          <th class="name-column">
+            Name
+          </th>
+          <th class="type-column">
+            Type
+          </th>
+          <th class="comment-column">
+            <font-awesome-icon icon="comment-alt" />
+            Comment
+          </th>
         </tr>
       </table>
+      <div class="canvas">
+        <table>
+          <tr
+            v-for="row in points"
+            :key="row.id"
+            :row="row"
+            v-on:click="toggleSelect(row)"
+            v-bind:class="{ selected: isSelected(row) }"
+          >
+            <td class="visibility-column">
+              <font-awesome-icon
+                v-show="row.visible"
+                v-on:click.stop.prevent="toggleVisible(row)"
+                icon="eye"
+              />
+              <font-awesome-icon
+                v-show="!row.visible"
+                v-on:click.stop.prevent="toggleVisible(row)"
+                icon="eye-slash"
+              />
+            </td>
+            <td class="name-column">
+              <font-awesome-icon icon="square" class="square" v-bind:class="{ target: row.target }" />
+              <Editable
+                :value="row.name"
+                v-on:changed="rename(row, $event)"
+                :allowEmpty="false"
+              />
+            </td>
+            <td class="type-column">
+              {{ row.type }}
+            </td>
+            <td class="comment-column">
+              <Editable
+                :value="row.comment"
+                v-on:changed="changeComment(row, $event)"
+                :allowEmpty="true"
+              />
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sequence -->
+    <div v-show="tab == 'sequence'">
+      <table>
+        <tr>
+          <th class="visibility-column">
+            <font-awesome-icon icon="eye" />
+          </th>
+          <th class="number-column">
+            #
+          </th>
+          <th class="name-column">
+            Name
+          </th>
+          <th class="intensity-column">
+            Intensity
+          </th>
+          <th class="isi-column">
+            ISI
+          </th>
+          <th class="mode-duration-column">
+            Mode Duration
+          </th>
+        </tr>
+      </table>
+
+      <div class="canvas">
+        <table>
+          <tr
+            v-for="row in targetPoints"
+            :key="row.id"
+            :row="row"
+            v-on:click="toggleSelect(row)"
+            v-bind:class="{ selected: isSelected(row) }"
+          >
+            <td class="visibility-column">
+              <font-awesome-icon
+                v-show="row.visible"
+                v-on:click.stop.prevent="toggleVisible(row)"
+                icon="eye"
+              />
+              <font-awesome-icon
+                v-show="!row.visible"
+                v-on:click.stop.prevent="toggleVisible(row)"
+                icon="eye-slash"
+              />
+            </td>
+            <td class="number-column">
+              1
+            </td>
+            <td class="name-column">
+              <font-awesome-icon icon="square" class="square" v-bind:class="{ target: row.target }" />
+              <Editable
+                :value="row.name"
+                v-on:changed="rename(row, $event)"
+                :allowEmpty="false"
+              />
+            </td>
+            <td class="intensity-column">
+              100
+            </td>
+            <td class="isi-column">
+              100
+            </td>
+            <td class="mode-duration-column">
+              80
+            </td>
+          </tr>
+        </table>
+      </div>
     </div>
 
     <div id="actions">
@@ -71,20 +162,16 @@
       <font-awesome-icon
         icon="arrow-alt-circle-right"
         class="fa-fw toggle-navigating"
-        v-bind:class="{ 'ready-to-navigate': isReadyToNavigate() }"
+        v-bind:class="{ 'ready-to-navigate': isReadyToNavigate }"
         v-on:click="toggleNavigating()"
       />
+      &nbsp;
+      <font-awesome-icon
+        icon="circle"
+        class="fa-fw coil-at-target-indicator"
+        v-bind:class="{ 'coil-at-target': isCoilAtTarget }"
+      />
     </div>
-
-    <!-- Show a circle indicating if the coil is at the target or not. -->
-    <p v-if="isCoilAtTarget">
-      <font-awesome-icon icon="circle" class="coil-at-target" />
-      Coil at the target
-    </p>
-    <p v-else>
-      <font-awesome-icon icon="circle" class="coil-not-at-target" />
-      Coil not at the target
-    </p>
 
     <!-- XXX: Keep the position display here for debugging purposes during the
               development, but remove later.
@@ -103,11 +190,23 @@ export default {
   data() {
     return {
       loading: true,
+      tab: 'targets',
       navigating: false,
       isCoilAtTarget: false,
       position: undefined,
       points: []
     };
+  },
+  computed: {
+    targetPoints: function () {
+      return this.points.filter((point) => point["target"]);
+    },
+    selectedPoints() {
+      return this.points.filter((point) => point["selected"]);
+    },
+    isReadyToNavigate: function () {
+      return this.points.some((point) => point["target"]);
+    }
   },
 
   components: {
@@ -119,6 +218,10 @@ export default {
   },
 
   methods: {
+    openTab(tab) {
+      this.tab = tab;
+    },
+
     addPoint() {
       if (this.position !== undefined) {
         this.$socket.emit("point.add", {
@@ -131,21 +234,17 @@ export default {
         throw "Position is undefined.";
       }
     },
-    getSelectedPoints() {
-      return this.points.filter((point) => point["selected"]);
-    },
     removePoint() {
-      this.getSelectedPoints().forEach((point) => {
+      this.selectedPoints.forEach((point) => {
         this.$socket.emit("point.remove", {
           name: point['name']
         });
       });
     },
     toggleTarget() {
-      const selectedPoints = this.getSelectedPoints();
-      if (selectedPoints.length === 1) {
+      if (this.selectedPoints.length === 1) {
         this.$socket.emit("planner.point.toggle_target", {
-          name: selectedPoints[0]["name"]
+          name: this.selectedPoints[0]["name"]
         });
       } else {
         // TODO: Add some kind of an indicator to the user that the number of selected
@@ -169,11 +268,8 @@ export default {
     isSelected(row) {
       return row["selected"];
     },
-    isReadyToNavigate() {
-      return this.points.some((point) => point["target"])
-    },
     toggleNavigating() {
-      if (this.isReadyToNavigate()) {
+      if (this.isReadyToNavigate) {
         this.$socket.emit("planner.toggle_navigating");
       }
     }
@@ -213,6 +309,11 @@ $name-column-width: 150px;
 $type-column-width: 50px;
 $comment-column-width: 150px;
 
+$number-column-width: 20px;
+$intensity-column-width: 60px;
+$isi-column-width: 20px;
+$mode-duration-column-width: 100px;
+
 $total-width: $visibility-column-width + $name-column-width + $type-column-width +
   $comment-column-width;
 
@@ -234,7 +335,18 @@ td {
 
 th {
   background: $lighter-gray;
+}
 
+.tab-link {
+  background: $light-gray;
+}
+
+.active-tab {
+  background: white;
+}
+
+th,
+.tab-link {
   color: $dark-gray;
   font-weight: normal;
   font-size: 12px;
@@ -261,6 +373,8 @@ input {
   background-color: $light-gray;
 }
 
+/* Common columns */
+
 .visibility-column {
   width: $visibility-column-width;
 }
@@ -269,6 +383,8 @@ input {
   width: $name-column-width;
 }
 
+/* Columns on 'Targets' tab */
+
 .type-column {
   width: $type-column-width;
 }
@@ -276,6 +392,25 @@ input {
 .comment-column {
   width: $comment-column-width;
 }
+
+/* Columns on 'Sequence' tab */
+
+.number-column {
+  width: $number-column-width;
+}
+
+.intensity-column {
+  width: $intensity-column-width;
+}
+
+.isi-column {
+  width: $isi-column-width;
+}
+
+.mode-duration-column {
+  width: $mode-duration-column-width;
+}
+
 
 #actions {
   color: $dark-gray;
@@ -290,12 +425,12 @@ input {
   color: $target-color;
 }
 
-.coil-at-target {
-  color: green;
+.coil-at-target-indicator {
+  color: red;
 }
 
-.coil-not-at-target {
-  color: red;
+.coil-at-target {
+  color: green;
 }
 
 .toggle-navigating {
