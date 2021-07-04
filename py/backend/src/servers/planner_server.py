@@ -32,6 +32,10 @@ class SetIntensityData(TypedDict):
     name: str
     value: int
 
+class SetIsiData(TypedDict):
+    name: str
+    value: int
+
 FiducialName = Literal['LE', 'RE', 'NA']
 FiducialType = Literal['image', 'tracker']
 
@@ -82,6 +86,7 @@ class PlannerServer:
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
     _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
     _KAFKA_COMMAND_SET_POINT_INTENSITY: str = 'point.set_intensity'
+    _KAFKA_COMMAND_SET_POINT_ISI: str = 'point.set_isi'
     _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
 
     # Stimulation parameter related constants.
@@ -158,8 +163,11 @@ class PlannerServer:
             # Toggle a point as target in the front-end
             'planner.point.toggle_target': self._handle_point_toggle_target,
 
-            # Remove a point in the front-end
+            # Set intensity of a point in the front-end
             'planner.point.set_intensity': self._handle_point_set_intensity,
+
+            # Set ISI of a point in the front-end
+            'planner.point.set_isi': self._handle_point_set_isi,
 
             # Toggle navigation in the front-end
             'planner.toggle_navigating': self._handle_toggle_navigating,
@@ -381,7 +389,7 @@ class PlannerServer:
 
     async def _handle_point_set_intensity(self, client_id: str, data: SetIntensityData) -> None:
         """When a command is received from the front-end to set intensity, pass on
-        the message to Kafka.
+        the message to Kafka and modify the backend state.
 
         Parameters
         ----------
@@ -421,6 +429,57 @@ class PlannerServer:
 
         self._kafka.produce(
             topic=self._KAFKA_COMMAND_SET_POINT_INTENSITY,
+            value=bytes(json.dumps(data_to_kafka), encoding='utf8')
+        )
+
+        # Update frontend
+        await self._update_points()
+
+    # TODO: Almost identical to _handle_point_set_intensity. Consider extracting out the
+    #       common parts.
+    #
+    async def _handle_point_set_isi(self, client_id: str, data: SetIsiData) -> None:
+        """When a command is received from the front-end to set ISI, pass on
+        the message to Kafka and modify the backend state.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end.
+
+            See type SetIsiData for the specification.
+
+            An example:
+
+            {
+                'name': "Target-1",
+                'value': 100,
+            }
+        """
+        logging.info("Received a command from the front-end to set ISI for a point")
+
+        name: str = data['name']
+        value: int = data['value']
+
+        clamped: int = clamp(value, self._ISI["min"], self._ISI["max"])
+
+        # TODO: Ensure that only a single point changes ISI, see a similar concern
+        #       in _handle_point_toggle_target.
+        #
+        point: Point
+        for point in self._points:
+            if point['name'] == name:
+                point['isi'] = clamped
+
+        data_to_kafka = {
+            'name': name,
+            'value': clamped,
+        }
+
+        self._kafka.produce(
+            topic=self._KAFKA_COMMAND_SET_POINT_ISI,
             value=bytes(json.dumps(data_to_kafka), encoding='utf8')
         )
 
