@@ -109,7 +109,7 @@
               ISI
             </th>
             <th class="mode-duration-column">
-              Mode Duration
+              Mode duration
             </th>
           </tr>
           <tr
@@ -143,13 +143,17 @@
               />
             </td>
             <td class="intensity-column">
-              100
+              <Editable
+                :value="row.intensity.toString()"
+                v-on:changed="setIntensity(row, $event)"
+                :allowEmpty="false"
+              />
             </td>
             <td class="isi-column">
-              100
+              {{ row.isi }}
             </td>
             <td class="mode-duration-column">
-              80
+              &mdash;
             </td>
           </tr>
         </table>
@@ -273,6 +277,18 @@ export default {
       if (this.isReadyToNavigate) {
         this.$socket.emit("planner.toggle_navigating");
       }
+    },
+    setIntensity(row, newIntensityString) {
+      const name = row["name"];
+      const newIntensity = parseInt(newIntensityString);
+
+      if (!isNaN(newIntensity)) {
+        this.$socket.emit("planner.point.set_intensity", {
+          name: name,
+          value: newIntensity
+        });
+        row.intensity = newIntensity;
+      }
     }
   },
 
@@ -311,8 +327,8 @@ $type-column-width: 50px;
 $comment-column-width: 150px;
 
 $number-column-width: 20px;
-$intensity-column-width: 60px;
-$isi-column-width: 20px;
+$intensity-column-width: 55px;
+$isi-column-width: 35px;
 $mode-duration-column-width: 100px;
 
 $total-width: $visibility-column-width + $name-column-width + $type-column-width +
