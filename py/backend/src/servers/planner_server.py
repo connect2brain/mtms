@@ -386,6 +386,41 @@ class PlannerServer:
         # Update frontend
         await self._update_points()
 
+        # Update stimulation parameters due to a new target
+        self._update_current_stimulation_parameters_to_kafka()
+
+    # TODO: Ideally, we'd have another class that takes care of transforming
+    #       the planner state to current stimulation parameters and keeping
+    #       Kafka up to date. That would also facilitate testing.
+    #
+    def _update_current_stimulation_parameters_to_kafka(self) -> None:
+        """Update current stimulation parameters (intensity, ISI) to Kafka.
+
+        """
+        # XXX: Ensure that only a single target point is found. See similar concerns
+        #      elsewhere in this class.
+        #
+        target_point: Optional[Point] = None
+        for point in self._points:
+            if point['target']:
+                target_point = point
+
+        if target_point is None:
+            return
+
+        intensity: int = target_point['intensity']
+        isi: int = target_point['isi']
+
+        self._kafka.produce(
+            topic='intensity',
+            value=bytes(str(intensity), encoding='utf8'),
+        )
+
+        self._kafka.produce(
+            topic='isi',
+            value=bytes(str(isi), encoding='utf8'),
+        )
+
     async def _handle_point_set_intensity(self, client_id: str, data: SetIntensityData) -> None:
         """When a command is received from the front-end to set intensity, pass on
         the message to Kafka and modify the backend state.
@@ -433,6 +468,13 @@ class PlannerServer:
 
         # Update frontend
         await self._update_points()
+
+        # Update stimulation parameters due to a new intensity for a potential target.
+        #
+        # XXX: This could be cleaner: it would be better to only update stimulation
+        #      parameters when a new intensity/ISI for the actual target is set.
+        #
+        self._update_current_stimulation_parameters_to_kafka()
 
     # TODO: Almost identical to _handle_point_set_intensity. Consider extracting out the
     #       common parts.
@@ -484,6 +526,13 @@ class PlannerServer:
 
         # Update frontend
         await self._update_points()
+
+        # Update stimulation parameters due to a new ISI for a potential target.
+        #
+        # XXX: This could be cleaner: it would be better to only update stimulation
+        #      parameters when a new intensity/ISI for the actual target is set.
+        #
+        self._update_current_stimulation_parameters_to_kafka()
 
     async def _handle_toggle_navigating(self, client_id: str) -> None:
         """When a command is received from the front-end to toggle navigating, pass on
