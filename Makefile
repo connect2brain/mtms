@@ -36,3 +36,7 @@ stream-data:            ## Stream EEG data via Kafka.
 listen:                 ## Listen to Kafka topic, specified in TOPIC environment variable.
 	docker-compose exec kafka /opt/bitnami/kafka/bin/kafka-console-consumer.sh --topic $(TOPIC) --bootstrap-server kafka:9092
 .PHONY: listen
+
+produce:                ## Produce to Kafka topic, specified in TOPIC environment variable.
+	docker-compose exec kafka /opt/bitnami/kafka/bin/kafka-console-producer.sh --topic $(TOPIC) --bootstrap-server kafka:9092
+.PHONY: produce
