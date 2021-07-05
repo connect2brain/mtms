@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import logging
 import os
 import time
-from multiprocessing.connection import Client, Listener
 from threading import Thread
+from multiprocessing.connection import Client, Listener
 
+# TODO: Add type hints to this class.
+#
 class MTMSConnection:
     """A class for connecting between Python and LabVIEW in the mTMS bridge.
 
@@ -141,9 +144,35 @@ class MTMSConnection:
             except (ConnectionRefusedError, ConnectionResetError) as e:
                 logging.info("Connection failed.")
 
-    def keep_connected(self):
+    async def run(self):
         """Connects to the other end, and creates a thread that periodically queries that the connection
         is still open. If not, attempts to reconnect.
+
+        """
+        server_or_client_str = "server" if self._is_server else "client"
+        asyncio.current_task().name = "{}_mtms_connection".format(server_or_client_str)
+
+        logging.info("mTMS connection coroutine started.")
+        try:
+            while True:
+                self._send_keep_alive()
+                self._connect_if_disconnected()
+                await asyncio.sleep(1)
+
+        except asyncio.CancelledError as e:
+            logging.info("Cancelled task {}".format(asyncio.current_task().name))
+            raise e
+
+        # General exception handling is needed here so that exceptions within asyncio coroutines are logged properly.
+        except Exception as e:
+            logging.exception(e)
+
+    def keep_connected(self):
+        """Functions similarly to 'run' coroutine, but uses threads instead of asyncio.
+
+        XXX: The reason for having a similar functionality implemented both using asyncio and
+             threads is that combining asyncio with LabVIEW turned out to be problematic:
+             how to make the asyncio coroutine run in the background while LabVIEW is running?
 
         """
         def keep_connected_thread():
