@@ -326,7 +326,6 @@ export default {
     },
 
     "planner.direction"(direction) {
-      console.log(direction);
       this.direction = direction.length == 0 ? null : direction;
     },
 

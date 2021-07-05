@@ -258,8 +258,8 @@ class PlannerServer:
             await self._update_position()
 
             # XXX: It is not the cleanest way to communicate that direction is unset that all the coordinates
-            #      are 0.0. Needs the kind of clean-up where that information is sent more explicitly, maybe
-            #      even in separate messages.
+            #      are 0.0, but this comes from InVesalius. A clean-up to InVesalius where that information is
+            #      sent more explicitly would be useful, maybe even sending direction and position in separate messages.
             #
             self._direction = direction if any([x != 0.0 for x in direction]) else None
             await self._update_direction()
@@ -898,7 +898,9 @@ class PlannerServer:
             position: Position = point['position']
 
             # XXX: Should be more explicit about the direction being missing when sending
-            #      the data to neuronavigation, instead of decoding it as [0.0, 0.0, 0.0].
+            #      the data to neuronavigation, instead of decoding it as [0.0, 0.0, 0.0],
+            #      but this needs changes to InVesalius: currently it interprets
+            #      [0.0, 0.0, 0.0] direction as missing.
             #
             direction: Direction = point['direction'] or [0.0, 0.0, 0.0]
 
