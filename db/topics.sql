@@ -86,6 +86,25 @@ INSERT INTO topics (name, type, latch)
 INSERT INTO topics (name, type, latch)
   VALUES ('point.remove', 'command', 0);
 
+--Set intensity of a point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.set_intensity', 'command', 0);
+
+--Set ISI of a point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.set_isi', 'command', 0);
+
+/* Navigation */
+
+--Indicator for the coil being at the target
+
+/* XXX: Unsure if this is of the 'state' type, as, in contrast to the other topics of the
+        'state' type, it is not part of state produced by the mTMS (= stimulation) system.
+        The topic types probably need to be rethought.
+*/
+INSERT INTO topics (name, type, latch)
+  VALUES ('coil_at_target', 'state', 0);
+
 /* Calibration */
 
 --Set fiducial

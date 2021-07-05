@@ -676,7 +676,7 @@ class PlannerServer:
         )
 
     async def _update_coil_at_target(self, client_id: str = None) -> None:
-        """Update the indicator for coil being at the target.
+        """Update the indicator for coil being at the target, both to Kafka and frontend.
 
         Parameters
         ----------
@@ -688,6 +688,16 @@ class PlannerServer:
             event=self._SOCKETIO_UPDATE_COIL_AT_TARGET,
             data=self._coil_at_target,
             client_id=client_id,
+        )
+
+        self._kafka.produce(
+            topic='coil_at_target',
+
+            # XXX: Unify the encoding of parameters of boolean (or other) types, preferably
+            #      using a wrapper class that does the encoding instead of doing it ad hoc,
+            #      even though the encoding here is just True -> b"True" and False -> b"False".
+            #
+            value=bytes(str(self._coil_at_target), encoding='utf8'),
         )
 
     async def _send_to_neuronavigation(self, topic: str, data: Any = None) -> None:
