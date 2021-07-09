@@ -23,6 +23,9 @@ class AddPointData(TypedDict):
 class RemovePointData(TypedDict):
     name: str
 
+class PointsSelectedData(TypedDict):
+    names: List[str]
+
 FiducialName = Literal['LE', 'RE', 'NA']
 FiducialType = Literal['image', 'tracker']
 
@@ -38,6 +41,7 @@ class PointAddedData(TypedDict):
     name: str
     type: str
     comment: str
+    selected: bool
     position: Position
 
 class FiducialSet(TypedDict):
@@ -100,6 +104,9 @@ class PlannerServer:
             'from_neuronavigation': self._handle_neuronavigation_message,
 
             # Add a new point in the front-end.
+            #
+            # XXX: Unify the naming, cf. 'planner.points.selected' below.
+            #
             'point.add': self._handle_add_point,
 
             # Remove a point in the front-end.
@@ -110,6 +117,9 @@ class PlannerServer:
 
             # A fiducial is set in the front-end.
             'calibration.set_fiducial': self._handle_set_fiducial,
+
+            # Select points in the front-end.
+            'planner.points.selected': self._handle_points_selected,
         }
 
         for event, handler in self._SOCKETIO_EVENT_HANDLERS.items():
@@ -208,6 +218,7 @@ class PlannerServer:
             'name': "Target-{}".format(self._added_points_total),
             'type': "Target",
             'comment': "",
+            'selected': False,
             'position': data['position'],
         }
 
@@ -240,6 +251,34 @@ class PlannerServer:
             topic=self._KAFKA_COMMAND_REMOVE_POINT,
             value=bytes(json.dumps(data), encoding='utf8')
         )
+
+    async def _handle_points_selected(self, client_id: str, data: PointsSelectedData) -> None:
+        """When a command is received from the front-end to select points, pass the
+        message to neuronavigation.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end.
+
+            See type PointsSelectedData for the specification.
+
+            An example:
+
+            {
+                'names': ["Target-1", "Target-2"],
+            }
+        """
+        logging.info("Received a command from the front-end to select points")
+
+        names = data['names']
+        for point in self._points:
+            point['selected'] = point['name'] in names
+
+        # Update neuronavigation
+        await self._update_neuronavigation()
 
     def _handle_set_fiducial(self, client_id: str, data: SetFiducialData) -> None:
         """When a command is received from the front-end to set a fiducial, pass the
@@ -385,11 +424,18 @@ class PlannerServer:
 
         for id, point in enumerate(self._points):
             coord: Position = point['position']
+            selected: bool = point['selected']
+
             marker_data = {
                 'ball_id': id,
                 'coord': coord,
                 'size': 2,
-                'colour': (1.0, 1.0, 0.0),
+
+                # XXX: The presentation layer (i.e., neuronavigation) should decide the colours.
+                #
+                # TODO: Re-think the colour scheme; these are just placeholder colours.
+                #
+                'colour': (0.0, 1.0, 0.0) if selected else (1.0, 1.0, 0.0),
             }
             markers.append(marker_data)
 
