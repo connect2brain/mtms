@@ -82,6 +82,10 @@ INSERT INTO topics (name, type, latch)
 INSERT INTO topics (name, type, latch)
   VALUES ('point.add', 'command', 0);
 
+--Remove point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.remove', 'command', 0);
+
 /* Calibration */
 
 --Set fiducial
