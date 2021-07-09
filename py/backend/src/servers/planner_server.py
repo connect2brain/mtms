@@ -17,6 +17,8 @@ logging.basicConfig(level=logging.INFO,
 
 Position = Optional[Tuple[float, float, float]]
 
+Color = Tuple[int, int, int]
+
 class AddPointData(TypedDict):
     position: Position
 
@@ -72,6 +74,15 @@ class PlannerServer:
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
     _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
     _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
+
+    # The colors have been picked from mTMS software prototype created in Adobe XD.
+    #
+    # XXX: The colors match those that are defined in _colors.scss in front-end. It would be
+    #      better if they were defined in a single place.
+    #
+    _COLOR_TARGET: Color = (43, 197, 255)  # hex: #2BC5FF, $target-color
+    _COLOR_NON_TARGET: Color = (230, 98, 48)  # hex: #E66230, $non-target-color
+    _COLOR_SELECTED: Color = (112, 112, 112)  # hex: #707070, $darker-gray
 
     def __init__(self, kafka: Kafka, socketio: AsyncServer) -> None:
         """Initialize the planner server.
@@ -426,16 +437,13 @@ class PlannerServer:
             coord: Position = point['position']
             selected: bool = point['selected']
 
+            color: Color = self._COLOR_SELECTED if selected else self._COLOR_NON_TARGET
+
             marker_data = {
                 'ball_id': id,
                 'coord': coord,
                 'size': 3,
-
-                # XXX: The presentation layer (i.e., neuronavigation) should decide the colours.
-                #
-                # TODO: Re-think the colour scheme; these are just placeholder colours.
-                #
-                'colour': (0.0, 1.0, 0.0) if selected else (1.0, 1.0, 0.0),
+                'colour': [c / 255.0 for c in color],
             }
             markers.append(marker_data)
 
