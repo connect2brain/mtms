@@ -41,6 +41,7 @@ class PlannerServer:
 
     _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
+    _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
     _SOCKETIO_NEW_CLIENT: str = 'planner.new_client'
 
     _COMMAND_ADD_POINT: str = 'point.add'
@@ -61,6 +62,7 @@ class PlannerServer:
 
         self._position: Position = None
         self._neuronavigation_project_open: bool = False
+        self._coil_at_target: bool = False
         self._added_points_total: int = 0
 
         # Socket.IO event handlers
@@ -138,6 +140,12 @@ class PlannerServer:
             self._neuronavigation_project_open = data['state']
             if self._neuronavigation_project_open:
                 await self._update_neuronavigation()
+
+        # Triggered when the neuronavigation evaluates if the coil is at the target: accordingly, the state
+        # is either True or False.
+        elif topic == "Coil at target":
+            self._coil_at_target = data['state']
+            await self._update_coil_at_target()
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
@@ -217,6 +225,9 @@ class PlannerServer:
         await self._update_position(
             client_id=client_id,
         )
+        await self._update_coil_at_target(
+            client_id=client_id,
+        )
 
     async def _update_points(self, client_id: str = None) -> None:
         """Update planner points to the frontend.
@@ -248,6 +259,21 @@ class PlannerServer:
                 data=self._position,
                 client_id=client_id,
             )
+
+    async def _update_coil_at_target(self, client_id: str = None) -> None:
+        """Update the indicator for coil being at the target.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the position is sent only to the client with that id.
+            If not provided (the default), the position is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_COIL_AT_TARGET,
+            data=self._coil_at_target,
+            client_id=client_id,
+        )
 
     async def _send_to_neuronavigation(self, topic: str, data: Any) -> None:
         """Given a topic and data of any type, send a message to neuronavigation in that topic
