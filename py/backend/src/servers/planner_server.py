@@ -429,7 +429,7 @@ class PlannerServer:
             marker_data = {
                 'ball_id': id,
                 'coord': coord,
-                'size': 2,
+                'size': 3,
 
                 # XXX: The presentation layer (i.e., neuronavigation) should decide the colours.
                 #
