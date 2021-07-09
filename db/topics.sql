@@ -81,3 +81,9 @@ INSERT INTO topics (name, type, latch)
 --Add point
 INSERT INTO topics (name, type, latch)
   VALUES ('point.add', 'command', 0);
+
+/* Calibration */
+
+--Set fiducial
+INSERT INTO topics (name, type, latch)
+  VALUES ('calibration.set_fiducial', 'command', 0)
