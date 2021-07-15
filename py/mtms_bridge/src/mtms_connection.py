@@ -99,8 +99,6 @@ class MTMSConnection:
             self._connection_lost()
             return None, None, None
 
-        logging.info(msg_type)
-
         return msg_type, param1, param2
 
     def is_connected(self):

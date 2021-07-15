@@ -85,7 +85,7 @@ def read_message():
 
     elif msg_type == 'parameter':
         parameter = param1
-        value = param2.decode('utf-8')
+        value = param2
 
         logging.info("[Done] Receive parameter: {} = {}".format(parameter, value))
         return ['True', 'parameter', parameter, str(value)]
@@ -95,3 +95,6 @@ def read_message():
 
         logging.info("[Done] Receive command: {}".format(command))
         return ['True', 'command', command, '']
+
+    else:
+        logging.error("[Done] Received a message of the unknown type {}".format(msg_type))
