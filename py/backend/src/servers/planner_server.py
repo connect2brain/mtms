@@ -15,17 +15,20 @@ from mtms.kafka.listener import KafkaListener
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
+# XXX: Position and Direction probably shouldn't be optional.
+#
 Position = Optional[Tuple[float, float, float]]
+Direction = Optional[Tuple[float, float, float]]
 
 Color = Tuple[int, int, int]
 
 class AddPointData(TypedDict):
     position: Position
 
-class RemovePointData(TypedDict):
+class PointSelectedData(TypedDict):
     name: str
 
-class PointsSelectedData(TypedDict):
+class MultiplePointsSelectedData(TypedDict):
     names: List[str]
 
 FiducialName = Literal['LE', 'RE', 'NA']
@@ -38,12 +41,13 @@ class Fiducial(TypedDict):
 class SetFiducialData(TypedDict):
     fiducial: Fiducial
 
-class PointAddedData(TypedDict):
+class Point(TypedDict):
     visible: bool
     name: str
     type: str
     comment: str
     selected: bool
+    target: bool
     position: Position
 
 class FiducialSet(TypedDict):
@@ -131,6 +135,9 @@ class PlannerServer:
 
             # Select points in the front-end.
             'planner.points.selected': self._handle_points_selected,
+
+            # Set a point as target in the front-end.
+            'planner.point.set_as_target': self._handle_point_set_as_target,
         }
 
         for event, handler in self._SOCKETIO_EVENT_HANDLERS.items():
@@ -139,7 +146,7 @@ class PlannerServer:
                 handler=handler,
             )
 
-        self._points: List[PointAddedData] = []
+        self._points: List[Point] = []
 
         self._setup_background_tasks()
 
@@ -224,13 +231,20 @@ class PlannerServer:
         logging.info("Received a command from the front-end to add a new point")
 
         self._added_points_total += 1
-        value: PointAddedData = {
+
+        # XXX: Use constant direction for all points. This needs to be thought through.
+        #
+        direction: Direction = [0.0, 0.0, 0.0]
+
+        value: Point = {
             'visible': False,
             'name': "Target-{}".format(self._added_points_total),
             'type': "Target",
             'comment': "",
             'selected': False,
+            'target': False,
             'position': data['position'],
+            'direction': direction,
         }
 
         self._kafka.produce(
@@ -238,7 +252,7 @@ class PlannerServer:
             value=bytes(json.dumps(value), encoding='utf8')
         )
 
-    def _handle_remove_point(self, client_id: str, data: RemovePointData) -> None:
+    def _handle_remove_point(self, client_id: str, data: PointSelectedData) -> None:
         """When a command is received from the front-end to remove a point, pass the
         message to remove a point to Kafka.
 
@@ -248,7 +262,8 @@ class PlannerServer:
             The client id, provided by the AsyncServer.
         data
             The data sent from the front-end with the command.
-            See type RemovePointData for the specification.
+
+            See type PointSelectedData for the specification.
 
             An example:
 
@@ -263,7 +278,7 @@ class PlannerServer:
             value=bytes(json.dumps(data), encoding='utf8')
         )
 
-    async def _handle_points_selected(self, client_id: str, data: PointsSelectedData) -> None:
+    async def _handle_points_selected(self, client_id: str, data: MultiplePointsSelectedData) -> None:
         """When a command is received from the front-end to select points, pass the
         message to neuronavigation.
 
@@ -274,7 +289,7 @@ class PlannerServer:
         data
             The data sent from the front-end.
 
-            See type PointsSelectedData for the specification.
+            See type MultiplePointsSelectedData for the specification.
 
             An example:
 
@@ -284,12 +299,49 @@ class PlannerServer:
         """
         logging.info("Received a command from the front-end to select points")
 
-        names = data['names']
+        names: List[str] = data['names']
+
+        point: Point
         for point in self._points:
             point['selected'] = point['name'] in names
 
         # Update neuronavigation
         await self._update_neuronavigation()
+
+    async def _handle_point_set_as_target(self, client_id: str, data: PointSelectedData) -> None:
+        """When a command is received from the front-end to select points, pass the
+        message to neuronavigation.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end.
+
+            See type PointSelectedData for the specification.
+
+            An example:
+
+            {
+                'name': "Target-1",
+            }
+        """
+        logging.info("Received a command from the front-end to set a point as target")
+
+        name: str = data['name']
+
+        # TODO: Ensure that only a single point is set as target.
+        #
+        point: Point
+        for point in self._points:
+            point['target'] = point['name'] == name
+
+        # Update neuronavigation
+        await self._update_neuronavigation()
+
+        # Update frontend
+        await self._update_points()
 
     def _handle_set_fiducial(self, client_id: str, data: SetFiducialData) -> None:
         """When a command is received from the front-end to set a fiducial, pass the
@@ -434,14 +486,26 @@ class PlannerServer:
         markers = []
 
         for id, point in enumerate(self._points):
-            coord: Position = point['position']
+            position: Position = point['position']
+            direction: Direction = point['direction']
             selected: bool = point['selected']
+            target: bool = point['target']
 
-            color: Color = self._COLOR_SELECTED if selected else self._COLOR_NON_TARGET
+            color: Color
+            if target:
+                color = self._COLOR_TARGET
+
+            elif selected:
+                color = self._COLOR_SELECTED
+
+            else:
+                color = self._COLOR_NON_TARGET
 
             marker_data = {
                 'ball_id': id,
-                'coord': coord,
+                'position': position,
+                'direction': direction,
+                'target': target,
                 'size': 3,
                 'colour': [c / 255.0 for c in color],
             }
@@ -509,7 +573,7 @@ class PlannerServer:
         # TODO: The format and the content of the received message needs to be checked.
         #       A natural place for those checks would be inside Kafka listener, so this
         #       function can then assume a valid message.
-        data: PointAddedData = json.loads(data)
+        data: Point = json.loads(data)
 
         # Update backend
         self._points.append(data)
@@ -537,7 +601,7 @@ class PlannerServer:
                 'name': "Target-1",
             }
         """
-        data: RemovePointData = json.loads(data)
+        data: PointSelectedData = json.loads(data)
 
         # Update backend
         index: int = drop_unique(self._points, lambda point: point['name'] == data['name'])
