@@ -99,8 +99,7 @@ export default {
       loading: true,
       isCoilAtTarget: false,
       position: undefined,
-      points: [],
-      selectedPointsByName: []
+      points: []
     };
   },
 
@@ -125,18 +124,21 @@ export default {
         throw "Position is undefined.";
       }
     },
+    getSelectedPoints() {
+      return this.points.filter((point) => point["selected"]);
+    },
     removePoint() {
-      const selectedPoints = this.points.filter((point) => this.selectedPointsByName.includes(point["name"]));
-      selectedPoints.forEach((point) => {
+      this.getSelectedPoints().forEach((point) => {
         this.$socket.emit("point.remove", {
           name: point['name']
         });
       });
     },
     setAsTarget() {
-      if (this.selectedPointsByName.length === 1) {
+      const selectedPoints = this.getSelectedPoints();
+      if (selectedPoints.length === 1) {
         this.$socket.emit("planner.point.set_as_target", {
-          name: this.selectedPointsByName[0]
+          name: selectedPoints[0]["name"]
         });
       } else {
         // TODO: Add some kind of an indicator to the user that the number of selected
@@ -153,19 +155,12 @@ export default {
       row.comment = newComment;
     },
     toggleSelect(row) {
-      const toggledName = row.name;
-      if (this.selectedPointsByName.includes(toggledName)) {
-        this.selectedPointsByName = this.selectedPointsByName.filter((name) => name !== toggledName);
-      } else {
-        this.selectedPointsByName.push(toggledName);
-      }
-
-      this.$socket.emit("planner.points.selected", {
-        names: this.selectedPointsByName
+      this.$socket.emit("planner.point.toggle_select", {
+        name: row["name"]
       });
     },
     isSelected(row) {
-      return this.selectedPointsByName.includes(row.name);
+      return row["selected"];
     }
   },
 

@@ -28,9 +28,6 @@ class AddPointData(TypedDict):
 class PointSelectedData(TypedDict):
     name: str
 
-class MultiplePointsSelectedData(TypedDict):
-    names: List[str]
-
 FiducialName = Literal['LE', 'RE', 'NA']
 FiducialType = Literal['image', 'tracker']
 
@@ -133,8 +130,8 @@ class PlannerServer:
             # A fiducial is set in the front-end.
             'calibration.set_fiducial': self._handle_set_fiducial,
 
-            # Select points in the front-end.
-            'planner.points.selected': self._handle_points_selected,
+            # Toggle selecting a point in the front-end.
+            'planner.point.toggle_select': self._handle_point_toggle_selected,
 
             # Set a point as target in the front-end.
             'planner.point.set_as_target': self._handle_point_set_as_target,
@@ -278,7 +275,7 @@ class PlannerServer:
             value=bytes(json.dumps(data), encoding='utf8')
         )
 
-    async def _handle_points_selected(self, client_id: str, data: MultiplePointsSelectedData) -> None:
+    async def _handle_point_toggle_selected(self, client_id: str, data: PointSelectedData) -> None:
         """When a command is received from the front-end to select points, pass the
         message to neuronavigation.
 
@@ -289,24 +286,28 @@ class PlannerServer:
         data
             The data sent from the front-end.
 
-            See type MultiplePointsSelectedData for the specification.
+            See type PointSelectedData for the specification.
 
             An example:
 
             {
-                'names': ["Target-1", "Target-2"],
+                'name': "Target-1",
             }
         """
-        logging.info("Received a command from the front-end to select points")
+        logging.info("Received a command from the front-end to toggle selecting a point")
 
-        names: List[str] = data['names']
+        name: str = data['name']
 
         point: Point
         for point in self._points:
-            point['selected'] = point['name'] in names
+            if point['name'] == name:
+                point['selected'] = not point['selected']
 
         # Update neuronavigation
         await self._update_neuronavigation()
+
+        # Update frontend
+        await self._update_points()
 
     async def _handle_point_set_as_target(self, client_id: str, data: PointSelectedData) -> None:
         """When a command is received from the front-end to select points, pass the
