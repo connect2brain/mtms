@@ -9,7 +9,7 @@
           <font-awesome-icon icon="eye" />
         </th>
         <th class="name-column">
-          asdf
+          Name
         </th>
         <th class="type-column">
           Type
@@ -68,6 +68,12 @@
       <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
       <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
       <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="toggleTarget()" />
+      <font-awesome-icon
+        icon="arrow-alt-circle-right"
+        class="fa-fw toggle-navigating"
+        v-bind:class="{ 'ready-to-navigate': isReadyToNavigate() }"
+        v-on:click="toggleNavigating()"
+      />
     </div>
 
     <!-- Show a circle indicating if the coil is at the target or not. -->
@@ -97,6 +103,7 @@ export default {
   data() {
     return {
       loading: true,
+      navigating: false,
       isCoilAtTarget: false,
       position: undefined,
       points: []
@@ -161,6 +168,14 @@ export default {
     },
     isSelected(row) {
       return row["selected"];
+    },
+    isReadyToNavigate() {
+      return this.points.some((point) => point["target"])
+    },
+    toggleNavigating() {
+      if (this.isReadyToNavigate()) {
+        this.$socket.emit("planner.toggle_navigating");
+      }
     }
   },
 
@@ -179,6 +194,12 @@ export default {
 
     "planner.state_sent"() {
       this.loading = false;
+    },
+
+    "planner.navigating"(navigating) {
+      // TODO: The value of 'navigating' is not yet shown to the user.
+      //
+      this.navigating = navigating;
     }
   }
 };
@@ -275,5 +296,13 @@ input {
 
 .coil-not-at-target {
   color: red;
+}
+
+.toggle-navigating {
+  color: darkred;
+}
+
+.ready-to-navigate {
+  color: darkgreen;
 }
 </style>
