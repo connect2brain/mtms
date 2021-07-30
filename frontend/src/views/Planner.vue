@@ -150,7 +150,11 @@
               />
             </td>
             <td class="isi-column">
-              {{ row.isi }}
+              <Editable
+                :value="row.isi.toString()"
+                v-on:changed="setIsi(row, $event)"
+                :allowEmpty="false"
+              />
             </td>
             <td class="mode-duration-column">
               &mdash;
@@ -288,6 +292,18 @@ export default {
           value: newIntensity
         });
         row.intensity = newIntensity;
+      }
+    },
+    setIsi(row, newIsiString) {
+      const name = row["name"];
+      const newIsi = parseInt(newIsiString);
+
+      if (!isNaN(newIsi)) {
+        this.$socket.emit("planner.point.set_isi", {
+          name: name,
+          value: newIsi
+        });
+        row.isi = newIsi;
       }
     }
   },
