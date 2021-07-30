@@ -3,7 +3,6 @@
 
 import logging
 import json
-from functools import partial
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypedDict
 
 from socketio import AsyncServer
