@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypedDic
 
 from socketio import AsyncServer
 
-from mtms.util.util import drop_unique
+from mtms.util.util import clamp, drop_unique
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
 
@@ -28,6 +28,10 @@ class AddPointData(TypedDict):
 class PointSelectedData(TypedDict):
     name: str
 
+class SetIntensityData(TypedDict):
+    name: str
+    value: int
+
 FiducialName = Literal['LE', 'RE', 'NA']
 FiducialType = Literal['image', 'tracker']
 
@@ -46,6 +50,8 @@ class Point(TypedDict):
     selected: bool
     target: bool
     position: Position
+    intensity: int
+    isi: int
 
 class FiducialSet(TypedDict):
     fiducial: Fiducial
@@ -75,7 +81,21 @@ class PlannerServer:
 
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
     _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
+    _KAFKA_COMMAND_SET_POINT_INTENSITY: str = 'point.set_intensity'
     _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
+
+    # Stimulation parameter related constants.
+    #
+    _INTENSITY: Dict[str, int] = {
+        'initial': 100,
+        'min': 1,
+        'max': 1000,
+    }
+    _ISI: Dict[str, int] = {
+        'initial': 100,
+        'min': 10,
+        'max': 1000,
+    }
 
     # The colors have been picked from mTMS software prototype created in Adobe XD.
     #
@@ -137,6 +157,9 @@ class PlannerServer:
 
             # Toggle a point as target in the front-end
             'planner.point.toggle_target': self._handle_point_toggle_target,
+
+            # Remove a point in the front-end
+            'planner.point.set_intensity': self._handle_point_set_intensity,
 
             # Toggle navigation in the front-end
             'planner.toggle_navigating': self._handle_toggle_navigating,
@@ -247,6 +270,10 @@ class PlannerServer:
             'target': False,
             'position': data['position'],
             'direction': direction,
+
+            # Stimulation-related parameters
+            'intensity': self._INTENSITY['initial'],
+            'isi': self._ISI['initial'],
         }
 
         self._kafka.produce(
@@ -348,6 +375,54 @@ class PlannerServer:
 
         # Update neuronavigation
         await self._update_neuronavigation()
+
+        # Update frontend
+        await self._update_points()
+
+    async def _handle_point_set_intensity(self, client_id: str, data: SetIntensityData) -> None:
+        """When a command is received from the front-end to set intensity, pass on
+        the message to Kafka.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        data
+            The data sent from the front-end.
+
+            See type SetIntensityData for the specification.
+
+            An example:
+
+            {
+                'name': "Target-1",
+                'value': 100,
+            }
+        """
+        logging.info("Received a command from the front-end to set intensity for a point")
+
+        name: str = data['name']
+        value: int = data['value']
+
+        clamped: int = clamp(value, self._INTENSITY["min"], self._INTENSITY["max"])
+
+        # TODO: Ensure that only a single point changes intensity, see a similar concern
+        #       in _handle_point_toggle_target.
+        #
+        point: Point
+        for point in self._points:
+            if point['name'] == name:
+                point['intensity'] = clamped
+
+        data_to_kafka = {
+            'name': name,
+            'value': clamped,
+        }
+
+        self._kafka.produce(
+            topic=self._KAFKA_COMMAND_SET_POINT_INTENSITY,
+            value=bytes(json.dumps(data_to_kafka), encoding='utf8')
+        )
 
         # Update frontend
         await self._update_points()
