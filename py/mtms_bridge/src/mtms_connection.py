@@ -18,15 +18,17 @@ class MTMSConnection:
 
     Python end is the server, and LabVIEW end is the client.
     """
-    def __init__(self, is_server=False):
+    def __init__(self, port, is_server=False):
         """Initialize one end of the mTMS connection.
 
         Parameters
         ----------
+        port : int
+            The port in which to connect.
         is_server : boolean
             True if the connecting end is the server, and False if it is the client.
         """
-        self._port = int(os.getenv("MTMS_BRIDGE_PORT"))
+        self._port = port
 
         # The server needs to listen to all interfaces (0.0.0.0) due to being run in a container.
         self._host = '0.0.0.0' if is_server else 'localhost'
