@@ -97,7 +97,7 @@ class MTMSConnection:
                 if msg_type != 'keep-alive':
                     break
 
-        except (EOFError, ConnectionResetError) as e:
+        except (EOFError, ConnectionAbortedError, ConnectionResetError) as e:
             self._connection_lost()
             return None, None, None
 
