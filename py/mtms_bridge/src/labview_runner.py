@@ -54,7 +54,7 @@ def connect():
     global client
     client = MTMSConnection(is_server=False, port=port)
 
-    client.keep_connected()
+    client.run_client()
     while not client.is_connected():
         time.sleep(1)
 

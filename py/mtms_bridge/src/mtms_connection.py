@@ -125,27 +125,43 @@ class MTMSConnection:
             if sent:
                 logging.info("Still connected...")
 
-    def _connect_if_disconnected(self):
-        """If not connected, reconnect to the other end.
+    async def _connect_to_client_if_disconnected(self):
+        """If the server is not connected to the client, wait for the client to reconnect.
 
-        The server side waits until the connection is successfully formed.
         """
         if not self.is_connected():
             try:
-                if self._is_server:
-                    logging.info("Waiting for client to connect to {}...".format(self._address))
-                    self._connection = self._listener.accept()
-                    logging.info("Connection accepted from {}".format(self._listener.last_accepted))
-                else:
-                    logging.info("Attempting to connect to server {}.".format(self._address))
-                    self._connection = Client(self._address, authkey=b'secret password')
-                    logging.info("Connected!")
+                logging.info("Waiting for client to connect to {}...".format(self._address))
+
+                # self._listener.accept() call has to be run in the executor because
+                # multiprocessing.connection.Listener's accept function blocks until the client
+                # connects, which means that calling it directly would block the other asyncio tasks.
+                #
+                loop = asyncio.get_event_loop()
+                self._connection = await loop.run_in_executor(None, self._listener.accept)
+
+                logging.info("Connection accepted from {}".format(self._listener.last_accepted))
 
             except (ConnectionRefusedError, ConnectionResetError) as e:
                 logging.info("Connection failed.")
 
-    async def run(self):
-        """Connects to the other end, and creates a thread that periodically queries that the connection
+    def _connect_to_server_if_disconnected(self):
+        """If the client is not connected, attempt to reconnect to the server.
+
+        """
+        if not self.is_connected():
+            try:
+                logging.info("Attempting to connect to server {}.".format(self._address))
+                self._connection = Client(self._address, authkey=b'secret password')
+                logging.info("Connected!")
+
+            except (ConnectionRefusedError, ConnectionResetError) as e:
+                logging.info("Connection failed.")
+
+    async def run_server(self):
+        """The main loop for the server.
+
+        Connects to the other end, and creates a thread that periodically queries that the connection
         is still open. If not, attempts to reconnect.
 
         """
@@ -156,7 +172,7 @@ class MTMSConnection:
         try:
             while True:
                 self._send_keep_alive()
-                self._connect_if_disconnected()
+                await self._connect_to_client_if_disconnected()
                 await asyncio.sleep(1)
 
         except asyncio.CancelledError as e:
@@ -167,8 +183,10 @@ class MTMSConnection:
         except Exception as e:
             logging.exception(e)
 
-    def keep_connected(self):
-        """Functions similarly to 'run' coroutine, but uses threads instead of asyncio.
+    def run_client(self):
+        """The main loop for the client.
+
+        Functions similarly to 'run_server' coroutine, but uses threads instead of asyncio.
 
         XXX: The reason for having a similar functionality implemented both using asyncio and
              threads is that combining asyncio with LabVIEW turned out to be problematic:
@@ -179,7 +197,7 @@ class MTMSConnection:
             logging.info("Thread started.")
             while True:
                 self._send_keep_alive()
-                self._connect_if_disconnected()
+                self._connect_to_server_if_disconnected()
                 time.sleep(1)
 
         name = "{}_keep_connected".format("server" if self._is_server else "client")
