@@ -31,6 +31,14 @@ parameter_sender = ParameterSender(kafka=kafka, server=server, topic_db=topic_db
 command_sender = CommandSender(kafka=kafka, server=server, topic_db=topic_db)
 
 async def main() -> None:
+    # XXX: This causes the asyncio warnings for some coroutines freezing or blocking
+    #      the event loop to disappear. However, the proper solution would be to fix
+    #      the freezing in the first place. There is an issue for this, see:
+    #
+    #      https://github.com/connect2brain/project-louhi/issues/228
+    #
+    asyncio.get_event_loop().slow_callback_duration = 1.0
+
     # TODO: Does not currently log the name of the task that writes the log line. That would be good to have.
     #       Here's a pointer for implementing it using logging filters and the task name:
     #
