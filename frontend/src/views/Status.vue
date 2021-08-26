@@ -125,6 +125,10 @@ export default {
       setTimeout(() => {
         this.connections.serialPort.data_received = false;
       }, this.DATA_RECEIVED_TIME_THRESHOLD);
+    },
+
+    "status.pedal_connection"(connected) {
+      this.connections.pedal.connected = connected;
     }
   }
 };
