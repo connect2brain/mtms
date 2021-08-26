@@ -193,7 +193,19 @@ class Kafka:
                 'bootstrap.servers': self.hosts,
                 'group.id': self.id,
             })
-            consumer.subscribe([topic])
+
+            # Use Consumer.assign to assign the topic partition to the consumer directly
+            # instead of using Consumer.subscribe to subscribe to the topic; the latter
+            # assigns the partition automatically, potentially triggering a consumer
+            # rebalancing between different partitions, which is slow and seems to happen
+            # even when having created only one partition for each topic.
+            #
+            partition = confluent_kafka.TopicPartition(
+                topic=topic,
+                partition=0,
+                offset=confluent_kafka.OFFSET_END,
+            )
+            consumer.assign([partition])
 
         else:
             assert False
