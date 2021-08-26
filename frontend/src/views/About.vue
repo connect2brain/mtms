@@ -1,5 +1,6 @@
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+    <img alt="ConnectToBrain logo" src="../assets/connect2brain.png" />
+    <h1>ConnectToBrain</h1>
   </div>
 </template>
