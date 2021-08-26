@@ -44,6 +44,9 @@ def send_state(state_variable, value):
     sent = client.send(msg_type='state', param1=state_variable, param2=value)
     if sent:
         logging.info('State sent: {}'.format(state_str))
+    else:
+        logging.warning('Failed to send state: {}'.format(state_str))
+
     return 1 if sent else 0
 
 
@@ -55,8 +58,13 @@ def connect():
     client = MTMSConnection(is_server=False, port=port)
 
     client.run_client()
-    while not client.is_connected():
-        time.sleep(1)
+
+
+def is_connected():
+    """Return True if the connection to the server is open.
+
+    """
+    return client.is_connected()
 
 
 def read_message():
@@ -87,13 +95,13 @@ def read_message():
         parameter = param1
         value = param2
 
-        logging.info("[Done] Receive parameter: {} = {}".format(parameter, value))
+        logging.info("[Done] Received a parameter: {} = {}".format(parameter, value))
         return ['True', 'parameter', parameter, str(value)]
 
     elif msg_type == 'command':
         command = param1
 
-        logging.info("[Done] Receive command: {}".format(command))
+        logging.info("[Done] Received a command: {}".format(command))
         return ['True', 'command', command, '']
 
     else:
