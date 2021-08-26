@@ -92,6 +92,7 @@ class PlannerServer:
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
     _SOCKETIO_UPDATE_PEDAL_CONNECTION: str = 'status.pedal_connection'
+    _SOCKETIO_PEDAL_STATE_CHANGED: str = 'status.pedal_state_changed'
 
     _SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION: str = 'status.serial_port_connection'
     _SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED: str = 'status.serial_port_pulse_triggered'
@@ -279,11 +280,18 @@ class PlannerServer:
 
             await self._serial_port_pulse_triggered()
 
+        # Triggered when pedal is connected or disconnected.
         elif topic == "Pedal connection":
             relevant_message = True
 
             self._pedal_connection = data['state']
             await self._update_pedal_connection()
+
+        # Triggered when the pedal state is changed.
+        elif topic == "Pedal state changed":
+            relevant_message = True
+
+            await self._pedal_state_changed(data['state'])
 
         if relevant_message:
             logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
@@ -812,6 +820,21 @@ class PlannerServer:
         """
         await self._socketio.emit(
             event=self._SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED,
+            client_id=client_id,
+        )
+
+    async def _pedal_state_changed(self, state: bool, client_id: str = None) -> None:
+        """Send a message to frontend of pedal state having changed.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the message is sent only to the client with that id.
+            If not provided (the default), the message is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_PEDAL_STATE_CHANGED,
+            data=state,
             client_id=client_id,
         )
 
