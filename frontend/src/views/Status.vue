@@ -2,32 +2,44 @@
   <div class="status">
     <b>Connections</b>
     <p>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections.backend" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.backend" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: connections.backend.connected }" />
       Core
       <br>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections.neuronavigation" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.neuronavigation" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: connections.neuronavigation.connected }" />
       Neuronavigation
     </p>
     <b>Devices</b>
     <p>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections.pedal" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.pedal" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: connections.pedal.connected }" />
       Trigger pedal
       <br>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections.serialPort" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.serialPort" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: connections.serialPort.connected, active: connections.serialPort.data_received }" />
       TTL link
     </p>
     <b>Stimulation</b>
     <p>
-      <font-awesome-icon icon="circle" class="connected" v-if="stimulating" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!stimulating" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: stimulating }" />
       Stimulating
       <br>
-      <font-awesome-icon icon="circle" class="connected" v-if="recharging" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!recharging" />
+      <font-awesome-icon
+        class="circle"
+        icon="circle"
+        v-bind:class="{ enabled: recharging }" />
       Recharging
     </p>
   </div>
@@ -39,10 +51,22 @@ export default {
   data: function() {
     return {
       connections: {
-        backend: false,
-        neuronavigation: false,
-        pedal: false,
-        serialPort: false
+        backend: {
+          connected: false,
+          data_received: false
+        },
+        neuronavigation: {
+          connected: false,
+          data_received: false
+        },
+        pedal: {
+          connected: false,
+          data_received: false
+        },
+        serialPort: {
+          connected: false,
+          data_received: false
+        }
       },
       stimulating: false,
       recharging: false,
@@ -52,13 +76,17 @@ export default {
     };
   },
 
+  created() {
+    this.DATA_RECEIVED_TIME_THRESHOLD = 200;
+  },
+
   sockets: {
     connect() {
-      this.connections["backend"] = true;
+      this.connections.backend.connected = true;
     },
 
     disconnect() {
-      this.connections["backend"] = false;
+      this.connections.backend.connected = false;
     },
 
     update_state(data) {
@@ -87,8 +115,16 @@ export default {
       }
     },
 
-    "status.serial_port_connection"(data) {
-      this.connections.serialPort = data
+    "status.serial_port_connection"(connected) {
+      this.connections.serialPort.connected = connected;
+    },
+
+    "status.serial_port_pulse_triggered"() {
+      this.connections.serialPort.data_received = true;
+
+      setTimeout(() => {
+        this.connections.serialPort.data_received = false;
+      }, this.DATA_RECEIVED_TIME_THRESHOLD);
     }
   }
 };
@@ -100,11 +136,15 @@ export default {
   text-align: left;
 }
 
-.connected {
+.circle {
+  color: gray;
+}
+
+.enabled {
   color: green;
 }
 
-.not-connected {
-  color: gray;
+.active {
+  color: lightgreen;
 }
 </style>

@@ -91,6 +91,7 @@ class PlannerServer:
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
     _SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION: str = 'status.serial_port_connection'
+    _SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED: str = 'status.serial_port_pulse_triggered'
 
     _SOCKETIO_FIDUCIAL_SET: str = 'calibration.fiducial_set'
 
@@ -267,6 +268,12 @@ class PlannerServer:
 
             self._serial_port_connection = data['state']
             await self._update_serial_port_connection()
+
+        # Triggered when serial port pulse is triggered.
+        elif topic == "Serial port pulse triggered":
+            relevant_message = True
+
+            await self._serial_port_pulse_triggered()
 
         if relevant_message:
             logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
@@ -742,8 +749,8 @@ class PlannerServer:
         Parameters
         ----------
         client_id
-            The client id. If provided, the position is sent only to the client with that id.
-            If not provided (the default), the position is broadcast to all clients.
+            The client id. If provided, the message is sent only to the client with that id.
+            If not provided (the default), the message is broadcast to all clients.
         """
         await self._socketio.emit(
             event=self._SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION,
@@ -759,6 +766,20 @@ class PlannerServer:
             #      even though the encoding here is just True -> b"True" and False -> b"False".
             #
             value=bytes(str(self._serial_port_connection), encoding='utf8'),
+        )
+
+    async def _serial_port_pulse_triggered(self, client_id: str = None) -> None:
+        """Send a message to frontend of serial port pulse being triggered.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the message is sent only to the client with that id.
+            If not provided (the default), the message is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED,
+            client_id=client_id,
         )
 
     async def _send_to_neuronavigation(self, topic: str, data: Any = None) -> None:
