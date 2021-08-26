@@ -8,6 +8,7 @@
 
                 However, maybe it works well enough for our use case.
       -->
+      <a href="#" v-on:click.stop.prevent="openWindow('Status')">Status</a> |
       <a href="#" v-on:click.stop.prevent="openWindow('Calibration')">Calibration</a> |
       <a href="#" v-on:click.stop.prevent="openWindow('Planner')">Planner</a> |
       <a href="#" v-on:click.stop.prevent="openWindow('TMS')">TMS</a> |
@@ -23,6 +24,11 @@ export default {
 
   created() {
     this.WINDOW_INFO = {
+      Status: {
+        url: '/status',
+        width: 140,
+        height: 400
+      },
       EEG: {
         url: '/eeg',
         width: 980,
@@ -30,13 +36,13 @@ export default {
       },
       Calibration: {
         url: '/calibration',
-        width: 300,
-        height: 480
+        width: 310,
+        height: 440
       },
       Planner: {
         url: '/planner',
-        width: 420,
-        height: 420
+        width: 400,
+        height: 320
       },
       TMS: {
         url: '/tms',
