@@ -11,7 +11,11 @@ from mtms.common.util import clamp, drop_unique
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
 
-from mtms.common.constants import KAFKA_COMMAND_SET_STIMULATION_PARAMETERS, KAFKA_COMMAND_SET_COIL_AT_TARGET
+from mtms.common.constants import (
+    KAFKA_COMMAND_SET_COIL_AT_TARGET,
+    KAFKA_COMMAND_SET_STIMULATION_PARAMETERS,
+    KAFKA_COMMAND_SET_SERIAL_PORT_CONNECTION,
+)
 from mtms.common.types import Intensity, Iti, StimulationParameters
 
 logging.basicConfig(level=logging.INFO,
@@ -86,6 +90,8 @@ class PlannerServer:
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
+    _SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION: str = 'status.serial_port_connection'
+
     _SOCKETIO_FIDUCIAL_SET: str = 'calibration.fiducial_set'
 
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
@@ -134,6 +140,7 @@ class PlannerServer:
         self._neuronavigation_project_open: bool = False
         self._coil_at_target: bool = False
         self._navigating: bool = False
+        self._serial_port_connection: bool = False
 
         self._fiducials_set: Dict[FiducialType, Dict[FiducialName, bool]] = {
             "image": {},
@@ -226,17 +233,22 @@ class PlannerServer:
         """
         topic: str = msg['topic']
         data: Any = msg['data']
-        logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
+
+        relevant_message: bool = False
 
         # Triggered when the cross is moved around in neuronavigation. React by updating the new cross
         # position to the frontend.
         if topic == "Set cross focal point":
+            relevant_message = True
+
             self._position = data['position'][0:3]
             await self._update_position()
 
         # Triggered when a project is opened in neuronavigation. React by sending the current points to
         # neuronavigation so that they can be shown in the project.
         elif topic == "Enable state project":
+            relevant_message = True
+
             self._neuronavigation_project_open = data['state']
             if self._neuronavigation_project_open:
                 await self._update_neuronavigation()
@@ -244,8 +256,20 @@ class PlannerServer:
         # Triggered when the neuronavigation evaluates if the coil is at the target: accordingly, the state
         # is either True or False.
         elif topic == "Coil at target":
+            relevant_message = True
+
             self._coil_at_target = data['state']
             await self._update_coil_at_target()
+
+        # Triggered when serial port connection is opened or closed.
+        elif topic == "Serial port connection":
+            relevant_message = True
+
+            self._serial_port_connection = data['state']
+            await self._update_serial_port_connection()
+
+        if relevant_message:
+            logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
 
     def _handle_add_point(self, client_id: str, data: AddPointData) -> None:
         """When a command is received from the front-end to add a new point, create the
@@ -628,6 +652,9 @@ class PlannerServer:
         await self._update_coil_at_target(
             client_id=client_id,
         )
+        await self._update_serial_port_connection(
+            client_id=client_id,
+        )
         await self._update_navigating(
             client_id=client_id,
         )
@@ -705,6 +732,33 @@ class PlannerServer:
             #      even though the encoding here is just True -> b"True" and False -> b"False".
             #
             value=bytes(str(self._coil_at_target), encoding='utf8'),
+        )
+
+    # XXX: There's a lot of code duplication here, cf. _update_coil_at_target above. Unify?
+    #
+    async def _update_serial_port_connection(self, client_id: str = None) -> None:
+        """Update the status of the serial port connection, both to Kafka and frontend.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the position is sent only to the client with that id.
+            If not provided (the default), the position is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION,
+            data=self._serial_port_connection,
+            client_id=client_id,
+        )
+
+        self._kafka.produce(
+            topic=KAFKA_COMMAND_SET_SERIAL_PORT_CONNECTION,
+
+            # XXX: Unify the encoding of parameters of boolean (or other) types, preferably
+            #      using a wrapper class that does the encoding instead of doing it ad hoc,
+            #      even though the encoding here is just True -> b"True" and False -> b"False".
+            #
+            value=bytes(str(self._serial_port_connection), encoding='utf8'),
         )
 
     async def _send_to_neuronavigation(self, topic: str, data: Any = None) -> None:
