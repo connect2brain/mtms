@@ -62,6 +62,7 @@ class ParameterServer:
                 kafka=self._kafka,
                 topic=topic,
                 callback=self._get_parameter_from_kafka,
+                latch=True,
             ) for topic in self._parameter_topics
         ]
 
