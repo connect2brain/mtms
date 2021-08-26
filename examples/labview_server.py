@@ -50,7 +50,7 @@ port: int = int(os.getenv("MTMS_BRIDGE_PORT"))
 server: MTMSConnection = MTMSConnection(port=port, is_server=True)
 
 async def main() -> None:
-    asyncio.create_task(server.run())
+    asyncio.create_task(server.run_server())
     while not server.is_connected():
         await asyncio.sleep(1)
 
