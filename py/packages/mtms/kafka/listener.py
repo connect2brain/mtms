@@ -52,12 +52,6 @@ class KafkaListener():
         )
         self._msgs_received = 0
 
-    def reset(self):
-        """Reset the listener to re-read the last message in the topic.
-
-        """
-        self._consumer.reset()
-
     def _read_value(self):
         """Read one message from Kafka, return the value.
 
