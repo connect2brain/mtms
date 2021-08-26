@@ -103,17 +103,6 @@ class KafkaConsumer:
 
         return value
 
-    def reset(self) -> None:
-        """Reset consumer to read the last message in the topic. If the topic is latched, reset consumer to
-        re-read the second-last message.
-
-        """
-        # TODO: This was removed when support for confluent-kafka was added. Rewrite an implementation
-        #       for this and add test, as the tests don't seem to break even if this function
-        #       doesn't exist. It's also not needed by any current functionality, so removing it
-        #       for now does not break anything.
-        pass
-
 
 class Kafka:
     """A class for communicating with Kafka.
