@@ -17,7 +17,7 @@ class KafkaListener():
     """A wrapper around KafkaConsumer that pushes the data produced into the given topic to a callback.
 
     """
-    def __init__(self, kafka=None, topic=None, callback=None, delay=0.1, verbose=True):
+    def __init__(self, kafka=None, topic=None, callback=None, latch=False, delay=0.1, verbose=True):
         """Initialize the listener.
 
         Parameters
@@ -28,6 +28,9 @@ class KafkaListener():
             The name of the Kafka topic.
         callback : callable
             The function that is called when new data are produced into the topic.
+        latch : boolean
+            If True, receive the latest message published into the topic when the Listener is first created.
+            Defaults to False.
         delay : float
             The delay (in seconds) between two consecutive runs of the listener.
             Defaults to 0.1 seconds.
@@ -38,12 +41,14 @@ class KafkaListener():
         self._kafka = kafka
         self._topic = topic
         self._callback = callback
+        self._latch = latch
         self._delay = delay
         self._verbose = verbose
 
         self._consumer = self._kafka.get_consumer(
             topic=topic,
             timeout=0,
+            latch=latch,
         )
         self._msgs_received = 0
 
