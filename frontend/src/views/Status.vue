@@ -45,7 +45,10 @@ export default {
         ttl: false
       },
       stimulating: false,
-      recharging: false
+      recharging: false,
+
+      // Currently not shown anywhere.
+      latestMessage: ""
     };
   },
 
@@ -56,7 +59,33 @@ export default {
 
     disconnect() {
       this.connections["backend"] = false;
-    }
+    },
+
+    update_state(data) {
+      const stateVariable = data["state_variable"];
+      const rawValue = String.fromCharCode.apply(
+        null,
+        new Uint8Array(data["value"])
+      );
+
+      const value = rawValue == "True";
+
+      let updated = false;
+      switch (stateVariable) {
+        case "stimulating":
+          updated = value != this.stimulating;
+          this.stimulating = value;
+          break;
+        case "recharging":
+          updated = value != this.recharging;
+          this.recharging = value;
+          break;
+      }
+
+      if (updated) {
+        this.latestMessage = `State updated: ${stateVariable} = ${value}`;
+      }
+    },
   }
 };
 </script>

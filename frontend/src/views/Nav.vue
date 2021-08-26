@@ -46,8 +46,8 @@ export default {
       },
       TMS: {
         url: '/tms',
-        width: 400,
-        height: 400
+        width: 200,
+        height: 20
       },
       About: {
         url: '/about',
