@@ -129,6 +129,15 @@ class Kafka:
         self.zookeeper_hosts = os.getenv("ZOOKEEPER_HOSTS")
         self.kafka_library = os.getenv("KAFKA_LIBRARY")
 
+        # Use the hostname (a container-specific, unique hexadecimal ID) as the
+        # group id for the Kafka consumers. This is to ensure that different
+        # services don't belong to the same consumer group. Belonging to the
+        # same group causes the events to be divided between the consumers
+        # in the same group, resulting in the individual consumers not receiving
+        # all the events.
+        #
+        self.id = os.getenv("HOSTNAME")
+
         self.hosts = "{ip}:{port}".format(
             ip=self.ip,
             port=self.port,
@@ -147,7 +156,7 @@ class Kafka:
         elif self.kafka_library == "confluent-kafka":
             self.producer = confluent_kafka.Producer({
                 'bootstrap.servers': self.hosts,
-                'client.id': socket.gethostname(),
+                'client.id': self.id,
             })
 
         else:
@@ -173,7 +182,7 @@ class Kafka:
         if self.kafka_library == "pykafka":
             timeout_ms: float = 1000 * timeout
             consumer = self.client.topics[topic].get_simple_consumer(
-                consumer_group="group",
+                consumer_group=self.id,
                 consumer_timeout_ms=timeout_ms,
                 auto_offset_reset=pykafka.common.OffsetType.LATEST,
                 reset_offset_on_start=True,
@@ -182,7 +191,7 @@ class Kafka:
         elif self.kafka_library == "confluent-kafka":
             consumer = confluent_kafka.Consumer({
                 'bootstrap.servers': self.hosts,
-                'group.id': "group",
+                'group.id': self.id,
             })
             consumer.subscribe([topic])
 
