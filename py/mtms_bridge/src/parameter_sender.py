@@ -9,7 +9,7 @@ from typing import List
 from mtms.kafka.listener import KafkaListener
 
 from mtms.common.constants import KAFKA_COMMAND_SET_STIMULATION_PARAMETERS, STIMULATION_PARAMETERS
-from mtms.common.types import Intensity, Isi, StimulationParameters
+from mtms.common.types import Intensity, Iti, StimulationParameters
 
 # TODO: Add type hints to this class.
 #

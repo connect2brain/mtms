@@ -105,8 +105,8 @@
             <th class="intensity-column">
               Intensity
             </th>
-            <th class="isi-column">
-              ISI
+            <th class="iti-column">
+              ITI
             </th>
             <th class="mode-duration-column">
               Mode duration
@@ -149,10 +149,10 @@
                 :allowEmpty="false"
               />
             </td>
-            <td class="isi-column">
+            <td class="iti-column">
               <Editable
-                :value="row.isi.toString()"
-                v-on:changed="setIsi(row, $event)"
+                :value="row.iti.toString()"
+                v-on:changed="setIti(row, $event)"
                 :allowEmpty="false"
               />
             </td>
@@ -294,16 +294,16 @@ export default {
         row.intensity = newIntensity;
       }
     },
-    setIsi(row, newIsiString) {
+    setIti(row, newItiString) {
       const name = row["name"];
-      const newIsi = parseInt(newIsiString);
+      const newIti = parseInt(newItiString);
 
-      if (!isNaN(newIsi)) {
-        this.$socket.emit("planner.point.set_isi", {
+      if (!isNaN(newIti)) {
+        this.$socket.emit("planner.point.set_iti", {
           name: name,
-          value: newIsi
+          value: newIti
         });
-        row.isi = newIsi;
+        row.iti = newIti;
       }
     }
   },
@@ -344,7 +344,7 @@ $comment-column-width: 150px;
 
 $number-column-width: 20px;
 $intensity-column-width: 55px;
-$isi-column-width: 35px;
+$iti-column-width: 35px;
 $mode-duration-column-width: 100px;
 
 $total-width: $visibility-column-width + $name-column-width + $type-column-width +
@@ -436,8 +436,8 @@ input {
   width: $intensity-column-width;
 }
 
-.isi-column {
-  width: $isi-column-width;
+.iti-column {
+  width: $iti-column-width;
 }
 
 .mode-duration-column {

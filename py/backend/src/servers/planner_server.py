@@ -12,7 +12,7 @@ from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
 
 from mtms.common.constants import KAFKA_COMMAND_SET_STIMULATION_PARAMETERS, KAFKA_COMMAND_SET_COIL_AT_TARGET
-from mtms.common.types import Intensity, Isi, StimulationParameters
+from mtms.common.types import Intensity, Iti, StimulationParameters
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
@@ -23,9 +23,9 @@ class SetIntensityForPointData(TypedDict):
     name: str
     value: Intensity
 
-class SetIsiForPointData(TypedDict):
+class SetItiForPointData(TypedDict):
     name: str
-    value: Isi
+    value: Iti
 
 # XXX: Position and Direction probably shouldn't be optional.
 #
@@ -59,7 +59,7 @@ class Point(TypedDict):
     target: bool
     position: Position
     intensity: Intensity
-    isi: Isi
+    iti: Iti
 
 class FiducialSet(TypedDict):
     fiducial: Fiducial
@@ -91,7 +91,7 @@ class PlannerServer:
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
     _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
     _KAFKA_COMMAND_SET_POINT_INTENSITY: str = 'point.set_intensity'
-    _KAFKA_COMMAND_SET_POINT_ISI: str = 'point.set_isi'
+    _KAFKA_COMMAND_SET_POINT_ITI: str = 'point.set_iti'
 
     _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
 
@@ -102,7 +102,7 @@ class PlannerServer:
         'min': 1,
         'max': 1000,
     }
-    _ISI: Dict[str, int] = {
+    _ITI: Dict[str, int] = {
         'initial': 100,
         'min': 10,
         'max': 1000,
@@ -172,8 +172,8 @@ class PlannerServer:
             # Set intensity of a point in the front-end
             'planner.point.set_intensity': self._handle_point_set_intensity,
 
-            # Set ISI of a point in the front-end
-            'planner.point.set_isi': self._handle_point_set_isi,
+            # Set ITI of a point in the front-end
+            'planner.point.set_iti': self._handle_point_set_iti,
 
             # Toggle navigation in the front-end
             'planner.toggle_navigating': self._handle_toggle_navigating,
@@ -287,7 +287,7 @@ class PlannerServer:
 
             # Stimulation-related parameters
             'intensity': self._INTENSITY['initial'],
-            'isi': self._ISI['initial'],
+            'iti': self._ITI['initial'],
         }
 
         self._kafka.produce(
@@ -401,7 +401,7 @@ class PlannerServer:
     #       Kafka up to date. That would also facilitate testing.
     #
     def _update_current_stimulation_parameters_to_kafka(self) -> None:
-        """Update current stimulation parameters (intensity, ISI) to Kafka.
+        """Update current stimulation parameters (intensity, ITI) to Kafka.
 
         """
         # XXX: Ensure that only a single target point is found. See similar concerns
@@ -416,11 +416,11 @@ class PlannerServer:
             return
 
         intensity: Intensity = target_point['intensity']
-        isi: Isi = target_point['isi']
+        iti: Iti = target_point['iti']
 
         stimulation_parameters: StimulationParameters = {
             'intensity': intensity,
-            'isi': isi,
+            'iti': iti,
         }
 
         self._kafka.produce(
@@ -479,15 +479,15 @@ class PlannerServer:
         # Update stimulation parameters due to a new intensity for a potential target.
         #
         # XXX: This could be cleaner: it would be better to only update stimulation
-        #      parameters when a new intensity/ISI for the actual target is set.
+        #      parameters when a new intensity/ITI for the actual target is set.
         #
         self._update_current_stimulation_parameters_to_kafka()
 
     # TODO: Almost identical to _handle_point_set_intensity. Consider extracting out the
     #       common parts.
     #
-    async def _handle_point_set_isi(self, client_id: str, data: SetIsiForPointData) -> None:
-        """When a command is received from the front-end to set ISI, pass on
+    async def _handle_point_set_iti(self, client_id: str, data: SetItiForPointData) -> None:
+        """When a command is received from the front-end to set ITI, pass on
         the message to Kafka and modify the backend state.
 
         Parameters
@@ -497,7 +497,7 @@ class PlannerServer:
         data
             The data sent from the front-end.
 
-            See type SetIsiData for the specification.
+            See type SetItiData for the specification.
 
             An example:
 
@@ -506,20 +506,20 @@ class PlannerServer:
                 'value': 100,
             }
         """
-        logging.info("Received a command from the front-end to set ISI for a point")
+        logging.info("Received a command from the front-end to set ITI for a point")
 
         name: str = data['name']
         value: int = data['value']
 
-        clamped: int = clamp(value, self._ISI["min"], self._ISI["max"])
+        clamped: int = clamp(value, self._ITI["min"], self._ITI["max"])
 
-        # TODO: Ensure that only a single point changes ISI, see a similar concern
+        # TODO: Ensure that only a single point changes ITI, see a similar concern
         #       in _handle_point_toggle_target.
         #
         point: Point
         for point in self._points:
             if point['name'] == name:
-                point['isi'] = clamped
+                point['iti'] = clamped
 
         data_to_kafka = {
             'name': name,
@@ -527,17 +527,17 @@ class PlannerServer:
         }
 
         self._kafka.produce(
-            topic=self._KAFKA_COMMAND_SET_POINT_ISI,
+            topic=self._KAFKA_COMMAND_SET_POINT_ITI,
             value=bytes(json.dumps(data_to_kafka), encoding='utf8')
         )
 
         # Update frontend
         await self._update_points()
 
-        # Update stimulation parameters due to a new ISI for a potential target.
+        # Update stimulation parameters due to a new ITI for a potential target.
         #
         # XXX: This could be cleaner: it would be better to only update stimulation
-        #      parameters when a new intensity/ISI for the actual target is set.
+        #      parameters when a new intensity/ITI for the actual target is set.
         #
         self._update_current_stimulation_parameters_to_kafka()
 
