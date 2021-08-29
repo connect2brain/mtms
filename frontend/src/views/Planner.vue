@@ -196,6 +196,8 @@
 import Editable from "@/components/Editable.vue";
 
 export default {
+  name: "Planner",
+
   data() {
     return {
       loading: true,
