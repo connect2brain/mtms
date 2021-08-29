@@ -10,6 +10,8 @@
 
 <script>
 export default {
+  name: "Tms",
+
   methods: {
     stimulate() {
       this.$socket.emit("command", "stimulate");

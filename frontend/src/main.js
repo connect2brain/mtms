@@ -18,7 +18,7 @@ import { faRedo } from "@fortawesome/free-solid-svg-icons";
 import { faSquare } from "@fortawesome/free-solid-svg-icons";
 
 import App from "./App.vue";
-import router from "./router";
+import router from  "./router";
 
 library.add(
   faArrowAltCircleRight,
