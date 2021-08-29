@@ -1,6 +1,6 @@
 <template>
-  <div class="nav">
-    <div id="nav">
+  <div class="navbar">
+    <div id="navbar">
       <!-- XXX: It is not a good practice to have a bogus value for href attribute,
                 see:
 
@@ -8,53 +8,29 @@
 
                 However, maybe it works well enough for our use case.
       -->
-      <a href="#" v-on:click.stop.prevent="openWindow('Status')">Status</a> |
       <a href="#" v-on:click.stop.prevent="openWindow('Calibration')">Calibration</a> |
-      <a href="#" v-on:click.stop.prevent="openWindow('Planner')">Planner</a> |
-      <a href="#" v-on:click.stop.prevent="openWindow('TMS')">TMS</a> |
-      <a href="#" v-on:click.stop.prevent="openWindow('EEG')">EEG</a> |
-      <a href="#" v-on:click.stop.prevent="openWindow('About')">About</a>
+      <a href="#" v-on:click.stop.prevent="openWindow('EEG')">EEG</a>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: "Home",
+  name: "Navbar",
 
   created() {
     this.WINDOW_INFO = {
-      Status: {
-        url: '/status',
-        width: 140,
-        height: 400
-      },
       EEG: {
         url: '/eeg',
-        width: 980,
-        height: 750
+        width: 740,
+        height: 580
       },
       Calibration: {
         url: '/calibration',
         width: 310,
-        height: 440
-      },
-      Planner: {
-        url: '/planner',
-        width: 400,
-        height: 320
-      },
-      TMS: {
-        url: '/tms',
-        width: 200,
-        height: 20
-      },
-      About: {
-        url: '/about',
-        width: 400,
         height: 400
       }
-    };
+    }
   },
 
   methods: {
@@ -65,7 +41,7 @@ export default {
       const width = info['width'];
       const height = info['height'];
 
-      const windowFeatures = `width=${width}, height=${height}, menubar=1, toolbar=1, resizable=0`;
+      const windowFeatures = `width=${width}, height=${height}`;
 
       const windowReference = window.open(url, windowName, windowFeatures);
       windowReference.focus();
@@ -79,12 +55,11 @@ export default {
 <style scoped lang="scss">
 @import "../styles/_colors.scss";
 
-#nav {
-  padding: 30px;
+#navbar {
+  margin-bottom: 20px;
 }
 
-#nav a {
-  font-weight: bold;
+#navbar a {
   color: $default-font-color;
 }
 </style>
