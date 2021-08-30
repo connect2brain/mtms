@@ -23,33 +23,6 @@ def init(mtms_bridge_port, log_path):
     logging.info("Logging into the file: {}".format(log_path))
 
 
-def send_state(state_variable, value):
-    """Send state to the server.
-
-    Parameters
-    ----------
-    state_variable : str
-        The name of the state variable.
-    value : number
-        The new value of the state variable.
-
-    Returns
-    -------
-    number
-        1 if the state was successfully sent, otherwise 0.
-    """
-    state_str = '{} = {}'.format(state_variable, str(value))
-    logging.info('Sending state: {}'.format(state_str))
-
-    sent = client.send(msg_type='state', param1=state_variable, param2=value)
-    if sent:
-        logging.info('State sent: {}'.format(state_str))
-    else:
-        logging.warning('Failed to send state: {}'.format(state_str))
-
-    return 1 if sent else 0
-
-
 def connect():
     """Connect to the server and ensure that the connection is retained.
 
@@ -67,8 +40,44 @@ def is_connected():
     return client.is_connected()
 
 
+def send_state(state_variable, value):
+    """Send state to the server.
+
+    If not connected, display a warning without sending the state.
+
+    Parameters
+    ----------
+    state_variable : str
+        The name of the state variable.
+    value : number
+        The new value of the state variable.
+
+    Returns
+    -------
+    number
+        1 if the state was successfully sent, otherwise 0.
+    """
+    state_str = '{} = {}'.format(state_variable, str(value))
+
+    if not is_connected():
+        logging.warning('Disconnected, not sending state: {}'.format(state_str))
+        return 0
+
+    logging.info('Sending state: {}'.format(state_str))
+
+    sent = client.send(msg_type='state', param1=state_variable, param2=value)
+    if sent:
+        logging.info('State sent: {}'.format(state_str))
+    else:
+        logging.error('Failed to send state: {}'.format(state_str))
+
+    return 1 if sent else 0
+
+
 def read_message():
     """Read a message from the server and return it to LabVIEW.
+
+    If not connected, return a similar value as when there are no new messages.
 
     Returns
     -------
@@ -86,6 +95,9 @@ def read_message():
         [3] The parameter value if the message type is 'parameter'.
             A dummy string '' if there are no new messages or the message type is 'command'.
     """
+    if not is_connected():
+        return ['False', '', '', '']
+
     msg_type, param1, param2 = client.receive()
 
     if msg_type is None:
@@ -95,14 +107,14 @@ def read_message():
         parameter = param1
         value = param2
 
-        logging.info("[Done] Received a parameter: {} = {}".format(parameter, value))
+        logging.info("Received a parameter: {} = {}".format(parameter, value))
         return ['True', 'parameter', parameter, str(value)]
 
     elif msg_type == 'command':
         command = param1
 
-        logging.info("[Done] Received a command: {}".format(command))
+        logging.info("Received a command: {}".format(command))
         return ['True', 'command', command, '']
 
     else:
-        logging.error("[Done] Received a message of the unknown type {}".format(msg_type))
+        logging.error("Received a message of the unknown type {}".format(msg_type))
