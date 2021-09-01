@@ -182,12 +182,16 @@
       />
     </div>
 
-    <!-- XXX: Keep the position display here for debugging purposes during the
-              development, but remove later.
+    <!-- XXX: Keep the position and direction displays here for debugging purposes
+              during the development, but remove later.
     -->
-    <div v-if="position !== undefined">
+    <div v-if="position !== null">
       Current position: ({{ position[0].toFixed(0) }},
       {{ position[1].toFixed(0) }}, {{ position[2].toFixed(0) }})
+    </div>
+    <div v-if="direction !== null">
+      Current direction: ({{ direction[0].toFixed(0) }},
+      {{ direction[1].toFixed(0) }}, {{ direction[2].toFixed(0) }})
     </div>
   </div>
 </template>
@@ -204,7 +208,8 @@ export default {
       tab: 'targets',
       navigating: false,
       isCoilAtTarget: false,
-      position: undefined,
+      position: null,
+      direction: null,
       points: []
     };
   },
@@ -236,7 +241,8 @@ export default {
     addPoint() {
       if (this.position !== undefined) {
         this.$socket.emit("point.add", {
-          position: this.position
+          position: this.position,
+          direction: this.direction
         });
       } else {
         /* XXX: Once we have a mechanism for showing user-visible errors, have this
@@ -312,7 +318,16 @@ export default {
 
   sockets: {
     "planner.position"(position) {
-      this.position = position;
+      // XXX: Socket.IO is sending a None value on the Python end, but the
+      //      JavaScript side receives it as an array of length 0, hence the
+      //      extra condition here.
+      //
+      this.position = position.length == 0 ? null : position;
+    },
+
+    "planner.direction"(direction) {
+      console.log(direction);
+      this.direction = direction.length == 0 ? null : direction;
     },
 
     "planner.points"(points) {

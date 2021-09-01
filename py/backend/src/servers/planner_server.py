@@ -41,6 +41,7 @@ Color = Tuple[int, int, int]
 
 class AddPointData(TypedDict):
     position: Position
+    direction: Optional[Direction]
 
 class PointSelectedData(TypedDict):
     name: str
@@ -63,6 +64,7 @@ class Point(TypedDict):
     selected: bool
     target: bool
     position: Position
+    direction: Optional[Direction]
     intensity: Intensity
     iti: Iti
 
@@ -88,6 +90,7 @@ class PlannerServer:
     _SOCKETIO_UPDATE_NAVIGATING: str = 'planner.navigating'
     _SOCKETIO_UPDATE_POINTS: str = 'planner.points'
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
+    _SOCKETIO_UPDATE_DIRECTION: str = 'planner.direction'
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
@@ -142,6 +145,7 @@ class PlannerServer:
         self._kafka: Kafka = kafka
 
         self._position: Position = None
+        self._direction: Direction = None
         self._neuronavigation_project_open: bool = False
         self._coil_at_target: bool = False
         self._navigating: bool = False
@@ -247,8 +251,18 @@ class PlannerServer:
         if topic == "Set cross focal point":
             relevant_message = True
 
-            self._position = data['position'][0:3]
+            position = data['position'][:3]
+            direction = data['position'][3:]
+
+            self._position = position
             await self._update_position()
+
+            # XXX: It is not the cleanest way to communicate that direction is unset that all the coordinates
+            #      are 0.0. Needs the kind of clean-up where that information is sent more explicitly, maybe
+            #      even in separate messages.
+            #
+            self._direction = direction if any([x != 0.0 for x in direction]) else None
+            await self._update_direction()
 
         # Triggered when a project is opened in neuronavigation. React by sending the current points to
         # neuronavigation so that they can be shown in the project.
@@ -306,7 +320,8 @@ class PlannerServer:
             The client id, provided by the AsyncServer.
         data
             The data sent from the front-end with the command. Should consist of
-            'position' key, with a value that consists of a list of three floats.
+            'position' and 'direction' keys, both with values that consist of a list
+            of three floats. 'direction' is optional.
 
             See type AddPointData for the specification.
 
@@ -314,15 +329,12 @@ class PlannerServer:
 
             {
                 'position': [1.0, 2.0, 3.0],
+                'direction': [2.0, 3.0, 4.0],
             }
         """
         logging.info("Received a command from the front-end to add a new point")
 
         self._added_points_total += 1
-
-        # XXX: Use constant direction for all points. This needs to be thought through.
-        #
-        direction: Direction = [0.0, 0.0, 0.0]
 
         value: Point = {
             'visible': False,
@@ -332,7 +344,7 @@ class PlannerServer:
             'selected': False,
             'target': False,
             'position': data['position'],
-            'direction': direction,
+            'direction': data['direction'],
 
             # Stimulation-related parameters
             'intensity': self._INTENSITY['initial'],
@@ -674,6 +686,9 @@ class PlannerServer:
         await self._update_position(
             client_id=client_id,
         )
+        await self._update_direction(
+            client_id=client_id,
+        )
         await self._update_coil_at_target(
             client_id=client_id,
         )
@@ -715,12 +730,26 @@ class PlannerServer:
             The client id. If provided, the position is sent only to the client with that id.
             If not provided (the default), the position is broadcast to all clients.
         """
-        if self._position is not None:
-            await self._socketio.emit(
-                event=self._SOCKETIO_UPDATE_POSITION,
-                data=self._position,
-                client_id=client_id,
-            )
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_POSITION,
+            data=self._position,
+            client_id=client_id,
+        )
+
+    async def _update_direction(self, client_id: str = None) -> None:
+        """Update the direction, if defined, to the frontend.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the position is sent only to the client with that id.
+            If not provided (the default), the position is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_DIRECTION,
+            data=self._direction,
+            client_id=client_id,
+        )
 
     async def _update_navigating(self, client_id: str = None) -> None:
         """Update the navigating state to the frontend.
@@ -867,7 +896,12 @@ class PlannerServer:
 
         for id, point in enumerate(self._points):
             position: Position = point['position']
-            direction: Direction = point['direction']
+
+            # XXX: Should be more explicit about the direction being missing when sending
+            #      the data to neuronavigation, instead of decoding it as [0.0, 0.0, 0.0].
+            #
+            direction: Direction = point['direction'] or [0.0, 0.0, 0.0]
+
             selected: bool = point['selected']
             target: bool = point['target']
 
