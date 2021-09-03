@@ -69,22 +69,7 @@ processes.
 
 #### Setting up the system
 
-- Open a terminal window by running `cmder`.
-
-- Run the following commands in the terminal window in project-louhi directory:
-
-```
-pip install python-dotenv
-```
-
-NB: Cmder needs to be run as the administrator for these commands to work.
-
-NB: Python-dotenv is needed for running the mTMS bridge in LabVIEW.
-
-- Initialize the environment variables by doing the following changes to `.env` file in project-louhi
-directory:
-
-    - Change the line `LOG_DIRECTORY=/tmp/logs` to `LOG_DIRECTORY=C:\logs` or similar.
+- TBD: How to configure the LabVIEW parts of the system?
 
 ### Getting started
 

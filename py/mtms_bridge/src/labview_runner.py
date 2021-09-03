@@ -3,27 +3,24 @@
 
 import logging
 import os
+import sys
 import time
 from pathlib import Path
 
-import dotenv
-
 from mtms_connection import MTMSConnection
 
-# XXX: Workaround for dotenv to find .env when running the script in LabVIEW.
-# See https://github.com/theskumar/python-dotenv/issues/299
-dir_path = os.path.dirname(os.path.realpath(__file__))
-env_path = Path(dir_path) / '..' / '..' / '..' / '.env'
-dotenv.load_dotenv(env_path)
+port = None
+client = None
 
-log_directory = os.getenv("LOG_DIRECTORY")
-log_filename = Path(log_directory) / 'mtms_client.log'
 
-logging.basicConfig(filename=log_filename,
-                    level=logging.INFO,
-                    format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s', )
+def init(mtms_bridge_port, log_path):
+    global port
+    port = int(mtms_bridge_port)
 
-client = MTMSConnection(is_server=False)
+    logging.basicConfig(filename=log_path,
+                        level=logging.INFO,
+                        format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s', )
+    logging.info("Logging into the file: {}".format(log_path))
 
 
 def send_state(state_variable, value):
@@ -54,6 +51,9 @@ def connect():
     """Connect to the server and ensure that the connection is retained.
 
     """
+    global client
+    client = MTMSConnection(is_server=False, port=port)
+
     client.keep_connected()
     while not client.is_connected():
         time.sleep(1)

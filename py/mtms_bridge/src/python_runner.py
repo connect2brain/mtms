@@ -4,6 +4,7 @@
 import asyncio
 import itertools
 import logging
+import os
 import time
 
 from mtms.db.topic_db import TopicDb
@@ -18,10 +19,12 @@ from command_sender import CommandSender
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
 
+port = int(os.getenv("MTMS_BRIDGE_PORT"))
+
 # Initialization
 kafka = Kafka()
 topic_db = TopicDb()
-server = MTMSConnection(is_server=True)
+server = MTMSConnection(port=port, is_server=True)
 
 state_receiver = StateReceiver(kafka=kafka, server=server, topic_db=topic_db)
 parameter_sender = ParameterSender(kafka=kafka, server=server, topic_db=topic_db)
