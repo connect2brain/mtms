@@ -7,12 +7,25 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, TypedDic
 
 from socketio import AsyncServer
 
-from mtms.util.util import clamp, drop_unique
+from mtms.common.util import clamp, drop_unique
 from mtms.kafka.kafka import Kafka
 from mtms.kafka.listener import KafkaListener
 
+from mtms.common.constants import KAFKA_COMMAND_SET_STIMULATION_PARAMETERS, KAFKA_COMMAND_SET_COIL_AT_TARGET
+from mtms.common.types import Intensity, Isi, StimulationParameters
+
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s [%(levelname)s] (%(threadName)-10s) %(message)s',)
+
+# Types related to planner.
+
+class SetIntensityForPointData(TypedDict):
+    name: str
+    value: Intensity
+
+class SetIsiForPointData(TypedDict):
+    name: str
+    value: Isi
 
 # XXX: Position and Direction probably shouldn't be optional.
 #
@@ -26,14 +39,6 @@ class AddPointData(TypedDict):
 
 class PointSelectedData(TypedDict):
     name: str
-
-class SetIntensityData(TypedDict):
-    name: str
-    value: int
-
-class SetIsiData(TypedDict):
-    name: str
-    value: int
 
 FiducialName = Literal['LE', 'RE', 'NA']
 FiducialType = Literal['image', 'tracker']
@@ -53,8 +58,8 @@ class Point(TypedDict):
     selected: bool
     target: bool
     position: Position
-    intensity: int
-    isi: int
+    intensity: Intensity
+    isi: Isi
 
 class FiducialSet(TypedDict):
     fiducial: Fiducial
@@ -80,12 +85,14 @@ class PlannerServer:
     _SOCKETIO_UPDATE_POSITION: str = 'planner.position'
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
+
     _SOCKETIO_FIDUCIAL_SET: str = 'calibration.fiducial_set'
 
     _KAFKA_COMMAND_ADD_POINT: str = 'point.add'
     _KAFKA_COMMAND_REMOVE_POINT: str = 'point.remove'
     _KAFKA_COMMAND_SET_POINT_INTENSITY: str = 'point.set_intensity'
     _KAFKA_COMMAND_SET_POINT_ISI: str = 'point.set_isi'
+
     _KAFKA_COMMAND_SET_FIDUCIAL: str = 'calibration.set_fiducial'
 
     # Stimulation parameter related constants.
@@ -408,20 +415,20 @@ class PlannerServer:
         if target_point is None:
             return
 
-        intensity: int = target_point['intensity']
-        isi: int = target_point['isi']
+        intensity: Intensity = target_point['intensity']
+        isi: Isi = target_point['isi']
+
+        stimulation_parameters: StimulationParameters = {
+            'intensity': intensity,
+            'isi': isi,
+        }
 
         self._kafka.produce(
-            topic='intensity',
-            value=bytes(str(intensity), encoding='utf8'),
+            topic=KAFKA_COMMAND_SET_STIMULATION_PARAMETERS,
+            value=bytes(json.dumps(stimulation_parameters), encoding='utf8'),
         )
 
-        self._kafka.produce(
-            topic='isi',
-            value=bytes(str(isi), encoding='utf8'),
-        )
-
-    async def _handle_point_set_intensity(self, client_id: str, data: SetIntensityData) -> None:
+    async def _handle_point_set_intensity(self, client_id: str, data: SetIntensityForPointData) -> None:
         """When a command is received from the front-end to set intensity, pass on
         the message to Kafka and modify the backend state.
 
@@ -479,7 +486,7 @@ class PlannerServer:
     # TODO: Almost identical to _handle_point_set_intensity. Consider extracting out the
     #       common parts.
     #
-    async def _handle_point_set_isi(self, client_id: str, data: SetIsiData) -> None:
+    async def _handle_point_set_isi(self, client_id: str, data: SetIsiForPointData) -> None:
         """When a command is received from the front-end to set ISI, pass on
         the message to Kafka and modify the backend state.
 
@@ -691,7 +698,7 @@ class PlannerServer:
         )
 
         self._kafka.produce(
-            topic='coil_at_target',
+            topic=KAFKA_COMMAND_SET_COIL_AT_TARGET,
 
             # XXX: Unify the encoding of parameters of boolean (or other) types, preferably
             #      using a wrapper class that does the encoding instead of doing it ad hoc,
