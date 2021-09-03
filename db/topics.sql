@@ -10,6 +10,10 @@ CREATE TABLE topics (
 INSERT INTO topics (name, type, latch)
   VALUES ('intensity', 'parameter', 1);
 
+--Inter-stimulus interval
+INSERT INTO topics (name, type, latch)
+  VALUES ('isi', 'parameter', 1);
+
 --Inter-trial interval
 INSERT INTO topics (name, type, latch)
   VALUES ('iti', 'parameter', 1);
