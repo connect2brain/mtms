@@ -47,7 +47,7 @@ async def main() -> None:
 
     asyncio.create_task(parameter_sender.run())
     asyncio.create_task(command_sender.run())
-    asyncio.create_task(server.run())
+    asyncio.create_task(server.run_server())
     asyncio.create_task(state_receiver.run())
 
     while True:
