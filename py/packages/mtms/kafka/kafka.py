@@ -163,8 +163,11 @@ class Kafka:
             assert False, \
                 "Unknown Kafka library: {}".format(self.kafka_library)
 
-    def get_latest_offset(self, topic: str, consumer: confluent_kafka.Consumer):
+    def get_latest_offset(self, topic: str, consumer: confluent_kafka.Consumer) -> int:
         """Return the latest offset for the topic.
+
+        The latest offset tells the number of Kafka events that have been produced
+        into the topic.
 
         XXX: Only supports confluent-kafka.
 
@@ -174,16 +177,23 @@ class Kafka:
             The name of the Kafka topic.
         consumer
             An instance of Consumer, used for fetching data about the topic.
+
+        Returns
+        -------
+        int
+            The latest offset for the topic.
+
         """
-        partition = confluent_kafka.TopicPartition(
+        partition: confluent_kafka.TopicPartition = confluent_kafka.TopicPartition(
             topic=topic,
             partition=0,
         )
+        max_offset: int
         _, max_offset = consumer.get_watermark_offsets(partition)
 
         return max_offset
 
-    def get_consumer(self, topic: str, latch: bool = False, timeout: float = 0):
+    def get_consumer(self, topic: str, latch: bool = False, timeout: float = 0) -> KafkaConsumer:
         """Initialize and return a KafkaConsumer.
 
         Parameters
@@ -220,11 +230,11 @@ class Kafka:
                 'group.id': self.id,
             })
 
-            latest_offset = self.get_latest_offset(
+            latest_offset: int = self.get_latest_offset(
                 topic=topic,
                 consumer=consumer,
             )
-            offset = max(0, latest_offset - 1) if latch else latest_offset
+            offset: int = max(0, latest_offset - 1) if latch else latest_offset
 
             # Use Consumer.assign to assign the topic partition to the consumer directly
             # instead of using Consumer.subscribe to subscribe to the topic; the latter
@@ -232,7 +242,7 @@ class Kafka:
             # rebalancing between different partitions, which is slow and seems to happen
             # even when having created only one partition for each topic.
             #
-            partition = confluent_kafka.TopicPartition(
+            partition: confluent_kafka.TopicPartition = confluent_kafka.TopicPartition(
                 topic=topic,
                 partition=0,
                 offset=offset,
