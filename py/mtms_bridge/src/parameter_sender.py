@@ -50,6 +50,7 @@ class ParameterSender():
                 kafka=self._kafka,
                 topic=KAFKA_COMMAND_SET_STIMULATION_PARAMETERS,
                 callback=self._update_and_send_parameters,
+                latch=True,
             )
         ]
 

@@ -163,13 +163,46 @@ class Kafka:
             assert False, \
                 "Unknown Kafka library: {}".format(self.kafka_library)
 
-    def get_consumer(self, topic: str = None, timeout: float = 0):
+    def get_latest_offset(self, topic: str, consumer: confluent_kafka.Consumer) -> int:
+        """Return the latest offset for the topic.
+
+        The latest offset tells the number of Kafka events that have been produced
+        into the topic.
+
+        XXX: Only supports confluent-kafka.
+
+        Parameters
+        ----------
+        topic
+            The name of the Kafka topic.
+        consumer
+            An instance of Consumer, used for fetching data about the topic.
+
+        Returns
+        -------
+        int
+            The latest offset for the topic.
+
+        """
+        partition: confluent_kafka.TopicPartition = confluent_kafka.TopicPartition(
+            topic=topic,
+            partition=0,
+        )
+        max_offset: int
+        _, max_offset = consumer.get_watermark_offsets(partition)
+
+        return max_offset
+
+    def get_consumer(self, topic: str, latch: bool = False, timeout: float = 0) -> KafkaConsumer:
         """Initialize and return a KafkaConsumer.
 
         Parameters
         ----------
         topic
             The name of the Kafka topic.
+        latch
+            If True, receive the latest message published into the topic when the consumer is first created.
+            Defaults to False.
         timeout
             The timeout (in seconds) when polling for a new message. Defaults to 0, that is, timeouts instantly
             if there are no new messages.
@@ -187,12 +220,21 @@ class Kafka:
                 auto_offset_reset=pykafka.common.OffsetType.LATEST,
                 reset_offset_on_start=True,
             )
-
+            # XXX: Latching not implemented for pykafka. However, we probably want to support only
+            #      one Kafka library eventually in any case, so it is likely that the support for
+            #      pykafka will be removed once confluent-kafka works properly.
+            #
         elif self.kafka_library == "confluent-kafka":
             consumer = confluent_kafka.Consumer({
                 'bootstrap.servers': self.hosts,
                 'group.id': self.id,
             })
+
+            latest_offset: int = self.get_latest_offset(
+                topic=topic,
+                consumer=consumer,
+            )
+            offset: int = max(0, latest_offset - 1) if latch else latest_offset
 
             # Use Consumer.assign to assign the topic partition to the consumer directly
             # instead of using Consumer.subscribe to subscribe to the topic; the latter
@@ -200,10 +242,10 @@ class Kafka:
             # rebalancing between different partitions, which is slow and seems to happen
             # even when having created only one partition for each topic.
             #
-            partition = confluent_kafka.TopicPartition(
+            partition: confluent_kafka.TopicPartition = confluent_kafka.TopicPartition(
                 topic=topic,
                 partition=0,
-                offset=confluent_kafka.OFFSET_END,
+                offset=offset,
             )
             consumer.assign([partition])
 

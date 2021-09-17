@@ -47,7 +47,12 @@ class MockKafka:
     def __init__(self) -> None:
         self.queues: Dict[Topic, Queue] = {}
 
-    def get_consumer(self, topic: Topic, timeout: float = 0) -> MockKafkaConsumer:
+    def get_consumer(self, topic: Topic, latch: bool = False, timeout: float = 0) -> MockKafkaConsumer:
+        # TBD: Latching not implemented. After implementing, it would be good to add a test to
+        #      test_parameter_server.py for checking that the latest parameter-related Kafka event
+        #      published before creating the server is handled properly by the server, and a similar
+        #      test for the mtms_bridge class that handles the parameters, namely, ParameterSender.
+        #
         queues: Dict[Topic, Queue] = self.queues
 
         if topic not in queues:
@@ -76,13 +81,17 @@ class MockKafkaListener(Thread):
             kafka: MockKafka,
             topic: Topic,
             callback: KafkaCallback,
+            latch: bool = False,
             delay: float = 0.1,
             verbose: bool = True) -> None:
 
         self.kafka: MockKafka = kafka
         self.topic: Topic = topic
         self.callback: KafkaCallback = callback
-        self.consumer: MockKafkaConsumer = self.kafka.get_consumer(topic)
+        self.consumer: MockKafkaConsumer = self.kafka.get_consumer(
+            topic=topic,
+            latch=latch,
+        )
 
         # Unused
         self.delay: float = delay
