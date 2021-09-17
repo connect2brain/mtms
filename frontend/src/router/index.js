@@ -1,6 +1,7 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
 import Nav from "@/views/Nav.vue";
+import Status from "@/views/Status.vue";
 import Eeg from "@/views/Eeg.vue";
 import Calibration from "@/views/Calibration.vue";
 import Planner from "@/views/Planner.vue";
@@ -14,6 +15,11 @@ const routes = [
     path: "/",
     name: "Nav",
     component: Nav
+  },
+  {
+    path: "/status",
+    name: "Status",
+    component: Status
   },
   {
     path: "/eeg",
