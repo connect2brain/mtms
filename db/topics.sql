@@ -91,9 +91,9 @@ INSERT INTO topics (name, type, latch)
 INSERT INTO topics (name, type, latch)
   VALUES ('point.set_intensity', 'command', 0);
 
---Set ISI of a point
+--Set ITI of a point
 INSERT INTO topics (name, type, latch)
-  VALUES ('point.set_isi', 'command', 0);
+  VALUES ('point.set_iti', 'command', 0);
 
 /* Calibration */
 

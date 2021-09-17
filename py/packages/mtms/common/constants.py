@@ -10,5 +10,5 @@ KAFKA_COMMAND_SET_COIL_AT_TARGET: str = 'stimulation.set_coil_at_target'
 
 STIMULATION_PARAMETERS = [
     'intensity',
-    'isi',
+    'iti',
 ]

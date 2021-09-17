@@ -6,8 +6,8 @@ from typing import TypedDict
 # Type definitions shared across modules.
 
 Intensity = int
-Isi = int
+Iti = int
 
 class StimulationParameters(TypedDict):
     intensity: Intensity
-    isi: Isi
+    iti: Iti
