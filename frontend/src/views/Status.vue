@@ -2,22 +2,22 @@
   <div class="status">
     <b>Connections</b>
     <p>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections['backend']" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections['backend']" />
+      <font-awesome-icon icon="circle" class="connected" v-if="connections.backend" />
+      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.backend" />
       Core
       <br>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections['neuronavigation']" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections['neuronavigation']" />
+      <font-awesome-icon icon="circle" class="connected" v-if="connections.neuronavigation" />
+      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.neuronavigation" />
       Neuronavigation
     </p>
     <b>Devices</b>
     <p>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections['pedal']" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections['pedal']" />
+      <font-awesome-icon icon="circle" class="connected" v-if="connections.pedal" />
+      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.pedal" />
       Trigger pedal
       <br>
-      <font-awesome-icon icon="circle" class="connected" v-if="connections['ttl']" />
-      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections['ttl']" />
+      <font-awesome-icon icon="circle" class="connected" v-if="connections.serialPort" />
+      <font-awesome-icon icon="circle" class="not-connected" v-if="!connections.serialPort" />
       TTL link
     </p>
     <b>Stimulation</b>
@@ -42,7 +42,7 @@ export default {
         backend: false,
         neuronavigation: false,
         pedal: false,
-        ttl: false
+        serialPort: false
       },
       stimulating: false,
       recharging: false,
@@ -86,6 +86,10 @@ export default {
         this.latestMessage = `State updated: ${stateVariable} = ${value}`;
       }
     },
+
+    "status.serial_port_connection"(data) {
+      this.connections.serialPort = data
+    }
   }
 };
 </script>
