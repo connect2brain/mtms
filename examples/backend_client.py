@@ -4,9 +4,13 @@
 # Example
 # -------
 #
+# Initialize by:
+#
+#     poetry install
+#
 # Run by:
 #
-#     python backend_client.py
+#     poetry run python backend_client.py
 #
 # Connects to the backend and does the following:
 #

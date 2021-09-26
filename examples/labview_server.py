@@ -4,13 +4,9 @@
 # Example
 # -------
 #
-# Setup by:
-#
-#     pip install python-dotenv
-#
 # Run by:
 #
-#     python labview_server.py
+#     poetry run python labview_server.py
 #
 # Runs a Python-end server for Python-LabVIEW bridge and does the following:
 #
