@@ -1,8 +1,40 @@
 <template>
   <div id="app">
-    <router-view />
+    <div v-if="$route.name === null">
+      <Navbar />
+      <div class="container">
+        <div id="planner">
+          <Planner />
+        </div>
+        <div class="container-right">
+          <div id="status">
+            <Status />
+          </div>
+          <div id="tms">
+            <Tms />
+          </div>
+        </div>
+      </div>
+    </div>
+    <router-view v-if="$route.name !== null" />
   </div>
 </template>
+
+<script>
+import Navbar from "@/views/Navbar.vue";
+import Planner from "@/views/Planner.vue";
+import Tms from "@/views/Tms.vue";
+import Status from "@/views/Status.vue";
+
+export default {
+  components: {
+    Navbar,
+    Planner,
+    Status,
+    Tms
+  }
+};
+</script>
 
 <style lang="scss">
 @import "styles/_colors.scss";
@@ -15,6 +47,14 @@
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: $default-font-color;
+}
+
+.container {
+  display: flex;
+}
+
+.container-right {
+  padding-left: 40px;
 }
 
 /* As a default, input elements use their own font. Instead, make the elements inherit
