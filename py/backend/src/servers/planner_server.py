@@ -14,6 +14,7 @@ from mtms.kafka.listener import KafkaListener
 from mtms.common.constants import (
     KAFKA_COMMAND_SET_COIL_AT_TARGET,
     KAFKA_COMMAND_SET_STIMULATION_PARAMETERS,
+    KAFKA_COMMAND_SET_PEDAL_CONNECTION,
     KAFKA_COMMAND_SET_SERIAL_PORT_CONNECTION,
 )
 from mtms.common.types import Intensity, Iti, StimulationParameters
@@ -90,6 +91,9 @@ class PlannerServer:
     _SOCKETIO_UPDATE_COIL_AT_TARGET: str = 'planner.coil_at_target'
     _SOCKETIO_STATE_SENT: str = 'planner.state_sent'
 
+    _SOCKETIO_UPDATE_PEDAL_CONNECTION: str = 'status.pedal_connection'
+    _SOCKETIO_PEDAL_STATE_CHANGED: str = 'status.pedal_state_changed'
+
     _SOCKETIO_UPDATE_SERIAL_PORT_CONNECTION: str = 'status.serial_port_connection'
     _SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED: str = 'status.serial_port_pulse_triggered'
 
@@ -142,6 +146,7 @@ class PlannerServer:
         self._coil_at_target: bool = False
         self._navigating: bool = False
         self._serial_port_connection: bool = False
+        self._pedal_connection: bool = False
 
         self._fiducials_set: Dict[FiducialType, Dict[FiducialName, bool]] = {
             "image": {},
@@ -274,6 +279,19 @@ class PlannerServer:
             relevant_message = True
 
             await self._serial_port_pulse_triggered()
+
+        # Triggered when pedal is connected or disconnected.
+        elif topic == "Pedal connection":
+            relevant_message = True
+
+            self._pedal_connection = data['state']
+            await self._update_pedal_connection()
+
+        # Triggered when the pedal state is changed.
+        elif topic == "Pedal state changed":
+            relevant_message = True
+
+            await self._pedal_state_changed(data['state'])
 
         if relevant_message:
             logging.info("Received a message from neuronavigation in topic '{}'".format(topic))
@@ -662,6 +680,9 @@ class PlannerServer:
         await self._update_serial_port_connection(
             client_id=client_id,
         )
+        await self._update_pedal_connection(
+            client_id=client_id,
+        )
         await self._update_navigating(
             client_id=client_id,
         )
@@ -768,6 +789,26 @@ class PlannerServer:
             value=bytes(str(self._serial_port_connection), encoding='utf8'),
         )
 
+    async def _update_pedal_connection(self, client_id: str = None) -> None:
+        """Update the status of the pedal connection, both to Kafka and frontend.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the message is sent only to the client with that id.
+            If not provided (the default), the message is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_UPDATE_PEDAL_CONNECTION,
+            data=self._pedal_connection,
+            client_id=client_id,
+        )
+
+        self._kafka.produce(
+            topic=KAFKA_COMMAND_SET_PEDAL_CONNECTION,
+            value=bytes(str(self._pedal_connection), encoding='utf8'),
+        )
+
     async def _serial_port_pulse_triggered(self, client_id: str = None) -> None:
         """Send a message to frontend of serial port pulse being triggered.
 
@@ -779,6 +820,21 @@ class PlannerServer:
         """
         await self._socketio.emit(
             event=self._SOCKETIO_SERIAL_PORT_PULSE_TRIGGERED,
+            client_id=client_id,
+        )
+
+    async def _pedal_state_changed(self, state: bool, client_id: str = None) -> None:
+        """Send a message to frontend of pedal state having changed.
+
+        Parameters
+        ----------
+        client_id
+            The client id. If provided, the message is sent only to the client with that id.
+            If not provided (the default), the message is broadcast to all clients.
+        """
+        await self._socketio.emit(
+            event=self._SOCKETIO_PEDAL_STATE_CHANGED,
+            data=state,
             client_id=client_id,
         )
 

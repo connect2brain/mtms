@@ -19,7 +19,7 @@
       <font-awesome-icon
         class="circle"
         icon="circle"
-        v-bind:class="{ enabled: connections.pedal.connected }" />
+        v-bind:class="{ enabled: connections.pedal.connected, active: connections.pedal.state }" />
       Trigger pedal
       <br>
       <font-awesome-icon
@@ -125,6 +125,14 @@ export default {
       setTimeout(() => {
         this.connections.serialPort.data_received = false;
       }, this.DATA_RECEIVED_TIME_THRESHOLD);
+    },
+
+    "status.pedal_connection"(connected) {
+      this.connections.pedal.connected = connected;
+    },
+
+    "status.pedal_state_changed"(state) {
+      this.connections.pedal.state = state;
     }
   }
 };
