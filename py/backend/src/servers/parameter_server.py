@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import logging
 import time
+from typing import Any, Dict, List
 
-import flask_socketio
+from socketio import AsyncServer
+
+from mtms.kafka.kafka import Kafka
+from mtms.kafka.listener import KafkaListener
+from mtms.db.topic_db import TopicDb
 
 class ParameterServer:
     """A server for sending parameter values to clients.
@@ -13,118 +19,137 @@ class ParameterServer:
     - When a parameter value in Kafka changes, sends the new value to all connected clients.
     """
 
-    _PARAMETER_TOPIC_TYPE = 'parameter'
-    _UPDATE_PARAMETER_EVENT = 'update_parameter'
+    _PARAMETER_TOPIC_TYPE: str = 'parameter'
+    _UPDATE_PARAMETER_EVENT: str = 'update_parameter'
 
-    def __init__(self, kafka=None, socketio=None, topic_db=None):
+    def __init__(self, kafka: Kafka, socketio: AsyncServer, topic_db: TopicDb) -> None:
         """Initialize the parameter server.
 
         Parameters
         ----------
-        kafka : Kafka
+        kafka
             A Kafka object to communicate with Kafka.
-        socketio : flask_socketio.SocketIO
-            A SocketIO object to which the event listeners are added.
-        topic_db : TopicDb
+        socketio
+            An AsyncServer object to which the event listeners are added.
+        topic_db
             A TopicDb object to communicate with the topic database.
         """
-        self._parameters = {}
-        self._kafka = kafka
-        self._socketio = socketio
-        self._topic_db = topic_db
+        self._parameters: Dict[str, float] = {}
+        self._kafka: Kafka = kafka
+        self._socketio: AsyncServer = socketio
+        self._topic_db: TopicDb = topic_db
 
-        self._parameter_topics = self._topic_db.get_topics_by_type(self._PARAMETER_TOPIC_TYPE)
-        self._setup_listeners()
+        self._parameter_topics: List[str] = self._topic_db.get_topics(type=self._PARAMETER_TOPIC_TYPE)
 
-        socketio.on_event('connect', self._send_parameters_on_connect)
-        socketio.on_event(self._UPDATE_PARAMETER_EVENT, self._set_parameter_to_kafka)
+        socketio.on(
+            event='connect',
+            handler=self._send_parameters_on_connect,
+        )
+        socketio.on(
+            event=self._UPDATE_PARAMETER_EVENT,
+            handler=self._set_parameter_to_kafka,
+        )
 
-    def _setup_listeners(self):
-        """Setup up a Kafka listener for each topic.
+        self._setup_background_tasks()
+
+    def _setup_background_tasks(self) -> None:
+        """Set up background tasks, namely, a Kafka listener for each topic.
 
         """
-        self._listeners = [
-            self._kafka.get_listener(
+        topic: str
+        self.background_tasks: List[KafkaListener] = [
+            KafkaListener(
+                kafka=self._kafka,
                 topic=topic,
                 callback=self._get_parameter_from_kafka,
+                latch=True,
             ) for topic in self._parameter_topics
         ]
 
-        for listener in self._listeners:
-            listener.start()
-
-    def _send_parameter(self, topic=None, broadcast=None):
-        """Send the parameter value in the given topic to one or several clients.
+    async def _send_parameter(self, topic: str, client_id: str = None) -> None:
+        """Send the parameter value in the given topic to one or several Socket.IO clients.
+        If the topic is not listed in the topic database, do nothing.
 
         Parameters
         ----------
-        topic : str
+        client_id
+            The client id. If provided, the value is sent only to the client with that id.
+            If not provided, the parameter value is sent to all clients.
+
+            Defaults to None.
+        topic
             The topic which contains the parameter to be sent.
-        broadcast : bool
-            If True, the parameter value is sent to all clients. If False, the value is sent
-            only to the client in the context.
         """
         if topic not in self._parameters:
             return None
 
-        value = self._parameters[topic]
+        value: float = self._parameters[topic]
         data = {
             'name': topic,
             'value': value,
         }
-        if broadcast:
-            # XXX: SocketIO object's emit function broadcasts the event, whereas flask_socketio.emit
-            #   sends it only to a single client if 'broadcast' argument is not specified. This convention
-            #   seems a bit confusing and complicates testing.
-            self._socketio.emit(self._UPDATE_PARAMETER_EVENT, data)
-        else:
-            flask_socketio.emit(self._UPDATE_PARAMETER_EVENT, data)
+        await self._socketio.emit(
+            event=self._UPDATE_PARAMETER_EVENT,
+            data=data,
+            to=client_id,
+        )
 
-    def _send_parameters_on_connect(self):
-        """Send all parameters to the client.
+    async def _send_parameters_on_connect(self, client_id: str, environment: Dict[str, Any]) -> None:
+        """Send all parameters to the connected Socket.IO client.
 
         Called when a new client connects.
+
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        environment
+            The WSGI environment provided by the AsyncServer.
         """
+        topic: str
         for topic in self._parameter_topics:
-            self._send_parameter(
+            await self._send_parameter(
                 topic=topic,
-                broadcast=False
+                client_id=client_id,
             )
 
-    def _get_parameter_from_kafka(self, topic, value):
+    # TODO: Function naming in this class needs to be rethought -- it's a bit unclear
+    #       currently.
+    async def _get_parameter_from_kafka(self, topic: str, value: float) -> None:
         """Update the parameter internally and broadcast to all connected clients.
 
         Called when a Kafka listener triggers.
 
         Parameters
         ----------
-        topic : str
+        topic
             The topic for the new parameter value.
-        value : number
+        value
             The new value.
         """
         self._parameters[topic] = value
-        self._send_parameter(
+        await self._send_parameter(
             topic=topic,
-            broadcast=True
         )
 
-    def _set_parameter_to_kafka(self, data):
+    def _set_parameter_to_kafka(self, client_id: str, data: Dict[str, Any]):
         """Set a parameter received from a client to Kafka.
 
         Called when a connected client updates a parameter value.
 
         Parameters
         ----------
-        data : dict
+        client_id
+            The client id provided by the AsyncServer.
+        data
             A dict consisting of 'name' and 'value' keys. Value for 'name' tells the name of the
             parameter that is updated, and value for 'value' tells the new value.
         """
-        name = data['name']
-        value = data['value']
+        name: str = data['name']
+        value: float = data['value']
         assert name in self._parameter_topics, "{} is not a valid parameter name".format(name)
 
-        # XXX: Recreating the producer each time is slow with PyKafka, revisit after changing
-        #   the Kafka library to a faster one.
-        producer = self._kafka.get_producer(topic=name)
-        producer.produce(bytes(str(value), encoding='utf8'))
+        self._kafka.produce(
+            topic=name,
+            value=bytes(str(value), encoding='utf8')
+        )

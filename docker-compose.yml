@@ -11,20 +11,43 @@ services:
   #   that everything stored in Kafka is lost. This is good enough for development at this stage,
   #   but change the behavior later to retain the data.
   zookeeper:
-    image: 'bitnami/zookeeper:latest'
+    image: 'bitnami/zookeeper:3.7.0-debian-10-r30'
     environment:
+      - ZOO_PORT_NUMBER=${ZOOKEEPER_PORT}
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
       - kafka
   kafka:
-    image: 'bitnami/kafka:latest'
+    image: 'bitnami/kafka:2.8.0-debian-10-r8'
     environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:${KAFKA_PORT}
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:${KAFKA_PORT}
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:${ZOOKEEPER_PORT}
+    ports:
+      - "${KAFKA_PORT}:${KAFKA_PORT}"
     depends_on:
       - zookeeper
     networks:
       - kafka
+  # Needs to match the value of INIT_HOST environment variable.
+  init:
+    build:
+      context: .
+      dockerfile: py/init/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      - KAFKA_IP=kafka
+      - KAFKA_PORT=${KAFKA_PORT}
+    volumes:
+      - ./py/init:/code/py/init
+      - ./py/packages:/code/py/packages
+    depends_on:
+      - kafka
+    networks:
+      - kafka
+  # Needs to match the value of BACKEND_HOST environment variable.
   backend:
     build:
       context: .
@@ -33,10 +56,10 @@ services:
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     env_file:
-      - .env
+      - ${ENV_FILE}
     environment:
       - KAFKA_IP=kafka
-      - KAFKA_PORT=9092
+      - KAFKA_PORT=${KAFKA_PORT}
     volumes:
       - ./py/backend:/code/py/backend
       - ./py/packages:/code/py/packages
@@ -44,7 +67,24 @@ services:
       - kafka
     networks:
       - kafka
-      - backend
+      - ${BACKEND_HOST}
+  eeg:
+    build:
+      context: .
+      dockerfile: py/eeg/Dockerfile
+    restart: always
+    env_file:
+      - ${ENV_FILE}
+    environment:
+      - KAFKA_IP=kafka
+      - KAFKA_PORT=${KAFKA_PORT}
+    volumes:
+      - ./py/eeg:/code/py/eeg
+      - ./py/packages:/code/py/packages
+    depends_on:
+      - kafka
+    networks:
+      - kafka
   mtms_bridge:
     build:
       context: .
@@ -53,10 +93,10 @@ services:
     ports:
       - "${MTMS_BRIDGE_PORT}:${MTMS_BRIDGE_PORT}"
     env_file:
-      - .env
+      - ${ENV_FILE}
     environment:
       - KAFKA_IP=kafka
-      - KAFKA_PORT=9092
+      - KAFKA_PORT=${KAFKA_PORT}
     volumes:
       - ./py/mtms_bridge:/code/py/mtms_bridge
       - ./py/packages:/code/py/packages
@@ -68,12 +108,18 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    # TODO: Change hard-coded port to a port read from .env
+    # TODO: Change hard-coded port to a port read from the env file
     ports:
       - "8080:8080"
+    environment:
+      # Fixes hot reload when using Windows/Mac. An explanation:
+      #
+      # https://daten-und-bass.io/blog/enabling-hot-reloading-with-vuejs-and-vue-cli-in-docker/
+      #
+      - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend/src:/app/src
     depends_on:
-      - backend
+      - ${BACKEND_HOST}
     networks:
-      - backend
+      - ${BACKEND_HOST}

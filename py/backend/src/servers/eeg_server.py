@@ -2,73 +2,118 @@
 # -*- coding: utf-8 -*-
 
 import json
+import logging
 import time
+from typing import Any, Dict, List, Tuple, TypedDict
 
-from flask import request
+from socketio import AsyncServer
+from numpy.typing import ArrayLike
 
+from mtms.kafka.kafka import Kafka
+from mtms.kafka.listener import KafkaListener
 from .eeg.cyclic_buffer import CyclicBuffer
-from .eeg.eeg_listener import EegListener
+
+class EegDataPoint(TypedDict):
+    data: ArrayLike
+    timestamp: float
+
+EegData = List[EegDataPoint]
 
 class EegServer():
     """A server for EEG data.
 
-    Reads data from a Kafka topic and serves it at /eeg_data endpoint.
+    Read data from a Kafka topic and serve it using Socket.IO.
     """
-    _EEG_TOPIC = 'eeg_data'
+    _KAFKA_TOPIC_EEG: str = 'eeg_data'
 
-    def __init__(self, kafka=None, app=None, eeg_buffer_length=None):
+    _SOCKETIO_EVENT_REQUEST_EEG_DATA: str = 'request_eeg_data'
+    _SOCKETIO_EVENT_RECEIVE_EEG_DATA: str = 'receive_eeg_data'
+
+    def __init__(self, kafka: Kafka, socketio: AsyncServer, eeg_buffer_length: int) -> None:
         """Initialize the EEG server.
 
         Parameters
         ----------
-        kafka : Kafka
+        kafka
             A Kafka object to communicate with Kafka.
-        app : Flask
-            The Flask application that the endpoint is added to.
-        eeg_buffer_length : int
+        socketio
+            An AsyncServer object to which the event listeners are added.
+        eeg_buffer_length
             The length of the buffer for EEG data, in samples.
         """
-        self._kafka = kafka
-        self._eeg_buffer_length = eeg_buffer_length
+        self._kafka: Kafka = kafka
+        self._socketio: AsyncServer = socketio
+        self._eeg_buffer_length: int = eeg_buffer_length
 
         # TODO: Sender should publish these via Kafka.
-        self._sampling_frequency = 160
-        self._n_channels = 64
+        self._sampling_frequency: int = 160
+        self._n_channels: int = 64
 
-        self._initialize_eeg_listener()
+        socketio.on(
+            event=self._SOCKETIO_EVENT_REQUEST_EEG_DATA,
+            handler=self._request_eeg_data,
+        )
 
-        # TODO: Document the API endpoint, modify to use Socket.IO.
-        @app.route('/eeg_data')
-        def get_eeg_data():
-            args_from = float(request.args.get('from', -60))
-            args_to = float(request.args.get('to', 0))
+        self._setup_background_tasks()
 
-            t0 = time.time()
-            data, timestamps = self._eeg_buffer.get_timerange(
-                t0 + args_from,
-                t0 + args_to,
-            )
-            timestamps_relative = [t - t0 for t in timestamps]
+    async def _request_eeg_data(self, client_id: str, params: Dict[str, Any]) -> None:
+        """Send EEG data on request.
 
-            result = [
-                {'data': data, 'timestamp': timestamp}
-                for data, timestamp in zip(data.tolist(), timestamps_relative)
-            ]
-            return json.dumps(result), 200, {'content-type': 'application/json'}
+        Parameters
+        ----------
+        client_id
+            The client id, provided by the AsyncServer.
+        params
+            A dict consisting of optional 'from' and 'to' keys, with values determining the
+            start and the end (in seconds) for the fetched data, relative to the current time.
 
-    def _initialize_eeg_listener(self):
-        """Initialize the EEG listener.
+            'from' defaults to -60 seconds, and 'to' defaults to 0 (the current time).
+        """
+        args_from: float = float(params.get('from', -60))
+        args_to: float = float(params.get('to', 0))
+
+        t0: float = time.time()
+
+        data: ArrayLike
+        timestamps: ArrayLike
+        data, timestamps = self._eeg_buffer.get_timerange(
+            t0 + args_from,
+            t0 + args_to,
+        )
+        timestamps_relative: ArrayLike = [t - t0 for t in timestamps]
+
+        result: EegData = [
+            {'data': data, 'timestamp': timestamp}
+            for data, timestamp in zip(data.tolist(), timestamps_relative)
+        ]
+        await self._socketio.emit(
+            event=self._SOCKETIO_EVENT_RECEIVE_EEG_DATA,
+            data=result,
+            client_id=client_id,
+        )
+
+    def _setup_background_tasks(self) -> None:
+        """Setup the background tasks, namely, a task for listening to Kafka topic for new EEG data.
 
         """
-        self._eeg_buffer = CyclicBuffer(
+        self._eeg_buffer: CyclicBuffer = CyclicBuffer(
             self._eeg_buffer_length,
             self._n_channels,
         )
-        self._eeg_listener = EegListener(
-            kafka=self._kafka,
-            name='eeg_listener',
-            topic=self._EEG_TOPIC,
-            buffer=self._eeg_buffer,
-            sampling_frequency=self._sampling_frequency,
-        )
-        self._eeg_listener.start()
+        async def callback(topic: str, raw_message: str):
+            message: Dict[str, Any] = json.loads(raw_message)
+            self._eeg_buffer.append(message['data'], message['time'])
+
+        delay: float = 1.0 / self._sampling_frequency
+
+        self.background_tasks: List[KafkaListener] = [
+            KafkaListener(
+                kafka=self._kafka,
+                topic=self._KAFKA_TOPIC_EEG,
+                callback=callback,
+                delay=delay,
+
+                # Be less verbose here due to the plentitude of EEG messages.
+                verbose=False,
+            ),
+        ]

@@ -10,48 +10,65 @@ def test_mock_kafka():
     """Tests MockKafka class.
 
     """
-    from mtms.mocks.mock_kafka import MockKafka
+    from mtms.mocks.mock_kafka import MockKafka, MockKafkaListener
 
     kafka = MockKafka()
 
     consumer = kafka.get_consumer(topic='test')
-    producer = kafka.get_producer(topic='test')
 
     # Test consuming when the topic is empty.
-    value = consumer.consume()
+    value = consumer.poll()
     assert value is None
 
     # Test producing and consuming a single message.
-    producer.produce(123)
-    value = consumer.consume()
+    kafka.produce(
+        topic='test',
+        value=123,
+    )
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
 
     assert value == 123
 
     # Test consuming again after the message has been consumed.
-    value = consumer.consume()
-    assert value is None
+    message = consumer.poll()
+    assert message is None
 
     # Test the order of two messages.
-    producer.produce(124)
-    producer.produce(125)
+    kafka.produce(
+        topic='test',
+        value=124,
+    )
+    kafka.produce(
+        topic='test',
+        value=125,
+    )
 
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 124
 
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 125
 
     # Test producing into two topics.
     consumer_2 = kafka.get_consumer(topic='test2')
-    producer_2 = kafka.get_producer(topic='test2')
+    kafka.produce(
+        topic='test',
+        value=999,
+    )
+    kafka.produce(
+        topic='test2',
+        value='',
+    )
 
-    producer.produce(999)
-    producer_2.produce('')
-
-    value = consumer.consume()
+    message = consumer.poll()
+    value = consumer.message_to_value(message)
     assert value == 999
 
-    value_2 = consumer_2.consume()
+    message_2 = consumer_2.poll()
+    value_2 = consumer.message_to_value(message_2)
     assert value_2 == ''
 
     # Test KafkaListener.
@@ -64,11 +81,17 @@ def test_mock_kafka():
         nonlocal callback_called
         callback_called = True
 
-    listener = kafka.get_listener(topic='test_listener', callback=callback)
+    listener = MockKafkaListener(
+        kafka=kafka,
+        topic='test_listener',
+        callback=callback,
+    )
     listener.start()
 
-    producer = kafka.get_producer(topic='test_listener')
-    producer.produce(12)
+    kafka.produce(
+        topic='test_listener',
+        value=12,
+    )
 
     time.sleep(1)
 

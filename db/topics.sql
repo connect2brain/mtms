@@ -4,21 +4,22 @@ CREATE TABLE topics (
     latch int
 );
 
-/* Parameters */
+/* Stimulation */
 
---Intensity
+--Set stimulation parameters
+
+/* XXX: Re-think if the topic of type 'parameter' makes sense, now that all parameters
+        are sent at once. It doesn't cause harm to have unuseful topic types, so leaving
+        it be for now. */
+
 INSERT INTO topics (name, type, latch)
-  VALUES ('intensity', 'parameter', 1);
+  VALUES ('stimulation.set_parameters', 'parameter', 1);
 
---Inter-trial interval
+--Indicator for the coil being at the target
 INSERT INTO topics (name, type, latch)
-  VALUES ('iti', 'parameter', 1);
+  VALUES ('stimulation.set_coil_at_target', 'command', 0);
 
---Number of stimuli
-INSERT INTO topics (name, type, latch)
-  VALUES ('number_of_stimuli', 'parameter', 1);
-
-/* Commands */
+/* XXX: Unify the command naming to start with the prefix 'stimulation.' */
 
 --Recharge
 INSERT INTO topics (name, type, latch)
@@ -75,3 +76,27 @@ INSERT INTO topics (name, type, latch)
 --EEG data
 INSERT INTO topics (name, type, latch)
   VALUES ('eeg_data', 'stream', 0);
+
+/* Planner */
+
+--Add point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.add', 'command', 0);
+
+--Remove point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.remove', 'command', 0);
+
+--Set intensity of a point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.set_intensity', 'command', 0);
+
+--Set ITI of a point
+INSERT INTO topics (name, type, latch)
+  VALUES ('point.set_iti', 'command', 0);
+
+/* Calibration */
+
+--Set fiducial
+INSERT INTO topics (name, type, latch)
+  VALUES ('calibration.set_fiducial', 'command', 0)

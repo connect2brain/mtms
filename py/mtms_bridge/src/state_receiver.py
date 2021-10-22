@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import logging
-from threading import Thread
 
-class StateReceiver(Thread):
+# TODO: Add type hints to this class.
+#
+class StateReceiver():
     """A class for receiving state from LabVIEW.
 
     """
-    def __init__(self, kafka=None, server=None, topic_db=None):
+    def __init__(self, kafka=None, server=None, topic_db=None, delay=0.1):
         """Initialize the state receiver.
 
         Parameters
@@ -19,29 +21,36 @@ class StateReceiver(Thread):
             A connection to LabVIEW.
         topic_db : TopicDb
             A connection to the topic database.
+        delay : float
+            The delay (in seconds) between two consecutive runs of the state receiver.
+            Defaults to 0.1 seconds.
         """
         self._kafka = kafka
         self._server = server
-        self._state_topics = topic_db.get_topics_by_type('state')
+        self._delay = delay
+        self._state_topics = topic_db.get_topics(type='state')
 
-        self._producers = {}
-        for topic in self._state_topics:
-            # XXX: What if connection to Kafka is lost in the middle of this loop?
-            producer = self._kafka.get_producer(topic=topic)
-            self._producers[topic] = producer
-
-        Thread.__init__(self)
-        self.daemon = True
-
-    def run(self):
+    async def run(self):
         """Read state messages from the server and pass them on to Kafka.
 
         """
-        while True:
-            msg_type, param1, param2 = self._server.receive()
-            if msg_type == 'state':
-                logging.info("[Done] Receive state: {} = {}".format(param1, str(param2)))
+        asyncio.current_task().name = "state-receiver"
+        try:
+            while True:
+                msg_type, param1, param2 = self._server.receive()
+                if msg_type == 'state':
+                    logging.info("[Done] Receive state: {} = {}".format(param1, str(param2)))
 
-                producer = self._producers[param1]
-                # XXX: What if connection to Kafka is lost before this line? Should there be an exception handler?
-                producer.produce(bytes(str(param2), encoding='utf8'))
+                    self._kafka.produce(
+                        topic=param1,
+                        value=bytes(str(param2), encoding='utf8')
+                    )
+                await asyncio.sleep(self._delay)
+
+        except asyncio.CancelledError as e:
+            logging.info("Cancelled task {}".format(asyncio.current_task().name))
+            raise e
+
+        # General exception handling is needed here so that exceptions within asyncio coroutines are logged properly.
+        except Exception as e:
+            logging.exception(e)

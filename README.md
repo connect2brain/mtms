@@ -9,8 +9,10 @@ This project contains the git repository for development of the mTMS system in C
 - Clone the repository by running:
 
 ```
-git clone https://github.com/okahilak/invesalius3 --branch add-backend-communication-to-tms-mode
+git clone --recurse-submodules https://github.com/connect2brain/project-louhi
 ```
+
+which clones InVesalius3 into `project-louhi/invesalius3` directory.
 
 - Note that you need 64-bit version of Python 3.7 to be able to easily install all the required
 Python libraries. One way of achieving this is to install Python 3.7 from
@@ -38,7 +40,7 @@ Universal Windows.
 - Install additional libraries needed by InVesalius-mTMS communication by running:
 
 ```
-C:\Python37\Scripts\pip install python-socketio requests
+pip install python-socketio
 ```
 
 #### Installing GNU tools
@@ -67,23 +69,7 @@ processes.
 
 #### Setting up the system
 
-- Open a terminal window by running `cmder`.
-
-- Run the following commands in the terminal window in project-louhi directory:
-
-```
-pip install python-dotenv
-```
-
-NB: Cmder needs to be run as the administrator for these commands to work.
-
-NB: Python-dotenv is needed when running the mTMS bridge in LabVIEW, which does not use pipenv.
-The Python packages needed by the other components of the software are installed using pipenv.
-
-- Initialize the environment variables by doing the following changes to `.env` file in project-louhi
-directory:
-
-    - Change the line `LOG_DIRECTORY=/tmp/logs` to `LOG_DIRECTORY=C:\logs` or similar.
+- TBD: How to configure the LabVIEW parts of the system?
 
 ### Getting started
 
@@ -96,15 +82,15 @@ directory:
 - Then, you can check that all services are successfully started by checking
 that there are no errors in the logs:
 
-    - `docker-compose logs --tail=100 -f [container]`
+    `docker-compose logs --tail=100 -f [container]`
 
 where `[container]` is one of the following: `zookeeper`, `kafka`, `backend`,
 `frontend`, `mtms_bridge`.
 
-- Start InVesalius by running the following in InVesalius repository:
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-C:\Python37\python app.py
+C:\Python37\python app.py --remote-host localhost:5000
 ```
 
 ## Debian and Ubuntu
@@ -118,8 +104,10 @@ Tested using Ubuntu 20.04.
 - Clone the repository by running:
 
 ```
-git clone https://github.com/okahilak/invesalius3 --branch add-backend-communication-to-tms-mode
+git clone --recurse-submodules https://github.com/connect2brain/project-louhi
 ```
+
+which clones InVesalius3 into `project-louhi/invesalius3` directory.
 
 - Set up the software by following the instructions on the following page:
 
@@ -147,31 +135,30 @@ that there are no errors in the logs:
 where `[container]` is one of the following: `zookeeper`, `kafka`, `backend`,
 `frontend`, `mtms_bridge`.
 
-- Start InVesalius by running the following in InVesalius repository:
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-python3 app.py
+python3 app.py --remote-host localhost:5000
 ```
 
 ## Examples
 
-### Example: Updating stimulation parameters in the frontend
+### Example: Sending 'stimulate' command in the frontend
 
-- Open the frontend at http://localhost:8081/. Navigate to TMS page and
-change the intensity. (Please refresh the page first after navigating to
-TMS page, as there is a bug that the connection is not shown until the
-page is refreshed.)
+- Open a Kafka listener from the command line:
 
-- Check from the backend logs that the parameter value has been updated:
+    `make listen TOPIC=stimulate`
 
-    - `sudo docker-compose logs --tail=100 -f backend`
+- Open the frontend at http://localhost:8080/. Navigate to TMS page and press "stimulate" button.
 
-### Example: Changing and listening to the stimulation parameters directly via backend
+- Check that the stimulate command is received by the listener.
+
+### Example: Changing and listening to the stimulation parameters directly using Python
 
 - Open a terminal window and run the following command in project-louhi directory:
 
 ```
-python3 examples/parameter_client.py
+python3 examples/backend_client.py
 ```
 
 NB: For this to work, you need to have python-socketio package installed in Python.
@@ -188,47 +175,60 @@ number_of_stimuli 10
 - Check that the script echoes the new parameter value back, indicating that the parameters
 have been updated in Kafka.
 
-### Example: Changing parameter values in InVesalius
+- The new parameter values should also be visible in the frontend.
 
-- Start InVesalius by running the following in InVesalius repository:
+### Example: Controlling InVesalius from the planner
+
+- Start InVesalius by running the following in InVesalius directory:
 
 ```
-python3 app.py
+python3 app.py --remote-host localhost:5000
 ```
 
 or (if you are running Windows):
 
 ```
-C:\Python37\python app.py
+C:\Python37\python app.py --remote-host localhost:5000
 ```
-
-- Enable TMS mode in InVesalius (Mode -> Navigation Mode -> Transcranial Magnetic Stimulation Mode).
 
 - Open an existing project, such as the example project `Cranium.inv3`.
 
-- Select `5. Navigation System` from the menu on the left. Open `Transcranial Magnetic Stimulation` submenu.
+- Select the tool "Slices' cross intersection" (the cross-shaped tool from the tool bar).
 
-- Press "Connect". The parameter values, such as intensity, should now be updated in their corresponding
-fields.
+- Open "Planner" tab in the frontend (http://localhost:8080/).
 
-- Change parameter values and check that the values are echoed back to InVesalius.
+- Press anywhere on the "Axial slice", "Sagittal slice", or "Coronal slice" plots.
 
-### Example: InVesalius-mTMS communication
+- The location of the point is now updated in the Planner.
 
-- Start InVesalius, as in the previous example.
+- Press "Plus" icon in the Planner.
 
-- Start LabVIEW and open mTMS software. Open SubVI called `api` under API folder.
-Set Module path to the file `bridge\labview_runner.py` in project-louhi directory.
-Run the SubVI.
+- A marker is now added to the Planner, and it should be visible in InVesalius's "Volume" plot.
 
-- Send commands, such as Stimulate and Recharge, and check that the commands end up in the mTMS software.
+- After adding several markers, select one or several of them.
+
+- Press "Minus" icon in the Planner.
+
+- The markers are now removed from the Planner.
+
+### Example: Streaming recorded EEG data
+
+- Run on the command line:
+
+    `make stream-data DATASET_FILE=datasets/eeg_test.edf`
+
+- The command streams the test EEG dataset, consisting of 8 seconds of pre-recorded EEG data.
+
+- Open "EEG" tab in the frontend (http://localhost:8080/).
+
+- The streamed data should now be shown in the plot.
 
 ## Other
 
 ### Makefile
 
-A Makefile is provided, including make targets to, e.g., reset environment variables to their
-default values.
+A Makefile is provided, including make targets to, e.g., download datasets, run tests, and
+reset environment variables to their default values.
 
 Run `make help` for a list of make targets.
 

@@ -1,43 +1,62 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import os
-import pytest
 import sys
 import time
+from typing import List, Union
+
+import pytest
 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../src")
 
+from mtms.kafka.listener import KafkaListener
 from mtms.mocks.mock_kafka import MockKafka
 from mtms.mocks.mock_topic_db import MockTopicDb
 from mtms.mocks.mock_socket_io import MockSocketIO
 
 from servers.state_server import StateServer
 
-def test_state_server(mocker):
+SocketIOData = Union[str, dict]
+
+@pytest.mark.asyncio
+async def test_state_server(mocker) -> None:
     """Tests StateServer class.
 
     """
 
     # Set up StateServer.
-    broadcasted = []
+    broadcasted: List[SocketIOData] = []
 
-    kafka = MockKafka()
-    socketio = MockSocketIO(broadcasted=broadcasted)
-    topic_db = MockTopicDb()
+    kafka: MockKafka = MockKafka()
+    socketio: MockSocketIO = MockSocketIO(
+        broadcasted=broadcasted,
+    )
+    topic_db: MockTopicDb = MockTopicDb()
 
-    server = StateServer(kafka=kafka, socketio=socketio, topic_db=topic_db)
+    server: StateServer = StateServer(
+        kafka=kafka,
+        socketio=socketio,
+        topic_db=topic_db,
+    )
+
+    task: KafkaListener
+    for task in server.background_tasks:
+        asyncio.create_task(task.run())
 
     # Test that connecting to the state server does not broadcast anything.
-    socketio.simulate_event('connect')
+    await socketio.simulate_event('connect')
 
     assert len(broadcasted) == 0
 
     # Produce a value for a state variable in Kafka.
-    producer = kafka.get_producer('error_code')
-    producer.produce(11)
+    kafka.produce(
+        topic='error_code',
+        value=11,
+    )
 
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Test that the state value is broadcast to all clients.
     assert len(broadcasted) == 1
@@ -50,10 +69,12 @@ def test_state_server(mocker):
     }
 
     # Produce a value for a parameter variable in Kafka.
-    producer = kafka.get_producer('intensity')
-    producer.produce(123)
+    kafka.produce(
+        topic='intensity',
+        value=123,
+    )
 
-    time.sleep(1)
+    await asyncio.sleep(1)
 
     # Test that the parameter value is not broadcast to the clients by the state server.
     assert len(broadcasted) == 1
