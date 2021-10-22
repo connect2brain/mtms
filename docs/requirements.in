@@ -1,0 +1,6 @@
+sphinx
+gendocs
+sphinx-rtd-theme
+cookiecutter
+recommonmark
+sphinx-markdown-tables

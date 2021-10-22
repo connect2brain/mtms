@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "emotiv_epoc"
+version = "0.0.1"
+description = "Connect Emotiv Epoc EEG device to Kafka"
+authors = ["Olli-Pekka Kahilakoski <olli-pekka.kahilakoski@aalto.fi>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+websocket-client = "^0.59.0"
+confluent-kafka = "^1.6.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
