@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>neuronavigation_pkg</name>
+  <version>0.0.1</version>
+  <description>ROS package for neuronavigation</description>
+
+  <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
+  <license>TODO</license>
+
+  <depend>neuronavigation_interfaces</depend>
+  <depend>rclpy</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>
