@@ -4,6 +4,10 @@ from threading import Thread
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
+
+from geometry_msgs.msg import Point
+from shape_msgs.msg import Mesh, MeshTriangle
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
 
 class NeuronavigationNode(Node):
@@ -12,14 +16,31 @@ class NeuronavigationNode(Node):
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
 
-    def update_coil_pose(self, coil_pose):
+        # Persist the latest sample.
+        qos = QoSProfile(
+            depth=1,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+        )
+        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
+
+    def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
 
-        msg.position.x, msg.position.y, msg.position.z = coil_pose[:3]
-        msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = coil_pose[3:]
+        msg.position.x, msg.position.y, msg.position.z = position
+        msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = orientation
 
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_pose")
         self._coil_pose_publisher.publish(msg)
+
+    def update_coil_mesh(self, points, polygons):
+        msg = Mesh()
+
+        msg.vertices = [Point(x=point[0], y=point[1], z=point[2]) for point in points.astype(float)]
+        msg.triangles = [MeshTriangle(vertex_indices=polygon) for polygon in polygons.astype(int)]
+
+        self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
+        self._coil_mesh_publisher.publish(msg)
 
 
 class Connection(Thread):
@@ -34,8 +55,17 @@ class Connection(Thread):
         rclpy.spin(self.node)
         rclpy.shutdown()
 
-    def update_coil_pose(self, coil_pose):
-        self.node.update_coil_pose(coil_pose)
+    def update_coil_pose(self, position, orientation):
+        self.node.update_coil_pose(
+            position=position,
+            orientation=orientation,
+        )
+
+    def update_coil_mesh(self, points, polygons):
+        self.node.update_coil_mesh(
+            points=points,
+            polygons=polygons,
+        )
 
 
 def main():
