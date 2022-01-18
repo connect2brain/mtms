@@ -23,6 +23,29 @@ class NeuronavigationNode(Node):
             history=HistoryPolicy.KEEP_LAST,
         )
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
+        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
+
+    def update_focus(self, position, orientation):
+        # TODO: The Euler angles cannot be None in the ROS message, hence the lines
+        #   below. Most likely the correct change to be able to remove this is to
+        #   decouple updates of focus that include orientation (during navigation)
+        #   from the updates that do not include orientation (outside navigation,
+        #   using mouse) into two different messages. However, it should be considered
+        #   if the mouse could be used to set a proper stimulation target, i.e., one
+        #   vector for position and another for orientation - in that case, there'd
+        #   be no more the possibility of passing None values here
+        #   and this check could be removed.
+        #
+        if orientation == [None, None, None]:
+            orientation = [0.0, 0.0, 0.0]
+
+        msg = PoseUsingEulerAngles()
+
+        msg.position.x, msg.position.y, msg.position.z = position
+        msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = orientation
+
+        self.get_logger().info("Publishing to the topic /neuronavigation/focus")
+        self._focus_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
@@ -54,6 +77,12 @@ class Connection(Thread):
     def run(self):
         rclpy.spin(self.node)
         rclpy.shutdown()
+
+    def update_focus(self, position, orientation):
+        self.node.update_focus(
+            position=position,
+            orientation=orientation,
+        )
 
     def update_coil_pose(self, position, orientation):
         self.node.update_coil_pose(
