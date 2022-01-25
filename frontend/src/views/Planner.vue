@@ -193,14 +193,19 @@
 </template>
 
 <script>
+import ROSLIB from "roslib";
+
 import Editable from "@/components/Editable.vue";
 
 export default {
   name: "Planner",
 
+  props: [
+    'ros'
+  ],
   data() {
     return {
-      loading: true,
+      loading: false,
       tab: 'targets',
       navigating: false,
       isCoilAtTarget: false,
@@ -225,10 +230,20 @@ export default {
   },
 
   created() {
-    this.$socket.emit("planner.request_state", {});
+    const listener = new ROSLIB.Topic({
+      ros : this.ros,
+      name : '/neuronavigation/focus',
+      messageType : 'neuronavigation_interfaces/PoseUsingEulerAngles',
+    });
+
+    listener.subscribe(this.update_position);
   },
 
   methods: {
+    update_position(message) {
+      this.position = [message.position.x, message.position.y, message.position.z];
+    },
+
     openTab(tab) {
       this.tab = tab;
     },
@@ -313,8 +328,8 @@ export default {
   sockets: {
     "planner.position"(position) {
       this.position = position;
-    },
-
+    }
+/*
     "planner.points"(points) {
       this.points = points;
     },
@@ -332,6 +347,7 @@ export default {
       //
       this.navigating = navigating;
     }
+*/
   }
 };
 </script>
