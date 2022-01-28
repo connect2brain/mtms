@@ -238,13 +238,17 @@ export default {
 
     listener.subscribe(this.update_position);
 
-    const addTargetClient = new ROSLIB.Service({
+    this.addTargetClient = new ROSLIB.Service({
       ros : this.ros,
       name : '/planner/add_target',
       serviceType : 'mtms_interfaces/AddTarget'
     });
 
-    this.addTargetClient = addTargetClient;
+    this.toggleSelectService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_select',
+      serviceType : 'mtms_interfaces/ToggleSelect'
+    });
 
     const stateListener = new ROSLIB.Topic({
       ros : this.ros,
@@ -346,8 +350,15 @@ export default {
       row.comment = newComment;
     },
     toggleSelect(row) {
-      this.$socket.emit("planner.point.toggle_select", {
+      const request = new ROSLIB.ServiceRequest({
         name: row["name"]
+      });
+
+      this.toggleSelectService.callService(request, function(result) {
+        if (!result.success) {
+          console.log('ERROR: Failed to toggle select for target: ');
+          console.log(request.name);
+        }
       });
     },
     isSelected(row) {
