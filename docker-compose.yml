@@ -119,7 +119,7 @@ services:
       - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend/src:/app/src
-    depends_on:
-      - ${BACKEND_HOST}
-    networks:
-      - ${BACKEND_HOST}
+#    depends_on:
+#      - ${BACKEND_HOST}
+#    networks:
+#      - ${BACKEND_HOST}
