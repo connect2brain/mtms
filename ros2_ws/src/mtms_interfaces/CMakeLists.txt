@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(neuronavigation_interfaces)
+project(mtms_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -25,6 +25,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/PoseUsingEulerAngles.msg"
+  "msg/Target.msg"
+  "msg/PlannerState.msg"
   "srv/AddTarget.srv"
   DEPENDENCIES geometry_msgs
  )
