@@ -6,42 +6,14 @@ from geometry_msgs.msg import Point
 from mtms_interfaces.msg import PlannerState, Target
 from std_msgs.msg import Bool, Float64, String
 
-from mtms_interfaces.srv import AddTarget, RemoveTarget, ToggleSelect
+from mtms_interfaces.srv import AddTarget
 
 
-# TODO: Move this from here to some utils-like module
-#
-def drop_unique(l, cond):
-    """Given a list and a condition, drop the element for which the condition is True.
-    Modify the list in place. Return the index of the dropped element.
-
-    If the condition is True for none of the elements or more than one element, raise an error.
-
-    Parameters
-    ----------
-    l
-        The list of interest.
-    cond
-        A function that takes an element of the list and return a boolean.
-    """
-    index = None
-    for i, element in enumerate(l):
-        if cond(element):
-            assert index is None, "Condition is True for more than one element"
-            index = i
-    assert index is not None, "Condition is True for none of the elements"
-    del l[index]
-
-    return index
-
-
-class Planner(Node):
+class AddTargetNode(Node):
 
     def __init__(self):
-        super().__init__('planner')
+        super().__init__('add_target')
         self.create_service(AddTarget, '/planner/add_target', self.add_target_callback)
-        self.create_service(RemoveTarget, '/planner/remove_target', self.remove_target_callback)
-        self.create_service(ToggleSelect, '/planner/toggle_select', self.toggle_select_callback)
 
         # Persist the latest sample.
         qos = QoSProfile(
@@ -105,45 +77,13 @@ class Planner(Node):
         response.success = True
         return response
 
-    def remove_target_callback(self, request, response):
-        self.get_logger().info('Incoming request')
-
-        state = self._state
-        if state is None:
-            response.success = False
-            return response
-
-        idx = drop_unique(state.targets, lambda target: target.name == request.name)
-
-        self._state_publisher.publish(state)
-
-        response.success = True
-        return response
-
-    def toggle_select_callback(self, request, response):
-        self.get_logger().info('Incoming request')
-
-        state = self._state
-        if state is None:
-            response.success = False
-            return response
-
-        for target in state.targets:
-            if target.name == request.name:
-                target.selected = not target.selected
-
-        self._state_publisher.publish(state)
-
-        response.success = True
-        return response
-
 
 def main():
     rclpy.init()
 
-    planner = Planner()
+    add_target_node = AddTargetNode()
 
-    rclpy.spin(planner)
+    rclpy.spin(add_target_node)
 
     rclpy.shutdown()
 
