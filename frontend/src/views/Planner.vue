@@ -250,6 +250,12 @@ export default {
       serviceType : 'mtms_interfaces/ToggleSelect'
     });
 
+    this.removeTargetService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/remove_target',
+      serviceType : 'mtms_interfaces/RemoveTarget'
+    });
+
     const stateListener = new ROSLIB.Topic({
       ros : this.ros,
       name : '/planner/state',
@@ -325,8 +331,15 @@ export default {
     },
     removePoint() {
       this.selectedPoints.forEach((point) => {
-        this.$socket.emit("point.remove", {
-          name: point['name']
+        const request = new ROSLIB.ServiceRequest({
+          name: point["name"]
+        });
+
+        this.removeTargetService.callService(request, function(result) {
+          if (!result.success) {
+            console.log('ERROR: Failed to remove target: ');
+            console.log(request.name);
+          }
         });
       });
     },
