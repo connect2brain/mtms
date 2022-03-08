@@ -13,15 +13,13 @@ from neuronavigation_interfaces.msg import PoseUsingEulerAngles
 class NeuronavigationNode(Node):
     def __init__(self):
         super().__init__("neuronavigation")
-
-        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
-
         # Persist the latest sample.
         qos = QoSProfile(
             depth=1,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
+        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
 
@@ -49,6 +47,8 @@ class NeuronavigationNode(Node):
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
+        if orientation == [None, None, None]:
+            orientation = [0.0, 0.0, 0.0]
 
         msg.position.x, msg.position.y, msg.position.z = position
         msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = orientation
