@@ -9,10 +9,11 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(shape_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 
 add_executable(efield src/efield.cpp)
-ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces)
+ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces shape_msgs)
 
 install(TARGETS
   efield
