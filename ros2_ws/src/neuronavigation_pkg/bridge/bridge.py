@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from threading import Thread
+from invesalius.pubsub import pub as Publisher
 
 import rclpy
 from rclpy.node import Node
@@ -9,6 +10,8 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
+
+from std_msgs.msg import String
 
 class NeuronavigationNode(Node):
     def __init__(self):
@@ -22,6 +25,17 @@ class NeuronavigationNode(Node):
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
+
+        self._efield_subscription = self.create_subscription(
+            String,
+            'efield',
+            self.efield_listener_callback,
+            10)
+        self._efield_subscription  # prevent unused variable warning
+
+    def efield_listener_callback(self, msg):
+        self.get_logger().info('I heard efield: "%s"' % msg.data)
+        #Publisher.sendMessage('invesalius messages', arg=msg.data)
 
     def update_focus(self, position, orientation):
         # TODO: The Euler angles cannot be None in the ROS message, hence the lines

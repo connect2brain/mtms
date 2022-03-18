@@ -13,10 +13,15 @@ find_package(shape_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 
 add_executable(efield src/efield.cpp)
+add_executable(efield_publisher src/efield_publisher.cpp)
 ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces shape_msgs)
+ament_target_dependencies(efield_publisher rclcpp std_msgs neuronavigation_interfaces shape_msgs)
 
 install(TARGETS
   efield
+  DESTINATION lib/${PROJECT_NAME})
+install(TARGETS
+  efield_publisher
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)

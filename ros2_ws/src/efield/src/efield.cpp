@@ -7,15 +7,15 @@
 
 using std::placeholders::_1;
 
-class MinimalSubscriber : public rclcpp::Node
+class EfieldSubscriber : public rclcpp::Node
 {
   public:
-    MinimalSubscriber() : Node("efield")
+    EfieldSubscriber() : Node("efield")
     {
       subscription_pose_ = this->create_subscription<neuronavigation_interfaces::msg::PoseUsingEulerAngles>(
-      "neuronavigation/coil_pose", 10, std::bind(&MinimalSubscriber::topic_callback_pose, this, _1));
+      "neuronavigation/coil_pose", 10, std::bind(&EfieldSubscriber::topic_callback_pose, this, _1));
        subscription_mesh_ = this->create_subscription<shape_msgs::msg::Mesh>(
-      "neuronavigation/coil_mesh", 10, std::bind(&MinimalSubscriber::topic_callback_mesh, this, _1));
+      "neuronavigation/coil_mesh", 10, std::bind(&EfieldSubscriber::topic_callback_mesh, this, _1));
     }
 
   private:
@@ -35,7 +35,7 @@ class MinimalSubscriber : public rclcpp::Node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalSubscriber>());
+  rclcpp::spin(std::make_shared<EfieldSubscriber>());
   rclcpp::shutdown();
   return 0;
 }
