@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 from threading import Thread
-from invesalius.pubsub import pub as Publisher
 
 import rclpy
 from rclpy.node import Node
@@ -10,8 +9,8 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
+from neuronavigation_interfaces.srv import Efield
 
-from std_msgs.msg import String
 
 class NeuronavigationNode(Node):
     def __init__(self):
@@ -26,12 +25,10 @@ class NeuronavigationNode(Node):
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
 
-        self._efield_subscription = self.create_subscription(
-            String,
-            'efield',
-            self.efield_listener_callback,
-            10)
-        self._efield_subscription  # prevent unused variable warning
+        self.cli = self.create_client(Efield, 'efield')
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('efield service not available, waiting again...')
+        self.req = Efield.Request()
 
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
@@ -79,6 +76,22 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
+    def update_efield(self, position, orientation):
+        self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
+        self.req.coordinate.orientation.alpha, self.req.coordinate.orientation.beta, self.req.coordinate.orientation.gamma = orientation
+
+        self.future = self.cli.call_async(self.req)
+        while self.future.done() is False:
+            pass
+        try:
+            response = self.future.result()
+            self.get_logger().info('Publishing to the server ')
+            return response.efield_data
+        except Exception as e:
+            self.get_logger().info(
+                'Service call failed %r' % (e,))
+            return None
+
 
 class Connection(Thread):
     def __init__(self):
@@ -110,6 +123,11 @@ class Connection(Thread):
             polygons=polygons,
         )
 
+    def update_efield(self, position, orientation):
+        return self.node.update_efield(
+                    position=position,
+                    orientation=orientation,
+                )
 
 def main():
     connection = Connection()
