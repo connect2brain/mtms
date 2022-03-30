@@ -26,3 +26,13 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+    environment:
+      - DISPLAY=130.233.100.240:0.0
+  efield:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/efield/Dockerfile
