@@ -3,42 +3,38 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "neuronavigation_interfaces/msg/pose_using_euler_angles.hpp"
-#include "shape_msgs/msg/mesh.hpp"
 
-using namespace std::chrono_literals;
+#include "neuronavigation_interfaces/srv/efield.hpp"
 
-/* This example creates a subclass of Node and uses std::bind() to register a
-* member function as a callback from the timer. */
+#include <memory>
 
-class EfieldPublisher : public rclcpp::Node
+void add(const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
+          std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response)
 {
-  public:
-    EfieldPublisher()
-    : Node("efield"), count_(0)
-    {
-      publisher_ = this->create_publisher<std_msgs::msg::String>("efield", 10);
-      timer_ = this->create_wall_timer(
-      500ms, std::bind(&EfieldPublisher::timer_callback, this));
-    }
+  //Change to efield vector
+  response->efield_data.push_back(request->coordinate.position.x);
+  response->efield_data.push_back(request->coordinate.position.y);
+  response->efield_data.push_back(request->coordinate.position.z);
+  response->efield_data.push_back(request->coordinate.orientation.alpha);
+  response->efield_data.push_back(request->coordinate.orientation.beta);
+  response->efield_data.push_back(request->coordinate.orientation.gamma);
+  //
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "Incoming request\nx: %f" " a: %f",
+                request->coordinate.position.x, request->coordinate.orientation.alpha);
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "sending back response");
+}
 
-  private:
-    void timer_callback()
-    {
-      auto message = std_msgs::msg::String();
-      message.data = "Hello, world! " + std::to_string(count_++);
-      RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
-      publisher_->publish(message);
-    }
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
-    size_t count_;
-};
-
-
-int main(int argc, char * argv[])
+int main(int argc, char **argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EfieldPublisher>());
+
+  std::shared_ptr<rclcpp::Node> node = rclcpp::Node::make_shared("efield");
+
+  rclcpp::Service<neuronavigation_interfaces::srv::Efield>::SharedPtr service =
+    node->create_service<neuronavigation_interfaces::srv::Efield>("efield", &add);
+
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "Efield server ready.");
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
-  return 0;
 }
