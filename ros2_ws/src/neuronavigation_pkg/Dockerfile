@@ -29,7 +29,8 @@ RUN apt-get install -y \
 # Copy ROS workspace, including InVesalius
 
 WORKDIR /app
-COPY ros2_ws/src ros2_ws/src/
+COPY ros2_ws/src/neuronavigation_pkg ros2_ws/src/neuronavigation_pkg/
+COPY ros2_ws/src/neuronavigation_interfaces ros2_ws/src/neuronavigation_interfaces/
 
 # Build Cython modules for InVesalius
 
@@ -47,4 +48,3 @@ COPY ros2_ws/src/neuronavigation_pkg/ros_entrypoint.sh /
 RUN chmod +x /ros_entrypoint.sh
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
-CMD ["bash"]
