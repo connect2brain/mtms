@@ -2,11 +2,14 @@ FROM osrf/ros:galactic-desktop
 
 SHELL ["/bin/bash", "-c"]
 
-# Install dependencies for InVesalius
+# Install dependencies
 
 RUN apt-get update
 
-# Copy ROS workspace, including InVesalius
+RUN apt-get install -y \
+    dos2unix
+
+# Copy ROS workspace for e-field
 
 WORKDIR /app
 COPY ros2_ws/src/efield ros2_ws/src/efield/
@@ -18,7 +21,8 @@ WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build
 
-COPY ros2_ws/src/efield/ros_entrypoint.sh /
-RUN chmod +x /ros_entrypoint.sh
+COPY ros2_ws/src/efield/ros_entrypoint.sh .
+RUN dos2unix ros_entrypoint.sh
+RUN chmod +x ros_entrypoint.sh
 
-ENTRYPOINT ["/ros_entrypoint.sh"]
+ENTRYPOINT ["./ros_entrypoint.sh"]
