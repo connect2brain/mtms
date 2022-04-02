@@ -26,16 +26,18 @@ RUN apt-get install -y \
     python3-keras \
     python3-pubsub
 
-# Copy ROS workspace, including InVesalius
+# Copy InVesalius, build Cython modules
+
+WORKDIR /app
+COPY ros2_ws/src/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation_pkg/invesalius3/
+WORKDIR /app/ros2_ws/src/neuronavigation_pkg/invesalius3
+RUN python3 setup.py build_ext --inplace
+
+# Copy rest of the ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/neuronavigation_pkg ros2_ws/src/neuronavigation_pkg/
 COPY ros2_ws/src/neuronavigation_interfaces ros2_ws/src/neuronavigation_interfaces/
-
-# Build Cython modules for InVesalius
-
-WORKDIR /app/ros2_ws/src/neuronavigation_pkg/invesalius3
-RUN python3 setup.py build_ext --inplace
 
 # Build ROS packages
 
