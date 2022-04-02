@@ -63,12 +63,26 @@ ros2 run neuronavigation_pkg start
 
 ## Running with Docker
 
+### Linux
+
 - Install Docker
 
-- Run the following commands in `invesalius_ros` directory:
+- Run the following commands in `invesalius_ros` directory (TODO: update for docker-compose):
 
 ```
 sudo docker -t neuronavigation .
 xhost local:root
 sudo docker run --rm -it --env DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw neuronavigation ros2 run neuronavigation_pkg start
 ```
+
+### Windows
+
+- Install Docker
+
+- Install X server, e.g., VcXsrv (using Choco: `choco install vcxsrv`). The following instructions are for VcXsrv.
+
+- Start XLaunch. Tick the checkbox "Disable access control".
+
+- Run `ipconfig`, replace the IP address in DISPLAY variable in `.env` file with the host IP address reported by `ipconfig`.
+
+- Run `docker-compose up -d` in `invesalius_ros` directory.
