@@ -27,14 +27,23 @@ RUN apt-get install -y \
     python3-pubsub \
     dos2unix
 
-# Copy InVesalius, build Cython modules
+## InVesalius
 
 WORKDIR /app
-COPY ros2_ws/src/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation_pkg/invesalius3/
+
+# Copy and build Cython modules
+
+COPY ros2_ws/src/neuronavigation_pkg/invesalius3/invesalius_cy ros2_ws/src/neuronavigation_pkg/invesalius3/invesalius_cy/
+COPY ros2_ws/src/neuronavigation_pkg/invesalius3/setup.py ros2_ws/src/neuronavigation_pkg/invesalius3/
 WORKDIR /app/ros2_ws/src/neuronavigation_pkg/invesalius3
 RUN python3 setup.py build_ext --inplace
 
-# Copy rest of the ROS workspace
+# Copy rest of InVesalius
+
+WORKDIR /app
+COPY ros2_ws/src/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation_pkg/invesalius3/
+
+## Copy rest of the ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/neuronavigation_pkg ros2_ws/src/neuronavigation_pkg/
