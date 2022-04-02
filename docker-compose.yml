@@ -30,9 +30,11 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
-    environment:
-      - DISPLAY=130.233.100.240:0.0
+    env_file:
+      - ${ENV_FILE}
   efield:
     build:
       context: .
       dockerfile: ros2_ws/src/efield/Dockerfile
+    env_file:
+      - ${ENV_FILE}
