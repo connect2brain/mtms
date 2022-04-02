@@ -24,7 +24,8 @@ RUN apt-get install -y \
     python3-h5py \
     python3-imageio \
     python3-keras \
-    python3-pubsub
+    python3-pubsub \
+    dos2unix
 
 # Copy InVesalius, build Cython modules
 
@@ -46,7 +47,8 @@ RUN cd ros2_ws && \
     source /opt/ros/galactic/setup.bash && \
     colcon build
 
-COPY ros2_ws/src/neuronavigation_pkg/ros_entrypoint.sh /
-RUN chmod +x /ros_entrypoint.sh
+COPY ros2_ws/src/neuronavigation_pkg/ros_entrypoint.sh .
+RUN dos2unix ros_entrypoint.sh
+RUN chmod +x ros_entrypoint.sh
 
-ENTRYPOINT ["/ros_entrypoint.sh"]
+ENTRYPOINT ["./ros_entrypoint.sh"]
