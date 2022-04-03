@@ -1,5 +1,5 @@
-[submodule "ros2_ws/src/rosbridge_suite"]
-	path = ros2_ws/src/rosbridge_suite
+[submodule "ros2_ws/src/rosbridge/rosbridge_suite"]
+	path = ros2_ws/src/rosbridge/rosbridge_suite
 	url = https://github.com/RobotWebTools/rosbridge_suite
 [submodule "ros2_ws/src/neuronavigation_pkg/invesalius3"]
 	path = ros2_ws/src/neuronavigation_pkg/invesalius3
