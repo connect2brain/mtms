@@ -13,12 +13,23 @@ class AddTargetNode(StateNode):
         super().__init__('add_target')
         self.create_service(AddTarget, '/planner/add_target', self.add_target_callback)
 
-    def create_new_target(self, pose):
-        target_idx = 0 if self._state is None else len(self._state.targets)
+    def first_available_target_name(self):
+        if self._state is None:
+            return "Target-0"
 
+        target_names = [target.name for target in self._state.targets]
+        idx = 0
+        while True:
+            target_name = "Target-{}".format(idx)
+            if target_name not in target_names:
+                break
+            idx += 1
+        return target_name
+
+    def create_new_target(self, pose):
         target = Target()
 
-        target.name = "Target-{}".format(target_idx)
+        target.name = self.first_available_target_name()
         target.type = "Target"
         target.comment = ""
         target.selected = False
