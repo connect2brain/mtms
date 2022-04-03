@@ -18,11 +18,13 @@ RUN pip install \
 
 WORKDIR /app/ros2_ws
 COPY ros2_ws/src/rosbridge/rosbridge_suite src/rosbridge_suite
+COPY ros2_ws/src/mtms_interfaces src/mtms_interfaces
+COPY ros2_ws/src/neuronavigation_interfaces src/neuronavigation_interfaces
 
 COPY ros2_ws/src/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
 
-# Change line endings in all files
+# Change line endings in all files in rosbridge
 
 RUN shopt -s globstar && dos2unix **
 
