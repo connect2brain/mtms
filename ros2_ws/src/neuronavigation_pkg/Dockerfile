@@ -48,6 +48,7 @@ COPY ros2_ws/src/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation_pkg
 WORKDIR /app
 COPY ros2_ws/src/neuronavigation_pkg ros2_ws/src/neuronavigation_pkg/
 COPY ros2_ws/src/neuronavigation_interfaces ros2_ws/src/neuronavigation_interfaces/
+COPY ros2_ws/src/mtms_interfaces ros2_ws/src/mtms_interfaces/
 
 # Build ROS packages
 
