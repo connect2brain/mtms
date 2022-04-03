@@ -10,9 +10,19 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
 from neuronavigation_interfaces.srv import Efield
+from mtms_interfaces.msg import PlannerState
 
 
 class NeuronavigationNode(Node):
+    # The colors have been picked from mTMS software prototype created in Adobe XD.
+    #
+    # XXX: The colors match those that are defined in _colors.scss in front-end. It would be
+    #      better if they were defined in a single place.
+    #
+    _COLOR_TARGET = (43, 197, 255)  # hex: #2BC5FF, $target-color
+    _COLOR_NON_TARGET = (230, 98, 48)  # hex: #E66230, $non-target-color
+    _COLOR_SELECTED = (112, 112, 112)  # hex: #707070, $darker-gray
+
     def __init__(self):
         super().__init__("neuronavigation")
         # Persist the latest sample.
@@ -24,11 +34,43 @@ class NeuronavigationNode(Node):
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
+        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state", self.planner_state_callback, qos)
 
         self.cli = self.create_client(Efield, 'efield')
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('efield service not available, waiting again...')
         self.req = Efield.Request()
+
+    def set_callback__set_markers(self, callback):
+        self._set_markers = callback
+
+    def planner_state_callback(self, msg):
+        markers = []
+        for id, target in enumerate(msg.targets):
+            position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
+            direction = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
+
+            if target.target:
+                color = self._COLOR_TARGET
+
+            elif target.selected:
+                color = self._COLOR_SELECTED
+
+            else:
+                color = self._COLOR_NON_TARGET
+
+            marker_data = {
+                'ball_id': id,
+                'position': position,
+                'direction': direction,
+                'target': target.target,
+                'size': 3,
+                'colour': [c / 255.0 for c in color],
+            }
+            markers.append(marker_data)
+
+        self._set_markers(markers)
+        self.get_logger().info('I heard planner state')
 
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
@@ -128,6 +170,10 @@ class Connection(Thread):
                     position=position,
                     orientation=orientation,
                 )
+
+    def set_callback__set_markers(self, callback):
+        self.node.set_callback__set_markers(callback)
+
 
 def main():
     connection = Connection()
