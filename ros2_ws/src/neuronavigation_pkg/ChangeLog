@@ -1,0 +1,6 @@
+CHANGES
+=======
+
+* Add ROS node for e-field modeling
+* ADD: Function to publish coil mesh in neuronavigation (#1)
+* First commit
