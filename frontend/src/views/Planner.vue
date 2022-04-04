@@ -193,14 +193,19 @@
 </template>
 
 <script>
+import ROSLIB from "roslib";
+
 import Editable from "@/components/Editable.vue";
 
 export default {
   name: "Planner",
 
+  props: [
+    'ros'
+  ],
   data() {
     return {
-      loading: true,
+      loading: false,
       tab: 'targets',
       navigating: false,
       isCoilAtTarget: false,
@@ -225,18 +230,97 @@ export default {
   },
 
   created() {
-    this.$socket.emit("planner.request_state", {});
+    const listener = new ROSLIB.Topic({
+      ros : this.ros,
+      name : '/neuronavigation/focus',
+      messageType : 'neuronavigation_interfaces/PoseUsingEulerAngles',
+    });
+
+    listener.subscribe(this.update_position);
+
+    this.addTargetClient = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/add_target',
+      serviceType : 'mtms_interfaces/AddTarget'
+    });
+
+    this.toggleSelectService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_select',
+      serviceType : 'mtms_interfaces/ToggleSelect'
+    });
+
+    this.removeTargetService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/remove_target',
+      serviceType : 'mtms_interfaces/RemoveTarget'
+    });
+
+    const stateListener = new ROSLIB.Topic({
+      ros : this.ros,
+      name : '/planner/state',
+      messageType : 'mtms_interfaces/PlannerState',
+    });
+
+    stateListener.subscribe(this.update_state);
   },
 
   methods: {
+    update_position(message) {
+      this.position = [message.position.x, message.position.y, message.position.z];
+    },
+
+    update_state(message) {
+      this.points = message.targets;
+/*    [{
+        visible: false,
+        name: "",
+        type: "Target",
+        comment: "",
+        selected: false,
+        target: false,
+        position: [2, 3, 4],
+        direction: [1, 2, 3],
+
+        intensity: 200,
+        iti: 100,
+      }]
+ */
+    },
+
     openTab(tab) {
       this.tab = tab;
     },
 
     addPoint() {
       if (this.position !== undefined) {
-        this.$socket.emit("point.add", {
-          position: this.position
+        const position = new ROSLIB.Message({
+          x: this.position[0],
+          y: this.position[1],
+          z: this.position[2]
+        });
+
+        // TODO: Use proper values.
+        const orientation = new ROSLIB.Message({
+          alpha: 0.0,
+          beta: 0.0,
+          gamma: 0.0
+        });
+
+        const pose = new ROSLIB.Message({
+          position: position,
+          orientation: orientation
+        });
+
+        var request = new ROSLIB.ServiceRequest({
+          target: pose,
+        });
+
+        this.addTargetClient.callService(request, function(result) {
+          if (!result.success) {
+            console.log('ERROR: Failed to add target: ');
+            console.log(request.target);
+          }
         });
       } else {
         /* XXX: Once we have a mechanism for showing user-visible errors, have this
@@ -247,8 +331,15 @@ export default {
     },
     removePoint() {
       this.selectedPoints.forEach((point) => {
-        this.$socket.emit("point.remove", {
-          name: point['name']
+        const request = new ROSLIB.ServiceRequest({
+          name: point["name"]
+        });
+
+        this.removeTargetService.callService(request, function(result) {
+          if (!result.success) {
+            console.log('ERROR: Failed to remove target: ');
+            console.log(request.name);
+          }
         });
       });
     },
@@ -272,8 +363,15 @@ export default {
       row.comment = newComment;
     },
     toggleSelect(row) {
-      this.$socket.emit("planner.point.toggle_select", {
+      const request = new ROSLIB.ServiceRequest({
         name: row["name"]
+      });
+
+      this.toggleSelectService.callService(request, function(result) {
+        if (!result.success) {
+          console.log('ERROR: Failed to toggle select for target: ');
+          console.log(request.name);
+        }
       });
     },
     isSelected(row) {
@@ -313,8 +411,8 @@ export default {
   sockets: {
     "planner.position"(position) {
       this.position = position;
-    },
-
+    }
+/*
     "planner.points"(points) {
       this.points = points;
     },
@@ -332,6 +430,7 @@ export default {
       //
       this.navigating = navigating;
     }
+*/
   }
 };
 </script>

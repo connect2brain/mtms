@@ -4,7 +4,7 @@
       <Navbar />
       <div class="container">
         <div id="planner">
-          <Planner />
+          <Planner :ros="ros" />
         </div>
         <div class="container-right">
           <div id="status">
@@ -32,7 +32,10 @@ export default {
     Planner,
     Status,
     Tms
-  }
+  },
+  props: [
+    'ros'
+  ]
 };
 </script>
 
