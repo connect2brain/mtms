@@ -1,0 +1,7 @@
+# Request: Actual coordinates from InVesalius
+#
+# Response: Efield
+
+PoseUsingEulerAngles coordinate
+---
+float64[] efield_data

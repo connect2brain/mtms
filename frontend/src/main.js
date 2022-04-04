@@ -1,6 +1,5 @@
 import Vue from "vue";
-import VueSocketIO from "vue-socket.io";
-import SocketIO from "socket.io-client";
+import ROSLIB from "roslib";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
@@ -34,26 +33,19 @@ library.add(
   faSquare
 );
 
+const ros = new ROSLIB.Ros({
+  url : 'ws://localhost:9090'
+});
+
 Vue.component("font-awesome-icon", FontAwesomeIcon);
 
 Vue.config.productionTip = false;
 
-const host = process.env.VUE_APP_BACKEND_HOST;
-const port = process.env.VUE_APP_BACKEND_PORT;
-const socketAddress = `http://${host}:${port}`;
-
-// XXX(okahilak): Connection objects must be used here for CORS to work in Socket.IO connection,
-//   see https://github.com/MetinSeylan/Vue-Socket.io/issues/295.
-const socketConnectionState = SocketIO(socketAddress);
-
-Vue.use(
-  new VueSocketIO({
-    debug: false,
-    connection: socketConnectionState
-  })
-);
-
 new Vue({
   router,
-  render: h => h(App)
+  render: h => h(App, {
+    props: {
+      'ros': ros
+    }
+  })
 }).$mount("#app");
