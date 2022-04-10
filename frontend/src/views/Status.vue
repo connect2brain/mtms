@@ -46,8 +46,14 @@
 </template>
 
 <script>
+import ROSLIB from "roslib";
+
 export default {
   name: "Status",
+
+  props: [
+    'ros'
+  ],
   data: function() {
     return {
       connections: {
@@ -61,7 +67,7 @@ export default {
         },
         pedal: {
           connected: false,
-          data_received: false
+          state: false
         },
         serialPort: {
           connected: false,
@@ -78,6 +84,36 @@ export default {
 
   created() {
     this.DATA_RECEIVED_TIME_THRESHOLD = 200;
+
+    this.add_pedal_listeners();
+  },
+
+  methods: {
+    add_pedal_listeners() {
+      const pedal_connected_listener = new ROSLIB.Topic({
+        ros : this.ros,
+        name : '/pedal/connected',
+        messageType : 'std_msgs/Bool',
+      });
+
+      pedal_connected_listener.subscribe(this.update_pedal_connected);
+
+      const pedal_pressed_listener = new ROSLIB.Topic({
+        ros : this.ros,
+        name : '/pedal/pressed',
+        messageType : 'std_msgs/Bool',
+      });
+
+      pedal_pressed_listener.subscribe(this.update_pedal_pressed);
+    },
+
+    update_pedal_connected(message) {
+      this.connections.pedal.connected = message.data;
+    },
+
+    update_pedal_pressed(message) {
+      this.connections.pedal.state = message.data;
+    }
   },
 
   sockets: {
