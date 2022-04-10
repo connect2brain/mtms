@@ -38,3 +38,11 @@ services:
       dockerfile: ros2_ws/src/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+  pedal_listener:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pedal_listener/Dockerfile
+    # The container needs to be privileged so that /dev devices (e.g., the USB pedal) are created.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
