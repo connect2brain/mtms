@@ -77,6 +77,10 @@ sudo docker run --rm -it --env DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw
 
 ### Windows
 
+#### Setup (done only once)
+
+##### Setting up Docker with X11 forwarding
+
 - Install Docker
 
 - Install X server, e.g., VcXsrv (using Choco: `choco install vcxsrv`). The following instructions are for VcXsrv.
@@ -84,5 +88,35 @@ sudo docker run --rm -it --env DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw
 - Start XLaunch. Tick the checkbox "Disable access control".
 
 - Run `ipconfig`, replace the IP address in DISPLAY variable in `.env` file with the host IP address reported by `ipconfig`.
+
+##### Setting up the pedal
+
+- Install [Ubuntu 20.04 LTS](https://ubuntu.com/tutorials/install-ubuntu-on-wsl2-on-windows-10#1-overview) on WSL.
+
+- Run `wsl --list`, it should look something like this:
+
+```
+docker-desktop (Default)
+Ubuntu-20.04
+```
+
+- Set `Ubuntu-20.04` as the default distribution by running `wsl --set-default Ubuntu-20.04`.
+
+- Follow the instructions on Microsoft [blog post](https://devblogs.microsoft.com/commandline/connecting-usb-devices-to-wsl/) under `Setup` heading for installing USB/IP. Do not proceed to `Attaching the device` heading.
+
+#### Running the system
+
+- Connect the pedal to a USB port.
+
+- Open command prompt in administrator mode. Run `usbipd wsl list`, it should print something like this:
+
+```
+BUSID  DEVICE                                                        STATE
+1-2    USB Input Device                                              Not attached
+1-10   USB Serial Device (COM7)                                      Not attached
+1-11   USB Input Device                                              Not attached
+```
+
+- Run `usbipd wsl attach --busid 1-10` (or similar if you have different bus id for the serial device).
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
