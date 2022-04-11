@@ -25,7 +25,7 @@
       <font-awesome-icon
         class="circle"
         icon="circle"
-        v-bind:class="{ enabled: connections.serialPort.connected, active: connections.serialPort.data_received }" />
+        v-bind:class="{ enabled: connections.trigger.connected, active: connections.trigger.data_received }" />
       TTL link
     </p>
     <b>Stimulation</b>
@@ -69,7 +69,7 @@ export default {
           connected: false,
           state: false
         },
-        serialPort: {
+        trigger: {
           connected: false,
           data_received: false
         }
@@ -86,9 +86,12 @@ export default {
     this.DATA_RECEIVED_TIME_THRESHOLD = 200;
 
     this.add_pedal_listeners();
+    this.add_trigger_listeners();
   },
 
   methods: {
+    /* Pedal-related methods */
+
     add_pedal_listeners() {
       const pedal_connected_listener = new ROSLIB.Topic({
         ros : this.ros,
@@ -113,6 +116,38 @@ export default {
 
     update_pedal_pressed(message) {
       this.connections.pedal.state = message.data;
+    },
+
+    /* Trigger-related methods */
+
+    add_trigger_listeners() {
+      const trigger_connected_listener = new ROSLIB.Topic({
+        ros : this.ros,
+        name : '/trigger/connected',
+        messageType : 'std_msgs/Bool',
+      });
+
+      trigger_connected_listener.subscribe(this.update_trigger_connected);
+
+      const triggered_listener = new ROSLIB.Topic({
+        ros : this.ros,
+        name : '/trigger/triggered',
+        messageType : 'std_msgs/Bool',
+      });
+
+      triggered_listener.subscribe(this.update_triggered);
+    },
+
+    update_trigger_connected(message) {
+      this.connections.trigger.connected = message.data;
+    },
+
+    update_triggered() {
+      this.connections.trigger.data_received = true;
+
+      setTimeout(() => {
+        this.connections.trigger.data_received = false;
+      }, this.DATA_RECEIVED_TIME_THRESHOLD);
     }
   },
 
@@ -150,26 +185,6 @@ export default {
         this.latestMessage = `State updated: ${stateVariable} = ${value}`;
       }
     },
-
-    "status.serial_port_connection"(connected) {
-      this.connections.serialPort.connected = connected;
-    },
-
-    "status.serial_port_pulse_triggered"() {
-      this.connections.serialPort.data_received = true;
-
-      setTimeout(() => {
-        this.connections.serialPort.data_received = false;
-      }, this.DATA_RECEIVED_TIME_THRESHOLD);
-    },
-
-    "status.pedal_connection"(connected) {
-      this.connections.pedal.connected = connected;
-    },
-
-    "status.pedal_state_changed"(state) {
-      this.connections.pedal.state = state;
-    }
   }
 };
 </script>
