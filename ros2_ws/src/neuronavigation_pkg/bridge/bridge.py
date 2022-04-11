@@ -8,6 +8,8 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
+from std_msgs.msg import Bool
+
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
 from neuronavigation_interfaces.srv import Efield
 from mtms_interfaces.msg import PlannerState
@@ -25,16 +27,18 @@ class NeuronavigationNode(Node):
 
     def __init__(self):
         super().__init__("neuronavigation")
-        # Persist the latest sample.
-        qos = QoSProfile(
+
+        qos_persist_latest = QoSProfile(
             depth=1,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
-        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos)
-        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos)
-        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state", self.planner_state_callback, qos)
+        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10)
+
+        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest)
+        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
+        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state", self.planner_state_callback, qos_persist_latest)
 
         self.cli = self.create_client(Efield, 'efield')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -98,6 +102,12 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/focus")
         self._focus_publisher.publish(msg)
 
+    def update_coil_at_target(self, state):
+        msg = Bool()
+        msg.data = state
+        self.get_logger().info("Publishing to the topic /neuronavigation/coil_at_target")
+        self._coil_at_target_publisher.publish(msg)
+
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
         if orientation == [None, None, None]:
@@ -151,6 +161,11 @@ class Connection(Thread):
         self.node.update_focus(
             position=position,
             orientation=orientation,
+        )
+
+    def update_coil_at_target(self, state):
+        self.node.update_coil_at_target(
+            state=state,
         )
 
     def update_coil_pose(self, position, orientation):
