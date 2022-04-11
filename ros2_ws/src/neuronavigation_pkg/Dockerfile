@@ -25,7 +25,15 @@ RUN apt-get install -y \
     python3-imageio \
     python3-keras \
     python3-pubsub \
-    dos2unix
+    dos2unix \
+    locales
+
+RUN locale-gen  \
+    en_US.UTF-8 \
+    en_GB.UTF-8
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 ## InVesalius
 
