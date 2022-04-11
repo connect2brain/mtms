@@ -8,7 +8,7 @@
         </div>
         <div class="container-right">
           <div id="status">
-            <Status />
+            <Status :ros="ros" />
           </div>
           <div id="tms">
             <Tms />
