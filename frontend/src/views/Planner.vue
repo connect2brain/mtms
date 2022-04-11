@@ -236,7 +236,7 @@ export default {
       messageType : 'neuronavigation_interfaces/PoseUsingEulerAngles',
     });
 
-    listener.subscribe(this.update_position);
+    listener.subscribe(this.updatePosition);
 
     /* Set up add_target service. */
     this.addTargetClient = new ROSLIB.Service({
@@ -266,37 +266,34 @@ export default {
       serviceType : 'mtms_interfaces/SetTarget'
     });
 
+    /* Set up listener for coil at target. */
+    const coilAtTargetListener = new ROSLIB.Topic({
+      ros : this.ros,
+      name : '/neuronavigation/coil_at_target',
+      messageType : 'std_msgs/Bool',
+    });
+    coilAtTargetListener.subscribe(this.updateCoilAtTarget);
+
     /* Set up listener for planner state. */
     const stateListener = new ROSLIB.Topic({
       ros : this.ros,
       name : '/planner/state',
       messageType : 'mtms_interfaces/PlannerState',
     });
-
-    stateListener.subscribe(this.update_state);
+    stateListener.subscribe(this.updateState);
   },
 
   methods: {
-    update_position(message) {
+    updatePosition(message) {
       this.position = [message.position.x, message.position.y, message.position.z];
     },
 
-    update_state(message) {
+    updateState(message) {
       this.points = message.targets;
-/*    [{
-        visible: false,
-        name: "",
-        type: "Target",
-        comment: "",
-        selected: false,
-        target: false,
-        position: [2, 3, 4],
-        direction: [1, 2, 3],
+    },
 
-        intensity: 200,
-        iti: 100,
-      }]
- */
+    updateCoilAtTarget(state) {
+      this.isCoilAtTarget = state.data;
     },
 
     openTab(tab) {
