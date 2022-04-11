@@ -42,7 +42,15 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/pedal_listener/Dockerfile
-    # The container needs to be privileged so that /dev devices (e.g., the USB pedal) are created.
+    # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
+  trigger_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/trigger_controller/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
     privileged: true
     env_file:
       - ${ENV_FILE}
