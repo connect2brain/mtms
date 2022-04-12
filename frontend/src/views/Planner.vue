@@ -167,7 +167,7 @@
     <div id="actions">
       <font-awesome-icon icon="plus" class="fa-fw" v-on:click="addPoint()" />
       <font-awesome-icon icon="minus" class="fa-fw" v-on:click="removePoint()" />
-      <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="toggleTarget()" />
+      <font-awesome-icon icon="bullseye" class="fa-fw" v-on:click="setTarget()" />
       <font-awesome-icon
         icon="arrow-alt-circle-right"
         class="fa-fw toggle-navigating"
@@ -238,24 +238,35 @@ export default {
 
     listener.subscribe(this.update_position);
 
+    /* Set up add_target service. */
     this.addTargetClient = new ROSLIB.Service({
       ros : this.ros,
       name : '/planner/add_target',
       serviceType : 'mtms_interfaces/AddTarget'
     });
 
+    /* Set up toggle_select service. */
     this.toggleSelectService = new ROSLIB.Service({
       ros : this.ros,
       name : '/planner/toggle_select',
       serviceType : 'mtms_interfaces/ToggleSelect'
     });
 
+    /* Set up remove_target service. */
     this.removeTargetService = new ROSLIB.Service({
       ros : this.ros,
       name : '/planner/remove_target',
       serviceType : 'mtms_interfaces/RemoveTarget'
     });
 
+    /* Set up set_target service. */
+    this.setTargetService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/set_target',
+      serviceType : 'mtms_interfaces/SetTarget'
+    });
+
+    /* Set up listener for planner state. */
     const stateListener = new ROSLIB.Topic({
       ros : this.ros,
       name : '/planner/state',
@@ -343,10 +354,19 @@ export default {
         });
       });
     },
-    toggleTarget() {
+    setTarget() {
       if (this.selectedPoints.length === 1) {
-        this.$socket.emit("planner.point.toggle_target", {
-          name: this.selectedPoints[0]["name"]
+        const point = this.selectedPoints[0];
+
+        const request = new ROSLIB.ServiceRequest({
+          name: point["name"]
+        });
+
+        this.setTargetService.callService(request, function(result) {
+          if (!result.success) {
+            console.log('ERROR: Failed to set target: ');
+            console.log(request.name);
+          }
         });
       } else {
         // TODO: Add some kind of an indicator to the user that the number of selected
