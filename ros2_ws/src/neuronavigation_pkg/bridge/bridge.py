@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import ctypes
 from threading import Thread
 
 import rclpy
@@ -11,6 +12,8 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
 from neuronavigation_interfaces.srv import Efield
 from mtms_interfaces.msg import PlannerState
+
+from invesalius3 import app
 
 
 class NeuronavigationNode(Node):
@@ -179,7 +182,9 @@ def main():
     connection = Connection()
     connection.start()
 
-    from invesalius3 import app
+    x11 = ctypes.cdll.LoadLibrary('libX11.so')
+    x11.XInitThreads()
+
     app.main(connection=connection)
 
 
