@@ -90,7 +90,7 @@ class NeuronavigationNode(Node):
         #   be no more the possibility of passing None values here
         #   and this check could be removed.
         #
-        if orientation == [None, None, None]:
+        if all(x is None for x in orientation):
             orientation = [0.0, 0.0, 0.0]
 
         msg = PoseUsingEulerAngles()
@@ -103,7 +103,7 @@ class NeuronavigationNode(Node):
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
-        if orientation == [None, None, None]:
+        if all(x is None for x in orientation):
             orientation = [0.0, 0.0, 0.0]
 
         msg.position.x, msg.position.y, msg.position.z = position
