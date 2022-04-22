@@ -4,3 +4,6 @@
 [submodule "ros2_ws/src/neuronavigation_pkg/invesalius3"]
 	path = ros2_ws/src/neuronavigation_pkg/invesalius3
 	url = https://github.com/connect2brain/invesalius3
+[submodule "ros2_ws/src/efield/efield_libraries"]
+	path = ros2_ws/src/efield/efield_libraries
+	url = https://github.com/connect2brain/efield_libraries.git
