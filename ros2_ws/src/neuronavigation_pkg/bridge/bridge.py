@@ -140,7 +140,7 @@ class NeuronavigationNode(Node):
             pass
         try:
             response = self.future.result()
-            self.get_logger().info('Publishing to the server ')
+            self.get_logger().info("Responding to the service request /neuronavigation/efield")
             return response.efield_data
         except Exception as e:
             self.get_logger().info(
