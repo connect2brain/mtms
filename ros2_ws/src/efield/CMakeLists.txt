@@ -11,17 +11,33 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
+find_package(linalg REQUIRED)
+find_package(tmsutil REQUIRED)
+find_package(phi REQUIRED)
+find_package(tms REQUIRED)
+find_package(efield_estimation REQUIRED)
 
-add_executable(efield src/efield.cpp)
-add_executable(efield_publisher src/efield_publisher.cpp)
-ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces shape_msgs)
-ament_target_dependencies(efield_publisher rclcpp std_msgs neuronavigation_interfaces shape_msgs)
+set(efield_includes ${linalg_INCLUDE_DIRS}
+                    ${tmsutil_INCLUDE_DIRS}
+                    ${phi_INCLUDE_DIRS}
+                    ${tms_INCLUDE_DIRS}
+                    ${efield_estimation_INCLUDE_DIRS})
+
+include_directories(include ${efield_includes})
+
+add_executable(efield_service src/efield_service.cpp)
+ament_target_dependencies(efield_service rclcpp std_msgs neuronavigation_interfaces shape_msgs)
+
+set(efield_libs ${linalg_LIBRARIES}
+                ${tmsutil_LIBRARIES}
+                ${phi_LIBRARIES}
+                ${tms_LIBRARIES}
+                ${efield_estimation_LIBRARIES})
+
+target_link_libraries(efield_service ${efield_libs})
 
 install(TARGETS
-  efield
-  DESTINATION lib/${PROJECT_NAME})
-install(TARGETS
-  efield_publisher
+  efield_service
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
