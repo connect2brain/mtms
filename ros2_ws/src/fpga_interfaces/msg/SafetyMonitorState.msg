@@ -1,0 +1,8 @@
+# The state of safety monitor.
+
+Version version
+SafetyMonitorErrors cumulative_errors
+SafetyMonitorErrors current_errors
+SafetyMonitorErrors emergency_errors
+uint32 n_startup_messages
+uint32 n_status_messages
