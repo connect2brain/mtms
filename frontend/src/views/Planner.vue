@@ -273,6 +273,13 @@ export default {
       serviceType : 'mtms_interfaces/SetTarget'
     });
 
+    /* Set up toggle_visible service. */
+    this.toggleVisibleService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_visible',
+      serviceType : 'mtms_interfaces/ToggleVisible'
+    });
+
     /* Set up listener for coil at target. */
     const coilAtTargetListener = new ROSLIB.Topic({
       ros : this.ros,
@@ -378,7 +385,17 @@ export default {
       }
     },
     toggleVisible(row) {
-      row.visible = !row.visible;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+      });
+
+      this.toggleVisibleService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to toggle visibility of target: ');
+          console.log(request.name);
+        }
+      });
     },
     rename(row, newName) {
       const request = new ROSLIB.ServiceRequest({
