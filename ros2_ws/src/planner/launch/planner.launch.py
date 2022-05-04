@@ -24,8 +24,14 @@ def generate_launch_description():
         executable="set_target"
     )
 
+    rename_target_node = Node(
+        package="planner",
+        executable="rename_target"
+    )
+
     ld.add_action(add_target_node)
     ld.add_action(remove_target_node)
     ld.add_action(toggle_select_node)
     ld.add_action(set_target_node)
+    ld.add_action(rename_target_node)
     return ld
