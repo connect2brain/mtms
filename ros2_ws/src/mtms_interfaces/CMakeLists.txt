@@ -32,6 +32,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/RenameTarget.srv"
   "srv/SetTarget.srv"
   "srv/ToggleSelect.srv"
+  "srv/ToggleVisible.srv"
   "srv/TriggerPulse.srv"
   DEPENDENCIES geometry_msgs
  )
