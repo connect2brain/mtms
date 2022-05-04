@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PlannerState.msg"
   "srv/AddTarget.srv"
   "srv/RemoveTarget.srv"
+  "srv/RenameTarget.srv"
   "srv/SetTarget.srv"
   "srv/ToggleSelect.srv"
   "srv/TriggerPulse.srv"
