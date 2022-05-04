@@ -29,9 +29,15 @@ def generate_launch_description():
         executable="rename_target"
     )
 
+    toggle_visible_node = Node(
+        package="planner",
+        executable="toggle_visible"
+    )
+
     ld.add_action(add_target_node)
     ld.add_action(remove_target_node)
     ld.add_action(toggle_select_node)
     ld.add_action(set_target_node)
     ld.add_action(rename_target_node)
+    ld.add_action(toggle_visible_node)
     return ld
