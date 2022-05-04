@@ -28,6 +28,7 @@ setup(
             'remove_target = planner.remove_target:main',
             'toggle_select = planner.toggle_select:main',
             'set_target = planner.set_target:main',
+            'rename_target = planner.rename_target:main',
         ],
     },
 )

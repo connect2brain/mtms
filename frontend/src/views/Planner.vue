@@ -252,6 +252,13 @@ export default {
       serviceType : 'mtms_interfaces/ToggleSelect'
     });
 
+    /* Set up rename_target service. */
+    this.renameTargetService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/rename_target',
+      serviceType : 'mtms_interfaces/RenameTarget'
+    });
+
     /* Set up remove_target service. */
     this.removeTargetService = new ROSLIB.Service({
       ros : this.ros,
@@ -374,7 +381,18 @@ export default {
       row.visible = !row.visible;
     },
     rename(row, newName) {
-      row.name = newName;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+        new_name: newName,
+      });
+
+      this.renameTargetService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to rename target: ');
+          console.log(request.name);
+        }
+      });
     },
     changeComment(row, newComment) {
       row.comment = newComment;
