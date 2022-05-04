@@ -29,6 +29,7 @@ setup(
             'toggle_select = planner.toggle_select:main',
             'set_target = planner.set_target:main',
             'rename_target = planner.rename_target:main',
+            'toggle_visible = planner.toggle_visible:main',
         ],
     },
 )
