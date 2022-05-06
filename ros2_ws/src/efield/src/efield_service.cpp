@@ -17,17 +17,17 @@ void add(const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request>
           std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response)
 {
   //Change to efield vector
-  std::vector<double> position;
+  std::vector<float> position;
   std::vector<double> orientation;
-  position.push_back(request->coordinate.position.x);
-  position.push_back(request->coordinate.position.y);
-  position.push_back(request->coordinate.position.z);
+  position.push_back(static_cast<float>(request->coordinate.position.x));
+  position.push_back(static_cast<float>(request->coordinate.position.y));
+  position.push_back(static_cast<float>(request->coordinate.position.z));
   orientation.push_back(request->coordinate.orientation.alpha);
   orientation.push_back(request->coordinate.orientation.beta);
   orientation.push_back(request->coordinate.orientation.gamma);
 
   std::vector<double> efield_vector;
-  efield_vector = efield_estimation(position, orientation);
+  efield_estimation(position, orientation,efield_vector);
   for (int i = 0; i < efield_vector.size(); i++)
   {
       response->efield_data.push_back(efield_vector[i]);
