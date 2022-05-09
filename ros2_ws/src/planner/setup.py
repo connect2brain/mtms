@@ -30,6 +30,7 @@ setup(
             'set_target = planner.set_target:main',
             'rename_target = planner.rename_target:main',
             'toggle_visible = planner.toggle_visible:main',
+            'change_comment = planner.change_comment:main',
         ],
     },
 )
