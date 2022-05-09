@@ -280,6 +280,13 @@ export default {
       serviceType : 'mtms_interfaces/ToggleVisible'
     });
 
+    /* Set up change_comment service. */
+    this.changeCommentService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/change_comment',
+      serviceType : 'mtms_interfaces/ChangeComment'
+    });
+
     /* Set up listener for coil at target. */
     const coilAtTargetListener = new ROSLIB.Topic({
       ros : this.ros,
@@ -412,7 +419,18 @@ export default {
       });
     },
     changeComment(row, newComment) {
-      row.comment = newComment;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+        new_comment: newComment,
+      });
+
+      this.changeCommentService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to add comment: ');
+          console.log(request.name);
+        }
+      });
     },
     toggleSelect(row) {
       const request = new ROSLIB.ServiceRequest({
