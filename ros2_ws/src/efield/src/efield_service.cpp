@@ -19,6 +19,7 @@ void add(const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request>
   //Change to efield vector
   std::vector<float> position;
   std::vector<double> orientation;
+
   position.push_back(static_cast<float>(request->coordinate.position.x));
   position.push_back(static_cast<float>(request->coordinate.position.y));
   position.push_back(static_cast<float>(request->coordinate.position.z));
@@ -26,13 +27,17 @@ void add(const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request>
   orientation.push_back(request->coordinate.orientation.beta);
   orientation.push_back(request->coordinate.orientation.gamma);
 
+
   std::vector<double> efield_vector;
-  efield_estimation(position, orientation,efield_vector);
+  efield_estimation(position, orientation,request->trot,efield_vector);
   for (int i = 0; i < efield_vector.size(); i++)
   {
       response->efield_data.push_back(efield_vector[i]);
   }
   //
+
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "Incoming request\nx: %f", request->trot[0]);
+
   RCLCPP_INFO(rclcpp::get_logger("efield"), "Incoming request\nx: %f" " a: %f",
                 request->coordinate.position.x, request->coordinate.orientation.alpha);
   RCLCPP_INFO(rclcpp::get_logger("efield"), "sending back response");
