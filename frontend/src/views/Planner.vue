@@ -427,7 +427,7 @@ export default {
       this.changeCommentService.callService(request, function(result) {
         if (!result.success) {
 
-          console.log('ERROR: Failed to add comment: ');
+          console.log('ERROR: Failed to change comment: ');
           console.log(request.name);
         }
       });
