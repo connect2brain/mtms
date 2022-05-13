@@ -31,6 +31,7 @@ setup(
             'rename_target = planner.rename_target:main',
             'toggle_visible = planner.toggle_visible:main',
             'change_comment = planner.change_comment:main',
+            'toggle_navigation = planner.toggle_navigation:main',
         ],
     },
 )

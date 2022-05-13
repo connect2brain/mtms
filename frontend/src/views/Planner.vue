@@ -287,6 +287,13 @@ export default {
       serviceType : 'mtms_interfaces/ChangeComment'
     });
 
+    /* Set up toggle_navigation service.*/
+    this.toggleNavigationService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_navigation',
+      serviceType : 'mtms_interfaces/ToggleNavigation'
+    });
+
     /* Set up listener for coil at target. */
     const coilAtTargetListener = new ROSLIB.Topic({
       ros : this.ros,
@@ -449,8 +456,14 @@ export default {
     },
     toggleNavigating() {
       if (this.isReadyToNavigate) {
-        this.$socket.emit("planner.toggle_navigating");
-      }
+        const request = new ROSLIB.ServiceRequest({});
+
+        this.toggleNavigationService.callService(request, function(result) {
+          if (!result.success) {
+            console.log("ERROR: Failed to toggle navigating");
+          }
+        });
+      } 
     },
     setIntensity(row, newIntensityString) {
       const name = row["name"];
