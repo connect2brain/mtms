@@ -456,7 +456,6 @@ export default {
     },
     toggleNavigating() {
       if (this.isReadyToNavigate) {
-        console.log("Ready to navigate!");
         const request = new ROSLIB.ServiceRequest({});
 
         this.toggleNavigationService.callService(request, function(result) {
