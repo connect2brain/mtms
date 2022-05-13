@@ -35,6 +35,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ToggleSelect.srv"
   "srv/ToggleVisible.srv"
   "srv/TriggerPulse.srv"
+  "srv/ToggleNavigation.srv"
   DEPENDENCIES geometry_msgs
  )
 
