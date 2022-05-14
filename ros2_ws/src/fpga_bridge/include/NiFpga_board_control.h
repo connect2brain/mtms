@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_board_control_Signature = "CBC3968E6B4320CBE79B184C7B9DEF92";
+static const char* const NiFpga_board_control_Signature = "6825B728E6BDC46ADAEF4EFAAA9DED58";
 
 #if NiFpga_Cpp
 extern "C"
@@ -124,6 +124,11 @@ typedef enum
    NiFpga_board_control_IndicatorArrayU32Size_discharge_controller__n_startup_messages = 5,
    NiFpga_board_control_IndicatorArrayU32Size_discharge_controller__n_status_messages = 5
 } NiFpga_board_control_IndicatorArrayU32Size;
+
+typedef enum
+{
+   NiFpga_board_control_HostToTargetFifoU8_PulseFIFO = 0
+} NiFpga_board_control_HostToTargetFifoU8;
 
 
 #if NiFpga_Cpp
