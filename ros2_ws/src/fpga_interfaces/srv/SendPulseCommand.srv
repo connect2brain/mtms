@@ -1,9 +1,0 @@
-# Send a pulse command.
-#
-# Request: A pulse command.
-#
-# Response: Boolean indicating if pulse command was sent successfully.
-
-PulseCommand pulse_command
----
-bool success
