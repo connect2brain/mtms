@@ -4,7 +4,16 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
+
 #include "fpga_interfaces/srv/set_power.hpp"
+#include "fpga_interfaces/srv/send_pulse_command.hpp"
+
+#include "fpga_interfaces/msg/channel_pulse.hpp"
+#include "fpga_interfaces/msg/channel_pulse_piece.hpp"
+#include "fpga_interfaces/msg/pulse.hpp"
+#include "fpga_interfaces/msg/pulse_command.hpp"
+#include "fpga_interfaces/msg/pulse_config.hpp"
+#include "fpga_interfaces/msg/trigger_out.hpp"
 
 #include "fpga_interfaces/msg/safety_monitor_errors.hpp"
 #include "fpga_interfaces/msg/safety_monitor_state.hpp"
@@ -16,6 +25,8 @@
 #include "NiFpga_board_control.h"
 
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
+#define GET_BYTE(var,n) (uint8_t)((var) >> (8 * (n)))
+#define MAX_SERIALIZED_MESSAGE_LENGTH 100
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
@@ -35,7 +46,7 @@ bool init_fpga(void) {
   /* opens a session, downloads the bitstream, and runs the FPGA */
 
   /* TODO: Remove hardcoded bitfile. */
-  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_0.lvbitx",
+  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_2_0.lvbitx",
           NiFpga_board_control_Signature,
           "PXI1Slot4",
           0,
@@ -83,6 +94,121 @@ void set_power(const std::shared_ptr<fpga_interfaces::srv::SetPower::Request> re
   RCLCPP_INFO(rclcpp::get_logger("fpga"), "Set the board power to %s\n", state ? "true" : "false");
 }
 
+uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH] = {0};
+uint8_t length = 0;
+
+#define ESCAPE_CHARACTER 0x1B
+#define TRANSPARENCY_MODIFIER 0x20
+#define START_OF_MESSAGE 0xFE
+#define END_OF_MESSAGE 0xFF
+
+void init_serialized_message() {
+  length = 0;
+  serialized_message[length++] = START_OF_MESSAGE;
+}
+
+void finalize_serialized_message() {
+  serialized_message[length++] = END_OF_MESSAGE;
+}
+
+void add_byte_to_serialized_message(uint8_t byte) {
+  if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE) {
+    serialized_message[length++] = ESCAPE_CHARACTER;
+    serialized_message[length++] = byte^TRANSPARENCY_MODIFIER;
+  } else {
+    serialized_message[length++] = byte;
+  }
+}
+
+void add_uint32_to_serialized_message(uint32_t value) {
+  for (uint8_t i = 0; i < 4; i++) {
+    add_byte_to_serialized_message(GET_BYTE(value, 3 - i));
+  }
+}
+
+void add_uint64_to_serialized_message(uint64_t value) {
+  for (uint8_t i = 0; i < 8; i++) {
+    add_byte_to_serialized_message(GET_BYTE(value, 7 - i));
+  }
+}
+
+void send_pulse_command(const std::shared_ptr<fpga_interfaces::srv::SendPulseCommand::Request> request,
+          std::shared_ptr<fpga_interfaces::srv::SendPulseCommand::Response> response)
+{
+  init_serialized_message();
+
+  /* Serialize pulse config. */
+
+  fpga_interfaces::msg::PulseCommand pulse_command = request->pulse_command;
+
+  fpga_interfaces::msg::PulseConfig config = pulse_command.config;
+
+  uint8_t is_timed = config.is_timed;
+  uint64_t time_us = config.time_us;
+
+  add_byte_to_serialized_message(is_timed);
+
+  add_uint64_to_serialized_message(time_us);
+
+  for (uint8_t i_trigger = 0; i_trigger < config.triggers_out.size(); i_trigger++) {
+    fpga_interfaces::msg::TriggerOut trigger_out = config.triggers_out[i_trigger];
+
+    uint32_t start_before_pulse_us = trigger_out.start_before_pulse_us;
+    uint32_t end_after_pulse_us = trigger_out.end_after_pulse_us;
+
+    add_uint32_to_serialized_message(start_before_pulse_us);
+    add_uint32_to_serialized_message(end_after_pulse_us);
+  }
+
+  /* Serialize pulse. */
+
+  fpga_interfaces::msg::Pulse pulse = pulse_command.pulse;
+
+  uint8_t n_channels = (uint8_t) pulse.channel_pulses.size();
+  add_byte_to_serialized_message(n_channels);
+
+  for (uint8_t i_channel = 0; i_channel < n_channels; i_channel++) {
+    fpga_interfaces::msg::ChannelPulse channel_pulse = pulse.channel_pulses[i_channel];
+
+    uint8_t n_pieces = (uint8_t) channel_pulse.pieces.size();
+    add_byte_to_serialized_message(n_pieces);
+
+    for (uint8_t i_piece = 0; i_piece < n_pieces; i_piece++) {
+      fpga_interfaces::msg::ChannelPulsePiece piece = channel_pulse.pieces[i_piece];
+
+      add_byte_to_serialized_message(piece.mode);
+      add_uint32_to_serialized_message(piece.duration_in_ns);
+    }
+  }
+
+  finalize_serialized_message();
+
+  NiFpga_MergeStatus(&status,
+    NiFpga_StartFifo(session,
+                     NiFpga_board_control_HostToTargetFifoU8_PulseFIFO));
+
+  NiFpga_MergeStatus(&status,
+    NiFpga_WriteFifoU8(session,
+                       NiFpga_board_control_HostToTargetFifoU8_PulseFIFO,
+                       serialized_message,
+                       length,
+                       NiFpga_InfiniteTimeout,
+                       NULL));
+
+  for (uint8_t i = 0; i < length; i++) {
+    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message[i]);
+  }
+/*
+  uint32_t testi = 0xFFFFFFFF;
+  NiFpga_MergeStatus(&status,
+                      NiFpga_ReadU32(session,
+                                     NiFpga_board_control_IndicatorU32_testi,
+                                     &testi));
+*/
+  response->success = true;
+//  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Pulse command sent %d %d\n", 2, testi);
+}
+
 class FPGABridge : public rclcpp::Node
 {
   public:
@@ -91,7 +217,8 @@ class FPGABridge : public rclcpp::Node
     {
       safety_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::SafetyMonitorState>("/fpga/safety_monitor_state", 10);
       discharge_controllers_publisher_ = this->create_publisher<fpga_interfaces::msg::DischargeControllerStates>("/fpga/discharge_controller_states", 10);
-      service_ = this->create_service<fpga_interfaces::srv::SetPower>("/fpga/set_power", set_power);
+      set_power_service_ = this->create_service<fpga_interfaces::srv::SetPower>("/fpga/set_power", set_power);
+      send_pulse_command_service_ = this->create_service<fpga_interfaces::srv::SendPulseCommand>("/fpga/send_pulse_command", send_pulse_command);
       timer_ = this->create_wall_timer(20ms, std::bind(&FPGABridge::timer_callback, this));
     }
 
@@ -200,7 +327,7 @@ class FPGABridge : public rclcpp::Node
       safety_monitor_state.n_startup_messages = n_startup_messages;
       safety_monitor_state.n_status_messages = n_status_messages;
 
-      RCLCPP_INFO(this->get_logger(), "Publishing safety monitor state.");
+//      RCLCPP_INFO(this->get_logger(), "Publishing safety monitor state.");
       safety_monitor_publisher_->publish(safety_monitor_state);
     }
 
@@ -273,7 +400,7 @@ class FPGABridge : public rclcpp::Node
         states.states.push_back(state);
       }
 
-      RCLCPP_INFO(this->get_logger(), "Publishing discharge controller state.");
+//      RCLCPP_INFO(this->get_logger(), "Publishing discharge controller state.");
       discharge_controllers_publisher_->publish(states);
     }
 
@@ -286,7 +413,8 @@ class FPGABridge : public rclcpp::Node
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<fpga_interfaces::msg::SafetyMonitorState>::SharedPtr safety_monitor_publisher_;
     rclcpp::Publisher<fpga_interfaces::msg::DischargeControllerStates>::SharedPtr discharge_controllers_publisher_;
-    rclcpp::Service<fpga_interfaces::srv::SetPower>::SharedPtr service_;
+    rclcpp::Service<fpga_interfaces::srv::SetPower>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::SendPulseCommand>::SharedPtr send_pulse_command_service_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
 };
 
