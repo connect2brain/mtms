@@ -118,6 +118,12 @@ void add_byte_to_serialized_message(uint8_t byte) {
   }
 }
 
+void add_uint16_to_serialized_message(uint16_t value) {
+  for (uint8_t i = 0; i < 2; i++) {
+    add_byte_to_serialized_message(GET_BYTE(value, 1 - i));
+  }
+}
+
 void add_uint32_to_serialized_message(uint32_t value) {
   for (uint8_t i = 0; i < 4; i++) {
     add_byte_to_serialized_message(GET_BYTE(value, 3 - i));
@@ -167,7 +173,7 @@ void send_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendPulseEvent
     fpga_interfaces::msg::PulsePiece piece = pulse_event.pieces[i];
 
     add_byte_to_serialized_message(piece.mode);
-    add_uint32_to_serialized_message(piece.duration_in_ns);
+    add_uint16_to_serialized_message(piece.duration_in_ticks);
   }
 
   finalize_serialized_message();
