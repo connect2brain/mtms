@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_board_control_Signature = "F70B67BB64C66E5AEB4B75B955767F44";
+static const char* const NiFpga_board_control_Signature = "5A49B1B8A081F9837F478496550145CE";
 
 #if NiFpga_Cpp
 extern "C"
@@ -73,6 +73,7 @@ typedef enum
    NiFpga_board_control_ControlBool_signal__15_v_igbts = 0x18062,
    NiFpga_board_control_ControlBool_signal__15_v_others = 0x1805A,
    NiFpga_board_control_ControlBool_signal__24_v = 0x1805E,
+   NiFpga_board_control_ControlBool_stimulation__event_trigger = 0x1808A,
    NiFpga_board_control_ControlBool_stimulation__started = 0x18082,
    NiFpga_board_control_ControlBool_stop = 0x18002
 } NiFpga_board_control_ControlBool;

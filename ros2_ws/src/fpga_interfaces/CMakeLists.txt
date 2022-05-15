@@ -35,6 +35,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/Version.msg"
 
 "srv/SetPower.srv"
+"srv/SendEventTrigger.srv"
 "srv/SendPulseEvent.srv"
 )
 

@@ -6,6 +6,7 @@
 #include "std_msgs/msg/string.hpp"
 
 #include "fpga_interfaces/srv/set_power.hpp"
+#include "fpga_interfaces/srv/send_event_trigger.hpp"
 #include "fpga_interfaces/srv/send_pulse_event.hpp"
 
 #include "fpga_interfaces/msg/pulse_piece.hpp"
@@ -44,7 +45,7 @@ bool init_fpga(void) {
   /* opens a session, downloads the bitstream, and runs the FPGA */
 
   /* TODO: Remove hardcoded bitfile. */
-  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_2.lvbitx",
+  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_3.lvbitx",
           NiFpga_board_control_Signature,
           "PXI1Slot4",
           0,
@@ -90,6 +91,18 @@ void set_power(const std::shared_ptr<fpga_interfaces::srv::SetPower::Request> re
 
   response->success = true;
   RCLCPP_INFO(rclcpp::get_logger("fpga"), "Set the board power to %s\n", state ? "true" : "false");
+}
+
+void send_event_trigger(const std::shared_ptr<fpga_interfaces::srv::SendEventTrigger::Request> request,
+          std::shared_ptr<fpga_interfaces::srv::SendEventTrigger::Response> response)
+{
+  NiFpga_MergeStatus(&status,
+                     NiFpga_WriteBool(session,
+                                      NiFpga_board_control_ControlBool_stimulation__event_trigger,
+                                      true));
+
+  response->success = true;
+  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Sent the event trigger");
 }
 
 uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH] = {0};
@@ -206,6 +219,7 @@ class FPGABridge : public rclcpp::Node
       safety_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::SafetyMonitorState>("/fpga/safety_monitor_state", 10);
       discharge_controllers_publisher_ = this->create_publisher<fpga_interfaces::msg::DischargeControllerStates>("/fpga/discharge_controller_states", 10);
       set_power_service_ = this->create_service<fpga_interfaces::srv::SetPower>("/fpga/set_power", set_power);
+      send_event_trigger_service_ = this->create_service<fpga_interfaces::srv::SendEventTrigger>("/fpga/send_event_trigger", send_event_trigger);
       send_pulse_event_service_ = this->create_service<fpga_interfaces::srv::SendPulseEvent>("/fpga/send_pulse_event", send_pulse_event);
       timer_ = this->create_wall_timer(20ms, std::bind(&FPGABridge::timer_callback, this));
     }
@@ -402,6 +416,7 @@ class FPGABridge : public rclcpp::Node
     rclcpp::Publisher<fpga_interfaces::msg::SafetyMonitorState>::SharedPtr safety_monitor_publisher_;
     rclcpp::Publisher<fpga_interfaces::msg::DischargeControllerStates>::SharedPtr discharge_controllers_publisher_;
     rclcpp::Service<fpga_interfaces::srv::SetPower>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::SendEventTrigger>::SharedPtr send_event_trigger_service_;
     rclcpp::Service<fpga_interfaces::srv::SendPulseEvent>::SharedPtr send_pulse_event_service_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
 };
