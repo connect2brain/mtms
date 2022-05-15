@@ -25,7 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/event/PulsePiece.msg"
 "msg/event/PulseEvent.msg"
 "msg/event/TriggerOutEvent.msg"
-"msg/event/Timing.msg"
+"msg/event/EventInfo.msg"
 
 "msg/SafetyMonitorErrors.msg"
 "msg/SafetyMonitorState.msg"
