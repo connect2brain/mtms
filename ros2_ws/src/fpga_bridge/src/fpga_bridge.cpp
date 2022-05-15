@@ -157,10 +157,10 @@ void send_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendPulseEvent
 
   fpga_interfaces::msg::Timing timing = pulse_event.timing;
 
-  uint8_t is_timed = timing.is_timed;
+  uint8_t wait_for_trigger = timing.wait_for_trigger;
   uint64_t time_us = timing.time_us;
 
-  add_byte_to_serialized_message(is_timed);
+  add_byte_to_serialized_message(wait_for_trigger);
 
   add_uint64_to_serialized_message(time_us);
 
