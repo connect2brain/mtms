@@ -7,11 +7,11 @@
 
 #include "fpga_interfaces/srv/set_power.hpp"
 #include "fpga_interfaces/srv/send_event_trigger.hpp"
-#include "fpga_interfaces/srv/send_pulse_event.hpp"
+#include "fpga_interfaces/srv/send_stimulation_pulse_event.hpp"
 
-#include "fpga_interfaces/msg/pulse_piece.hpp"
-#include "fpga_interfaces/msg/pulse_event.hpp"
-#include "fpga_interfaces/msg/trigger_out_event.hpp"
+#include "fpga_interfaces/msg/stimulation_pulse_piece.hpp"
+#include "fpga_interfaces/msg/stimulation_pulse_event.hpp"
+#include "fpga_interfaces/msg/trigger_out_pulse_event.hpp"
 #include "fpga_interfaces/msg/event_info.hpp"
 
 #include "fpga_interfaces/msg/safety_monitor_errors.hpp"
@@ -157,18 +157,18 @@ const uint8_t channel_pulse_fifos[3] = {
 //  NiFpga_board_control_HostToTargetFifoU8_Channel3PulseFIFO
 };
 
-void send_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendPulseEvent::Request> request,
-          std::shared_ptr<fpga_interfaces::srv::SendPulseEvent::Response> response)
+void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Request> request,
+          std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Response> response)
 {
   init_serialized_message();
 
-  fpga_interfaces::msg::PulseEvent pulse_event = request->pulse_event;
+  fpga_interfaces::msg::StimulationPulseEvent stimulation_pulse_event = request->stimulation_pulse_event;
 
-  uint8_t channel = pulse_event.channel;
+  uint8_t channel = stimulation_pulse_event.channel;
 
   /* Serialize event info. */
 
-  fpga_interfaces::msg::EventInfo event_info = pulse_event.event_info;
+  fpga_interfaces::msg::EventInfo event_info = stimulation_pulse_event.event_info;
 
   uint16_t event_id = event_info.event_id;
   uint8_t wait_for_trigger = event_info.wait_for_trigger;
@@ -178,13 +178,13 @@ void send_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendPulseEvent
   add_byte_to_serialized_message(wait_for_trigger);
   add_uint64_to_serialized_message(time_us);
 
-  /* Serialize pulse. */
+  /* Serialize stimulation pulse. */
 
-  uint8_t n_pieces = (uint8_t) pulse_event.pieces.size();
+  uint8_t n_pieces = (uint8_t) stimulation_pulse_event.pieces.size();
   add_byte_to_serialized_message(n_pieces);
 
   for (uint8_t i = 0; i < n_pieces; i++) {
-    fpga_interfaces::msg::PulsePiece piece = pulse_event.pieces[i];
+    fpga_interfaces::msg::StimulationPulsePiece piece = stimulation_pulse_event.pieces[i];
 
     add_byte_to_serialized_message(piece.mode);
     add_uint16_to_serialized_message(piece.duration_in_ticks);
@@ -221,7 +221,7 @@ class FPGABridge : public rclcpp::Node
       discharge_controllers_publisher_ = this->create_publisher<fpga_interfaces::msg::DischargeControllerStates>("/fpga/discharge_controller_states", 10);
       set_power_service_ = this->create_service<fpga_interfaces::srv::SetPower>("/fpga/set_power", set_power);
       send_event_trigger_service_ = this->create_service<fpga_interfaces::srv::SendEventTrigger>("/fpga/send_event_trigger", send_event_trigger);
-      send_pulse_event_service_ = this->create_service<fpga_interfaces::srv::SendPulseEvent>("/fpga/send_pulse_event", send_pulse_event);
+      send_stimulation_pulse_event_service_ = this->create_service<fpga_interfaces::srv::SendStimulationPulseEvent>("/fpga/send_stimulation_pulse_event", send_stimulation_pulse_event);
       timer_ = this->create_wall_timer(20ms, std::bind(&FPGABridge::timer_callback, this));
     }
 
@@ -418,7 +418,7 @@ class FPGABridge : public rclcpp::Node
     rclcpp::Publisher<fpga_interfaces::msg::DischargeControllerStates>::SharedPtr discharge_controllers_publisher_;
     rclcpp::Service<fpga_interfaces::srv::SetPower>::SharedPtr set_power_service_;
     rclcpp::Service<fpga_interfaces::srv::SendEventTrigger>::SharedPtr send_event_trigger_service_;
-    rclcpp::Service<fpga_interfaces::srv::SendPulseEvent>::SharedPtr send_pulse_event_service_;
+    rclcpp::Service<fpga_interfaces::srv::SendStimulationPulseEvent>::SharedPtr send_stimulation_pulse_event_service_;
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
 };
 
