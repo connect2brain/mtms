@@ -34,6 +34,8 @@ services:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # Requires by linux when opening projects, otherwise segfaults
+    privileged: true
   efield:
     build:
       context: .
