@@ -1,9 +1,0 @@
-# Send a pulse event.
-#
-# Request: A pulse event.
-#
-# Response: Boolean indicating if pulse event was sent successfully.
-
-PulseEvent pulse_event
----
-bool success
