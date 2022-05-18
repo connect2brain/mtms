@@ -32,6 +32,8 @@ services:
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
     env_file:
       - ${ENV_FILE}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
   efield:
     build:
       context: .
