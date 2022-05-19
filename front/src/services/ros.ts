@@ -1,6 +1,6 @@
 import ROSLIB from 'roslib';
 import { ROS_URL } from '../utils/constants';
-import { TargetMessage } from '../types/ros';
+import { PositionMessage, TargetMessage } from '../types/ros';
 
 export const ros = new ROSLIB.Ros({
   url : ROS_URL
@@ -18,7 +18,7 @@ ros.on('close', () => {
   console.log('ROS closed ws connection')
 })
 
-export const listener = new ROSLIB.Topic({
+export const positionListener = new ROSLIB.Topic<PositionMessage>({
   ros : ros,
   name : '/neuronavigation/focus',
   messageType : 'neuronavigation_interfaces/PoseUsingEulerAngles',

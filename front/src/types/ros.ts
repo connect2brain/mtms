@@ -32,3 +32,7 @@ export interface Target {
 export interface TargetMessage extends ROSLIB.Message {
   targets: Target[]
 }
+
+export interface PositionMessage extends ROSLIB.Message {
+  position: Position
+}
