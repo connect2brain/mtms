@@ -2,15 +2,11 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
-import { Target, TargetMessage } from './types/ros'
-import { stateListener } from './services/ros'
+import { Position, PositionMessage, Target, TargetMessage } from './types/ros';
+import { positionListener, stateListener } from './services/ros';
+import expand from './utils';
 
 const Point = ({ name, pose, type }: Target) => {
-
-  const expand = (obj: any) =>
-    Object.keys(obj)
-      .map((key) => obj[key].toFixed(3))
-      .join(', ')
 
   return (
     <TableRow>
@@ -25,12 +21,19 @@ const Point = ({ name, pose, type }: Target) => {
 function App() {
   const [targets, setTargets] = useState<Target[]>([])
 
+  const [position, setPosition] = useState<Position | null>(null)
+
   const updateTargets = (message: TargetMessage) => {
     setTargets(message.targets)
   }
 
+  const updatePosition = (message: PositionMessage) => {
+    setPosition(message.position)
+  }
+
   useEffect(() => {
     stateListener.subscribe(updateTargets)
+    positionListener.subscribe(updatePosition)
   }, [])
 
   return (
@@ -53,6 +56,7 @@ function App() {
           </tbody>
         </TargetsTable>
       </TargetsContainer>
+      <p>Current position: {expand(position)}</p>
     </Providers>
   )
 }
