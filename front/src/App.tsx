@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
-import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros';
-import { addTargetClient, positionListener, stateListener } from './services/ros';
+import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros'
+import { addTargetClient, positionListener, stateListener } from './services/ros'
 import expand from './utils'
-import ROSLIB from 'roslib';
+import ROSLIB from 'roslib'
+import { TargetTable } from './components/TargetTable'
 
 const Point = ({ name, pose, type }: Target) => {
   return (
@@ -23,6 +24,48 @@ function App() {
 
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
+  const [skipPageReset, setSkipPageReset] = useState(false)
+
+  const targetTableColumns = useMemo(
+    () => [
+      {
+        Header: 'Targets',
+        columns: [
+          {
+            Header: 'Name',
+            accessor: 'targetName',
+          },
+          {
+            Header: 'Type',
+            accessor: 'targetType',
+          },
+          {
+            Header: 'Orientation (alpha, beta, gamma)',
+            accessor: 'targetOrientation',
+          },
+          {
+            Header: 'Position (x, y, z)',
+            accessor: 'targetPosition',
+          },
+        ],
+      },
+    ],
+    [],
+  )
+
+  const updateTargetData = (rowIndex: number, columnId: number, value: any) => {
+    setSkipPageReset(true)
+    const newTargets = targets.map((row, index) => {
+      if (index === rowIndex) {
+        return {
+          ...targets[rowIndex],
+          [columnId]: value,
+        }
+      }
+      return row
+    })
+    setTargets(newTargets)
+  }
 
   const updateTargets = (message: TargetMessage) => {
     setTargets(message.targets)
@@ -38,37 +81,63 @@ function App() {
     positionListener.subscribe(updatePosition)
   }, [])
 
+  useEffect(() => {
+    setSkipPageReset(false)
+  }, [targets])
+
   const addTarget = () => {
     if (position) {
-      const positionAsRosMessage = new ROSLIB.Message({...position});
+      const positionAsRosMessage = new ROSLIB.Message({ ...position })
 
-      // TODO: Use proper values.
-      const orientationAsRosMessage = new ROSLIB.Message({...orientation});
+      const orientationAsRosMessage = new ROSLIB.Message({ ...orientation })
 
       const pose = new ROSLIB.Message({
         position: positionAsRosMessage,
-        orientation: orientationAsRosMessage
-      });
+        orientation: orientationAsRosMessage,
+      })
 
       const request = new ROSLIB.ServiceRequest({
         target: pose,
-      });
-
-      addTargetClient.callService(request, (response) => {
-        if (!response.success) {
-          console.log('ERROR: Failed to add target', pose)
-        }
-      }, (error) => {
-        console.log('ERROR: Failed to add target', pose, ', error:')
-        console.error(error)
       })
+
+      addTargetClient.callService(
+        request,
+        (response) => {
+          if (!response.success) {
+            console.log('ERROR: Failed to add target', pose)
+          }
+        },
+        (error) => {
+          console.log('ERROR: Failed to add target', pose, ', error:')
+          console.error(error)
+        },
+      )
     }
+  }
+
+  const filterTargetKeys = () => {
+    return targets.map((target) => {
+      return {
+        targetName: target.name,
+        targetType: target.type,
+        targetOrientation: target.pose.orientation,
+        targetPosition: target.pose.position,
+      }
+    })
   }
 
   return (
     <Providers>
       <Wrapper>
         <Header>test</Header>
+
+        <TargetTable
+          columns={targetTableColumns}
+          data={filterTargetKeys()}
+          updateData={updateTargetData}
+          skipPageReset={skipPageReset}
+        />
+        <hr />
         <TargetsContainer>
           <TargetsTable>
             <thead>
