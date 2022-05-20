@@ -57,6 +57,7 @@ function App() {
     setSkipPageReset(true)
     const newTargets = targets.map((row, index) => {
       if (index === rowIndex) {
+        console.log('found!', rowIndex, columnId, value)
         return {
           ...targets[rowIndex],
           [columnId]: value,
@@ -120,8 +121,8 @@ function App() {
       return {
         targetName: target.name,
         targetType: target.type,
-        targetOrientation: target.pose.orientation,
-        targetPosition: target.pose.position,
+        targetOrientation: expand(target.pose.orientation),
+        targetPosition: expand(target.pose.position),
       }
     })
   }
@@ -197,13 +198,6 @@ const TargetsTable = styled.table`
   border-collapse: collapse;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 `
-
-const TargetRow = styled.div`
-  display: flex;
-  flex-direction: row;
-  gap: 0.5rem;
-`
-const RowElement = styled.div``
 
 const Header = styled.h1`
   color: ${(p) => p.theme.colors.red};
