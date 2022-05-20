@@ -35,4 +35,5 @@ export interface TargetMessage extends ROSLIB.Message {
 
 export interface PositionMessage extends ROSLIB.Message {
   position: Position
+  orientation: EulerAngles
 }

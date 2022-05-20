@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
-import { Position, PositionMessage, Target, TargetMessage } from './types/ros';
-import { positionListener, stateListener } from './services/ros';
-import expand from './utils';
+import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros';
+import { addTargetClient, positionListener, stateListener } from './services/ros';
+import expand from './utils'
+import ROSLIB from 'roslib';
 
 const Point = ({ name, pose, type }: Target) => {
-
   return (
     <TableRow>
       <Td>{name}</Td>
@@ -22,6 +22,7 @@ function App() {
   const [targets, setTargets] = useState<Target[]>([])
 
   const [position, setPosition] = useState<Position | null>(null)
+  const [orientation, setOrientation] = useState<EulerAngles | null>(null)
 
   const updateTargets = (message: TargetMessage) => {
     setTargets(message.targets)
@@ -29,6 +30,7 @@ function App() {
 
   const updatePosition = (message: PositionMessage) => {
     setPosition(message.position)
+    setOrientation(message.orientation)
   }
 
   useEffect(() => {
@@ -36,30 +38,68 @@ function App() {
     positionListener.subscribe(updatePosition)
   }, [])
 
+  const addTarget = () => {
+    if (position) {
+      const positionAsRosMessage = new ROSLIB.Message({...position});
+
+      // TODO: Use proper values.
+      const orientationAsRosMessage = new ROSLIB.Message({...orientation});
+
+      const pose = new ROSLIB.Message({
+        position: positionAsRosMessage,
+        orientation: orientationAsRosMessage
+      });
+
+      const request = new ROSLIB.ServiceRequest({
+        target: pose,
+      });
+
+      addTargetClient.callService(request, (response) => {
+        if (!response.success) {
+          console.log('ERROR: Failed to add target', pose)
+        }
+      }, (error) => {
+        console.log('ERROR: Failed to add target', pose, ', error:')
+        console.error(error)
+      })
+    }
+  }
+
   return (
     <Providers>
-      <Header>test</Header>
-      <TargetsContainer>
-        <TargetsTable>
-          <thead>
-            <TableRow>
-              <Th>Name</Th>
-              <Th>Type</Th>
-              <Th>Orientation (alpha, beta, gamma)</Th>
-              <Th>Position (x, y, z)</Th>
-            </TableRow>
-          </thead>
-          <tbody>
-            {targets.map((target, index) => (
-              <Point key={index} {...target} />
-            ))}
-          </tbody>
-        </TargetsTable>
-      </TargetsContainer>
-      <p>Current position: {expand(position)}</p>
+      <Wrapper>
+        <Header>test</Header>
+        <TargetsContainer>
+          <TargetsTable>
+            <thead>
+              <TableRow>
+                <Th>Name</Th>
+                <Th>Type</Th>
+                <Th>Orientation (alpha, beta, gamma)</Th>
+                <Th>Position (x, y, z)</Th>
+              </TableRow>
+            </thead>
+            <tbody>
+              {targets.map((target, index) => (
+                <Point key={index} {...target} />
+              ))}
+            </tbody>
+          </TargetsTable>
+        </TargetsContainer>
+
+        <p>Current position: {expand(position)}</p>
+        <p>Current orientation: {expand(orientation)}</p>
+        <AddTargetButton onClick={addTarget}>Add current position and orientation as target</AddTargetButton>
+      </Wrapper>
     </Providers>
   )
 }
+
+const Wrapper = styled.div`
+  padding: 0.5rem;
+`
+
+const AddTargetButton = styled.button``
 
 const Th = styled.th`
   padding: 0.5rem 1rem;
@@ -79,10 +119,8 @@ const TableRow = styled.tr`
   }
 `
 
-
 const TargetsContainer = styled.div`
   overflow-x: auto;
-  margin: 20px;
 `
 
 const TargetsTable = styled.table`
