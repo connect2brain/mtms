@@ -56,7 +56,7 @@ ament_target_dependencies(set_power_handler rclcpp std_msgs fpga_interfaces)
 
 # Install stimulation pulse event handler.
 
-add_executable(stimulation_pulse_event_handler src/stimulation_pulse_event_handler.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(stimulation_pulse_event_handler src/stimulation_pulse_event_handler.cpp src/NiFpga.c src/fpga.cpp src/serdes.cpp)
 
 target_include_directories(stimulation_pulse_event_handler
   PUBLIC
