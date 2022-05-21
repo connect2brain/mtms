@@ -12,7 +12,11 @@ find_package(fpga_interfaces REQUIRED)
 
 # Install run_fpga executable.
 
-add_executable(run_fpga src/run_fpga.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(run_fpga
+  src/nodes/run_fpga.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(run_fpga
   PUBLIC
@@ -23,7 +27,11 @@ ament_target_dependencies(run_fpga rclcpp std_msgs fpga_interfaces)
 
 # Install discharge controller bridge.
 
-add_executable(discharge_controller_bridge src/discharge_controller_bridge.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(discharge_controller_bridge
+  src/nodes/discharge_controller_bridge.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(discharge_controller_bridge
   PUBLIC
@@ -34,7 +42,11 @@ ament_target_dependencies(discharge_controller_bridge rclcpp std_msgs fpga_inter
 
 # Install safety monitor bridge.
 
-add_executable(safety_monitor_bridge src/safety_monitor_bridge.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(safety_monitor_bridge
+  src/nodes/safety_monitor_bridge.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(safety_monitor_bridge
   PUBLIC
@@ -45,7 +57,11 @@ ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
 # Install set power handler.
 
-add_executable(set_power_handler src/set_power_handler.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(set_power_handler
+  src/nodes/set_power_handler.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(set_power_handler
   PUBLIC
@@ -56,7 +72,12 @@ ament_target_dependencies(set_power_handler rclcpp std_msgs fpga_interfaces)
 
 # Install stimulation pulse event handler.
 
-add_executable(stimulation_pulse_event_handler src/stimulation_pulse_event_handler.cpp src/NiFpga.c src/fpga.cpp src/serdes.cpp)
+add_executable(stimulation_pulse_event_handler
+  src/nodes/stimulation_pulse_event_handler.cpp
+  src/lib/serdes.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(stimulation_pulse_event_handler
   PUBLIC
@@ -67,7 +88,11 @@ ament_target_dependencies(stimulation_pulse_event_handler rclcpp std_msgs fpga_i
 
 # Install send event trigger handler.
 
-add_executable(event_trigger_handler src/event_trigger_handler.cpp src/NiFpga.c src/fpga.cpp)
+add_executable(event_trigger_handler
+  src/nodes/event_trigger_handler.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
 
 target_include_directories(event_trigger_handler
   PUBLIC
