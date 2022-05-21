@@ -1,20 +1,8 @@
-#include <chrono>
-#include <functional>
-#include <memory>
-
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
 #include "fpga_interfaces/srv/set_power.hpp"
 
 #include "NiFpga_board_control.h"
-
-#define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
-#define GET_BYTE(var,n) (uint8_t)((var) >> (8 * (n)))
-#define MAX_SERIALIZED_MESSAGE_LENGTH 100
-
-using namespace std::chrono_literals;
-using std::placeholders::_1;
 
 NiFpga_Session session;
 NiFpga_Status status;
