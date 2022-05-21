@@ -1,15 +1,8 @@
-#include <chrono>
-#include <functional>
-#include <memory>
-
 #include "rclcpp/rclcpp.hpp"
 
 #include "fpga_interfaces/srv/send_event_trigger.hpp"
 
 #include "NiFpga_board_control.h"
-
-using namespace std::chrono_literals;
-using std::placeholders::_1;
 
 NiFpga_Session session;
 NiFpga_Status status;

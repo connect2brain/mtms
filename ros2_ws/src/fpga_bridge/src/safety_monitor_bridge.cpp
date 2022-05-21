@@ -1,9 +1,6 @@
 #include <chrono>
-#include <functional>
-#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
 #include "fpga_interfaces/msg/safety_monitor_errors.hpp"
 #include "fpga_interfaces/msg/safety_monitor_state.hpp"
@@ -14,7 +11,6 @@
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
 
 using namespace std::chrono_literals;
-using std::placeholders::_1;
 
 NiFpga_Session session;
 NiFpga_Status status;
@@ -65,7 +61,7 @@ class SafetyMonitorBridge : public rclcpp::Node
     : Node("safety_monitor_bridge")
     {
       safety_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::SafetyMonitorState>("/fpga/safety_monitor_state", 10);
-      timer_ = this->create_wall_timer(20ms, std::bind(&SafetyMonitorBridge::timer_callback, this));
+      timer_ = this->create_wall_timer(20ms, std::bind(&SafetyMonitorBridge::publish_safety_monitor_state, this));
     }
 
   private:
@@ -160,11 +156,6 @@ class SafetyMonitorBridge : public rclcpp::Node
 
 //      RCLCPP_INFO(this->get_logger(), "Publishing safety monitor state.");
       safety_monitor_publisher_->publish(safety_monitor_state);
-    }
-
-    void timer_callback()
-    {
-      publish_safety_monitor_state();
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
