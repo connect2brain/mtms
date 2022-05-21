@@ -1,9 +1,6 @@
 #include <chrono>
-#include <functional>
-#include <memory>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 
 #include "fpga_interfaces/msg/discharge_controller_errors.hpp"
 #include "fpga_interfaces/msg/discharge_controller_state.hpp"
@@ -15,7 +12,6 @@
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
 
 using namespace std::chrono_literals;
-using std::placeholders::_1;
 
 NiFpga_Session session;
 NiFpga_Status status;
@@ -66,7 +62,7 @@ class DischargeControllerBridge : public rclcpp::Node
     : Node("discharge_controller_bridge")
     {
       discharge_controllers_publisher_ = this->create_publisher<fpga_interfaces::msg::DischargeControllerStates>("/fpga/discharge_controller_states", 10);
-      timer_ = this->create_wall_timer(20ms, std::bind(&DischargeControllerBridge::timer_callback, this));
+      timer_ = this->create_wall_timer(20ms, std::bind(&DischargeControllerBridge::publish_discharge_controller_state, this));
     }
 
   private:
@@ -156,11 +152,6 @@ class DischargeControllerBridge : public rclcpp::Node
 
 //      RCLCPP_INFO(this->get_logger(), "Publishing discharge controller state.");
       discharge_controllers_publisher_->publish(states);
-    }
-
-    void timer_callback()
-    {
-      publish_discharge_controller_state();
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
