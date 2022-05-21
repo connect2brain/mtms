@@ -33,10 +33,12 @@ void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   uint16_t event_id = event_info.event_id;
   uint8_t wait_for_trigger = event_info.wait_for_trigger;
   uint64_t time_us = event_info.time_us;
+  uint32_t delay_us = event_info.delay_us;
 
   add_uint16_to_serialized_message(event_id);
   add_byte_to_serialized_message(wait_for_trigger);
   add_uint64_to_serialized_message(time_us);
+  add_uint32_to_serialized_message(delay_us);
 
   /* Serialize stimulation pulse. */
 
