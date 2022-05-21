@@ -9,12 +9,12 @@
 #include "fpga.h"
 #include "serdes.h"
 
-const uint8_t channel_pulse_fifos[3] = {
+const uint8_t channel_pulse_fifos[5] = {
   NiFpga_board_control_HostToTargetFifoU8_Channel1PulseFIFO,
-  0,
-  0
-//  NiFpga_board_control_HostToTargetFifoU8_Channel2PulseFIFO,
-//  NiFpga_board_control_HostToTargetFifoU8_Channel3PulseFIFO
+  0, /* Not in use. */
+  0, /* Not in use. */
+  0, /* Not in use. */
+  0  /* Not in use. */
 };
 
 void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Request> request,
