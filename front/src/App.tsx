@@ -11,7 +11,7 @@ import {
 } from './services/ros';
 import { expand } from './utils'
 import ROSLIB from 'roslib'
-import { TargetTable } from './components/TargetTable'
+import { EditableCell, TargetTable } from './components/TargetTable';
 
 function App() {
   const [targets, setTargets] = useState<Target[]>([])
@@ -28,10 +28,7 @@ function App() {
           {
             Header: 'Name',
             accessor: 'name',
-          },
-          {
-            Header: 'Type',
-            accessor: 'type',
+            Cell: EditableCell
           },
           {
             Header: 'Orientation (alpha, beta, gamma)',
@@ -43,7 +40,8 @@ function App() {
           },
           {
             Header: 'Comment',
-            accessor: 'comment'
+            accessor: 'comment',
+            Cell: EditableCell
           }
         ],
       },
@@ -138,7 +136,6 @@ function App() {
     return targets.map((target) => {
       return {
         name: target.name,
-        type: target.type,
         orientation: expand(target.pose.orientation),
         position: expand(target.pose.position),
         comment: target.comment
