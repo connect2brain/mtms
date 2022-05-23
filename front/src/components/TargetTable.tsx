@@ -1,8 +1,8 @@
 import React from 'react'
 
-import { useTable, usePagination, Row, Cell } from 'react-table';
-import styled from 'styled-components';
-import { ChangeableKey, Target } from '../types/ros';
+import { useTable, usePagination, Row, Cell } from 'react-table'
+import styled from 'styled-components'
+import { ChangeableKey, Target } from '../types/ros'
 
 type EditableCellProps = {
   value: any
@@ -25,7 +25,19 @@ type EditableProps = {
   row: RowProps
   updateData: (index: number, id: number, value: any) => void
 }
-const EditableCell = ({
+
+const NotEditableCell = ({
+  value: initialValue,
+  row: { index },
+  column: { id },
+}: any) => {
+  // We need to keep and update the state of the cell normally
+  const [value, setValue] = React.useState(initialValue)
+
+  return <DisabledInput value={value} disabled={true} />
+}
+
+export const EditableCell = ({
   value: initialValue,
   row: { index },
   column: { id },
@@ -60,11 +72,11 @@ const EditableCell = ({
     setValue(value)
   }, [value])
 
-  return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress}/>
+  return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
 }
 
 const defaultColumn = {
-  Cell: EditableCell,
+  Cell: NotEditableCell,
 }
 
 type TableProps = {
@@ -123,19 +135,23 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
         </thead>
 
         <tbody {...getTableBodyProps()}>
-        {page.map((row: Row, i: number) => {
-          prepareRow(row)
-          return (
-            <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
-              {row.cells.map(cell => {
-                return <Td {...cell.getCellProps()} key={cell.getCellProps().key}>{cell.render('Cell')}</Td>
-              })}
-            </TableRow>
-          )
-        })}
+          {page.map((row: Row, i: number) => {
+            prepareRow(row)
+            return (
+              <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
+                {row.cells.map((cell) => {
+                  return (
+                    <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
+                      {cell.render('Cell')}
+                    </Td>
+                  )
+                })}
+              </TableRow>
+            )
+          })}
         </tbody>
       </TargetsTable>
-      <div className="pagination">
+      <div className='pagination'>
         <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
           {'<<'}
         </button>{' '}
@@ -157,9 +173,9 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
         <span>
           | Go to page:{' '}
           <input
-            type="number"
+            type='number'
             defaultValue={pageIndex + 1}
-            onChange={e => {
+            onChange={(e) => {
               const page = e.target.value ? Number(e.target.value) - 1 : 0
               gotoPage(page)
             }}
@@ -168,11 +184,11 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
         </span>{' '}
         <select
           value={pageSize}
-          onChange={e => {
+          onChange={(e) => {
             setPageSize(Number(e.target.value))
           }}
         >
-          {[10, 20, 30, 40, 50].map(pageSize => (
+          {[10, 20, 30, 40, 50].map((pageSize) => (
             <option key={pageSize} value={pageSize}>
               Show {pageSize}
             </option>
@@ -190,14 +206,25 @@ const Th = styled.th`
 const Td = styled.td`
   padding: 0.5rem 1rem;
   border: #e0e0e0;
-  
-  textarea, input {
+
+  textarea,
+  input {
     border: 0;
     background-color: inherit;
     font-size: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+      'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 `
+const DisabledInput = styled.input`
+  color: ${(p) => p.theme.colors.primary};
+  border: 0;
+  background-color: inherit;
+  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+  'Droid Sans', 'Helvetica Neue', sans-serif;
+`
+
 const TableRow = styled.tr`
   border-bottom: 1px solid #dddddd;
 
@@ -220,6 +247,4 @@ const TargetsTable = styled.table`
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 `
 
-const Pagination = styled.div`
-
-`
+const Pagination = styled.div``
