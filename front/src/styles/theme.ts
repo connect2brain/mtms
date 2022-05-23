@@ -7,7 +7,8 @@ const pxToRem = (px: number) => `${px / 16}rem`;
 const theme = {
   rem: pxToRem,
   colors: {
-    red: 'red'
+    red: 'red',
+    primary: 'black'
   },
   spacing: {},
   typography: {},
