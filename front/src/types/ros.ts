@@ -29,6 +29,9 @@ export interface Target {
   iti: number;
 }
 
+//type ChangeableKeys = keyof Target
+export type ChangeableKey = 'name' | 'comment'
+
 export interface TargetMessage extends ROSLIB.Message {
   targets: Target[]
 }
