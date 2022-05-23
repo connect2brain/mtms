@@ -3,8 +3,8 @@ import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros'
-import { addTargetClient, positionListener, stateListener } from './services/ros'
-import expand from './utils'
+import { addTargetClient, positionListener, renameTargetService, stateListener } from './services/ros';
+import { expand } from './utils'
 import ROSLIB from 'roslib'
 import { TargetTable } from './components/TargetTable'
 
@@ -53,19 +53,32 @@ function App() {
     [],
   )
 
-  const updateTargetData = (rowIndex: number, columnId: number, value: any) => {
+  const updateTargetData = (rowIndex: number, columnId: string, value: any) => {
     setSkipPageReset(true)
-    const newTargets = targets.map((row, index) => {
-      if (index === rowIndex) {
-        console.log('found!', rowIndex, columnId, value)
-        return {
-          ...targets[rowIndex],
-          [columnId]: value,
-        }
-      }
-      return row
-    })
+
+    const newTargets = [...targets]
+    const oldTarget = targets[rowIndex]
+
+    newTargets[rowIndex] = {
+      ...oldTarget,
+      [columnId]: value
+    }
     setTargets(newTargets)
+
+    const request = new ROSLIB.ServiceRequest({
+      name: oldTarget.name,
+      new_name: value,
+    });
+
+    renameTargetService.callService(request, (result) => {
+      if (!result.success) {
+        console.log('ERROR: Failed to rename target:', oldTarget.name);
+      } else {
+        console.log('Updated', oldTarget.name, 'name to', value)
+      }
+    }, (error) => {
+      console.error(error)
+    })
   }
 
   const updateTargets = (message: TargetMessage) => {

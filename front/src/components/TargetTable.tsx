@@ -61,7 +61,7 @@ const defaultColumn = {
 type TableProps = {
   columns: any[]
   data: any[]
-  updateData: (rowIndex: number, columnId: number, value: any) => void
+  updateData: (rowIndex: number, columnId: string, value: any) => void
   skipPageReset: boolean
 }
 
@@ -176,12 +176,13 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
 
 const Th = styled.th`
   padding: 0.5rem 1rem;
+  text-align: left;
 `
 const Td = styled.td`
   padding: 0.5rem 1rem;
   border: #e0e0e0;
   
-  input {
+  textarea, input {
     border: 0;
     background-color: inherit;
     font-size: 1rem;
