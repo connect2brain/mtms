@@ -2,22 +2,16 @@ import React, { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
-import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros'
-import { addTargetClient, positionListener, renameTargetService, stateListener } from './services/ros';
+import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from './types/ros';
+import {
+  addTargetClient,
+  positionListener,
+  rosServicesByKey,
+  stateListener
+} from './services/ros';
 import { expand } from './utils'
 import ROSLIB from 'roslib'
 import { TargetTable } from './components/TargetTable'
-
-const Point = ({ name, pose, type }: Target) => {
-  return (
-    <TableRow>
-      <Td>{name}</Td>
-      <Td>{type}</Td>
-      <Td>{expand(pose.orientation)}</Td>
-      <Td>{expand(pose.position)}</Td>
-    </TableRow>
-  )
-}
 
 function App() {
   const [targets, setTargets] = useState<Target[]>([])
@@ -33,27 +27,32 @@ function App() {
         columns: [
           {
             Header: 'Name',
-            accessor: 'targetName',
+            accessor: 'name',
           },
           {
             Header: 'Type',
-            accessor: 'targetType',
+            accessor: 'type',
           },
           {
             Header: 'Orientation (alpha, beta, gamma)',
-            accessor: 'targetOrientation',
+            accessor: 'orientation',
           },
           {
             Header: 'Position (x, y, z)',
-            accessor: 'targetPosition',
+            accessor: 'position',
           },
+          {
+            Header: 'Comment',
+            accessor: 'comment'
+          }
         ],
       },
     ],
     [],
   )
 
-  const updateTargetData = (rowIndex: number, columnId: string, value: any) => {
+  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any) => {
+    console.log(rowIndex, key, value)
     setSkipPageReset(true)
 
     const newTargets = [...targets]
@@ -61,20 +60,26 @@ function App() {
 
     newTargets[rowIndex] = {
       ...oldTarget,
-      [columnId]: value
+      [key]: value
     }
     setTargets(newTargets)
 
+    const requestKey = `new_${key}`
     const request = new ROSLIB.ServiceRequest({
       name: oldTarget.name,
-      new_name: value,
+      [requestKey]: value,
     });
+    console.log(key, requestKey, request, rosServicesByKey)
 
-    renameTargetService.callService(request, (result) => {
+    if (!Object.prototype.hasOwnProperty.call(rosServicesByKey, key)) {
+      console.error(`Key ${key} is not changeable`)
+      return
+    }
+    rosServicesByKey[key].callService(request, (result) => {
       if (!result.success) {
-        console.log('ERROR: Failed to rename target:', oldTarget.name);
+        console.error(`ERROR: Failed to change key ${key} from ${oldTarget[key]} to ${value}`);
       } else {
-        console.log('Updated', oldTarget.name, 'name to', value)
+        console.log(`Changed ${oldTarget.name} key ${key} from ${oldTarget[key]} to ${value}`);
       }
     }, (error) => {
       console.error(error)
@@ -132,10 +137,11 @@ function App() {
   const filterTargetKeys = () => {
     return targets.map((target) => {
       return {
-        targetName: target.name,
-        targetType: target.type,
-        targetOrientation: expand(target.pose.orientation),
-        targetPosition: expand(target.pose.position),
+        name: target.name,
+        type: target.type,
+        orientation: expand(target.pose.orientation),
+        position: expand(target.pose.position),
+        comment: target.comment
       }
     })
   }
@@ -152,23 +158,6 @@ function App() {
           skipPageReset={skipPageReset}
         />
         <hr />
-        <TargetsContainer>
-          <TargetsTable>
-            <thead>
-              <TableRow>
-                <Th>Name</Th>
-                <Th>Type</Th>
-                <Th>Orientation (alpha, beta, gamma)</Th>
-                <Th>Position (x, y, z)</Th>
-              </TableRow>
-            </thead>
-            <tbody>
-              {targets.map((target, index) => (
-                <Point key={index} {...target} />
-              ))}
-            </tbody>
-          </TargetsTable>
-        </TargetsContainer>
 
         <p>Current position: {expand(position)}</p>
         <p>Current orientation: {expand(orientation)}</p>
@@ -183,34 +172,6 @@ const Wrapper = styled.div`
 `
 
 const AddTargetButton = styled.button``
-
-const Th = styled.th`
-  padding: 0.5rem 1rem;
-`
-const Td = styled.td`
-  padding: 0.5rem 1rem;
-`
-const TableRow = styled.tr`
-  border-bottom: 1px solid #dddddd;
-
-  :nth-of-type(even) {
-    background-color: #f3f3f3;
-  }
-
-  :last-of-type {
-    border-bottom: 2px solid #797979;
-  }
-`
-
-const TargetsContainer = styled.div`
-  overflow-x: auto;
-`
-
-const TargetsTable = styled.table`
-  //border-spacing: 0.5rem;
-  border-collapse: collapse;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-`
 
 const Header = styled.h1`
   color: ${(p) => p.theme.colors.red};
