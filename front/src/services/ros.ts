@@ -96,3 +96,8 @@ export const stateListener = new ROSLIB.Topic<TargetMessage>({
   name : '/planner/state',
   messageType : 'mtms_interfaces/PlannerState',
 });
+
+export const rosServicesByKey = {
+  name: renameTargetService,
+  comment: changeCommentService
+}

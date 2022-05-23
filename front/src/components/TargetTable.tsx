@@ -2,6 +2,7 @@ import React from 'react'
 
 import { useTable, usePagination, Row, Cell } from 'react-table';
 import styled from 'styled-components';
+import { ChangeableKey, Target } from '../types/ros';
 
 type EditableCellProps = {
   value: any
@@ -33,6 +34,8 @@ const EditableCell = ({
   // We need to keep and update the state of the cell normally
   const [value, setValue] = React.useState(initialValue)
 
+  const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
+
   const onChange = (e: any) => {
     setValue(e.target.value)
   }
@@ -46,12 +49,18 @@ const EditableCell = ({
     updateData(index, id, value)
   }
 
+  const handleKeyPress = (event: any) => {
+    if (event.key === 'Enter') {
+      inputRef.current?.blur()
+    }
+  }
+
   // If the initialValue is changed external, sync it up with our state
   React.useEffect(() => {
     setValue(value)
   }, [value])
 
-  return <input value={value} onChange={onChange} onBlur={onBlur} />
+  return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress}/>
 }
 
 const defaultColumn = {
@@ -61,7 +70,7 @@ const defaultColumn = {
 type TableProps = {
   columns: any[]
   data: any[]
-  updateData: (rowIndex: number, columnId: string, value: any) => void
+  updateData: (rowIndex: number, key: ChangeableKey, value: any) => void
   skipPageReset: boolean
 }
 
