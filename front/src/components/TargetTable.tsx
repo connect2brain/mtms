@@ -4,13 +4,6 @@ import { useTable, usePagination, Row, Cell } from 'react-table'
 import styled from 'styled-components'
 import { ChangeableKey, Target } from '../types/ros'
 
-type EditableCellProps = {
-  value: any
-  row: { index: number }
-  column: { id: number }
-  updateData: (index: number, id: number, value: any) => void
-}
-
 type CellProps = {
   value: any
   column: number
@@ -20,21 +13,8 @@ type RowProps = {
   original: any
 }
 
-type EditableProps = {
-  cell: CellProps
-  row: RowProps
-  updateData: (index: number, id: number, value: any) => void
-}
-
-const NotEditableCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-}: any) => {
-  // We need to keep and update the state of the cell normally
-  const [value, setValue] = React.useState(initialValue)
-
-  return <DisabledInput value={value} disabled={true} />
+const NotEditableCell = ({ value: initialValue, row: { index }, column: { id } }: any) => {
+  return <DisabledInput value={initialValue} disabled={true} />
 }
 
 export const EditableCell = ({
@@ -54,10 +34,6 @@ export const EditableCell = ({
 
   // We'll only update the external data when the input is blurred
   const onBlur = () => {
-    console.log('initialValue', initialValue)
-    console.log('index', index)
-    console.log('id', id)
-    console.log('new value', value)
     updateData(index, id, value)
   }
 
@@ -151,7 +127,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
           })}
         </tbody>
       </TargetsTable>
-      <div className='pagination'>
+      <Pagination>
         <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
           {'<<'}
         </button>{' '}
@@ -194,7 +170,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
             </option>
           ))}
         </select>
-      </div>
+      </Pagination>
     </TargetsContainer>
   )
 }
@@ -222,7 +198,7 @@ const DisabledInput = styled.input`
   background-color: inherit;
   font-size: 1rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-  'Droid Sans', 'Helvetica Neue', sans-serif;
+    'Droid Sans', 'Helvetica Neue', sans-serif;
 `
 
 const TableRow = styled.tr`
@@ -242,7 +218,6 @@ const TargetsContainer = styled.div`
 `
 
 const TargetsTable = styled.table`
-  //border-spacing: 0.5rem;
   border-collapse: collapse;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
 `
