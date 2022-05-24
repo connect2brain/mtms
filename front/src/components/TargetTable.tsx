@@ -108,7 +108,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
         </thead>
 
         <tbody {...getTableBodyProps()}>
-          {page.map((row: Row, i: number) => {
+          {page.map((row: Row) => {
             prepareRow(row)
             return (
               <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
