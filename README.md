@@ -97,7 +97,9 @@ docker-compose up
 
 #### Troubleshooting
 
-These two links should be useful for trouble shooting
+These two links should be useful for troubleshooting:
+1) https://github.com/microsoft/WSL/issues/6430
+2) https://stackoverflow.com/questions/61860208/wsl-2-run-graphical-linux-desktop-applications-from-windows-10-bash-shell-erro
 
 ### Windows
 
