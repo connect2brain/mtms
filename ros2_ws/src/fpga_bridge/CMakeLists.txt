@@ -86,6 +86,22 @@ target_include_directories(stimulation_pulse_event_handler
 
 ament_target_dependencies(stimulation_pulse_event_handler rclcpp std_msgs fpga_interfaces)
 
+# Install trigger out pulse event handler.
+
+add_executable(trigger_out_pulse_event_handler
+  src/nodes/trigger_out_pulse_event_handler.cpp
+  src/lib/serdes.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+)
+
+target_include_directories(trigger_out_pulse_event_handler
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(trigger_out_pulse_event_handler rclcpp std_msgs fpga_interfaces)
+
 # Install send event trigger handler.
 
 add_executable(event_trigger_handler
@@ -108,6 +124,7 @@ install(TARGETS
   safety_monitor_bridge
   set_power_handler
   stimulation_pulse_event_handler
+  trigger_out_pulse_event_handler
   event_trigger_handler
   DESTINATION lib/${PROJECT_NAME})
 
