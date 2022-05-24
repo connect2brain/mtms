@@ -50,7 +50,6 @@ function App() {
   )
 
   const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any) => {
-    console.log(rowIndex, key, value)
     setSkipPageReset(true)
 
     const newTargets = [...targets]
@@ -67,7 +66,6 @@ function App() {
       name: oldTarget.name,
       [requestKey]: value,
     });
-    console.log(key, requestKey, request, rosServicesByKey)
 
     if (!Object.prototype.hasOwnProperty.call(rosServicesByKey, key)) {
       console.error(`Key ${key} is not changeable`)
