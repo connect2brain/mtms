@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react';
 
 import { useTable, usePagination, Row } from 'react-table'
 import styled from 'styled-components'
@@ -16,17 +16,22 @@ export const EditableCell = ({
   updateData, // This is a custom function that we supplied to our table instance
 }: any) => {
   // We need to keep and update the state of the cell normally
-  const [value, setValue] = React.useState(initialValue)
+  const [value, setValue] = useState(initialValue)
+  const [changed, setChanged] = useState<boolean>(false)
 
   const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
 
   const onChange = (e: any) => {
     setValue(e.target.value)
+    setChanged(true)
   }
 
   // We'll only update the external data when the input is blurred
   const onBlur = () => {
-    updateData(index, id, value)
+    if (changed) {
+      updateData(index, id, value)
+      setChanged(false)
+    }
   }
 
   const handleKeyPress = (event: any) => {
