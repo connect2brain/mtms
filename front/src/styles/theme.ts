@@ -2,17 +2,17 @@
 
 //const css = cssFn as unknown as ThemedCssFunction<never>;
 
-const pxToRem = (px: number) => `${px / 16}rem`;
+const pxToRem = (px: number) => `${px / 16}rem`
 
 const theme = {
   rem: pxToRem,
   colors: {
     red: 'red',
-    primary: 'black'
+    primary: 'black',
   },
   spacing: {},
   typography: {},
-  borderRadius: pxToRem(5)
+  borderRadius: pxToRem(5),
 }
 
 export type Theme = typeof theme
