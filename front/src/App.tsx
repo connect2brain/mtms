@@ -2,7 +2,7 @@ import React from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
-import Targets from 'views/Targets';
+import Targets from 'views/Targets'
 
 function App() {
   return (
