@@ -1,21 +1,15 @@
 version: '2'
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    # TODO: Change hard-coded port to a port read from the env file
+  front:
+    build: ./front/
     ports:
-      - "8080:8080"
+      - "3000:3000"
     environment:
-      # Fixes hot reload when using Windows/Mac. An explanation:
-      #
-      # https://daten-und-bass.io/blog/enabling-hot-reloading-with-vuejs-and-vue-cli-in-docker/
-      #
       - CHOKIDAR_USEPOLLING=true
     volumes:
-      - ./frontend/src:/app/src
+      - './front:/app'
+      - '/app/node_modules'
   rosbridge:
     build:
       context: .
