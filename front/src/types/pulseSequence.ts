@@ -10,6 +10,7 @@ export interface PulseSequence {
   nofPulsesInBursts: number
   channelInfo: ChannelInfo[]
 }
+
 interface ChannelInfo {
   channelIndex: number
   voltage: number
