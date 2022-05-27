@@ -76,6 +76,31 @@ xhost local:root
 docker-compose up
 ```
 
+### WSL
+
+- Install XMing on Windows
+
+- Possibly also follow [these](https://github.com/microsoft/WSL/issues/6430) instructions but replace VcXsrv with Xming. So Control Panel > System and Security > Windows Defender Firewall > Advanced Settings > Inbound Rules > New Rule... > Program > %ProgramFiles%\Xming\Xming.exe > Allow the connection > checked Domain/Private/Public > Named and Confirmed Rule.
+
+- Run the rest of the commands in WSL
+
+- Install Docker and Docker compose
+
+- Check your `$DISPLAY` variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
+
+- Run the following commands on the root directory of the repository
+
+```
+xhost local:root
+docker-compose up
+```
+
+#### Troubleshooting
+
+These two links should be useful for troubleshooting:
+1) https://github.com/microsoft/WSL/issues/6430
+2) https://stackoverflow.com/questions/61860208/wsl-2-run-graphical-linux-desktop-applications-from-windows-10-bash-shell-erro
+
 ### Windows
 
 #### Setup (done only once)
