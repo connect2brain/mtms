@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
-import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from 'types/ros'
+import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from 'types/target'
 import { addTargetClient, positionListener, rosServicesByKey, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import ROSLIB from 'roslib'
