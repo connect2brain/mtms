@@ -1,6 +1,6 @@
 import ROSLIB from 'roslib';
 import { ROS_URL } from '../utils/constants';
-import { PositionMessage, TargetMessage } from '../types/ros';
+import { PositionMessage, TargetMessage } from '../types/target';
 
 export const ros = new ROSLIB.Ros({
   url : ROS_URL
