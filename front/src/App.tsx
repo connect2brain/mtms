@@ -3,13 +3,20 @@ import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
 import Targets from 'views/Targets'
+import { Route, Routes } from 'react-router-dom'
+import PulseSequenceConfiguration from './views/PulseSequenceConfiguration'
 
 function App() {
   return (
     <Providers>
+      <Header>mTMS control panel</Header>
       <Wrapper>
-        <Header>mTMS control panel</Header>
-        <Targets />
+        <Routes>
+          <Route path='/' element={<PulseSequenceConfiguration />}>
+            <Route index element={<PulseSequenceConfiguration />} />
+            <Route path='/targets' element={<Targets />} />
+          </Route>
+        </Routes>
       </Wrapper>
     </Providers>
   )
