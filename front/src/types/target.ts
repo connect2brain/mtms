@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib';
+import ROSLIB from 'roslib'
 
 export interface EulerAngles {
   alpha: number;
