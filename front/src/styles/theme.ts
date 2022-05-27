@@ -9,6 +9,7 @@ const theme = {
   colors: {
     red: 'red',
     primary: 'black',
+    disabled: 'grey'
   },
   spacing: {},
   typography: {},

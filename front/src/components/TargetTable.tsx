@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 
 import { useTable, usePagination, Row } from 'react-table'
 import styled from 'styled-components'
-import { ChangeableKey } from '../types/ros'
+import { ChangeableKey } from '../types/target'
 
 const NotEditableCell = ({ value: initialValue }: any) => {
   return <DisabledInput value={initialValue} disabled={true} />
