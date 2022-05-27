@@ -34,9 +34,22 @@ const ChannelContainer = styled.div<{
 `
 /** TODO: button to add additional channels */
 const PulseSequenceConfiguration = () => {
-  const { channels, setChannels } = useStore((state) => state)
-
-  const [description, setDescription] = useState<string>('')
+  const {
+    channels,
+    setChannels,
+    iti,
+    ibi,
+    nofBurstsInTrains,
+    nofTrains,
+    isis,
+    setIti,
+    setIbi,
+    setNofBurstsInTrains,
+    setNofTrains,
+    setIsis,
+    nofPulsesInBursts,
+    setNofPulsesInBursts,
+  } = useStore((state) => state)
 
   const startSequence = (event: any) => {
     const sequenceData = {}
@@ -46,22 +59,37 @@ const PulseSequenceConfiguration = () => {
 
   return (
     <div>
-      <label htmlFor='iti'>Inter-train interval (iti) {' '}</label>
-      <input name='iti' type='number' value={500}/>
-      <br/>
-      <label htmlFor='ibi'>Inter-burst interval (ibi) {' '}</label>
-      <input name='ibi' type='number' value={500}/>
-      <br/>
-      <label htmlFor='nofPulsesInBursts'>Number of pulses in bursts {' '}</label>
-      <input name='nofPulsesInBursts' type='number' value={3}/>
-      <br/>
-      <label htmlFor='nofBurstsInTrains'>Number of bursts in trains {' '}</label>
-      <input name='nofBurstsInTrains' type='number' value={3}/>
-      <br/>
-      <label htmlFor='nofTrains'>Number of trains {' '}</label>
-      <input name='nofTrains' type='number' value={1}/>
-      <br/>
-      <br/>
+      <label htmlFor='iti'>Inter-train interval (iti) </label>
+      <input name='iti' type='number' value={iti} onChange={(event) => setIti(Number(event.target.value))} />
+      <br />
+      <label htmlFor='ibi'>Inter-burst interval (ibi) </label>
+      <input name='ibi' type='number' value={ibi} onChange={(event) => setIbi(Number(event.target.value))} />
+      <br />
+      <label htmlFor='nofPulsesInBursts'>Number of pulses in bursts </label>
+      <input
+        name='nofPulsesInBursts'
+        type='number'
+        value={nofPulsesInBursts}
+        onChange={(event) => setNofPulsesInBursts(Number(event.target.value))}
+      />
+      <br />
+      <label htmlFor='nofBurstsInTrains'>Number of bursts in trains </label>
+      <input
+        name='nofBurstsInTrains'
+        type='number'
+        value={nofBurstsInTrains}
+        onChange={(event) => setNofBurstsInTrains(Number(event.target.value))}
+      />
+      <br />
+      <label htmlFor='nofTrains'>Number of trains </label>
+      <input
+        name='nofTrains'
+        type='number'
+        value={nofTrains}
+        onChange={(event) => setNofTrains(Number(event.target.value))}
+      />
+      <br />
+      <br />
 
       <h2>Channels</h2>
       <ChannelsContainer>
@@ -70,7 +98,7 @@ const PulseSequenceConfiguration = () => {
         ))}
       </ChannelsContainer>
 
-      <br/>
+      <br />
       <button onClick={startSequence}>Start sequence</button>
     </div>
   )
