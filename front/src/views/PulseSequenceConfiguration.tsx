@@ -20,7 +20,7 @@ const Channel = (props: ChannelInfoWithEnabled) => {
 
   return (
     <ChannelContainer enabled={enabled}>
-      <input name='enabled' type='checkbox' onChange={handleOnChange} />
+      <input name='enabled' type='checkbox' checked={enabled} onChange={handleOnChange} />
       Channel {channelIndex} <label htmlFor='voltage'>Voltage: </label>
       <input name='voltage' type='number' disabled={!enabled} value={voltage} onChange={handleOnChange} />
     </ChannelContainer>
@@ -50,12 +50,6 @@ const PulseSequenceConfiguration = () => {
     nofPulsesInBursts,
     setNofPulsesInBursts,
   } = useStore((state) => state)
-
-  const startSequence = (event: any) => {
-    const sequenceData = {}
-
-    console.log('starting sequence:', sequenceData)
-  }
 
   const isiChangeHandler = (value: string, index: number) => {
     const newIsis = [...isis]
@@ -138,7 +132,7 @@ const PulseSequenceConfiguration = () => {
       <br />
       <br />
 
-      <h2>Channels</h2>
+      <h3>Channels</h3>
       <ChannelsContainer>
         {channels.map((channel) => (
           <Channel key={`channel-${channel.channelIndex}`} {...channel} />
@@ -146,7 +140,6 @@ const PulseSequenceConfiguration = () => {
       </ChannelsContainer>
 
       <br />
-      <button onClick={startSequence}>Start sequence</button>
     </div>
   )
 }
