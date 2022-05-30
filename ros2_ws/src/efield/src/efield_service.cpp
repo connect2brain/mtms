@@ -8,7 +8,7 @@
 #include <cstdlib>
 #include <memory>
 
-#include <efield_estimation/efield_estimation.h>
+#include <efield_estimation.h>
 
 using namespace std::chrono_literals;
 
