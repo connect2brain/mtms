@@ -20,6 +20,10 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
   neuronavigation:
     build:
       context: .

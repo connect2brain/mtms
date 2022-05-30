@@ -27,6 +27,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PoseUsingEulerAngles.msg"
   "msg/Target.msg"
   "msg/PlannerState.msg"
+  "msg/ChannelInfo.msg"
+  "msg/Experiment.msg"
+  "msg/PulseSequence.msg"
   "srv/AddTarget.srv"
   "srv/ChangeComment.srv"
   "srv/RemoveTarget.srv"
@@ -36,6 +39,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ToggleVisible.srv"
   "srv/TriggerPulse.srv"
   "srv/ToggleNavigation.srv"
+  "srv/StartPulseSequence.srv"
   DEPENDENCIES geometry_msgs
  )
 
