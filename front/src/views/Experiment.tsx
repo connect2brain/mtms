@@ -1,21 +1,66 @@
 import React, { useState } from 'react'
-import useStore from '../providers/state'
 import PulseSequenceConfiguration from './PulseSequenceConfiguration'
+import useStore from '../providers/state'
+import { ExperimentMessage } from '../types/pulseSequence'
+import { startExperimentService } from '../services/ros'
+import ROSLIB from 'roslib'
 
 const Experiment = () => {
-  const { description, setDescription } = useStore((state) => state)
+  const { description, setDescription, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } =
+    useStore((state) => state)
 
   const startSequence = (event: any) => {
-    const sequenceData = {}
+    const channelData = channels
+      .filter((channel) => channel.enabled)
+      .map((fullChannel) => {
+        const { enabled, ...channel } = fullChannel
+        return channel
+      })
 
-    console.log('starting sequence:', sequenceData)
+    const messageData: ExperimentMessage = {
+      description,
+      pulseSequence: {
+        iti,
+        ibi,
+        nofBurstsInTrains,
+        nofPulsesInBursts,
+        nofTrains,
+        isis,
+        channelInfo: channelData,
+      },
+    }
+
+    console.log('starting sequence:', messageData)
+
+    const message = new ROSLIB.Message(messageData)
+    const request = new ROSLIB.ServiceRequest({
+      experiment: message,
+    })
+
+    console.log('request', request)
+    startExperimentService.callService(
+      request,
+      (response) => {
+        if (!response.success) {
+          console.error('FAILED TO START SEQUENCE, response', response)
+        }
+      },
+      (error) => {
+        console.error(error)
+      },
+    )
   }
 
   return (
     <div>
-      <h2>Pulse sequence configuration</h2>
+      <h1>Experiment</h1>
       <label htmlFor='description'>Description </label>
-      <input name='description' type='text' value={description} onChange={(event) => setDescription(event.target.value)} />
+      <input
+        name='description'
+        type='text'
+        value={description}
+        onChange={(event) => setDescription(event.target.value)}
+      />
 
       <br />
 
