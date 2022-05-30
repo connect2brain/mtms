@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ChannelInfoWithEnabled, Experiment, PulseSequence } from '../types/pulseSequence'
+import { ChannelInfoWithEnabled } from '../types/pulseSequence'
 import styled from 'styled-components'
 import useStore from '../providers/state'
 
@@ -36,7 +36,6 @@ const ChannelContainer = styled.div<{
 const PulseSequenceConfiguration = () => {
   const {
     channels,
-    setChannels,
     iti,
     ibi,
     nofBurstsInTrains,
@@ -76,6 +75,7 @@ const PulseSequenceConfiguration = () => {
 
   return (
     <div>
+      <h2>Pulse sequence configuration</h2>
       <label htmlFor='iti'>Inter-train interval (iti) </label>
       <input name='iti' type='number' value={iti} min={0} onChange={(event) => setIti(Number(event.target.value))} />
       <br />
