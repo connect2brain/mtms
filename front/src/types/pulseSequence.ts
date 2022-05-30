@@ -1,5 +1,4 @@
-
-export interface Experiment {
+export interface ExperimentMessage {
   description: string
   pulseSequence: PulseSequence
 }
@@ -9,6 +8,9 @@ export interface PulseSequence {
   nofBurstsInTrains: number
   nofPulsesInBursts: number
   channelInfo: ChannelInfo[]
+  iti: number
+  ibi: number
+  isis: number[]
 }
 
 interface ChannelInfo {
