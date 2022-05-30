@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
 import PulseSequenceConfiguration from './views/PulseSequenceConfiguration'
+import Experiment from './views/Experiment'
 
 function App() {
   return (
@@ -12,8 +13,8 @@ function App() {
       <Header>mTMS control panel</Header>
       <Wrapper>
         <Routes>
-          <Route path='/' element={<PulseSequenceConfiguration />}>
-            <Route index element={<PulseSequenceConfiguration />} />
+          <Route path='/' element={<Experiment />}>
+            <Route index element={<Experiment />} />
             <Route path='/targets' element={<Targets />} />
           </Route>
         </Routes>
