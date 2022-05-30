@@ -23,12 +23,7 @@ COPY ros2_ws/src/neuronavigation_interfaces ros2_ws/src/neuronavigation_interfac
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-
-COPY ros2_ws/src/efield/efield_libraries/libs/linalg ros2_ws/src/efield/efield_libraries/libs/linalg/
-COPY ros2_ws/src/efield/efield_libraries/libs/tmsutil ros2_ws/src/efield/efield_libraries/libs/tmsutil/
-COPY ros2_ws/src/efield/efield_libraries/libs/phi ros2_ws/src/efield/efield_libraries/libs/phi/
-COPY ros2_ws/src/efield/efield_libraries/libs/tms ros2_ws/src/efield/efield_libraries/libs/tms/
-COPY ros2_ws/src/efield/efield_libraries/efield_estimation ros2_ws/src/efield/efield_libraries/efield_estimation/
+COPY ros2_ws/src/efield/efield_libraries ros2_ws/src/efield/efield_libraries/
 
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build
