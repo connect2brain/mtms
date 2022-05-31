@@ -25,10 +25,12 @@ class StartPulseSequenceNode(Node):
         pulse_durations = []
 
         pulses = []
-        # wth, pieces or pulses??
-        for pulse in pulses:
+        # TODO: different length pulses?
+        for i in range(pulse_sequence.nof_pulses_in_bursts):
+            pulse = generate_pulse(pulse_sequence.channel_info[0].channel_index, pulse_sequence.channel_info[0].voltage)
             pulse_duration = pulse_duration_in_us(pulse)
             pulse_durations.append(pulse_duration)
+            pulses.append(pulse)
 
         longest_pulse_duration = max(pulse_durations)
 
