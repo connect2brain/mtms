@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 from mtms_interfaces.srv import StartPulseSequence
 from pulses import generate_pulse
-from datetime import datetime
+from time import time_ns
 
 START_DELAY = 100
 
@@ -12,7 +12,7 @@ class StartPulseSequenceNode(Node):
     def __init__(self):
         super().__init__('start_pulse_sequence')
         self.create_service(StartPulseSequence, '/stimulation/start_experiment', self.start_pulse_sequence)
-        self.start_time = datetime.now().microsecond
+        self.start_time = time_ns() / 1000
 
     def sequence_is_possible(self, sequence):
         return True
@@ -48,6 +48,15 @@ class StartPulseSequenceNode(Node):
                             'time_us': self.calculate_time_us(train_interval, burst_interval, isi),
                             'delay_us': 0
                         }
+
+                        stimulation_pulse_event = {
+                            'stimulation_pulse_event': {
+                                'pieces': pulse,
+                                'channel': channel_index,
+                                'event_info': event_info
+                            }
+                        }
+                        self.get_logger().info(str(stimulation_pulse_event))
 
                         event_id += 1
                 burst_interval += pulse_sequence.ibi
