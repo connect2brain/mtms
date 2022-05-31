@@ -9,7 +9,13 @@ const Channel = (props: ChannelInfoWithEnabled) => {
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const target = event.target.name
-    const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
+    const value =
+      event.target.type === 'checkbox'
+        ? event.target.checked
+        : event.target.type === 'number'
+        ? Number(event.target.value)
+        : event.target.value
+
     const newChannels = [...channels]
     newChannels[channelIndex - 1] = {
       ...props,

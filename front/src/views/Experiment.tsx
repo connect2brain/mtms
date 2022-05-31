@@ -47,6 +47,7 @@ const Experiment = () => {
           console.error('FAILED TO START SEQUENCE, response', response)
         } else {
           console.log('Started sequence')
+          console.log(response.sequence)
         }
       },
       (error) => {
