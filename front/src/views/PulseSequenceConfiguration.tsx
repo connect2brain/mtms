@@ -59,14 +59,15 @@ const PulseSequenceConfiguration = () => {
   const nofPulsesInBurstChangeHandler = (value: number) => {
     const last = isis.length > 0 ? isis[isis.length - 1] : 500
 
-    const nofElementsToAdd = value - isis.length
+    const nofElementsToAdd = value - isis.length - 1
+    console.log(nofElementsToAdd)
 
     let newIsis: number[]
     if (nofElementsToAdd > 0) {
       const elementsToAdd = Array(nofElementsToAdd).fill(last)
       newIsis = isis.concat(...elementsToAdd)
     } else {
-      newIsis = isis.slice(0, value)
+      newIsis = isis.slice(0, value - 1)
     }
 
     setNofPulsesInBursts(value)
