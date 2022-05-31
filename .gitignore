@@ -5,3 +5,5 @@ build/*
 log/*
 install/*
 .idea
+__pycache__
+.vscode
