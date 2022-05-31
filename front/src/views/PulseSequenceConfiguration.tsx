@@ -60,7 +60,6 @@ const PulseSequenceConfiguration = () => {
     const last = isis.length > 0 ? isis[isis.length - 1] : 500
 
     const nofElementsToAdd = value - isis.length - 1
-    console.log(nofElementsToAdd)
 
     let newIsis: number[]
     if (nofElementsToAdd > 0) {
