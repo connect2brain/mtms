@@ -3,3 +3,5 @@
 Experiment experiment
 ---
 bool success
+string status "OK"
+StimulationPulseEvent[] sequence

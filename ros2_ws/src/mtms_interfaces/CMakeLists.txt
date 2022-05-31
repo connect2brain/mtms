@@ -30,6 +30,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ChannelInfo.msg"
   "msg/Experiment.msg"
   "msg/PulseSequence.msg"
+  "msg/Event/EventInfo.msg"
+  "msg/Event/StimulationPulseEvent.msg"
+  "msg/Event/StimulationPulsePiece.msg"
   "srv/AddTarget.srv"
   "srv/ChangeComment.srv"
   "srv/RemoveTarget.srv"
@@ -40,6 +43,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/TriggerPulse.srv"
   "srv/ToggleNavigation.srv"
   "srv/StartPulseSequence.srv"
+  "srv/SendStimulationPulseEvent.srv"
   DEPENDENCIES geometry_msgs
  )
 
