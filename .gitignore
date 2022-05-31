@@ -7,3 +7,4 @@ install/*
 .idea
 __pycache__
 .vscode
+cmake-build-debug
