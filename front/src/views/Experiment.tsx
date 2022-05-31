@@ -4,6 +4,7 @@ import useStore from '../providers/state'
 import { ExperimentMessage } from '../types/pulseSequence'
 import { startExperimentService } from '../services/ros'
 import ROSLIB from 'roslib'
+import { objectKeysToSnakeCase } from '../utils'
 
 const Experiment = () => {
   const { description, setDescription, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } =
@@ -32,7 +33,10 @@ const Experiment = () => {
 
     console.log('starting sequence:', messageData)
 
-    const message = new ROSLIB.Message(messageData)
+    const messageDataSnakeCase = objectKeysToSnakeCase(messageData)
+    console.log('as snake case', messageDataSnakeCase)
+
+    const message = new ROSLIB.Message(messageDataSnakeCase)
     const request = new ROSLIB.ServiceRequest({
       experiment: message,
     })
@@ -43,6 +47,8 @@ const Experiment = () => {
       (response) => {
         if (!response.success) {
           console.error('FAILED TO START SEQUENCE, response', response)
+        } else {
+          console.log('Started sequence')
         }
       },
       (error) => {
