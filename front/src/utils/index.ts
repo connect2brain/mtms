@@ -11,6 +11,11 @@ const isObject = function (obj: any) {
 const camelToUnderscore = (key: string) => {
   return key.replace(/([A-Z])/g, '_$1').toLowerCase()
 }
+const snakeToCamel = (str: string) => {
+  return str.replace(/([-_][a-z])/gi, ($1) => {
+    return $1.toUpperCase().replace('-', '').replace('_', '')
+  })
+}
 
 export const objectKeysToSnakeCase = (obj: any): any => {
   if (isObject(obj)) {
