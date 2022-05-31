@@ -38,7 +38,7 @@ def generate_pulse(channel, voltage):
     return pulses[channel]
 
 
-def pulse_length_in_us(pulse):
+def pulse_duration_in_us(pulse):
     s = 0
     for piece in pulse:
         s += piece.duration_in_ticks * TICK_DURATION_IN_US
