@@ -34,14 +34,12 @@ const Experiment = () => {
     console.log('starting sequence:', messageData)
 
     const messageDataSnakeCase = objectKeysToSnakeCase(messageData)
-    console.log('as snake case', messageDataSnakeCase)
 
     const message = new ROSLIB.Message(messageDataSnakeCase)
     const request = new ROSLIB.ServiceRequest({
       experiment: message,
     })
 
-    console.log('request', request)
     startExperimentService.callService(
       request,
       (response) => {
