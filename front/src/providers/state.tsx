@@ -69,7 +69,7 @@ const useStore = create<Store>(
     description: '',
     setDescription: (description) => set({ description }),
 
-    isis: [3, 3, 3],
+    isis: [3, 3],
     setIsis: (isis) => set({ isis }),
 
     nofPulsesInBursts: 3,
