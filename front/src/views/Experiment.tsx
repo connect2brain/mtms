@@ -5,12 +5,19 @@ import { ExperimentMessage } from '../types/pulseSequence'
 import { startExperimentService } from '../services/ros'
 import ROSLIB from 'roslib'
 import { objectKeysToSnakeCase } from '../utils'
+import styled from 'styled-components'
 
 const Experiment = () => {
   const { description, setDescription, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } =
     useStore((state) => state)
 
+  const [statusMessage, setStatusMessage] = useState<string>('')
+  const [status, setStatus] = useState<'OK' | 'ERROR'>('OK')
+
   const startSequence = (event: any) => {
+    setStatus('OK')
+    setStatusMessage('Starting sequence...')
+
     const channelData = channels
       .filter((channel) => channel.enabled)
       .map((fullChannel) => {
@@ -45,13 +52,19 @@ const Experiment = () => {
       (response) => {
         if (!response.success) {
           console.error('FAILED TO START SEQUENCE, response', response)
+          setStatus('ERROR')
+          setStatusMessage(`Failed to start sequence! Error: ${response.status}`)
         } else {
           console.log('Started sequence')
           console.log(response.sequence)
+          setStatus('OK')
+          setStatusMessage('Started sequence')
         }
       },
       (error) => {
         console.error(error)
+        setStatus('ERROR')
+        setStatusMessage(`Failed to start sequence! Error: ${error}`)
       },
     )
   }
@@ -72,8 +85,17 @@ const Experiment = () => {
       <PulseSequenceConfiguration />
 
       <button onClick={startSequence}>Start sequence</button>
+      <div>
+        <StatusMessage status={status}>{statusMessage}</StatusMessage>
+      </div>
     </div>
   )
 }
+
+const StatusMessage = styled.p<{
+  status: 'OK' | 'ERROR'
+}>`
+  color: ${(p) => (p.status === 'OK' ? p.theme.colors.primary : p.theme.colors.error)};
+`
 
 export default Experiment

@@ -82,10 +82,11 @@ const PulseSequenceConfiguration = () => {
   return (
     <div>
       <h2>Pulse sequence configuration</h2>
-      <label htmlFor='iti'>Inter-train interval (iti) </label>
+      <label htmlFor='iti'>Inter-train interval (iti) (<span>&#181;</span>) </label>
+
       <input name='iti' type='number' value={iti} min={0} onChange={(event) => setIti(Number(event.target.value))} />
       <br />
-      <label htmlFor='ibi'>Inter-burst interval (ibi) </label>
+      <label htmlFor='ibi'>Inter-burst interval (ibi) (<span>&#181;</span>) </label>
       <input name='ibi' type='number' value={ibi} min={0} onChange={(event) => setIbi(Number(event.target.value))} />
       <br />
 
@@ -112,7 +113,7 @@ const PulseSequenceConfiguration = () => {
       {isis.map((isi, index) => {
         return (
           <div key={`isi-${index}`}>
-            <label htmlFor={`isi-${index}`}>Interstimulus interval (isi) {index + 1} </label>
+            <label htmlFor={`isi-${index}`}>Interstimulus interval (isi) {index + 1} (<span>&#181;</span>) </label>
             <input
               name={`isi-${index}`}
               type='number'
