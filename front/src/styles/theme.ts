@@ -9,7 +9,9 @@ const theme = {
   colors: {
     red: 'red',
     primary: 'black',
-    disabled: 'grey'
+    disabled: 'grey',
+    error: '#a21010',
+    ok: '#258f25'
   },
   spacing: {},
   typography: {},
