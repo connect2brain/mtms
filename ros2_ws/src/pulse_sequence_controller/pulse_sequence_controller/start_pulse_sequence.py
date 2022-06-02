@@ -20,6 +20,7 @@ class StartPulseSequenceNode(Node):
     def pulse_sequence_is_possible(self, pulse_sequence):
         result = TestResult()
         result.result = True
+        return result
         real_iti = pulse_sequence.iti - pulse_sequence.ibi * pulse_sequence.nof_bursts_in_trains
 
         pulse_durations = []
@@ -32,14 +33,14 @@ class StartPulseSequenceNode(Node):
             pulse_durations.append(pulse_duration)
             pulses.append(pulse)
 
-        longest_pulse_duration = max(pulse_durations)
+        last_pulse_duration = pulse_durations[-1]
 
-        # IBI >= sum(isis) + longest pulse
-        if not pulse_sequence.ibi >= sum(pulse_sequence.isis) + longest_pulse_duration:
+        # IBI >= sum(isis) + last pulse
+        if not pulse_sequence.ibi >= sum(pulse_sequence.isis) + last_pulse_duration:
             result.result = False
             result.reason = 'Assert failure: IBI >= ' \
-                            'sum(isis) + longest_pulse_duration: {} >= {} + {}' \
-                .format(pulse_sequence.ibi, sum(pulse_sequence.isis), longest_pulse_duration)
+                            'sum(isis) + last_pulse_duration: {} >= {} + {}' \
+                .format(pulse_sequence.ibi, sum(pulse_sequence.isis), last_pulse_duration)
             return result
 
         # ITI >= IBI * nofBurstsInTrains
@@ -98,7 +99,7 @@ class StartPulseSequenceNode(Node):
         return int(self.start_time + self.start_delay + train_interval + burst_interval + stimulus_interval)
 
     def send_stimulation_pulse_event(self, event):
-        self.get_logger().info("SENDING: " + str(event))
+        self.get_logger().info('SENDING: ' + str(event))
 
     def send_charge_event(self, channel_info):
         charge_event = {
