@@ -27,10 +27,10 @@ pulses = {}
 TICK_DURATION_IN_US = 25
 
 
-def pulse_piece_from_dict(d):
+def pulse_piece_from_dict(pulse_dict):
     piece = StimulationPulsePiece()
-    piece.mode = d["mode"]
-    piece.duration_in_ticks = d["duration_in_ticks"]
+    piece.mode = pulse_dict['mode']
+    piece.duration_in_ticks = pulse_dict['duration_in_ticks']
     return piece
 
 
@@ -39,10 +39,10 @@ def generate_pulse(channel, voltage):
 
 
 def pulse_duration_in_us(pulse):
-    s = 0
+    duration = 0
     for piece in pulse:
-        s += piece.duration_in_ticks * TICK_DURATION_IN_US
-    return s
+        duration += piece.duration_in_ticks * TICK_DURATION_IN_US
+    return duration / 1000
 
 
 for index in range(0, 6):
