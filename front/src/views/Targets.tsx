@@ -4,7 +4,8 @@ import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMe
 import { addTargetClient, positionListener, rosServicesByKey, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import ROSLIB from 'roslib'
-import { EditableCell, TargetTable } from 'components/TargetTable'
+import { EditableCell, EyeCell, TargetTable } from 'components/TargetTable'
+import Eye from 'components/Eye'
 
 const Targets = () => {
   const [targets, setTargets] = useState<Target[]>([])
@@ -19,17 +20,19 @@ const Targets = () => {
         Header: 'Targets',
         columns: [
           {
+            Header: () => <Eye visible={true} />,
+            accessor: 'visible',
+            width: '10%',
+            Cell: EyeCell,
+          },
+          {
             Header: 'Name',
             accessor: 'name',
             Cell: EditableCell,
           },
           {
-            Header: 'Orientation (alpha, beta, gamma)',
-            accessor: 'orientation',
-          },
-          {
-            Header: 'Position (x, y, z)',
-            accessor: 'position',
+            Header: 'Type',
+            accessor: 'type',
           },
           {
             Header: 'Comment',
@@ -42,7 +45,7 @@ const Targets = () => {
     [],
   )
 
-  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any) => {
+  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => {
     setSkipPageReset(true)
 
     const newTargets = [...targets]
@@ -54,11 +57,18 @@ const Targets = () => {
     }
     setTargets(newTargets)
 
-    const requestKey = `new_${key}`
-    const request = new ROSLIB.ServiceRequest({
+    let requestObject = {
       name: oldTarget.name,
-      [requestKey]: value,
-    })
+    }
+    if (!toggle) {
+      const requestKey = `new_${key}`
+      requestObject = {
+        ...requestObject,
+        [requestKey]: value,
+      }
+    }
+    const request = new ROSLIB.ServiceRequest(requestObject)
+    console.log(request)
 
     if (!Object.prototype.hasOwnProperty.call(rosServicesByKey, key)) {
       console.error(`Key ${key} is not changeable`)
@@ -131,9 +141,9 @@ const Targets = () => {
     return targets.map((target) => {
       return {
         name: target.name,
-        orientation: expand(target.pose.orientation),
-        position: expand(target.pose.position),
         comment: target.comment,
+        type: target.type,
+        visible: target.visible,
       }
     })
   }
