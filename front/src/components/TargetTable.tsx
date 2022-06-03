@@ -4,6 +4,7 @@ import { useTable, usePagination, Row } from 'react-table'
 import styled from 'styled-components'
 import { ChangeableKey } from '../types/target'
 import Eye from './Eye'
+import useStore from '../providers/state'
 
 const NotEditableCell = ({ value: initialValue }: any) => {
   return <DisabledInput value={initialValue} disabled={true} />
@@ -75,18 +76,19 @@ export const EditableCell = ({
 }
 
 const SelectableTableRow = (props: any) => {
-  const { selected, index, updateData } = props
+  const { index, updateData } = props
+  const { targets, setTargets } = useStore((state) => state)
 
   const onClick = (event: any) => {
     event.preventDefault()
-    console.log('clicked row', index, selected)
+    console.log('clicked row', index)
+    const selected = targets[index].selected
 
     updateData(index, 'selected', !selected, true)
   }
 
-
   return (
-    <TableRow {...props} onClick={onClick} selected={selected}>
+    <TableRow {...props} onClick={onClick} selected={targets[index].selected}>
       {props.children}
     </TableRow>
   )
@@ -231,11 +233,11 @@ const TableRow = styled.tr<{
   border-bottom: 2px solid #b0b0b0;
 
   :nth-of-type(even) {
-    background-color: ${p => p.selected ? '#623c3c' : '#f3f3f3'};
+    background-color: ${(p) => (p.selected ? '#623c3c' : '#f3f3f3')};
   }
 
   :nth-of-type(odd) {
-    background-color: ${p => p.selected ? '#623c3c' : '#ffffff'};
+    background-color: ${(p) => (p.selected ? '#623c3c' : '#ffffff')};
   }
 `
 
