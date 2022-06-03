@@ -30,7 +30,7 @@ export interface Target {
 }
 
 //type ChangeableKeys = keyof Target
-export type ChangeableKey = 'name' | 'comment' | 'visible'
+export type ChangeableKey = 'name' | 'comment' | 'visible' | 'selected'
 
 export interface TargetMessage extends ROSLIB.Message {
   targets: Target[]

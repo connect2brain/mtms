@@ -140,8 +140,9 @@ const Targets = () => {
       return {
         name: target.name,
         comment: target.comment,
-        type: target.type,
+        type: target.selected,
         visible: target.visible,
+        selected: target.selected
       }
     })
   }
