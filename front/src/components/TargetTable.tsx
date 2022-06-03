@@ -74,6 +74,24 @@ export const EditableCell = ({
   return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
 }
 
+const SelectableTableRow = (props: any) => {
+  const { selected, index, updateData } = props
+
+  const onClick = (event: any) => {
+    event.preventDefault()
+    console.log('clicked row', index, selected)
+
+    updateData(index, 'selected', !selected, true)
+  }
+
+
+  return (
+    <TableRow {...props} onClick={onClick} selected={selected}>
+      {props.children}
+    </TableRow>
+  )
+}
+
 const defaultColumn = {
   Cell: NotEditableCell,
 }
@@ -130,13 +148,17 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
           {rows.map((row: Row) => {
             prepareRow(row)
             return (
-              <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
+              <SelectableTableRow
+                {...row.getRowProps()}
+                key={row.getRowProps().key}
+                index={row.index}
+                updateData={updateData}
+              >
                 {row.cells.map((cell) => {
                   return (
                     <Td
                       {...cell.getCellProps({
-                        style: {
-                        },
+                        style: {},
                       })}
                       key={cell.getCellProps().key}
                     >
@@ -144,7 +166,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
                     </Td>
                   )
                 })}
-              </TableRow>
+              </SelectableTableRow>
             )
           })}
         </Tbody>
@@ -158,12 +180,12 @@ const Th = styled.th`
   text-align: left;
   border-top: none !important;
   border-bottom: none !important;
-  box-shadow: inset 0 1px 0 #000000, inset 0 -1px 0 #000000;
+  box-shadow: inset 0 1px 0 #b0b0b0, inset 0 -1px 0 #b0b0b0;
 `
 const Td = styled.td`
   padding: 0.25rem 0.5rem;
   border: #e0e0e0;
-  
+
   textarea,
   input {
     all: unset;
@@ -182,8 +204,7 @@ const Thead = styled.thead`
   width: 100%;
   z-index: 1;
 `
-const Tbody = styled.tbody`
-`
+const Tbody = styled.tbody``
 
 const DisabledInput = styled.input`
   color: ${(p) => p.theme.colors.primary};
@@ -198,20 +219,23 @@ const HeaderTableRow = styled.tr`
   :nth-of-type(even) {
     background-color: #f3f3f3;
   }
+
   :nth-of-type(odd) {
     background-color: #ffffff;
   }
 `
 
-const TableRow = styled.tr`
-  :last-of-type {
-    border-bottom: 2px solid #797979;
-  }
+const TableRow = styled.tr<{
+  selected: boolean
+}>`
+  border-bottom: 2px solid #b0b0b0;
+
   :nth-of-type(even) {
-    background-color: #f3f3f3;
+    background-color: ${p => p.selected ? '#623c3c' : '#f3f3f3'};
   }
+
   :nth-of-type(odd) {
-    background-color: #ffffff;
+    background-color: ${p => p.selected ? '#623c3c' : '#ffffff'};
   }
 `
 
