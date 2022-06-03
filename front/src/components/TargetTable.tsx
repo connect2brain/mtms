@@ -180,7 +180,7 @@ const Td = styled.td`
 
 const Thead = styled.thead`
   position: sticky;
-  top: 0px;
+  top: 0;
   margin: 0 0 0 0;
   width: 100%;
   z-index: 1;
@@ -220,7 +220,7 @@ const TableRow = styled.tr`
 
 const TargetsContainer = styled.div`
   overflow: auto;
-  max-height: 300px;
+  width: fit-content;
 `
 
 const TargetsTable = styled.table`
