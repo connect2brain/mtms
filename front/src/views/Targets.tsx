@@ -16,31 +16,29 @@ const Targets = () => {
 
   const targetTableColumns = useMemo(
     () => [
-      {
-        Header: 'Targets',
-        columns: [
           {
             Header: () => <Eye visible={true} />,
             accessor: 'visible',
-            width: '10%',
+            width: 40,
             Cell: EyeCell,
           },
           {
             Header: 'Name',
             accessor: 'name',
+            width: 'auto',
             Cell: EditableCell,
           },
           {
             Header: 'Type',
             accessor: 'type',
+            width: 'auto',
           },
           {
             Header: 'Comment',
             accessor: 'comment',
+            width: 'auto',
             Cell: EditableCell,
           },
-        ],
-      },
     ],
     [],
   )

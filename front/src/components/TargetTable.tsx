@@ -114,6 +114,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
                   {...column.getHeaderProps({
                     style: {
                       width: column.width,
+                      minWidth: column.minWidth,
                     },
                   })}
                   key={column.getHeaderProps().key}
@@ -135,7 +136,6 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
                     <Td
                       {...cell.getCellProps({
                         style: {
-                          width: cell.column.width,
                         },
                       })}
                       key={cell.getCellProps().key}
@@ -154,27 +154,24 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
 }
 
 const Th = styled.th`
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   text-align: left;
   border-top: none !important;
   border-bottom: none !important;
   box-shadow: inset 0 1px 0 #000000, inset 0 -1px 0 #000000;
 `
 const Td = styled.td`
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.5rem;
   border: #e0e0e0;
-
+  
   textarea,
   input {
+    all: unset;
     border: 0;
     background-color: inherit;
     font-size: 1rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
       'Droid Sans', 'Helvetica Neue', sans-serif;
-  }
-
-  :nth-of-type(1) {
-    border-top: none !important;
   }
 `
 
@@ -219,16 +216,17 @@ const TableRow = styled.tr`
 `
 
 const TargetsContainer = styled.div`
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: fit-content;
+  max-height: 600px;
 `
 
 const TargetsTable = styled.table`
   border-collapse: collapse;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-  tbody:nth-of-type(1) tr:nth-of-type(1) td {
-    border-top: none !important;
-  }
+  table-layout: fixed;
+  width: 600px;
 `
 
 const EyeButton = styled.button`
