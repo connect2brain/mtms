@@ -220,13 +220,14 @@ const TargetsContainer = styled.div`
   overflow-x: hidden;
   width: fit-content;
   max-height: 600px;
+  max-width: 500px;
 `
 
 const TargetsTable = styled.table`
   border-collapse: collapse;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   table-layout: fixed;
-  width: 600px;
+  width: 100%;
 `
 
 const EyeButton = styled.button`
