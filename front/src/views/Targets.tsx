@@ -6,9 +6,10 @@ import { expand } from 'utils'
 import ROSLIB from 'roslib'
 import { EditableCell, EyeCell, TargetTable } from 'components/TargetTable'
 import Eye from 'components/Eye'
+import useStore from '../providers/state'
 
 const Targets = () => {
-  const [targets, setTargets] = useState<Target[]>([])
+  const { targets, setTargets } = useStore((state) => state)
 
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
@@ -16,29 +17,29 @@ const Targets = () => {
 
   const targetTableColumns = useMemo(
     () => [
-          {
-            Header: () => <Eye visible={true} />,
-            accessor: 'visible',
-            width: 40,
-            Cell: EyeCell,
-          },
-          {
-            Header: 'Name',
-            accessor: 'name',
-            width: 'auto',
-            Cell: EditableCell,
-          },
-          {
-            Header: 'Type',
-            accessor: 'type',
-            width: 'auto',
-          },
-          {
-            Header: 'Comment',
-            accessor: 'comment',
-            width: 'auto',
-            Cell: EditableCell,
-          },
+      {
+        Header: () => <Eye visible={true} />,
+        accessor: 'visible',
+        width: 40,
+        Cell: EyeCell,
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+      {
+        Header: 'Type',
+        accessor: 'type',
+        width: 'auto',
+      },
+      {
+        Header: 'Comment',
+        accessor: 'comment',
+        width: 'auto',
+        Cell: EditableCell,
+      },
     ],
     [],
   )
@@ -142,7 +143,7 @@ const Targets = () => {
         comment: target.comment,
         type: target.selected,
         visible: target.visible,
-        selected: target.selected
+        selected: target.selected,
       }
     })
   }
