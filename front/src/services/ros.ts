@@ -108,4 +108,5 @@ export const startExperimentService = new ROSLIB.Service({
 export const rosServicesByKey = {
   name: renameTargetService,
   comment: changeCommentService,
+  visible: toggleVisibleService
 }
