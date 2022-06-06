@@ -6,7 +6,7 @@ import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
 import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
-import { PulseSequence } from '../types/pulseSequence'
+import { Pulse, PulseSequence } from '../types/pulseSequence'
 import NotEditableCell from './TableElements/NotEditableCell'
 import SelectableTableRow from './TableElements/SelectableTableRow'
 
@@ -18,11 +18,10 @@ type TableProps = {
   columns: any[]
   data: any[]
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
-  skipPageReset: boolean
 }
 
-export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableProps) => {
-  const { targets, sequences, setSequences } = useStore((state) => state)
+export const TargetTable = ({ columns, data, updateData }: TableProps) => {
+  const { targets, sequences, setSequences } = useStore()
 
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow, rows } = useTable(
     {
@@ -49,20 +48,37 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
   }
 
   const handleNewSequence = (event: any) => {
-    const selectedTargets = targets.filter((t) => t.selected)
+    const pulses: Pulse[] = targets
+      .filter((t) => t.selected)
+      .map((target) => {
+        return {
+          target,
+          isi: 100,
+          intensity: 0.5,
+          modeDuration: 100,
+        }
+      })
+    if (pulses.length === 0) {
+      console.log('no targets selected for new sequence')
+      return
+    }
 
     const newSequence: PulseSequence = {
-      targets: selectedTargets,
+      pulses,
+      name: `sequence-${sequences.length}`,
+      selected: false,
+      visible: true,
+      comment: '',
       iti: 100,
       ibi: 100,
-      isis: [],
+      isis: pulses.map((pulse) => pulse.isi),
       channelInfo: [],
       nofBurstsInTrains: 3,
       nofTrains: 3,
       nofPulsesInBursts: 1,
     }
     setSequences(sequences.concat(newSequence))
-    console.log('Created new sequence with targets', selectedTargets.map((t) => t.name).join(', '))
+    console.log('Created new sequence with targets', pulses.map((t) => t.target.name).join(', '))
   }
 
   return (
