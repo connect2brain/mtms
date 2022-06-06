@@ -1,117 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 
-import { useTable, usePagination, Row, useExpanded } from 'react-table'
+import { useTable, Row, useExpanded } from 'react-table'
 import styled from 'styled-components'
 import { ChangeableKey } from 'types/target'
-import Eye from './Eye'
 import useStore from 'providers/state'
-import { useFocus, useFocusMemo } from 'utils'
-
-const NotEditableCell = ({ value: initialValue }: any) => {
-  return <DisabledInput value={initialValue} disabled={true} />
-}
-
-export const EyeCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateData, // This is a custom function that we supplied to our table instance
-}: any) => {
-  const [visible, setVisible] = useState(initialValue)
-
-  const onClick = (event: any) => {
-    event.stopPropagation()
-    const newVisible = !visible
-    setVisible(newVisible)
-    updateData(index, id, newVisible, true)
-  }
-
-  // If the initialValue is changed external, sync it up with our state
-  React.useEffect(() => {
-    setVisible(visible)
-  }, [visible])
-
-  return (
-    <EyeButton onClick={onClick}>
-      <Eye visible={visible} />
-    </EyeButton>
-  )
-}
-
-export const EditableCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateData, // This is a custom function that we supplied to our table instance
-}: any) => {
-  // We need to keep and update the state of the cell normally
-  const [value, setValue] = useState(initialValue)
-  const [changed, setChanged] = useState<boolean>(false)
-  const [toggle, setToggle] = useState<boolean>(true)
-
-  //const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
-  const [inputRef, setInputFocus] = useFocusMemo()
-
-  const onChange = (e: any) => {
-    if (e.target.value.length > 0) {
-      setValue(e.target.value)
-      setChanged(true)
-    }
-  }
-
-  // We'll only update the external data when the input is blurred
-  const onBlur = () => {
-    if (changed) {
-      updateData(index, id, value, false)
-      setChanged(false)
-    }
-    setToggle(true)
-  }
-
-  const handleKeyPress = (event: any) => {
-    if (event.key === 'Enter') {
-      inputRef.current?.blur()
-    }
-  }
-
-  // If the initialValue is changed external, sync it up with our state
-  useEffect(() => {
-    setValue(value)
-  }, [value])
-
-  const onDoubleClick = () => {
-    setToggle(false)
-    setTimeout(() => {
-      console.log(toggle)
-      setInputFocus()
-    }, 100)
-  }
-
-  return toggle ? (
-    <span onDoubleClick={onDoubleClick}>{value}</span>
-  ) : (
-    <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
-  )
-}
-
-const SelectableTableRow = (props: any) => {
-  const { index, updateData } = props
-  const { targets, setTargets } = useStore((state) => state)
-
-  const onClick = (event: any) => {
-    event.preventDefault()
-    console.log('clicked row', index)
-    const selected = targets[index].selected
-
-    updateData(index, 'selected', !selected, true)
-  }
-
-  return (
-    <TableRow {...props} selected={targets[index].selected} onClick={onClick}>
-      {props.children}
-    </TableRow>
-  )
-}
+import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
+import '@szhsin/react-menu/dist/index.css'
+import { PulseSequence } from '../types/pulseSequence'
+import NotEditableCell from './TableElements/NotEditableCell'
+import SelectableTableRow from './TableElements/SelectableTableRow'
 
 const defaultColumn = {
   Cell: NotEditableCell,
@@ -125,13 +22,13 @@ type TableProps = {
 }
 
 export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableProps) => {
+  const { targets, sequences, setSequences } = useStore((state) => state)
+
   const { getTableProps, getTableBodyProps, headerGroups, prepareRow, rows } = useTable(
     {
       columns,
       data,
       defaultColumn,
-      // use the skipPageReset option to disable page resetting temporarily
-      autoResetPage: skipPageReset,
       // updateMyData isn't part of the API, but
       // anything we put into these options will
       // automatically be available on the instance.
@@ -142,8 +39,34 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
     useExpanded,
   )
 
+  const [menuProps, toggleMenu] = useMenuState()
+  const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 })
+
+  const onContextMenu = (event: any) => {
+    event.preventDefault()
+    setAnchorPoint({ x: event.clientX, y: event.clientY })
+    toggleMenu(true)
+  }
+
+  const handleNewSequence = (event: any) => {
+    const selectedTargets = targets.filter((t) => t.selected)
+
+    const newSequence: PulseSequence = {
+      targets: selectedTargets,
+      iti: 100,
+      ibi: 100,
+      isis: [],
+      channelInfo: [],
+      nofBurstsInTrains: 3,
+      nofTrains: 3,
+      nofPulsesInBursts: 1,
+    }
+    setSequences(sequences.concat(newSequence))
+    console.log('Created new sequence with targets', selectedTargets.map((t) => t.name).join(', '))
+  }
+
   return (
-    <TargetsContainer>
+    <TargetsContainer onContextMenu={onContextMenu}>
       <TargetsTable {...getTableProps()}>
         <Thead>
           {headerGroups.map((headerGroup) => (
@@ -192,6 +115,10 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
           })}
         </Tbody>
       </TargetsTable>
+
+      <ControlledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)}>
+        <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
+      </ControlledMenu>
     </TargetsContainer>
   )
 }
@@ -210,16 +137,6 @@ const Th = styled.th`
     box-shadow: inset 0 1px 0 ${(p) => p.theme.colors.gray}, inset 0 -1px 0 ${(p) => p.theme.colors.gray},
       inset -1px 0 0 ${(p) => p.theme.colors.gray};
   }
-`
-
-const CellInput = styled.input`
-  all: unset;
-  width: 100%;
-  border: 0;
-  background-color: inherit;
-  font-size: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-    'Droid Sans', 'Helvetica Neue', sans-serif;
 `
 
 const Td = styled.td`
@@ -247,16 +164,6 @@ const Thead = styled.thead`
 `
 const Tbody = styled.tbody``
 
-const DisabledInput = styled.input`
-  width: 100%;
-  color: ${(p) => p.theme.colors.primary};
-  border: 0;
-  background-color: inherit;
-  font-size: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-    'Droid Sans', 'Helvetica Neue', sans-serif;
-`
-
 const HeaderTableRow = styled.tr`
   :nth-of-type(even) {
     background-color: #f3f3f3;
@@ -265,13 +172,6 @@ const HeaderTableRow = styled.tr`
   :nth-of-type(odd) {
     background-color: #ffffff;
   }
-`
-
-const TableRow = styled.tr<{
-  selected: boolean
-}>`
-  border-bottom: 1px solid ${(p) => p.theme.colors.gray};
-  background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
 `
 
 const TargetsContainer = styled.div`
@@ -287,8 +187,4 @@ const TargetsTable = styled.table`
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
   table-layout: fixed;
   width: 100%;
-`
-
-const EyeButton = styled.button`
-  all: unset;
 `

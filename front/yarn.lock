@@ -1685,6 +1685,14 @@
     "@svgr/plugin-svgo" "^5.5.0"
     loader-utils "^2.0.0"
 
+"@szhsin/react-menu@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@szhsin/react-menu/-/react-menu-3.0.2.tgz#d22971c53d56e6d404c9d3c98f533907cd8f03dc"
+  integrity sha512-m9Ly+cT+CxQx3xhq90CVaOLQWU7f7UKeMxfDt1gPYV23tDwEe8Zo6PO547qPlAEGEwwb9MdA38U8OyueXKJc2g==
+  dependencies:
+    prop-types "^15.7.2"
+    react-transition-state "^1.1.4"
+
 "@testing-library/dom@^8.5.0":
   version "8.13.0"
   resolved "https://registry.yarnpkg.com/@testing-library/dom/-/dom-8.13.0.tgz#bc00bdd64c7d8b40841e27a70211399ad3af46f5"
@@ -1739,6 +1747,13 @@
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@trysound/sax/-/sax-0.2.0.tgz#cccaab758af56761eb7bf37af6f03f326dd798ad"
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
+
+"@types/@szhsin/react-menu":
+  version "3.0.2"
+  resolved "https://codeload.github.com/szhsin/react-menu/tar.gz/28284b2183801fb4f6a95e9270ce580441c5da70"
+  dependencies:
+    prop-types "^15.7.2"
+    react-transition-state "^1.1.4"
 
 "@types/aria-query@^4.2.0":
   version "4.2.2"
@@ -7243,7 +7258,7 @@ prompts@^2.0.1, prompts@^2.4.2:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@^15.8.1:
+prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.8.1.tgz#67d87bf1a694f48435cf332c24af10214a3140b5"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -7470,6 +7485,11 @@ react-table@^7.8.0:
   version "7.8.0"
   resolved "https://registry.yarnpkg.com/react-table/-/react-table-7.8.0.tgz#07858c01c1718c09f7f1aed7034fcfd7bda907d2"
   integrity sha512-hNaz4ygkZO4bESeFfnfOft73iBUj8K5oKi1EcSHPAibEydfsX2MyU6Z8KCr3mv3C9Kqqh71U+DhZkFvibbnPbA==
+
+react-transition-state@^1.1.4:
+  version "1.1.4"
+  resolved "https://registry.yarnpkg.com/react-transition-state/-/react-transition-state-1.1.4.tgz#113224eaa27e0ff81661305e44d5e0348cdf61ac"
+  integrity sha512-6nQLWWx95gYazCm6OdtD1zGbRiirvVXPrDtHAGsYb4xs9spMM7bA8Vx77KCpjL8PJ8qz1lXFGz2PTboCSvt7iw==
 
 react@^18.1.0:
   version "18.1.0"
