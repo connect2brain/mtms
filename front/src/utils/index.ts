@@ -1,3 +1,5 @@
+import React, { MutableRefObject, useRef } from 'react'
+
 export const expand = (obj: any) =>
   obj
     ? Object.keys(obj)
@@ -33,4 +35,26 @@ export const objectKeysToSnakeCase = (obj: any): any => {
   }
 
   return obj
+}
+
+export const useFocus = (): [any, () => void] => {
+  const htmlElRef: MutableRefObject<any> = useRef(null)
+  const setFocus = (): void => {
+    console.log(htmlElRef)
+    console.log(htmlElRef.current)
+    htmlElRef?.current?.focus?.()
+  }
+
+  return [htmlElRef, setFocus]
+}
+
+export const useFocusMemo = (): [React.RefObject<HTMLInputElement>, VoidFunction] => {
+  const htmlElRef = React.useRef<HTMLInputElement>(null)
+  const setFocus = React.useCallback(() => {
+    console.log(htmlElRef)
+    console.log(htmlElRef.current)
+    if (htmlElRef.current) htmlElRef.current.focus()
+  }, [htmlElRef])
+
+  return React.useMemo(() => [htmlElRef, setFocus], [htmlElRef, setFocus])
 }
