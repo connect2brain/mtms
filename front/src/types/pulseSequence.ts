@@ -1,3 +1,5 @@
+import { Target } from './target'
+
 export interface ExperimentMessage {
   description: string
   pulseSequence: PulseSequence
@@ -11,6 +13,7 @@ export interface PulseSequence {
   iti: number
   ibi: number
   isis: number[]
+  targets?: Target[]
 }
 
 interface ChannelInfo {

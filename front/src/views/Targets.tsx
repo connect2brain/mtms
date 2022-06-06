@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
-import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from 'types/target'
+import { ChangeableKey, EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
 import { addTargetClient, positionListener, rosServicesByKey, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import ROSLIB from 'roslib'
-import { EditableCell, EyeCell, TargetTable } from 'components/TargetTable'
+import { TargetTable } from 'components/TargetTable'
 import Eye from 'components/Eye'
 import useStore from '../providers/state'
+import { EyeCell } from '../components/TableElements/EyeCell'
+import EditableCell from '../components/TableElements/EditableCell'
 
 const Targets = () => {
   const { targets, setTargets } = useStore((state) => state)
