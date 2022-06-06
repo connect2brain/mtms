@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 
-import { useTable, usePagination, Row } from 'react-table'
+import { useTable, usePagination, Row, useExpanded } from 'react-table'
 import styled from 'styled-components'
-import { ChangeableKey } from '../types/target'
+import { ChangeableKey } from 'types/target'
 import Eye from './Eye'
-import useStore from '../providers/state'
-import { useFocus, useFocusMemo } from '../utils'
+import useStore from 'providers/state'
+import { useFocus, useFocusMemo } from 'utils'
 
 const NotEditableCell = ({ value: initialValue }: any) => {
   return <DisabledInput value={initialValue} disabled={true} />
@@ -80,7 +80,6 @@ export const EditableCell = ({
   }, [value])
 
   const onDoubleClick = () => {
-    console.log('double clicked')
     setToggle(false)
     setTimeout(() => {
       console.log(toggle)
@@ -140,7 +139,7 @@ export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableP
       // cell renderer!
       updateData,
     },
-    usePagination,
+    useExpanded,
   )
 
   return (
@@ -202,7 +201,15 @@ const Th = styled.th`
   text-align: left;
   border-top: none !important;
   border-bottom: none !important;
-  box-shadow: inset 0 1px 0 #b0b0b0, inset 0 -1px 0 #b0b0b0;
+
+  :last-of-type {
+    box-shadow: inset 0 1px 0 ${(p) => p.theme.colors.gray}, inset 0 -1px 0 ${(p) => p.theme.colors.gray};
+  }
+
+  :not(:last-of-type) {
+    box-shadow: inset 0 1px 0 ${(p) => p.theme.colors.gray}, inset 0 -1px 0 ${(p) => p.theme.colors.gray},
+      inset -1px 0 0 ${(p) => p.theme.colors.gray};
+  }
 `
 
 const CellInput = styled.input`
@@ -263,7 +270,7 @@ const HeaderTableRow = styled.tr`
 const TableRow = styled.tr<{
   selected: boolean
 }>`
-  border-bottom: 2px solid #b0b0b0;
+  border-bottom: 1px solid ${(p) => p.theme.colors.gray};
   background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
 `
 
