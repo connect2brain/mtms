@@ -1,6 +1,6 @@
 import create from 'zustand'
 import { devtools } from 'zustand/middleware'
-import { ChannelInfoWithEnabled } from '../types/pulseSequence'
+import { ChannelInfoWithEnabled, PulseSequence } from '../types/pulseSequence'
 import { Target } from '../types/target'
 import targets from '../views/Targets'
 
@@ -64,6 +64,9 @@ type Store = {
 
   targets: Target[]
   setTargets: (targets: Target[]) => void
+
+  sequences: PulseSequence[]
+  setSequences: (sequences: PulseSequence[]) => void
 }
 
 const useStore = create<Store>(
@@ -94,6 +97,9 @@ const useStore = create<Store>(
 
     targets: [],
     setTargets: (targets) => set({ targets }),
+
+    sequences: [],
+    setSequences: (sequences) => set({ sequences }),
   })),
 )
 
