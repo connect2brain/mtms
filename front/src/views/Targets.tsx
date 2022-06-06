@@ -11,11 +11,12 @@ import { EyeCell } from '../components/TableElements/EyeCell'
 import EditableCell from '../components/TableElements/EditableCell'
 
 const Targets = () => {
-  const { targets, setTargets } = useStore((state) => state)
+  const { targets, setTargets, sequences, setSequences } = useStore()
 
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
-  const [skipPageReset, setSkipPageReset] = useState(false)
+
+  const [tab, setTab] = useState<'TARGETS' | 'SEQUENCES'>('TARGETS')
 
   const targetTableColumns = useMemo(
     () => [
@@ -46,9 +47,43 @@ const Targets = () => {
     [],
   )
 
-  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => {
-    setSkipPageReset(true)
+  const sequenceTableColumns = useMemo(
+    () => [
+      {
+        Header: () => <Eye visible={true} />,
+        accessor: 'visible',
+        width: 40,
+        Cell: EyeCell,
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+      {
+        Header: 'intensity',
+        accessor: 'intensity',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+      {
+        Header: 'isi',
+        accessor: 'isi',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+      {
+        Header: 'Mode Duration',
+        accessor: 'modeDuration',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+    ],
+    [],
+  )
 
+  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => {
     const newTargets = [...targets]
     const oldTarget = targets[rowIndex]
 
@@ -79,9 +114,9 @@ const Targets = () => {
       request,
       (result) => {
         if (!result.success) {
-          console.error(`ERROR: Failed to change key ${key} from ${oldTarget[key]} to ${value}`)
+          console.error(`ERROR: Failed to change key '${key}' from ${oldTarget[key]} to ${value}`)
         } else {
-          console.log(`Changed ${oldTarget.name} key ${key} from ${oldTarget[key]} to ${value}`)
+          console.log(`Changed ${oldTarget.name} key '${key}' from ${oldTarget[key]} to ${value}`)
         }
       },
       (error) => {
@@ -104,15 +139,11 @@ const Targets = () => {
     positionListener.subscribe(updatePosition)
   }, [])
 
-  useEffect(() => {
-    setSkipPageReset(false)
-  }, [targets])
-
   const addTarget = () => {
     if (position) {
-      const positionAsRosMessage = new ROSLIB.Message({ ...position })
+      const positionAsRosMessage = new ROSLIB.Message(position)
 
-      const orientationAsRosMessage = new ROSLIB.Message({ ...orientation })
+      const orientationAsRosMessage = new ROSLIB.Message(orientation)
 
       const pose = new ROSLIB.Message({
         position: positionAsRosMessage,
@@ -150,14 +181,32 @@ const Targets = () => {
     })
   }
 
+  const filterSequenceKeys = () => {
+    return sequences.map((seq) => {
+      return {
+        name: seq.name,
+        comment: seq.comment,
+        intensity: 0,
+        visible: seq.visible,
+        selected: seq.selected,
+      }
+    })
+  }
+
+  const table = () => {
+    switch (tab) {
+      case 'SEQUENCES':
+        return <TargetTable columns={targetTableColumns} data={filterTargetKeys()} updateData={updateTargetData} />
+      case 'TARGETS':
+        return <TargetTable columns={sequenceTableColumns} data={filterSequenceKeys()} updateData={updateTargetData} />
+    }
+  }
+
   return (
     <>
-      <TargetTable
-        columns={targetTableColumns}
-        data={filterTargetKeys()}
-        updateData={updateTargetData}
-        skipPageReset={skipPageReset}
-      />
+      <button>targets</button>
+      <button>sequences</button>
+
       <br />
 
       <p>Current position: {expand(position)}</p>

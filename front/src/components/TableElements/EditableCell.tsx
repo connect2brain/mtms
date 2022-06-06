@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
 
-export const EditableCell = ({
+const EditableCell = ({
   value: initialValue,
   row: { index },
   column: { id },
