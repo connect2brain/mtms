@@ -11,7 +11,12 @@ const theme = {
     primary: 'black',
     disabled: 'grey',
     error: '#a21010',
-    ok: '#258f25'
+    ok: '#258f25',
+    white: '#FFFFFF',
+    lightergray: '#f1f1f1',
+    lightgray: '#e0e0e0',
+    darkgray: '#707070',
+    darkergray: '#606060',
   },
   spacing: {},
   typography: {},

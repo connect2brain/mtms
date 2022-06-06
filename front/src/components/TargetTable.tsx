@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { useTable, usePagination, Row } from 'react-table'
 import styled from 'styled-components'
 import { ChangeableKey } from '../types/target'
 import Eye from './Eye'
 import useStore from '../providers/state'
+import { useFocus, useFocusMemo } from '../utils'
 
 const NotEditableCell = ({ value: initialValue }: any) => {
   return <DisabledInput value={initialValue} disabled={true} />
@@ -18,7 +19,8 @@ export const EyeCell = ({
 }: any) => {
   const [visible, setVisible] = useState(initialValue)
 
-  const onClick = () => {
+  const onClick = (event: any) => {
+    event.stopPropagation()
     const newVisible = !visible
     setVisible(newVisible)
     updateData(index, id, newVisible, true)
@@ -45,12 +47,16 @@ export const EditableCell = ({
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue)
   const [changed, setChanged] = useState<boolean>(false)
+  const [toggle, setToggle] = useState<boolean>(true)
 
-  const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
+  //const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
+  const [inputRef, setInputFocus] = useFocusMemo()
 
   const onChange = (e: any) => {
-    setValue(e.target.value)
-    setChanged(true)
+    if (e.target.value.length > 0) {
+      setValue(e.target.value)
+      setChanged(true)
+    }
   }
 
   // We'll only update the external data when the input is blurred
@@ -59,6 +65,7 @@ export const EditableCell = ({
       updateData(index, id, value, false)
       setChanged(false)
     }
+    setToggle(true)
   }
 
   const handleKeyPress = (event: any) => {
@@ -68,11 +75,24 @@ export const EditableCell = ({
   }
 
   // If the initialValue is changed external, sync it up with our state
-  React.useEffect(() => {
+  useEffect(() => {
     setValue(value)
   }, [value])
 
-  return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
+  const onDoubleClick = () => {
+    console.log('double clicked')
+    setToggle(false)
+    setTimeout(() => {
+      console.log(toggle)
+      setInputFocus()
+    }, 100)
+  }
+
+  return toggle ? (
+    <span onDoubleClick={onDoubleClick}>{value}</span>
+  ) : (
+    <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
+  )
 }
 
 const SelectableTableRow = (props: any) => {
@@ -88,7 +108,7 @@ const SelectableTableRow = (props: any) => {
   }
 
   return (
-    <TableRow {...props} onClick={onClick} selected={targets[index].selected}>
+    <TableRow {...props} selected={targets[index].selected} onClick={onClick}>
       {props.children}
     </TableRow>
   )
@@ -184,18 +204,30 @@ const Th = styled.th`
   border-bottom: none !important;
   box-shadow: inset 0 1px 0 #b0b0b0, inset 0 -1px 0 #b0b0b0;
 `
+
+const CellInput = styled.input`
+  all: unset;
+  width: 100%;
+  border: 0;
+  background-color: inherit;
+  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+    'Droid Sans', 'Helvetica Neue', sans-serif;
+`
+
 const Td = styled.td`
   padding: 0.25rem 0.5rem;
   border: #e0e0e0;
 
-  textarea,
-  input {
+  span {
     all: unset;
     border: 0;
     background-color: inherit;
     font-size: 1rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
       'Droid Sans', 'Helvetica Neue', sans-serif;
+    display: list-item;
+    overflow: auto;
   }
 `
 
@@ -209,6 +241,7 @@ const Thead = styled.thead`
 const Tbody = styled.tbody``
 
 const DisabledInput = styled.input`
+  width: 100%;
   color: ${(p) => p.theme.colors.primary};
   border: 0;
   background-color: inherit;
@@ -231,14 +264,7 @@ const TableRow = styled.tr<{
   selected: boolean
 }>`
   border-bottom: 2px solid #b0b0b0;
-
-  :nth-of-type(even) {
-    background-color: ${(p) => (p.selected ? '#623c3c' : '#f3f3f3')};
-  }
-
-  :nth-of-type(odd) {
-    background-color: ${(p) => (p.selected ? '#623c3c' : '#ffffff')};
-  }
+  background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
 `
 
 const TargetsContainer = styled.div`
@@ -246,7 +272,7 @@ const TargetsContainer = styled.div`
   overflow-x: hidden;
   width: fit-content;
   max-height: 600px;
-  max-width: 500px;
+  max-width: 40%;
 `
 
 const TargetsTable = styled.table`
