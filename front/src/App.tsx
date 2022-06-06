@@ -4,7 +4,6 @@ import Providers from './providers/Providers'
 import styled from 'styled-components'
 import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
-import PulseSequenceConfiguration from './views/PulseSequenceConfiguration'
 import Experiment from './views/Experiment'
 
 function App() {
