@@ -6,14 +6,25 @@ export interface ExperimentMessage {
 }
 
 export interface PulseSequence {
+  name: string
+  comment: string
   nofTrains: number
+  visible: boolean
+  selected: boolean
   nofBurstsInTrains: number
   nofPulsesInBursts: number
   channelInfo: ChannelInfo[]
   iti: number
   ibi: number
   isis: number[]
-  targets?: Target[]
+  pulses?: Pulse[]
+}
+
+export interface Pulse {
+  target: Target
+  intensity: number
+  isi: number
+  modeDuration: number
 }
 
 interface ChannelInfo {
