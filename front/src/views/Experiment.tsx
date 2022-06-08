@@ -35,6 +35,10 @@ const Experiment = () => {
         nofTrains,
         isis,
         channelInfo: channelData,
+        name: '',
+        comment: '',
+        visible: false,
+        selected: false,
       },
     }
 
