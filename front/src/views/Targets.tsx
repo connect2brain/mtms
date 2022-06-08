@@ -1,87 +1,20 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { ChangeableKey, EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
 import { addTargetClient, positionListener, rosServicesByKey, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import ROSLIB from 'roslib'
-import { TargetTable } from 'components/TargetTable'
-import Eye from 'components/Eye'
-import useStore from '../providers/state'
-import { EyeCell } from '../components/TableElements/EyeCell'
-import EditableCell from '../components/TableElements/EditableCell'
+import useStore from 'providers/state'
+import SequenceTable from 'components/SequenceTable'
+import TargetTable from 'components/TargetTable'
 
 const Targets = () => {
-  const { targets, setTargets, sequences, setSequences } = useStore()
+  const { targets, setTargets, sequences } = useStore()
 
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
 
   const [tab, setTab] = useState<'TARGETS' | 'SEQUENCES'>('TARGETS')
-
-  const targetTableColumns = useMemo(
-    () => [
-      {
-        Header: () => <Eye visible={true} />,
-        accessor: 'visible',
-        width: 40,
-        Cell: EyeCell,
-      },
-      {
-        Header: 'Name',
-        accessor: 'name',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-      {
-        Header: 'Type',
-        accessor: 'type',
-        width: 'auto',
-      },
-      {
-        Header: 'Comment',
-        accessor: 'comment',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-    ],
-    [],
-  )
-
-  const sequenceTableColumns = useMemo(
-    () => [
-      {
-        Header: () => <Eye visible={true} />,
-        accessor: 'seqVisible',
-        width: 40,
-        Cell: EyeCell,
-      },
-      {
-        Header: 'Name',
-        accessor: 'seqName',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-      {
-        Header: 'Intensity',
-        accessor: 'seqIntensity',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-      {
-        Header: 'isi',
-        accessor: 'seqIsi',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-      {
-        Header: 'Mode Duration',
-        accessor: 'seqModeDuration',
-        width: 'auto',
-        Cell: EditableCell,
-      },
-    ],
-    [],
-  )
 
   const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => {
     const newTargets = [...targets]
@@ -141,13 +74,9 @@ const Targets = () => {
 
   const addTarget = () => {
     if (position) {
-      const positionAsRosMessage = new ROSLIB.Message(position)
-
-      const orientationAsRosMessage = new ROSLIB.Message(orientation)
-
       const pose = new ROSLIB.Message({
-        position: positionAsRosMessage,
-        orientation: orientationAsRosMessage,
+        position,
+        orientation,
       })
 
       const request = new ROSLIB.ServiceRequest({
@@ -196,9 +125,9 @@ const Targets = () => {
   const table = () => {
     switch (tab) {
       case 'TARGETS':
-        return <TargetTable columns={targetTableColumns} data={filterTargetKeys()} updateData={updateTargetData} />
+        return <TargetTable data={filterTargetKeys()} updateData={updateTargetData} />
       case 'SEQUENCES':
-        return <TargetTable columns={sequenceTableColumns} data={filterSequenceKeys()} updateData={updateTargetData} />
+        return <SequenceTable data={filterSequenceKeys()} updateData={updateTargetData} />
     }
   }
 
