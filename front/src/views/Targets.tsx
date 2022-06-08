@@ -98,36 +98,12 @@ const Targets = () => {
     }
   }
 
-  const filterTargetKeys = () => {
-    return targets.map((target) => {
-      return {
-        name: target.name,
-        comment: target.comment,
-        type: target.type,
-        visible: target.visible,
-        selected: target.selected,
-      }
-    })
-  }
-
-  const filterSequenceKeys = () => {
-    return sequences.map((seq) => {
-      return {
-        seqName: seq.name,
-        seqComment: seq.comment,
-        seqIntensity: 0,
-        seqVisible: seq.visible,
-        seqSelected: seq.selected,
-      }
-    })
-  }
-
   const table = () => {
     switch (tab) {
       case 'TARGETS':
-        return <TargetTable data={filterTargetKeys()} updateData={updateTargetData} />
+        return <TargetTable updateData={updateTargetData} />
       case 'SEQUENCES':
-        return <SequenceTable data={filterSequenceKeys()} updateData={updateTargetData} />
+        return <SequenceTable updateData={updateTargetData} />
     }
   }
 
