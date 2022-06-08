@@ -19,31 +19,36 @@ interface TableProps {
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
 }
 
-const TargetTable = ({ data, updateData }: TableProps) => {
-  const { sequences, setSequences, targets } = useStore()
-
+const SequenceTable = ({ data, updateData }: TableProps) => {
   const columns = useMemo(
     () => [
       {
         Header: () => <Eye visible={true} />,
-        accessor: 'visible',
+        accessor: 'seqVisible',
         width: 40,
         Cell: EyeCell,
       },
       {
         Header: 'Name',
-        accessor: 'name',
+        accessor: 'seqName',
         width: 'auto',
         Cell: EditableCell,
       },
       {
-        Header: 'Type',
-        accessor: 'type',
+        Header: 'Intensity',
+        accessor: 'seqIntensity',
         width: 'auto',
+        Cell: EditableCell,
       },
       {
-        Header: 'Comment',
-        accessor: 'comment',
+        Header: 'isi',
+        accessor: 'seqIsi',
+        width: 'auto',
+        Cell: EditableCell,
+      },
+      {
+        Header: 'Mode Duration',
+        accessor: 'seqModeDuration',
         width: 'auto',
         Cell: EditableCell,
       },
@@ -51,45 +56,11 @@ const TargetTable = ({ data, updateData }: TableProps) => {
     [],
   )
 
-  const handleNewSequence = (event: any) => {
-    const pulses: Pulse[] = targets
-      .filter((t) => t.selected)
-      .map((target) => {
-        return {
-          target,
-          isi: 100,
-          intensity: 0.5,
-          modeDuration: 100,
-        }
-      })
-    if (pulses.length === 0) {
-      console.log('no targets selected for new sequence')
-      return
-    }
-
-    const newSequence: PulseSequence = {
-      pulses,
-      name: `sequence-${sequences.length}`,
-      selected: false,
-      visible: true,
-      comment: '',
-      iti: 100,
-      ibi: 100,
-      isis: pulses.map((pulse) => pulse.isi),
-      channelInfo: [],
-      nofBurstsInTrains: 3,
-      nofTrains: 3,
-      nofPulsesInBursts: 1,
-    }
-    setSequences(sequences.concat(newSequence))
-    console.log('Created new sequence with targets', pulses.map((t) => t.target.name).join(', '))
-  }
-
   const createMenu = () => {
-    return <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
+    return <MenuItem>moi</MenuItem>
   }
 
   return <GenericTable columns={columns} data={data} updateData={updateData} createMenu={createMenu} />
 }
 
-export default TargetTable
+export default SequenceTable
