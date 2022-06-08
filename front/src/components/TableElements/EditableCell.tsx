@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
+import Expand from '../Expand'
 
 const EditableCell = ({
   value: initialValue,
   row: { index },
   column: { id },
-  updateData, // This is a custom function that we supplied to our table instance
+  updateData, // This is a custom function that we supplied to our table instance,
+  expandable,
 }: any) => {
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue)
@@ -51,8 +53,16 @@ const EditableCell = ({
     }, 100)
   }
 
+  const test = (event: any) => {
+    event.stopPropagation()
+    console.log('clicked expand')
+  }
+
   return toggle ? (
-    <span onDoubleClick={onDoubleClick}>{value}</span>
+    <>
+      {expandable ? <Expand onClick={test} expanded={false} /> : null}
+      <span onDoubleClick={onDoubleClick}>{value}</span>
+    </>
   ) : (
     <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
   )
