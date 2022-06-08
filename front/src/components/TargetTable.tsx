@@ -15,11 +15,10 @@ import EditableCell from './TableElements/EditableCell'
 import { GenericTable } from './GenericTable'
 
 interface TableProps {
-  data: any[]
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
 }
 
-const TargetTable = ({ data, updateData }: TableProps) => {
+const TargetTable = ({ updateData }: TableProps) => {
   const { sequences, setSequences, targets } = useStore()
 
   const columns = useMemo(
@@ -85,11 +84,23 @@ const TargetTable = ({ data, updateData }: TableProps) => {
     console.log('Created new sequence with targets', pulses.map((t) => t.target.name).join(', '))
   }
 
+  const filterTargetKeys = () => {
+    return targets.map((target) => {
+      return {
+        name: target.name,
+        comment: target.comment,
+        type: target.type,
+        visible: target.visible,
+        selected: target.selected,
+      }
+    })
+  }
+
   const createMenu = () => {
     return <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
   }
 
-  return <GenericTable columns={columns} data={data} updateData={updateData} createMenu={createMenu} />
+  return <GenericTable columns={columns} data={filterTargetKeys()} updateData={updateData} createMenu={createMenu} />
 }
 
 export default TargetTable
