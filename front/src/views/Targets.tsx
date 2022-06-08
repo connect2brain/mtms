@@ -51,31 +51,31 @@ const Targets = () => {
     () => [
       {
         Header: () => <Eye visible={true} />,
-        accessor: 'visible',
+        accessor: 'seqVisible',
         width: 40,
         Cell: EyeCell,
       },
       {
         Header: 'Name',
-        accessor: 'name',
+        accessor: 'seqName',
         width: 'auto',
         Cell: EditableCell,
       },
       {
-        Header: 'intensity',
-        accessor: 'intensity',
+        Header: 'Intensity',
+        accessor: 'seqIntensity',
         width: 'auto',
         Cell: EditableCell,
       },
       {
         Header: 'isi',
-        accessor: 'isi',
+        accessor: 'seqIsi',
         width: 'auto',
         Cell: EditableCell,
       },
       {
         Header: 'Mode Duration',
-        accessor: 'modeDuration',
+        accessor: 'seqModeDuration',
         width: 'auto',
         Cell: EditableCell,
       },
@@ -174,7 +174,7 @@ const Targets = () => {
       return {
         name: target.name,
         comment: target.comment,
-        type: target.selected,
+        type: target.type,
         visible: target.visible,
         selected: target.selected,
       }
@@ -184,30 +184,41 @@ const Targets = () => {
   const filterSequenceKeys = () => {
     return sequences.map((seq) => {
       return {
-        name: seq.name,
-        comment: seq.comment,
-        intensity: 0,
-        visible: seq.visible,
-        selected: seq.selected,
+        seqName: seq.name,
+        seqComment: seq.comment,
+        seqIntensity: 0,
+        seqVisible: seq.visible,
+        seqSelected: seq.selected,
       }
     })
   }
 
   const table = () => {
     switch (tab) {
-      case 'SEQUENCES':
-        return <TargetTable columns={targetTableColumns} data={filterTargetKeys()} updateData={updateTargetData} />
       case 'TARGETS':
+        return <TargetTable columns={targetTableColumns} data={filterTargetKeys()} updateData={updateTargetData} />
+      case 'SEQUENCES':
         return <TargetTable columns={sequenceTableColumns} data={filterSequenceKeys()} updateData={updateTargetData} />
     }
   }
 
+  const handleViewChangeClick = (event: any) => {
+    const target = event.target.name
+    setTab(target)
+  }
+
   return (
     <>
-      <button>targets</button>
-      <button>sequences</button>
+      <button name='TARGETS' onClick={handleViewChangeClick}>
+        targets
+      </button>
+      <button name='SEQUENCES' onClick={handleViewChangeClick}>
+        sequences
+      </button>
 
       <br />
+
+      {table()}
 
       <p>Current position: {expand(position)}</p>
       <p>Current orientation: {expand(orientation)}</p>

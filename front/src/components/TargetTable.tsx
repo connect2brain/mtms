@@ -37,7 +37,7 @@ export const TargetTable = ({ columns, data, updateData }: TableProps) => {
     },
     useExpanded,
   )
-
+  
   const [menuProps, toggleMenu] = useMenuState()
   const [anchorPoint, setAnchorPoint] = useState({ x: 0, y: 0 })
 
@@ -116,12 +116,7 @@ export const TargetTable = ({ columns, data, updateData }: TableProps) => {
               >
                 {row.cells.map((cell) => {
                   return (
-                    <Td
-                      {...cell.getCellProps({
-                        style: {},
-                      })}
-                      key={cell.getCellProps().key}
-                    >
+                    <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
                       {cell.render('Cell')}
                     </Td>
                   )
