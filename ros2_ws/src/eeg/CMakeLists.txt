@@ -11,10 +11,14 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
 
 add_executable(eeg_bridge src/eeg_bridge.cpp)
+add_executable(mock_eeg_bridge src/mock_eeg_bridge.cpp)
 ament_target_dependencies(eeg_bridge rclcpp std_msgs mtms_interfaces)
+ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs mtms_interfaces)
+
 
 install(TARGETS
   eeg_bridge
+  mock_eeg_bridge
   DESTINATION lib/${PROJECT_NAME}
 )
 
