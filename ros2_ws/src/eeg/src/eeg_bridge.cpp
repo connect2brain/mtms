@@ -58,47 +58,49 @@ class EegBridge : public rclcpp::Node {
       this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
       this->get_parameter("sampling_frequency", sampling_frequency_);
 
-      auto sampling_frequency_int = int(round(1000 / sampling_frequency_));
-      auto sampling_interval = std::chrono::milliseconds(sampling_frequency_int);
+      auto sampling_interval_int = int(round(1000 / sampling_frequency_));
+      auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
 
-      timer_ = this->create_wall_timer(sampling_interval, std::bind(&EegBridge::timer_callback, this));
+      timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&EegBridge::timer_callback, this));
     }
 
     void init_socket() {
 
       // Init socket variables
-      this->socket_length = sizeof(socket_other);
+      this->socket_length = sizeof(this->socket_other);
 
       // Init socket
-      if ((socket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-        die("socket");
+      this->socket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+      if (this->socket_ == -1) {
+        EegBridge::err("socket");
       }
 
-      memset((char *) &socket_own, 0, sizeof(socket_own));
+      memset((char *) &(this->socket_own), 0, sizeof(this->socket_own));
       socket_own.sin_family = AF_INET;
       socket_own.sin_port = htons(PORT);
       socket_own.sin_addr.s_addr = htonl(INADDR_ANY);
 
-      if (bind(socket_, (struct sockaddr*)&socket_own, sizeof(socket_own)) == -1) {
-        die("bind");
+      if (bind(this->socket_, (struct sockaddr*)&(this->socket_own), sizeof(this->socket_own)) == -1) {
+        EegBridge::err("bind");
       }
 
       struct timeval read_timeout;
       read_timeout.tv_sec = 1;
       read_timeout.tv_usec = 0;
-      setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
+      setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
     }
 
-    void die(const char *message) {
+    void err(const char *message) {
 
-      RCLCPP_INFO(this->get_logger(), "KILLED");
+      RCLCPP_INFO(this->get_logger(), "Error.");
       perror(message);
       exit(1);
     }
 
     void timer_callback() {
 
-      auto val = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0,(struct sockaddr*) &socket_other, &(this->socket_length));
+      auto val = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0,(struct sockaddr*) &(this->socket_other), &(this->socket_length));
 
       if (val == -1) {
 
@@ -115,10 +117,11 @@ class EegBridge : public rclcpp::Node {
 
         int i = FIRST_CHANNEL_INDEX;
         for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
-          int result = (buffer[i] << 16 | buffer[i+1] << 8 | buffer[i+2]);
+
+          int result = buffer[i] << 16 | buffer[i+1] << 8 | buffer[i+2];
 
           if (result > SIGNED_MAX) {
-            result = (result - UNSIGNED_MAX);
+            result = result - UNSIGNED_MAX;
           }
 
           double result_uv = result;
@@ -139,8 +142,8 @@ class EegBridge : public rclcpp::Node {
       }
 
       else {
-        close(socket_);
-        RCLCPP_INFO(this->get_logger(), "CLOSING");
+        close(this->socket_);
+        RCLCPP_INFO(this->get_logger(), "Closing.");
       }
     }
 
