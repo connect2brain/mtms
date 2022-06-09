@@ -37,7 +37,6 @@ const Targets = () => {
       }
     }
     const request = new ROSLIB.ServiceRequest(requestObject)
-    console.log(request)
 
     if (!Object.prototype.hasOwnProperty.call(rosServicesByKey, key)) {
       console.error(`Key ${key} is not changeable`)

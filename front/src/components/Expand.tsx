@@ -15,6 +15,9 @@ const Expand = ({ expanded, onClick }: Props) => {
 
 const ExpandButton = styled.button`
   all: unset;
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
 `
 
 const StyledArrowDown = styled(ArrowDown)`
