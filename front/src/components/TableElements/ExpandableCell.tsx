@@ -1,26 +1,35 @@
-import React, { useEffect, useState } from 'react'
-import { useFocusMemo } from '../../utils'
-import styled from 'styled-components'
+import React from 'react'
 import Expand from '../Expand'
 import EditableCell from './EditableCell'
-import useStore from 'providers/state'
+import { Column, Row } from 'react-table'
+import styled from 'styled-components'
 
-const ExpandableCell = ({
-  value,
-  row,
-  column,
-  updateData, // This is a custom function that we supplied to our table instance,
-}: any) => {
-  const { canExpand } = row
+interface ExpandableCellProps {
+  value: string
+  row: Row
+  column: Column
+  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
+}
+
+const ExpandableCell = ({ value, row, column, updateData }: ExpandableCellProps) => {
+  const { canExpand, depth } = row
 
   const handleClickExpand = (event: any) => {
     event.stopPropagation()
     row.toggleRowExpanded()
   }
-
   const expandElement = canExpand ? <Expand onClick={handleClickExpand} expanded={row.isExpanded} /> : null
 
-  return <EditableCell value={value} row={row} column={column} updateData={updateData} expandElement={expandElement} />
+  return (
+    <EditableCell
+      value={value}
+      row={row}
+      column={column}
+      updateData={updateData}
+      expandElement={expandElement}
+      whiteSpace={depth > 0}
+    />
+  )
 }
 
 export default ExpandableCell

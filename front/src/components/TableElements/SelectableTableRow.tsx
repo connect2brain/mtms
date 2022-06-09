@@ -1,21 +1,31 @@
 import useStore from '../../providers/state'
-import React from 'react'
+import React, {useEffect, useState} from 'react'
 import styled from 'styled-components'
 
 const SelectableTableRow = (props: any) => {
-  const { index, updateData } = props
+  const { index, updateData, isTarget } = props
   const { targets, setTargets } = useStore((state) => state)
+
+  const [selected, setSelected] = useState(isTarget ? targets[index].selected : false)
+
+  useEffect(() => {
+    if (isTarget) {
+      setSelected(targets[index].selected)
+    }
+  }, [targets[index].selected])
 
   const onClick = (event: any) => {
     event.preventDefault()
-    console.log('clicked row', index)
-    const selected = targets[index].selected
 
-    updateData(index, 'selected', !selected, true)
+    if (isTarget) {
+      updateData(index, 'selected', !selected, true)
+    } else {
+      console.log('clicked a sequence, not implemented')
+    }
   }
 
   return (
-    <TableRow {...props} selected={targets[index].selected} onClick={onClick}>
+    <TableRow {...props} selected={selected} onClick={onClick}>
       {props.children}
     </TableRow>
   )
