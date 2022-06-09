@@ -36,7 +36,7 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
       defaultColumn,
       autoResetExpanded: false,
       /* updateMyData isn't part of the API, but anything we put into these options will automatically
-            be available on the instance. That way we can call this function from our cell renderer and updateData */
+      be available on the instance. That way we can call this function from our cell renderer and updateData */
       updateData,
     },
     useExpanded,
@@ -77,12 +77,14 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
         <Tbody {...getTableBodyProps()}>
           {rows.map((row: Row) => {
             prepareRow(row)
+
             return (
               <SelectableTableRow
                 {...row.getRowProps()}
                 key={row.getRowProps().key}
                 index={row.index}
                 updateData={updateData}
+                isTarget={row.depth > 0}
               >
                 {row.cells.map((cell) => {
                   return (
@@ -96,10 +98,6 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
           })}
         </Tbody>
       </TargetsTable>
-
-      <pre>
-        <code>{JSON.stringify({ expanded: expanded }, null, 2)}</code>
-      </pre>
 
       <ControlledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)}>
         {createMenu()}
@@ -127,17 +125,6 @@ const Th = styled.th`
 const Td = styled.td`
   padding: 0.25rem 0.5rem;
   border: #e0e0e0;
-
-  span {
-    all: unset;
-    border: 0;
-    background-color: inherit;
-    font-size: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-      'Droid Sans', 'Helvetica Neue', sans-serif;
-    display: list-item;
-    overflow: auto;
-  }
 `
 
 const Thead = styled.thead`

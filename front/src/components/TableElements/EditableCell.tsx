@@ -1,37 +1,51 @@
 import React, { useEffect, useState } from 'react'
 import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
-import Expand from '../Expand'
+import { Column, Row } from 'react-table'
 
 interface EditableCellProps {
   value: string
-  row: any
-  column: any
+  row: Row
+  column: Column
   updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
   expandElement?: any
+  whiteSpace?: boolean
 }
 
-const EditableCell = ({ value: initialValue, row, column, updateData, expandElement }: EditableCellProps) => {
+const EditableCell = ({
+  value: initialValue,
+  row,
+  column,
+  updateData,
+  expandElement,
+  whiteSpace,
+}: EditableCellProps) => {
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue)
   const [changed, setChanged] = useState<boolean>(false)
+  const [beforeChange, setBeforeChange] = useState(initialValue)
   const [toggle, setToggle] = useState<boolean>(true)
 
-  const { index, canExpand } = row
+  const { index, depth } = row
 
-  //const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
   const [inputRef, setInputFocus] = useFocusMemo()
 
   const onChange = (e: any) => {
-    if (e.target.value.length > 0) {
-      setValue(e.target.value)
-      setChanged(true)
-    }
+    setValue(e.target.value)
+    setChanged(true)
   }
 
   // We'll only update the external data when the input is blurred
   const onBlur = () => {
-    if (changed) {
+    if (value && value.length === 0) {
+      setValue(beforeChange)
+      // do not update data if value is not changed
+      return
+    } else {
+      setBeforeChange(value)
+    }
+
+    if (changed && column.id) {
       updateData(index, column.id, value, false)
       setChanged(false)
     }
@@ -48,27 +62,56 @@ const EditableCell = ({ value: initialValue, row, column, updateData, expandElem
   useEffect(() => {
     setValue(value)
   }, [value])
-
   const onDoubleClick = () => {
     setToggle(false)
+
+    // Needs to be in setTimeout so the input element can render, otherwise it would be impossible to setInputFocus
+    // as the element does not exist
     setTimeout(() => {
-      console.log(toggle)
       setInputFocus()
     }, 100)
   }
 
-  return toggle ? (
-    <ExpandContainer>
-      <span onDoubleClick={onDoubleClick}>{value}</span> {expandElement}
-    </ExpandContainer>
-  ) : (
-    <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
+  return (
+    <Margin>
+      {whiteSpace ? <WhiteSpace cols={depth} /> : null}
+      {toggle ? (
+        <Container onDoubleClick={onDoubleClick}>
+          <span>{value}</span>
+          {expandElement}
+        </Container>
+      ) : (
+        <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
+      )}
+    </Margin>
   )
 }
 
-const ExpandContainer = styled.span`
-  display: flex !important;
-  justify-content: space-between !important;
+const Margin = styled.span`
+  display: flex;
+`
+
+const WhiteSpace = styled.span<{
+  cols: number
+}>`
+  background-color: rgba(255, 255, 255, 0);
+  width: ${(p) => p.cols * 20}px;
+  height: 100%;
+  overflow: hidden;
+  writing-mode: horizontal-tb;
+  border: 0;
+`
+const Container = styled.span`
+  display: flex;
+  width: 100%;
+  border: 0;
+  background-color: inherit;
+  font-size: 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
+  'Droid Sans', 'Helvetica Neue', sans-serif;
+  overflow: auto;
+  overflow-y: hidden;
+  min-height: 1rem;
 `
 
 const CellInput = styled.input`
