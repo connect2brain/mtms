@@ -22,13 +22,21 @@ interface TableProps {
 }
 
 export const GenericTable = ({ columns, data, updateData, createMenu }: TableProps) => {
-  const { getTableProps, getTableBodyProps, headerGroups, prepareRow, rows } = useTable(
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    rows,
+    state: { expanded },
+  } = useTable(
     {
       columns,
       data,
       defaultColumn,
-      /* updateMyData isn't part of the API, but anything we put into these options will automatically be available
-            on the instance. That way we can call this function from our cell renderer and updateData */
+      autoResetExpanded: false,
+      /* updateMyData isn't part of the API, but anything we put into these options will automatically
+            be available on the instance. That way we can call this function from our cell renderer and updateData */
       updateData,
     },
     useExpanded,
@@ -88,6 +96,11 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
           })}
         </Tbody>
       </TargetsTable>
+
+      <pre>
+        <code>{JSON.stringify({ expanded: expanded }, null, 2)}</code>
+      </pre>
+
       <ControlledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)}>
         {createMenu()}
       </ControlledMenu>
@@ -151,7 +164,7 @@ const TargetsContainer = styled.div`
   overflow-x: hidden;
   width: fit-content;
   max-height: 600px;
-  max-width: 40%;
+  max-width: 60%;
 `
 
 const TargetsTable = styled.table`
