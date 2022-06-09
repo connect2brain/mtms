@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
 import { Column, Row } from 'react-table'
+import Rectangle from '../Rectangle'
+import theme from '../../styles/theme'
 
 interface EditableCellProps {
   value: string
@@ -74,7 +76,12 @@ const EditableCell = ({
 
   return (
     <Margin>
-      {whiteSpace ? <WhiteSpace cols={depth} /> : null}
+      {whiteSpace ? (
+        <>
+          <WhiteSpace cols={depth} />
+          <Rectangle color={'red'} />
+        </>
+      ) : null}
       {toggle ? (
         <Container onDoubleClick={onDoubleClick}>
           <span>{value}</span>
@@ -108,7 +115,7 @@ const Container = styled.span`
   background-color: inherit;
   font-size: 1rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-  'Droid Sans', 'Helvetica Neue', sans-serif;
+    'Droid Sans', 'Helvetica Neue', sans-serif;
   overflow: auto;
   overflow-y: hidden;
   min-height: 1rem;
