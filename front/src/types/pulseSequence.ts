@@ -17,7 +17,7 @@ export interface PulseSequence {
   iti: number
   ibi: number
   isis: number[]
-  pulses?: Pulse[]
+  pulses: Pulse[]
 }
 
 export interface Pulse {

@@ -3,17 +3,21 @@ import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
 import Expand from '../Expand'
 
-const EditableCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateData, // This is a custom function that we supplied to our table instance,
-  expandable,
-}: any) => {
+interface EditableCellProps {
+  value: string
+  row: any
+  column: any
+  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
+  expandElement?: any
+}
+
+const EditableCell = ({ value: initialValue, row, column, updateData, expandElement }: EditableCellProps) => {
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue)
   const [changed, setChanged] = useState<boolean>(false)
   const [toggle, setToggle] = useState<boolean>(true)
+
+  const { index, canExpand } = row
 
   //const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
   const [inputRef, setInputFocus] = useFocusMemo()
@@ -28,7 +32,7 @@ const EditableCell = ({
   // We'll only update the external data when the input is blurred
   const onBlur = () => {
     if (changed) {
-      updateData(index, id, value, false)
+      updateData(index, column.id, value, false)
       setChanged(false)
     }
     setToggle(true)
@@ -53,20 +57,19 @@ const EditableCell = ({
     }, 100)
   }
 
-  const test = (event: any) => {
-    event.stopPropagation()
-    console.log('clicked expand')
-  }
-
   return toggle ? (
-    <>
-      {expandable ? <Expand onClick={test} expanded={false} /> : null}
-      <span onDoubleClick={onDoubleClick}>{value}</span>
-    </>
+    <ExpandContainer>
+      <span onDoubleClick={onDoubleClick}>{value}</span> {expandElement}
+    </ExpandContainer>
   ) : (
     <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
   )
 }
+
+const ExpandContainer = styled.span`
+  display: flex !important;
+  justify-content: space-between !important;
+`
 
 const CellInput = styled.input`
   all: unset;
