@@ -8,6 +8,7 @@ import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
 import EditableCell from './TableElements/EditableCell'
 import { GenericTable } from './GenericTable'
+import ExpandableCell from './TableElements/ExpandableCell'
 
 interface TableProps {
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
@@ -28,7 +29,7 @@ const SequenceTable = ({ updateData }: TableProps) => {
         Header: 'Name',
         accessor: 'seqName',
         width: 'auto',
-        Cell: (props: any) => <EditableCell {...props} expandable={true}/>,
+        Cell: ExpandableCell,
       },
       {
         Header: 'Intensity',
@@ -53,12 +54,23 @@ const SequenceTable = ({ updateData }: TableProps) => {
   )
   const filterSequenceKeys = () => {
     return sequences.map((seq) => {
+      const subRows = seq.pulses.map((pulse) => {
+        return {
+          seqName: pulse.target.name,
+          seqComment: pulse.target.comment,
+          seqIntensity: 0,
+          seqVisible: pulse.target.visible,
+          seqSelected: pulse.target.selected,
+        }
+      })
+
       return {
         seqName: seq.name,
         seqComment: seq.comment,
         seqIntensity: 0,
         seqVisible: seq.visible,
         seqSelected: seq.selected,
+        subRows,
       }
     })
   }
