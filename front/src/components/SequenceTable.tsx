@@ -60,7 +60,8 @@ const SequenceTable = ({ updateData }: TableProps) => {
           seqComment: pulse.target.comment,
           seqIntensity: 0,
           seqVisible: pulse.target.visible,
-          seqSelected: pulse.target.selected,
+          selected: pulse.target.selected,
+          seqIsi: pulse.isi,
         }
       })
 
@@ -69,8 +70,9 @@ const SequenceTable = ({ updateData }: TableProps) => {
         seqComment: seq.comment,
         seqIntensity: 0,
         seqVisible: seq.visible,
-        seqSelected: seq.selected,
+        selected: seq.selected,
         subRows,
+        seqIsi: 0
       }
     })
   }
