@@ -10,11 +10,8 @@ import EditableCell from './TableElements/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 
-interface TableProps {
-  updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
-}
 
-const TargetTable = ({ updateData }: TableProps) => {
+const TargetTable = () => {
   const { sequences, setSequences, targets } = useStore()
 
   const columns = useMemo(
@@ -102,7 +99,6 @@ const TargetTable = ({ updateData }: TableProps) => {
     <GenericTable
       columns={columns}
       data={filterTargetKeys()}
-      updateData={updateData}
       createMenu={createMenu}
       SelectableRow={SelectableTargetTableRow}
     />

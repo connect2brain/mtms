@@ -6,16 +6,12 @@ import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
-import EditableCell from './TableElements/EditableCell'
+import { EditableSequenceTableCell } from './TableElements/EditableCell'
 import { GenericTable } from './GenericTable'
 import ExpandableCell from './TableElements/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
 
-interface TableProps {
-  updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
-}
-
-const SequenceTable = ({ updateData }: TableProps) => {
+const SequenceTable = () => {
   const { sequences, targets } = useStore()
 
   const columns = useMemo(
@@ -36,19 +32,19 @@ const SequenceTable = ({ updateData }: TableProps) => {
         Header: 'Intensity',
         accessor: 'seqIntensity',
         width: 'auto',
-        Cell: EditableCell,
+        Cell: EditableSequenceTableCell,
       },
       {
         Header: 'isi',
         accessor: 'seqIsi',
         width: 'auto',
-        Cell: EditableCell,
+        Cell: EditableSequenceTableCell,
       },
       {
         Header: 'Mode Duration',
         accessor: 'seqModeDuration',
         width: 'auto',
-        Cell: EditableCell,
+        Cell: EditableSequenceTableCell,
       },
     ],
     [],
@@ -86,7 +82,6 @@ const SequenceTable = ({ updateData }: TableProps) => {
     <GenericTable
       columns={columns}
       data={filterSequenceKeys()}
-      updateData={updateData}
       createMenu={createMenu}
       SelectableRow={SelectableSequenceTableRow}
     />
