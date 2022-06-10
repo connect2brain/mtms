@@ -1,13 +1,10 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import Expand from '../Expand'
 import EditableCell from './EditableCell'
-import { Column, Row } from 'react-table'
 import useStore from 'providers/state'
+import { CellProps } from 'types/table'
 
-interface ExpandableCellProps {
-  value: string
-  row: Row
-  column: Column
+interface ExpandableCellProps extends CellProps {
   updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
 }
 

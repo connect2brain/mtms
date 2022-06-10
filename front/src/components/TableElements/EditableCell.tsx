@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useFocusMemo } from '../../utils'
 import styled from 'styled-components'
-import { Column, Row } from 'react-table'
 import Rectangle from '../Rectangle'
-import theme from '../../styles/theme'
+import { CellProps } from 'types/table'
 
-interface EditableCellProps {
-  value: string
-  row: Row
-  column: Column
+interface EditableCellProps extends CellProps {
   updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
   expandElement?: any
   whiteSpace?: boolean
