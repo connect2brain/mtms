@@ -1,8 +1,7 @@
-import React from 'react'
+import React, {useEffect, useState} from 'react'
 import Expand from '../Expand'
 import EditableCell from './EditableCell'
 import { Column, Row } from 'react-table'
-import styled from 'styled-components'
 import useStore from 'providers/state'
 
 interface ExpandableCellProps {
@@ -16,15 +15,22 @@ const ExpandableCell = ({ value, row, column, updateData }: ExpandableCellProps)
   const { canExpand, depth } = row
   const { expandedSequences, setExpandedSequences } = useStore()
 
+  const [isExpanded, setIsExpanded] = useState(row.isExpanded)
+
+  useEffect(() => {
+    setIsExpanded(row.isExpanded)
+  }, [row.isExpanded])
+
   const handleClickExpand = (event: any) => {
     event.stopPropagation()
     row.toggleRowExpanded()
+
     setExpandedSequences({
       ...expandedSequences,
-      [row.index]: row.isExpanded
+      [row.index]: !isExpanded,
     })
   }
-  const expandElement = canExpand ? <Expand onClick={handleClickExpand} expanded={row.isExpanded} /> : null
+  const expandElement = canExpand ? <Expand onClick={handleClickExpand} expanded={isExpanded} /> : null
 
   return (
     <EditableCell
