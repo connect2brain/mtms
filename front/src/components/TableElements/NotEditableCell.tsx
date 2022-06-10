@@ -1,7 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
+import { CellProps } from 'types/table'
 
-const NotEditableCell = ({ value: initialValue }: any) => {
+const NotEditableCell = ({ value: initialValue }: CellProps) => {
   return <DisabledInput value={initialValue} disabled={true} />
 }
 const DisabledInput = styled.input`
