@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import Rectangle from '../Rectangle'
 import { CellProps } from 'types/table'
 import useStore from 'providers/state'
-import { updateTarget } from 'services/ros'
+import { updateTargetInRos } from 'services/ros'
 import { ChangeableKey } from 'types/target'
 
 interface EditableCellProps extends CellProps {
@@ -25,7 +25,7 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
     const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
     const target = targets[targetIndex]
     const key: string = columnName.slice(3).toLowerCase()
-    updateTarget(target, key, value, toggle, targets, setTargets)
+    updateTargetInRos(target, key, value, toggle, targets, setTargets)
   }
 
   const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
@@ -50,7 +50,7 @@ export const EditableTargetTableCell = (props: EditableCellProps) => {
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
     console.log('updating target data')
     const target = targets[rowIndex]
-    updateTarget(target, columnName, value, toggle, targets, setTargets)
+    updateTargetInRos(target, columnName, value, toggle, targets, setTargets)
   }
 
   return <EditableCell {...props} updateData={updateTargetData} />

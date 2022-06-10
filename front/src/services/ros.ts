@@ -1,6 +1,6 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
-import { ChangeableKey, PositionMessage, Target, TargetMessage } from '../types/target'
+import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
 import { ExperimentMessage } from '../types/pulseSequence'
 import useStore from '../providers/state'
 import { isOfChangeableKey } from '../utils'
@@ -107,7 +107,31 @@ export const startExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleNavigation',
 })
 
-export const updateTarget = (
+export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
+  const pose = new ROSLIB.Message({
+    position,
+    orientation,
+  })
+
+  const request = new ROSLIB.ServiceRequest({
+    target: pose,
+  })
+
+  addTargetClient.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to add target', pose)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to add target', pose, ', error:')
+      console.error(error)
+    },
+  )
+}
+
+export const updateTargetInRos = (
   target: Target,
   key: string,
   value: any,

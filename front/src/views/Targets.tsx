@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { ChangeableKey, EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
-import { addTargetClient, positionListener, rosServicesByKey, stateListener } from 'services/ros'
+import {addTargetClient, addTargetToRos, positionListener, rosServicesByKey, stateListener} from 'services/ros'
 import { expand } from 'utils'
 import ROSLIB from 'roslib'
 import useStore from 'providers/state'
@@ -31,28 +31,8 @@ const Targets = () => {
   }, [])
 
   const addTarget = () => {
-    if (position) {
-      const pose = new ROSLIB.Message({
-        position,
-        orientation,
-      })
-
-      const request = new ROSLIB.ServiceRequest({
-        target: pose,
-      })
-
-      addTargetClient.callService(
-        request,
-        (response) => {
-          if (!response.success) {
-            console.log('ERROR: Failed to add target', pose)
-          }
-        },
-        (error) => {
-          console.log('ERROR: Failed to add target', pose, ', error:')
-          console.error(error)
-        },
-      )
+    if (position && orientation) {
+      addTargetToRos(position, orientation)
     }
   }
 
