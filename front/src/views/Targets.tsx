@@ -16,47 +16,6 @@ const Targets = () => {
 
   const [tab, setTab] = useState<'TARGETS' | 'SEQUENCES'>('TARGETS')
 
-  const updateTargetData = (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => {
-    const newTargets = [...targets]
-    const oldTarget = targets[rowIndex]
-
-    newTargets[rowIndex] = {
-      ...oldTarget,
-      [key]: value,
-    }
-    setTargets(newTargets)
-
-    let requestObject = {
-      name: oldTarget.name,
-    }
-    if (!toggle) {
-      const requestKey = `new_${key}`
-      requestObject = {
-        ...requestObject,
-        [requestKey]: value,
-      }
-    }
-    const request = new ROSLIB.ServiceRequest(requestObject)
-
-    if (!Object.prototype.hasOwnProperty.call(rosServicesByKey, key)) {
-      console.error(`Key ${key} is not changeable`)
-      return
-    }
-    rosServicesByKey[key].callService(
-      request,
-      (result) => {
-        if (!result.success) {
-          console.error(`ERROR: Failed to change key '${key}' from ${oldTarget[key]} to ${value}`)
-        } else {
-          console.log(`Changed ${oldTarget.name} key '${key}' from ${oldTarget[key]} to ${value}`)
-        }
-      },
-      (error) => {
-        console.error(error)
-      },
-    )
-  }
-
   const updateTargets = (message: TargetMessage) => {
     setTargets(message.targets)
   }
@@ -100,9 +59,9 @@ const Targets = () => {
   const table = () => {
     switch (tab) {
       case 'TARGETS':
-        return <TargetTable updateData={updateTargetData} />
+        return <TargetTable />
       case 'SEQUENCES':
-        return <SequenceTable updateData={updateTargetData} />
+        return <SequenceTable />
     }
   }
 

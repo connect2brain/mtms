@@ -1,6 +1,7 @@
-import React, {ReactNode, useEffect, useState} from 'react'
+import React, { ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
 import useStore from 'providers/state'
+import { getSequenceIndexFromRowId } from 'utils'
 
 interface Props {
   index: number
@@ -14,18 +15,18 @@ const SelectableSequenceTableRow = (props: Props) => {
 
   const { sequences, setSequences, targets } = useStore()
 
-  const sequenceIndex = isTarget ? Number(rowId.split('.').slice(0, -1).join('.')) : index
+  const sequenceIndex = isTarget ? getSequenceIndexFromRowId(rowId) : index
 
   const sequence = sequences[sequenceIndex]
   const [selected, setSelected] = useState(isTarget ? sequence.pulses[index]?.selected : sequence.selected)
 
   /* is still needed? Yep, if store selected changes, this should be changed too TODO
-  useEffect(() => {
-    if (isTarget) {
-      setSelected(targets[index].selected)
-    }
-  }, [targets[index].selected])
-*/
+    useEffect(() => {
+      if (isTarget) {
+        setSelected(targets[index].selected)
+      }
+    }, [targets[index].selected])
+  */
 
   const onClick = (event: any) => {
     event.preventDefault()
@@ -35,9 +36,9 @@ const SelectableSequenceTableRow = (props: Props) => {
     } else {
       const newSequence = {
         ...sequence,
-        selected: !sequence.selected
+        selected: !sequence.selected,
       }
-      const newSequences = sequences.filter(seq => seq.name !== sequence.name)
+      const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
       newSequences.splice(sequenceIndex, 0, newSequence)
       setSequences(newSequences)
       setSelected(!sequence.selected)
