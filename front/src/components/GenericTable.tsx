@@ -15,21 +15,15 @@ const defaultColumn = {
   Cell: NotEditableCell,
 }
 
-export enum VIEW {
-  TARGETS,
-  SEQUENCES,
-}
-
 interface TableProps {
   columns: any[]
   data: any[]
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
   createMenu: any
-  view: VIEW
   SelectableRow: any
 }
 
-export const GenericTable = ({ columns, data, updateData, createMenu, view, SelectableRow }: TableProps) => {
+export const GenericTable = ({ columns, data, updateData, createMenu, SelectableRow }: TableProps) => {
   const { expandedSequences } = useStore()
   const {
     getTableProps,
@@ -44,7 +38,7 @@ export const GenericTable = ({ columns, data, updateData, createMenu, view, Sele
       data,
       defaultColumn,
       autoResetExpanded: false,
-      //initialState: { expanded: expandedSequences },
+      initialState: { expanded: expandedSequences },
       /* updateMyData isn't part of the API, but anything we put into these options will automatically
              be available on the instance. That way we can call this function from our cell renderer and updateData */
       updateData,
@@ -96,7 +90,6 @@ export const GenericTable = ({ columns, data, updateData, createMenu, view, Sele
                 index={row.index}
                 updateData={updateData}
                 isTarget={isTarget}
-                view={view}
                 rowId={row.id}
               >
                 {row.cells.map((cell) => {
@@ -107,24 +100,6 @@ export const GenericTable = ({ columns, data, updateData, createMenu, view, Sele
                   )
                 })}
               </SelectableRow>
-            )
-            return (
-              <SelectableTargetTableRow
-                {...row.getRowProps()}
-                key={row.getRowProps().key}
-                index={row.index}
-                updateData={updateData}
-                isTarget={isTarget}
-                view={view}
-              >
-                {row.cells.map((cell) => {
-                  return (
-                    <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
-                      {cell.render('Cell')}
-                    </Td>
-                  )
-                })}
-              </SelectableTargetTableRow>
             )
           })}
         </Tbody>

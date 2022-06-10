@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import useStore from 'providers/state'
-import { VIEW } from '../GenericTable'
-import { Target } from 'types/target'
-import { PulseSequence } from 'types/pulseSequence'
 
 const SelectableTargetTableRow = (props: any) => {
-  const { index, updateData, isTarget, view } = props
+  const { index, updateData, isTarget } = props
   const { targets } = useStore()
   const [selected, setSelected] = useState(isTarget ? targets[index].selected : false)
 

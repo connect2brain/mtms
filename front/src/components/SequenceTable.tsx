@@ -7,7 +7,7 @@ import '@szhsin/react-menu/dist/index.css'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
 import EditableCell from './TableElements/EditableCell'
-import { GenericTable, VIEW } from './GenericTable'
+import { GenericTable } from './GenericTable'
 import ExpandableCell from './TableElements/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
 
@@ -88,7 +88,6 @@ const SequenceTable = ({ updateData }: TableProps) => {
       data={filterSequenceKeys()}
       updateData={updateData}
       createMenu={createMenu}
-      view={VIEW.SEQUENCES}
       SelectableRow={SelectableSequenceTableRow}
     />
   )

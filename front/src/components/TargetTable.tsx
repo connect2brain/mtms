@@ -7,7 +7,7 @@ import { Pulse, PulseSequence } from '../types/pulseSequence'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
 import EditableCell from './TableElements/EditableCell'
-import { GenericTable, VIEW } from './GenericTable'
+import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 
 interface TableProps {
@@ -104,7 +104,6 @@ const TargetTable = ({ updateData }: TableProps) => {
       data={filterTargetKeys()}
       updateData={updateData}
       createMenu={createMenu}
-      view={VIEW.TARGETS}
       SelectableRow={SelectableTargetTableRow}
     />
   )
