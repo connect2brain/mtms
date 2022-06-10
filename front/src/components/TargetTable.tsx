@@ -1,18 +1,14 @@
-import React, { useMemo, useState } from 'react'
-
-import { useTable, Row, useExpanded } from 'react-table'
-import styled from 'styled-components'
+import React, { useMemo } from 'react'
 import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
-import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
+import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
-import NotEditableCell from './TableElements/NotEditableCell'
-import SelectableTableRow from './TableElements/SelectableTableRow'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
 import EditableCell from './TableElements/EditableCell'
-import { GenericTable } from './GenericTable'
+import { GenericTable, VIEW } from './GenericTable'
+import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 
 interface TableProps {
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
@@ -55,10 +51,12 @@ const TargetTable = ({ updateData }: TableProps) => {
       .filter((t) => t.selected)
       .map((target) => {
         return {
-          target,
+          targetIndex: targets.indexOf(target),
           isi: 100,
           intensity: 0.5,
           modeDuration: 100,
+          visible: true,
+          selected: false,
         }
       })
     if (pulses.length === 0) {
@@ -81,7 +79,7 @@ const TargetTable = ({ updateData }: TableProps) => {
       nofPulsesInBursts: 1,
     }
     setSequences(sequences.concat(newSequence))
-    console.log('Created new sequence with targets', pulses.map((t) => t.target.name).join(', '))
+    console.log('Created new sequence with targets', pulses.map((t) => targets[t.targetIndex].name).join(', '))
   }
 
   const filterTargetKeys = () => {
@@ -100,7 +98,16 @@ const TargetTable = ({ updateData }: TableProps) => {
     return <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
   }
 
-  return <GenericTable columns={columns} data={filterTargetKeys()} updateData={updateData} createMenu={createMenu} />
+  return (
+    <GenericTable
+      columns={columns}
+      data={filterTargetKeys()}
+      updateData={updateData}
+      createMenu={createMenu}
+      view={VIEW.TARGETS}
+      SelectableRow={SelectableTargetTableRow}
+    />
+  )
 }
 
 export default TargetTable
