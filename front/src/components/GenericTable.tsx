@@ -18,12 +18,11 @@ const defaultColumn = {
 interface TableProps {
   columns: any[]
   data: any[]
-  updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
   createMenu: any
   SelectableRow: any
 }
 
-export const GenericTable = ({ columns, data, updateData, createMenu, SelectableRow }: TableProps) => {
+export const GenericTable = ({ columns, data, createMenu, SelectableRow }: TableProps) => {
   const { expandedSequences } = useStore()
   const {
     getTableProps,
@@ -39,9 +38,6 @@ export const GenericTable = ({ columns, data, updateData, createMenu, Selectable
       defaultColumn,
       autoResetExpanded: false,
       initialState: { expanded: expandedSequences },
-      /* updateMyData isn't part of the API, but anything we put into these options will automatically
-             be available on the instance. That way we can call this function from our cell renderer and updateData */
-      updateData,
     },
     useExpanded,
   )
@@ -88,7 +84,6 @@ export const GenericTable = ({ columns, data, updateData, createMenu, Selectable
                 {...row.getRowProps()}
                 key={row.getRowProps().key}
                 index={row.index}
-                updateData={updateData}
                 isTarget={isTarget}
                 rowId={row.id}
               >

@@ -1,4 +1,5 @@
 import React, { MutableRefObject, useRef } from 'react'
+import {changeableKey, ChangeableKey} from '../types/target'
 
 export const expand = (obj: any) =>
   obj
@@ -37,17 +38,6 @@ export const objectKeysToSnakeCase = (obj: any): any => {
   return obj
 }
 
-export const useFocus = (): [any, () => void] => {
-  const htmlElRef: MutableRefObject<any> = useRef(null)
-  const setFocus = (): void => {
-    console.log(htmlElRef)
-    console.log(htmlElRef.current)
-    htmlElRef?.current?.focus?.()
-  }
-
-  return [htmlElRef, setFocus]
-}
-
 export const useFocusMemo = (): [React.RefObject<HTMLInputElement>, VoidFunction] => {
   const htmlElRef = React.useRef<HTMLInputElement>(null)
   const setFocus = React.useCallback(() => {
@@ -57,4 +47,10 @@ export const useFocusMemo = (): [React.RefObject<HTMLInputElement>, VoidFunction
   }, [htmlElRef])
 
   return React.useMemo(() => [htmlElRef, setFocus], [htmlElRef, setFocus])
+}
+
+export const getSequenceIndexFromRowId = (rowId: string) => Number(rowId.split('.').slice(0, -1).join('.'))
+
+export const isOfChangeableKey = (keyInput: any): keyInput is ChangeableKey => {
+  return changeableKey.includes(keyInput)
 }

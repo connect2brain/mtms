@@ -1,13 +1,59 @@
 import React, { useEffect, useState } from 'react'
-import { useFocusMemo } from '../../utils'
+import { getSequenceIndexFromRowId, isOfChangeableKey, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../Rectangle'
 import { CellProps } from 'types/table'
+import useStore from 'providers/state'
+import { updateTarget } from 'services/ros'
+import { ChangeableKey } from 'types/target'
 
 interface EditableCellProps extends CellProps {
-  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
   expandElement?: any
   whiteSpace?: boolean
+  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void //TODO: this is not needed
+}
+
+export const EditableSequenceTableCell = (props: EditableCellProps) => {
+  const { row } = props
+  const isTarget = props.row.depth > 0
+  const { targets, setTargets, sequences, setSequences } = useStore()
+
+  const sequenceIndex = getSequenceIndexFromRowId(row.id)
+
+  const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
+    console.log('updating target data')
+    const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
+    const target = targets[targetIndex]
+    const key: string = columnName.slice(3).toLowerCase()
+    updateTarget(target, key, value, toggle, targets, setTargets)
+  }
+
+  const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
+    const key: string = columnName.slice(3).toLowerCase()
+    const sequence = sequences[rowIndex]
+    const newSequence = {
+      ...sequence,
+      [key]: value,
+    }
+    const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
+    newSequences.splice(rowIndex, 0, newSequence)
+    setSequences(newSequences)
+  }
+
+  return <EditableCell {...props} updateData={isTarget ? updateTargetData : updateSequenceData} />
+}
+
+export const EditableTargetTableCell = (props: EditableCellProps) => {
+  const { row } = props
+  const { targets, setTargets } = useStore()
+
+  const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
+    console.log('updating target data')
+    const target = targets[rowIndex]
+    updateTarget(target, columnName, value, toggle, targets, setTargets)
+  }
+
+  return <EditableCell {...props} updateData={updateTargetData} />
 }
 
 const EditableCell = ({

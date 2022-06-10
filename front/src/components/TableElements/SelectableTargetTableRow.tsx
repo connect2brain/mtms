@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import useStore from 'providers/state'
+import { updateTarget } from '../../services/ros'
 
 const SelectableTargetTableRow = (props: any) => {
-  const { index, updateData, isTarget } = props
-  const { targets } = useStore()
+  const { index, isTarget } = props
+  const { targets, setTargets } = useStore()
   const [selected, setSelected] = useState(isTarget ? targets[index].selected : false)
 
   useEffect(() => {
@@ -18,7 +19,8 @@ const SelectableTargetTableRow = (props: any) => {
     event.preventDefault()
 
     if (isTarget) {
-      updateData(index, 'selected', !selected, true)
+      const target = targets[index]
+      updateTarget(target, 'selected', !selected, true, targets, setTargets)
     } else {
       console.log('clicked a sequence, not implemented')
     }
