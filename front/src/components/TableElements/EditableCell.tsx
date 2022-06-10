@@ -73,7 +73,7 @@ const EditableCell = ({
       setInputFocus()
     }, 100)
   }
-
+  //console.log(row)
   return (
     <Margin>
       {whiteSpace ? (

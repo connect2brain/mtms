@@ -21,10 +21,12 @@ export interface PulseSequence {
 }
 
 export interface Pulse {
-  target: Target
+  targetIndex: number
   intensity: number
   isi: number
   modeDuration: number
+  visible: boolean
+  selected: boolean
 }
 
 interface ChannelInfo {

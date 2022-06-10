@@ -8,10 +8,16 @@ import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
 import NotEditableCell from './TableElements/NotEditableCell'
-import SelectableTableRow from './TableElements/SelectableTableRow'
+import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
+import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 
 const defaultColumn = {
   Cell: NotEditableCell,
+}
+
+export enum VIEW {
+  TARGETS,
+  SEQUENCES,
 }
 
 interface TableProps {
@@ -19,9 +25,12 @@ interface TableProps {
   data: any[]
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
   createMenu: any
+  view: VIEW
+  SelectableRow: any
 }
 
-export const GenericTable = ({ columns, data, updateData, createMenu }: TableProps) => {
+export const GenericTable = ({ columns, data, updateData, createMenu, view, SelectableRow }: TableProps) => {
+  const { expandedSequences } = useStore()
   const {
     getTableProps,
     getTableBodyProps,
@@ -35,8 +44,9 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
       data,
       defaultColumn,
       autoResetExpanded: false,
+      //initialState: { expanded: expandedSequences },
       /* updateMyData isn't part of the API, but anything we put into these options will automatically
-      be available on the instance. That way we can call this function from our cell renderer and updateData */
+             be available on the instance. That way we can call this function from our cell renderer and updateData */
       updateData,
     },
     useExpanded,
@@ -77,14 +87,17 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
         <Tbody {...getTableBodyProps()}>
           {rows.map((row: Row) => {
             prepareRow(row)
-
+            // TODO: is it possible that there is a sequence with 0 targets?
+            const isTarget = row.depth > 0 || (row.depth === 0 && row.subRows.length === 0)
             return (
-              <SelectableTableRow
+              <SelectableRow
                 {...row.getRowProps()}
                 key={row.getRowProps().key}
                 index={row.index}
                 updateData={updateData}
-                isTarget={row.depth > 0}
+                isTarget={isTarget}
+                view={view}
+                rowId={row.id}
               >
                 {row.cells.map((cell) => {
                   return (
@@ -93,7 +106,25 @@ export const GenericTable = ({ columns, data, updateData, createMenu }: TablePro
                     </Td>
                   )
                 })}
-              </SelectableTableRow>
+              </SelectableRow>
+            )
+            return (
+              <SelectableTargetTableRow
+                {...row.getRowProps()}
+                key={row.getRowProps().key}
+                index={row.index}
+                updateData={updateData}
+                isTarget={isTarget}
+                view={view}
+              >
+                {row.cells.map((cell) => {
+                  return (
+                    <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
+                      {cell.render('Cell')}
+                    </Td>
+                  )
+                })}
+              </SelectableTargetTableRow>
             )
           })}
         </Tbody>

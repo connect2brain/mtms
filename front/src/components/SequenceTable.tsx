@@ -1,21 +1,22 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 
 import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
-import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
+import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/EyeCell'
 import EditableCell from './TableElements/EditableCell'
-import { GenericTable } from './GenericTable'
+import { GenericTable, VIEW } from './GenericTable'
 import ExpandableCell from './TableElements/ExpandableCell'
+import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
 
 interface TableProps {
   updateData: (rowIndex: number, key: ChangeableKey, value: any, toggle: boolean) => void
 }
 
 const SequenceTable = ({ updateData }: TableProps) => {
-  const { sequences } = useStore()
+  const { sequences, targets } = useStore()
 
   const columns = useMemo(
     () => [
@@ -55,12 +56,13 @@ const SequenceTable = ({ updateData }: TableProps) => {
   const filterSequenceKeys = () => {
     return sequences.map((seq) => {
       const subRows = seq.pulses.map((pulse) => {
+        const target = targets[pulse.targetIndex]
         return {
-          seqName: pulse.target.name,
-          seqComment: pulse.target.comment,
+          seqName: target.name,
+          seqComment: target.comment,
           seqIntensity: 0,
-          seqVisible: pulse.target.visible,
-          selected: pulse.target.selected,
+          seqVisible: pulse.visible, //should be pulse specific, not target specific TODO
+          selected: pulse.selected, //should be pulse specific, not target specific TODO
           seqIsi: pulse.isi,
         }
       })
@@ -72,7 +74,7 @@ const SequenceTable = ({ updateData }: TableProps) => {
         seqVisible: seq.visible,
         selected: seq.selected,
         subRows,
-        seqIsi: 0
+        seqIsi: 0,
       }
     })
   }
@@ -80,7 +82,16 @@ const SequenceTable = ({ updateData }: TableProps) => {
     return <MenuItem>moi</MenuItem>
   }
 
-  return <GenericTable columns={columns} data={filterSequenceKeys()} updateData={updateData} createMenu={createMenu} />
+  return (
+    <GenericTable
+      columns={columns}
+      data={filterSequenceKeys()}
+      updateData={updateData}
+      createMenu={createMenu}
+      view={VIEW.SEQUENCES}
+      SelectableRow={SelectableSequenceTableRow}
+    />
+  )
 }
 
 export default SequenceTable
