@@ -61,8 +61,8 @@ const SequenceTable = ({ updateData }: TableProps) => {
           seqName: target.name,
           seqComment: target.comment,
           seqIntensity: 0,
-          seqVisible: pulse.visible, //should be pulse specific, not target specific TODO
-          selected: pulse.selected, //should be pulse specific, not target specific TODO
+          seqVisible: pulse.visible,
+          selected: pulse.selected,
           seqIsi: pulse.isi,
         }
       })
