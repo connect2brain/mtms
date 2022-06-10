@@ -1,20 +1,22 @@
 import React, { useState } from 'react'
 import Eye from '../Eye'
 import styled from 'styled-components'
+import { CellProps } from 'types/table'
 
-export const EyeCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateData, // This is a custom function that we supplied to our table instance
-}: any) => {
+interface EyeCellProps extends CellProps {
+  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
+}
+
+export const EyeCell = ({ value: initialValue, row, column, updateData }: EyeCellProps) => {
   const [visible, setVisible] = useState(initialValue)
 
   const onClick = (event: any) => {
     event.stopPropagation()
     const newVisible = !visible
     setVisible(newVisible)
-    updateData(index, id, newVisible, true)
+    if (column.id) {
+      updateData(row.index, column.id, newVisible, true)
+    }
   }
 
   // If the initialValue is changed external, sync it up with our state
