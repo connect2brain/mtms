@@ -67,6 +67,9 @@ type Store = {
 
   sequences: PulseSequence[]
   setSequences: (sequences: PulseSequence[]) => void
+
+  expandedSequences: any
+  setExpandedSequences: (expandedSequences: number[]) => void
 }
 
 const useStore = create<Store>(
@@ -100,6 +103,9 @@ const useStore = create<Store>(
 
     sequences: [],
     setSequences: (sequences) => set({ sequences }),
+
+    expandedSequences: {},
+    setExpandedSequences: (expandedSequences: number[]) => set({ expandedSequences }),
   })),
 )
 

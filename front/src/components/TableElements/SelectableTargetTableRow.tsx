@@ -1,11 +1,13 @@
-import useStore from '../../providers/state'
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
+import useStore from 'providers/state'
+import { VIEW } from '../GenericTable'
+import { Target } from 'types/target'
+import { PulseSequence } from 'types/pulseSequence'
 
-const SelectableTableRow = (props: any) => {
-  const { index, updateData, isTarget } = props
-  const { targets, setTargets } = useStore((state) => state)
-
+const SelectableTargetTableRow = (props: any) => {
+  const { index, updateData, isTarget, view } = props
+  const { targets } = useStore()
   const [selected, setSelected] = useState(isTarget ? targets[index].selected : false)
 
   useEffect(() => {
@@ -15,6 +17,7 @@ const SelectableTableRow = (props: any) => {
   }, [targets[index].selected])
 
   const onClick = (event: any) => {
+    console.log(targets, selected)
     event.preventDefault()
 
     if (isTarget) {
@@ -38,4 +41,4 @@ const TableRow = styled.tr<{
   background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
 `
 
-export default SelectableTableRow
+export default SelectableTargetTableRow
