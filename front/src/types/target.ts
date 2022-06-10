@@ -1,36 +1,38 @@
 import ROSLIB from 'roslib'
 
 export interface EulerAngles {
-  alpha: number;
-  beta: number;
-  gamma: number;
+  alpha: number
+  beta: number
+  gamma: number
 }
+
 export interface Position {
-  x: number;
-  y: number;
-  z: number;
+  x: number
+  y: number
+  z: number
 }
 
 export interface PoseUsingEulerAngles {
-  orientation: EulerAngles;
-  position: Position;
+  orientation: EulerAngles
+  position: Position
 }
 
 export interface Target {
-  name: string;
-  type: string;
-  comment: string;
-  visible: boolean;
-  selected: boolean;
-  target: boolean;
-  pose: PoseUsingEulerAngles;
+  name: string
+  type: string
+  comment: string
+  visible: boolean
+  selected: boolean
+  target: boolean
+  pose: PoseUsingEulerAngles
 
-  intensity: number;
-  iti: number;
+  intensity: number
+  iti: number
 }
 
 //type ChangeableKeys = keyof Target
-export type ChangeableKey = 'name' | 'comment' | 'visible' | 'selected'
+export const changeableKey = ['name', 'comment', 'visible', 'selected'] as const
+export type ChangeableKey = typeof changeableKey[number]
 
 export interface TargetMessage extends ROSLIB.Message {
   targets: Target[]

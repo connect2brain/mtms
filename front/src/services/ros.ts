@@ -1,7 +1,9 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
-import { PositionMessage, TargetMessage } from '../types/target'
+import { ChangeableKey, PositionMessage, Target, TargetMessage } from '../types/target'
 import { ExperimentMessage } from '../types/pulseSequence'
+import useStore from '../providers/state'
+import { isOfChangeableKey } from '../utils'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -105,9 +107,59 @@ export const startExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleNavigation',
 })
 
+export const updateTarget = (
+  target: Target,
+  key: string,
+  value: any,
+  toggle: boolean,
+  targets: Target[],
+  setTargets: any,
+) => {
+  if (!isOfChangeableKey(key)) {
+    console.error(`Key ${key} is not changeable`)
+    return
+  }
+
+  const newTarget = {
+    ...target,
+    [key]: value,
+  }
+  const newTargets = [...targets]
+  newTargets[targets.indexOf(target)] = newTarget
+
+  setTargets(newTargets)
+
+  let requestObject = {
+    name: target.name,
+  }
+  if (!toggle) {
+    const requestKey = `new_${key}`
+    requestObject = {
+      ...requestObject,
+      [requestKey]: value,
+    }
+  }
+  const request = new ROSLIB.ServiceRequest(requestObject)
+
+  rosServicesByKey[key].callService(
+    request,
+    (result) => {
+      if (!result.success) {
+        console.error(`ERROR: Failed to change key '${key}' from ${target[key]} to ${value}`)
+      } else {
+        console.log(`Changed ${target.name} key '${key}' from ${target[key]} to ${value}`)
+        setTargets(newTargets)
+      }
+    },
+    (error) => {
+      console.error(error)
+    },
+  )
+}
+
 export const rosServicesByKey = {
   name: renameTargetService,
   comment: changeCommentService,
   visible: toggleVisibleService,
-  selected: toggleSelectService
+  selected: toggleSelectService,
 }

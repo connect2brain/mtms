@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Expand from '../Expand'
-import EditableCell from './EditableCell'
+import EditableCell, {EditableSequenceTableCell} from './EditableCell'
 import useStore from 'providers/state'
 import { CellProps } from 'types/table'
 
@@ -30,7 +30,7 @@ const ExpandableCell = ({ value, row, column, updateData }: ExpandableCellProps)
   const expandElement = canExpand ? <Expand onClick={handleClickExpand} expanded={isExpanded} /> : null
 
   return (
-    <EditableCell
+    <EditableSequenceTableCell
       value={value}
       row={row}
       column={column}
