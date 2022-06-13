@@ -1,7 +1,6 @@
 #include <chrono>
 #include <functional>
 #include <memory>
-#include <string>
 #include <cmath>
 
 #include <arpa/inet.h>
@@ -10,7 +9,6 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 #define BUFFER_LENGTH 250
@@ -25,7 +23,6 @@
 #define NUMBER_OF_CHANNELS 62
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 
@@ -51,7 +48,7 @@ class EegBridge : public rclcpp::Node {
 
       auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-      publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/data", 10);
+      publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
       publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
       EegBridge::init_socket();
 
@@ -121,7 +118,7 @@ class EegBridge : public rclcpp::Node {
           int result = buffer[i] << 16 | buffer[i+1] << 8 | buffer[i+2];
 
           if (result > SIGNED_MAX) {
-            result = result - UNSIGNED_MAX;
+            result -= UNSIGNED_MAX;
           }
 
           double result_uv = result;
@@ -159,8 +156,8 @@ class EegBridge : public rclcpp::Node {
     char buffer[BUFFER_LENGTH];
 };
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]) {
+
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<EegBridge>());
   rclcpp::shutdown();
