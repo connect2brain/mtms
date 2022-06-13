@@ -13,14 +13,23 @@
 
 #define BUFFER_LENGTH 250
 #define PORT 50000
+
 #define SIGNED_MAX pow(2,23)
 #define UNSIGNED_MAX pow(2,24)
 #define DEFAULT_FREQUENCY_VALUE 500.0 // Hz
 #define DC_MODE_SCALE 100
 #define AC_MODE_SCALE 20
 #define NANO_TO_MICRO_CONVERSION 1000
+
 #define FIRST_CHANNEL_INDEX 28
+#define SAMPLE_PACKET_FIRST_TIME_INDEX 20
+#define TRIGGER_PACKET_FIRST_TIME_INDEX 8
+
 #define NUMBER_OF_CHANNELS 62
+#define SAMPLE_PACKET_ID 2
+#define TRIGGER_PACKET_ID 3
+
+#define VERBOSE 1
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -63,8 +72,10 @@ class EegBridge : public rclcpp::Node {
 
     void init_socket() {
 
-      // Init socket variables
+      // Init socket variable
       this->socket_length = sizeof(this->socket_other);
+
+      this->trigger_timestamp_ = 0;
 
       // Init socket
       this->socket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -108,40 +119,99 @@ class EegBridge : public rclcpp::Node {
         this->publisher_streaming_->publish(stream_msg);
       }
 
-      else if (this->buffer[0] < 4) {
+      else if (this->buffer[0] == SAMPLE_PACKET_ID) {
+        
+        uint16_t bundles = this->buffer[10] << 8 | buffer[11];
 
-        auto message = mtms_interfaces::msg::EegDatapoint();
-
-        int i = FIRST_CHANNEL_INDEX;
-        for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
-
-          int result = buffer[i] << 16 | buffer[i+1] << 8 | buffer[i+2];
-
-          if (result > SIGNED_MAX) {
-            result -= UNSIGNED_MAX;
-          }
-
-          double result_uv = result;
-          result_uv *= DC_MODE_SCALE;
-          result_uv /= NANO_TO_MICRO_CONVERSION;
-
-          message.channel_datapoint.push_back(result_uv);
-          RCLCPP_INFO(this->get_logger(), "Channel: %d, Result: %f", channel, result_uv);
-
-          i+=3;
+        if (bundles != 1) {
+          RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
         }
 
-        this->publisher_data_->publish(message);
+        if (VERBOSE) {
+          RCLCPP_INFO(this->get_logger(), "Sample packet received.");
+          RCLCPP_INFO(this->get_logger(), "Number of bundles in this packet: %d", bundles);
+        }
+
+        uint64_t time = (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX] << 56 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 1] << 48 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 2] << 40 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 3] << 32 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 4] << 24 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 5] << 16 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 6] << 8 |
+                        (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 7];
+
+        if (this->trigger_timestamp_ > 0 && time > this->trigger_timestamp_) {
+          uint64_t time_diff_ms = round((time - this->trigger_timestamp_) / 1000);
+
+          if (VERBOSE) {
+            RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
+            RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
+            RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %lu\n", time_diff_ms);
+
+            EegBridge::publish_eeg_datapoint(time_diff_ms);
+          }
+        }
+
+        else if (time < this->trigger_timestamp_) {
+          RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
+          RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
+          RCLCPP_WARN(this->get_logger(), "Warning: Sample packet arrived %f milliseconds before the trigger. Skipping.\n", round((this->trigger_timestamp_ - time) / 1000));
+        }
+      }
+
+      else if (this-> buffer[0] == TRIGGER_PACKET_ID) {
+                
+        RCLCPP_INFO(this->get_logger(), "Trigger packet received.");
+
+        this->trigger_timestamp_ = (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX] << 56 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 1] << 48 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 2] << 40 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 3] << 32 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 4] << 24 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 5] << 16 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 6] << 8 |
+                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 7];
         
-        auto stream_msg = std_msgs::msg::Bool();
-        stream_msg.data = true;
-        this->publisher_streaming_->publish(stream_msg);
+        RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->trigger_timestamp_);
       }
 
       else {
         close(this->socket_);
         RCLCPP_INFO(this->get_logger(), "Closing.");
       }
+    }
+
+  void publish_eeg_datapoint(uint64_t time_since_trigger) {
+
+    auto message = mtms_interfaces::msg::EegDatapoint();
+    message.time = time_since_trigger;
+
+    int i = FIRST_CHANNEL_INDEX;
+    for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
+
+      int result =  (uint8_t) buffer[i] << 16 |
+                    (uint8_t) buffer[i+1] << 8 |
+                    (uint8_t) buffer[i+2];
+
+      if (result > SIGNED_MAX) {
+        result -= UNSIGNED_MAX;
+      }
+
+      double result_uv = result;
+      result_uv *= DC_MODE_SCALE;
+      result_uv /= NANO_TO_MICRO_CONVERSION;
+
+      message.channel_datapoint.push_back(result_uv);
+
+      i+=3;
+    }
+
+      this->publisher_data_->publish(message);
+      
+      auto stream_msg = std_msgs::msg::Bool();
+      stream_msg.data = true;
+      this->publisher_streaming_->publish(stream_msg);
     }
 
   private:
@@ -153,7 +223,8 @@ class EegBridge : public rclcpp::Node {
     sockaddr_in socket_own;
     sockaddr_in socket_other;
     socklen_t socket_length;
-    char buffer[BUFFER_LENGTH];
+    uint8_t buffer[BUFFER_LENGTH];
+    uint64_t trigger_timestamp_;
 };
 
 int main(int argc, char * argv[]) {
