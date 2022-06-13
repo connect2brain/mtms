@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import Expand from '../Expand'
-import EditableCell, {EditableSequenceTableCell} from './EditableCell'
+import Expand from '../../Expand'
+import EditableCell, { EditableSequenceTableCell } from './EditableCell'
 import useStore from 'providers/state'
 import { CellProps } from 'types/table'
 
-interface ExpandableCellProps extends CellProps {
-  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
-}
-
-const ExpandableCell = ({ value, row, column, updateData }: ExpandableCellProps) => {
+const ExpandableCell = ({ value, row, column }: CellProps) => {
   const { canExpand, depth } = row
   const { expandedSequences, setExpandedSequences } = useStore()
 
@@ -34,7 +30,6 @@ const ExpandableCell = ({ value, row, column, updateData }: ExpandableCellProps)
       value={value}
       row={row}
       column={column}
-      updateData={updateData}
       expandElement={expandElement}
       whiteSpace={depth > 0}
     />

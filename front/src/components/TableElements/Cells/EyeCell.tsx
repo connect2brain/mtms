@@ -1,21 +1,21 @@
 import React, { useState } from 'react'
-import Eye from '../Eye'
+import Eye from '../../Eye'
 import styled from 'styled-components'
 import { CellProps } from 'types/table'
+import { updateTargetInRos } from 'services/ros'
+import useStore from 'providers/state'
 
-interface EyeCellProps extends CellProps {
-  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
-}
-
-export const EyeCell = ({ value: initialValue, row, column, updateData }: EyeCellProps) => {
+export const EyeCell = ({ value: initialValue, row, column }: CellProps) => {
   const [visible, setVisible] = useState(initialValue)
+  const { targets, setTargets } = useStore()
 
   const onClick = (event: any) => {
     event.stopPropagation()
     const newVisible = !visible
     setVisible(newVisible)
     if (column.id) {
-      updateData(row.index, column.id, newVisible, true)
+      const target = targets[row.index]
+      updateTargetInRos(target, column.id, newVisible, true, targets, setTargets)
     }
   }
 
