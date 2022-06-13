@@ -2,14 +2,10 @@ import React, { useState } from 'react'
 
 import { useTable, Row, useExpanded } from 'react-table'
 import styled from 'styled-components'
-import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
 import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
-import { Pulse, PulseSequence } from '../types/pulseSequence'
-import NotEditableCell from './TableElements/NotEditableCell'
-import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
-import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
+import NotEditableCell from './TableElements/Cells/NotEditableCell'
 
 const defaultColumn = {
   Cell: NotEditableCell,

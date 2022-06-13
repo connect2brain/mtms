@@ -1,14 +1,13 @@
 import React, { useMemo } from 'react'
 
-import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
 import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import Eye from './Eye'
-import { EyeCell } from './TableElements/EyeCell'
-import { EditableSequenceTableCell } from './TableElements/EditableCell'
+import { EyeCell } from './TableElements/Cells/EyeCell'
+import { EditableSequenceTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
-import ExpandableCell from './TableElements/ExpandableCell'
+import ExpandableCell from './TableElements/Cells/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
 
 const SequenceTable = () => {

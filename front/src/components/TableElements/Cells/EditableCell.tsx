@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react'
+import React, { ReactNode, useEffect, useState } from 'react'
 import { getSequenceIndexFromRowId, isOfChangeableKey, useFocusMemo } from 'utils'
 import styled from 'styled-components'
-import Rectangle from '../Rectangle'
+import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
 import useStore from 'providers/state'
 import { updateTargetInRos } from 'services/ros'
 import { ChangeableKey } from 'types/target'
 
 interface EditableCellProps extends CellProps {
-  expandElement?: any
+  expandElement?: ReactNode
   whiteSpace?: boolean
-  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void //TODO: this is not needed
+}
+
+interface UpdateEditableCellProps extends EditableCellProps {
+  updateData: (rowIndex: number, columnName: string, value: any, toggle: boolean) => void
 }
 
 export const EditableSequenceTableCell = (props: EditableCellProps) => {
@@ -43,8 +46,7 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   return <EditableCell {...props} updateData={isTarget ? updateTargetData : updateSequenceData} />
 }
 
-export const EditableTargetTableCell = (props: EditableCellProps) => {
-  const { row } = props
+export const EditableTargetTableCell = (props: UpdateEditableCellProps) => {
   const { targets, setTargets } = useStore()
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
@@ -63,7 +65,7 @@ const EditableCell = ({
   updateData,
   expandElement,
   whiteSpace,
-}: EditableCellProps) => {
+}: UpdateEditableCellProps) => {
   // We need to keep and update the state of the cell normally
   const [value, setValue] = useState(initialValue)
   const [changed, setChanged] = useState<boolean>(false)

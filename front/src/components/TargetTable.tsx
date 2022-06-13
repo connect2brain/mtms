@@ -1,15 +1,13 @@
 import React, { useMemo } from 'react'
-import { ChangeableKey } from 'types/target'
 import useStore from 'providers/state'
 import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
 import Eye from './Eye'
-import { EyeCell } from './TableElements/EyeCell'
-import EditableCell from './TableElements/EditableCell'
+import { EyeCell } from './TableElements/Cells/EyeCell'
+import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
-
 
 const TargetTable = () => {
   const { sequences, setSequences, targets } = useStore()
@@ -26,7 +24,7 @@ const TargetTable = () => {
         Header: 'Name',
         accessor: 'name',
         width: 'auto',
-        Cell: EditableCell,
+        Cell: EditableTargetTableCell,
       },
       {
         Header: 'Type',
@@ -37,7 +35,7 @@ const TargetTable = () => {
         Header: 'Comment',
         accessor: 'comment',
         width: 'auto',
-        Cell: EditableCell,
+        Cell: EditableTargetTableCell,
       },
     ],
     [],
