@@ -148,9 +148,9 @@ class EegBridge : public rclcpp::Node {
             RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
             RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
             RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %lu\n", time_diff_ms);
-
-            EegBridge::publish_eeg_datapoint(time_diff_ms);
           }
+
+          EegBridge::publish_eeg_datapoint(time_diff_ms);
         }
 
         else if (time < this->trigger_timestamp_) {
