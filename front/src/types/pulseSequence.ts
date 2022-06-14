@@ -18,6 +18,8 @@ export interface PulseSequence {
   ibi: number
   isis: number[]
   pulses: Pulse[]
+  intensity: number
+  isi: number
 }
 
 export interface Pulse {
