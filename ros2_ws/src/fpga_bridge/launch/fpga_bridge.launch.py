@@ -34,6 +34,11 @@ def generate_launch_description():
         executable="trigger_out_pulse_event_handler"
     )
 
+    charge_event_handler_node = Node(
+        package="fpga_bridge",
+        executable="charge_event_handler"
+    )
+
     event_trigger_handler_node = Node(
         package="fpga_bridge",
         executable="event_trigger_handler"
@@ -44,5 +49,6 @@ def generate_launch_description():
     ld.add_action(discharge_controller_bridge_node)
     ld.add_action(stimulation_pulse_event_handler_node)
     ld.add_action(trigger_out_pulse_event_handler_node)
+    ld.add_action(charge_event_handler_node)
     ld.add_action(event_trigger_handler_node)
     return ld
