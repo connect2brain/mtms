@@ -107,6 +107,13 @@ export const startExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleNavigation',
 })
 
+const rosServicesByKey = {
+  name: renameTargetService,
+  comment: changeCommentService,
+  visible: toggleVisibleService,
+  selected: toggleSelectService,
+}
+
 export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
   const pose = new ROSLIB.Message({
     position,
@@ -181,9 +188,3 @@ export const updateTargetInRos = (
   )
 }
 
-export const rosServicesByKey = {
-  name: renameTargetService,
-  comment: changeCommentService,
-  visible: toggleVisibleService,
-  selected: toggleSelectService,
-}
