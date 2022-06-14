@@ -39,7 +39,9 @@ const Experiment = () => {
         comment: '',
         visible: false,
         selected: false,
-          pulses: []
+        intensity: 10,
+        pulses: [],
+        isi: 10,
       },
     }
 
