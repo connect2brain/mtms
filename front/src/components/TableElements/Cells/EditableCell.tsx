@@ -34,10 +34,37 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
     const key: string = columnName.slice(3).toLowerCase()
     const sequence = sequences[rowIndex]
+
+    const updateAlsoInTargets = ['isi', 'intensity', 'modeDuration', 'visible', 'selected']
+
+    const pulses = updateAlsoInTargets.includes(key)
+      ? sequence.pulses.map((pulse) => {
+          return {
+            ...pulse,
+            [key]: value,
+          }
+        })
+      : [...sequence.pulses]
+
+    console.log(sequence)
+    console.log(sequence.pulses)
+    console.log(pulses)
+
     const newSequence = {
       ...sequence,
       [key]: value,
     }
+    if (updateAlsoInTargets.includes(key)) {
+      newSequence.pulses = newSequence.pulses.map(pulse => {
+        return {
+          ...pulse,
+          [key]: value,
+        }
+      })
+    }
+
+    console.log('new seq', newSequence)
+
     const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
     newSequences.splice(rowIndex, 0, newSequence)
     setSequences(newSequences)

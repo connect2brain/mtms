@@ -72,6 +72,8 @@ const TargetTable = () => {
       nofBurstsInTrains: 3,
       nofTrains: 3,
       nofPulsesInBursts: 1,
+      intensity: 100,
+      isi: 10
     }
     setSequences(sequences.concat(newSequence))
     console.log('Created new sequence with targets', pulses.map((t) => targets[t.targetIndex].name).join(', '))
