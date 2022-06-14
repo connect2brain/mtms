@@ -22,6 +22,7 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+"msg/event/ChargeEvent.msg"
 "msg/event/StimulationPulsePiece.msg"
 "msg/event/StimulationPulseEvent.msg"
 "msg/event/TriggerOutPulseEvent.msg"
@@ -35,6 +36,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/Version.msg"
 
 "srv/SetPower.srv"
+"srv/SendChargeEvent.srv"
 "srv/SendEventTrigger.srv"
 "srv/SendStimulationPulseEvent.srv"
 "srv/SendTriggerOutPulseEvent.srv"
