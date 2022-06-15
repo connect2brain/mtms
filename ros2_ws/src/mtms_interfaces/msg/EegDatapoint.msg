@@ -1,4 +1,5 @@
 # eeg data points in micro volts
 
 float64[] channel_datapoint
-uint64 time
+float64 time
+bool first_sample_of_experiment

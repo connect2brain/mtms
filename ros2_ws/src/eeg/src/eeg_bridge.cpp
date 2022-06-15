@@ -67,8 +67,11 @@ class EegBridge : public rclcpp::Node {
       auto sampling_interval_int = int(round(1000 / sampling_frequency_));
       auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
 
+      this->first_sample_of_experiment_ = false;
+
       timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&EegBridge::timer_callback, this));
     }
+
 
     void init_socket() {
 
@@ -99,12 +102,14 @@ class EegBridge : public rclcpp::Node {
       setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
     }
 
+
     void err(const char *message) {
 
       RCLCPP_INFO(this->get_logger(), "Error.");
       perror(message);
       exit(1);
     }
+
 
     void timer_callback() {
 
@@ -142,21 +147,22 @@ class EegBridge : public rclcpp::Node {
                         (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 7];
 
         if (this->trigger_timestamp_ > 0 && time > this->trigger_timestamp_) {
-          uint64_t time_diff_ms = round((time - this->trigger_timestamp_) / 1000);
+          double_t time_diff_ms = (time - this->trigger_timestamp_) / 1000;
 
           if (VERBOSE) {
             RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
             RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
-            RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %lu\n", time_diff_ms);
+            RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %f\n", time_diff_ms);
           }
 
           EegBridge::publish_eeg_datapoint(time_diff_ms);
+          this->first_sample_of_experiment_ = false;
         }
 
         else if (time < this->trigger_timestamp_) {
           RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
           RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
-          RCLCPP_WARN(this->get_logger(), "Warning: Sample packet arrived %f milliseconds before the trigger. Skipping.\n", round((this->trigger_timestamp_ - time) / 1000));
+          RCLCPP_WARN(this->get_logger(), "Warning: Sample packet arrived %ld milliseconds before the trigger. Skipping.\n", (this->trigger_timestamp_ - time) / 1000);
         }
       }
 
@@ -174,6 +180,7 @@ class EegBridge : public rclcpp::Node {
                                    (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 7];
         
         RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->trigger_timestamp_);
+        this->first_sample_of_experiment_ = true;
       }
 
       else {
@@ -182,7 +189,8 @@ class EegBridge : public rclcpp::Node {
       }
     }
 
-  void publish_eeg_datapoint(uint64_t time_since_trigger) {
+
+  void publish_eeg_datapoint(double time_since_trigger) {
 
     auto message = mtms_interfaces::msg::EegDatapoint();
     message.time = time_since_trigger;
@@ -207,12 +215,15 @@ class EegBridge : public rclcpp::Node {
       i+=3;
     }
 
+      message.first_sample_of_experiment = this->first_sample_of_experiment_;
+
       this->publisher_data_->publish(message);
       
       auto stream_msg = std_msgs::msg::Bool();
       stream_msg.data = true;
       this->publisher_streaming_->publish(stream_msg);
     }
+
 
   private:
     rclcpp::TimerBase::SharedPtr timer_;
@@ -225,7 +236,9 @@ class EegBridge : public rclcpp::Node {
     socklen_t socket_length;
     uint8_t buffer[BUFFER_LENGTH];
     uint64_t trigger_timestamp_;
+    bool first_sample_of_experiment_;
 };
+
 
 int main(int argc, char * argv[]) {
 
