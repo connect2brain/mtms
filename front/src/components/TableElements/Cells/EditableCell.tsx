@@ -85,13 +85,15 @@ const EditableCell = ({
   const [changed, setChanged] = useState<boolean>(false)
   const [beforeChange, setBeforeChange] = useState(initialValue)
   const [toggle, setToggle] = useState<boolean>(true)
+  const valueType = typeof initialValue
 
   const { index, depth } = row
 
   const [inputRef, setInputFocus] = useFocusMemo()
 
   const onChange = (e: any) => {
-    setValue(e.target.value)
+    const newValue = valueType === 'number' ? Number(e.target.value) : e.target.value
+    setValue(newValue)
     setChanged(true)
   }
 
