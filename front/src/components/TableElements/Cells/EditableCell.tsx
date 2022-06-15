@@ -46,24 +46,11 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
         })
       : [...sequence.pulses]
 
-    console.log(sequence)
-    console.log(sequence.pulses)
-    console.log(pulses)
-
     const newSequence = {
       ...sequence,
       [key]: value,
+      pulses,
     }
-    if (updateAlsoInTargets.includes(key)) {
-      newSequence.pulses = newSequence.pulses.map(pulse => {
-        return {
-          ...pulse,
-          [key]: value,
-        }
-      })
-    }
-
-    console.log('new seq', newSequence)
 
     const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
     newSequences.splice(rowIndex, 0, newSequence)
@@ -133,8 +120,9 @@ const EditableCell = ({
 
   // If the initialValue is changed external, sync it up with our state
   useEffect(() => {
-    setValue(value)
-  }, [value])
+    setValue(initialValue)
+  }, [initialValue])
+
   const onDoubleClick = () => {
     setToggle(false)
 
