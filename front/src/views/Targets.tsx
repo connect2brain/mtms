@@ -3,13 +3,13 @@ import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
 import { addTargetToRos, positionListener, stateListener } from 'services/ros'
 import { expand } from 'utils'
-import useStore from 'providers/state'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
+import { useAppSelector } from 'providers/reduxHooks'
+import { setTargets } from 'reducers/targetReducer'
 
 const Targets = () => {
-  const { targets, setTargets, sequences } = useStore()
-
+  const { targets } = useAppSelector((state) => state.targetReducer)
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
 
@@ -69,15 +69,13 @@ const Targets = () => {
   )
 }
 
-
-
 const TabButton = styled.button<{
   selected: boolean
 }>`
   all: unset;
-  background-color: ${p => p.selected ? p.theme.colors.lightergray : p.theme.colors.lightgray};
+  background-color: ${(p) => (p.selected ? p.theme.colors.lightergray : p.theme.colors.lightgray)};
   padding: 0.3rem;
-  border: 1px solid ${p => p.theme.colors.gray};
+  border: 1px solid ${(p) => p.theme.colors.gray};
 `
 
 export default Targets
