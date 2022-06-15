@@ -144,7 +144,6 @@ export const updateTargetInRos = (
   value: any,
   toggle: boolean,
   targets: Target[],
-  setTargets: any,
 ) => {
   if (!isOfChangeableKey(key)) {
     console.error(`Key ${key} is not changeable`)
