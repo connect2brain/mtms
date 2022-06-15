@@ -49,12 +49,11 @@ const SequenceTable = () => {
     [],
   )
   const filterSequenceKeys = () => {
-    console.log('in filter sequence keys')
     return sequences.map((seq) => {
       const subRows = seq.pulses.map((pulse) => {
         const target = targets[pulse.targetIndex]
 
-        const o = {
+        return {
           seqName: target.name,
           seqComment: target.comment,
           seqIntensity: pulse.intensity,
@@ -62,8 +61,6 @@ const SequenceTable = () => {
           selected: pulse.selected,
           seqIsi: pulse.isi,
         }
-        console.log(o)
-        return o
       })
 
       return {
