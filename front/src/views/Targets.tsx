@@ -5,18 +5,19 @@ import { addTargetToRos, positionListener, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
-import { useAppSelector } from 'providers/reduxHooks'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
 
 const Targets = () => {
-  const { targets } = useAppSelector((state) => state.targetReducer)
   const [position, setPosition] = useState<Position | null>(null)
   const [orientation, setOrientation] = useState<EulerAngles | null>(null)
 
   const [tab, setTab] = useState<'TARGETS' | 'SEQUENCES'>('TARGETS')
 
+  const dispatch = useAppDispatch()
+
   const updateTargets = (message: TargetMessage) => {
-    setTargets(message.targets)
+    dispatch(setTargets(message.targets))
   }
 
   const updatePosition = (message: PositionMessage) => {
