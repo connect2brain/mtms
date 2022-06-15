@@ -1,24 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import useStore from 'providers/state'
 import { updateTargetInRos } from 'services/ros'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { setTargets } from 'reducers/targetReducer'
 
 const SelectableTargetTableRow = (props: any) => {
   const { index } = props
-  const { targets, setTargets } = useStore()
+  const { targets } = useAppSelector((state) => state.targets)
   const [selected, setSelected] = useState(targets[index].selected)
 
   const dropRef = useRef<HTMLTableRowElement>(null)
   const dragRef = useRef<HTMLTableCellElement>(null)
+
+  const dispatch = useAppDispatch()
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const newTargets = [...targets]
 
     newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
 
-    setTargets(newTargets)
+    dispatch(setTargets(newTargets))
   }
 
   const [, drop] = useDrop({
@@ -77,7 +80,7 @@ const SelectableTargetTableRow = (props: any) => {
     event.preventDefault()
 
     const target = targets[index]
-    updateTargetInRos(target, 'selected', !selected, true, targets, setTargets)
+    updateTargetInRos(target, 'selected', !selected, true, targets)
   }
 
   const [{ isDragging }, drag, preview] = useDrag({

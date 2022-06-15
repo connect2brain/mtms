@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import targetReducer from '../reducers/targetReducer'
+import sequenceReducer from '../reducers/sequenceReducer'
 
 export const store = configureStore({
   reducer: {
-    targetReducer,
+    targets: targetReducer,
+    sequences: sequenceReducer,
   },
 })
 

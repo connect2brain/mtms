@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react'
-import useStore from 'providers/state'
 import { MenuItem, SubMenu } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
@@ -9,9 +8,15 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from '../utils'
+import { useAppSelector } from 'providers/reduxHooks'
+import {addSequence, modifySequence} from '../reducers/sequenceReducer'
+import { useDispatch } from 'react-redux'
 
 const TargetTable = () => {
-  const { sequences, setSequences, targets } = useStore()
+  const { sequences } = useAppSelector((state) => state.sequences)
+  const { targets } = useAppSelector((state) => state.targets)
+
+  const dispatch = useDispatch()
 
   const columns = useMemo(
     () => [
@@ -65,8 +70,7 @@ const TargetTable = () => {
       intensity: 100,
       isi: 10,
     }
-    setSequences(sequences.concat(newSequence))
-    console.log('Created new sequence with targets', pulses.map((t) => targets[t.targetIndex].name).join(', '))
+    dispatch(addSequence(newSequence))
   }
 
   const handleAddToSequence = (sequence: PulseSequence) => {
@@ -82,10 +86,10 @@ const TargetTable = () => {
       ...sequence,
       pulses,
     }
-
-    const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
-    newSequences.splice(sequenceIndex, 0, newSequence)
-    setSequences(newSequences)
+    dispatch(modifySequence({
+      index: sequenceIndex,
+      pulseSequence: newSequence
+    }))
   }
 
   const filterTargetKeys = () => {
