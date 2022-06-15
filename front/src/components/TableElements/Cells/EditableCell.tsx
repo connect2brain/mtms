@@ -6,6 +6,8 @@ import { CellProps } from 'types/table'
 import useStore from 'providers/state'
 import { updateTargetInRos } from 'services/ros'
 import { ChangeableKey } from 'types/target'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { modifySequence } from '../../../reducers/sequenceReducer'
 
 interface EditableCellProps extends CellProps {
   expandElement?: ReactNode
@@ -19,16 +21,18 @@ interface UpdateEditableCellProps extends EditableCellProps {
 export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const { row } = props
   const isTarget = props.row.depth > 0
-  const { targets, setTargets, sequences, setSequences } = useStore()
+  const { targets } = useAppSelector((state) => state.targets)
+  const { sequences } = useAppSelector((state) => state.sequences)
+
+  const dispatch = useAppDispatch()
 
   const sequenceIndex = getSequenceIndexFromRowId(row.id)
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
-    console.log('updating target data')
     const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
     const target = targets[targetIndex]
     const key: string = columnName.slice(3).toLowerCase()
-    updateTargetInRos(target, key, value, toggle, targets, setTargets)
+    updateTargetInRos(target, key, value, toggle, targets)
   }
 
   const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
@@ -51,22 +55,23 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
       [key]: value,
       pulses,
     }
-
-    const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
-    newSequences.splice(rowIndex, 0, newSequence)
-    setSequences(newSequences)
+    dispatch(
+      modifySequence({
+        index: rowIndex,
+        pulseSequence: newSequence,
+      }),
+    )
   }
 
   return <EditableCell {...props} updateData={isTarget ? updateTargetData : updateSequenceData} />
 }
 
 export const EditableTargetTableCell = (props: UpdateEditableCellProps) => {
-  const { targets, setTargets } = useStore()
+  const { targets } = useAppSelector((state) => state.targets)
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
-    console.log('updating target data')
     const target = targets[rowIndex]
-    updateTargetInRos(target, columnName, value, toggle, targets, setTargets)
+    updateTargetInRos(target, columnName, value, toggle, targets)
   }
 
   return <EditableCell {...props} updateData={updateTargetData} />
