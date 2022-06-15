@@ -4,6 +4,8 @@ import { useTable, Row, useExpanded } from 'react-table'
 import styled from 'styled-components'
 import useStore from 'providers/state'
 import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
+import { menuSelector, menuItemSelector, menuDividerSelector } from '@szhsin/react-menu/style-utils'
+
 import '@szhsin/react-menu/dist/index.css'
 import NotEditableCell from './TableElements/Cells/NotEditableCell'
 
@@ -96,12 +98,18 @@ export const GenericTable = ({ columns, data, createMenu, SelectableRow }: Table
         </Tbody>
       </TargetsTable>
 
-      <ControlledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)}>
+      <StyledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)} overflow='visible'>
         {createMenu()}
-      </ControlledMenu>
+      </StyledMenu>
     </TargetsContainer>
   )
 }
+
+const StyledMenu = styled(ControlledMenu)`
+  ${menuSelector.name} {
+    border: 1px solid ${p => p.theme.colors.gray};
+  }
+`
 
 const Th = styled.th`
   padding: 0.25rem 0.5rem;
