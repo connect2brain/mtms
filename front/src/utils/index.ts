@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useRef } from 'react'
-import {changeableKey, ChangeableKey} from '../types/target'
+import { changeableKey, ChangeableKey, Target } from '../types/target'
 
 export const expand = (obj: any) =>
   obj
@@ -53,4 +53,19 @@ export const getSequenceIndexFromRowId = (rowId: string) => Number(rowId.split('
 
 export const isOfChangeableKey = (keyInput: any): keyInput is ChangeableKey => {
   return changeableKey.includes(keyInput)
+}
+
+export const createPulsesFromSelectedTargets = (targets: Target[]) => {
+  return targets
+    .filter((t) => t.selected)
+    .map((target) => {
+      return {
+        targetIndex: targets.indexOf(target),
+        isi: 100,
+        intensity: 0.5,
+        modeDuration: 100,
+        visible: true,
+        selected: false,
+      }
+    })
 }
