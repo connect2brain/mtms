@@ -158,8 +158,6 @@ export const updateTargetInRos = (
   const newTargets = [...targets]
   newTargets[targets.indexOf(target)] = newTarget
 
-  setTargets(newTargets)
-
   let requestObject = {
     name: target.name,
   }
@@ -179,7 +177,7 @@ export const updateTargetInRos = (
         console.error(`ERROR: Failed to change key '${key}' from ${target[key]} to ${value}`)
       } else {
         console.log(`Changed ${target.name} key '${key}' from ${target[key]} to ${value}`)
-        setTargets(newTargets)
+        //setTargets(newTargets)
       }
     },
     (error) => {
