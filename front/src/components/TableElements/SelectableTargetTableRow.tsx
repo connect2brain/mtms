@@ -19,15 +19,6 @@ const SelectableTargetTableRow = (props: any) => {
     newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
 
     setTargets(newTargets)
-    /*
-            setRecords(
-              update(records, {
-                $splice: [
-                  [dragIndex, 1],
-                  [hoverIndex, 0, dragRecord],
-                ],
-              }),
-            )*/
   }
 
   const [, drop] = useDrop({
@@ -83,7 +74,6 @@ const SelectableTargetTableRow = (props: any) => {
   }, [targets[index].selected])
 
   const onClick = (event: any) => {
-    console.log(targets, selected)
     event.preventDefault()
 
     const target = targets[index]
