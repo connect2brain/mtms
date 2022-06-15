@@ -1,43 +1,127 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import useStore from 'providers/state'
-import { updateTargetInRos } from '../../services/ros'
+import { updateTargetInRos } from 'services/ros'
+import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
+import Dots from '../Dots'
 
 const SelectableTargetTableRow = (props: any) => {
-  const { index, isTarget } = props
+  const { index } = props
   const { targets, setTargets } = useStore()
-  const [selected, setSelected] = useState(isTarget ? targets[index].selected : false)
+  const [selected, setSelected] = useState(targets[index].selected)
+
+  const dropRef = useRef<HTMLTableRowElement>(null)
+  const dragRef = useRef<HTMLTableCellElement>(null)
+
+  const moveRow = (dragIndex: number, hoverIndex: number) => {
+    const newTargets = [...targets]
+
+    newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
+
+    setTargets(newTargets)
+    /*
+            setRecords(
+              update(records, {
+                $splice: [
+                  [dragIndex, 1],
+                  [hoverIndex, 0, dragRecord],
+                ],
+              }),
+            )*/
+  }
+
+  const [, drop] = useDrop({
+    accept: 'row',
+    hover(item: any, monitor) {
+      if (!dropRef.current) {
+        return
+      }
+      const dragIndex: number = item.index
+      const hoverIndex: number = index
+      // Don't replace items with themselves
+      if (dragIndex === hoverIndex) {
+        return
+      }
+      // Determine rectangle on screen
+      const hoverBoundingRect = dropRef.current.getBoundingClientRect()
+      // Get vertical middle
+      const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+
+      // Determine mouse position
+      const clientOffset = monitor.getClientOffset()
+      if (!clientOffset || !clientOffset.y) {
+        console.log('no clientOffset for row', index)
+        return
+      }
+
+      // Get pixels to the top
+      const hoverClientY = clientOffset.y - hoverBoundingRect.top
+
+      // Only perform the move when the mouse has crossed half of the items height
+      // When dragging downwards, only move when the cursor is below 50%
+      // When dragging upwards, only move when the cursor is above 50%
+      // Dragging downwards
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+        return
+      }
+      // Dragging upwards
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+        return
+      }
+      // Time to actually perform the action
+      moveRow(dragIndex, hoverIndex)
+      // Note: we're mutating the monitor item here!
+      // Generally it's better to avoid mutations,
+      // but it's good here for the sake of performance
+      // to avoid expensive index searches.
+      item.index = hoverIndex
+    },
+  })
 
   useEffect(() => {
-    if (isTarget) {
-      setSelected(targets[index].selected)
-    }
+    setSelected(targets[index].selected)
   }, [targets[index].selected])
 
   const onClick = (event: any) => {
     console.log(targets, selected)
     event.preventDefault()
 
-    if (isTarget) {
-      const target = targets[index]
-      updateTargetInRos(target, 'selected', !selected, true, targets, setTargets)
-    } else {
-      console.log('clicked a sequence, not implemented')
-    }
+    const target = targets[index]
+    updateTargetInRos(target, 'selected', !selected, true, targets, setTargets)
   }
 
+  const [{ isDragging }, drag, preview] = useDrag({
+    item: { type: 'row', index },
+    type: 'row',
+    collect: (monitor: DragSourceMonitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  })
+
+  const opacity = isDragging ? 0 : 1
+
+  preview(drop(dropRef))
+  drag(dragRef)
+
   return (
-    <TableRow {...props} selected={selected} onClick={onClick}>
+    <TableRow {...props} selected={selected} opacity={opacity} onClick={onClick} ref={dropRef}>
+      <td ref={dragRef}>
+        <Dots />
+      </td>
       {props.children}
     </TableRow>
   )
 }
 
+const DragElement = styled.span``
+
 const TableRow = styled.tr<{
   selected: boolean
+  opacity: number
 }>`
   border-bottom: 1px solid ${(p) => p.theme.colors.gray};
   background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
+  opacity: ${(p) => p.opacity};
 `
 
 export default SelectableTargetTableRow
