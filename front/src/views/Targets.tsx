@@ -51,12 +51,12 @@ const Targets = () => {
 
   return (
     <>
-      <button name='TARGETS' onClick={handleViewChangeClick}>
-        targets
-      </button>
-      <button name='SEQUENCES' onClick={handleViewChangeClick}>
-        sequences
-      </button>
+      <TabButton name='TARGETS' onClick={handleViewChangeClick} selected={tab === 'TARGETS'}>
+        Targets
+      </TabButton>
+      <TabButton name='SEQUENCES' onClick={handleViewChangeClick} selected={tab === 'SEQUENCES'}>
+        Sequences
+      </TabButton>
 
       <br />
 
@@ -64,11 +64,20 @@ const Targets = () => {
 
       <p>Current position: {expand(position)}</p>
       <p>Current orientation: {expand(orientation)}</p>
-      <AddTargetButton onClick={addTarget}>Add current position and orientation as target</AddTargetButton>
+      <button onClick={addTarget}>Add current position and orientation as target</button>
     </>
   )
 }
 
-const AddTargetButton = styled.button``
+
+
+const TabButton = styled.button<{
+  selected: boolean
+}>`
+  all: unset;
+  background-color: ${p => p.selected ? p.theme.colors.lightergray : p.theme.colors.lightgray};
+  padding: 0.3rem;
+  border: 1px solid ${p => p.theme.colors.gray};
+`
 
 export default Targets

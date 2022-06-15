@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import useStore from 'providers/state'
-import { MenuItem } from '@szhsin/react-menu'
+import { MenuItem, SubMenu } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
 import Eye from './Eye'
@@ -8,6 +8,7 @@ import { EyeCell } from './TableElements/Cells/EyeCell'
 import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
+import { createPulsesFromSelectedTargets } from '../utils'
 
 const TargetTable = () => {
   const { sequences, setSequences, targets } = useStore()
@@ -42,18 +43,7 @@ const TargetTable = () => {
   )
 
   const handleNewSequence = (event: any) => {
-    const pulses: Pulse[] = targets
-      .filter((t) => t.selected)
-      .map((target) => {
-        return {
-          targetIndex: targets.indexOf(target),
-          isi: 100,
-          intensity: 0.5,
-          modeDuration: 100,
-          visible: true,
-          selected: false,
-        }
-      })
+    const pulses: Pulse[] = createPulsesFromSelectedTargets(targets)
     if (pulses.length === 0) {
       console.log('no targets selected for new sequence')
       return
@@ -73,10 +63,29 @@ const TargetTable = () => {
       nofTrains: 3,
       nofPulsesInBursts: 1,
       intensity: 100,
-      isi: 10
+      isi: 10,
     }
     setSequences(sequences.concat(newSequence))
     console.log('Created new sequence with targets', pulses.map((t) => targets[t.targetIndex].name).join(', '))
+  }
+
+  const handleAddToSequence = (sequence: PulseSequence) => {
+    const selectedPulses = createPulsesFromSelectedTargets(targets)
+    if (selectedPulses.length === 0) {
+      console.log('no targets selected for new sequence')
+      return
+    }
+
+    const pulses = [...sequence.pulses, ...selectedPulses]
+    const sequenceIndex = sequences.indexOf(sequence)
+    const newSequence = {
+      ...sequence,
+      pulses,
+    }
+
+    const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
+    newSequences.splice(sequenceIndex, 0, newSequence)
+    setSequences(newSequences)
   }
 
   const filterTargetKeys = () => {
@@ -92,7 +101,20 @@ const TargetTable = () => {
   }
 
   const createMenu = () => {
-    return <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
+    return (
+      <>
+        <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
+        <SubMenu label='Add to sequence'>
+          {sequences.map((seq) => {
+            return (
+              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name}>
+                {seq.name}
+              </MenuItem>
+            )
+          })}
+        </SubMenu>
+      </>
+    )
   }
 
   return (
