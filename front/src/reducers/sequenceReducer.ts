@@ -16,6 +16,11 @@ interface SetExpandedSequencePayload {
   expanded: boolean
 }
 
+interface RemovePulsesFromSequencePayload {
+  sequenceIndex: number
+  pulseIdsToRemove: number[]
+}
+
 const initialState: SequenceState = {
   sequences: [],
   expandedSequences: {},
@@ -41,9 +46,29 @@ const sequenceSlice = createSlice({
     setExpandedSequence: (state, action: PayloadAction<SetExpandedSequencePayload>) => {
       state.expandedSequences[action.payload.index] = action.payload.expanded
     },
+    removePulsesFromSequence: (state, action: PayloadAction<RemovePulsesFromSequencePayload>) => {
+      const sequence = state.sequences[action.payload.sequenceIndex]
+      const pulseIdsToRemove = action.payload.pulseIdsToRemove
+      const targetIdsToRemove = pulseIdsToRemove.map((id) => sequence.pulses[id].targetIndex)
+      let updatedPulses = sequence.pulses.filter((pulse, i) => !pulseIdsToRemove.includes(i))
+      targetIdsToRemove.forEach((id) => {
+        updatedPulses = updatedPulses.map((pulse) => {
+          const newIndex = pulse.targetIndex < id ? pulse.targetIndex : pulse.targetIndex - 1
+          return {
+            ...pulse,
+            targetIndex: newIndex,
+          }
+        })
+      })
+
+      state.sequences[action.payload.sequenceIndex] = {
+        ...sequence,
+        pulses: updatedPulses,
+      }
+    },
   },
 })
 
-export const { addSequence, modifySequence, setSequences, setExpandedSequences, setExpandedSequence } =
+export const { addSequence, modifySequence, setSequences, removePulsesFromSequence, setExpandedSequence } =
   sequenceSlice.actions
 export default sequenceSlice.reducer
