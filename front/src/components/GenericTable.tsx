@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 
 import { useTable, Row, useExpanded } from 'react-table'
 import styled from 'styled-components'
-import useStore from 'providers/state'
 import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import { menuSelector, menuItemSelector, menuDividerSelector } from '@szhsin/react-menu/style-utils'
 
@@ -10,6 +9,7 @@ import '@szhsin/react-menu/dist/index.css'
 import NotEditableCell from './TableElements/Cells/NotEditableCell'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { useAppSelector } from '../providers/reduxHooks'
 
 const defaultColumn = {
   Cell: NotEditableCell,
@@ -23,7 +23,7 @@ interface TableProps {
 }
 
 export const GenericTable = ({ columns, data, createMenu, SelectableRow }: TableProps) => {
-  const { expandedSequences } = useStore()
+  const { expandedSequences } = useAppSelector((state) => state.sequences)
   const {
     getTableProps,
     getTableBodyProps,

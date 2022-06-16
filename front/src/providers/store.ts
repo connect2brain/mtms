@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
-import targetReducer from '../reducers/targetReducer'
-import sequenceReducer from '../reducers/sequenceReducer'
+import targetReducer from 'reducers/targetReducer'
+import sequenceReducer from 'reducers/sequenceReducer'
+import experimentReducer from 'reducers/experimentReducer'
 
 export const store = configureStore({
   reducer: {
     targets: targetReducer,
     sequences: sequenceReducer,
+    experiment: experimentReducer,
   },
 })
 

@@ -2,7 +2,6 @@ import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
 import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
 import { ExperimentMessage } from '../types/pulseSequence'
-import useStore from '../providers/state'
 import { isOfChangeableKey } from '../utils'
 
 export const ros = new ROSLIB.Ros({
