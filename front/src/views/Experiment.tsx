@@ -1,15 +1,18 @@
 import React, { useState } from 'react'
 import PulseSequenceConfiguration from './PulseSequenceConfiguration'
-import useStore from '../providers/state'
 import { ExperimentMessage } from '../types/pulseSequence'
 import { startExperimentService } from '../services/ros'
 import ROSLIB from 'roslib'
 import { objectKeysToSnakeCase } from '../utils'
 import styled from 'styled-components'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { setDescription } from 'reducers/experimentReducer'
 
 const Experiment = () => {
-  const { description, setDescription, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } =
-    useStore((state) => state)
+  const { description, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } = useAppSelector(
+    (state) => state.experiment,
+  )
+  const dispatch = useAppDispatch()
 
   const [statusMessage, setStatusMessage] = useState<string>('')
   const [status, setStatus] = useState<'OK' | 'ERROR'>('OK')
@@ -84,7 +87,7 @@ const Experiment = () => {
         name='description'
         type='text'
         value={description}
-        onChange={(event) => setDescription(event.target.value)}
+        onChange={(event) => dispatch(setDescription(event.target.value))}
       />
 
       <br />

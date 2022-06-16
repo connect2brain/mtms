@@ -1,9 +1,10 @@
 import React, { ReactNode, useRef, useState } from 'react'
 import styled from 'styled-components'
-import useStore from 'providers/state'
 import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { setSequences } from 'reducers/sequenceReducer'
 
 interface Props {
   index: number
@@ -21,7 +22,8 @@ interface DragItem {
 const SelectableSequenceTableRow = (props: Props) => {
   const { index, isTarget, rowId } = props
 
-  const { sequences, setSequences, targets } = useStore()
+  const { sequences } = useAppSelector((state) => state.sequences)
+  const dispatch = useAppDispatch()
 
   const sequenceIndex = isTarget ? getSequenceIndexFromRowId(rowId) : index
 
@@ -32,12 +34,12 @@ const SelectableSequenceTableRow = (props: Props) => {
   const dragRef = useRef<HTMLTableCellElement>(null)
 
   /* is still needed? Yep, if store selected changes, this should be changed too TODO
-          useEffect(() => {
-            if (isTarget) {
-              setSelected(targets[index].selected)
-            }
-          }, [targets[index].selected])
-        */
+              useEffect(() => {
+                if (isTarget) {
+                  setSelected(targets[index].selected)
+                }
+              }, [targets[index].selected])
+            */
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const newPulses = [...sequence.pulses]
@@ -51,7 +53,7 @@ const SelectableSequenceTableRow = (props: Props) => {
 
     const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
     newSequences.splice(sequenceIndex, 0, newSequence)
-    setSequences(newSequences)
+    dispatch(setSequences(newSequences))
 
     //setTargets(newTargets)
   }
@@ -104,7 +106,7 @@ const SelectableSequenceTableRow = (props: Props) => {
       // but it's good here for the sake of performance
       // to avoid expensive index searches.
       item.index = hoverIndex
-    }
+    },
   })
 
   const onClick = (event: any) => {

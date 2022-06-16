@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 
-import useStore from 'providers/state'
 import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
 import Eye from './Eye'
@@ -9,9 +8,11 @@ import { EditableSequenceTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import ExpandableCell from './TableElements/Cells/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
+import { useAppSelector } from 'providers/reduxHooks'
 
 const SequenceTable = () => {
-  const { sequences, targets } = useStore()
+  const { sequences } = useAppSelector((state) => state.sequences)
+  const { targets } = useAppSelector((state) => state.targets)
 
   const columns = useMemo(
     () => [

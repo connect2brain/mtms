@@ -1,11 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React from 'react'
 import { ChannelInfoWithEnabled } from '../types/pulseSequence'
 import styled from 'styled-components'
-import useStore from '../providers/state'
+import { useAppDispatch, useAppSelector } from '../providers/reduxHooks'
+import {
+  setChannels,
+  setIbi,
+  setIsis,
+  setIti,
+  setNofBurstsInTrains,
+  setNofPulsesInBursts,
+  setNofTrains,
+} from 'reducers/experimentReducer'
 
 const Channel = (props: ChannelInfoWithEnabled) => {
   const { channelIndex, enabled, voltage } = props
-  const { channels, setChannels } = useStore((state) => state)
+  const { channels } = useAppSelector((state) => state.experiment)
+  const dispatch = useAppDispatch()
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const target = event.target.name
@@ -21,7 +31,7 @@ const Channel = (props: ChannelInfoWithEnabled) => {
       ...props,
       [target]: value,
     }
-    setChannels(newChannels)
+    dispatch(setChannels(newChannels))
   }
 
   return (
@@ -40,26 +50,15 @@ const ChannelContainer = styled.div<{
 `
 /** TODO: button to add additional channels */
 const PulseSequenceConfiguration = () => {
-  const {
-    channels,
-    iti,
-    ibi,
-    nofBurstsInTrains,
-    nofTrains,
-    isis,
-    setIti,
-    setIbi,
-    setNofBurstsInTrains,
-    setNofTrains,
-    setIsis,
-    nofPulsesInBursts,
-    setNofPulsesInBursts,
-  } = useStore((state) => state)
+  const { channels, iti, ibi, nofBurstsInTrains, nofTrains, isis, nofPulsesInBursts } = useAppSelector(
+    (state) => state.experiment,
+  )
+  const dispatch = useAppDispatch()
 
   const isiChangeHandler = (value: string, index: number) => {
     const newIsis = [...isis]
     newIsis[index] = Number(value)
-    setIsis(newIsis)
+    dispatch(setIsis(newIsis))
   }
 
   const nofPulsesInBurstChangeHandler = (value: number) => {
@@ -75,19 +74,35 @@ const PulseSequenceConfiguration = () => {
       newIsis = isis.slice(0, value - 1)
     }
 
-    setNofPulsesInBursts(value)
-    setIsis(newIsis)
+    dispatch(setNofPulsesInBursts(value))
+    dispatch(setIsis(newIsis))
   }
 
   return (
     <div>
       <h2>Pulse sequence configuration</h2>
-      <label htmlFor='iti'>Inter-train interval (iti) (<span>&#181;</span>) </label>
+      <label htmlFor='iti'>
+        Inter-train interval (iti) (<span>&#181;</span>){' '}
+      </label>
 
-      <input name='iti' type='number' value={iti} min={0} onChange={(event) => setIti(Number(event.target.value))} />
+      <input
+        name='iti'
+        type='number'
+        value={iti}
+        min={0}
+        onChange={(event) => dispatch(setIti(Number(event.target.value)))}
+      />
       <br />
-      <label htmlFor='ibi'>Inter-burst interval (ibi) (<span>&#181;</span>) </label>
-      <input name='ibi' type='number' value={ibi} min={0} onChange={(event) => setIbi(Number(event.target.value))} />
+      <label htmlFor='ibi'>
+        Inter-burst interval (ibi) (<span>&#181;</span>){' '}
+      </label>
+      <input
+        name='ibi'
+        type='number'
+        value={ibi}
+        min={0}
+        onChange={(event) => dispatch(setIbi(Number(event.target.value)))}
+      />
       <br />
 
       <label htmlFor='nofPulsesInBursts'>Number of pulses in bursts </label>
@@ -105,7 +120,7 @@ const PulseSequenceConfiguration = () => {
         type='number'
         min={0}
         value={nofBurstsInTrains}
-        onChange={(event) => setNofBurstsInTrains(Number(event.target.value))}
+        onChange={(event) => dispatch(setNofBurstsInTrains(Number(event.target.value)))}
       />
       <br />
       <br />
@@ -113,7 +128,9 @@ const PulseSequenceConfiguration = () => {
       {isis.map((isi, index) => {
         return (
           <div key={`isi-${index}`}>
-            <label htmlFor={`isi-${index}`}>Interstimulus interval (isi) {index + 1} (<span>&#181;</span>) </label>
+            <label htmlFor={`isi-${index}`}>
+              Interstimulus interval (isi) {index + 1} (<span>&#181;</span>)
+            </label>
             <input
               name={`isi-${index}`}
               type='number'
@@ -134,7 +151,7 @@ const PulseSequenceConfiguration = () => {
         type='number'
         min={0}
         value={nofTrains}
-        onChange={(event) => setNofTrains(Number(event.target.value))}
+        onChange={(event) => dispatch(setNofTrains(Number(event.target.value)))}
       />
       <br />
       <br />
