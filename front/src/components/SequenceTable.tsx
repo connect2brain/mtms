@@ -99,7 +99,7 @@ const SequenceTable = () => {
     })
   }
 
-  const handleRemoveTargets = () => {
+  const handleRemovePulses = () => {
     sequences.forEach((seq: PulseSequence, index: number) => {
       const pulseSequence = {
         ...seq,
@@ -119,7 +119,7 @@ const SequenceTable = () => {
     return (
       <>
         <MenuItem onClick={handleDuplicateTargets}>Duplicate selected target(s)</MenuItem>
-        <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
+        <MenuItem onClick={handleRemovePulses}>Remove selected target(s)</MenuItem>
       </>
     )
   }

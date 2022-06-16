@@ -9,8 +9,9 @@ import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from '../utils'
 import { useAppSelector } from 'providers/reduxHooks'
-import {addSequence, modifySequence} from '../reducers/sequenceReducer'
+import { addSequence, modifySequence, removePulsesFromSequence } from '../reducers/sequenceReducer'
 import { useDispatch } from 'react-redux'
+import { removeTargetInRos } from '../services/ros'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -72,7 +73,17 @@ const TargetTable = () => {
     }
     dispatch(addSequence(newSequence))
   }
-
+  const filterTargetKeys = () => {
+    return targets.map((target) => {
+      return {
+        name: target.name,
+        comment: target.comment,
+        type: target.type,
+        visible: target.visible,
+        selected: target.selected,
+      }
+    })
+  }
   const handleAddToSequence = (sequence: PulseSequence) => {
     const selectedPulses = createPulsesFromSelectedTargets(targets)
     if (selectedPulses.length === 0) {
@@ -86,28 +97,38 @@ const TargetTable = () => {
       ...sequence,
       pulses,
     }
-    dispatch(modifySequence({
-      index: sequenceIndex,
-      pulseSequence: newSequence
-    }))
+    dispatch(
+      modifySequence({
+        index: sequenceIndex,
+        pulseSequence: newSequence,
+      }),
+    )
   }
 
-  const filterTargetKeys = () => {
-    return targets.map((target) => {
-      return {
-        name: target.name,
-        comment: target.comment,
-        type: target.type,
-        visible: target.visible,
-        selected: target.selected,
-      }
-    })
+  const handleRemoveTargets = () => {
+    targets
+      .filter((target) => target.selected)
+      .forEach((target) => {
+        const targetIndex = targets.indexOf(target)
+        removeTargetInRos(target)
+
+        sequences.forEach((sequence, sequenceIndex) => {
+          const pulses = sequence.pulses.filter((pulse) => pulse.targetIndex === targetIndex)
+          dispatch(
+            removePulsesFromSequence({
+              sequenceIndex,
+              pulseIdsToRemove: pulses.map((pulse, id) => id),
+            }),
+          )
+        })
+      })
   }
 
   const createMenu = () => {
     return (
       <>
         <MenuItem onClick={handleNewSequence}>New sequence from selection</MenuItem>
+        <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
         <SubMenu label='Add to sequence'>
           {sequences.map((seq) => {
             return (
