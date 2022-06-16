@@ -37,9 +37,10 @@ class MockEegBridge : public rclcpp::Node {
         this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
         this->get_parameter("sampling_frequency", sampling_frequency_);
 
-        auto sampling_interval_int = int(round(1000 / sampling_frequency_));
+        auto sampling_interval_int = int(round(1000 / this->sampling_frequency_));
         auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
         
+        this->time_ = 0;
 
         timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&MockEegBridge::timer_callback, this));
     }
@@ -50,15 +51,26 @@ class MockEegBridge : public rclcpp::Node {
 
         for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
 
-            double result = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX/RANDOM_MAX));
+            double result = static_cast <double> (rand()) / (static_cast <double> (RAND_MAX/(2 * RANDOM_MAX)));
 
-            if (result > RANDOM_MAX / 2) {
-                result -= RANDOM_MAX;
+            if (result > RANDOM_MAX) {
+                result -= 2 * RANDOM_MAX;
             }
 
             message.channel_datapoint.push_back(result);
             RCLCPP_INFO(this->get_logger(), "Channel: %d, Result: %f", channel, result);
         }
+
+        if (this->time_ == 0) {
+          message.first_sample_of_experiment = true;
+        }
+
+        else {
+          message.first_sample_of_experiment = false;
+        }
+
+        message.time = this->time_;
+        this->time_ += int(round(1000 / this->sampling_frequency_));
 
         this->publisher_data_->publish(message);
 
@@ -72,6 +84,7 @@ class MockEegBridge : public rclcpp::Node {
     rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
     float sampling_frequency_;
+    double time_;
 };
 
 int main(int argc, char * argv[]) {
