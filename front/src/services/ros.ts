@@ -137,13 +137,25 @@ export const addTargetToRos = (position: Position, orientation: EulerAngles) => 
   )
 }
 
-export const updateTargetInRos = (
-  target: Target,
-  key: string,
-  value: any,
-  toggle: boolean,
-  targets: Target[],
-) => {
+export const removeTargetInRos = (target: Target) => {
+  const request = new ROSLIB.ServiceRequest({
+    name: target.name,
+  })
+  removeTargetService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to remove target', target)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to remove target', target, ', error:')
+      console.error(error)
+    },
+  )
+}
+
+export const updateTargetInRos = (target: Target, key: string, value: any, toggle: boolean, targets: Target[]) => {
   if (!isOfChangeableKey(key)) {
     console.error(`Key ${key} is not changeable`)
     return
@@ -183,4 +195,3 @@ export const updateTargetInRos = (
     },
   )
 }
-
