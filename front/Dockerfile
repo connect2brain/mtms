@@ -24,4 +24,4 @@ RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 COPY . ./
 
 # start app
-CMD ["npm", "start"]
+CMD ["yarn", "start"]

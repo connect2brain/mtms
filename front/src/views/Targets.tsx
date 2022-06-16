@@ -9,8 +9,16 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
 
 const Targets = () => {
-  const [position, setPosition] = useState<Position | null>(null)
-  const [orientation, setOrientation] = useState<EulerAngles | null>(null)
+  const [position, setPosition] = useState<Position>({
+    x: 0,
+    y: 0,
+    z: 0,
+  })
+  const [orientation, setOrientation] = useState<EulerAngles>({
+    alpha: 0,
+    beta: 0,
+    gamma: 0,
+  })
 
   const [tab, setTab] = useState<'TARGETS' | 'SEQUENCES'>('TARGETS')
 
@@ -31,9 +39,7 @@ const Targets = () => {
   }, [])
 
   const addTarget = () => {
-    if (position && orientation) {
-      addTargetToRos(position, orientation)
-    }
+    addTargetToRos(position, orientation)
   }
 
   const table = () => {
@@ -65,7 +71,9 @@ const Targets = () => {
 
       <p>Current position: {expand(position)}</p>
       <p>Current orientation: {expand(orientation)}</p>
-      <button onClick={addTarget}>Add current position and orientation as target</button>
+      <button onClick={addTarget} id='add-target-button'>
+        Add current position and orientation as target
+      </button>
     </>
   )
 }
