@@ -3,6 +3,7 @@ import { PulseSequence } from 'types/pulseSequence'
 
 interface SequenceState {
   sequences: PulseSequence[]
+  expandedSequences: Record<string, boolean>
 }
 
 interface ModifyPulseSequencePayload {
@@ -10,8 +11,14 @@ interface ModifyPulseSequencePayload {
   pulseSequence: PulseSequence
 }
 
+interface SetExpandedSequencePayload {
+  index: number
+  expanded: boolean
+}
+
 const initialState: SequenceState = {
   sequences: [],
+  expandedSequences: {},
 }
 
 const sequenceSlice = createSlice({
@@ -28,8 +35,15 @@ const sequenceSlice = createSlice({
     modifySequence: (state, action: PayloadAction<ModifyPulseSequencePayload>) => {
       state.sequences[action.payload.index] = action.payload.pulseSequence
     },
+    setExpandedSequences: (state, action: PayloadAction<Record<string, boolean>>) => {
+      state.expandedSequences = action.payload
+    },
+    setExpandedSequence: (state, action: PayloadAction<SetExpandedSequencePayload>) => {
+      state.expandedSequences[action.payload.index] = action.payload.expanded
+    },
   },
 })
 
-export const { addSequence, modifySequence, setSequences } = sequenceSlice.actions
+export const { addSequence, modifySequence, setSequences, setExpandedSequences, setExpandedSequence } =
+  sequenceSlice.actions
 export default sequenceSlice.reducer

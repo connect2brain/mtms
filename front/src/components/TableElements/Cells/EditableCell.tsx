@@ -1,11 +1,9 @@
 import React, { ReactNode, useEffect, useState } from 'react'
-import { getSequenceIndexFromRowId, isOfChangeableKey, useFocusMemo } from 'utils'
+import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
-import useStore from 'providers/state'
 import { updateTargetInRos } from 'services/ros'
-import { ChangeableKey } from 'types/target'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence } from '../../../reducers/sequenceReducer'
 
