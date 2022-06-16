@@ -1,4 +1,4 @@
-import React, { ReactNode, useRef, useState } from 'react'
+import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
@@ -33,13 +33,13 @@ const SelectableSequenceTableRow = (props: Props) => {
   const dropRef = useRef<HTMLTableRowElement>(null)
   const dragRef = useRef<HTMLTableCellElement>(null)
 
-  /* is still needed? Yep, if store selected changes, this should be changed too TODO
-                useEffect(() => {
-                  if (isTarget) {
-                    setSelected(targets[index].selected)
-                  }
-                }, [targets[index].selected])
-              */
+  useEffect(() => {
+    if (isTarget) {
+      setSelected(sequences[sequenceIndex].pulses[index].selected)
+    } else {
+      setSelected(sequence.selected)
+    }
+  }, [sequences])
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
     const newPulses = [...sequence.pulses]
@@ -113,6 +113,22 @@ const SelectableSequenceTableRow = (props: Props) => {
     event.preventDefault()
 
     if (isTarget) {
+      const pulses = [...sequences[sequenceIndex].pulses]
+      pulses[index] = {
+        ...pulses[index],
+        selected: !selected,
+      }
+
+      const newSequence = {
+        ...sequence,
+        pulses,
+      }
+      dispatch(
+        modifySequence({
+          index: sequenceIndex,
+          pulseSequence: newSequence,
+        }),
+      )
       setSelected(!selected)
     } else {
       const newSequence = {

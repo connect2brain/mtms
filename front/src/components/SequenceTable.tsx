@@ -8,11 +8,16 @@ import { EditableSequenceTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import ExpandableCell from './TableElements/Cells/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
-import { useAppSelector } from 'providers/reduxHooks'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { Pulse, PulseSequence } from 'types/pulseSequence'
+import { modifySequence } from '../reducers/sequenceReducer'
+import styled from 'styled-components'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
+
+  const dispatch = useAppDispatch()
 
   const columns = useMemo(
     () => [
@@ -75,8 +80,48 @@ const SequenceTable = () => {
       }
     })
   }
+
+  const handleDuplicateTargets = () => {
+    sequences.forEach((seq: PulseSequence, index: number) => {
+      const selectedPulses = seq.pulses.filter((pulse) => pulse.selected)
+
+      const pulseSequence = {
+        ...seq,
+        pulses: seq.pulses.concat(...selectedPulses),
+      }
+
+      dispatch(
+        modifySequence({
+          index,
+          pulseSequence,
+        }),
+      )
+    })
+  }
+
+  const handleRemoveTargets = () => {
+    sequences.forEach((seq: PulseSequence, index: number) => {
+      const pulseSequence = {
+        ...seq,
+        pulses: seq.pulses.filter((pulse) => !pulse.selected),
+      }
+
+      dispatch(
+        modifySequence({
+          index,
+          pulseSequence,
+        }),
+      )
+    })
+  }
+
   const createMenu = () => {
-    return <MenuItem>moi</MenuItem>
+    return (
+      <>
+        <MenuItem onClick={handleDuplicateTargets}>Duplicate selected target(s)</MenuItem>
+        <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
+      </>
+    )
   }
 
   return (
@@ -88,5 +133,9 @@ const SequenceTable = () => {
     />
   )
 }
+
+const Wrapper = styled.div`
+  all: unset;
+`
 
 export default SequenceTable
