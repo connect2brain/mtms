@@ -54,7 +54,7 @@ export const GenericTable = ({ columns, data, createMenu, SelectableRow }: Table
   return (
     <TargetsContainer onContextMenu={onContextMenu}>
       <DndProvider backend={HTML5Backend}>
-        <TargetsTable {...getTableProps()}>
+        <TargetsTable {...getTableProps()} id='targets-table'>
           <Thead>
             {headerGroups.map((headerGroup) => (
               <HeaderTableRow {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
