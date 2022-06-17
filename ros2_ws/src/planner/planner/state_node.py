@@ -31,5 +31,5 @@ class StateNode(Node):
         self._state = None
 
     def state_updated(self, msg):
-        self.get_logger().info('Planner state updated')
+        # self.get_logger().info('Planner state updated')
         self._state = msg
