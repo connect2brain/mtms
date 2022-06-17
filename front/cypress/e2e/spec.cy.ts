@@ -37,16 +37,7 @@ describe('Target table', () => {
   it('allows editing targets', () => {
     cy.get('#add-target-button').click()
     cy.wait(200)
-    /*
-                            cy.get('tr').then((rows) => {
-                              expect(rows[0].style.backgroundColor).to.equal(notSelectedColor)
-                            })
-                            cy.get('tr').click()
-                            cy.get('tr').then((rows) => {
-                              expect(rows[0].style.backgroundColor).to.equal(selectedColor)
-                            })
-                           
-                         */
+
     cy.get('#cell-container-0-name').find('.cell-value-container').first().dblclick()
     cy.get('#cell-container-0-name').find('input').clear().type('first target')
     cy.get('#cell-container-0-name').find('input').type('{enter}')
