@@ -61,15 +61,10 @@ const TargetTable = () => {
       selected: false,
       visible: true,
       comment: '',
-      iti: 100,
-      ibi: 100,
-      isis: pulses.map((pulse) => pulse.isi),
       channelInfo: [],
-      nofBurstsInTrains: 3,
-      nofTrains: 3,
-      nofPulsesInBursts: 1,
       intensity: 100,
       isi: 10,
+      nofPulses: 1
     }
     dispatch(addSequence(newSequence))
   }
