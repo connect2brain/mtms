@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import { updateTargetInRos } from 'services/ros'
+import {changeTargetIndexInRos, updateTargetInRos} from 'services/ros'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
@@ -17,11 +17,14 @@ const SelectableTargetTableRow = (props: any) => {
   const dispatch = useAppDispatch()
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
-    const newTargets = [...targets]
+    //const newTargets = [...targets]
 
-    newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
+    const target = targets[dragIndex]
+    changeTargetIndexInRos(target, hoverIndex)
 
-    dispatch(setTargets(newTargets))
+    //newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
+
+    //dispatch(setTargets(newTargets))
   }
 
   const [, drop] = useDrop({
