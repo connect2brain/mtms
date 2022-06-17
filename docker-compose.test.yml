@@ -3,14 +3,13 @@ version: '3.5'
 services:
   front_test:
     build: ./front/
+    entrypoint: ["yarn", "test"]
     networks:
       - testnetwork
     ports:
       - "3001:3000"
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_ROS_URL=rosbridge_test:9090
-      - CYPRESS_BASE_URL=front_test:3000
     volumes:
       - './front:/app'
       - '/app/node_modules'
@@ -21,6 +20,7 @@ services:
     networks:
       - testnetwork
     environment:
+      - CYPRESS_FRONT_URL=front_test:3000
       - DISPLAY
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
@@ -33,6 +33,7 @@ services:
       - testnetwork
     environment:
       - DISPLAY
+      - CYPRESS_FRONT_URL=front_test:3000
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
       - './front:/app'
@@ -45,6 +46,9 @@ services:
   planner_test:
     networks:
       - testnetwork
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
