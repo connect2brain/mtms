@@ -1,10 +1,9 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
-import { ChangeableKey, EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
-import { ExperimentMessage } from '../types/pulseSequence'
+import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
 import { isOfChangeableKey } from '../utils'
 
-export const ros = new ROSLIB.Ros({
+const ros = new ROSLIB.Ros({
   url: ROS_URL,
 })
 
@@ -26,66 +25,70 @@ export const positionListener = new ROSLIB.Topic<PositionMessage>({
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
 })
 
-//listener.subscribe(updatePosition);
-
 /* Set up add_target service. */
-export const addTargetClient = new ROSLIB.Service({
+const addTargetClient = new ROSLIB.Service({
   ros: ros,
   name: '/planner/add_target',
   serviceType: 'mtms_interfaces/AddTarget',
 })
 
 /* Set up toggle_select service. */
-export const toggleSelectService = new ROSLIB.Service({
+const toggleSelectService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_select',
   serviceType: 'mtms_interfaces/ToggleSelect',
 })
 
 /* Set up rename_target service. */
-export const renameTargetService = new ROSLIB.Service({
+const renameTargetService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/rename_target',
   serviceType: 'mtms_interfaces/RenameTarget',
 })
 
 /* Set up remove_target service. */
-export const removeTargetService = new ROSLIB.Service({
+const removeTargetService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/remove_target',
   serviceType: 'mtms_interfaces/RemoveTarget',
 })
 
 /* Set up set_target service. */
-export const setTargetService = new ROSLIB.Service({
+const setTargetService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/set_target',
   serviceType: 'mtms_interfaces/SetTarget',
 })
 
 /* Set up toggle_visible service. */
-export const toggleVisibleService = new ROSLIB.Service({
+const toggleVisibleService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_visible',
   serviceType: 'mtms_interfaces/ToggleVisible',
 })
 
 /* Set up change_comment service. */
-export const changeCommentService = new ROSLIB.Service({
+const changeCommentService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/change_comment',
   serviceType: 'mtms_interfaces/ChangeComment',
 })
 
 /* Set up toggle_navigation service.*/
-export const toggleNavigationService = new ROSLIB.Service({
+const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_navigation',
   serviceType: 'mtms_interfaces/ToggleNavigation',
 })
 
+const clearStateService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/clear_state',
+  serviceType: 'mtms_interfaces/ClearState',
+})
+
 /* Set up listener for coil at target. */
-export const coilAtTargetListener = new ROSLIB.Topic({
+const coilAtTargetListener = new ROSLIB.Topic({
   ros: ros,
   name: '/neuronavigation/coil_at_target',
   messageType: 'std_msgs/Bool',
@@ -132,6 +135,23 @@ export const addTargetToRos = (position: Position, orientation: EulerAngles) => 
     },
     (error) => {
       console.log('ERROR: Failed to add target', pose, ', error:')
+      console.error(error)
+    },
+  )
+}
+
+export const clearRosState = () => {
+  const request = new ROSLIB.ServiceRequest()
+  console.log('clearing ros state')
+  clearStateService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to clear state')
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to clear state, error:')
       console.error(error)
     },
   )
