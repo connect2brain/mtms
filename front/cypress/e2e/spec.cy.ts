@@ -1,13 +1,13 @@
 import theme from '../../src/styles/theme'
+import { clearRosState } from '../../src/services/ros'
 
 const notSelectedColor = theme.colors.white
 const selectedColor = theme.colors.lightgray
 
-console.log(Cypress.env())
-const testUrl = `http://${Cypress.env('BASE_URL') ?? 'localhost:3000'}`
-
+const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3000'}`
 describe('Target table', () => {
   beforeEach(() => {
+    clearRosState()
     cy.visit(testUrl + '/targets')
   })
 
@@ -35,17 +35,18 @@ describe('Target table', () => {
   })
 
   it('allows editing targets', () => {
+    cy.get('#add-target-button').click()
     cy.wait(200)
     /*
-            cy.get('tr').then((rows) => {
-              expect(rows[0].style.backgroundColor).to.equal(notSelectedColor)
-            })
-            cy.get('tr').click()
-            cy.get('tr').then((rows) => {
-              expect(rows[0].style.backgroundColor).to.equal(selectedColor)
-            })
-           
-         */
+                            cy.get('tr').then((rows) => {
+                              expect(rows[0].style.backgroundColor).to.equal(notSelectedColor)
+                            })
+                            cy.get('tr').click()
+                            cy.get('tr').then((rows) => {
+                              expect(rows[0].style.backgroundColor).to.equal(selectedColor)
+                            })
+                           
+                         */
     cy.get('#cell-container-0-name').find('.cell-value-container').first().dblclick()
     cy.get('#cell-container-0-name').find('input').clear().type('first target')
     cy.get('#cell-container-0-name').find('input').type('{enter}')
