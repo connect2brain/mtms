@@ -45,6 +45,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StartPulseSequence.srv"
   "srv/SendStimulationPulseEvent.srv"
   "srv/ClearState.srv"
+  "srv/ChangeTargetIndex.srv"
   DEPENDENCIES geometry_msgs
  )
 

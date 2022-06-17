@@ -53,6 +53,12 @@ const removeTargetService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/RemoveTarget',
 })
 
+const changeTargetIndexService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/change_target_index',
+  serviceType: 'mtms_interfaces/ChangeTargetIndex',
+})
+
 /* Set up set_target service. */
 const setTargetService = new ROSLIB.Service({
   ros: ros,
@@ -137,6 +143,25 @@ export const addTargetToRos = (position: Position, orientation: EulerAngles) => 
       console.log('ERROR: Failed to add target', pose, ', error:')
       console.error(error)
     },
+  )
+}
+
+export const changeTargetIndexInRos = (target: Target, newIndex: number) => {
+  const request = new ROSLIB.ServiceRequest({
+    name: target.name,
+    new_index: newIndex,
+  })
+  changeTargetIndexService.callService(
+      request,
+      (response) => {
+        if (!response.success) {
+          console.log('ERROR: Failed to change target', target, 'index')
+        }
+      },
+      (error) => {
+        console.log('ERROR: Failed to change target', target, 'index, error')
+        console.error(error)
+      },
   )
 }
 
