@@ -97,7 +97,7 @@ const SelectableTargetTableRow = (props: any) => {
   drag(dragRef)
 
   return (
-    <TableRow {...props} selected={selected} opacity={opacity} onClick={onClick} ref={dropRef}>
+    <TableRow id={`target-${index}`} {...props} selected={selected} opacity={opacity} onClick={onClick} ref={dropRef}>
       <td ref={dragRef}>
         <Dots />
       </td>
