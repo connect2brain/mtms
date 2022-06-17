@@ -30,9 +30,9 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "REACT_APP_ENV=dev react-scripts start",
+    "build": "REACT_APP_ENV=prod react-scripts build",
+    "test": "REACT_APP_ENV=test react-scripts start",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx,json}",
     "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx,json}'",
