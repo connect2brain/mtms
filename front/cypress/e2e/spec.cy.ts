@@ -1,12 +1,17 @@
+import theme from '../../src/styles/theme'
+
+const notSelectedColor = theme.colors.white
+const selectedColor = theme.colors.lightgray
+
 console.log(Cypress.env())
 const testUrl = `http://${Cypress.env('BASE_URL') ?? 'localhost:3000'}`
 
-describe('Note app', () => {
+describe('Target table', () => {
   beforeEach(() => {
     cy.visit(testUrl + '/targets')
   })
 
-  it('front page can be opened', () => {
+  it('can be opened', () => {
     cy.contains('mTMS control panel')
   })
 
@@ -18,7 +23,7 @@ describe('Note app', () => {
       .find('tr')
       .then((rows) => {
         const originalLength = rows.toArray().length
-
+        rows[0].style.backgroundColor
         cy.get('#add-target-button').click()
 
         cy.get('#targets-table')
@@ -27,5 +32,22 @@ describe('Note app', () => {
             expect(newRows.toArray().length).to.equal(originalLength + 1)
           })
       })
+  })
+
+  it('allows editing targets', () => {
+    cy.wait(200)
+    /*
+            cy.get('tr').then((rows) => {
+              expect(rows[0].style.backgroundColor).to.equal(notSelectedColor)
+            })
+            cy.get('tr').click()
+            cy.get('tr').then((rows) => {
+              expect(rows[0].style.backgroundColor).to.equal(selectedColor)
+            })
+           
+         */
+    cy.get('#cell-container-0-name').find('.cell-value-container').first().dblclick()
+    cy.get('#cell-container-0-name').find('input').clear().type('first target')
+    cy.get('#cell-container-0-name').find('input').type('{enter}')
   })
 })
