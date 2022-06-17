@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
-import { addTargetToRos, positionListener, stateListener } from 'services/ros'
+import { addTargetToRos, clearRosState, positionListener, stateListener } from 'services/ros'
 import { expand } from 'utils'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
@@ -56,6 +56,10 @@ const Targets = () => {
     setTab(target)
   }
 
+  const handleResetStateClick = (event: any) => {
+    clearRosState()
+  }
+
   return (
     <>
       <TabButton name='TARGETS' onClick={handleViewChangeClick} selected={tab === 'TARGETS'}>
@@ -73,6 +77,10 @@ const Targets = () => {
       <p>Current orientation: {expand(orientation)}</p>
       <button onClick={addTarget} id='add-target-button'>
         Add current position and orientation as target
+      </button>
+
+      <button onClick={handleResetStateClick} id='reset-state-button'>
+        Reset state
       </button>
     </>
   )
