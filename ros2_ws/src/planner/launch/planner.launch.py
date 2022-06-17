@@ -1,6 +1,7 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
+
 def generate_launch_description():
     ld = LaunchDescription()
 
@@ -44,6 +45,11 @@ def generate_launch_description():
         executable="toggle_navigation"
     )
 
+    clear_state_node = Node(
+        package="planner",
+        executable="clear_state"
+    )
+
     ld.add_action(add_target_node)
     ld.add_action(remove_target_node)
     ld.add_action(toggle_select_node)
@@ -52,4 +58,5 @@ def generate_launch_description():
     ld.add_action(toggle_visible_node)
     ld.add_action(change_comment_node)
     ld.add_action(toggle_navigation_node)
+    ld.add_action(clear_state_node)
     return ld
