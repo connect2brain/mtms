@@ -1,25 +1,31 @@
-import { Target } from './target'
 
 export interface ExperimentMessage {
-  description: string
-  pulseSequence: PulseSequence
+  experiment: IExperiment
 }
 
 export interface PulseSequence {
   name: string
   comment: string
-  nofTrains: number
   visible: boolean
   selected: boolean
-  nofBurstsInTrains: number
-  nofPulsesInBursts: number
+  nofPulses: number
   channelInfo: ChannelInfo[]
-  iti: number
-  ibi: number
-  isis: number[]
   pulses: Pulse[]
   intensity: number
-  isi: number
+  isi: number // only here because it's in the table, used to set isi for all pulses
+}
+
+export interface Train {
+  sequences: PulseSequence[]
+  nofBursts: number
+  ibi: number
+}
+
+export interface IExperiment {
+  train: Train
+  nofTrains: number
+  iti: number
+  description: string
 }
 
 export interface Pulse {
