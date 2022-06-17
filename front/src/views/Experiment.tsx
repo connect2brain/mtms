@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import PulseSequenceConfiguration from './PulseSequenceConfiguration'
-import { ExperimentMessage } from '../types/pulseSequence'
+import { IExperiment, ExperimentMessage, Train } from '../types/pulseSequence'
 import { startExperimentService } from '../services/ros'
 import ROSLIB from 'roslib'
 import { objectKeysToSnakeCase } from '../utils'
@@ -12,6 +12,8 @@ const Experiment = () => {
   const { description, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } = useAppSelector(
     (state) => state.experiment,
   )
+
+  const { sequences } = useAppSelector((state) => state.sequences)
   const dispatch = useAppDispatch()
 
   const [statusMessage, setStatusMessage] = useState<string>('')
@@ -28,24 +30,20 @@ const Experiment = () => {
         return channel
       })
 
-    const messageData: ExperimentMessage = {
+    const train: Train = {
+      ibi,
+      sequences,
+      nofBursts: nofBurstsInTrains,
+    }
+
+    const experiment: IExperiment = {
+      iti,
       description,
-      pulseSequence: {
-        iti,
-        ibi,
-        nofBurstsInTrains,
-        nofPulsesInBursts,
-        nofTrains,
-        isis,
-        channelInfo: channelData,
-        name: '',
-        comment: '',
-        visible: false,
-        selected: false,
-        intensity: 10,
-        pulses: [],
-        isi: 10,
-      },
+      nofTrains,
+      train,
+    }
+    const messageData: ExperimentMessage = {
+      experiment,
     }
 
     console.log('starting sequence:', messageData)
