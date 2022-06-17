@@ -35,6 +35,9 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
   pulse_sequence_controller:
     build:
       context: .
