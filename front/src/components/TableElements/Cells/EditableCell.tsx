@@ -90,7 +90,7 @@ const EditableCell = ({
   const [toggle, setToggle] = useState<boolean>(true)
   const valueType = typeof initialValue
 
-  const { index, depth } = row
+  const { index, depth, id } = row
 
   const [inputRef, setInputFocus] = useFocusMemo()
 
@@ -139,7 +139,7 @@ const EditableCell = ({
   }
   //console.log(row)
   return (
-    <Margin>
+    <Margin id={`cell-container-${id}-${column.id}`}>
       {whiteSpace ? (
         <>
           <WhiteSpace cols={depth} />
@@ -147,7 +147,7 @@ const EditableCell = ({
         </>
       ) : null}
       {toggle ? (
-        <Container onDoubleClick={onDoubleClick}>
+        <Container onDoubleClick={onDoubleClick} className={'cell-value-container'}>
           <span>{value}</span>
           {expandElement}
         </Container>
