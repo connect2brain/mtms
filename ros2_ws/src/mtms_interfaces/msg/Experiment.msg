@@ -2,5 +2,5 @@
 
 Train train
 uint16 nof_trains
-uint16 iti
+float64 iti
 string description

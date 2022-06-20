@@ -55,6 +55,11 @@ def generate_launch_description():
         executable="change_target_index"
     )
 
+    add_pulse_sequence_node = Node(
+        package="planner",
+        executable="add_pulse_sequence"
+    )
+
     ld.add_action(add_target_node)
     ld.add_action(remove_target_node)
     ld.add_action(toggle_select_node)
@@ -65,4 +70,6 @@ def generate_launch_description():
     ld.add_action(toggle_navigation_node)
     ld.add_action(clear_state_node)
     ld.add_action(change_target_index_node)
+    ld.add_action(add_pulse_sequence_node)
+
     return ld

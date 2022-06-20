@@ -12,7 +12,6 @@ class ClearStateNode(StateNode):
     def __init__(self):
         super().__init__('clear_state')
         self.create_service(ClearState, '/planner/clear_state', self.clear_state_callback)
-        self.get_logger().info('in clear state __init__')
 
     def clear_state_callback(self, request, response):
         self.get_logger().info('Clearing state')
