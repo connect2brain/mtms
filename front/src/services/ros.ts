@@ -1,7 +1,8 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
 import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
-import { isOfChangeableKey } from '../utils'
+import { isOfChangeableKey, objectKeysToSnakeCase } from '../utils'
+import { Pulse, PulseSequence } from '../types/pulseSequence'
 
 const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -30,6 +31,13 @@ const addTargetClient = new ROSLIB.Service({
   ros: ros,
   name: '/planner/add_target',
   serviceType: 'mtms_interfaces/AddTarget',
+})
+
+/* Set up add_target service. */
+const addPulseSequenceClient = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/add_pulse_sequence',
+  serviceType: 'mtms_interfaces/AddPulseSequence',
 })
 
 /* Set up toggle_select service. */
@@ -152,16 +160,41 @@ export const changeTargetIndexInRos = (target: Target, newIndex: number) => {
     new_index: newIndex,
   })
   changeTargetIndexService.callService(
-      request,
-      (response) => {
-        if (!response.success) {
-          console.log('ERROR: Failed to change target', target, 'index')
-        }
-      },
-      (error) => {
-        console.log('ERROR: Failed to change target', target, 'index, error')
-        console.error(error)
-      },
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to change target', target, 'index')
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to change target', target, 'index, error')
+      console.error(error)
+    },
+  )
+}
+
+export const addPulseSequenceToRos = (pulses: Pulse[]) => {
+  const snakeCasePulses = objectKeysToSnakeCase({
+    pulses,
+  })
+
+  console.log(snakeCasePulses)
+
+  const request = new ROSLIB.ServiceRequest({
+    pulses: snakeCasePulses.pulses,
+  })
+
+  addPulseSequenceClient.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to add pulse sequence')
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to add pulse sequence, error:')
+      console.error(error)
+    },
   )
 }
 
