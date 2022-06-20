@@ -33,7 +33,8 @@ setup(
             'change_comment = planner.change_comment:main',
             'toggle_navigation = planner.toggle_navigation:main',
             'clear_state = planner.clear_state:main',
-            'change_target_index = planner.change_target_index:main'
+            'change_target_index = planner.change_target_index:main',
+            'add_pulse_sequence = planner.add_pulse_sequence:main'
         ],
     },
 )

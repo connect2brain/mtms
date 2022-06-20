@@ -11,7 +11,7 @@ import { createPulsesFromSelectedTargets } from '../utils'
 import { useAppSelector } from 'providers/reduxHooks'
 import { addSequence, modifySequence, removePulsesFromSequence } from '../reducers/sequenceReducer'
 import { useDispatch } from 'react-redux'
-import { removeTargetInRos } from '../services/ros'
+import {addPulseSequenceToRos, removeTargetInRos} from '../services/ros'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -55,18 +55,8 @@ const TargetTable = () => {
       return
     }
 
-    const newSequence: PulseSequence = {
-      pulses,
-      name: `sequence-${sequences.length}`,
-      selected: false,
-      visible: true,
-      comment: '',
-      channelInfo: [],
-      intensity: 100,
-      isi: 10,
-      nofPulses: 1
-    }
-    dispatch(addSequence(newSequence))
+    //dispatch(addSequence(newSequence))
+    addPulseSequenceToRos(pulses)
   }
   const filterTargetKeys = () => {
     return targets.map((target) => {
