@@ -27,11 +27,12 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const sequenceIndex = getSequenceIndexFromRowId(row.id)
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
+    const key: string = columnName.slice(3).toLowerCase()
+
     //update only name for target, otherwise update the pulse
-    if (columnName === 'name') {
+    if (key === 'name') {
       const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
       const target = targets[targetIndex]
-      const key: string = columnName.slice(3).toLowerCase()
       updateTargetInRos(target, key, value, toggle)
     } else {
       //update pulse

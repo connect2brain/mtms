@@ -26,7 +26,7 @@ setup(
         'console_scripts': [
             'add_target = planner.add_target:main',
             'remove_target = planner.remove_target:main',
-            'toggle_select = planner.toggle_select:main',
+            'toggle_select_target = planner.toggle_select_target:main',
             'set_target = planner.set_target:main',
             'rename_target = planner.rename_target:main',
             'toggle_visible = planner.toggle_visible:main',
@@ -35,7 +35,8 @@ setup(
             'clear_state = planner.clear_state:main',
             'change_target_index = planner.change_target_index:main',
             'add_pulse_sequence = planner.add_pulse_sequence:main',
-            'rename_pulse_sequence = planner.rename_pulse_sequence:main'
+            'rename_pulse_sequence = planner.rename_pulse_sequence:main',
+            'toggle_select_pulse_sequence = planner.toggle_select_pulse_sequence:main'
         ],
     },
 )
