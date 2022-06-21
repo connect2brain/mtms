@@ -15,7 +15,7 @@ export const EyeCell = ({ value: initialValue, row, column }: CellProps) => {
     setVisible(newVisible)
     if (column.id) {
       const target = targets[row.index]
-      updateTargetInRos(target, column.id, newVisible, true, targets)
+      updateTargetInRos(target, column.id, newVisible, true)
     }
   }
 

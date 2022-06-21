@@ -5,71 +5,58 @@ from launch_ros.actions import Node
 def generate_launch_description():
     ld = LaunchDescription()
 
-    add_target_node = Node(
-        package="planner",
-        executable="add_target"
-    )
+    nodes = [
+        Node(
+            package="planner",
+            executable="add_target"
+        ),
+        Node(
+            package="planner",
+            executable="remove_target"
+        ),
+        Node(
+            package="planner",
+            executable="toggle_select"
+        ),
+        Node(
+            package="planner",
+            executable="set_target"
+        ),
+        Node(
+            package="planner",
+            executable="rename_target"
+        ),
+        Node(
+            package="planner",
+            executable="toggle_visible"
+        ),
+        Node(
+            package="planner",
+            executable="change_comment"
+        ),
+        Node(
+            package="planner",
+            executable="toggle_navigation"
+        ),
+        Node(
+            package="planner",
+            executable="clear_state"
+        ),
+        Node(
+            package="planner",
+            executable="change_target_index"
+        ),
+        Node(
+            package="planner",
+            executable="add_pulse_sequence"
+        ),
+        Node(
+            package="planner",
+            executable="rename_pulse_sequence"
+        )
+    ]
 
-    remove_target_node = Node(
-        package="planner",
-        executable="remove_target"
-    )
-
-    toggle_select_node = Node(
-        package="planner",
-        executable="toggle_select"
-    )
-
-    set_target_node = Node(
-        package="planner",
-        executable="set_target"
-    )
-
-    rename_target_node = Node(
-        package="planner",
-        executable="rename_target"
-    )
-
-    toggle_visible_node = Node(
-        package="planner",
-        executable="toggle_visible"
-    )
-
-    change_comment_node = Node(
-        package="planner",
-        executable="change_comment"
-    )
-
-    toggle_navigation_node = Node(
-        package="planner",
-        executable="toggle_navigation"
-    )
-
-    clear_state_node = Node(
-        package="planner",
-        executable="clear_state"
-    )
-
-    change_target_index_node = Node(
-        package="planner",
-        executable="change_target_index"
-    )
-
-    add_pulse_sequence_node = Node(
-        package="planner",
-        executable="add_pulse_sequence"
-    )
-
-    ld.add_action(add_target_node)
-    ld.add_action(remove_target_node)
-    ld.add_action(toggle_select_node)
-    ld.add_action(set_target_node)
-    ld.add_action(rename_target_node)
-    ld.add_action(toggle_visible_node)
-    ld.add_action(change_comment_node)
-    ld.add_action(toggle_navigation_node)
-    ld.add_action(clear_state_node)
-    ld.add_action(change_target_index_node)
-    ld.add_action(add_pulse_sequence_node)
+    for node in nodes:
+        ld.add_action(node)
 
     return ld

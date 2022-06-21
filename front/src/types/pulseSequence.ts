@@ -1,4 +1,3 @@
-
 export interface ExperimentMessage {
   experiment: IExperiment
 }
@@ -47,3 +46,6 @@ export interface ChannelInfoWithEnabled {
   voltage: number
   enabled: boolean
 }
+
+export const pulseSequenceChangeableKeys = ['name', 'comment', 'visible', 'selected'] as const
+export type PulseSequenceChangeableKey = typeof pulseSequenceChangeableKeys[number]
