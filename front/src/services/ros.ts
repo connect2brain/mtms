@@ -178,8 +178,6 @@ export const addPulseSequenceToRos = (pulses: Pulse[]) => {
     pulses,
   })
 
-  console.log(snakeCasePulses)
-
   const request = new ROSLIB.ServiceRequest({
     pulses: snakeCasePulses.pulses,
   })
