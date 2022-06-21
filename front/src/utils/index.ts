@@ -20,6 +20,24 @@ const snakeToCamel = (str: string) => {
   })
 }
 
+export const objectKeysToCamelCase = (obj: any): any => {
+  if (isObject(obj)) {
+    const n: any = {}
+
+    Object.keys(obj).forEach((k) => {
+      n[snakeToCamel(k)] = objectKeysToCamelCase(obj[k])
+    })
+
+    return n
+  } else if (Array.isArray(obj)) {
+    return obj.map((i) => {
+      return objectKeysToCamelCase(i)
+    })
+  }
+
+  return obj
+}
+
 export const objectKeysToSnakeCase = (obj: any): any => {
   if (isObject(obj)) {
     const n: any = {}

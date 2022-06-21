@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
 import { addTargetToRos, clearRosState, positionListener, stateListener } from 'services/ros'
-import { expand } from 'utils'
+import { expand, objectKeysToCamelCase } from 'utils'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
+import { setPulseSequences } from 'reducers/sequenceReducer'
 
 const Targets = () => {
   const [position, setPosition] = useState<Position>({
@@ -24,8 +25,12 @@ const Targets = () => {
 
   const dispatch = useAppDispatch()
 
-  const updateTargets = (message: TargetMessage) => {
-    dispatch(setTargets(message.targets))
+  const updateState = (message: TargetMessage) => {
+    const pulseSequences = objectKeysToCamelCase(message.pulse_sequences)
+    const targets = objectKeysToCamelCase(message.targets)
+
+    dispatch(setTargets(targets))
+    dispatch(setPulseSequences(pulseSequences))
   }
 
   const updatePosition = (message: PositionMessage) => {
@@ -34,7 +39,7 @@ const Targets = () => {
   }
 
   useEffect(() => {
-    stateListener.subscribe(updateTargets)
+    stateListener.subscribe(updateState)
     positionListener.subscribe(updatePosition)
   }, [])
 
