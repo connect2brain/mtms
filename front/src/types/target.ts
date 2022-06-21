@@ -1,4 +1,5 @@
 import ROSLIB from 'roslib'
+import { PulseSequence } from './pulseSequence'
 
 export interface EulerAngles {
   alpha: number
@@ -36,7 +37,7 @@ export type ChangeableKey = typeof changeableKey[number]
 
 export interface TargetMessage extends ROSLIB.Message {
   targets: Target[]
-  
+  pulse_sequences: PulseSequence[]
 }
 
 export interface PositionMessage extends ROSLIB.Message {

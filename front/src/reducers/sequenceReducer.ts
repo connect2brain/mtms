@@ -30,6 +30,9 @@ const sequenceSlice = createSlice({
   name: 'sequences',
   initialState,
   reducers: {
+    setPulseSequences: (state, action: PayloadAction<PulseSequence[]>) => {
+      state.sequences = action.payload
+    },
     addSequence: (state, action: PayloadAction<PulseSequence>) => {
       state.sequences.push(action.payload)
       console.log(`Created new sequence ${action.payload.name} with ${action.payload.pulses.length} targets`)
@@ -69,6 +72,12 @@ const sequenceSlice = createSlice({
   },
 })
 
-export const { addSequence, modifySequence, setSequences, removePulsesFromSequence, setExpandedSequence } =
-  sequenceSlice.actions
+export const {
+  addSequence,
+  modifySequence,
+  setSequences,
+  removePulsesFromSequence,
+  setExpandedSequence,
+  setPulseSequences,
+} = sequenceSlice.actions
 export default sequenceSlice.reducer
