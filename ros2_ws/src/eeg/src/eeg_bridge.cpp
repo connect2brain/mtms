@@ -24,6 +24,7 @@
 #define FIRST_CHANNEL_INDEX 28
 #define SAMPLE_PACKET_FIRST_TIME_INDEX 20
 #define TRIGGER_PACKET_FIRST_TIME_INDEX 8
+#define TRIGGER_PORT_INDEX 24
 
 #define NUMBER_OF_CHANNELS 62
 #define SAMPLE_PACKET_ID 2
@@ -34,6 +35,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "mtms_interfaces/msg/trigger.hpp"
 
 using namespace std::chrono_literals;
 
@@ -59,6 +61,8 @@ class EegBridge : public rclcpp::Node {
 
       publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
       publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
+      publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("eeg/trigger_received", qos);
+
       EegBridge::init_socket();
 
       this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
@@ -77,8 +81,6 @@ class EegBridge : public rclcpp::Node {
 
       // Init socket variable
       this->socket_length = sizeof(this->socket_other);
-
-      this->trigger_timestamp_ = 0;
 
       // Init socket
       this->socket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -146,11 +148,11 @@ class EegBridge : public rclcpp::Node {
                         (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 6] << 8 |
                         (uint64_t) buffer[SAMPLE_PACKET_FIRST_TIME_INDEX + 7];
 
-        if (this->trigger_timestamp_ > 0 && time > this->trigger_timestamp_) {
-          double_t time_diff_ms = (time - this->trigger_timestamp_) / 1000;
+        if (this->latest_trigger_timestamp_ > 0 && time > this->latest_trigger_timestamp_) {
+          double_t time_diff_ms = (time - this->latest_trigger_timestamp_) / 1000;
 
           if (VERBOSE) {
-            RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
+            RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->latest_trigger_timestamp_);
             RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
             RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %f\n", time_diff_ms);
           }
@@ -159,27 +161,45 @@ class EegBridge : public rclcpp::Node {
           this->first_sample_of_experiment_ = false;
         }
 
-        else if (time < this->trigger_timestamp_) {
-          RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->trigger_timestamp_);
+        else if (time < this->latest_trigger_timestamp_) {
+          RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->latest_trigger_timestamp_);
           RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
-          RCLCPP_WARN(this->get_logger(), "Warning: Sample packet arrived %ld milliseconds before the trigger. Skipping.\n", (this->trigger_timestamp_ - time) / 1000);
+          RCLCPP_WARN(this->get_logger(), "Warning: Sample packet arrived %ld milliseconds before the trigger. Skipping.\n", (this->latest_trigger_timestamp_ - time) / 1000);
         }
       }
 
       else if (this-> buffer[0] == TRIGGER_PACKET_ID) {
-                
+
         RCLCPP_INFO(this->get_logger(), "Trigger packet received.");
 
-        this->trigger_timestamp_ = (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX] << 56 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 1] << 48 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 2] << 40 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 3] << 32 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 4] << 24 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 5] << 16 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 6] << 8 |
-                                   (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 7];
+        uint64_t new_trigger_timestamp = (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX] << 56 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 1] << 48 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 2] << 40 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 3] << 32 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 4] << 24 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 5] << 16 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 6] << 8 |
+                                         (uint64_t) buffer[TRIGGER_PACKET_FIRST_TIME_INDEX + 7];
+
+        uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
+        RCLCPP_INFO(this->get_logger(), "Trigger coming from port: %u\n", trigger_index);
+
+        auto trigger_msg = mtms_interfaces::msg::Trigger();
+        if (trigger_index == 1) {
+          this->first_trigger_timestamp_ = new_trigger_timestamp;
+          trigger_msg.time_us = 0;
+        }
+
+        else {
+          trigger_msg.time_us = new_trigger_timestamp - this->first_trigger_timestamp_;
+        }
+
+        this->latest_trigger_timestamp_ = new_trigger_timestamp;
+
+        trigger_msg.index = trigger_index;
+        this->publisher_trigger_->publish(trigger_msg);
         
-        RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->trigger_timestamp_);
+        RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->latest_trigger_timestamp_);
         this->first_sample_of_experiment_ = true;
       }
 
@@ -229,13 +249,17 @@ class EegBridge : public rclcpp::Node {
     rclcpp::TimerBase::SharedPtr timer_;
     rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
+    rclcpp::Publisher<mtms_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
+
+    uint64_t first_trigger_timestamp_;
+    uint64_t latest_trigger_timestamp_;
+
     float sampling_frequency_;
     int socket_;
     sockaddr_in socket_own;
     sockaddr_in socket_other;
     socklen_t socket_length;
     uint8_t buffer[BUFFER_LENGTH];
-    uint64_t trigger_timestamp_;
     bool first_sample_of_experiment_;
 };
 
