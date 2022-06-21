@@ -83,7 +83,7 @@ const SelectableTargetTableRow = (props: any) => {
     event.preventDefault()
 
     const target = targets[index]
-    updateTargetInRos(target, 'selected', !selected, true, targets)
+    updateTargetInRos(target, 'selected', !selected, true)
   }
 
   const [{ isDragging }, drag, preview] = useDrag({

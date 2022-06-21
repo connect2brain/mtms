@@ -3,7 +3,7 @@ import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
-import { updateTargetInRos } from 'services/ros'
+import {updatePulseSequenceInRos, updateTargetInRos} from 'services/ros'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence } from '../../../reducers/sequenceReducer'
 
@@ -27,10 +27,15 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const sequenceIndex = getSequenceIndexFromRowId(row.id)
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
-    const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
-    const target = targets[targetIndex]
-    const key: string = columnName.slice(3).toLowerCase()
-    updateTargetInRos(target, key, value, toggle, targets)
+    //update only name for target, otherwise update the pulse
+    if (columnName === 'name') {
+      const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
+      const target = targets[targetIndex]
+      const key: string = columnName.slice(3).toLowerCase()
+      updateTargetInRos(target, key, value, toggle)
+    } else {
+      //update pulse
+    }
   }
 
   const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
@@ -39,26 +44,16 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
 
     const updateAlsoInTargets = ['isi', 'intensity', 'modeDuration', 'visible', 'selected']
 
-    const pulses = updateAlsoInTargets.includes(key)
+    /* const pulses = updateAlsoInTargets.includes(key)
       ? sequence.pulses.map((pulse) => {
           return {
             ...pulse,
             [key]: value,
           }
         })
-      : [...sequence.pulses]
+      : [...sequence.pulses] */
 
-    const newSequence = {
-      ...sequence,
-      [key]: value,
-      pulses,
-    }
-    dispatch(
-      modifySequence({
-        index: rowIndex,
-        pulseSequence: newSequence,
-      }),
-    )
+    updatePulseSequenceInRos(sequence, key, value, toggle)
   }
 
   return <EditableCell {...props} updateData={isTarget ? updateTargetData : updateSequenceData} />
@@ -69,7 +64,7 @@ export const EditableTargetTableCell = (props: UpdateEditableCellProps) => {
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
     const target = targets[rowIndex]
-    updateTargetInRos(target, columnName, value, toggle, targets)
+    updateTargetInRos(target, columnName, value, toggle)
   }
 
   return <EditableCell {...props} updateData={updateTargetData} />

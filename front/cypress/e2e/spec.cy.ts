@@ -23,7 +23,7 @@ describe('Target table', () => {
       .find('tr')
       .then((rows) => {
         const originalLength = rows.toArray().length
-        rows[0].style.backgroundColor
+
         cy.get('#add-target-button').click()
 
         cy.get('#targets-table')
@@ -41,5 +41,37 @@ describe('Target table', () => {
     cy.get('#cell-container-0-name').find('.cell-value-container').first().dblclick()
     cy.get('#cell-container-0-name').find('input').clear().type('first target')
     cy.get('#cell-container-0-name').find('input').type('{enter}')
+  })
+
+  it('allows adding sequences and editing them', () => {
+    cy.get('#add-target-button').click()
+    cy.wait(200)
+    cy.get('#add-target-button').click()
+    cy.wait(200)
+
+    cy.get('#target-0').click()
+    cy.get('#target-1').click()
+
+    cy.get('#targets-table').rightclick()
+
+    cy.get('#create-new-sequence').click()
+    cy.wait(200)
+    cy.get('#sequences-view-button').click()
+
+    //sequence-0 + header row
+    cy.get('#targets-table').find('tr').its('length').should('equal', 2)
+
+    const newName = 'a sequence'
+
+    cy.get('#cell-container-0-seqName').find('.cell-value-container').first().dblclick()
+    cy.get('#cell-container-0-seqName').find('input').clear().type(newName)
+    cy.get('#cell-container-0-seqName').find('input').type('{enter}')
+
+    cy.reload()
+    cy.get('#sequences-view-button').click()
+    cy.get('#targets-table').find('tr').its('length').should('equal', 2)
+
+    cy.get(newName)
+
   })
 })
