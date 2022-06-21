@@ -1,7 +1,7 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
 import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
-import { isOfChangeableKey, objectKeysToSnakeCase } from '../utils'
+import {isOfPulseSequenceChangeableKey, isOfTargetChangeableKey, objectKeysToSnakeCase} from '../utils'
 import { Pulse, PulseSequence } from '../types/pulseSequence'
 
 const ros = new ROSLIB.Ros({
@@ -53,6 +53,14 @@ const renameTargetService = new ROSLIB.Service({
   name: '/planner/rename_target',
   serviceType: 'mtms_interfaces/RenameTarget',
 })
+
+/* Set up rename_pulse_sequence service. */
+const renamePulseSequenceService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/rename_pulse_sequence',
+  serviceType: 'mtms_interfaces/RenamePulseSequence',
+})
+
 
 /* Set up remove_target service. */
 const removeTargetService = new ROSLIB.Service({
@@ -123,8 +131,14 @@ export const startExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleNavigation',
 })
 
-const rosServicesByKey = {
+export const targetServicesByKey = {
   name: renameTargetService,
+  comment: changeCommentService,
+  visible: toggleVisibleService,
+  selected: toggleSelectService,
+}
+export const pulseSequenceServicesByKey = {
+  name: renamePulseSequenceService,
   comment: changeCommentService,
   visible: toggleVisibleService,
   selected: toggleSelectService,
@@ -231,18 +245,11 @@ export const removeTargetInRos = (target: Target) => {
   )
 }
 
-export const updateTargetInRos = (target: Target, key: string, value: any, toggle: boolean, targets: Target[]) => {
-  if (!isOfChangeableKey(key)) {
+export const updateTargetInRos = (target: Target, key: string, value: any, toggle: boolean) => {
+  if (!isOfTargetChangeableKey(key)) {
     console.error(`Key ${key} is not changeable`)
     return
   }
-
-  const newTarget = {
-    ...target,
-    [key]: value,
-  }
-  const newTargets = [...targets]
-  newTargets[targets.indexOf(target)] = newTarget
 
   let requestObject = {
     name: target.name,
@@ -256,14 +263,46 @@ export const updateTargetInRos = (target: Target, key: string, value: any, toggl
   }
   const request = new ROSLIB.ServiceRequest(requestObject)
 
-  rosServicesByKey[key].callService(
+  targetServicesByKey[key].callService(
     request,
     (result) => {
       if (!result.success) {
         console.error(`ERROR: Failed to change key '${key}' from ${target[key]} to ${value}`)
       } else {
         console.log(`Changed ${target.name} key '${key}' from ${target[key]} to ${value}`)
-        //setTargets(newTargets)
+      }
+    },
+    (error) => {
+      console.error(error)
+    },
+  )
+}
+
+export const updatePulseSequenceInRos = (sequence: PulseSequence, key: string, value: any, toggle: boolean) => {
+  if (!isOfPulseSequenceChangeableKey(key)) {
+    console.error(`Key ${key} is not changeable`)
+    return
+  }
+
+  let requestObject = {
+    name: sequence.name,
+  }
+  if (!toggle) {
+    const requestKey = `new_${key}`
+    requestObject = {
+      ...requestObject,
+      [requestKey]: value,
+    }
+  }
+  const request = new ROSLIB.ServiceRequest(requestObject)
+
+  pulseSequenceServicesByKey[key].callService(
+    request,
+    (result) => {
+      if (!result.success) {
+        console.error(`ERROR: Failed to change key '${key}' from ${sequence[key]} to ${value}`)
+      } else {
+        console.log(`Changed ${sequence.name} key '${key}' from ${sequence[key]} to ${value}`)
       }
     },
     (error) => {

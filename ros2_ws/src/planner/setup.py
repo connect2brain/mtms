@@ -34,7 +34,8 @@ setup(
             'toggle_navigation = planner.toggle_navigation:main',
             'clear_state = planner.clear_state:main',
             'change_target_index = planner.change_target_index:main',
-            'add_pulse_sequence = planner.add_pulse_sequence:main'
+            'add_pulse_sequence = planner.add_pulse_sequence:main',
+            'rename_pulse_sequence = planner.rename_pulse_sequence:main'
         ],
     },
 )
