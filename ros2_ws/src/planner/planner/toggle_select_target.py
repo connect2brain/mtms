@@ -5,18 +5,18 @@ from geometry_msgs.msg import Point
 from mtms_interfaces.msg import PlannerState, Target
 from std_msgs.msg import Bool, Float64, String
 
-from mtms_interfaces.srv import ToggleSelect
+from mtms_interfaces.srv import ToggleSelectTarget
 
 from .state_node import StateNode
 
 
-class ToggleSelectNode(StateNode):
+class ToggleSelectTargetNode(StateNode):
 
     def __init__(self):
-        super().__init__('toggle_select')
-        self.create_service(ToggleSelect, '/planner/toggle_select', self.toggle_select_callback)
+        super().__init__('toggle_select_target')
+        self.create_service(ToggleSelectTarget, '/planner/toggle_select_target', self.toggle_select_target_callback)
 
-    def toggle_select_callback(self, request, response):
+    def toggle_select_target_callback(self, request, response):
         self.get_logger().info('Incoming request')
 
         state = self._state
@@ -37,9 +37,9 @@ class ToggleSelectNode(StateNode):
 def main():
     rclpy.init()
 
-    toggle_select_node = ToggleSelectNode()
+    toggle_select_target_node = ToggleSelectTargetNode()
 
-    rclpy.spin(toggle_select_node)
+    rclpy.spin(toggle_select_target_node)
 
     rclpy.shutdown()
 

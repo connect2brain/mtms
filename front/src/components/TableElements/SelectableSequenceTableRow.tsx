@@ -5,6 +5,7 @@ import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence, setSequences } from 'reducers/sequenceReducer'
+import { updatePulseSequenceInRos, updateTargetInRos } from '../../services/ros'
 
 interface Props {
   index: number
@@ -131,17 +132,7 @@ const SelectableSequenceTableRow = (props: Props) => {
       )
       setSelected(!selected)
     } else {
-      const newSequence = {
-        ...sequence,
-        selected: !sequence.selected,
-      }
-      dispatch(
-        modifySequence({
-          index: sequenceIndex,
-          pulseSequence: newSequence,
-        }),
-      )
-      setSelected(!sequence.selected)
+      updatePulseSequenceInRos(sequence, 'selected', !selected, true)
     }
   }
 

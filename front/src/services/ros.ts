@@ -41,11 +41,19 @@ const addPulseSequenceClient = new ROSLIB.Service({
 })
 
 /* Set up toggle_select service. */
-const toggleSelectService = new ROSLIB.Service({
+const toggleTargetSelectService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_select',
-  serviceType: 'mtms_interfaces/ToggleSelect',
+  name: '/planner/toggle_select_target',
+  serviceType: 'mtms_interfaces/ToggleSelectTarget',
 })
+
+/* Set up toggle_select service. */
+const togglePulseSequenceSelectService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/toggle_select_pulse_sequence',
+  serviceType: 'mtms_interfaces/ToggleSelectPulseSequence',
+})
+
 
 /* Set up rename_target service. */
 const renameTargetService = new ROSLIB.Service({
@@ -135,13 +143,13 @@ export const targetServicesByKey = {
   name: renameTargetService,
   comment: changeCommentService,
   visible: toggleVisibleService,
-  selected: toggleSelectService,
+  selected: toggleTargetSelectService,
 }
 export const pulseSequenceServicesByKey = {
   name: renamePulseSequenceService,
   comment: changeCommentService,
   visible: toggleVisibleService,
-  selected: toggleSelectService,
+  selected: togglePulseSequenceSelectService,
 }
 
 export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
