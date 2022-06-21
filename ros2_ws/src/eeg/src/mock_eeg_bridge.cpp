@@ -1,7 +1,7 @@
 #include <chrono>
 #include <functional>
 
-#define DEFAULT_FREQUENCY_VALUE 500.0 // Hz
+#define DEFAULT_FREQUENCY_VALUE 0.5 // Hz
 #define NUMBER_OF_CHANNELS 62
 #define RANDOM_MAX 4000.0
 
@@ -39,7 +39,7 @@ class MockEegBridge : public rclcpp::Node {
 
         auto sampling_interval_int = int(round(1000 / this->sampling_frequency_));
         auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
-        
+
         this->time_ = 0;
 
         timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&MockEegBridge::timer_callback, this));
