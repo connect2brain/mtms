@@ -7,11 +7,11 @@ import { EyeCell } from './TableElements/Cells/EyeCell'
 import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
-import { createPulsesFromSelectedTargets } from '../utils'
+import { createPulsesFromSelectedTargets } from 'utils'
 import { useAppSelector } from 'providers/reduxHooks'
-import { addSequence, modifySequence, removePulsesFromSequence } from '../reducers/sequenceReducer'
+import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
 import { useDispatch } from 'react-redux'
-import {addPulseSequenceToRos, removeTargetInRos} from '../services/ros'
+import { addPulseSequenceToRos, removeTargetInRos } from 'services/ros'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
