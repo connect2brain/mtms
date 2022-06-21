@@ -1,5 +1,6 @@
 import React, { MutableRefObject, useRef } from 'react'
-import { changeableKey, ChangeableKey, Target } from '../types/target'
+import { targetChangeableKeys, TargetChangeableKey, Target } from '../types/target'
+import { PulseSequenceChangeableKey, pulseSequenceChangeableKeys } from '../types/pulseSequence'
 
 export const expand = (obj: any) =>
   obj
@@ -59,8 +60,6 @@ export const objectKeysToSnakeCase = (obj: any): any => {
 export const useFocusMemo = (): [React.RefObject<HTMLInputElement>, VoidFunction] => {
   const htmlElRef = React.useRef<HTMLInputElement>(null)
   const setFocus = React.useCallback(() => {
-    console.log(htmlElRef)
-    console.log(htmlElRef.current)
     if (htmlElRef.current) htmlElRef.current.focus()
   }, [htmlElRef])
 
@@ -69,8 +68,12 @@ export const useFocusMemo = (): [React.RefObject<HTMLInputElement>, VoidFunction
 
 export const getSequenceIndexFromRowId = (rowId: string) => Number(rowId.split('.').slice(0, -1).join('.'))
 
-export const isOfChangeableKey = (keyInput: any): keyInput is ChangeableKey => {
-  return changeableKey.includes(keyInput)
+export const isOfTargetChangeableKey = (keyInput: any): keyInput is TargetChangeableKey => {
+  return targetChangeableKeys.includes(keyInput)
+}
+
+export const isOfPulseSequenceChangeableKey = (keyInput: any): keyInput is PulseSequenceChangeableKey => {
+  return pulseSequenceChangeableKeys.includes(keyInput)
 }
 
 export const createPulsesFromSelectedTargets = (targets: Target[]) => {

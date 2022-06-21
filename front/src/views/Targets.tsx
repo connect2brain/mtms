@@ -67,10 +67,10 @@ const Targets = () => {
 
   return (
     <>
-      <TabButton name='TARGETS' onClick={handleViewChangeClick} selected={tab === 'TARGETS'}>
+      <TabButton name='TARGETS' onClick={handleViewChangeClick} selected={tab === 'TARGETS'} id='targets-view-button'>
         Targets
       </TabButton>
-      <TabButton name='SEQUENCES' onClick={handleViewChangeClick} selected={tab === 'SEQUENCES'}>
+      <TabButton name='SEQUENCES' onClick={handleViewChangeClick} selected={tab === 'SEQUENCES'} id='sequences-view-button'>
         Sequences
       </TabButton>
 
