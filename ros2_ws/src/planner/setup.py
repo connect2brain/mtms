@@ -38,7 +38,8 @@ setup(
             'rename_pulse_sequence = planner.rename_pulse_sequence:main',
             'toggle_select_pulse_sequence = planner.toggle_select_pulse_sequence:main',
             'remove_pulse_sequence = planner.remove_pulse_sequence:main',
-            'remove_pulse = planner.remove_pulse:main'
+            'remove_pulse = planner.remove_pulse:main',
+            'set_pulse_sequence_isi = planner.set_pulse_sequence_isi:main'
         ],
     },
 )
