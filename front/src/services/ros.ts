@@ -119,6 +119,13 @@ const changeCommentService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ChangeComment',
 })
 
+/* Set up set_pulse_sequence_isi service. */
+const setPulseSequenceIsiService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/set_pulse_sequence_isi',
+  serviceType: 'mtms_interfaces/SetPulseSequenceIsi',
+})
+
 /* Set up toggle_navigation service.*/
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
@@ -165,6 +172,7 @@ export const pulseSequenceServicesByKey = {
   comment: changeCommentService,
   visible: toggleVisibleService,
   selected: togglePulseSequenceSelectService,
+  isi: setPulseSequenceIsiService
 }
 
 export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
@@ -295,11 +303,11 @@ export const removePulseInRos = (pulseSequence: PulseSequence, pulseIndex: numbe
       request,
       (response) => {
         if (!response.success) {
-          console.log('ERROR: Failed to remove pulse sequence', pulseSequence)
+          console.log(`ERROR: Failed to remove pulse of index ${pulseIndex} from ${pulseSequence}`)
         }
       },
       (error) => {
-        console.log('ERROR: Failed to remove pulse sequence', pulseSequence, ', error:')
+        console.log(`ERROR: Failed to remove pulse of index ${pulseIndex} from ${pulseSequence}, error:`)
         console.error(error)
       },
   )
