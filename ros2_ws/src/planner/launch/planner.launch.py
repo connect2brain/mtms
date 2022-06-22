@@ -65,6 +65,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="remove_pulse"
+        ),
+        Node(
+            package="planner",
+            executable="set_pulse_sequence_isi"
         )
     ]
 
