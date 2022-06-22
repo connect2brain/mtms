@@ -36,7 +36,8 @@ setup(
             'change_target_index = planner.change_target_index:main',
             'add_pulse_sequence = planner.add_pulse_sequence:main',
             'rename_pulse_sequence = planner.rename_pulse_sequence:main',
-            'toggle_select_pulse_sequence = planner.toggle_select_pulse_sequence:main'
+            'toggle_select_pulse_sequence = planner.toggle_select_pulse_sequence:main',
+            'remove_pulse_sequence = planner.remove_pulse_sequence:main'
         ],
     },
 )

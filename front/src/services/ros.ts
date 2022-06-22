@@ -77,6 +77,14 @@ const removeTargetService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/RemoveTarget',
 })
 
+/* Set up remove_pulse_sequence service. */
+const removePulseSequenceService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/remove_pulse_sequence',
+  serviceType: 'mtms_interfaces/RemovePulseSequence',
+})
+
+
 const changeTargetIndexService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/change_target_index',
@@ -250,6 +258,24 @@ export const removeTargetInRos = (target: Target) => {
       console.log('ERROR: Failed to remove target', target, ', error:')
       console.error(error)
     },
+  )
+}
+
+export const removePulseSequenceInRos = (pulseSequence: PulseSequence) => {
+  const request = new ROSLIB.ServiceRequest({
+    name: pulseSequence.name,
+  })
+  removePulseSequenceService.callService(
+      request,
+      (response) => {
+        if (!response.success) {
+          console.log('ERROR: Failed to remove pulse sequence', pulseSequence)
+        }
+      },
+      (error) => {
+        console.log('ERROR: Failed to remove pulse sequence', pulseSequence, ', error:')
+        console.error(error)
+      },
   )
 }
 

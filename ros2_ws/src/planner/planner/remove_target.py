@@ -40,7 +40,7 @@ class RemoveTargetNode(StateNode):
         self.create_service(RemoveTarget, '/planner/remove_target', self.remove_target_callback)
 
     def remove_target_callback(self, request, response):
-        self.get_logger().info('Incoming request')
+        self.get_logger().info(f'Removing target {request.name}')
 
         state = self._state
         if state is None:
