@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { Pulse, PulseSequence } from 'types/pulseSequence'
 import { modifySequence } from '../reducers/sequenceReducer'
 import styled from 'styled-components'
-import { removePulseSequenceInRos } from '../services/ros'
+import { removePulseInRos, removePulseSequenceInRos } from '../services/ros'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -101,18 +101,13 @@ const SequenceTable = () => {
   }
 
   const handleRemovePulses = () => {
-    sequences.forEach((seq: PulseSequence, index: number) => {
-      const pulseSequence = {
-        ...seq,
-        pulses: seq.pulses.filter((pulse) => !pulse.selected),
-      }
-
-      dispatch(
-        modifySequence({
-          index,
-          pulseSequence,
-        }),
-      )
+    sequences.forEach((seq: PulseSequence) => {
+      seq.pulses
+        .filter((pulse) => pulse.selected)
+        .forEach((pulse) => {
+          const pulseIndex = seq.pulses.indexOf(pulse)
+          removePulseInRos(seq, pulseIndex)
+        })
     })
   }
 
