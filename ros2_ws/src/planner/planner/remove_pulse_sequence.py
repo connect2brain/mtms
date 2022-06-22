@@ -40,7 +40,7 @@ class RemovePulseSequenceNode(StateNode):
         self.create_service(RemovePulseSequence, '/planner/remove_pulse_sequence', self.remove_pulse_sequence_callback)
 
     def remove_pulse_sequence_callback(self, request, response):
-        self.get_logger().info('Incoming request')
+        self.get_logger().info(f'Removing pulse sequence {request.name}')
 
         state = self._state
         if state is None:

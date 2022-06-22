@@ -12,6 +12,7 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { Pulse, PulseSequence } from 'types/pulseSequence'
 import { modifySequence } from '../reducers/sequenceReducer'
 import styled from 'styled-components'
+import { removePulseSequenceInRos } from '../services/ros'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -115,11 +116,20 @@ const SequenceTable = () => {
     })
   }
 
+  const handleRemovePulseSequences = () => {
+    sequences
+      .filter((seq) => seq.selected)
+      .forEach((seq) => {
+        removePulseSequenceInRos(seq)
+      })
+  }
+
   const createMenu = () => {
     return (
       <>
         <MenuItem onClick={handleDuplicateTargets}>Duplicate selected target(s)</MenuItem>
         <MenuItem onClick={handleRemovePulses}>Remove selected target(s)</MenuItem>
+        <MenuItem onClick={handleRemovePulseSequences}>Remove selected pulse sequences(s)</MenuItem>
       </>
     )
   }

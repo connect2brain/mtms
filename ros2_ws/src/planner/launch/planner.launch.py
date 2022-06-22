@@ -57,6 +57,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="toggle_select_pulse_sequence"
+        ),
+        Node(
+            package="planner",
+            executable="remove_pulse_sequence"
         )
     ]
 
