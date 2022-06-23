@@ -20,7 +20,7 @@ class ChangePulseIndexNode(StateNode):
 
         pulse_sequence = next((seq for seq in state.pulse_sequences if seq.name == request.name), None)
 
-        if not pulse_sequence or request.pulse_index >= len(pulse_sequence.pulses):
+        if pulse_sequence is None or request.pulse_index >= len(pulse_sequence.pulses):
             response.success = False
             return response
 

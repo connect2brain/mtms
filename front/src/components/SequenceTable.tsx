@@ -13,7 +13,7 @@ import { Pulse, PulseSequence } from 'types/pulseSequence'
 import { modifySequence } from '../reducers/sequenceReducer'
 import styled from 'styled-components'
 import { removePulseInRos } from 'services/pulse'
-import { removePulseSequenceInRos } from 'services/pulseSequence'
+import {addPulseToPulseSequenceInRos, removePulseSequenceInRos} from 'services/pulseSequence'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -87,17 +87,9 @@ const SequenceTable = () => {
     sequences.forEach((seq: PulseSequence, index: number) => {
       const selectedPulses = seq.pulses.filter((pulse) => pulse.selected)
 
-      const pulseSequence = {
-        ...seq,
-        pulses: seq.pulses.concat(...selectedPulses),
-      }
-
-      dispatch(
-        modifySequence({
-          index,
-          pulseSequence,
-        }),
-      )
+      selectedPulses.forEach(pulse => {
+        addPulseToPulseSequenceInRos(seq, pulse)
+      })
     })
   }
 
