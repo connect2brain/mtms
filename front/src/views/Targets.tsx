@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
-import { addTargetToRos, clearRosState, positionListener, stateListener } from 'services/ros'
+import { clearRosState, positionListener, stateListener } from 'services/ros'
 import { expand, objectKeysToCamelCase } from 'utils'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { useAppDispatch } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
 import { setPulseSequences } from 'reducers/sequenceReducer'
+import { addTargetToRos } from 'services/target'
 
 const Targets = () => {
   const [position, setPosition] = useState<Position>({
@@ -70,7 +71,12 @@ const Targets = () => {
       <TabButton name='TARGETS' onClick={handleViewChangeClick} selected={tab === 'TARGETS'} id='targets-view-button'>
         Targets
       </TabButton>
-      <TabButton name='SEQUENCES' onClick={handleViewChangeClick} selected={tab === 'SEQUENCES'} id='sequences-view-button'>
+      <TabButton
+        name='SEQUENCES'
+        onClick={handleViewChangeClick}
+        selected={tab === 'SEQUENCES'}
+        id='sequences-view-button'
+      >
         Sequences
       </TabButton>
 

@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import Eye from '../../Eye'
 import styled from 'styled-components'
 import { CellProps } from 'types/table'
-import { updateTargetInRos } from 'services/ros'
 import { useAppSelector } from 'providers/reduxHooks'
+import { updateTargetInRos } from 'services/target'
 
 export const EyeCell = ({ value: initialValue, row, column }: CellProps) => {
   const [visible, setVisible] = useState(initialValue)
