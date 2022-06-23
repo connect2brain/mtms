@@ -27,6 +27,7 @@ const Targets = () => {
   const dispatch = useAppDispatch()
 
   const updateState = (message: TargetMessage) => {
+    console.log(message)
     const pulseSequences = objectKeysToCamelCase(message.pulse_sequences)
     const targets = objectKeysToCamelCase(message.targets)
 
