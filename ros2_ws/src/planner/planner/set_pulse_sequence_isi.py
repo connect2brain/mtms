@@ -23,7 +23,7 @@ class SetPulseSequenceIsiNode(StateNode):
 
         self.get_logger().info(f"Setting pulse sequence {request.name} isi to {request.new_isi}")
 
-        found = True
+        found = False
         for pulse_sequence in state.pulse_sequences:
             if pulse_sequence.name == request.name:
                 pulse_sequence.isi = request.new_isi

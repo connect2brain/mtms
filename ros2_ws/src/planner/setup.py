@@ -40,7 +40,11 @@ setup(
             'remove_pulse_sequence = planner.remove_pulse_sequence:main',
             'remove_pulse = planner.remove_pulse:main',
             'set_pulse_sequence_isi = planner.set_pulse_sequence_isi:main',
-            'set_pulse_sequence_intensity = planner.set_pulse_sequence_intensity:main'
+            'set_pulse_sequence_intensity = planner.set_pulse_sequence_intensity:main',
+            'set_pulse_isi = planner.set_pulse_isi:main',
+            'set_pulse_intensity = planner.set_pulse_intensity:main',
+            'toggle_select_pulse = planner.toggle_select_pulse:main',
+            'toggle_visible_pulse = planner.toggle_visible_pulse:main'
         ],
     },
 )

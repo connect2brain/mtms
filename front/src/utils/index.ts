@@ -1,6 +1,11 @@
-import React, { MutableRefObject, useRef } from 'react'
-import { targetChangeableKeys, TargetChangeableKey, Target } from '../types/target'
-import { PulseSequenceChangeableKey, pulseSequenceChangeableKeys } from '../types/pulseSequence'
+import React from 'react'
+import { targetChangeableKeys, TargetChangeableKey, Target } from 'types/target'
+import {
+  PulseChangeableKey,
+  pulseChangeableKeys,
+  PulseSequenceChangeableKey,
+  pulseSequenceChangeableKeys,
+} from 'types/pulseSequence'
 
 export const expand = (obj: any) =>
   obj
@@ -74,6 +79,10 @@ export const isOfTargetChangeableKey = (keyInput: any): keyInput is TargetChange
 
 export const isOfPulseSequenceChangeableKey = (keyInput: any): keyInput is PulseSequenceChangeableKey => {
   return pulseSequenceChangeableKeys.includes(keyInput)
+}
+
+export const isOfPulseChangeableKey = (keyInput: any): keyInput is PulseChangeableKey => {
+  return pulseChangeableKeys.includes(keyInput)
 }
 
 export const createPulsesFromSelectedTargets = (targets: Target[]) => {
