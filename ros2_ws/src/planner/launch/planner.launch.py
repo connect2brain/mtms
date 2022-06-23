@@ -89,6 +89,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="toggle_select_pulse"
+        ),
+        Node(
+            package="planner",
+            executable="change_pulse_index"
         )
     ]
 

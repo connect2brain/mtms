@@ -6,7 +6,7 @@ import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence, setSequences } from 'reducers/sequenceReducer'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
-import { updatePulseInRos } from '../../services/pulse'
+import {updatePulseIndexInRos, updatePulseInRos} from '../../services/pulse'
 
 interface Props {
   index: number
@@ -44,20 +44,7 @@ const SelectableSequenceTableRow = (props: Props) => {
   }, [sequences])
 
   const moveRow = (dragIndex: number, hoverIndex: number) => {
-    const newPulses = [...sequence.pulses]
-
-    newPulses.splice(hoverIndex, 0, newPulses.splice(dragIndex, 1)[0])
-
-    const newSequence = {
-      ...sequence,
-      pulses: newPulses,
-    }
-
-    const newSequences = sequences.filter((seq) => seq.name !== sequence.name)
-    newSequences.splice(sequenceIndex, 0, newSequence)
-    dispatch(setSequences(newSequences))
-
-    //setTargets(newTargets)
+    updatePulseIndexInRos(sequence, dragIndex, hoverIndex)
   }
 
   const [, drop] = useDrop({

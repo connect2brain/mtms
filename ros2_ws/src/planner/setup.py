@@ -44,7 +44,8 @@ setup(
             'set_pulse_isi = planner.set_pulse_isi:main',
             'set_pulse_intensity = planner.set_pulse_intensity:main',
             'toggle_select_pulse = planner.toggle_select_pulse:main',
-            'toggle_visible_pulse = planner.toggle_visible_pulse:main'
+            'toggle_visible_pulse = planner.toggle_visible_pulse:main',
+            'change_pulse_index = planner.change_pulse_index:main'
         ],
     },
 )
