@@ -31,11 +31,40 @@ const togglePulseVisibleService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleVisiblePulse',
 })
 
+const changePulseIndexService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/change_pulse_index',
+  serviceType: 'mtms_interfaces/ChangePulseIndex',
+})
+
 export const pulseServicesByKey = {
   intensity: setPulseIntensityService,
   isi: setPulseIsiService,
   selected: togglePulseSelectedService,
   visible: togglePulseVisibleService,
+}
+
+export const updatePulseIndexInRos = (sequence: PulseSequence, pulseIndex: number, newIndex: number) => {
+  const request = new ROSLIB.ServiceRequest({
+    name: sequence.name,
+    pulse_index: pulseIndex,
+    new_index: newIndex,
+  })
+
+  console.log(request)
+
+  changePulseIndexService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log(`ERROR: Failed to change ${sequence.name} pulse ${pulseIndex} index to ${newIndex}`)
+      }
+    },
+    (error) => {
+      console.log(`ERROR: Failed to change ${sequence.name} pulse ${pulseIndex} index to ${newIndex}, error`)
+      console.error(error)
+    },
+  )
 }
 
 export const updatePulseInRos = (
@@ -45,7 +74,6 @@ export const updatePulseInRos = (
   value: any,
   toggle: boolean,
 ) => {
-  console.log(sequence, pulseIndex, key, value, toggle)
   if (!isOfPulseChangeableKey(key)) {
     console.error(`Key ${key} is not changeable`)
     return
@@ -63,7 +91,6 @@ export const updatePulseInRos = (
     }
   }
 
-  console.log(requestObject)
   const request = new ROSLIB.ServiceRequest(requestObject)
 
   pulseServicesByKey[key].callService(
