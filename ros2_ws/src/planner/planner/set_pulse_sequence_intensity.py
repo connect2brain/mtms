@@ -23,7 +23,7 @@ class SetPulseSequenceIntensityNode(StateNode):
 
         self.get_logger().info(f"Setting pulse sequence {request.name} intensity to {request.new_intensity}")
 
-        found = True
+        found = False
         for pulse_sequence in state.pulse_sequences:
             if pulse_sequence.name == request.name:
                 pulse_sequence.intensity = request.new_intensity

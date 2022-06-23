@@ -73,6 +73,22 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="set_pulse_sequence_intensity"
+        ),
+        Node(
+            package="planner",
+            executable="set_pulse_intensity"
+        ),
+        Node(
+            package="planner",
+            executable="set_pulse_isi"
+        ),
+        Node(
+            package="planner",
+            executable="toggle_visible_pulse"
+        ),
+        Node(
+            package="planner",
+            executable="toggle_select_pulse"
         )
     ]
 

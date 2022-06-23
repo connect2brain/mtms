@@ -6,6 +6,7 @@ import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence, setSequences } from 'reducers/sequenceReducer'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
+import { updatePulseInRos } from '../../services/pulse'
 
 interface Props {
   index: number
@@ -114,23 +115,7 @@ const SelectableSequenceTableRow = (props: Props) => {
     event.preventDefault()
 
     if (isTarget) {
-      const pulses = [...sequences[sequenceIndex].pulses]
-      pulses[index] = {
-        ...pulses[index],
-        selected: !selected,
-      }
-
-      const newSequence = {
-        ...sequence,
-        pulses,
-      }
-      dispatch(
-        modifySequence({
-          index: sequenceIndex,
-          pulseSequence: newSequence,
-        }),
-      )
-      setSelected(!selected)
+      updatePulseInRos(sequence, index, 'selected', !selected, true)
     } else {
       updatePulseSequenceInRos(sequence, 'selected', !selected, true)
     }
