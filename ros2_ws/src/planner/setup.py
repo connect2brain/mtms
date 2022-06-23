@@ -12,7 +12,7 @@ setup(
         (os.path.join('share', package_name, 'launch'),
          glob(os.path.join('launch', '*.launch.py'))),
         ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+         ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
     ],
     install_requires=['setuptools'],
@@ -39,7 +39,8 @@ setup(
             'toggle_select_pulse_sequence = planner.toggle_select_pulse_sequence:main',
             'remove_pulse_sequence = planner.remove_pulse_sequence:main',
             'remove_pulse = planner.remove_pulse:main',
-            'set_pulse_sequence_isi = planner.set_pulse_sequence_isi:main'
+            'set_pulse_sequence_isi = planner.set_pulse_sequence_isi:main',
+            'set_pulse_sequence_intensity = planner.set_pulse_sequence_intensity:main'
         ],
     },
 )
