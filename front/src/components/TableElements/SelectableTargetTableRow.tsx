@@ -14,17 +14,9 @@ const SelectableTargetTableRow = (props: any) => {
   const dropRef = useRef<HTMLTableRowElement>(null)
   const dragRef = useRef<HTMLTableCellElement>(null)
 
-  const dispatch = useAppDispatch()
-
   const moveRow = (dragIndex: number, hoverIndex: number) => {
-    //const newTargets = [...targets]
-
     const target = targets[dragIndex]
     changeTargetIndexInRos(target, hoverIndex)
-
-    //newTargets.splice(hoverIndex, 0, newTargets.splice(dragIndex, 1)[0])
-
-    //dispatch(setTargets(newTargets))
   }
 
   const [, drop] = useDrop({
