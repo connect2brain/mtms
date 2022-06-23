@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence } from '../../../reducers/sequenceReducer'
 import { updateTargetInRos } from 'services/target'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
+import { updatePulseInRos } from 'services/pulse'
 
 interface EditableCellProps extends CellProps {
   expandElement?: ReactNode
@@ -19,6 +20,7 @@ interface UpdateEditableCellProps extends EditableCellProps {
 
 export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const { row } = props
+
   const isTarget = props.row.depth > 0
   const { targets } = useAppSelector((state) => state.targets)
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -30,13 +32,14 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
     const key: string = columnName.slice(3).toLowerCase()
 
-    //update only name for target, otherwise update the pulse
+    //update only name for target (so changes are reflected in all pulses in all sequences), otherwise update the pulse
     if (key === 'name') {
       const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
       const target = targets[targetIndex]
       updateTargetInRos(target, key, value, toggle)
     } else {
-      //update pulse
+      const sequenceId = getSequenceIndexFromRowId(row.id)
+      updatePulseInRos(sequences[sequenceId], rowIndex, key, value, toggle)
     }
   }
 
