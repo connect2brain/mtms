@@ -3,9 +3,10 @@ import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
-import {updatePulseSequenceInRos, updateTargetInRos} from 'services/ros'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence } from '../../../reducers/sequenceReducer'
+import { updateTargetInRos } from 'services/target'
+import { updatePulseSequenceInRos } from 'services/pulseSequence'
 
 interface EditableCellProps extends CellProps {
   expandElement?: ReactNode
