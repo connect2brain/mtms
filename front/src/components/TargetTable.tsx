@@ -8,9 +8,9 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
-import {useAppDispatch, useAppSelector} from 'providers/reduxHooks'
+import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
-import {addPulseSequenceToRos, addPulseToPulseSequenceInRos} from 'services/pulseSequence'
+import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
 import { removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
@@ -75,8 +75,8 @@ const TargetTable = () => {
       return
     }
 
-    selectedPulses.forEach(pulse => {
-        addPulseToPulseSequenceInRos(sequence, pulse)
+    selectedPulses.forEach((pulse) => {
+      addPulseToPulseSequenceInRos(sequence, pulse)
     })
   }
 
@@ -84,18 +84,7 @@ const TargetTable = () => {
     targets
       .filter((target) => target.selected)
       .forEach((target) => {
-        const targetIndex = targets.indexOf(target)
         removeTargetInRos(target)
-
-        sequences.forEach((sequence, sequenceIndex) => {
-          const pulses = sequence.pulses.filter((pulse) => pulse.targetIndex === targetIndex)
-          dispatch(
-            removePulsesFromSequence({
-              sequenceIndex,
-              pulseIdsToRemove: pulses.map((pulse, id) => id),
-            }),
-          )
-        })
       })
   }
 
