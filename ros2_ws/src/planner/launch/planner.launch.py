@@ -93,6 +93,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="change_pulse_index"
+        ),
+        Node(
+            package="planner",
+            executable="add_pulse_to_pulse_sequence"
         )
     ]
 
