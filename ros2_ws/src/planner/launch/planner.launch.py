@@ -69,6 +69,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="set_pulse_sequence_isi"
+        ),
+        Node(
+            package="planner",
+            executable="set_pulse_sequence_intensity"
         )
     ]
 
