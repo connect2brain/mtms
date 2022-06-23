@@ -48,8 +48,8 @@ class MasterStateNode(Node):
 
 def main():
     rclpy.init()
-    get_state_node = MasterStateNode()
-    rclpy.spin(get_state_node)
+    master_state_node = MasterStateNode()
+    rclpy.spin(master_state_node)
     rclpy.shutdown()
 
 
