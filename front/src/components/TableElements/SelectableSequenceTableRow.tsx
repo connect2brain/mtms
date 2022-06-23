@@ -5,7 +5,7 @@ import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { modifySequence, setSequences } from 'reducers/sequenceReducer'
-import { updatePulseSequenceInRos, updateTargetInRos } from '../../services/ros'
+import { updatePulseSequenceInRos } from 'services/pulseSequence'
 
 interface Props {
   index: number

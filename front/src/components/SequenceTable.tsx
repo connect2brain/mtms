@@ -12,7 +12,8 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { Pulse, PulseSequence } from 'types/pulseSequence'
 import { modifySequence } from '../reducers/sequenceReducer'
 import styled from 'styled-components'
-import { removePulseInRos, removePulseSequenceInRos } from '../services/ros'
+import { removePulseInRos } from 'services/pulse'
+import { removePulseSequenceInRos } from 'services/pulseSequence'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
