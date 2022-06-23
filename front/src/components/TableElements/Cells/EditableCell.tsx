@@ -43,17 +43,6 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
     const key: string = columnName.slice(3).toLowerCase()
     const sequence = sequences[rowIndex]
 
-    const updateAlsoInTargets = ['isi', 'intensity', 'modeDuration', 'visible', 'selected']
-
-    /* const pulses = updateAlsoInTargets.includes(key)
-      ? sequence.pulses.map((pulse) => {
-          return {
-            ...pulse,
-            [key]: value,
-          }
-        })
-      : [...sequence.pulses] */
-
     updatePulseSequenceInRos(sequence, key, value, toggle)
   }
 

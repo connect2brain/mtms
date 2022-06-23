@@ -126,6 +126,13 @@ const setPulseSequenceIsiService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/SetPulseSequenceIsi',
 })
 
+/* Set up set_pulse_sequence_intensity service. */
+const setPulseSequenceIntensityService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/set_pulse_sequence_intensity',
+  serviceType: 'mtms_interfaces/SetPulseSequenceIntensity',
+})
+
 /* Set up toggle_navigation service.*/
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
@@ -172,7 +179,8 @@ export const pulseSequenceServicesByKey = {
   comment: changeCommentService,
   visible: toggleVisibleService,
   selected: togglePulseSequenceSelectService,
-  isi: setPulseSequenceIsiService
+  isi: setPulseSequenceIsiService,
+  intensity: setPulseSequenceIntensityService
 }
 
 export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
