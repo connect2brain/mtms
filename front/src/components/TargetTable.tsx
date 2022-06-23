@@ -11,7 +11,8 @@ import { createPulsesFromSelectedTargets } from 'utils'
 import { useAppSelector } from 'providers/reduxHooks'
 import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
 import { useDispatch } from 'react-redux'
-import { addPulseSequenceToRos, removeTargetInRos } from 'services/ros'
+import { addPulseSequenceToRos } from 'services/pulseSequence'
+import { removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -112,7 +113,9 @@ const TargetTable = () => {
   const createMenu = () => {
     return (
       <>
-        <MenuItem onClick={handleNewSequence} id='create-new-sequence'>New sequence from selection</MenuItem>
+        <MenuItem onClick={handleNewSequence} id='create-new-sequence'>
+          New sequence from selection
+        </MenuItem>
         <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
         <SubMenu label='Add to sequence'>
           {sequences.map((seq) => {

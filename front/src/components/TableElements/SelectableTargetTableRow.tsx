@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
-import {changeTargetIndexInRos, updateTargetInRos} from 'services/ros'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
+import { changeTargetIndexInRos, updateTargetInRos } from 'services/target'
 
 const SelectableTargetTableRow = (props: any) => {
   const { index } = props
