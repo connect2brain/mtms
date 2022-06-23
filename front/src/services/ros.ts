@@ -21,9 +21,9 @@ ros.on('close', () => {
 })
 
 export const defaultOptions = {
-  latch: true,
-  queue_length: 1,
-  queue_size: 1,
+  //latch: true,
+  //queue_length: 1,
+  //queue_size: 1,
 }
 
 export const positionListener = new ROSLIB.Topic<PositionMessage>({
