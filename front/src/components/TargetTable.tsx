@@ -8,16 +8,13 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
+import { useAppSelector } from 'providers/reduxHooks'
 import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
 import { removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
-
-  const dispatch = useAppDispatch()
 
   const columns = useMemo(
     () => [
