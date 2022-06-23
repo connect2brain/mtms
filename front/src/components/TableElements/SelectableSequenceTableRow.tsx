@@ -3,7 +3,7 @@ import styled from 'styled-components'
 import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { useAppSelector } from 'providers/reduxHooks'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
 import {updatePulseIndexInRos, updatePulseInRos} from '../../services/pulse'
 

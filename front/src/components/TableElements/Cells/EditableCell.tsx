@@ -3,8 +3,7 @@ import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { modifySequence } from '../../../reducers/sequenceReducer'
+import { useAppSelector } from 'providers/reduxHooks'
 import { updateTargetInRos } from 'services/target'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
 import { updatePulseInRos } from 'services/pulse'
@@ -24,8 +23,6 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const isTarget = props.row.depth > 0
   const { targets } = useAppSelector((state) => state.targets)
   const { sequences } = useAppSelector((state) => state.sequences)
-
-  const dispatch = useAppDispatch()
 
   const sequenceIndex = getSequenceIndexFromRowId(row.id)
 

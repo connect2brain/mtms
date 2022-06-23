@@ -8,17 +8,16 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
-import { useAppSelector } from 'providers/reduxHooks'
+import {useAppDispatch, useAppSelector} from 'providers/reduxHooks'
 import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
-import { useDispatch } from 'react-redux'
-import { addPulseSequenceToRos } from 'services/pulseSequence'
+import {addPulseSequenceToRos, addPulseToPulseSequenceInRos} from 'services/pulseSequence'
 import { removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
 
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
 
   const columns = useMemo(
     () => [
@@ -56,7 +55,6 @@ const TargetTable = () => {
       return
     }
 
-    //dispatch(addSequence(newSequence))
     addPulseSequenceToRos(pulses)
   }
   const filterTargetKeys = () => {
@@ -77,18 +75,9 @@ const TargetTable = () => {
       return
     }
 
-    const pulses = [...sequence.pulses, ...selectedPulses]
-    const sequenceIndex = sequences.indexOf(sequence)
-    const newSequence = {
-      ...sequence,
-      pulses,
-    }
-    dispatch(
-      modifySequence({
-        index: sequenceIndex,
-        pulseSequence: newSequence,
-      }),
-    )
+    selectedPulses.forEach(pulse => {
+        addPulseToPulseSequenceInRos(sequence, pulse)
+    })
   }
 
   const handleRemoveTargets = () => {
