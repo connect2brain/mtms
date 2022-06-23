@@ -4,7 +4,6 @@ import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { modifySequence, setSequences } from 'reducers/sequenceReducer'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
 import {updatePulseIndexInRos, updatePulseInRos} from '../../services/pulse'
 
@@ -25,7 +24,6 @@ const SelectableSequenceTableRow = (props: Props) => {
   const { index, isTarget, rowId } = props
 
   const { sequences } = useAppSelector((state) => state.sequences)
-  const dispatch = useAppDispatch()
 
   const sequenceIndex = isTarget ? getSequenceIndexFromRowId(rowId) : index
 
