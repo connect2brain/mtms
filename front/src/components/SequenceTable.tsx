@@ -8,9 +8,8 @@ import { EditableSequenceTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import ExpandableCell from './TableElements/Cells/ExpandableCell'
 import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableRow'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { Pulse, PulseSequence } from 'types/pulseSequence'
-import { modifySequence } from '../reducers/sequenceReducer'
+import { useAppSelector } from 'providers/reduxHooks'
+import { PulseSequence } from 'types/pulseSequence'
 import styled from 'styled-components'
 import { removePulseInRos } from 'services/pulse'
 import {addPulseToPulseSequenceInRos, removePulseSequenceInRos} from 'services/pulseSequence'
@@ -19,7 +18,6 @@ const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
 
-  const dispatch = useAppDispatch()
 
   const columns = useMemo(
     () => [
