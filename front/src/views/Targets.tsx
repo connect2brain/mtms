@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { EulerAngles, Position, PositionMessage, TargetMessage } from 'types/target'
+import { EulerAngles, Position, PositionMessage, StateMessage } from 'types/target'
 import { clearRosState, positionListener, stateListener } from 'services/ros'
 import { expand, objectKeysToCamelCase } from 'utils'
 import SequenceTable from 'components/SequenceTable'
@@ -26,8 +26,7 @@ const Targets = () => {
 
   const dispatch = useAppDispatch()
 
-  const updateState = (message: TargetMessage) => {
-    console.log(message)
+  const updateState = (message: StateMessage) => {
     const pulseSequences = objectKeysToCamelCase(message.pulse_sequences)
     const targets = objectKeysToCamelCase(message.targets)
 
