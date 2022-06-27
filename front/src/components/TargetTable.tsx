@@ -92,10 +92,10 @@ const TargetTable = () => {
           New sequence from selection
         </MenuItem>
         <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
-        <SubMenu label='Add to sequence'>
-          {sequences.map((seq) => {
+        <SubMenu label='Add to sequence' id={'add-to-sequence'}>
+          {sequences.map((seq, i) => {
             return (
-              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name}>
+              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name} id={`add-to-sequence-${i}`}>
                 {seq.name}
               </MenuItem>
             )
