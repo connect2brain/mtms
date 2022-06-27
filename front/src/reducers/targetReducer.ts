@@ -13,9 +13,6 @@ const targetSlice = createSlice({
   name: 'targets',
   initialState,
   reducers: {
-    addTarget: (state, action: PayloadAction<Target>) => {
-      state.targets.push(action.payload)
-    },
     setTargets: (state, action: PayloadAction<Target[]>) => {
       state.targets = action.payload
     },
