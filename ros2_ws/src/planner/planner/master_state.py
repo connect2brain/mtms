@@ -36,14 +36,12 @@ class MasterStateNode(Node):
             self.state_updated,
             qos_profile=subscribe_qos
         )
-        self._state = PlannerState()
 
     def state_updated(self, msg):
-        self._state = msg
         self._state_publisher.publish(msg)
         self.get_logger().info(
-            f'Updated state, nof targets: {len(self._state.targets)}, '
-            f'nof sequences: {len(self._state.pulse_sequences)}')
+            f'Updated state, nof targets: {len(msg.targets)}, '
+            f'nof sequences: {len(msg.pulse_sequences)}')
 
 
 def main():
