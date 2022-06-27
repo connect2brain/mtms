@@ -68,11 +68,10 @@ describe('Target table', () => {
     cy.get('#cell-container-0-seqName').find('input').type('{enter}')
 
     cy.reload()
-    cy.wait(100)
     cy.get('#sequences-view-button').click()
     cy.get('#targets-table').find('tr').its('length').should('equal', 2)
 
-    cy.contains(newName)
+    cy.get(newName)
 
   })
 })
