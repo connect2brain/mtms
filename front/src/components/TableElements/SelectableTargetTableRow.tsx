@@ -100,8 +100,6 @@ const SelectableTargetTableRow = (props: any) => {
   )
 }
 
-const DragElement = styled.span``
-
 const TableRow = styled.tr<{
   selected: boolean
   opacity: number

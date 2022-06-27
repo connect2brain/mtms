@@ -1,8 +1,6 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
-import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
-import { isOfPulseSequenceChangeableKey, isOfTargetChangeableKey, objectKeysToSnakeCase } from '../utils'
-import { Pulse, PulseSequence } from '../types/pulseSequence'
+import { PositionMessage, StateMessage } from '../types/target'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -20,7 +18,7 @@ ros.on('close', () => {
   console.log('ROS closed ws connection')
 })
 
-export const defaultOptions = {
+const defaultOptions = {
   latch: true,
   queue_length: 1,
   queue_size: 1,
@@ -56,7 +54,7 @@ const coilAtTargetListener = new ROSLIB.Topic({
 //coilAtTargetListener.subscribe(updateCoilAtTarget);
 
 /* Set up listener for planner state. */
-export const stateListener = new ROSLIB.Topic<TargetMessage>({
+export const stateListener = new ROSLIB.Topic<StateMessage>({
   ros: ros,
   name: '/planner/state',
   messageType: 'mtms_interfaces/PlannerState',

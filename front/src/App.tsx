@@ -12,8 +12,8 @@ function App() {
       <Header>mTMS control panel</Header>
       <Wrapper>
         <Routes>
-          <Route path='/' element={<Experiment />} />
-          <Route path='/targets' element={<Targets />} />
+          <Route path='/' element={<Targets />} />
+          <Route path='/experiment' element={<Experiment />} />
         </Routes>
       </Wrapper>
     </Providers>
