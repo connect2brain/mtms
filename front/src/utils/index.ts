@@ -1,6 +1,7 @@
 import React from 'react'
 import { targetChangeableKeys, TargetChangeableKey, Target } from 'types/target'
 import {
+  Pulse,
   PulseChangeableKey,
   pulseChangeableKeys,
   PulseSequenceChangeableKey,
@@ -85,7 +86,7 @@ export const isOfPulseChangeableKey = (keyInput: any): keyInput is PulseChangeab
   return pulseChangeableKeys.includes(keyInput)
 }
 
-export const createPulsesFromSelectedTargets = (targets: Target[]) => {
+export const createPulsesFromSelectedTargets = (targets: Target[]): Pulse[] => {
   return targets
     .filter((t) => t.selected)
     .map((target) => {
