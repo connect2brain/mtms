@@ -26,11 +26,7 @@ jobs:
       - name: print ls
         run: ls -la
 
-      - name: Change directory
-        run: cd front
-
-      - name: print ls again
-        run: ls -la
-
       - name: Run Cypress tests
         uses: cypress-io/github-action@v4
+        with:
+          working-directory: front
