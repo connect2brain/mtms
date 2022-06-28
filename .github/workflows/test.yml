@@ -7,7 +7,6 @@ jobs:
   test:
     name: Run test suite
     runs-on: ubuntu-20.04
-    container: cypress/included:10.2.0
     env:
       COMPOSE_FILE: .ci/docker-compose.yml
 
