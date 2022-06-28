@@ -2,10 +2,10 @@ version: '3.5'
 
 services:
   front_test:
-    build: ./front/
+    build: ../front/
     entrypoint: [ "yarn", "test" ]
     networks:
-      - testnetwork
+      - cinetwork
     ports:
       - "3001:3000"
     environment:
@@ -14,37 +14,54 @@ services:
       - rosbridge_test
       - planner_test
       - pulse_sequence_controller_test
+  cypress:
+    image: cypress/included:10.1.0
+    entrypoint: cypress open --env BASE_URL=front_test:3000 --project .
+    working_dir: /app
+    networks:
+      - cinetwork
+    environment:
+      - CYPRESS_FRONT_URL=front_test:3000
+      - DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - '../front:/app'
+    depends_on:
+      - front_test
   cypress_headless:
     image: cypress/included:10.1.0
     entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
     working_dir: /app
     networks:
-      - testnetwork
+      - cinetwork
     environment:
       - DISPLAY
       - CYPRESS_FRONT_URL=front_test:3000
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - '../front:/app'
     depends_on:
       - front_test
   rosbridge_test:
     networks:
-      - testnetwork
+      - cinetwork
     build:
-      context: .
+      context: ..
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
   planner_test:
     networks:
-      - testnetwork
+      - cinetwork
     build:
-      context: .
+      context: ..
       dockerfile: ros2_ws/src/planner/Dockerfile
   pulse_sequence_controller_test:
     networks:
-      - testnetwork
+      - cinetwork
     build:
-      context: .
+      context: ..
       dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
 
 networks:
-  testnetwork:
-    name: testnetwork
+  cinetwork:
+    name: cinetwork
     driver: bridge
