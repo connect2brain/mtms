@@ -14,20 +14,6 @@ services:
       - rosbridge_test
       - planner_test
       - pulse_sequence_controller_test
-  cypress:
-    image: cypress/included:10.1.0
-    entrypoint: cypress open --env BASE_URL=front_test:3000 --project .
-    working_dir: /app
-    networks:
-      - cinetwork
-    environment:
-      - CYPRESS_FRONT_URL=front_test:3000
-      - DISPLAY
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - '../front:/app'
-    depends_on:
-      - front_test
   cypress_headless:
     image: cypress/included:10.1.0
     entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
