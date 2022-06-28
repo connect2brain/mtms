@@ -8,7 +8,7 @@ const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3000'}`
 describe('Target table', () => {
   beforeEach(() => {
     clearRosState()
-    cy.visit(testUrl + '/targets')
+    cy.visit(testUrl)
   })
 
   it('can be opened', () => {
