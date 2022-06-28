@@ -20,12 +20,6 @@ jobs:
       - name: Start containers
         run: docker-compose up -d
 
-      - name: Print pwd
-        run: pwd
-
-      - name: print ls
-        run: ls -la
-
       - name: Run Cypress tests
         uses: cypress-io/github-action@v4
         with:
@@ -44,3 +38,14 @@ jobs:
         with:
           name: cypress-videos
           path: front/cypress/videos
+
+      - name: Create docker logs
+        run: cd .ci && docker-compose logs > docker-compose.log && mv docker-compose.log ..
+        if: failure()
+
+      - name: Upload docker compose logs
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: docker-logs
+          path: docker-compose.log
