@@ -30,3 +30,17 @@ jobs:
         uses: cypress-io/github-action@v4
         with:
           working-directory: front
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: front/cypress/screenshots
+
+      - name: Upload videos
+        uses: actions/upload-artifact@v1
+        if: failure()
+        with:
+          name: cypress-videos
+          path: front/cypress/videos
