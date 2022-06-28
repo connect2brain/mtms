@@ -7,33 +7,19 @@ services:
     networks:
       - cinetwork
     ports:
-      - "3001:3000"
+      - "3000:3000"
     depends_on:
       - rosbridge_test
       - planner_test
       - pulse_sequence_controller_test
-  cypress_headless:
-    # image: cypress/included:10.2.0
-    build:
-      context: ..
-      dockerfile: .ci/Dockerfile.cypress
-    entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
-    working_dir: /app
-    networks:
-      - cinetwork
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    environment:
-      - DISPLAY
-      - CYPRESS_FRONT_URL=front_test:3000
-    depends_on:
-      - front_test
   rosbridge_test:
     networks:
       - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
+    ports:
+      - "9090:9090"
   planner_test:
     networks:
       - cinetwork
