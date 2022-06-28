@@ -15,7 +15,7 @@ services:
       - planner_test
       - pulse_sequence_controller_test
   cypress_headless:
-    image: cypress/included:10.1.0
+    image: cypress/included:10.2.0
     entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
     working_dir: /app
     networks:
