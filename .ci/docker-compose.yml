@@ -8,24 +8,24 @@ services:
       - cinetwork
     ports:
       - "3001:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - rosbridge_test
       - planner_test
       - pulse_sequence_controller_test
   cypress_headless:
-    image: cypress/included:10.2.0
-    entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
+    # image: cypress/included:10.2.0
+    build:
+      context: ..
+      dockerfile: .ci/Dockerfile.cypress
+    entrypoint: bash # cypress run --env BASE_URL=front_test:3000 --project .
     working_dir: /app
     networks:
       - cinetwork
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
     environment:
       - DISPLAY
       - CYPRESS_FRONT_URL=front_test:3000
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-      - '../front:/app'
     depends_on:
       - front_test
   rosbridge_test:
