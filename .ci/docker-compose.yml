@@ -17,7 +17,7 @@ services:
     build:
       context: ..
       dockerfile: .ci/Dockerfile.cypress
-    entrypoint: bash # cypress run --env BASE_URL=front_test:3000 --project .
+    entrypoint: cypress run --env BASE_URL=front_test:3000 --project .
     working_dir: /app
     networks:
       - cinetwork
