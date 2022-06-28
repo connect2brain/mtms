@@ -1,3 +1,5 @@
 FROM cypress/included:10.2.0
 
 COPY front /app
+
+RUN ls -la /app
