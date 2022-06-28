@@ -7,6 +7,7 @@ jobs:
   test:
     name: Run test suite
     runs-on: ubuntu-20.04
+    container: cypress/included:10.2.0
     env:
       COMPOSE_FILE: .ci/docker-compose.yml
 
@@ -17,5 +18,14 @@ jobs:
       - name: Build docker images
         run: docker-compose build
 
-      - name: Run tests
-        run: docker-compose run cypress_headless
+      - name: Start containers
+        run: docker-compose up -d
+
+      - name: Print pwd
+        run: pwd
+
+      - name: print ls
+        run: ls -la
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v4
