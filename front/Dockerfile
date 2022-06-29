@@ -11,9 +11,6 @@ ENV PATH /app/node_modules/.bin:$PATH
 # install app dependencies
 COPY package.json ./
 COPY yarn.lock ./
-# RUN npm install --global yarn
-# RUN npm install --silent
-# RUN npm install react-scripts@5.0.0 -g --silent
 RUN yarn install --silent
 RUN yarn global add react-scripts@5.0.0 --silent
 

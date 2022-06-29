@@ -97,6 +97,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="master_state"
+        ),
+        Node(
+            package="planner",
+            executable="add_pulse_to_pulse_sequence"
         )
     ]
 

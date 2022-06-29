@@ -36,7 +36,7 @@ export const targetChangeableKeys = ['name', 'comment', 'visible', 'selected'] a
 export type TargetChangeableKey = typeof targetChangeableKeys[number]
 
 
-export interface TargetMessage extends ROSLIB.Message {
+export interface StateMessage extends ROSLIB.Message {
   targets: Target[]
   pulse_sequences: PulseSequence[]
 }

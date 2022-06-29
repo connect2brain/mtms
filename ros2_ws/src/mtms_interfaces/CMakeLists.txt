@@ -55,6 +55,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PulseSequence/ToggleSelectPulse.srv"
   "srv/PulseSequence/ToggleVisiblePulse.srv"
   "srv/PulseSequence/ChangePulseIndex.srv"
+  "srv/PulseSequence/AddPulseToPulseSequence.srv"
   "srv/TriggerPulse.srv"
   "srv/ToggleNavigation.srv"
   "srv/StartPulseSequence.srv"

@@ -52,68 +52,76 @@ export const GenericTable = ({ columns, data, createMenu, SelectableRow }: Table
   }
 
   return (
-    <TargetsContainer onContextMenu={onContextMenu}>
-      <DndProvider backend={HTML5Backend}>
-        <TargetsTable {...getTableProps()} id='targets-table'>
-          <Thead>
-            {headerGroups.map((headerGroup) => (
-              <HeaderTableRow {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
-                <MoveTh></MoveTh>
-                {headerGroup.headers.map((column) => (
-                  <Th
-                    {...column.getHeaderProps({
-                      style: {
-                        width: column.width,
-                        minWidth: column.minWidth,
-                      },
-                    })}
-                    key={column.getHeaderProps().key}
+    <MenuContainer>
+      <TargetsContainer onContextMenu={onContextMenu}>
+        <DndProvider backend={HTML5Backend}>
+          <TargetsTable {...getTableProps()} id='targets-table'>
+            <Thead>
+              {headerGroups.map((headerGroup) => (
+                <HeaderTableRow {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
+                  <MoveTh></MoveTh>
+                  {headerGroup.headers.map((column) => (
+                    <Th
+                      {...column.getHeaderProps({
+                        style: {
+                          width: column.width,
+                          minWidth: column.minWidth,
+                        },
+                      })}
+                      key={column.getHeaderProps().key}
+                    >
+                      {column.render('Header')}
+                    </Th>
+                  ))}
+                </HeaderTableRow>
+              ))}
+            </Thead>
+
+            <Tbody {...getTableBodyProps()}>
+              {rows.map((row: Row) => {
+                prepareRow(row)
+                // TODO: is it possible that there is a sequence with 0 targets?
+                const isTarget = row.depth > 0 || (row.depth === 0 && row.subRows.length === 0)
+                return (
+                  <SelectableRow
+                    {...row.getRowProps()}
+                    key={row.getRowProps().key}
+                    index={row.index}
+                    isTarget={isTarget}
+                    rowId={row.id}
                   >
-                    {column.render('Header')}
-                  </Th>
-                ))}
-              </HeaderTableRow>
-            ))}
-          </Thead>
-
-          <Tbody {...getTableBodyProps()}>
-            {rows.map((row: Row) => {
-              prepareRow(row)
-              // TODO: is it possible that there is a sequence with 0 targets?
-              const isTarget = row.depth > 0 || (row.depth === 0 && row.subRows.length === 0)
-              return (
-                <SelectableRow
-                  {...row.getRowProps()}
-                  key={row.getRowProps().key}
-                  index={row.index}
-                  isTarget={isTarget}
-                  rowId={row.id}
-                >
-                  {row.cells.map((cell) => {
-                    return (
-                      <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
-                        {cell.render('Cell')}
-                      </Td>
-                    )
-                  })}
-                </SelectableRow>
-              )
-            })}
-          </Tbody>
-        </TargetsTable>
-
-        <StyledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)} overflow='visible'>
-          {createMenu()}
-        </StyledMenu>
-      </DndProvider>
-    </TargetsContainer>
+                    {row.cells.map((cell) => {
+                      return (
+                        <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
+                          {cell.render('Cell')}
+                        </Td>
+                      )
+                    })}
+                  </SelectableRow>
+                )
+              })}
+            </Tbody>
+          </TargetsTable>
+        </DndProvider>
+      </TargetsContainer>
+      <StyledMenu {...menuProps} anchorPoint={anchorPoint} onClose={() => toggleMenu(false)} overflow='visible'>
+        {createMenu()}
+      </StyledMenu>
+    </MenuContainer>
   )
 }
+
+const MenuContainer = styled.div`
+  all: unset;
+  overflow: visible;
+`
 
 const StyledMenu = styled(ControlledMenu)`
   ${menuSelector.name} {
     border: 1px solid ${(p) => p.theme.colors.gray};
   }
+
+  z-index: 1;
 `
 
 const Th = styled.th`

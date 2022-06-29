@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setDescription } from 'reducers/experimentReducer'
 
 const Experiment = () => {
-  const { description, channels, iti, ibi, nofBurstsInTrains, nofPulsesInBursts, nofTrains, isis } = useAppSelector(
+  const { description, channels, iti, ibi, nofBurstsInTrains, nofTrains } = useAppSelector(
     (state) => state.experiment,
   )
 
