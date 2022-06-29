@@ -17,6 +17,8 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
+    ports:
+      - "9090:9090"
   planner_test:
     networks:
       - cinetwork
