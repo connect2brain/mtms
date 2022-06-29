@@ -40,7 +40,7 @@ jobs:
           path: front/cypress/videos
 
       - name: Create docker logs
-        run: cd .ci && docker-compose logs > docker-compose.log && mv docker-compose.log ..
+        run: cd .ci && ls -la && docker-compose logs > docker-compose.log && mv docker-compose.log ..
         if: failure()
 
       - name: Upload docker compose logs
