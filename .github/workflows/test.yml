@@ -24,6 +24,7 @@ jobs:
         uses: cypress-io/github-action@v4
         with:
           working-directory: front
+          env: ELECTRON_ENABLE_LOGGING=1
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v1
@@ -39,8 +40,8 @@ jobs:
           name: cypress-videos
           path: front/cypress/videos
 
-      - name: Create docker logs
-        run: cd .ci && ls -la && docker-compose logs > docker-compose.log && mv docker-compose.log ..
+      - name: Create docker compose logs
+        run: docker-compose logs > docker-compose.log
         if: failure()
 
       - name: Upload docker compose logs
