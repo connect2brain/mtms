@@ -42,6 +42,13 @@ const renamePulseSequenceService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/RenamePulseSequence',
 })
 
+const addPulseToPulseSequenceService = new ROSLIB.Service({
+  ros: ros,
+  name: '/planner/add_pulse_to_pulse_sequence',
+  serviceType: 'mtms_interfaces/AddPulseToPulseSequence',
+})
+
+
 export const pulseSequenceServicesByKey = {
   name: renamePulseSequenceService,
   selected: togglePulseSequenceSelectService,
@@ -69,6 +76,28 @@ export const addPulseSequenceToRos = (pulses: Pulse[]) => {
       console.log('ERROR: Failed to add pulse sequence, error:')
       console.error(error)
     },
+  )
+}
+
+export const addPulseToPulseSequenceInRos = (sequence: PulseSequence, pulse: Pulse) => {
+  const snakeCasePulse = objectKeysToSnakeCase(pulse)
+
+  const request = new ROSLIB.ServiceRequest({
+    pulse: snakeCasePulse,
+    name: sequence.name
+  })
+
+  addPulseToPulseSequenceService.callService(
+      request,
+      (response) => {
+        if (!response.success) {
+          console.log('ERROR: Failed to add pulse sequence')
+        }
+      },
+      (error) => {
+        console.log('ERROR: Failed to add pulse sequence, error:')
+        console.error(error)
+      },
   )
 }
 

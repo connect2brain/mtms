@@ -1,8 +1,7 @@
 import { PulseSequence } from '../types/pulseSequence'
 import ROSLIB from 'roslib'
 import { ros } from './ros'
-import { isOfPulseChangeableKey, isOfPulseSequenceChangeableKey } from '../utils'
-import { pulseSequenceServicesByKey } from './pulseSequence'
+import { isOfPulseChangeableKey } from '../utils'
 
 const removePulseService = new ROSLIB.Service({
   ros: ros,
