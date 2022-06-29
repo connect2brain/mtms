@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { setTargets } from 'reducers/targetReducer'
+import { useAppSelector } from 'providers/reduxHooks'
 import { changeTargetIndexInRos, updateTargetInRos } from 'services/target'
 
 const SelectableTargetTableRow = (props: any) => {
@@ -100,8 +99,6 @@ const SelectableTargetTableRow = (props: any) => {
     </TableRow>
   )
 }
-
-const DragElement = styled.span``
 
 const TableRow = styled.tr<{
   selected: boolean

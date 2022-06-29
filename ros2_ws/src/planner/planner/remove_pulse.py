@@ -48,8 +48,10 @@ class RemovePulseNode(StateNode):
         for pulse_sequence in state.pulse_sequences:
             if pulse_sequence.name == request.name:
                 if request.pulse_index < len(pulse_sequence.pulses):
-                    found = True
-                    del pulse_sequence.pulses[request.pulse_index]
+                    if len(pulse_sequence.pulses) > 2:
+                        found = True
+                        del pulse_sequence.pulses[request.pulse_index]
+
                     break
 
         if not found:

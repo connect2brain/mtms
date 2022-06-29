@@ -3,8 +3,7 @@ import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { modifySequence } from '../../../reducers/sequenceReducer'
+import { useAppSelector } from 'providers/reduxHooks'
 import { updateTargetInRos } from 'services/target'
 import { updatePulseSequenceInRos } from 'services/pulseSequence'
 import { updatePulseInRos } from 'services/pulse'
@@ -25,14 +24,13 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   const { targets } = useAppSelector((state) => state.targets)
   const { sequences } = useAppSelector((state) => state.sequences)
 
-  const dispatch = useAppDispatch()
-
   const sequenceIndex = getSequenceIndexFromRowId(row.id)
 
   const updateTargetData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
-    const key: string = columnName.slice(3).toLowerCase()
+    const key = columnName.slice(3).toLowerCase()
 
-    //update only name for target (so changes are reflected in all pulses in all sequences), otherwise update the pulse
+    //update only name for target (so changes are reflected in all pulses with this target in all sequences),
+    //otherwise update the pulse
     if (key === 'name') {
       const targetIndex = sequences[sequenceIndex].pulses[rowIndex].targetIndex
       const target = targets[targetIndex]
@@ -44,7 +42,7 @@ export const EditableSequenceTableCell = (props: EditableCellProps) => {
   }
 
   const updateSequenceData = (rowIndex: number, columnName: string, value: any, toggle: boolean) => {
-    const key: string = columnName.slice(3).toLowerCase()
+    const key = columnName.slice(3).toLowerCase()
     const sequence = sequences[rowIndex]
 
     updatePulseSequenceInRos(sequence, key, value, toggle)
@@ -128,7 +126,7 @@ const EditableCell = ({
   }
   //console.log(row)
   return (
-    <Margin id={`cell-container-${id}-${column.id}`}>
+    <ContainerWithMargin id={`cell-container-${id}-${column.id}`}>
       {whiteSpace ? (
         <>
           <WhiteSpace cols={depth} />
@@ -143,11 +141,11 @@ const EditableCell = ({
       ) : (
         <CellInput value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
       )}
-    </Margin>
+    </ContainerWithMargin>
   )
 }
 
-const Margin = styled.span`
+const ContainerWithMargin = styled.span`
   display: flex;
 `
 
@@ -183,4 +181,3 @@ const CellInput = styled.input`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
     'Droid Sans', 'Helvetica Neue', sans-serif;
 `
-export default EditableCell
