@@ -25,6 +25,7 @@ jobs:
         uses: cypress-io/github-action@v4
         with:
           working-directory: front
+          env: ELECTRON_ENABLE_LOGGING=1
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v1
