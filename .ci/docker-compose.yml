@@ -3,7 +3,6 @@ version: '3.5'
 services:
   front_test:
     build: ../front/
-    entrypoint: [ "yarn", "test" ]
     networks:
       - cinetwork
     ports:
@@ -18,8 +17,6 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
-    ports:
-      - "9090:9090"
   planner_test:
     networks:
       - cinetwork
