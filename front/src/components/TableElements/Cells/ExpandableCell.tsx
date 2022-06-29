@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Expand from '../../Expand'
 import { EditableSequenceTableCell } from './EditableCell'
 import { CellProps } from 'types/table'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
+import { useAppDispatch } from 'providers/reduxHooks'
 import { setExpandedSequence } from 'reducers/sequenceReducer'
 
 const ExpandableCell = ({ value, row, column }: CellProps) => {

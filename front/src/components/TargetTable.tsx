@@ -9,16 +9,12 @@ import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
 import { useAppSelector } from 'providers/reduxHooks'
-import { addSequence, modifySequence, removePulsesFromSequence } from 'reducers/sequenceReducer'
-import { useDispatch } from 'react-redux'
-import { addPulseSequenceToRos } from 'services/pulseSequence'
+import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
 import { removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
-
-  const dispatch = useDispatch()
 
   const columns = useMemo(
     () => [
@@ -56,7 +52,6 @@ const TargetTable = () => {
       return
     }
 
-    //dispatch(addSequence(newSequence))
     addPulseSequenceToRos(pulses)
   }
   const filterTargetKeys = () => {
@@ -77,36 +72,16 @@ const TargetTable = () => {
       return
     }
 
-    const pulses = [...sequence.pulses, ...selectedPulses]
-    const sequenceIndex = sequences.indexOf(sequence)
-    const newSequence = {
-      ...sequence,
-      pulses,
-    }
-    dispatch(
-      modifySequence({
-        index: sequenceIndex,
-        pulseSequence: newSequence,
-      }),
-    )
+    selectedPulses.forEach((pulse) => {
+      addPulseToPulseSequenceInRos(sequence, pulse)
+    })
   }
 
   const handleRemoveTargets = () => {
     targets
       .filter((target) => target.selected)
       .forEach((target) => {
-        const targetIndex = targets.indexOf(target)
         removeTargetInRos(target)
-
-        sequences.forEach((sequence, sequenceIndex) => {
-          const pulses = sequence.pulses.filter((pulse) => pulse.targetIndex === targetIndex)
-          dispatch(
-            removePulsesFromSequence({
-              sequenceIndex,
-              pulseIdsToRemove: pulses.map((pulse, id) => id),
-            }),
-          )
-        })
       })
   }
 
@@ -117,10 +92,10 @@ const TargetTable = () => {
           New sequence from selection
         </MenuItem>
         <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
-        <SubMenu label='Add to sequence'>
-          {sequences.map((seq) => {
+        <SubMenu label='Add to sequence' id={'add-to-sequence'}>
+          {sequences.map((seq, i) => {
             return (
-              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name}>
+              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name} id={`add-to-sequence-${i}`}>
                 {seq.name}
               </MenuItem>
             )

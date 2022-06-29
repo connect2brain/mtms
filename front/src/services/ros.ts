@@ -1,8 +1,6 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
-import { EulerAngles, Position, PositionMessage, Target, TargetMessage } from '../types/target'
-import { isOfPulseSequenceChangeableKey, isOfTargetChangeableKey, objectKeysToSnakeCase } from '../utils'
-import { Pulse, PulseSequence } from '../types/pulseSequence'
+import { PositionMessage, StateMessage } from '../types/target'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -20,17 +18,10 @@ ros.on('close', () => {
   console.log('ROS closed ws connection')
 })
 
-export const defaultOptions = {
-  latch: true,
-  queue_length: 1,
-  queue_size: 1,
-}
-
 export const positionListener = new ROSLIB.Topic<PositionMessage>({
   ros: ros,
   name: '/neuronavigation/focus',
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
-  ...defaultOptions,
 })
 
 /* Set up toggle_navigation service.*/
@@ -51,16 +42,14 @@ const coilAtTargetListener = new ROSLIB.Topic({
   ros: ros,
   name: '/neuronavigation/coil_at_target',
   messageType: 'std_msgs/Bool',
-  ...defaultOptions,
 })
 //coilAtTargetListener.subscribe(updateCoilAtTarget);
 
 /* Set up listener for planner state. */
-export const stateListener = new ROSLIB.Topic<TargetMessage>({
+export const stateListener = new ROSLIB.Topic<StateMessage>({
   ros: ros,
   name: '/planner/state',
   messageType: 'mtms_interfaces/PlannerState',
-  ...defaultOptions,
 })
 
 /* Set up start_experiment service */
