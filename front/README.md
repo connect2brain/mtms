@@ -2,6 +2,10 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+# npm vs yarn
+
+This project utilizes yarn as the package manager as it's faster.
+
 ## Available Scripts
 
 In the project directory, you can run:

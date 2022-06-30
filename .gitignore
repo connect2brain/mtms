@@ -5,3 +5,8 @@ build/*
 log/*
 install/*
 .idea
+__pycache__
+.vscode
+cmake-build-debug
+front/cypress/videos
+front/cypress/screenshots
