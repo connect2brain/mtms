@@ -14,6 +14,7 @@ RUN apt-get install -y \
 WORKDIR /app
 COPY ros2_ws/src/pulse_sequence_controller ros2_ws/src/pulse_sequence_controller/
 COPY ros2_ws/src/mtms_interfaces ros2_ws/src/mtms_interfaces/
+COPY ros2_ws/src/fpga_interfaces ros2_ws/src/fpga_interfaces/
 
 # Build ROS packages
 

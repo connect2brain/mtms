@@ -1,4 +1,4 @@
-from mtms_interfaces.msg import StimulationPulsePiece
+from fpga_interfaces.msg import StimulationPulsePiece
 
 fullEvent = {
     'stimulation_pulse_event': {

@@ -64,7 +64,6 @@ const Experiment = () => {
           setStatusMessage(`Failed to start sequence! Error: ${response.status}`)
         } else {
           console.log('Started sequence')
-          console.log(response.sequence)
           setStatus('OK')
           setStatusMessage('Started sequence')
         }
