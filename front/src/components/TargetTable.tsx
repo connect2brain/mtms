@@ -1,222 +1,118 @@
-import React, { useState } from 'react';
+import React, { useMemo } from 'react'
+import { MenuItem, SubMenu } from '@szhsin/react-menu'
+import '@szhsin/react-menu/dist/index.css'
+import { Pulse, PulseSequence } from '../types/pulseSequence'
+import Eye from './Eye'
+import { EyeCell } from './TableElements/Cells/EyeCell'
+import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
+import { GenericTable } from './GenericTable'
+import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
+import { createPulsesFromSelectedTargets } from 'utils'
+import { useAppSelector } from 'providers/reduxHooks'
+import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
+import { removeTargetInRos } from 'services/target'
 
-import { useTable, usePagination, Row } from 'react-table'
-import styled from 'styled-components'
-import { ChangeableKey } from '../types/ros'
+const TargetTable = () => {
+  const { sequences } = useAppSelector((state) => state.sequences)
+  const { targets } = useAppSelector((state) => state.targets)
 
-
-const NotEditableCell = ({ value: initialValue }: any) => {
-  return <DisabledInput value={initialValue} disabled={true} />
-}
-
-export const EditableCell = ({
-  value: initialValue,
-  row: { index },
-  column: { id },
-  updateData, // This is a custom function that we supplied to our table instance
-}: any) => {
-  // We need to keep and update the state of the cell normally
-  const [value, setValue] = useState(initialValue)
-  const [changed, setChanged] = useState<boolean>(false)
-
-  const inputRef: React.RefObject<HTMLInputElement> = React.createRef()
-
-  const onChange = (e: any) => {
-    setValue(e.target.value)
-    setChanged(true)
-  }
-
-  // We'll only update the external data when the input is blurred
-  const onBlur = () => {
-    if (changed) {
-      updateData(index, id, value)
-      setChanged(false)
-    }
-  }
-
-  const handleKeyPress = (event: any) => {
-    if (event.key === 'Enter') {
-      inputRef.current?.blur()
-    }
-  }
-
-  // If the initialValue is changed external, sync it up with our state
-  React.useEffect(() => {
-    setValue(value)
-  }, [value])
-
-  return <input value={value} onChange={onChange} onBlur={onBlur} ref={inputRef} onKeyPress={handleKeyPress} />
-}
-
-const defaultColumn = {
-  Cell: NotEditableCell,
-}
-
-type TableProps = {
-  columns: any[]
-  data: any[]
-  updateData: (rowIndex: number, key: ChangeableKey, value: any) => void
-  skipPageReset: boolean
-}
-
-export const TargetTable = ({ columns, data, updateData, skipPageReset }: TableProps) => {
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageOptions,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    setPageSize,
-    state: { pageIndex, pageSize },
-  } = useTable(
-    {
-      columns,
-      data,
-      defaultColumn,
-      // use the skipPageReset option to disable page resetting temporarily
-      autoResetPage: skipPageReset,
-      // updateMyData isn't part of the API, but
-      // anything we put into these options will
-      // automatically be available on the instance.
-      // That way we can call this function from our
-      // cell renderer!
-      updateData,
-    },
-    usePagination,
+  const columns = useMemo(
+    () => [
+      {
+        Header: () => <Eye visible={true} />,
+        accessor: 'visible',
+        width: 40,
+        Cell: EyeCell,
+      },
+      {
+        Header: 'Name',
+        accessor: 'name',
+        width: 'auto',
+        Cell: EditableTargetTableCell,
+      },
+      {
+        Header: 'Type',
+        accessor: 'type',
+        width: 'auto',
+      },
+      {
+        Header: 'Comment',
+        accessor: 'comment',
+        width: 'auto',
+        Cell: EditableTargetTableCell,
+      },
+    ],
+    [],
   )
 
-  return (
-    <TargetsContainer>
-      <TargetsTable {...getTableProps()}>
-        <thead>
-          {headerGroups.map((headerGroup) => (
-            <TableRow {...headerGroup.getHeaderGroupProps()} key={headerGroup.getHeaderGroupProps().key}>
-              {headerGroup.headers.map((column) => (
-                <Th {...column.getHeaderProps()} key={column.getHeaderProps().key}>
-                  {column.render('Header')}
-                </Th>
-              ))}
-            </TableRow>
-          ))}
-        </thead>
+  const handleNewSequence = (event: any) => {
+    const pulses: Pulse[] = createPulsesFromSelectedTargets(targets)
+    if (pulses.length === 0) {
+      console.log('no targets selected for new sequence')
+      return
+    }
 
-        <tbody {...getTableBodyProps()}>
-          {page.map((row: Row, i: number) => {
-            prepareRow(row)
+    addPulseSequenceToRos(pulses)
+  }
+  const filterTargetKeys = () => {
+    return targets.map((target) => {
+      return {
+        name: target.name,
+        comment: target.comment,
+        type: target.type,
+        visible: target.visible,
+        selected: target.selected,
+      }
+    })
+  }
+  const handleAddToSequence = (sequence: PulseSequence) => {
+    const selectedPulses = createPulsesFromSelectedTargets(targets)
+    if (selectedPulses.length === 0) {
+      console.log('no targets selected for new sequence')
+      return
+    }
+
+    selectedPulses.forEach((pulse) => {
+      addPulseToPulseSequenceInRos(sequence, pulse)
+    })
+  }
+
+  const handleRemoveTargets = () => {
+    targets
+      .filter((target) => target.selected)
+      .forEach((target) => {
+        removeTargetInRos(target)
+      })
+  }
+
+  const createMenu = () => {
+    return (
+      <>
+        <MenuItem onClick={handleNewSequence} id='create-new-sequence'>
+          New sequence from selection
+        </MenuItem>
+        <MenuItem onClick={handleRemoveTargets}>Remove selected target(s)</MenuItem>
+        <SubMenu label='Add to sequence' id={'add-to-sequence'}>
+          {sequences.map((seq, i) => {
             return (
-              <TableRow {...row.getRowProps()} key={row.getRowProps().key}>
-                {row.cells.map((cell) => {
-                  return (
-                    <Td {...cell.getCellProps()} key={cell.getCellProps().key}>
-                      {cell.render('Cell')}
-                    </Td>
-                  )
-                })}
-              </TableRow>
+              <MenuItem onClick={() => handleAddToSequence(seq)} key={seq.name} id={`add-to-sequence-${i}`}>
+                {seq.name}
+              </MenuItem>
             )
           })}
-        </tbody>
-      </TargetsTable>
-      <Pagination>
-        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-          {'<<'}
-        </button>{' '}
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-          {'<'}
-        </button>{' '}
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
-          {'>'}
-        </button>{' '}
-        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-          {'>>'}
-        </button>{' '}
-        <span>
-          Page{' '}
-          <strong>
-            {pageIndex + 1} of {pageOptions.length}
-          </strong>{' '}
-        </span>
-        <span>
-          | Go to page:{' '}
-          <input
-            type='number'
-            defaultValue={pageIndex + 1}
-            onChange={(e) => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              gotoPage(page)
-            }}
-            style={{ width: '100px' }}
-          />
-        </span>{' '}
-        <select
-          value={pageSize}
-          onChange={(e) => {
-            setPageSize(Number(e.target.value))
-          }}
-        >
-          {[10, 20, 30, 40, 50].map((pageSize) => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </Pagination>
-    </TargetsContainer>
+        </SubMenu>
+      </>
+    )
+  }
+
+  return (
+    <GenericTable
+      columns={columns}
+      data={filterTargetKeys()}
+      createMenu={createMenu}
+      SelectableRow={SelectableTargetTableRow}
+    />
   )
 }
 
-const Th = styled.th`
-  padding: 0.5rem 1rem;
-  text-align: left;
-`
-const Td = styled.td`
-  padding: 0.5rem 1rem;
-  border: #e0e0e0;
-
-  textarea,
-  input {
-    border: 0;
-    background-color: inherit;
-    font-size: 1rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-      'Droid Sans', 'Helvetica Neue', sans-serif;
-  }
-`
-const DisabledInput = styled.input`
-  color: ${(p) => p.theme.colors.primary};
-  border: 0;
-  background-color: inherit;
-  font-size: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans',
-    'Droid Sans', 'Helvetica Neue', sans-serif;
-`
-
-const TableRow = styled.tr`
-  border-bottom: 1px solid #dddddd;
-
-  :nth-of-type(even) {
-    background-color: #f3f3f3;
-  }
-
-  :last-of-type {
-    border-bottom: 2px solid #797979;
-  }
-`
-
-const TargetsContainer = styled.div`
-  overflow-x: auto;
-`
-
-const TargetsTable = styled.table`
-  border-collapse: collapse;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-`
-
-const Pagination = styled.div``
+export default TargetTable

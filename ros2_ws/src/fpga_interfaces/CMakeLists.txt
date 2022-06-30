@@ -42,6 +42,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "srv/SendEventTrigger.srv"
 "srv/SendStimulationPulseEvent.srv"
 "srv/SendTriggerOutPulseEvent.srv"
+
 )
 
 ament_package()
