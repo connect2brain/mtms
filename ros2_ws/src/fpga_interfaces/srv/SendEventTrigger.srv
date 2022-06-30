@@ -1,0 +1,7 @@
+# Send event trigger.
+#
+# Response: Boolean indicating if the event trigger was sent successfully.
+
+bool state
+---
+bool success
