@@ -68,7 +68,6 @@ const SelectableSequenceTableRow = (props: Props) => {
       // Determine mouse position
       const clientOffset = monitor.getClientOffset()
       if (!clientOffset || !clientOffset.y) {
-        console.log('no clientOffset for row', index)
         return
       }
 

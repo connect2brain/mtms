@@ -50,8 +50,6 @@ export const updatePulseIndexInRos = (sequence: PulseSequence, pulseIndex: numbe
     new_index: newIndex,
   })
 
-  console.log(request)
-
   changePulseIndexService.callService(
     request,
     (response) => {
