@@ -55,7 +55,6 @@ describe('Target table', () => {
     cy.get('#targets-table').rightclick()
 
     cy.get('#create-new-sequence').click()
-    cy.wait(200)
     cy.get('#sequences-view-button').click()
 
     //sequence-0 + header row
@@ -74,15 +73,19 @@ describe('Target table', () => {
     cy.contains(newName)
 
     cy.get('#targets-view-button').click()
-
     cy.get('#targets-table').rightclick()
-    cy.get('#add-to-sequence').trigger('mouseover')
+
+    cy.contains('Add to sequence').click()
     cy.get('#add-to-sequence-0').click()
 
     cy.get('#sequences-view-button').click()
     cy.get('#cell-container-0-seqName').find('.cell-value-container').first().find('button').click()
     cy.get('#targets-table').find('tr').its('length').should('equal', 6)
 
+  })
+
+  after(() => {
+    clearRosState()
   })
 
 })
