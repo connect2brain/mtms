@@ -80,7 +80,6 @@ export const GenericTable = ({ columns, data, createMenu, SelectableRow }: Table
             <Tbody {...getTableBodyProps()}>
               {rows.map((row: Row) => {
                 prepareRow(row)
-                // TODO: is it possible that there is a sequence with 0 targets?
                 const isTarget = row.depth > 0 || (row.depth === 0 && row.subRows.length === 0)
                 return (
                   <SelectableRow

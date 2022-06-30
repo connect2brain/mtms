@@ -124,7 +124,7 @@ const EditableCell = ({
       setInputFocus()
     }, 100)
   }
-  //console.log(row)
+
   return (
     <ContainerWithMargin id={`cell-container-${id}-${column.id}`}>
       {whiteSpace ? (
