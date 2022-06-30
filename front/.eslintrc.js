@@ -30,6 +30,8 @@ module.exports = {
         '@typescript-eslint/explicit-module-boundary-types': 'off',
         quotes: [2, 'single', 'avoid-escape'],
         '@typescript-eslint/no-explicit-any': ['off'],
+        'eol-last': 'error',
+        'semi': ['error', 'never'],
         'max-len': [
             'error',
             {

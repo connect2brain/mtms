@@ -1,7 +1,7 @@
-import React from 'react';
-import { ThemeProvider } from 'styled-components';
+import React from 'react'
+import { ThemeProvider } from 'styled-components'
 
-import theme from 'styles/theme';
+import theme from 'styles/theme'
 
 interface Props {
   children: React.ReactNode
@@ -9,6 +9,6 @@ interface Props {
 
 const Providers: React.FC<Props> = (props: Props ) => (
   <ThemeProvider theme={theme}>{props.children}</ThemeProvider>
-);
+)
 
-export default Providers;
+export default Providers

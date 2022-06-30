@@ -1,6 +1,21 @@
 version: '2'
 
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    # TODO: Change hard-coded port to a port read from the env file
+    ports:
+      - "8080:8080"
+    environment:
+      # Fixes hot reload when using Windows/Mac. An explanation:
+      #
+      # https://daten-und-bass.io/blog/enabling-hot-reloading-with-vuejs-and-vue-cli-in-docker/
+      #
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src
   front:
     build: ./front/
     ports:
@@ -20,6 +35,17 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
+      - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
   neuronavigation:
     build:
       context: .
