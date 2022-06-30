@@ -1,0 +1,95 @@
+#include "rclcpp/rclcpp.hpp"
+
+#include "fpga_interfaces/srv/send_trigger_out_pulse_event.hpp"
+#include "fpga_interfaces/msg/trigger_out_pulse_event.hpp"
+#include "fpga_interfaces/msg/event_info.hpp"
+
+#include "NiFpga_board_control.h"
+#include "fpga.h"
+#include "serdes.h"
+
+const uint8_t trigger_out_pulse_fifos[3] = {
+  0, //NiFpga_board_control_HostToTargetFifoU8_TriggerOut1PulseFIFO,
+  0, /* Not in use */
+  0  /* Not in use */
+};
+
+void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Request> request,
+          std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Response> response)
+{
+  init_serialized_message();
+
+  fpga_interfaces::msg::TriggerOutPulseEvent trigger_out_pulse_event = request->trigger_out_pulse_event;
+
+  uint8_t index = trigger_out_pulse_event.index;
+
+  /* Serialize event info. */
+
+  fpga_interfaces::msg::EventInfo event_info = trigger_out_pulse_event.event_info;
+
+  uint16_t event_id = event_info.event_id;
+  uint8_t wait_for_trigger = event_info.wait_for_trigger;
+  uint64_t time_us = event_info.time_us;
+  uint32_t delay_us = event_info.delay_us;
+
+  add_uint16_to_serialized_message(event_id);
+  add_byte_to_serialized_message(wait_for_trigger);
+  add_uint64_to_serialized_message(time_us);
+  add_uint32_to_serialized_message(delay_us);
+
+  /* Serialize trigger out pulse. */
+
+  uint32_t duration_us = (uint8_t) trigger_out_pulse_event.duration_us;
+  add_uint32_to_serialized_message(duration_us);
+
+  finalize_serialized_message();
+
+  /* For consistency with channel indexing, start trigger out indexing from 1. */
+  NiFpga_MergeStatus(&status,
+    NiFpga_StartFifo(session,
+                     trigger_out_pulse_fifos[index - 1]));
+
+  NiFpga_MergeStatus(&status,
+    NiFpga_WriteFifoU8(session,
+                       trigger_out_pulse_fifos[index - 1],
+                       serialized_message,
+                       length,
+                       NiFpga_InfiniteTimeout,
+                       NULL));
+
+  for (uint8_t i = 0; i < length; i++) {
+    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message[i]);
+  }
+
+  response->success = true;
+}
+
+class TriggerOutPulseEventHandler : public rclcpp::Node
+{
+  public:
+    TriggerOutPulseEventHandler()
+    : Node("trigger_out_pulse_event_handler")
+    {
+      send_trigger_out_pulse_event_service_ = this->create_service<fpga_interfaces::srv::SendTriggerOutPulseEvent>("/fpga/send_trigger_out_pulse_event", send_trigger_out_pulse_event);
+    }
+
+  private:
+    rclcpp::Service<fpga_interfaces::srv::SendTriggerOutPulseEvent>::SharedPtr send_trigger_out_pulse_event_service_;
+};
+
+int main(int argc, char **argv)
+{
+  if (!init_fpga())
+  {
+    return 1;
+  }
+
+  rclcpp::init(argc, argv);
+
+  RCLCPP_INFO(rclcpp::get_logger("trigger_out_pulse_event_handler"), "Trigger out pulse event handler ready.");
+
+  rclcpp::spin(std::make_shared<TriggerOutPulseEventHandler>());
+  rclcpp::shutdown();
+
+  close_fpga();
+}

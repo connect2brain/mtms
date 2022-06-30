@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_board_control_Signature = "CBC3968E6B4320CBE79B184C7B9DEF92";
+static const char* const NiFpga_board_control_Signature = "5A49B1B8A081F9837F478496550145CE";
 
 #if NiFpga_Cpp
 extern "C"
@@ -65,9 +65,16 @@ typedef enum
 
 typedef enum
 {
+   NiFpga_board_control_IndicatorU64_time = 0x18084
+} NiFpga_board_control_IndicatorU64;
+
+typedef enum
+{
    NiFpga_board_control_ControlBool_signal__15_v_igbts = 0x18062,
    NiFpga_board_control_ControlBool_signal__15_v_others = 0x1805A,
    NiFpga_board_control_ControlBool_signal__24_v = 0x1805E,
+   NiFpga_board_control_ControlBool_stimulation__event_trigger = 0x1808A,
+   NiFpga_board_control_ControlBool_stimulation__started = 0x18082,
    NiFpga_board_control_ControlBool_stop = 0x18002
 } NiFpga_board_control_ControlBool;
 
@@ -124,6 +131,16 @@ typedef enum
    NiFpga_board_control_IndicatorArrayU32Size_discharge_controller__n_startup_messages = 5,
    NiFpga_board_control_IndicatorArrayU32Size_discharge_controller__n_status_messages = 5
 } NiFpga_board_control_IndicatorArrayU32Size;
+
+typedef enum
+{
+   NiFpga_board_control_TargetToHostFifoU8_Channel1PulsefeedbackFIFO = 0
+} NiFpga_board_control_TargetToHostFifoU8;
+
+typedef enum
+{
+   NiFpga_board_control_HostToTargetFifoU8_Channel1PulseFIFO = 1
+} NiFpga_board_control_HostToTargetFifoU8;
 
 
 #if NiFpga_Cpp
