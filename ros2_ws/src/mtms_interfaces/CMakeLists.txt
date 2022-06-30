@@ -27,6 +27,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PoseUsingEulerAngles.msg"
   "msg/Target.msg"
   "msg/PlannerState.msg"
+  "msg/EegDatapoint.msg"
   "msg/ChannelInfo.msg"
   "msg/Experiment.msg"
   "msg/PulseSequence.msg"

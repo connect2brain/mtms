@@ -22,17 +22,27 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+"msg/event/ChargeEvent.msg"
+"msg/event/DischargeEvent.msg"
+"msg/event/StimulationPulsePiece.msg"
+"msg/event/StimulationPulseEvent.msg"
+"msg/event/TriggerOutPulseEvent.msg"
+"msg/event/EventInfo.msg"
+
 "msg/SafetyMonitorErrors.msg"
 "msg/SafetyMonitorState.msg"
 "msg/DischargeControllerErrors.msg"
 "msg/DischargeControllerState.msg"
 "msg/DischargeControllerStates.msg"
 "msg/Version.msg"
-"msg/Event/EventInfo.msg"
-"msg/Event/StimulationPulseEvent.msg"
-"msg/Event/StimulationPulsePiece.msg"
+
 "srv/SetPower.srv"
+"srv/SendChargeEvent.srv"
+"srv/SendDischargeEvent.srv"
+"srv/SendEventTrigger.srv"
 "srv/SendStimulationPulseEvent.srv"
+"srv/SendTriggerOutPulseEvent.srv"
+
 )
 
 ament_package()
