@@ -80,8 +80,6 @@ docker-compose up
 
 - Install XMing on Windows
 
-- Possibly also follow [these](https://github.com/microsoft/WSL/issues/6430) instructions but replace VcXsrv with Xming. So Control Panel > System and Security > Windows Defender Firewall > Advanced Settings > Inbound Rules > New Rule... > Program > %ProgramFiles%\Xming\Xming.exe > Allow the connection > checked Domain/Private/Public > Named and Confirmed Rule.
-
 - Run the rest of the commands in WSL
 
 - Install Docker and Docker compose
@@ -91,7 +89,6 @@ docker-compose up
 - Run the following commands on the root directory of the repository
 
 ```
-xhost local:root
 docker-compose up
 ```
 

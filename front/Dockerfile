@@ -10,9 +10,9 @@ ENV PATH /app/node_modules/.bin:$PATH
 
 # install app dependencies
 COPY package.json ./
-COPY package-lock.json ./
-RUN npm install --silent
-RUN npm install react-scripts@5.0.0 -g --silent
+COPY yarn.lock ./
+RUN yarn install --silent
+RUN yarn global add react-scripts@5.0.0 --silent
 
 # Fixes .cache EACCESS error. Taken from https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
@@ -21,4 +21,4 @@ RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 COPY . ./
 
 # start app
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
