@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.srv import StartPulseSequence
-from mtms_interfaces.msg import StimulationPulseEvent, EventInfo
+from fpga_interfaces.msg import StimulationPulseEvent, EventInfo
 from .pulses import generate_pulse, pulse_duration_in_us
 from .testResult import TestResult
 

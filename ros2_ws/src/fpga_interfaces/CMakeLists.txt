@@ -28,7 +28,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/DischargeControllerState.msg"
 "msg/DischargeControllerStates.msg"
 "msg/Version.msg"
+"msg/Event/EventInfo.msg"
+"msg/Event/StimulationPulseEvent.msg"
+"msg/Event/StimulationPulsePiece.msg"
 "srv/SetPower.srv"
+"srv/SendStimulationPulseEvent.srv"
 )
 
 ament_package()
