@@ -7,7 +7,7 @@
 #include "fpga_interfaces/msg/discharge_controller_states.hpp"
 #include "fpga_interfaces/msg/version.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)

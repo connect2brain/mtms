@@ -11,9 +11,12 @@ uint8_t length = 0;
 #define TRANSPARENCY_MODIFIER 0x20
 #define START_OF_MESSAGE 0xFE
 #define END_OF_MESSAGE 0xFF
+#define CHANNEL_SWITCH_CHAR 0xFD
 
-void init_serialized_message() {
+void init_serialized_message(uint8_t channel) {
   length = 0;
+  serialized_message[length++] = CHANNEL_SWITCH_CHAR;
+  serialized_message[length++] = add_byte_to_serialized_message(channel);
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
@@ -22,7 +25,7 @@ void finalize_serialized_message() {
 }
 
 void add_byte_to_serialized_message(uint8_t byte) {
-  if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE) {
+  if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE || byte == CHANNEL_SWITCH_CHAR) {
     serialized_message[length++] = ESCAPE_CHARACTER;
     serialized_message[length++] = byte^TRANSPARENCY_MODIFIER;
   } else {

@@ -4,17 +4,11 @@
 #include "fpga_interfaces/msg/charge_event.hpp"
 #include "fpga_interfaces/msg/event_info.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
 
-const uint8_t charge_fifos[5] = {
-  0, /* Not in use. */ //NiFpga_board_control_HostToTargetFifoU8_Channel1ChargeFIFO,
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0  /* Not in use. */
-};
+const NiFpga_mTMS_HostToTargetFifoU8 charge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetChargeFIFO;
 
 void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Response> response)
@@ -48,11 +42,11 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
 
   NiFpga_MergeStatus(&status,
     NiFpga_StartFifo(session,
-                     charge_fifos[channel - 1]));
+                     charge_fifo));
 
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
-                       charge_fifos[channel - 1],
+                       charge_fifo,
                        serialized_message,
                        length,
                        NiFpga_InfiniteTimeout,
