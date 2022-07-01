@@ -16,7 +16,8 @@ uint8_t length = 0;
 void init_serialized_message(uint8_t channel) {
   length = 0;
   serialized_message[length++] = CHANNEL_SWITCH_CHAR;
-  serialized_message[length++] = add_byte_to_serialized_message(channel);
+  add_byte_to_serialized_message(channel);
+  length++;
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
