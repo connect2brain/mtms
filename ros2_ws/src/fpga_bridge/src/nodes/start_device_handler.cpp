@@ -1,18 +1,18 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/set_power.hpp"
+#include "fpga_interfaces/srv/start_device.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 
-void start_device(const std::shared_ptr<fpga_interfaces::srv::SetPower::Request> request,
-          std::shared_ptr<fpga_interfaces::srv::SetPower::Response> response)
+void start_device(const std::shared_ptr<fpga_interfaces::srv::StartDevice::Request> request,
+          std::shared_ptr<fpga_interfaces::srv::StartDevice::Response> response)
 {
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Startdevice, true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Set power to true");
+  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Started device");
 }
 
 class StartDevice : public rclcpp::Node
@@ -21,11 +21,11 @@ class StartDevice : public rclcpp::Node
     StartDevice()
     : Node("start_device")
     {
-      set_power_service_ = this->create_service<fpga_interfaces::srv::SetPower>("/fpga/start_device", start_device);
+      set_power_service_ = this->create_service<fpga_interfaces::srv::StartDevice>("/fpga/start_device", start_device);
     }
 
   private:
-    rclcpp::Service<fpga_interfaces::srv::SetPower>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::StartDevice>::SharedPtr set_power_service_;
 };
 
 int main(int argc, char **argv)

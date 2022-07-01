@@ -57,18 +57,18 @@ ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
 # Install set power handler.
 
-add_executable(set_power_handler
-  src/nodes/set_power_handler.cpp
+add_executable(start_device_handler
+        src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
 )
 
-target_include_directories(set_power_handler
+target_include_directories(start_device_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(set_power_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
 
 # Install stimulation pulse event handler.
 
@@ -154,7 +154,7 @@ install(TARGETS
   run_fpga
   discharge_controller_bridge
   safety_monitor_bridge
-  set_power_handler
+  start_device_handler
   charge_event_handler
   discharge_event_handler
   stimulation_pulse_event_handler
