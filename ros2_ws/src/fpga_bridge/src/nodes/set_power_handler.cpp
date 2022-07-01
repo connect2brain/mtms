@@ -2,7 +2,7 @@
 
 #include "fpga_interfaces/srv/set_power.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 
 void set_power(const std::shared_ptr<fpga_interfaces::srv::SetPower::Request> request,
