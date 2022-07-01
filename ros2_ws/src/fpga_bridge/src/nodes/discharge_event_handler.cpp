@@ -4,17 +4,11 @@
 #include "fpga_interfaces/msg/discharge_event.hpp"
 #include "fpga_interfaces/msg/event_info.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
 
-const uint8_t discharge_fifos[5] = {
-  0, /* Not in use. */ //NiFpga_board_control_HostToTargetFifoU8_Channel1DischargeFIFO,
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0  /* Not in use. */
-};
+const NiFpga_mTMS_HostToTargetFifoU8 discharge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetDischargeFIFO;
 
 void send_discharge_event(const std::shared_ptr<fpga_interfaces::srv::SendDischargeEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendDischargeEvent::Response> response)
@@ -48,11 +42,11 @@ void send_discharge_event(const std::shared_ptr<fpga_interfaces::srv::SendDischa
 
   NiFpga_MergeStatus(&status,
     NiFpga_StartFifo(session,
-                     discharge_fifos[channel - 1]));
+                     discharge_fifo));
 
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
-                       discharge_fifos[channel - 1],
+                       discharge_fifo,
                        serialized_message,
                        length,
                        NiFpga_InfiniteTimeout,

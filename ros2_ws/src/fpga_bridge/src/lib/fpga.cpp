@@ -7,7 +7,7 @@ NiFpga_Session session;
 NiFpga_Status status;
 bool fpga_opened = false;
 
-bool init_fpga(void) {
+bool init_fpga(std::string bitfile_path, std::string signature) {
   /* must be called before any other calls */
   status = NiFpga_Initialize();
   if (NiFpga_IsError(status)) {
