@@ -4,15 +4,11 @@
 #include "fpga_interfaces/msg/trigger_out_pulse_event.hpp"
 #include "fpga_interfaces/msg/event_info.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
 
-const uint8_t trigger_out_pulse_fifos[3] = {
-  0, //NiFpga_board_control_HostToTargetFifoU8_TriggerOut1PulseFIFO,
-  0, /* Not in use */
-  0  /* Not in use */
-};
+const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_pulse_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO;
 
 void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Response> response)
@@ -47,11 +43,11 @@ void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   /* For consistency with channel indexing, start trigger out indexing from 1. */
   NiFpga_MergeStatus(&status,
     NiFpga_StartFifo(session,
-                     trigger_out_pulse_fifos[index - 1]));
+                     trigger_out_pulse_fifo));
 
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
-                       trigger_out_pulse_fifos[index - 1],
+                       trigger_out_pulse_fifo,
                        serialized_message,
                        length,
                        NiFpga_InfiniteTimeout,
