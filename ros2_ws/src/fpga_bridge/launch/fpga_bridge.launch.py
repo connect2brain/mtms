@@ -21,7 +21,7 @@ def generate_launch_description():
 
     set_power_handler_node = Node(
         package="fpga_bridge",
-        executable="set_power_handler"
+        executable="start_device_handler"
     )
 
     stimulation_pulse_event_handler_node = Node(
