@@ -14,11 +14,11 @@ const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTarg
 void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Response> response)
 {
-  init_serialized_message();
-
   fpga_interfaces::msg::StimulationPulseEvent stimulation_pulse_event = request->stimulation_pulse_event;
 
   uint8_t channel = stimulation_pulse_event.channel;
+
+  init_serialized_message(channel);
 
   /* Serialize event info. */
 
