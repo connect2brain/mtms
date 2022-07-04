@@ -55,7 +55,7 @@ target_include_directories(safety_monitor_bridge
 
 ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
-# Install set power handler.
+# Install start device handler.
 
 add_executable(start_device_handler
         src/nodes/start_device_handler.cpp
@@ -69,6 +69,51 @@ target_include_directories(start_device_handler
     $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
+
+# Install start experiment handler.
+
+add_executable(start_experiment_handler
+        src/nodes/start_experiment_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(start_experiment_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(start_experiment_handler rclcpp std_msgs fpga_interfaces)
+
+# Install stop experiment handler.
+
+add_executable(stop_experiment_handler
+        src/nodes/stop_experiment_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(stop_experiment_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(stop_experiment_handler rclcpp std_msgs fpga_interfaces)
+
+# Install stop device handler.
+
+add_executable(stop_device_handler
+        src/nodes/stop_device_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(stop_device_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
 
 # Install stimulation pulse event handler.
 
@@ -155,6 +200,7 @@ install(TARGETS
   discharge_controller_bridge
   safety_monitor_bridge
   start_device_handler
+  stop_device_handler
   charge_event_handler
   discharge_event_handler
   stimulation_pulse_event_handler

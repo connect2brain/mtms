@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "fpga.h"
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 
 NiFpga_Session session;
 NiFpga_Status status;
@@ -21,7 +21,7 @@ bool init_fpga(std::string bitfile_path, std::string signature) {
 
   /* TODO: Remove hardcoded bitfile. */
   NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_3.lvbitx",
-          NiFpga_board_control_Signature,
+          NiFpga_mTMS_Signature,
           "PXI1Slot4",
           NiFpga_OpenAttribute_NoRun,
           &session));
