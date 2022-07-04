@@ -13,11 +13,10 @@ const NiFpga_mTMS_HostToTargetFifoU8 charge_fifo = NiFpga_mTMS_HostToTargetFifoU
 void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Response> response)
 {
-  init_serialized_message();
-
   fpga_interfaces::msg::ChargeEvent charge_event = request->charge_event;
 
   uint8_t channel = charge_event.channel;
+  init_serialized_message(channel);
 
   /* Serialize event info. */
 
