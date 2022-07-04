@@ -42,6 +42,7 @@ class DischargeControllerBridge : public rclcpp::Node
 
     void publish_discharge_controller_state()
     {
+        /*
       uint16_t capacitor_voltages[NiFpga_board_control_IndicatorArrayU16Size_discharge_controller__capacitor_voltage] = {0xFFFF};
       NiFpga_MergeStatus(&status,
                           NiFpga_ReadArrayU16(session,
@@ -92,9 +93,10 @@ class DischargeControllerBridge : public rclcpp::Node
                                              NiFpga_board_control_IndicatorArrayU8Size_discharge_controller__version_patch));
 
       auto states = fpga_interfaces::msg::DischargeControllerStates();
-
+*/
       /* Arbitrarily take the number of discharge controllers to be the number of capacitor voltages reported by the FPGA;
          any other variable could be used here, as well. */
+      /*
       for (uint8_t i = 0; i < NiFpga_board_control_IndicatorArrayU16Size_discharge_controller__capacitor_voltage; i++) {
         auto state = fpga_interfaces::msg::DischargeControllerState();
 
@@ -111,6 +113,7 @@ class DischargeControllerBridge : public rclcpp::Node
 
 //      RCLCPP_INFO(this->get_logger(), "Publishing discharge controller state.");
       discharge_controllers_publisher_->publish(states);
+       */
     }
 
     rclcpp::TimerBase::SharedPtr timer_;

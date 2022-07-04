@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "fpga.h"
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 
 int main(int argc, char **argv)
 {
