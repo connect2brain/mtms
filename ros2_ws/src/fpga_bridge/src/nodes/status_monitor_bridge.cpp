@@ -44,7 +44,7 @@ class StatusMonitorBridge : public rclcpp::Node
     void publish_status_monitor_state()
     {
 
-      fpga_interfaces::msg::ChannelStatus channel_statuses[CHANNEL_COUNT];
+      fpga_interfaces::msg::StatusMonitorState state = fpga_interfaces::msg::StatusMonitorState();
 
       for (auto i = 0; i < CHANNEL_COUNT; i++) {
         fpga_interfaces::msg::ChannelStatus channel_status = fpga_interfaces::msg::ChannelStatus();
@@ -64,11 +64,9 @@ class StatusMonitorBridge : public rclcpp::Node
                                &channel_status.temperature
                            ));
 
-        channel_statuses[i] = channel_status;
+        state.channel_statuses.push_back(channel_status);
       }
 
-      fpga_interfaces::msg::StatusMonitorState state = fpga_interfaces::msg::StatusMonitorState();
-      state.channel_statuses = channel_statuses;
 
     }
 
