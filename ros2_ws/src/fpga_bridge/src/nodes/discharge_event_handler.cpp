@@ -13,11 +13,11 @@ const NiFpga_mTMS_HostToTargetFifoU8 discharge_fifo = NiFpga_mTMS_HostToTargetFi
 void send_discharge_event(const std::shared_ptr<fpga_interfaces::srv::SendDischargeEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendDischargeEvent::Response> response)
 {
-  init_serialized_message();
-
   fpga_interfaces::msg::DischargeEvent discharge_event = request->discharge_event;
 
   uint8_t channel = discharge_event.channel;
+
+  init_serialized_message(channel);
 
   /* Serialize event info. */
 

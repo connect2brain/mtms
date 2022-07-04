@@ -13,11 +13,11 @@ const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_pulse_fifo = NiFpga_mTMS_HostTo
 void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendTriggerOutPulseEvent::Response> response)
 {
-  init_serialized_message();
-
   fpga_interfaces::msg::TriggerOutPulseEvent trigger_out_pulse_event = request->trigger_out_pulse_event;
 
   uint8_t index = trigger_out_pulse_event.index;
+
+  init_serialized_message(index);
 
   /* Serialize event info. */
 
