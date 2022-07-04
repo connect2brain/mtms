@@ -55,6 +55,21 @@ target_include_directories(safety_monitor_bridge
 
 ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
+# Install status monitor bridge.
+
+add_executable(status_monitor_bridge
+        src/nodes/status_monitor_bridge.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(status_monitor_bridge
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
+
 # Install start device handler.
 
 add_executable(start_device_handler
@@ -197,8 +212,9 @@ ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
 
 install(TARGETS
   run_fpga
-  discharge_controller_bridge
-  safety_monitor_bridge
+  #discharge_controller_bridge
+  #safety_monitor_bridge
+  status_monitor_bridge
   start_device_handler
   stop_device_handler
   charge_event_handler
