@@ -5,7 +5,7 @@
 
 #define MAX_SERIALIZED_MESSAGE_LENGTH 100
 
-void init_serialized_message();
+void init_serialized_message(uint8_t channel);
 void finalize_serialized_message();
 void add_byte_to_serialized_message(uint8_t byte);
 void add_uint16_to_serialized_message(uint16_t value);
