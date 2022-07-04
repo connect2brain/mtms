@@ -17,9 +17,8 @@ void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
 
   uint8_t index = trigger_out_pulse_event.index;
 
-  init_serialized_message(index);
-
   /* Serialize event info. */
+  auto serialized_message = SerializedMessage(index);
 
   fpga_interfaces::msg::EventInfo event_info = trigger_out_pulse_event.event_info;
 
@@ -28,17 +27,17 @@ void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   uint64_t time_us = event_info.time_us;
   uint32_t delay_us = event_info.delay_us;
 
-  add_uint16_to_serialized_message(event_id);
-  add_byte_to_serialized_message(wait_for_trigger);
-  add_uint64_to_serialized_message(time_us);
-  add_uint32_to_serialized_message(delay_us);
+  serialized_message.add_uint16(event_id);
+  serialized_message.add_byte(wait_for_trigger);
+  serialized_message.add_uint64(time_us);
+  serialized_message.add_uint32(delay_us);
 
   /* Serialize trigger out pulse. */
 
   uint32_t duration_us = (uint8_t) trigger_out_pulse_event.duration_us;
-  add_uint32_to_serialized_message(duration_us);
+  serialized_message.add_uint32(duration_us);
 
-  finalize_serialized_message();
+  serialized_message.finalize();
 
   /* For consistency with channel indexing, start trigger out indexing from 1. */
   NiFpga_MergeStatus(&status,
@@ -48,13 +47,13 @@ void send_trigger_out_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
                        trigger_out_pulse_fifo,
-                       serialized_message,
-                       length,
+                       serialized_message.serialized_message,
+                       serialized_message.get_length(),
                        NiFpga_InfiniteTimeout,
                        NULL));
 
-  for (uint8_t i = 0; i < length; i++) {
-    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message[i]);
+  for (uint8_t i = 0; i <  serialized_message.get_length(); i++) {
+    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message.serialized_message[i]);
   }
 
   response->success = true;
