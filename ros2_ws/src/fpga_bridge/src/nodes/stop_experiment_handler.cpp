@@ -21,11 +21,11 @@ class StopExperiment : public rclcpp::Node
     StopExperiment()
     : Node("stop_experiment")
     {
-      set_power_service_ = this->create_service<fpga_interfaces::srv::StopExperiment>("/fpga/stop_experiment", stop_experiment);
+      stop_experiment_service_ = this->create_service<fpga_interfaces::srv::StopExperiment>("/fpga/stop_experiment", stop_experiment);
     }
 
   private:
-    rclcpp::Service<fpga_interfaces::srv::StopExperiment>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::StopExperiment>::SharedPtr stop_experiment_service_;
 };
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   rclcpp::init(argc, argv);
 
-  RCLCPP_INFO(rclcpp::get_logger("set_power_handler"), "Set power handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Stop experiment handler ready.");
 
   rclcpp::spin(std::make_shared<StopExperiment>());
   rclcpp::shutdown();
