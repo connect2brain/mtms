@@ -60,13 +60,14 @@ class StatusMonitorBridge : public rclcpp::Node
         NiFpga_MergeStatus(&status,
                            NiFpga_ReadU16(
                                session,
-                               voltage_indicators[i],
+                               temperature_indicators[i],
                                &channel_status.temperature
                            ));
 
         state.channel_statuses.push_back(channel_status);
       }
 
+      status_monitor_publisher_->publish(state);
 
     }
 
