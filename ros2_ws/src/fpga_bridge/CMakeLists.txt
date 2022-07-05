@@ -217,6 +217,8 @@ install(TARGETS
   status_monitor_bridge
   start_device_handler
   stop_device_handler
+  start_experiment_handler
+  stop_experiment_handler
   charge_event_handler
   discharge_event_handler
   stimulation_pulse_event_handler
