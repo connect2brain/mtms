@@ -4,11 +4,16 @@ import { clearRosState } from '../../src/services/ros'
 const notSelectedColor = theme.colors.white
 const selectedColor = theme.colors.lightgray
 
+const defaultWaitDuration = 500
+
 const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3000'}`
 describe('Target table', () => {
+  before(() => {
+    cy.visit(testUrl)
+  })
   beforeEach(() => {
     clearRosState()
-    cy.visit(testUrl + '/targets')
+    cy.wait(defaultWaitDuration)
   })
 
   it('can be opened', () => {
@@ -18,25 +23,26 @@ describe('Target table', () => {
   it('allows adding new targets', () => {
     cy.get('#add-target-button').click()
     cy.get('#add-target-button').click()
-    cy.wait(200)
+    cy.wait(defaultWaitDuration)
     cy.get('#targets-table')
-      .find('tr')
-      .then((rows) => {
-        const originalLength = rows.toArray().length
+        .find('tr')
+        .then((rows) => {
+          const originalLength = rows.toArray().length
 
-        cy.get('#add-target-button').click()
+          cy.get('#add-target-button').click()
+          cy.wait(defaultWaitDuration)
 
-        cy.get('#targets-table')
-          .find('tr')
-          .then((newRows) => {
-            expect(newRows.toArray().length).to.equal(originalLength + 1)
-          })
-      })
+          cy.get('#targets-table')
+              .find('tr')
+              .then((newRows) => {
+                expect(newRows.toArray().length).to.equal(originalLength + 1)
+              })
+        })
   })
 
   it('allows editing targets', () => {
     cy.get('#add-target-button').click()
-    cy.wait(200)
+    cy.wait(defaultWaitDuration)
 
     cy.get('#cell-container-0-name').find('.cell-value-container').first().dblclick()
     cy.get('#cell-container-0-name').find('input').clear().type('first target')
@@ -45,9 +51,9 @@ describe('Target table', () => {
 
   it('allows adding sequences and editing them', () => {
     cy.get('#add-target-button').click()
-    cy.wait(200)
+    cy.wait(defaultWaitDuration)
     cy.get('#add-target-button').click()
-    cy.wait(200)
+    cy.wait(defaultWaitDuration)
 
     cy.get('#target-0').click()
     cy.get('#target-1').click()
@@ -55,7 +61,6 @@ describe('Target table', () => {
     cy.get('#targets-table').rightclick()
 
     cy.get('#create-new-sequence').click()
-    cy.wait(200)
     cy.get('#sequences-view-button').click()
 
     //sequence-0 + header row
@@ -74,15 +79,19 @@ describe('Target table', () => {
     cy.contains(newName)
 
     cy.get('#targets-view-button').click()
-
     cy.get('#targets-table').rightclick()
-    cy.get('#add-to-sequence').trigger('mouseover')
+
+    cy.contains('Add to sequence').click()
     cy.get('#add-to-sequence-0').click()
 
     cy.get('#sequences-view-button').click()
     cy.get('#cell-container-0-seqName').find('.cell-value-container').first().find('button').click()
     cy.get('#targets-table').find('tr').its('length').should('equal', 6)
 
+  })
+
+  after(() => {
+    clearRosState()
   })
 
 })
