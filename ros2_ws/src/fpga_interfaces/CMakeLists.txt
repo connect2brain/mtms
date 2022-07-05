@@ -39,7 +39,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/ChannelStatus.msg"
 "msg/StatusMonitorState.msg"
 
-"srv/SetPower.srv"
 "srv/SendChargeEvent.srv"
 "srv/SendDischargeEvent.srv"
 "srv/SendEventTrigger.srv"
