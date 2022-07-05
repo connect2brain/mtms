@@ -11,7 +11,6 @@ void SerializedMessage::init(uint8_t channel) {
   length = 0;
   serialized_message[length++] = CHANNEL_SWITCH_CHAR;
   add_byte(channel);
-  length++;
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
@@ -30,19 +29,19 @@ void SerializedMessage::finalize() {
 
 void SerializedMessage::add_uint16(uint16_t value) {
   for (uint8_t i = 0; i < 2; i++) {
-    (GET_BYTE(value, 1 - i));
+    add_byte(GET_BYTE(value, 1 - i));
   }
 }
 
 void SerializedMessage::add_uint32(uint32_t value) {
   for (uint8_t i = 0; i < 4; i++) {
-    (GET_BYTE(value, 3 - i));
+    add_byte(GET_BYTE(value, 3 - i));
   }
 }
 
 void SerializedMessage::add_uint64(uint64_t value) {
   for (uint8_t i = 0; i < 8; i++) {
-    (GET_BYTE(value, 7 - i));
+    add_byte(GET_BYTE(value, 7 - i));
   }
 }
 

@@ -21,11 +21,11 @@ class StopDevice : public rclcpp::Node
     StopDevice()
     : Node("stop_device")
     {
-      set_power_service_ = this->create_service<fpga_interfaces::srv::StopDevice>("/fpga/stop_device", stop_device);
+      stop_device_service_ = this->create_service<fpga_interfaces::srv::StopDevice>("/fpga/stop_device", stop_device);
     }
 
   private:
-    rclcpp::Service<fpga_interfaces::srv::StopDevice>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::StopDevice>::SharedPtr stop_device_service_;
 };
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   rclcpp::init(argc, argv);
 
-  RCLCPP_INFO(rclcpp::get_logger("set_power_handler"), "Set power handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("stop_device_handler"), "Stop device handler ready.");
 
   rclcpp::spin(std::make_shared<StopDevice>());
   rclcpp::shutdown();

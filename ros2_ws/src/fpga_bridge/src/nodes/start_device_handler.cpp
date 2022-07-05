@@ -21,11 +21,11 @@ class StartDevice : public rclcpp::Node
     StartDevice()
     : Node("start_device")
     {
-      set_power_service_ = this->create_service<fpga_interfaces::srv::StartDevice>("/fpga/start_device", start_device);
+      start_device_service_ = this->create_service<fpga_interfaces::srv::StartDevice>("/fpga/start_device", start_device);
     }
 
   private:
-    rclcpp::Service<fpga_interfaces::srv::StartDevice>::SharedPtr set_power_service_;
+    rclcpp::Service<fpga_interfaces::srv::StartDevice>::SharedPtr start_device_service_;
 };
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   rclcpp::init(argc, argv);
 
-  RCLCPP_INFO(rclcpp::get_logger("set_power_handler"), "Set power handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("start_device_handler"), "Start device handler ready.");
 
   rclcpp::spin(std::make_shared<StartDevice>());
   rclcpp::shutdown();
