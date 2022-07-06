@@ -52,6 +52,10 @@ class NeuronavigationNode(Node):
         self._set_markers = callback
 
     def planner_state_callback(self, msg):
+        if not hasattr(self, '_set_markers'):
+            return
+
+        self.get_logger().info(f'Updating planner state msg: {str(msg)}')
         markers = []
         for id, target in enumerate(msg.targets):
             position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
@@ -73,6 +77,7 @@ class NeuronavigationNode(Node):
                 'target': target.target,
                 'size': 3,
                 'colour': [c / 255.0 for c in color],
+                'arrow_flag': False
             }
             markers.append(marker_data)
 
