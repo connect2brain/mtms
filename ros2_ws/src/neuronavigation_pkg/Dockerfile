@@ -17,7 +17,6 @@ RUN apt-get install -y \
     python3-nibabel \
     python3-serial \
     python3-psutil \
-    python3-vtk7 \
     python3-vtkgdcm \
     python3-gdcm \
     cython3 \
@@ -26,7 +25,8 @@ RUN apt-get install -y \
     python3-keras \
     python3-pubsub \
     dos2unix \
-    locales
+    locales \
+    python3-pip
 
 RUN locale-gen  \
     en_US.UTF-8 \
@@ -34,6 +34,8 @@ RUN locale-gen  \
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+RUN pip install vtk==9.1.0
 
 ## InVesalius
 
