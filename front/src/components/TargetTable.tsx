@@ -10,7 +10,7 @@ import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
 import { useAppSelector } from 'providers/reduxHooks'
 import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
-import { removeTargetInRos } from 'services/target'
+import { openTargetOrientationDialogInNeuronavigation, removeTargetInRos } from 'services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -85,6 +85,14 @@ const TargetTable = () => {
       })
   }
 
+  const handleOpenOrientationDialog = () => {
+    targets
+      .filter((target) => target.selected)
+      .forEach((target) => {
+        openTargetOrientationDialogInNeuronavigation(targets.indexOf(target))
+      })
+  }
+
   const createMenu = () => {
     return (
       <>
@@ -101,6 +109,7 @@ const TargetTable = () => {
             )
           })}
         </SubMenu>
+        <MenuItem onClick={handleOpenOrientationDialog}>Open orientation dialog for target(s)</MenuItem>
       </>
     )
   }
