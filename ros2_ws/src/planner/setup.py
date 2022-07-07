@@ -47,7 +47,8 @@ setup(
             'toggle_visible_pulse = planner.toggle_visible_pulse:main',
             'change_pulse_index = planner.change_pulse_index:main',
             'master_state = planner.master_state:main',
-            'add_pulse_to_pulse_sequence = planner.add_pulse_to_pulse_sequence:main'
+            'add_pulse_to_pulse_sequence = planner.add_pulse_to_pulse_sequence:main',
+            'set_target_orientation = planner.set_target_orientation:main'
         ],
     },
 )
