@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import ctypes
-from threading import Thread, current_thread
+from threading import Thread
 
 import rclpy
 from rclpy.node import Node
@@ -73,9 +73,10 @@ class NeuronavigationNode(Node):
 
     def planner_state_callback(self, msg):
         if not hasattr(self, '_set_markers'):
+            self.get_logger().info('set markers not set yet')
             return
 
-        self.get_logger().info(f'Updating planner state msg: {str(msg)}')
+        self.get_logger().info(f'Updating planner state')
         markers = []
         for id, target in enumerate(msg.targets):
             position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
@@ -97,7 +98,7 @@ class NeuronavigationNode(Node):
                 'target': target.target,
                 'size': 3,
                 'colour': [c / 255.0 for c in color],
-                'arrow_flag': False
+                'arrow_flag': not all(d == 0.0 for d in direction)
             }
             markers.append(marker_data)
 
@@ -184,7 +185,7 @@ class NeuronavigationNode(Node):
         request.orientation = euler_angles
         request.target_id = target_id
 
-        self._update_target_orientation_client.call(request)
+        self._update_target_orientation_client.call_async(request)
 
 
 class Connection(Thread):
