@@ -1,15 +1,15 @@
-from threading import Thread
-import time
-
 import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutPulseEvent
-from fpga_interfaces.msg.Event import TriggerOutPulseEvent
+from fpga_interfaces.msg import TriggerOutPulseEvent, EventInfo
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
+EVENT_ID = 1
+TIME_CONSTANT_US = 10000
+DELAY_US = 0
 
 class EegProcessor(Node):
 
@@ -17,22 +17,18 @@ class EegProcessor(Node):
         super().__init__('eeg_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
+        self.trigger_client = self.create_client(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event')
+        self.trigger_pulse_service = self.create_service(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event', self.send_trigger_out)
 
-        self.data_subscriber  # prevent unused variable warning
-        self.trigger_subscriber
-
-        self.trigger_requested = False
+        self.request = SendTriggerOutPulseEvent.Request()
 
         self.first_trigger_time = 0
         self.last_trigger_time = 0
-        self.last_trigger_index = 0
 
+        self.client_futures = []
 
 
     def data_reader_callback(self, msg):
-
-#        for i in range(0,len(msg.channel_datapoint)):
-#            self.get_logger().info("Channel {}: {}".format(i+1, msg.channel_datapoint[i]))
 
         self.get_logger().info("Timestamp: {} ms. First sample of experiment {} \n".format(msg.time, msg.first_sample_of_experiment))
 
@@ -41,80 +37,58 @@ class EegProcessor(Node):
 
         if msg.index == 1:
             self.first_trigger_time = msg.time_us
-            self.last_trigger_index = 1 # <---- MAYBE REMOVE THIS?
-            self.trigger_requested = True
-            #self.send_trigger_request(msg.index)
 
+            self.set_trigger_request(msg.index, msg.time_us)
+            self.client_futures.append(self.trigger_client.call_async(self.request))
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time_us
-            self.last_trigger_index = 2 # <---- MAYBE REMOVE THIS?
-            self.get_logger().info("Time difference between triggers: {}".format(self.last_trigger_time))
+            self.get_logger().info("Time difference between triggers: {}".format(self.last_trigger_time)) 
 
 
+    def set_trigger_request(self, index, time_us):
 
-class Connection(Thread):
+        event_info = EventInfo()
+        event_info.event_id = EVENT_ID
+        event_info.wait_for_trigger = False
+        event_info.time_us = time_us + TIME_CONSTANT_US
+        event_info.delay_us = DELAY_US
 
-    def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-
-        self.eeg_processor = EegProcessor()
-
-    def run(self):
-        rclpy.spin(self.eeg_processor)
-        rclpy.shutdown()
-
-
-class TriggerProcessor(Node):
-
-    def __init__(self):
-        super().__init__('trigger_processor')
-        self.trigger_client = self.create_client(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event')
-        self.trigger_pulse_service = self.create_service(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event', self.send_trigger_out)
-
-        self.request = SendTriggerOutPulseEvent.Request()
-
-
-    def send_trigger_out(self, request, response=False):
-        self.get_logger().info("\nSUCCESSFUL SERVICE CALL\n")
-        return True
-
-        """
-        trigger_request = TriggerOutPulseEvent.Request()
-        trigger_request.index = index
-        trigger_request.duration_us = TRIGGER_DURATION_US
-        # TODO: Implement EventInfo
-
-        self.send_trigger_pulse.call_service(trigger_request)
-        """
-
-
-    def send_trigger_request(self, index):
         trigger_event = TriggerOutPulseEvent()
         trigger_event.index = index
         trigger_event.duration_us = TRIGGER_DURATION_US
-        # TODO: Implement EventInfo
+        trigger_event.event_info = event_info
 
-        self.request = trigger_event
-        return self.trigger_client.call(self.request)
+        self.request.trigger_out_pulse_event = trigger_event
+
+
+    def send_trigger_out(self, request, response):
+        self.get_logger().info("SUCCESSFUL SERVICE CALL\n")
+
+        response.success = True
+        return response
+
+
+    def spin(self):
+        while rclpy.ok():
+            rclpy.spin_once(self)
+
+            incomplete_futures = []
+            for f in self.client_futures:
+                if f.done():
+                    result = f.result()
+                    # Do something with result?
+
+                else:
+                    incomplete_futures.append(f)
+
+            self.client_futures = incomplete_futures
 
 
 def main():
     rclpy.init()
-    
-    connection = Connection()
-    connection.start()
-
-    trigger_processor = TriggerProcessor()
-    while True:
-
-        while not connection.eeg_processor.trigger_requested:
-            pass
-
-        response = trigger_processor.send_trigger_request(connection.eeg_processor.last_trigger_index)
-        print("\nTrigger sent: {}\n".format(response))
-
+    eeg_processor = EegProcessor()
+    eeg_processor.spin()
 
 if __name__ == '__main__':
     main()
