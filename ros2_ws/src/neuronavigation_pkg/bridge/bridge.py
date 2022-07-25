@@ -80,7 +80,7 @@ class NeuronavigationNode(Node):
         markers = []
         for id, target in enumerate(msg.targets):
             position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
-            direction = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
+            orientation = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
 
             if target.target:
                 color = self._COLOR_TARGET
@@ -94,11 +94,11 @@ class NeuronavigationNode(Node):
             marker_data = {
                 'ball_id': id,
                 'position': position,
-                'direction': direction,
+                'orientation': orientation,
                 'target': target.target,
                 'size': 3,
                 'colour': [c / 255.0 for c in color],
-                'arrow_flag': not all(d == 0.0 for d in direction)
+                'arrow_flag': not all(d == 0.0 for d in orientation)
             }
             markers.append(marker_data)
 
