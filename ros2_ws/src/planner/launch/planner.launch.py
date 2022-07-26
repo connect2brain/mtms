@@ -101,6 +101,10 @@ def generate_launch_description():
         Node(
             package="planner",
             executable="add_pulse_to_pulse_sequence"
+        ),
+        Node(
+            package="planner",
+            executable="set_target_orientation"
         )
     ]
 

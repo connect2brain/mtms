@@ -41,6 +41,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Target/SetTarget.srv"
   "srv/Target/ToggleSelectTarget.srv"
   "srv/Target/ToggleVisible.srv"
+  "srv/Target/SetTargetOrientation.srv"
   "srv/PulseSequence/AddPulseSequence.srv"
   "srv/PulseSequence/RenamePulseSequence.srv"
   "srv/PulseSequence/ToggleSelectPulseSequence.srv"
