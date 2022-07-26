@@ -127,7 +127,7 @@ class EegBridge : public rclcpp::Node {
       }
 
       else if (this->buffer[0] == SAMPLE_PACKET_ID) {
-        
+
         uint16_t bundles = this->buffer[10] << 8 | buffer[11];
 
         if (bundles != 1) {
