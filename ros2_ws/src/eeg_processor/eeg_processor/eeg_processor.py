@@ -2,8 +2,8 @@ import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendTriggerOutPulseEvent
-from fpga_interfaces.msg import TriggerOutPulseEvent, EventInfo
+from fpga_interfaces.srv import SendTriggerOutEvent
+from fpga_interfaces.msg import TriggerOutEvent, EventInfo
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -17,10 +17,10 @@ class EegProcessor(Node):
         super().__init__('eeg_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
-        self.trigger_client = self.create_client(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event')
-        self.trigger_pulse_service = self.create_service(SendTriggerOutPulseEvent, '/fpga/send_trigger_out_pulse_event', self.send_trigger_out)
+        self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
+        # self.trigger_service = self.create_service(SendTriggerOutEvent, '/fpga/send_trigger_out_event', self.send_trigger_out)
 
-        self.request = SendTriggerOutPulseEvent.Request()
+        self.request = SendTriggerOutEvent.Request()
 
         self.first_trigger_time = 0
         self.last_trigger_time = 0
@@ -54,19 +54,19 @@ class EegProcessor(Node):
         event_info.time_us = time_us + TIME_CONSTANT_US
         event_info.delay_us = DELAY_US
 
-        trigger_event = TriggerOutPulseEvent()
+        trigger_event = TriggerOutEvent()
         trigger_event.index = index
         trigger_event.duration_us = TRIGGER_DURATION_US
         trigger_event.event_info = event_info
 
-        self.request.trigger_out_pulse_event = trigger_event
+        self.request.trigger_out_event = trigger_event
 
 
-    def send_trigger_out(self, request, response):
-        self.get_logger().info("SUCCESSFUL SERVICE CALL\n")
+    # def send_trigger_out(self, request, response):
+    #     self.get_logger().info("SUCCESSFUL SERVICE CALL\n")
 
-        response.success = True
-        return response
+    #     response.success = True
+    #     return response
 
 
     def spin(self):
@@ -77,7 +77,7 @@ class EegProcessor(Node):
             for f in self.client_futures:
                 if f.done():
                     result = f.result()
-                    # Do something with result?
+                    print("\n Result is {}\n".format(result))
 
                 else:
                     incomplete_futures.append(f)
