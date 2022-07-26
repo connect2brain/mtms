@@ -26,7 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/event/DischargeEvent.msg"
 "msg/event/StimulationPulsePiece.msg"
 "msg/event/StimulationPulseEvent.msg"
-"msg/event/TriggerOutPulseEvent.msg"
+"msg/event/TriggerOutEvent.msg"
 "msg/event/EventInfo.msg"
 
 "msg/SafetyMonitorErrors.msg"
@@ -36,12 +36,19 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/DischargeControllerStates.msg"
 "msg/Version.msg"
 
-"srv/SetPower.srv"
+"msg/ChannelStatus.msg"
+"msg/StatusMonitorState.msg"
+
 "srv/SendChargeEvent.srv"
 "srv/SendDischargeEvent.srv"
 "srv/SendEventTrigger.srv"
 "srv/SendStimulationPulseEvent.srv"
-"srv/SendTriggerOutPulseEvent.srv"
+"srv/SendTriggerOutEvent.srv"
+
+"srv/StartDevice.srv"
+"srv/StopDevice.srv"
+"srv/StartExperiment.srv"
+"srv/StopExperiment.srv"
 
 )
 

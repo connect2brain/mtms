@@ -7,7 +7,7 @@
 #include "fpga_interfaces/msg/version.hpp"
 
 #include "fpga.h"
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
 
@@ -48,6 +48,7 @@ class SafetyMonitorBridge : public rclcpp::Node
 
     void publish_safety_monitor_state()
     {
+        /*
       uint8_t version_major = 0xFF;
       NiFpga_MergeStatus(&status,
                           NiFpga_ReadU8(session,
@@ -113,8 +114,10 @@ class SafetyMonitorBridge : public rclcpp::Node
       safety_monitor_state.n_startup_messages = n_startup_messages;
       safety_monitor_state.n_status_messages = n_status_messages;
 
+
 //      RCLCPP_INFO(this->get_logger(), "Publishing safety monitor state.");
       safety_monitor_publisher_->publish(safety_monitor_state);
+         */
     }
 
     rclcpp::TimerBase::SharedPtr timer_;

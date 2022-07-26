@@ -2,7 +2,7 @@
 
 #include "fpga_interfaces/srv/send_event_trigger.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 
 void send_event_trigger(const std::shared_ptr<fpga_interfaces::srv::SendEventTrigger::Request> request,
@@ -10,7 +10,7 @@ void send_event_trigger(const std::shared_ptr<fpga_interfaces::srv::SendEventTri
 {
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteBool(session,
-                                      NiFpga_board_control_ControlBool_stimulation__event_trigger,
+                                      NiFpga_mTMS_ControlBool_Eventtrigger,
                                       true));
 
   response->success = true;

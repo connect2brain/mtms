@@ -4,6 +4,6 @@
 #
 # Response: Boolean indicating if trigger out pulse event was sent successfully.
 
-TriggerOutPulseEvent trigger_out_pulse_event
+TriggerOutEvent trigger_out_event
 ---
 bool success

@@ -5,14 +5,36 @@
 
 #define MAX_SERIALIZED_MESSAGE_LENGTH 100
 
-void init_serialized_message();
-void finalize_serialized_message();
-void add_byte_to_serialized_message(uint8_t byte);
-void add_uint16_to_serialized_message(uint16_t value);
-void add_uint32_to_serialized_message(uint32_t value);
-void add_uint64_to_serialized_message(uint64_t value);
+#define GET_BYTE(var,n) (uint8_t)((var) >> (8 * (n)))
 
-extern uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH];
-extern uint8_t length;
+#define ESCAPE_CHARACTER 0x1B
+#define TRANSPARENCY_MODIFIER 0x20
+#define START_OF_MESSAGE 0xFE
+#define END_OF_MESSAGE 0xFF
+#define CHANNEL_SWITCH_CHAR 0xFD
+
+class SerializedMessage
+{
+private:
+  void init(uint8_t channel);
+
+  uint8_t length_;
+
+public:
+  SerializedMessage(uint8_t channel);
+
+  void add_byte(uint8_t byte);
+  void add_uint16(uint16_t value);
+  void add_uint32(uint32_t value);
+  void add_uint64(uint64_t value);
+
+  void finalize();
+
+  uint8_t get_length();
+
+  uint8_t length;
+  uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH] = {0};
+
+};
 
 #endif
