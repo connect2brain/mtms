@@ -1,9 +1,0 @@
-# Set power of the boards.
-#
-# Request: Boolean indicating if the boards will be powered or not.
-#
-# Response: Boolean indicating if state change was successful.
-
-bool state
----
-bool success
