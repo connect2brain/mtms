@@ -54,11 +54,36 @@ const toggleVisibleService = new ROSLIB.Service({
   serviceType: 'mtms_interfaces/ToggleVisible',
 })
 
+const openTargetOrientationDialogService = new ROSLIB.Service({
+  ros,
+  name: 'neuronavigation/open_orientation_dialog',
+  serviceType: 'neuronavigation_interfaces/OpenOrientationDialog'
+})
+
 export const targetServicesByKey = {
   name: renameTargetService,
   comment: changeCommentService,
   visible: toggleVisibleService,
   selected: toggleTargetSelectService,
+}
+
+export const openTargetOrientationDialogInNeuronavigation = (targetId: number) => {
+  const request = new ROSLIB.ServiceRequest({
+    target_id: targetId
+  })
+
+  openTargetOrientationDialogService.callService(
+      request,
+      (response) => {
+        if (!response.success) {
+          console.log('ERROR: Failed to open orientation dialog for target', targetId)
+        }
+      },
+      (error) => {
+        console.log('ERROR: Failed to open orientation dialog for target', targetId, ', error:')
+        console.error(error)
+      },
+  )
 }
 
 export const addTargetToRos = (position: Position, orientation: EulerAngles) => {
