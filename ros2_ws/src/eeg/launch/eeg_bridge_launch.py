@@ -10,7 +10,7 @@ def generate_launch_description():
             output="screen",
             emulate_tty=True,
             parameters=[
-                {"sampling_frequency": 500.0} # Must be float
+                {"sampling_frequency": 5000.0} # Must be float
             ]
         )
     ])
