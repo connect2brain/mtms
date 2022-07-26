@@ -55,20 +55,80 @@ target_include_directories(safety_monitor_bridge
 
 ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
-# Install set power handler.
+# Install status monitor bridge.
 
-add_executable(set_power_handler
-  src/nodes/set_power_handler.cpp
+add_executable(status_monitor_bridge
+        src/nodes/status_monitor_bridge.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(status_monitor_bridge
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
+
+# Install start device handler.
+
+add_executable(start_device_handler
+        src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
 )
 
-target_include_directories(set_power_handler
+target_include_directories(start_device_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(set_power_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
+
+# Install start experiment handler.
+
+add_executable(start_experiment_handler
+        src/nodes/start_experiment_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(start_experiment_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(start_experiment_handler rclcpp std_msgs fpga_interfaces)
+
+# Install stop experiment handler.
+
+add_executable(stop_experiment_handler
+        src/nodes/stop_experiment_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(stop_experiment_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(stop_experiment_handler rclcpp std_msgs fpga_interfaces)
+
+# Install stop device handler.
+
+add_executable(stop_device_handler
+        src/nodes/stop_device_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(stop_device_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
 
 # Install stimulation pulse event handler.
 
@@ -88,19 +148,19 @@ ament_target_dependencies(stimulation_pulse_event_handler rclcpp std_msgs fpga_i
 
 # Install trigger out pulse event handler.
 
-add_executable(trigger_out_pulse_event_handler
-  src/nodes/trigger_out_pulse_event_handler.cpp
+add_executable(trigger_out_event_handler
+        src/nodes/trigger_out_event_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
 )
 
-target_include_directories(trigger_out_pulse_event_handler
+target_include_directories(trigger_out_event_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(trigger_out_pulse_event_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(trigger_out_event_handler rclcpp std_msgs fpga_interfaces)
 
 # Install charge event handler.
 
@@ -152,13 +212,17 @@ ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
 
 install(TARGETS
   run_fpga
-  discharge_controller_bridge
-  safety_monitor_bridge
-  set_power_handler
+  #discharge_controller_bridge
+  #safety_monitor_bridge
+  status_monitor_bridge
+  start_device_handler
+  stop_device_handler
+  start_experiment_handler
+  stop_experiment_handler
   charge_event_handler
   discharge_event_handler
   stimulation_pulse_event_handler
-  trigger_out_pulse_event_handler
+  trigger_out_event_handler
   event_trigger_handler
   DESTINATION lib/${PROJECT_NAME})
 

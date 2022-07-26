@@ -5,28 +5,21 @@
 #include "fpga_interfaces/msg/stimulation_pulse_event.hpp"
 #include "fpga_interfaces/msg/event_info.hpp"
 
-#include "NiFpga_board_control.h"
+#include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
 
-const uint8_t channel_pulse_fifos[5] = {
-  NiFpga_board_control_HostToTargetFifoU8_Channel1PulseFIFO,
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0, /* Not in use. */
-  0  /* Not in use. */
-};
+const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetStimulationpulseFIFO;
 
 void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendStimulationPulseEvent::Response> response)
 {
-  init_serialized_message();
-
   fpga_interfaces::msg::StimulationPulseEvent stimulation_pulse_event = request->stimulation_pulse_event;
 
   uint8_t channel = stimulation_pulse_event.channel;
 
   /* Serialize event info. */
+  auto serialized_message = SerializedMessage(channel);
 
   fpga_interfaces::msg::EventInfo event_info = stimulation_pulse_event.event_info;
 
@@ -35,39 +28,39 @@ void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   uint64_t time_us = event_info.time_us;
   uint32_t delay_us = event_info.delay_us;
 
-  add_uint16_to_serialized_message(event_id);
-  add_byte_to_serialized_message(wait_for_trigger);
-  add_uint64_to_serialized_message(time_us);
-  add_uint32_to_serialized_message(delay_us);
+  serialized_message.add_uint16(event_id);
+  serialized_message.add_byte(wait_for_trigger);
+  serialized_message.add_uint64(time_us);
+  serialized_message.add_uint32(delay_us);
 
   /* Serialize stimulation pulse. */
 
   uint8_t n_pieces = (uint8_t) stimulation_pulse_event.pieces.size();
-  add_byte_to_serialized_message(n_pieces);
+  serialized_message.add_byte(n_pieces);
 
   for (uint8_t i = 0; i < n_pieces; i++) {
     fpga_interfaces::msg::StimulationPulsePiece piece = stimulation_pulse_event.pieces[i];
 
-    add_byte_to_serialized_message(piece.mode);
-    add_uint16_to_serialized_message(piece.duration_in_ticks);
+    serialized_message.add_byte(piece.mode);
+    serialized_message.add_uint16(piece.duration_in_ticks);
   }
 
-  finalize_serialized_message();
+  serialized_message.finalize();
 
   NiFpga_MergeStatus(&status,
     NiFpga_StartFifo(session,
-                     channel_pulse_fifos[channel - 1]));
+                     channel_pulse_fifo));
 
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
-                       channel_pulse_fifos[channel - 1],
-                       serialized_message,
-                       length,
+                       channel_pulse_fifo,
+                       serialized_message.serialized_message,
+                       serialized_message.get_length(),
                        NiFpga_InfiniteTimeout,
                        NULL));
 
-  for (uint8_t i = 0; i < length; i++) {
-    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message[i]);
+  for (uint8_t i = 0; i < serialized_message.get_length(); i++) {
+    RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message.serialized_message[i]);
   }
 
   response->success = true;
