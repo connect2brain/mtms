@@ -40,7 +40,7 @@ def generate_launch_description():
         ),
         Node(
             package="fpga_bridge",
-            executable="trigger_out_pulse_event_handler"
+            executable="trigger_out_event_handler"
         ),
         Node(
             package="fpga_bridge",
