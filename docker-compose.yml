@@ -78,3 +78,11 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}

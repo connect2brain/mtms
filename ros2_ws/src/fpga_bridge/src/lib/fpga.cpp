@@ -20,7 +20,7 @@ bool init_fpga(void) {
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
 
   /* TODO: Remove hardcoded bitfile. */
-  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_3.lvbitx",
+  NiFpga_MergeStatus(&status, NiFpga_Open("/app/ros2_ws/src/fpga_bridge/mtms.lvbitx",
           NiFpga_mTMS_Signature,
           "PXI1Slot4",
           NiFpga_OpenAttribute_NoRun,
