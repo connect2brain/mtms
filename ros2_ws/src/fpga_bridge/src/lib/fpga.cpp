@@ -20,14 +20,14 @@ bool init_fpga(void) {
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
 
   /* TODO: Remove hardcoded bitfile. */
-  NiFpga_MergeStatus(&status, NiFpga_Open("C:\\Users\\mTMS\\mtms\\bitfiles\\NiFpga_board_control_0_1_3.lvbitx",
+  NiFpga_MergeStatus(&status, NiFpga_Open("/home/mtms/workspace/mtms-python-api/mtms_31_two_channels.lvbitx",
           NiFpga_mTMS_Signature,
           "PXI1Slot4",
           NiFpga_OpenAttribute_NoRun,
           &session));
 
   if (NiFpga_IsError(status)) {
-      RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting.");
+      RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
       return false;
   }
 
