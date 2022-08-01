@@ -1,0 +1,52 @@
+version: '3.5'
+
+services:
+  planner_test:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/planner/Dockerfile
+  pulse_sequence_controller_test:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+  neuronavigation_test:
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # Requires by linux when opening projects, otherwise segfaults
+    privileged: true
+  efield_test:
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/efield/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+  pedal_listener_test:
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/pedal_listener/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
+  trigger_controller_test:
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/trigger_controller/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
+
+networks:
+  cinetwork:
+    name: cinetwork
+    driver: bridge
