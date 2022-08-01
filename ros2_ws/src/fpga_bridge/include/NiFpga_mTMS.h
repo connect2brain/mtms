@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "6C12C68FEC8A9ECB60C6F0977A0092C6";
+static const char* const NiFpga_mTMS_Signature = "C62CE2CD9787B6C15307A80377B33430";
 
 #if NiFpga_Cpp
 extern "C"
