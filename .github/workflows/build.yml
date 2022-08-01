@@ -8,7 +8,7 @@ jobs:
     name: Build ros packages
     runs-on: ubuntu-20.04
     env:
-      COMPOSE_FILE: .ci/docker-compose.yml
+      COMPOSE_FILE: .ci/docker-compose.build.yml
 
     steps:
       - name: Checkout code
