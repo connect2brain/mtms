@@ -27,7 +27,7 @@ bool init_fpga(void) {
           &session));
 
   if (NiFpga_IsError(status)) {
-      RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting.");
+      RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Error status: %d", status);
       return false;
   }
 
