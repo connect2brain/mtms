@@ -2,8 +2,8 @@ import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendTriggerOutEvent
-from fpga_interfaces.msg import TriggerOutEvent, EventInfo, StartDevice, StartExperiment, StopExperiment
+from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment
+from fpga_interfaces.msg import TriggerOutEvent, EventInfo
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -19,7 +19,7 @@ class EegProcessor(Node):
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
         
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
-        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device"')
+        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
@@ -30,7 +30,7 @@ class EegProcessor(Node):
 
         self.client_futures = []
 
-        self.start_device_client.call_async()
+        self.start_device_client.call_async(StartDevice.Request())
         self.restart_experiment()
 
     def data_reader_callback(self, msg):
@@ -69,8 +69,8 @@ class EegProcessor(Node):
 
 
     def restart_experiment(self):
-        self.stop_experiment_client.call_async()
-        self.start_experiment_client.call_async()
+        self.stop_experiment_client.call_async(StopExperiment.Request())
+        self.start_experiment_client.call_async(StartExperiment.Request())
 
 
     def spin(self):
