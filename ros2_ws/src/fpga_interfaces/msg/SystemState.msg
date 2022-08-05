@@ -1,0 +1,3 @@
+# System state
+
+string state
