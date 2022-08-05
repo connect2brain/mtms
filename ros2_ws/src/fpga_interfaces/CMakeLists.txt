@@ -36,8 +36,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 "msg/DischargeControllerStates.msg"
 "msg/Version.msg"
 
+"msg/event/Feedback.msg"
+
 "msg/ChannelStatus.msg"
 "msg/StatusMonitorState.msg"
+"msg/SystemState.msg"
 
 "srv/SendChargeEvent.srv"
 "srv/SendDischargeEvent.srv"
