@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutEvent
-from fpga_interfaces.msg import TriggerOutEvent, EventInfo
+from fpga_interfaces.msg import TriggerOutEvent, EventInfo, StartDevice, StartExperiment, StopExperiment
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -17,8 +17,11 @@ class EegProcessor(Node):
         super().__init__('eeg_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
+        
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
-        # self.trigger_service = self.create_service(SendTriggerOutEvent, '/fpga/send_trigger_out_event', self.send_trigger_out)
+        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device"')
+        self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
+        self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
         self.request = SendTriggerOutEvent.Request()
 
@@ -27,6 +30,8 @@ class EegProcessor(Node):
 
         self.client_futures = []
 
+        self.start_device_client.call_async()
+        self.restart_experiment()
 
     def data_reader_callback(self, msg):
 
@@ -43,7 +48,8 @@ class EegProcessor(Node):
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time_us
-            self.get_logger().info("Time difference between triggers: {}".format(self.last_trigger_time)) 
+            self.get_logger().info("Time difference between triggers: {}".format(self.last_trigger_time))
+            self.restart_experiment() 
 
 
     def set_trigger_request(self, index, time_us):
@@ -62,11 +68,9 @@ class EegProcessor(Node):
         self.request.trigger_out_event = trigger_event
 
 
-    # def send_trigger_out(self, request, response):
-    #     self.get_logger().info("SUCCESSFUL SERVICE CALL\n")
-
-    #     response.success = True
-    #     return response
+    def restart_experiment(self):
+        self.stop_experiment_client.call_async()
+        self.start_experiment_client.call_async()
 
 
     def spin(self):
