@@ -55,6 +55,21 @@ target_include_directories(safety_monitor_bridge
 
 ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
+# Install system state monitor bridge.
+
+add_executable(system_state_monitor_bridge
+        src/nodes/system_state_monitor_bridge.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(system_state_monitor_bridge
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(system_state_monitor_bridge rclcpp std_msgs fpga_interfaces)
+
 # Install status monitor bridge.
 
 add_executable(status_monitor_bridge
@@ -210,6 +225,20 @@ target_include_directories(event_trigger_handler
 ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
 
 
+add_executable(feedback_monitor_bridge
+        src/nodes/feedback_monitor_bridge.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(feedback_monitor_bridge
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interfaces)
+
+
 install(TARGETS
   run_fpga
   #discharge_controller_bridge
@@ -224,6 +253,8 @@ install(TARGETS
   stimulation_pulse_event_handler
   trigger_out_event_handler
   event_trigger_handler
+  feedback_monitor_bridge
+  system_state_monitor_bridge
   DESTINATION lib/${PROJECT_NAME})
 
 # Install the launch directory.
