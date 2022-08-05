@@ -30,7 +30,7 @@
 #define SAMPLE_PACKET_ID 2
 #define TRIGGER_PACKET_ID 3
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"

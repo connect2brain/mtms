@@ -5,10 +5,9 @@ from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutEvent
 from fpga_interfaces.msg import TriggerOutEvent, EventInfo
 
-TRIGGER_DURATION_US = 10000
+TRIGGER_DURATION_US = 1000000
 SAMPLING_INTERVAL = 0.0002
-EVENT_ID = 1
-TIME_CONSTANT_US = 10000
+TIME_CONSTANT_US = 0
 DELAY_US = 0
 
 class EegProcessor(Node):
@@ -24,17 +23,18 @@ class EegProcessor(Node):
 
         self.first_trigger_time = 0
         self.last_trigger_time = 0
+        self.event_id = 0
 
         self.client_futures = []
 
 
     def data_reader_callback(self, msg):
-
-        self.get_logger().info("Timestamp: {} ms. First sample of experiment {} \n".format(msg.time, msg.first_sample_of_experiment))
+        pass
+        # self.get_logger().info("Timestamp: {} ms. First sample of experiment {} \n".format(msg.time, msg.first_sample_of_experiment))
 
 
     def trigger_reader_callback(self, msg):
-
+        self.get_logger().info(f"msg index: {msg.index}")
         if msg.index == 1:
             self.first_trigger_time = msg.time_us
 
@@ -47,19 +47,20 @@ class EegProcessor(Node):
 
 
     def set_trigger_request(self, index, time_us):
-
+        time_us = int(1e6) * 40
         event_info = EventInfo()
-        event_info.event_id = EVENT_ID
+        event_info.event_id = self.event_id
         event_info.wait_for_trigger = False
         event_info.time_us = time_us + TIME_CONSTANT_US
         event_info.delay_us = DELAY_US
 
         trigger_event = TriggerOutEvent()
-        trigger_event.index = index
+        trigger_event.index = 3
         trigger_event.duration_us = TRIGGER_DURATION_US
         trigger_event.event_info = event_info
 
         self.request.trigger_out_event = trigger_event
+        self.event_id += 1
 
 
     # def send_trigger_out(self, request, response):
@@ -70,6 +71,7 @@ class EegProcessor(Node):
 
 
     def spin(self):
+        self.get_logger().info("Starting eeg processor")
         while rclpy.ok():
             rclpy.spin_once(self)
 

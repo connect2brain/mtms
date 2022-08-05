@@ -31,6 +31,24 @@ services:
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
+      - './ros2_ws/src/eeg_processor:/app/ros2_ws/src/eeg_processor/'
+  eeg_bridge:
+    ports:
+      - "50000:50000"
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
+      - './ros2_ws/src/eeg:/app/ros2_ws/src/eeg/'
   planner:
     build:
       context: .
