@@ -57,18 +57,6 @@ class NeuronavigationNode(Node):
             self.get_logger().info('efield service not available, waiting again...')
         self.req = Efield.Request()
 
-    def set_callback__open_orientation_dialog(self, callback):
-        self._open_orientation_dialog = callback
-
-    def open_orientation_dialog_callback(self, request, response):
-        target_id = request.target_id
-        self.get_logger().info(f'Received open orientation dialog with target {target_id}')
-        self._open_orientation_dialog(target_id)
-
-        response.success = True
-        return response
-
-
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
 
