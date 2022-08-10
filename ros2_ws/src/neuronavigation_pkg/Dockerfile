@@ -26,10 +26,10 @@ RUN apt-get install -y \
     python3-pubsub \
     dos2unix \
     locales \
-    python3-pip \
+    python3-pip
 
-RUN pip3 install pyacvd==0.2.7
-RUN pip3 install pyvista
+RUN pip install pyacvd==0.2.7
+RUN pip install pyvista
 
 RUN locale-gen  \
     en_US.UTF-8 \
