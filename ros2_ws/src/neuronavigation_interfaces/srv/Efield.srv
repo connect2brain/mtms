@@ -3,6 +3,6 @@
 # Response: Efield
 
 PoseUsingEulerAngles coordinate
----
 float32[] trot
+---
 float64[] efield_data
