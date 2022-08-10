@@ -12,8 +12,9 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import PoseUsingEulerAngles
-from neuronavigation_interfaces.srv import Efield
-from mtms_interfaces.msg import PlannerState
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
+from mtms_interfaces.msg import PlannerState, EulerAngles
+from mtms_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
 
@@ -41,7 +42,15 @@ class NeuronavigationNode(Node):
 
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
-        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state", self.planner_state_callback, qos_persist_latest)
+        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
+                                                                    self.planner_state_callback, qos_persist_latest)
+
+        self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
+                                                                    "neuronavigation/open_orientation_dialog",
+                                                                    self.open_orientation_dialog_callback)
+
+        self._update_target_orientation_client = self.create_client(SetTargetOrientation,
+                                                                    '/planner/set_target_orientation')
 
         self.cli = self.create_client(Efield, 'efield')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -63,11 +72,27 @@ class NeuronavigationNode(Node):
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
 
+    def set_callback__open_orientation_dialog(self, callback):
+        self._open_orientation_dialog = callback
+
+    def open_orientation_dialog_callback(self, request, response):
+        target_id = request.target_id
+        self.get_logger().info(f'Received open orientation dialog with target {target_id}')
+        self._open_orientation_dialog(target_id)
+
+        response.success = True
+        return response
+
     def planner_state_callback(self, msg):
+        if not hasattr(self, '_set_markers'):
+            self.get_logger().info('set markers not set yet')
+            return
+
+        self.get_logger().info(f'Updating planner state')
         markers = []
         for id, target in enumerate(msg.targets):
             position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
-            direction = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
+            orientation = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
 
             if target.target:
                 color = self._COLOR_TARGET
@@ -81,10 +106,11 @@ class NeuronavigationNode(Node):
             marker_data = {
                 'ball_id': id,
                 'position': position,
-                'direction': direction,
+                'orientation': orientation,
                 'target': target.target,
                 'size': 3,
                 'colour': [c / 255.0 for c in color],
+                'arrow_flag': not all(d == 0.0 for d in orientation)
             }
             markers.append(marker_data)
 
@@ -93,7 +119,7 @@ class NeuronavigationNode(Node):
 
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
-        #Publisher.sendMessage('invesalius messages', arg=msg.data)
+        # Publisher.sendMessage('invesalius messages', arg=msg.data)
 
     def update_focus(self, position, orientation):
         # TODO: The Euler angles cannot be None in the ROS message, hence the lines
@@ -158,6 +184,20 @@ class NeuronavigationNode(Node):
                 'Service call failed %r' % (e,))
             return None
 
+    def update_target_orientation(self, target_id, orientation):
+        self.get_logger().info(f'updating target {target_id} orientation to {str(orientation)}')
+        request = SetTargetOrientation.Request()
+
+        euler_angles = EulerAngles()
+        euler_angles.alpha = orientation[0]
+        euler_angles.beta = orientation[1]
+        euler_angles.gamma = orientation[2]
+
+        request.orientation = euler_angles
+        request.target_id = target_id
+
+        self._update_target_orientation_client.call_async(request)
+
 
 class Connection(Thread):
     def __init__(self):
@@ -188,6 +228,12 @@ class Connection(Thread):
             orientation=orientation,
         )
 
+    def update_target_orientation(self, target_id, orientation):
+        self.node.update_target_orientation(
+            target_id=target_id,
+            orientation=orientation
+        )
+
     def update_coil_mesh(self, points, polygons):
         self.node.update_coil_mesh(
             points=points,
@@ -201,11 +247,13 @@ class Connection(Thread):
                     T_rot=T_rot,
                 )
 
+
     def set_callback__set_markers(self, callback):
         self.node.set_callback__set_markers(callback)
 
     def set_callback__open_orientation_dialog(self, callback):
         self.node.set_callback__open_orientation_dialog(callback)
+
 
 def main():
     connection = Connection()

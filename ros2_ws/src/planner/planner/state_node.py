@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 
 from mtms_interfaces.msg import PlannerState
 
@@ -13,23 +13,23 @@ class StateNode(Node):
         # Persist the latest sample.
         qos = QoSProfile(
             depth=1,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            durability=DurabilityPolicy.VOLATILE,
             history=HistoryPolicy.KEEP_LAST,
+            reliability=ReliabilityPolicy.RELIABLE,
         )
 
         self._state_publisher = self.create_publisher(
             PlannerState,
-            "/planner/state",
+            "/planner/inner/state",
             qos
         )
         self._state_subscriber = self.create_subscription(
             PlannerState,
-            '/planner/state',
+            '/planner/inner/state',
             self.state_updated,
-            10
+            qos_profile=qos
         )
         self._state = None
 
     def state_updated(self, msg):
-        self.get_logger().info('Planner state updated')
         self._state = msg

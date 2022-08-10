@@ -5,7 +5,7 @@
 - Run:
 
 ```
-git clone --recurse-submodules git@github.com:connect2brain/invesalius_ros.git
+git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 ```
 
 ## Running without Docker
@@ -65,15 +65,38 @@ ros2 run neuronavigation_pkg start
 
 ### Linux
 
-- Install Docker
+- Install Docker and Docker compose
 
-- Run the following commands in `invesalius_ros` directory (TODO: update for docker-compose):
+- Check your $DISPLAY variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
+
+- Run the following commands on the root directory of the repository
 
 ```
-sudo docker -t neuronavigation .
 xhost local:root
-sudo docker run --rm -it --env DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw neuronavigation ros2 run neuronavigation_pkg start
+docker-compose up
 ```
+
+### WSL
+
+- Install XMing on Windows
+
+- Run the rest of the commands in WSL
+
+- Install Docker and Docker compose
+
+- Check your `$DISPLAY` variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
+
+- Run the following commands on the root directory of the repository
+
+```
+docker-compose up
+```
+
+#### Troubleshooting
+
+These two links should be useful for troubleshooting:
+1) https://github.com/microsoft/WSL/issues/6430
+2) https://stackoverflow.com/questions/61860208/wsl-2-run-graphical-linux-desktop-applications-from-windows-10-bash-shell-erro
 
 ### Windows
 

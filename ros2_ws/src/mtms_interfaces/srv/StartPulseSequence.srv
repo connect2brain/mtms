@@ -1,0 +1,6 @@
+# ROS service for starting a new pulse sequence.
+
+Experiment experiment
+---
+bool success
+string status "OK"

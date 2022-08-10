@@ -1,0 +1,9 @@
+# Send a trigger out pulse event.
+#
+# Request: A trigger out pulse event.
+#
+# Response: Boolean indicating if trigger out pulse event was sent successfully.
+
+TriggerOutEvent trigger_out_event
+---
+bool success
