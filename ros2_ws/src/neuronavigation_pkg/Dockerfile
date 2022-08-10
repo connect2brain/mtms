@@ -7,8 +7,6 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 
 ENV DEBIAN_FRONTEND=noninteractive
-#RUN apt-get install -y python3-pip
-#RUN pip3 install https://www.vtk.org/files/release/9.1/vtk-9.1.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 RUN apt-get install -y \
     python3-wxgtk4.0 \
     python3-numpy \
