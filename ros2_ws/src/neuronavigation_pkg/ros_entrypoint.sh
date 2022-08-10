@@ -7,6 +7,3 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.8/dist-packages/p
 
 
 ros2 run neuronavigation_pkg start
-# Multithreading
-export MKL_NUM_THREADS=16
-export OMP_NUM_THREADS=16
