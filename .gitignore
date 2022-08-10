@@ -5,3 +5,11 @@ build/*
 log/*
 install/*
 .idea
+__pycache__
+.vscode
+cmake-build-debug
+front/cypress/videos
+front/cypress/screenshots
+ros2_ws/src/install/
+ros2_ws/src/log/
+ros2_ws/src/build/

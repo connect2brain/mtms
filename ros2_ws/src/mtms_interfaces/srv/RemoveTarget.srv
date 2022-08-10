@@ -1,5 +1,0 @@
-# ROS service for removing a target.
-
-string name
----
-bool success

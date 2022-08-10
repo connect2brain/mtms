@@ -1,0 +1,6 @@
+# ROS service for changing a target comment.
+
+uint16 target_id
+EulerAngles orientation
+---
+bool success

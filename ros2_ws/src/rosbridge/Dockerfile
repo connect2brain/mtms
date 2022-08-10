@@ -33,9 +33,9 @@ RUN shopt -s globstar && dos2unix **
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build --symlink-install
 
-# XXX: Hack around the symlink issue
+# XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux
 
-RUN cp install/rosbridge_server/lib/rosbridge_server/rosbridge_websocket.py install/rosbridge_server/lib/rosbridge_server/rosbridge_websocket
+RUN cp install/rosbridge_server/lib/rosbridge_server/rosbridge_websocket.py install/rosbridge_server/lib/rosbridge_server/rosbridge_websocket || :
 
 # Define entrypoint
 

@@ -40,14 +40,26 @@ class RemoveTargetNode(StateNode):
         self.create_service(RemoveTarget, '/planner/remove_target', self.remove_target_callback)
 
     def remove_target_callback(self, request, response):
-        self.get_logger().info('Incoming request')
+        self.get_logger().info(f'Removing target {request.name}')
 
         state = self._state
         if state is None:
             response.success = False
             return response
 
-        idx = drop_unique(state.targets, lambda target: target.name == request.name)
+        index_of_removed_target = drop_unique(state.targets, lambda target: target.name == request.name)
+
+        for pulse_sequence in state.pulse_sequences:
+            pulses_to_keep = list(
+                filter(lambda pulse: pulse.target_index != index_of_removed_target, pulse_sequence.pulses))
+
+            for pulse in pulses_to_keep:
+                new_index = pulse.target_index if pulse.target_index < index_of_removed_target else pulse.target_index - 1
+                pulse.target_index = new_index
+
+            pulse_sequence.pulses = pulses_to_keep
+
+        state.pulse_sequences = list(filter(lambda seq: len(seq.pulses) > 0, state.pulse_sequences))
 
         self._state_publisher.publish(state)
 

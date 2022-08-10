@@ -16,6 +16,15 @@ services:
       - CHOKIDAR_USEPOLLING=true
     volumes:
       - ./frontend/src:/app/src
+  front:
+    build: ./front/
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - './front:/app'
+      - '/app/node_modules'
   rosbridge:
     build:
       context: .
@@ -26,6 +35,17 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+    volumes:
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
+      - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
   neuronavigation:
     privileged: true
     build:
@@ -33,6 +53,10 @@ services:
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
     env_file:
       - ${ENV_FILE}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # Requires by linux when opening projects, otherwise segfaults
+    privileged: true
   efield:
     privileged: true
     build:
