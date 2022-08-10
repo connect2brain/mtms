@@ -7,8 +7,8 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get install -y python3-pip
-RUN pip3 install https://www.vtk.org/files/release/9.1/vtk-9.1.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+#RUN apt-get install -y python3-pip
+#RUN pip3 install https://www.vtk.org/files/release/9.1/vtk-9.1.0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 RUN apt-get install -y \
     python3-wxgtk4.0 \
     python3-numpy \
@@ -18,7 +18,7 @@ RUN apt-get install -y \
     python3-skimage \
     python3-nibabel \
     python3-serial \
-    python3-psutil \   
+    python3-psutil \
     python3-vtkgdcm \
     python3-gdcm \
     cython3 \
@@ -27,15 +27,20 @@ RUN apt-get install -y \
     python3-keras \
     python3-pubsub \
     dos2unix \
-    locales
+    locales \
+    python3-pip \
+
 RUN pip3 install pyacvd==0.2.7
 RUN pip3 install pyvista
+
 RUN locale-gen  \
     en_US.UTF-8 \
     en_GB.UTF-8
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
+
+RUN pip install vtk==9.1.0
 
 ## InVesalius
 
