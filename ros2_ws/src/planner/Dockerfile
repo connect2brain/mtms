@@ -19,7 +19,7 @@ COPY ros2_ws/src/mtms_interfaces ros2_ws/src/mtms_interfaces/
 
 WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
-    colcon build
+    colcon build --symlink-install
 
 # Copy entrypoint
 

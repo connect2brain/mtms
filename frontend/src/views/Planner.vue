@@ -252,6 +252,13 @@ export default {
       serviceType : 'mtms_interfaces/ToggleSelect'
     });
 
+    /* Set up rename_target service. */
+    this.renameTargetService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/rename_target',
+      serviceType : 'mtms_interfaces/RenameTarget'
+    });
+
     /* Set up remove_target service. */
     this.removeTargetService = new ROSLIB.Service({
       ros : this.ros,
@@ -264,6 +271,27 @@ export default {
       ros : this.ros,
       name : '/planner/set_target',
       serviceType : 'mtms_interfaces/SetTarget'
+    });
+
+    /* Set up toggle_visible service. */
+    this.toggleVisibleService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_visible',
+      serviceType : 'mtms_interfaces/ToggleVisible'
+    });
+
+    /* Set up change_comment service. */
+    this.changeCommentService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/change_comment',
+      serviceType : 'mtms_interfaces/ChangeComment'
+    });
+
+    /* Set up toggle_navigation service.*/
+    this.toggleNavigationService = new ROSLIB.Service({
+      ros : this.ros,
+      name : '/planner/toggle_navigation',
+      serviceType : 'mtms_interfaces/ToggleNavigation'
     });
 
     /* Set up listener for coil at target. */
@@ -371,13 +399,45 @@ export default {
       }
     },
     toggleVisible(row) {
-      row.visible = !row.visible;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+      });
+
+      this.toggleVisibleService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to toggle visibility of target: ');
+          console.log(request.name);
+        }
+      });
     },
     rename(row, newName) {
-      row.name = newName;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+        new_name: newName,
+      });
+
+      this.renameTargetService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to rename target: ');
+          console.log(request.name);
+        }
+      });
     },
     changeComment(row, newComment) {
-      row.comment = newComment;
+      const request = new ROSLIB.ServiceRequest({
+        name: row.name,
+        new_comment: newComment,
+      });
+
+      this.changeCommentService.callService(request, function(result) {
+        if (!result.success) {
+
+          console.log('ERROR: Failed to change comment: ');
+          console.log(request.name);
+        }
+      });
     },
     toggleSelect(row) {
       const request = new ROSLIB.ServiceRequest({
@@ -396,8 +456,14 @@ export default {
     },
     toggleNavigating() {
       if (this.isReadyToNavigate) {
-        this.$socket.emit("planner.toggle_navigating");
-      }
+        const request = new ROSLIB.ServiceRequest({});
+
+        this.toggleNavigationService.callService(request, function(result) {
+          if (!result.success) {
+            console.log("ERROR: Failed to toggle navigating");
+          }
+        });
+      } 
     },
     setIntensity(row, newIntensityString) {
       const name = row["name"];
