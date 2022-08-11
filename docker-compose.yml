@@ -46,8 +46,7 @@ services:
       - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
       - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
-  neuronavigation:
-    privileged: true
+  neuronavigation:    
     build:
       context: .
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
