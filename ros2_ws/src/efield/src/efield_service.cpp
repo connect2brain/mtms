@@ -29,7 +29,7 @@ void add(const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request>
 
 
   std::vector<double> efield_vector;
-  efield_estimation(position, orientation,request->trot,efield_vector);
+  efield_estimation(position, orientation, request->trot, efield_vector);
   for (int i = 0; i < efield_vector.size(); i++)
   {
       response->efield_data.push_back(efield_vector[i]);
