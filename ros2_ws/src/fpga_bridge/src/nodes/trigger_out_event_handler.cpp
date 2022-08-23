@@ -7,8 +7,11 @@
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
+#include "memory_utils.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO;
+
+auto serialized_message = SerializedMessage();
 
 void send_trigger_out_event(const std::shared_ptr<fpga_interfaces::srv::SendTriggerOutEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendTriggerOutEvent::Response> response)
@@ -17,9 +20,6 @@ void send_trigger_out_event(const std::shared_ptr<fpga_interfaces::srv::SendTrig
 
   uint8_t index = trigger_out_event.index;
 
-  /* Serialize event info. */
-  auto serialized_message = SerializedMessage(index);
-
   fpga_interfaces::msg::EventInfo event_info = trigger_out_event.event_info;
 
   uint16_t event_id = event_info.event_id;
@@ -27,13 +27,14 @@ void send_trigger_out_event(const std::shared_ptr<fpga_interfaces::srv::SendTrig
   uint64_t time_us = event_info.time_us;
   uint32_t delay_us = event_info.delay_us;
 
+  serialized_message.init(index);
+
   serialized_message.add_uint16(event_id);
   serialized_message.add_byte(wait_for_trigger);
   serialized_message.add_uint64(time_us);
   serialized_message.add_uint32(delay_us);
 
   /* Serialize trigger out . */
-
   uint32_t duration_us = (uint8_t) trigger_out_event.duration_us;
   serialized_message.add_uint32(duration_us);
 
@@ -47,7 +48,7 @@ void send_trigger_out_event(const std::shared_ptr<fpga_interfaces::srv::SendTrig
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
                        trigger_out_fifo,
-                       serialized_message.serialized_message,
+                       serialized_message.serialized_message.data(),
                        serialized_message.get_length(),
                        NiFpga_InfiniteTimeout,
                        NULL));
@@ -81,9 +82,18 @@ int main(int argc, char **argv)
 
   rclcpp::init(argc, argv);
 
+  auto node = std::make_shared<TriggerOutEventHandler>();
+
   RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Trigger out event handler ready.");
 
-  rclcpp::spin(std::make_shared<TriggerOutEventHandler>());
+#ifdef ON_UNIX
+  set_default_thread_stacksize(1024 * 50); //50 MB, default in unix is 8 MB
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  rclcpp::spin(node);
+
   rclcpp::shutdown();
 
   close_fpga();
