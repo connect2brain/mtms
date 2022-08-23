@@ -1,6 +1,7 @@
 //
 // Created by alqio on 22.8.2022.
 // Adapted from https://github.com/ros-realtime/ros2-realtime-examples/tree/rolling/minimal_memory_lock
+// Apache 2.0 License. No major changes
 //
 
 #include "memory_utils.h"
