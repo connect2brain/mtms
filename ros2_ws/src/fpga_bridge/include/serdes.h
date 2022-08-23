@@ -2,6 +2,8 @@
 #define SERDES_H
 
 #include <stdint.h>
+#include <vector>
+
 
 #define MAX_SERIALIZED_MESSAGE_LENGTH 100
 
@@ -16,13 +18,12 @@
 class SerializedMessage
 {
 private:
-  void init(uint8_t channel);
-
   uint8_t length_;
 
 public:
-  SerializedMessage(uint8_t channel);
+  SerializedMessage();
 
+  void init(uint8_t channel);
   void add_byte(uint8_t byte);
   void add_uint16(uint16_t value);
   void add_uint32(uint32_t value);
@@ -33,7 +34,8 @@ public:
   uint8_t get_length();
 
   uint8_t length;
-  uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH] = {0};
+  //uint8_t serialized_message[MAX_SERIALIZED_MESSAGE_LENGTH] = {0};
+  std::vector<uint8_t> serialized_message;
 
 };
 

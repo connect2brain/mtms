@@ -31,7 +31,7 @@ add_executable(discharge_controller_bridge
   src/nodes/discharge_controller_bridge.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(discharge_controller_bridge
   PUBLIC
@@ -46,7 +46,7 @@ add_executable(safety_monitor_bridge
   src/nodes/safety_monitor_bridge.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(safety_monitor_bridge
   PUBLIC
@@ -61,7 +61,7 @@ add_executable(system_state_monitor_bridge
         src/nodes/system_state_monitor_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(system_state_monitor_bridge
         PUBLIC
@@ -76,7 +76,7 @@ add_executable(status_monitor_bridge
         src/nodes/status_monitor_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(status_monitor_bridge
         PUBLIC
@@ -91,7 +91,7 @@ add_executable(start_device_handler
         src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(start_device_handler
   PUBLIC
@@ -106,7 +106,7 @@ add_executable(start_experiment_handler
         src/nodes/start_experiment_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(start_experiment_handler
         PUBLIC
@@ -121,7 +121,7 @@ add_executable(stop_experiment_handler
         src/nodes/stop_experiment_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(stop_experiment_handler
         PUBLIC
@@ -136,7 +136,7 @@ add_executable(stop_device_handler
         src/nodes/stop_device_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(stop_device_handler
         PUBLIC
@@ -152,7 +152,7 @@ add_executable(stimulation_pulse_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(stimulation_pulse_event_handler
   PUBLIC
@@ -168,7 +168,7 @@ add_executable(trigger_out_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(trigger_out_event_handler
   PUBLIC
@@ -184,7 +184,7 @@ add_executable(charge_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(charge_event_handler
   PUBLIC
@@ -200,7 +200,7 @@ add_executable(discharge_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(discharge_event_handler
   PUBLIC
@@ -215,7 +215,7 @@ add_executable(event_trigger_handler
   src/nodes/event_trigger_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(event_trigger_handler
   PUBLIC
@@ -229,7 +229,7 @@ add_executable(feedback_monitor_bridge
         src/nodes/feedback_monitor_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h)
 
 target_include_directories(feedback_monitor_bridge
         PUBLIC
