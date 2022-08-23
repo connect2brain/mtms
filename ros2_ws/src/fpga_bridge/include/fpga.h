@@ -3,6 +3,11 @@
 
 #include "NiFpga.h"
 
+#ifdef __unix__
+#define ON_UNIX
+#endif
+
+
 bool init_fpga(void);
 bool close_fpga(void);
 bool run_fpga(void);
