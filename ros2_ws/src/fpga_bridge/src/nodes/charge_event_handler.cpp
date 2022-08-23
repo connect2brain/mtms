@@ -9,6 +9,7 @@
 #include "serdes.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 charge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetChargeFIFO;
+auto serialized_message = SerializedMessage();
 
 void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Request> request,
           std::shared_ptr<fpga_interfaces::srv::SendChargeEvent::Response> response)
@@ -18,8 +19,6 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
   uint8_t channel = charge_event.channel;
 
   /* Serialize event info. */
-  auto serialized_message = SerializedMessage(channel);
-
   fpga_interfaces::msg::EventInfo event_info = charge_event.event_info;
 
   uint16_t event_id = event_info.event_id;
@@ -27,13 +26,13 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
   uint64_t time_us = event_info.time_us;
   uint32_t delay_us = event_info.delay_us;
 
+  serialized_message.init(channel);
   serialized_message.add_uint16(event_id);
   serialized_message.add_byte(wait_for_trigger);
   serialized_message.add_uint64(time_us);
   serialized_message.add_uint32(delay_us);
 
   /* Serialize charge event. */
-
   uint16_t target_voltage = charge_event.target_voltage;
   serialized_message.add_uint16(target_voltage);
 
@@ -46,7 +45,7 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
   NiFpga_MergeStatus(&status,
     NiFpga_WriteFifoU8(session,
                        charge_fifo,
-                       serialized_message.serialized_message,
+                       serialized_message.serialized_message.data(),
                        serialized_message.get_length(),
                        NiFpga_InfiniteTimeout,
                        NULL));
@@ -83,6 +82,11 @@ int main(int argc, char **argv)
   RCLCPP_INFO(rclcpp::get_logger("charge_event_handler"), "Charge event handler ready.");
 
   rclcpp::spin(std::make_shared<ChargeEventHandler>());
+#ifdef ON_UNIX
+  set_default_thread_stacksize(1024 * 50); //50 MB, default in unix is 8 MB
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
   rclcpp::shutdown();
 
   close_fpga();
