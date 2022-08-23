@@ -8,6 +8,7 @@
 #include "fpga.h"
 #include "serdes.h"
 #include "memory_utils.h"
+#include "scheduling_utils.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO;
 
@@ -84,9 +85,9 @@ int main(int argc, char **argv) {
   RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Trigger out event handler ready.");
 
 #ifdef ON_UNIX
-  //set_default_thread_stacksize(1024 * 50); //50 MB, default in unix is 8 MB
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
 
   rclcpp::spin(node);
