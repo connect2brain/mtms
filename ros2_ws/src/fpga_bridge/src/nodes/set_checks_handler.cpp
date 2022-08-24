@@ -17,7 +17,7 @@ void set_checks(const std::shared_ptr<fpga_interfaces::srv::SetChecks::Request> 
 
   response->success = true;
 
-  RCLCPP_DEBUG(rclcpp::get_logger("set_checks_handler"), "Set checks: %s", enabled ? "true" : "false");
+  RCLCPP_INFO(rclcpp::get_logger("set_checks_handler"), "Set checks: %s", enabled ? "true" : "false");
 }
 
 class SetChecksHandler : public rclcpp::Node
