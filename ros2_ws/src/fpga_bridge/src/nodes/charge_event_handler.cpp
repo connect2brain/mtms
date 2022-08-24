@@ -27,17 +27,21 @@ public:
       fpga_interfaces::msg::EventInfo event_info = charge_event.event_info;
 
       uint16_t event_id = event_info.event_id;
-      uint8_t wait_for_trigger = event_info.wait_for_trigger;
+      uint8_t execution_condition = event_info.execution_condition;
       uint64_t time_us = event_info.time_us;
       uint32_t delay_us = event_info.delay_us;
 
-      serialized_message.init(channel);
+      serialized_message.init();
       serialized_message.add_uint16(event_id);
-      serialized_message.add_byte(wait_for_trigger);
+      serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(time_us);
       serialized_message.add_uint32(delay_us);
 
       /* Serialize charge event. */
+
+      // Charge event requires the channel here instead of the beginning of the message
+      serialized_message.add_byte(channel);
+
       uint16_t target_voltage = charge_event.target_voltage;
       serialized_message.add_uint16(target_voltage);
 
