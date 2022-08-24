@@ -46,6 +46,7 @@ class EegProcessor(Node):
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time_us
+            self.get_logger().info(f'Difference between triggers: {msg.time_us}us')
             self.log_to_file(self.last_trigger_time)
 
     def log_to_file(self, time_difference):
@@ -82,6 +83,7 @@ class EegProcessor(Node):
                 if f.done():
                     result = f.result()
                     # print("\n Result is {}\n".format(result))
+                    # self.get_logger().info("")
 
                 else:
                     incomplete_futures.append(f)
