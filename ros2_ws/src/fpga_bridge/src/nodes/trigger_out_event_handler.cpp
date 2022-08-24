@@ -18,7 +18,8 @@ void send_trigger_out_event(const std::shared_ptr<fpga_interfaces::srv::SendTrig
   uint8_t index = trigger_out_event.index;
 
   /* Serialize event info. */
-  auto serialized_message = SerializedMessage(index);
+  auto serialized_message = SerializedMessage();
+  serialized_message.init(index);
 
   fpga_interfaces::msg::EventInfo event_info = trigger_out_event.event_info;
 
