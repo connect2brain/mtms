@@ -64,7 +64,7 @@ def generate_launch_description():
         ),
         Node(
             package="fpga_bridge",
-            executable="set_checks_handler"
+            executable="disable_checks_handler"
         )
     ]
 
