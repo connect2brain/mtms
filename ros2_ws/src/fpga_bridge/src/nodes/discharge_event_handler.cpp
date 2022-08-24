@@ -57,7 +57,7 @@ public:
                                             NiFpga_InfiniteTimeout,
                                             NULL));
 
-      RCLCPP_DEBUG(rclcpp::get_logger("discharge_event_handler"), "Sent discharge request for channel %d", channel);
+      RCLCPP_INFO(rclcpp::get_logger("discharge_event_handler"), "Sent discharge request for channel %d", channel);
 
       response->success = true;
     };
