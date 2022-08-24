@@ -29,18 +29,18 @@ public:
 
       fpga_interfaces::msg::EventInfo event_info = stimulation_pulse_event.event_info;
 
-      uint16_t event_id = event_info.event_id;
-      uint8_t wait_for_trigger = event_info.wait_for_trigger;
-      uint64_t time_us = event_info.time_us;
-      uint32_t delay_us = event_info.delay_us;
+  uint16_t event_id = event_info.event_id;
+  uint8_t execution_condition = event_info.execution_condition;
+  uint64_t time_us = event_info.time_us;
+  uint32_t delay_us = event_info.delay_us;
 
-      serialized_message.init(channel);
-      serialized_message.add_uint16(event_id);
-      serialized_message.add_byte(wait_for_trigger);
-      serialized_message.add_uint64(time_us);
-      serialized_message.add_uint32(delay_us);
+  serialized_message.init(channel);
+  serialized_message.add_uint16(event_id);
+  serialized_message.add_byte(execution_condition);
+  serialized_message.add_uint64(time_us);
+  serialized_message.add_uint32(delay_us);
 
-      /* Serialize stimulation pulse. */
+  /* Serialize stimulation pulse. */
 
       uint8_t n_pieces = (uint8_t) stimulation_pulse_event.pieces.size();
       serialized_message.add_byte(n_pieces);
