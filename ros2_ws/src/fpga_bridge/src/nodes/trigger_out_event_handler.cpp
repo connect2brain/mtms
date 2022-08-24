@@ -54,7 +54,7 @@ public:
                                             serialized_message.get_length(),
                                             NiFpga_InfiniteTimeout,
                                             NULL));
-      RCLCPP_DEBUG(rclcpp::get_logger("trigger_out_event_handler"), "Sent trigger out request for index %d", index);
+      RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Sent trigger out request for index %d", index);
 
       response->success = true;
     };

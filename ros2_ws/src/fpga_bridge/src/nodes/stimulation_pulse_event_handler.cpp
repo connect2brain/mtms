@@ -66,7 +66,7 @@ public:
                                             NiFpga_InfiniteTimeout,
                                             NULL));
 
-      RCLCPP_DEBUG(rclcpp::get_logger("stimulation_pulse_event_handler"), "Sent stimulation request for channel %d", channel);
+      RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Sent stimulation request for channel %d", channel);
 
       response->success = true;
     };
