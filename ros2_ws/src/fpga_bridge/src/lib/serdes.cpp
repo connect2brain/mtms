@@ -2,15 +2,17 @@
 
 #include "serdes.h"
 
-SerializedMessage::SerializedMessage(uint8_t channel)
-{
-  init(channel);
-}
+SerializedMessage::SerializedMessage(){}
 
 void SerializedMessage::init(uint8_t channel) {
   length = 0;
   serialized_message[length++] = CHANNEL_SWITCH_CHAR;
   add_byte(channel);
+  serialized_message[length++] = START_OF_MESSAGE;
+}
+
+void SerializedMessage::init() {
+  length = 0;
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
