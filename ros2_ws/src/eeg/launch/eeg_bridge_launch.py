@@ -1,16 +1,33 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+
 
 def generate_launch_description():
-    return LaunchDescription([
-        Node(
+    ld = LaunchDescription()
+    logger = LaunchConfiguration("log_level")
+
+    log_arg = DeclareLaunchArgument(
+        "log_level",
+        default_value=["info"],
+        description="Logging level",
+    )
+
+    node = Node(
             package="eeg",
             executable="eeg_bridge",
             name="eeg_bridge",
             output="screen",
             emulate_tty=True,
             parameters=[
-                {"sampling_frequency": 5000.0} # Must be float
-            ]
+                {
+                    "sampling_frequency": 5000.0, # Must be float
+                }
+            ],
+            arguments=['--ros-args', '--log-level', logger]
         )
-    ])
+    ld.add_action(node)
+    ld.add_action(log_arg)
+
+    return ld
