@@ -12,7 +12,7 @@ void start_experiment(const std::shared_ptr<fpga_interfaces::srv::StartExperimen
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Startexperiment, true));
 
   response->success = true;
-  RCLCPP_DEBUG(rclcpp::get_logger("fpga"), "Started experiment");
+  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Started experiment");
 }
 
 class StartExperiment : public rclcpp::Node
