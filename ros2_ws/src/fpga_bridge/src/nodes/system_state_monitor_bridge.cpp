@@ -18,7 +18,7 @@ public:
     SystemStateMonitorBridge()
             : Node("system_state_monitor_bridge") {
         state_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::SystemState>(
-                "/fpga/system_state_monitor_bridge", 10);
+                "/fpga/system_state_monitor_state", 10);
         timer_ = this->create_wall_timer(20ms, std::bind(&SystemStateMonitorBridge::publish_system_state, this));
     }
 
