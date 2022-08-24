@@ -55,10 +55,7 @@ public:
                                             serialized_message.get_length(),
                                             NiFpga_InfiniteTimeout,
                                             NULL));
-
-      for (uint8_t i = 0; i < serialized_message.get_length(); i++) {
-        RCLCPP_INFO(rclcpp::get_logger("fpga"), "%d,  %d", i - 1, serialized_message.serialized_message[i]);
-      }
+      RCLCPP_DEBUG(rclcpp::get_logger("trigger_out_event_handler"), "Sent trigger out request for index %d", index);
 
       response->success = true;
     };
