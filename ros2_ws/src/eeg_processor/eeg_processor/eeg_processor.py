@@ -15,7 +15,7 @@ class EegProcessor(Node):
 
     def __init__(self):
         super().__init__('eeg_processor')
-        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
+        # self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
         
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
@@ -31,12 +31,10 @@ class EegProcessor(Node):
         self.client_futures = []
 
         self.start_device_client.call_async(StartDevice.Request())
-        # self.restart_experiment()
+        self.restart_experiment()
 
     def data_reader_callback(self, msg):
         pass
-        # self.get_logger().info("Timestamp: {} ms. First sample of experiment {} \n".format(msg.time, msg.first_sample_of_experiment))
-
 
     def trigger_reader_callback(self, msg):
 
@@ -44,13 +42,10 @@ class EegProcessor(Node):
             self.first_trigger_time = msg.time_us
 
             self.set_trigger_request(msg.index, msg.time_us)
-            self.start_experiment_client.call_async(StartExperiment.Request())
             self.client_futures.append(self.trigger_client.call_async(self.request))
 
         elif msg.index == 2:
-            self.stop_experiment_client.call_async(StopExperiment.Request())
             self.last_trigger_time = msg.time_us
-            self.get_logger().info("Time difference between triggers: {}".format(self.last_trigger_time))
             self.log_to_file(self.last_trigger_time)
 
     def log_to_file(self, time_difference):
@@ -58,7 +53,6 @@ class EegProcessor(Node):
             f.write(str(time_difference) + "\n")
 
     def set_trigger_request(self, index, time_us):
-        self.get_logger().info(f"event info time_us = {time_us + TIME_CONSTANT_US}")
         event_info = EventInfo()
         event_info.event_id = EVENT_ID
         event_info.wait_for_trigger = False
@@ -87,7 +81,7 @@ class EegProcessor(Node):
             for f in self.client_futures:
                 if f.done():
                     result = f.result()
-                    print("\n Result is {}\n".format(result))
+                    # print("\n Result is {}\n".format(result))
 
                 else:
                     incomplete_futures.append(f)
