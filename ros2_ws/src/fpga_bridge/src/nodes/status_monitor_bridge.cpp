@@ -23,11 +23,11 @@ NiFpga_mTMS_IndicatorU16 voltage_indicators[CHANNEL_COUNT] = {
 };
 
 NiFpga_mTMS_IndicatorU16 temperature_indicators[CHANNEL_COUNT] = {
-    NiFpga_mTMS_IndicatorU16_Channel1Temperature,
-    NiFpga_mTMS_IndicatorU16_Channel2Temperature,
-    NiFpga_mTMS_IndicatorU16_Channel3Temperature,
-    NiFpga_mTMS_IndicatorU16_Channel4Temperature,
-    NiFpga_mTMS_IndicatorU16_Channel5Temperature
+    NiFpga_mTMS_IndicatorU16_Coil1Temperature,
+    NiFpga_mTMS_IndicatorU16_Coil2Temperature,
+    NiFpga_mTMS_IndicatorU16_Coil3Temperature,
+    NiFpga_mTMS_IndicatorU16_Coil4Temperature,
+    NiFpga_mTMS_IndicatorU16_Coil5Temperature
 };
 
 class StatusMonitorBridge : public rclcpp::Node
