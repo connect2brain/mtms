@@ -13,6 +13,11 @@ void SerializedMessage::init(uint8_t channel) {
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
+void SerializedMessage::init() {
+  length = 0;
+  serialized_message[length++] = START_OF_MESSAGE;
+}
+
 void SerializedMessage::add_byte(uint8_t byte) {
   if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE || byte == CHANNEL_SWITCH_CHAR) {
     serialized_message[length++] = ESCAPE_CHARACTER;
