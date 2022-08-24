@@ -145,6 +145,21 @@ target_include_directories(stop_device_handler
 
 ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
 
+# Install disable checks handler.
+
+add_executable(disable_checks_handler
+        src/nodes/disable_checks_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(disable_checks_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(disable_checks_handler rclcpp std_msgs fpga_interfaces)
+
 # Install stimulation pulse event handler.
 
 add_executable(stimulation_pulse_event_handler
@@ -255,6 +270,7 @@ install(TARGETS
   event_trigger_handler
   feedback_monitor_bridge
   system_state_monitor_bridge
+  disable_checks_handler
   DESTINATION lib/${PROJECT_NAME})
 
 # Install the launch directory.
