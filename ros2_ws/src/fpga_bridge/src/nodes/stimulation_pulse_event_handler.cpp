@@ -19,7 +19,8 @@ void send_stimulation_pulse_event(const std::shared_ptr<fpga_interfaces::srv::Se
   uint8_t channel = stimulation_pulse_event.channel;
 
   /* Serialize event info. */
-  auto serialized_message = SerializedMessage(channel);
+  auto serialized_message = SerializedMessage();
+  serialized_message.init(channel);
 
   fpga_interfaces::msg::EventInfo event_info = stimulation_pulse_event.event_info;
 
