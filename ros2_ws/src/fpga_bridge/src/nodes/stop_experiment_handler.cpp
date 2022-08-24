@@ -12,7 +12,7 @@ void stop_experiment(const std::shared_ptr<fpga_interfaces::srv::StopExperiment:
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopexperiment, true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Stoped experiment");
+  RCLCPP_DEBUG(rclcpp::get_logger("fpga"), "Stoped experiment");
 }
 
 class StopExperiment : public rclcpp::Node
