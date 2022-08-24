@@ -118,8 +118,7 @@ class EegBridge : public rclcpp::Node {
       auto val = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0,(struct sockaddr*) &(this->socket_other), &(this->socket_length));
 
       if (val == -1) {
-
-        RCLCPP_INFO(this->get_logger(), "No data received");
+        RCLCPP_WARN(this->get_logger(), "No data received, reason: %s", strerror(errno));
 
         auto stream_msg = std_msgs::msg::Bool();
         stream_msg.data = false;
@@ -198,7 +197,7 @@ class EegBridge : public rclcpp::Node {
 
         trigger_msg.index = trigger_index;
         this->publisher_trigger_->publish(trigger_msg);
-        
+
         RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->latest_trigger_timestamp_);
         this->first_sample_of_experiment_ = true;
       }
@@ -238,7 +237,7 @@ class EegBridge : public rclcpp::Node {
       message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
       this->publisher_data_->publish(message);
-      
+
       auto stream_msg = std_msgs::msg::Bool();
       stream_msg.data = true;
       this->publisher_streaming_->publish(stream_msg);
