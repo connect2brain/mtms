@@ -46,7 +46,7 @@ private:
         read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 0, NiFpga_InfiniteTimeout,
                                         &elements_remaining);
         if (NiFpga_IsError(read_status)) {
-            RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d", read_status);
+            RCLCPP_ERROR(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d", read_status);
             return;
         }
 
@@ -55,7 +55,7 @@ private:
                                             &elements_remaining);
 
             if (NiFpga_IsError(read_status)) {
-                RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d",
+                RCLCPP_ERROR(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d",
                             read_status);
                 return;
             }
@@ -87,7 +87,7 @@ private:
         feedback.event_id = event_id;
         feedback.status = status_code;
 
-        RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
+        RCLCPP_DEBUG(rclcpp::get_logger("feedback_monitor_bridge"),
                     "Publishing data to %s feedback: {channel: %d, event_id: %d, status: %d}", event_type.data(),
                     channel, event_id, status_code);
 

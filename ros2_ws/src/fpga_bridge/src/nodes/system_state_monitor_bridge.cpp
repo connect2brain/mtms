@@ -52,6 +52,9 @@ private:
         auto system_state_msg = fpga_interfaces::msg::SystemState();
         system_state_msg.state = system_state_str;
         state_monitor_publisher_->publish(system_state_msg);
+
+        RCLCPP_DEBUG(rclcpp::get_logger("system_state_monitor_state"), "Publishing system state: %s", system_state_str.c_str());
+
     }
 
     rclcpp::TimerBase::SharedPtr timer_;
@@ -65,7 +68,7 @@ int main(int argc, char **argv) {
 
     rclcpp::init(argc, argv);
 
-    RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_bridge"), "System state monitor bridge ready.");
+    RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "System state monitor bridge ready.");
 
     rclcpp::spin(std::make_shared<SystemStateMonitorBridge>());
     rclcpp::shutdown();

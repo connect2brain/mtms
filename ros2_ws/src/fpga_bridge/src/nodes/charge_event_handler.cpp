@@ -55,10 +55,8 @@ public:
                                             NiFpga_InfiniteTimeout,
                                             NULL));
 
-      for (uint8_t i = 0; i < serialized_message.get_length(); i++) {
-        RCLCPP_INFO(rclcpp::get_logger("charge_event_handler"), "%d,  %d", i - 1,
-                    serialized_message.serialized_message[i]);
-      }
+
+      RCLCPP_DEBUG(rclcpp::get_logger("charge_event_handler"), "Sent charge request for channel %d", channel);
 
       response->success = true;
     };
