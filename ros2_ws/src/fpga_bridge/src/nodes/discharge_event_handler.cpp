@@ -18,7 +18,8 @@ void send_discharge_event(const std::shared_ptr<fpga_interfaces::srv::SendDischa
   uint8_t channel = discharge_event.channel;
 
   /* Serialize event info. */
-  auto serialized_message = SerializedMessage(channel);
+  auto serialized_message = SerializedMessage();
+  serialized_message.init(channel);
 
   fpga_interfaces::msg::EventInfo event_info = discharge_event.event_info;
 
