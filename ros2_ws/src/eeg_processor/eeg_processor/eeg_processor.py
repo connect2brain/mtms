@@ -2,8 +2,8 @@ import rclpy
 from rclpy.node import Node
 import time
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment
-from fpga_interfaces.msg import TriggerOutEvent, EventInfo
+from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, DisableChecks
+from fpga_interfaces.msg import TriggerOutEvent, EventInfo, SystemState
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -17,24 +17,48 @@ class EegProcessor(Node):
         super().__init__('eeg_processor')
         # self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
-        
+        self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state_monitor_state', self.system_state_callback, 10)
+
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
         self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
+
+        self.disable_checks_client = self.create_client(DisableChecks, '/fpga/disable_checks')
 
         self.request = SendTriggerOutEvent.Request()
 
         self.first_trigger_time = 0
         self.last_trigger_time = 0
 
+        self.system_state = "Not set"
+
         self.client_futures = []
 
+        self.init_device()
+
+    def init_device(self):
         self.start_device_client.call_async(StartDevice.Request())
+        
+        time.sleep(0.1)
+        
+        req = DisableChecks.Request()
+        req.enabled = False
+        self.disable_checks_client.call_async(req)
+        
+        time.sleep(0.1)
+
         self.restart_experiment()
 
     def data_reader_callback(self, msg):
         pass
+
+    def system_state_callback(self, msg):
+        self.system_state = msg.state
+
+    def wait_until_operational(self, timestep=0.1):
+        while self.system_state != "Operational":
+            time.sleep(timestep)
 
     def trigger_reader_callback(self, msg):
 
@@ -56,7 +80,7 @@ class EegProcessor(Node):
     def set_trigger_request(self, index, time_us):
         event_info = EventInfo()
         event_info.event_id = EVENT_ID
-        event_info.wait_for_trigger = False
+        event_info.execution_condition = 2
         event_info.time_us = time_us + TIME_CONSTANT_US
         event_info.delay_us = DELAY_US
 
