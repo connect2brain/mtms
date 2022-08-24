@@ -11,7 +11,7 @@ void SerializedMessage::init(uint8_t channel) {
   serialized_message[length++] = START_OF_MESSAGE;
 }
 
-void SerializedMessage::init_without_channel() {
+void SerializedMessage::init() {
   length = 0;
   serialized_message[length++] = START_OF_MESSAGE;
 }

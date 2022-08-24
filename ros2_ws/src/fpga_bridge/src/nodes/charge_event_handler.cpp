@@ -19,7 +19,7 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
 
   /* Serialize event info. */
   auto serialized_message = SerializedMessage();
-  serialized_message.init_without_channel();
+  serialized_message.init();
 
   fpga_interfaces::msg::EventInfo event_info = charge_event.event_info;
 
@@ -35,7 +35,7 @@ void send_charge_event(const std::shared_ptr<fpga_interfaces::srv::SendChargeEve
 
   /* Serialize charge event. */
 
-  //Charge event requires the channel here instead of the beginning of the message
+  // Charge event requires the channel here instead of the beginning of the message
   serialized_message.add_byte(channel);
 
   uint16_t target_voltage = charge_event.target_voltage;

@@ -53,7 +53,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/StartExperiment.srv"
         "srv/StopExperiment.srv"
 
-        "srv/SetChecks.srv"
+        "srv/DisableChecks.srv"
         )
 
 ament_package()
