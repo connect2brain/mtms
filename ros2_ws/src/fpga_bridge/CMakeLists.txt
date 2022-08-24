@@ -145,7 +145,7 @@ target_include_directories(stop_device_handler
 
 ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
 
-# Install stop device handler.
+# Install set chekcs handler.
 
 add_executable(set_checks_handler
         src/nodes/set_checks_handler.cpp
