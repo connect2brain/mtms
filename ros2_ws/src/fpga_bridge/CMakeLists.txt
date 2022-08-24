@@ -145,6 +145,21 @@ target_include_directories(stop_device_handler
 
 ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
 
+# Install stop device handler.
+
+add_executable(set_checks_handler
+        src/nodes/set_checks_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        )
+
+target_include_directories(set_checks_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(set_checks_handler rclcpp std_msgs fpga_interfaces)
+
 # Install stimulation pulse event handler.
 
 add_executable(stimulation_pulse_event_handler

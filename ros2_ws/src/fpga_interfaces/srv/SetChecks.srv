@@ -1,0 +1,7 @@
+# Disable checks
+#
+# Response: Boolean indicating if setting checks was successful
+
+bool enabled
+---
+bool success

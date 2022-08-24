@@ -61,6 +61,10 @@ def generate_launch_description():
         Node(
             package="fpga_bridge",
             executable="system_state_monitor_bridge"
+        ),
+        Node(
+            package="fpga_bridge",
+            executable="set_checks_handler"
         )
     ]
 
