@@ -12,7 +12,7 @@ void start_device(const std::shared_ptr<fpga_interfaces::srv::StartDevice::Reque
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Startdevice, true));
 
   response->success = true;
-  RCLCPP_DEBUG(rclcpp::get_logger("fpga"), "Started device");
+  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Started device");
 }
 
 class StartDevice : public rclcpp::Node

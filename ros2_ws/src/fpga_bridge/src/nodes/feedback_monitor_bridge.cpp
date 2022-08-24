@@ -87,7 +87,7 @@ private:
         feedback.event_id = event_id;
         feedback.status = status_code;
 
-        RCLCPP_DEBUG(rclcpp::get_logger("feedback_monitor_bridge"),
+        RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
                     "Publishing data to %s feedback: {channel: %d, event_id: %d, status: %d}", event_type.data(),
                     channel, event_id, status_code);
 

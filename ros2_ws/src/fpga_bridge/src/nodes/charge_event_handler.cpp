@@ -60,7 +60,7 @@ public:
                                             NULL));
 
 
-      RCLCPP_DEBUG(rclcpp::get_logger("charge_event_handler"), "Sent charge request for channel %d", channel);
+      RCLCPP_INFO(rclcpp::get_logger("charge_event_handler"), "Sent charge request for channel %d", channel);
 
       response->success = true;
     };
