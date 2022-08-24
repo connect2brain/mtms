@@ -6,13 +6,14 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     ld = LaunchDescription()
-    logger = LaunchConfiguration("log_level")
 
     log_arg = DeclareLaunchArgument(
         "log_level",
         default_value=["info"],
         description="Logging level",
     )
+
+    logger = LaunchConfiguration("log_level")
 
     node = Node(
             package="eeg",
