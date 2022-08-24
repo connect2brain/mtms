@@ -2,8 +2,8 @@
 
 uint16 event_id
 
-# If true, wait for an external event trigger to start the event.
-bool wait_for_trigger
+# When the event will be event executed.
+uint8 execution_condition
 
 # Time in microseconds when the event is triggered.
 uint64 time_us
