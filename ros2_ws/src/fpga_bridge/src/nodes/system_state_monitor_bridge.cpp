@@ -53,7 +53,7 @@ private:
     system_state_msg.state = system_state_str;
     state_monitor_publisher_->publish(system_state_msg);
 
-    RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "Publishing system state: %s",
+    RCLCPP_DEBUG(rclcpp::get_logger("system_state_monitor_state"), "Publishing system state: %s",
                  system_state_str.c_str());
 
   }
