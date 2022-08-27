@@ -16,7 +16,7 @@ def generate_launch_description():
     logger = LaunchConfiguration("log_level")
 
     node = Node(
-            package="eeg",
+            package="eeg_bridge",
             executable="eeg_bridge",
             name="eeg_bridge",
             output="screen",
