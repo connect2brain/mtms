@@ -32,6 +32,9 @@
 #define SAMPLE_PACKET_ID 2
 #define TRIGGER_PACKET_ID 3
 
+#define TRIGGER_A_IN 2
+#define TRIGGER_B_IN 8
+
 #define VERBOSE 0
 
 #include "rclcpp/rclcpp.hpp"
@@ -63,7 +66,7 @@ public:
 
     publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
     publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
-    publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("eeg/trigger_received", qos);
+    publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
     this->init_socket();
 
@@ -154,7 +157,7 @@ public:
     uint16_t bundles = this->buffer[10] << 8 | buffer[11];
     uint16_t num_channels = this->buffer[8] << 8 | buffer[9];
 
-    RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "channel count: %d", num_channels);
+    //RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "channel count: %d", num_channels);
 
     if (bundles != 1) {
       RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
@@ -171,8 +174,7 @@ public:
      * protocol where the triggers are sent as a part of EEG data instead of as separate packet */
     auto trigger_channel = num_channels > NUMBER_OF_CHANNELS;
 
-    //TODO: trigger_channel && trigger_channel != 0
-    if (trigger_channel) {
+    if (trigger_channel && get_trigger_package_from_buffer() != 0) {
       this->latest_trigger_timestamp_ = time;
       this->publish_trigger_from_buffer(time);
       this->first_sample_of_experiment_ = true;
@@ -234,35 +236,24 @@ public:
     }
   }
 
-  int get_byte(int number, int byte_index) {
-    if (byte_index > 0 && byte_index <= 32)
-      return (number & (1 << (byte_index - 1)));
-    else
-      return 0;
+  int get_trigger_package_from_buffer() {
+    auto index = FIRST_CHANNEL_INDEX + NUMBER_OF_CHANNELS * 3;
+
+    return (uint8_t) buffer[index] << 16 |
+           (uint8_t) buffer[index + 1] << 8 |
+           (uint8_t) buffer[index + 2];
   }
 
   void publish_trigger_from_buffer(uint64_t time) {
-    auto index = FIRST_CHANNEL_INDEX + NUMBER_OF_CHANNELS * 3;
-
-    // Does not matter which channel we use to receive the trigger information, so we use the first one
-    int first_trigger_channel_package = (uint8_t) buffer[index] << 16 |
-                                        (uint8_t) buffer[index + 1] << 8 |
-                                        (uint8_t) buffer[index + 2];
-
-
-    // Bits 1 - 2 = Trig A IN (1) and OUT (2)
-    // Bits 3 - 4 = Trig B IN (2) and OUT (4)
-    auto bit1 = get_byte(first_trigger_channel_package, 1);
-    auto bit3 = get_byte(first_trigger_channel_package, 3);
+    int trigger_channel_package = get_trigger_package_from_buffer();
 
     auto trigger_msg = mtms_interfaces::msg::Trigger();
 
-
-    if (bit1 == 1) {
+    if (trigger_channel_package == TRIGGER_A_IN) {
       trigger_msg.index = 1;
       first_trigger_timestamp_ = time;
       trigger_msg.time_us = 0;
-    } else if (bit3 == 1) {
+    } else if (trigger_channel_package == TRIGGER_B_IN) {
       trigger_msg.index = 2;
       trigger_msg.time_us = time - first_trigger_timestamp_;
     }
