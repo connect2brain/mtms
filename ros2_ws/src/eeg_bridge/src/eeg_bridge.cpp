@@ -175,6 +175,7 @@ public:
     auto trigger_channel = num_channels > NUMBER_OF_CHANNELS;
 
     if (trigger_channel && get_trigger_package_from_buffer() != 0) {
+      RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
       this->latest_trigger_timestamp_ = time;
       this->publish_trigger_from_buffer(time);
       this->first_sample_of_experiment_ = true;
