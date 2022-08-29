@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
 import time
+import gc
+
 from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, DisableChecks
 from fpga_interfaces.msg import TriggerOutEvent, EventInfo, SystemState
@@ -17,14 +19,14 @@ class EegProcessor(Node):
         super().__init__('eeg_processor')
         # self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
-        self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state_monitor_state', self.system_state_callback, 10)
+        # self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state_monitor_state', self.system_state_callback, 10)
 
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
         self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
-        self.disable_checks_client = self.create_client(DisableChecks, '/fpga/disable_checks')
+        # self.disable_checks_client = self.create_client(DisableChecks, '/fpga/disable_checks')
 
         self.request = SendTriggerOutEvent.Request()
 
@@ -37,40 +39,44 @@ class EegProcessor(Node):
 
         self.init_device()
 
+        if gc.isenabled():
+            gc.disable()
+
     def init_device(self):
-        self.start_device_client.call_async(StartDevice.Request())
-        
-        time.sleep(0.1)
-        
-        req = DisableChecks.Request()
-        req.enabled = False
-        self.disable_checks_client.call_async(req)
-        
-        time.sleep(0.1)
+        # req = DisableChecks.Request()
+        # req.enabled = True
+        # self.disable_checks_client.call_async(req)
+
+        # time.sleep(1)
+
+        # self.start_device_client.call_async(StartDevice.Request())
+        # self.wait_until_operational(1)
 
         self.restart_experiment()
+        self.get_logger().info('Experiment started')
+
 
     def data_reader_callback(self, msg):
         pass
 
     def system_state_callback(self, msg):
+        self.get_logger().info(f'Received state msg {msg.state}')
         self.system_state = msg.state
 
     def wait_until_operational(self, timestep=0.1):
         while self.system_state != "Operational":
+            self.get_logger().info('Waiting for system to be operational...')
             time.sleep(timestep)
 
     def trigger_reader_callback(self, msg):
-
         if msg.index == 1:
             self.first_trigger_time = msg.time_us
-
             self.set_trigger_request(msg.index, msg.time_us)
             self.client_futures.append(self.trigger_client.call_async(self.request))
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time_us
-            self.get_logger().info(f'Difference between triggers: {msg.time_us}us')
+            self.get_logger().info(f'Difference between triggers: {msg.time_us} us')
             self.log_to_file(self.last_trigger_time)
 
     def log_to_file(self, time_difference):
