@@ -7,12 +7,12 @@
 
 void disable_checks(const std::shared_ptr<fpga_interfaces::srv::DisableChecks::Request> request,
                     std::shared_ptr<fpga_interfaces::srv::DisableChecks::Response> response) {
-  auto enabled = request->enabled;
+  auto disabled = request->disabled;
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteBool(session,
                                       NiFpga_mTMS_ControlBool_Disablechecks,
-                                      enabled));
+                                      disabled));
 
   response->success = true;
 
