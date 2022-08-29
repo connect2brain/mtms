@@ -2,10 +2,11 @@ import rclpy
 from rclpy.node import Node
 import time
 import gc
+import numpy as np
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, DisableChecks
-from fpga_interfaces.msg import TriggerOutEvent, EventInfo, SystemState
+from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, SendStimulationPulseEvent
+from fpga_interfaces.msg import TriggerOutEvent, EventInfo, SystemState, StimulationPulsePiece, StimulationPulseEvent
 
 TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -13,15 +14,33 @@ EVENT_ID = 1
 TIME_CONSTANT_US = int(1e6) * 1
 DELAY_US = 0
 
+pulse_event = {
+    'stimulation_pulse_event': {
+        'pieces': [
+            {'mode': 4, 'duration_in_ticks': 10000},
+            {'mode': 3, 'duration_in_ticks': 30000},
+            {'mode': 2, 'duration_in_ticks': 50000}
+        ],
+        'channel': 2,
+        'event_info': {
+            'event_id': 1,
+            'execution_cond': 2,
+            'time_us': 10000000,
+            'delay_us': 0
+        }
+    }
+}
+
 class EegProcessor(Node):
 
     def __init__(self):
         super().__init__('eeg_processor')
-        # self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
-        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
+        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
+        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback_pulse_artefact, 10)
         # self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state_monitor_state', self.system_state_callback, 10)
 
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
+        self.stimulation_pulse_client = self.create_client(SendStimulationPulseEvent, '/fpga/send_trigger_out_event')
         self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
@@ -29,6 +48,7 @@ class EegProcessor(Node):
         # self.disable_checks_client = self.create_client(DisableChecks, '/fpga/disable_checks')
 
         self.request = SendTriggerOutEvent.Request()
+        self.stimulation_request = SendStimulationPulseEvent.Request()
 
         self.first_trigger_time = 0
         self.last_trigger_time = 0
@@ -37,10 +57,19 @@ class EegProcessor(Node):
 
         self.client_futures = []
 
+        self.eeg_data_mean = 0
+        self.eeg_data = []
+        self.eeg_length = 20
+        self.eeg_threshold = 250
+        self.signal_out_start = None
+
         self.init_device()
 
         if gc.isenabled():
             gc.disable()
+
+    def eeg_mean(self):
+        return np.mean(self.eeg_data)
 
     def init_device(self):
         # req = DisableChecks.Request()
@@ -55,9 +84,19 @@ class EegProcessor(Node):
         self.restart_experiment()
         self.get_logger().info('Experiment started')
 
-
     def data_reader_callback(self, msg):
-        pass
+        data_received_at = self.get_clock().now().nanoseconds / 1000
+        new_data = msg.channel_datapoint[4]
+        self.eeg_data.append(new_data)
+        if self.eeg_data > self.eeg_length:
+            self.eeg_data.pop(0)
+
+        self.eeg_data_mean = self.eeg_mean()
+
+        if abs(new_data - self.eeg_data_mean) > self.eeg_threshold:
+            diff = data_received_at - self.signal_out_start
+            self.get_logger().info(f"Received TMS pulse artefact, time difference from signal out: {diff} us")
+            self.log_to_file(diff)
 
     def system_state_callback(self, msg):
         self.get_logger().info(f'Received state msg {msg.state}')
@@ -67,6 +106,40 @@ class EegProcessor(Node):
         while self.system_state != "Operational":
             self.get_logger().info('Waiting for system to be operational...')
             time.sleep(timestep)
+
+    def trigger_reader_callback_pulse_artefact(self, msg):
+        event_info = EventInfo()
+        event_info.event_id = EVENT_ID
+        event_info.execution_condition = 2
+        event_info.time_us = 0
+        event_info.delay_us = DELAY_US
+
+        piece1 = StimulationPulsePiece()
+        piece1.duration_in_ticks = 10000
+        piece1.mode = 4
+
+        piece2 = StimulationPulsePiece()
+        piece2.duration_in_ticks = 30000
+        piece2.mode = 3
+
+        piece3 = StimulationPulsePiece()
+        piece3.duration_in_ticks = 50000
+        piece3.mode = 2
+
+        event = StimulationPulseEvent()
+        event.event_info = event_info
+        event.channel = 5
+        event.pieces = [
+            piece1,
+            piece2,
+            piece3
+        ]
+        
+        self.stimulation_request.stimulation_pulse_event = event
+
+        self.stimulation_pulse_client.call_async(self.stimulation_request)
+        self.signal_out_start = self.get_clock().now().nanoseconds / 1000
+
 
     def trigger_reader_callback(self, msg):
         if msg.index == 1:
