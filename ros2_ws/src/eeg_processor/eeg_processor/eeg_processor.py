@@ -61,7 +61,7 @@ class EegProcessor(Node):
         self.eeg_data = []
         self.eeg_length = 20
         self.eeg_threshold = 250
-        self.signal_out_start = None
+        self.pulse_sent_at = None
 
         self.init_device()
 
@@ -94,8 +94,12 @@ class EegProcessor(Node):
         self.eeg_data_mean = self.eeg_mean()
 
         if abs(new_data - self.eeg_data_mean) > self.eeg_threshold:
-            diff = data_received_at - self.signal_out_start
-            self.get_logger().info(f"Received TMS pulse artefact, time difference from signal out: {diff} us")
+            if self.pulse_sent_at is None:
+                self.get_logger().info("Received TMS artefact before pulse_sent_at was set ")
+                return
+
+            diff = data_received_at - self.pulse_sent_at
+            self.get_logger().info(f"Received TMS pulse artefact, time difference from pulse_sent_at: {diff} us")
             self.log_to_file(diff)
 
     def system_state_callback(self, msg):
@@ -109,7 +113,7 @@ class EegProcessor(Node):
 
     def trigger_reader_callback_pulse_artefact(self, msg):
         event_info = EventInfo()
-        event_info.event_id = EVENT_ID
+        event_info.event_id = 1
         event_info.execution_condition = 2
         event_info.time_us = 0
         event_info.delay_us = DELAY_US
@@ -138,7 +142,7 @@ class EegProcessor(Node):
         self.stimulation_request.stimulation_pulse_event = event
 
         self.stimulation_pulse_client.call_async(self.stimulation_request)
-        self.signal_out_start = self.get_clock().now().nanoseconds / 1000
+        self.pulse_sent_at = self.get_clock().now().nanoseconds / 1000
 
 
     def trigger_reader_callback(self, msg):
