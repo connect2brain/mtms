@@ -5,18 +5,18 @@ US_TO_TICKS_CONVERSION_RATIO = 40
 # Channel modes and times in order
 mode_list = [
     [0, 2, 1],
-    [0, 2, 1],
-    [0, 2, 1],
-    [0, 2, 1],
-    [0, 2, 1]
+    #[0, 2, 1],
+    #[0, 2, 1],
+    #[0, 2, 1],
+    #[0, 2, 1]
 ]
 
 time_list = [
     [60, 30, 37.0],
-    [60, 30, 37.0],
-    [60, 30, 39.1],
-    [60, 30, 39.1],
-    [60, 30, 44.4]
+    #[60, 30, 37.0],
+    #[60, 30, 39.1],
+    #[60, 30, 39.1],
+    #[60, 30, 44.4]
 ]
 
 # Generate standard pulse command, values in us
@@ -38,7 +38,6 @@ def generate_standard_pulse_command():
         event_info.event_id = i
         event_info.execution_condition = 2
         event_info.time_us = 0
-        event_info.delay_us = 0
 
         event = StimulationPulseEvent()
         event.event_info = event_info
@@ -57,7 +56,6 @@ def generate_standard_charge_command(voltage):
         event_info.event_id = i
         event_info.execution_condition = 2
         event_info.time_us = 0
-        event_info.delay_us = 0
 
         event = ChargeEvent()
         event.channel = i + 1
