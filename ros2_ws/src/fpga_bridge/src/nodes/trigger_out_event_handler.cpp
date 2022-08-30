@@ -28,13 +28,11 @@ public:
       uint16_t event_id = event_info.event_id;
       uint8_t execution_condition = event_info.execution_condition;
       uint64_t time_us = event_info.time_us;
-      uint32_t delay_us = event_info.delay_us;
 
       serialized_message.init(index);
       serialized_message.add_uint16(event_id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(time_us);
-      serialized_message.add_uint32(delay_us);
 
       /* Serialize trigger out . */
       uint32_t duration_us = (uint8_t) trigger_out_event.duration_us;
