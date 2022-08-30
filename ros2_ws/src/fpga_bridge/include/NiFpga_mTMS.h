@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "F996BEF312A556657017B8790BA0DEC5";
+static const char* const NiFpga_mTMS_Signature = "D7D0A31ED1917EC637F5D0935B41E3BE";
 
 #if NiFpga_Cpp
 extern "C"
@@ -111,6 +111,18 @@ typedef enum
    NiFpga_mTMS_ControlBool_Stopdevice = 0x1800A,
    NiFpga_mTMS_ControlBool_Stopexperiment = 0x1802E
 } NiFpga_mTMS_ControlBool;
+
+typedef enum
+{
+   NiFpga_mTMS_ControlU8_Maximumpulsespertimepulses = 0x180F2
+} NiFpga_mTMS_ControlU8;
+
+typedef enum
+{
+   NiFpga_mTMS_ControlU16_Maximumpulsedurationticks = 0x180EA,
+   NiFpga_mTMS_ControlU16_Maximumpulsespertimetimems = 0x180F6,
+   NiFpga_mTMS_ControlU16_Maximumrisingfallingdifferenceticks = 0x180EE
+} NiFpga_mTMS_ControlU16;
 
 typedef enum
 {
