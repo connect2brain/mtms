@@ -253,6 +253,18 @@ target_include_directories(feedback_monitor_bridge
 
 ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
+add_executable(settings_handler
+        src/nodes/settings_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c)
+
+target_include_directories(settings_handler
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(settings_handler rclcpp std_msgs fpga_interfaces)
+
 
 install(TARGETS
   run_fpga
@@ -271,6 +283,7 @@ install(TARGETS
   feedback_monitor_bridge
   system_state_monitor_bridge
   disable_checks_handler
+  settings_handler
   DESTINATION lib/${PROJECT_NAME})
 
 # Install the launch directory.
