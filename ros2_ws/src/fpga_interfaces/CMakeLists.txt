@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/event/StimulationPulseEvent.msg"
         "msg/event/TriggerOutEvent.msg"
         "msg/event/EventInfo.msg"
+        "msg/Settings.msg"
 
         "msg/SafetyMonitorErrors.msg"
         "msg/SafetyMonitorState.msg"
@@ -54,6 +55,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/StopExperiment.srv"
 
         "srv/DisableChecks.srv"
+        "srv/SendSettings.srv"
         )
 
 ament_package()

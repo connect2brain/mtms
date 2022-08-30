@@ -4,7 +4,7 @@ US_TO_TICKS_CONVERSION_RATIO = 40
 
 # Channel modes and times in order
 mode_list = [
-    [0, 2, 1],
+    [1, 2, 3],
     #[0, 2, 1],
     #[0, 2, 1],
     #[0, 2, 1],
