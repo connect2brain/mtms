@@ -31,7 +31,8 @@ def generate_launch_description():
         "feedback_monitor_bridge",
         "system_state_monitor_bridge",
         "status_monitor_bridge",
-        "disable_checks_handler"
+        "disable_checks_handler",
+        "settings_handler"
     ]
 
     for node_executable in node_executables:
