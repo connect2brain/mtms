@@ -16,7 +16,7 @@ void disable_checks(const std::shared_ptr<fpga_interfaces::srv::DisableChecks::R
 
   response->success = true;
 
-  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Disable checks: %s", enabled ? "true" : "false");
+  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Disable checks: %s", disabled ? "true" : "false");
 }
 
 class DisableChecksHandler : public rclcpp::Node {

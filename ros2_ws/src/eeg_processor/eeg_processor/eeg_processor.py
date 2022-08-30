@@ -14,7 +14,6 @@ TRIGGER_DURATION_US = 100
 SAMPLING_INTERVAL = 0.0002
 EVENT_ID = 1
 TIME_CONSTANT_US = int(1e6) * 1
-DELAY_US = 0
 
 
 class EegProcessor(Node):
@@ -52,11 +51,12 @@ class EegProcessor(Node):
         self.pulse_sent_at = None
 
         self.pulse_events = generate_standard_pulse_command()
-        self.charge_events = generate_standard_charge_command(100)
+        self.get_logger().info(f"{self.pulse_events[0]}")
+        self.charge_events = generate_standard_charge_command(10)
         self.init_device()
 
-        if gc.isenabled():
-            gc.disable()
+        # if gc.isenabled():
+        #     gc.disable()
 
         self.send_charge_events()
 
@@ -114,7 +114,7 @@ class EegProcessor(Node):
         for event in self.pulse_events:
             self.stimulation_request.stimulation_pulse_event = event
             self.stimulation_pulse_client.call_async(self.stimulation_request)
-            self.get_logger().info(f"Sent stimulation request for channel {event.channel}")
+            self.get_logger().info(f"Sent stimulation request for channel {event.channel}: {event}")
 
         self.pulse_sent_at = self.get_clock().now().nanoseconds / 1000
 
@@ -138,7 +138,6 @@ class EegProcessor(Node):
         event_info.event_id = EVENT_ID
         event_info.execution_condition = 2
         event_info.time_us = time_us + TIME_CONSTANT_US
-        event_info.delay_us = DELAY_US
 
         trigger_event = TriggerOutEvent()
         trigger_event.index = 3
