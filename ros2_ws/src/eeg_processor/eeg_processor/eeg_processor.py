@@ -44,10 +44,6 @@ class EegProcessor(Node):
 
         self.client_futures = []
 
-        self.eeg_data_mean = 0
-        self.eeg_data = []
-        self.eeg_length = 20
-        self.eeg_threshold = 250000
         self.pulse_sent_at = None
         self.artifact_detected = False
 
@@ -57,9 +53,6 @@ class EegProcessor(Node):
         self.charge_events = generate_standard_charge_command(1200)
         self.timed_charge_events = generate_timed_charges(100, 1200)
         self.init_device()
-
-        # if gc.isenabled():
-        #     gc.disable()
 
         self.send_charge_events()
         #time.sleep(5)
@@ -73,10 +66,6 @@ class EegProcessor(Node):
         self.create_timer(2, self.timer_callback)
         self.set_trigger_request(3, 0)
         self.pulses_sent = 0
-
-
-    def eeg_mean(self):
-        return np.mean(self.eeg_data)
 
     def init_device(self):
         # req = DisableChecks.Request()
