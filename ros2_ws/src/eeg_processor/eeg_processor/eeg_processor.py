@@ -8,7 +8,7 @@ from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, SendStimulationPulseEvent, SendChargeEvent
 from fpga_interfaces.msg import TriggerOutEvent, EventInfo, SystemState, StimulationPulsePiece, StimulationPulseEvent
 
-from .pulses import generate_standard_pulse_command, generate_standard_charge_command
+from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges
 
 TRIGGER_DURATION_US = 100
 SAMPLING_INTERVAL = 0.0002
@@ -49,16 +49,31 @@ class EegProcessor(Node):
         self.eeg_length = 20
         self.eeg_threshold = 250000
         self.pulse_sent_at = None
+        self.artifact_detected = False
 
         self.pulse_events = generate_standard_pulse_command()
+        self.timed_pulse_events = generate_timed_pulses(100)
         self.get_logger().info(f"{self.pulse_events[0]}")
-        self.charge_events = generate_standard_charge_command(10)
+        self.charge_events = generate_standard_charge_command(1200)
+        self.timed_charge_events = generate_timed_charges(100, 1200)
         self.init_device()
 
         # if gc.isenabled():
         #     gc.disable()
 
         self.send_charge_events()
+        #time.sleep(5)
+        #self.send_timed_pulse_commands()
+        #self.send_timed_charge_events()
+
+        self.start_time = self.get_clock().now().nanoseconds / 1000
+
+        time.sleep(3)
+
+        self.create_timer(2, self.timer_callback)
+        self.set_trigger_request(3, 0)
+        self.pulses_sent = 0
+
 
     def eeg_mean(self):
         return np.mean(self.eeg_data)
@@ -79,21 +94,23 @@ class EegProcessor(Node):
     def data_reader_callback(self, msg):
         data_received_at = self.get_clock().now().nanoseconds / 1000
         new_data = msg.channel_datapoint[4]
-        self.eeg_data.append(new_data)
-        if len(self.eeg_data) > self.eeg_length:
-            self.eeg_data.pop(0)
+        
+        #if self.pulse_sent_at is not None:
+        # self.log_to_file(new_data)
 
-        self.eeg_data_mean = self.eeg_mean()
-        # self.get_logger().info(f"EEG mean: {self.eeg_data_mean}")
-
-        if abs(new_data - self.eeg_data_mean) > self.eeg_threshold:
+        if abs(new_data) > 20000 and not self.artifact_detected:
+            #self.get_logger().info(f"Artifact diff from start time: {data_received_at - self.start_time}")
             if self.pulse_sent_at is None:
-                self.get_logger().warn("Received TMS artifact before pulse_sent_at was set ")
+                self.get_logger().warn(f"Received TMS artifact before pulse_sent_at was set {new_data}")
                 return
 
             diff = data_received_at - self.pulse_sent_at
+
+            self.artifact_detected = True
             self.get_logger().info(f"Received TMS pulse artifact, time difference from pulse_sent_at: {diff} us")
             self.log_to_file(diff)
+
+            self.send_charge_events()
 
     def system_state_callback(self, msg):
         self.get_logger().info(f'Received state msg {msg.state}')
@@ -110,13 +127,49 @@ class EegProcessor(Node):
             self.charge_client.call_async(self.charge_request)
             self.get_logger().info(f"Sent charge request for channel {event.channel} {event.target_voltage}V")
 
+    def send_timed_charge_events(self):
+        for event in self.timed_charge_events:
+            self.charge_request.charge_event = event
+            self.charge_client.call_async(self.charge_request)
+            self.get_logger().info(f"Sent charge request for channel {event.channel} {event.target_voltage}V")
+   
+
+    def send_timed_pulse_commands(self):
+        for event in self.timed_pulse_events:
+            self.stimulation_request.stimulation_pulse_event = event
+            self.stimulation_pulse_client.call_async(self.stimulation_request)
+            self.get_logger().info(f"Sent stimulation request for channel {event.channel}: {event.event_info.event_id}")
+
+
+    def timer_callback(self):
+        self.trigger_client.call_async(self.request)
+        self.get_logger().info(f"Sent trigger out for index {self.request.trigger_out_event.index}")
+
+        for event in self.pulse_events:
+            self.stimulation_request.stimulation_pulse_event = event
+            self.stimulation_pulse_client.call_async(self.stimulation_request)
+            self.get_logger().info(f"Sent stimulation request for channel {event.channel}")
+            self.get_logger().info(f"Pulse count {self.pulses_sent}")
+            self.pulses_sent += 1
+        
+        time.sleep(0.1)
+
+        for event in self.charge_events:
+            self.charge_request.charge_event = event
+            self.charge_client.call_async(self.charge_request)
+            self.get_logger().info(f"Sent charge request for channel {event.channel} {event.target_voltage}V")
+
     def trigger_reader_callback_pulse_artifact(self, msg):
         for event in self.pulse_events:
             self.stimulation_request.stimulation_pulse_event = event
             self.stimulation_pulse_client.call_async(self.stimulation_request)
             self.get_logger().info(f"Sent stimulation request for channel {event.channel}: {event}")
+            time.sleep(0.1)
+            self.send_charge_events()
+
 
         self.pulse_sent_at = self.get_clock().now().nanoseconds / 1000
+        self.artifact_detected = False
 
     def trigger_reader_callback(self, msg):
         if msg.index == 1:
@@ -140,7 +193,7 @@ class EegProcessor(Node):
         event_info.time_us = time_us + TIME_CONSTANT_US
 
         trigger_event = TriggerOutEvent()
-        trigger_event.index = 3
+        trigger_event.index = 1
         trigger_event.duration_us = TRIGGER_DURATION_US
         trigger_event.event_info = event_info
 
