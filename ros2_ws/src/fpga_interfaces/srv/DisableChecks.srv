@@ -2,6 +2,6 @@
 #
 # Response: Boolean indicating if setting checks was successful
 
-bool enabled
+bool disabled
 ---
 bool success

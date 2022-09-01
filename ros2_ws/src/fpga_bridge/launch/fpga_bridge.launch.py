@@ -1,74 +1,48 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
     ld = LaunchDescription()
 
-    nodes = [
-        Node(
-            package="fpga_bridge",
-            executable="run_fpga"
-        ),
-        #Node(
-        #    package="fpga_bridge",
-        #    executable="safety_monitor_bridge"
-        #),
-        #Node(
-        #    package="fpga_bridge",
-        #    executable="discharge_controller_bridge"
-        #),
-        Node(
-            package="fpga_bridge",
-            executable="start_device_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="stop_device_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="start_experiment_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="stop_experiment_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="stimulation_pulse_event_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="trigger_out_event_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="charge_event_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="discharge_event_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="event_trigger_handler"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="feedback_monitor_bridge"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="system_state_monitor_bridge"
-        ),
-        Node(
-            package="fpga_bridge",
-            executable="disable_checks_handler"
-        )
+    log_arg = DeclareLaunchArgument(
+        "log_level",
+        default_value=["info"],
+        description="Logging level",
+    )
+
+    logger = LaunchConfiguration("log_level")
+
+    node_executables = [
+        "run_fpga",
+        #"safety_monitor_bridge",
+        #"discharge_controller_bridge",
+        "start_device_handler",
+        "stop_device_handler",
+        "start_experiment_handler",
+        "stop_experiment_handler",
+        "stimulation_pulse_event_handler",
+        "trigger_out_event_handler",
+        "charge_event_handler",
+        "discharge_event_handler",
+        "event_trigger_handler",
+        "feedback_monitor_bridge",
+        "system_state_monitor_bridge",
+        "status_monitor_bridge",
+        "disable_checks_handler",
+        "settings_handler"
     ]
 
-    for node in nodes:
+    for node_executable in node_executables:
+        node = Node(
+            package="fpga_bridge",
+            executable=node_executable,
+            arguments=['--ros-args', '--log-level', logger]
+        )
         ld.add_action(node)
+
+    ld.add_action(log_arg)
 
     return ld
