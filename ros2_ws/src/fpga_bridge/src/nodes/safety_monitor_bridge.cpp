@@ -8,6 +8,8 @@
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
+#include "memory_utils.h"
+#include "scheduling_utils.h"
 
 #define CHECK_BIT(var,pos) (((var)>>(pos)) & 1)
 
@@ -132,10 +134,14 @@ int main(int argc, char **argv)
   }
 
   rclcpp::init(argc, argv);
-
+  auto node = std::make_shared<SafetyMonitorBridge>();
   RCLCPP_INFO(rclcpp::get_logger("safety_monitor_bridge"), "Safety monitor bridge ready.");
-
-  rclcpp::spin(std::make_shared<SafetyMonitorBridge>());
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
+#endif
+  rclcpp::spin(node);
   rclcpp::shutdown();
 
   close_fpga();
