@@ -6,7 +6,7 @@ from mtms_interfaces.msg import EegDatapoint, Trigger
 from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, SendStimulationPulseEvent, SendChargeEvent
 from fpga_interfaces.msg import TriggerOutEvent, EventInfo
 
-TRIGGER_DURATION_US = 100
+TRIGGER_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 EVENT_ID = 1
 TIME_CONSTANT_US = int(1e6) * 1
