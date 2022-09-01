@@ -30,8 +30,7 @@ ament_target_dependencies(run_fpga rclcpp std_msgs fpga_interfaces)
 add_executable(discharge_controller_bridge
   src/nodes/discharge_controller_bridge.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c
-)
+  src/lib/NiFpga.c)
 
 target_include_directories(discharge_controller_bridge
   PUBLIC
@@ -45,8 +44,7 @@ ament_target_dependencies(discharge_controller_bridge rclcpp std_msgs fpga_inter
 add_executable(safety_monitor_bridge
   src/nodes/safety_monitor_bridge.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c
-)
+  src/lib/NiFpga.c)
 
 target_include_directories(safety_monitor_bridge
   PUBLIC
@@ -60,8 +58,7 @@ ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 add_executable(system_state_monitor_bridge
         src/nodes/system_state_monitor_bridge.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+        src/lib/NiFpga.c)
 
 target_include_directories(system_state_monitor_bridge
         PUBLIC
@@ -75,8 +72,7 @@ ament_target_dependencies(system_state_monitor_bridge rclcpp std_msgs fpga_inter
 add_executable(status_monitor_bridge
         src/nodes/status_monitor_bridge.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+        src/lib/NiFpga.c)
 
 target_include_directories(status_monitor_bridge
         PUBLIC
@@ -88,10 +84,9 @@ ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
 # Install start device handler.
 
 add_executable(start_device_handler
-        src/nodes/start_device_handler.cpp
+  src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c
-)
+  src/lib/NiFpga.c)
 
 target_include_directories(start_device_handler
   PUBLIC
@@ -105,8 +100,7 @@ ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
 add_executable(start_experiment_handler
         src/nodes/start_experiment_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+        src/lib/NiFpga.c)
 
 target_include_directories(start_experiment_handler
         PUBLIC
@@ -120,8 +114,7 @@ ament_target_dependencies(start_experiment_handler rclcpp std_msgs fpga_interfac
 add_executable(stop_experiment_handler
         src/nodes/stop_experiment_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+        src/lib/NiFpga.c)
 
 target_include_directories(stop_experiment_handler
         PUBLIC
@@ -135,8 +128,7 @@ ament_target_dependencies(stop_experiment_handler rclcpp std_msgs fpga_interface
 add_executable(stop_device_handler
         src/nodes/stop_device_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+        src/lib/NiFpga.c)
 
 target_include_directories(stop_device_handler
         PUBLIC
@@ -167,7 +159,7 @@ add_executable(stimulation_pulse_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(stimulation_pulse_event_handler
   PUBLIC
@@ -179,11 +171,11 @@ ament_target_dependencies(stimulation_pulse_event_handler rclcpp std_msgs fpga_i
 # Install trigger out pulse event handler.
 
 add_executable(trigger_out_event_handler
-        src/nodes/trigger_out_event_handler.cpp
+  src/nodes/trigger_out_event_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(trigger_out_event_handler
   PUBLIC
@@ -199,7 +191,7 @@ add_executable(charge_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(charge_event_handler
   PUBLIC
@@ -215,7 +207,7 @@ add_executable(discharge_event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(discharge_event_handler
   PUBLIC
@@ -230,7 +222,7 @@ add_executable(event_trigger_handler
   src/nodes/event_trigger_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-)
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(event_trigger_handler
   PUBLIC
@@ -239,19 +231,29 @@ target_include_directories(event_trigger_handler
 
 ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
 
-
 add_executable(feedback_monitor_bridge
-        src/nodes/feedback_monitor_bridge.cpp
-        src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        )
+  src/nodes/feedback_monitor_bridge.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c)
 
 target_include_directories(feedback_monitor_bridge
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interfaces)
+
+add_executable(settings_handler
+        src/nodes/settings_handler.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c)
+
+target_include_directories(settings_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(settings_handler rclcpp std_msgs fpga_interfaces)
 
 
 install(TARGETS
@@ -271,6 +273,7 @@ install(TARGETS
   feedback_monitor_bridge
   system_state_monitor_bridge
   disable_checks_handler
+  settings_handler
   DESTINATION lib/${PROJECT_NAME})
 
 # Install the launch directory.

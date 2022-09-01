@@ -2,7 +2,9 @@
 
 #include "serdes.h"
 
-SerializedMessage::SerializedMessage(){}
+SerializedMessage::SerializedMessage() {
+  serialized_message = std::vector<uint8_t>(MAX_SERIALIZED_MESSAGE_LENGTH, 0);
+}
 
 void SerializedMessage::init(uint8_t channel) {
   length = 0;
@@ -19,7 +21,7 @@ void SerializedMessage::init() {
 void SerializedMessage::add_byte(uint8_t byte) {
   if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE || byte == CHANNEL_SWITCH_CHAR) {
     serialized_message[length++] = ESCAPE_CHARACTER;
-    serialized_message[length++] = byte^TRANSPARENCY_MODIFIER;
+    serialized_message[length++] = byte ^ TRANSPARENCY_MODIFIER;
   } else {
     serialized_message[length++] = byte;
   }

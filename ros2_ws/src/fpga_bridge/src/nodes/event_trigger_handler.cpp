@@ -14,7 +14,7 @@ void send_event_trigger(const std::shared_ptr<fpga_interfaces::srv::SendEventTri
                                       true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Sent the event trigger");
+  RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Sent event trigger");
 }
 
 class SendEventTriggerHandler : public rclcpp::Node
