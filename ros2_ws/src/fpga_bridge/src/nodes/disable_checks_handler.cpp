@@ -6,37 +6,33 @@
 #include "fpga.h"
 
 void disable_checks(const std::shared_ptr<fpga_interfaces::srv::DisableChecks::Request> request,
-          std::shared_ptr<fpga_interfaces::srv::DisableChecks::Response> response)
-{
-  auto enabled = request->enabled;
+                    std::shared_ptr<fpga_interfaces::srv::DisableChecks::Response> response) {
+  auto disabled = request->disabled;
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteBool(session,
                                       NiFpga_mTMS_ControlBool_Disablechecks,
-                                      enabled));
+                                      disabled));
 
   response->success = true;
 
-  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Disable checks: %s", enabled ? "true" : "false");
+  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Disable checks: %s", disabled ? "true" : "false");
 }
 
-class DisableChecksHandler : public rclcpp::Node
-{
-  public:
-    DisableChecksHandler()
-    : Node("disable_checks_handler")
-    {
-      disable_checks_service_ = this->create_service<fpga_interfaces::srv::DisableChecks>("/fpga/disable_checks", disable_checks);
-    }
+class DisableChecksHandler : public rclcpp::Node {
+public:
+  DisableChecksHandler()
+      : Node("disable_checks_handler") {
+    disable_checks_service_ = this->create_service<fpga_interfaces::srv::DisableChecks>("/fpga/disable_checks",
+                                                                                        disable_checks);
+  }
 
-  private:
-    rclcpp::Service<fpga_interfaces::srv::DisableChecks>::SharedPtr disable_checks_service_;
+private:
+  rclcpp::Service<fpga_interfaces::srv::DisableChecks>::SharedPtr disable_checks_service_;
 };
 
-int main(int argc, char **argv)
-{
-  if (!init_fpga())
-  {
+int main(int argc, char **argv) {
+  if (!init_fpga()) {
     return 1;
   }
 
