@@ -44,15 +44,6 @@ class EegProcessor(Node):
     def data_reader_callback(self, msg):
         pass
 
-    def system_state_callback(self, msg):
-        self.get_logger().info(f'Received state msg {msg.state}')
-        self.system_state = msg.state
-
-    def wait_until_operational(self, timestep=0.1):
-        while self.system_state != "Operational":
-            self.get_logger().info('Waiting for system to be operational...')
-            time.sleep(timestep)
-
     def trigger_reader_callback(self, msg):
         if msg.index == 1:
             self.first_trigger_time = msg.time_us
