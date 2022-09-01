@@ -157,8 +157,6 @@ public:
     uint16_t bundles = this->buffer[10] << 8 | buffer[11];
     uint16_t num_channels = this->buffer[8] << 8 | buffer[9];
 
-    //RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "channel count: %d", num_channels);
-
     if (bundles != 1) {
       RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
     }
