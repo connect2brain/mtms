@@ -9,12 +9,13 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
+find_package(fpga_interfaces REQUIRED)
 
 find_package(PythonLibs REQUIRED) # find_package(Python COMPONENTS Development REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 add_executable(data_processor src/data_processor.cpp src/processor.cpp src/headers/processor.h src/python_processor.cpp src/headers/python_processor.h)
-ament_target_dependencies(data_processor rclcpp std_msgs mtms_interfaces)
+ament_target_dependencies(data_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
 target_link_libraries(data_processor ${PYTHON_LIBRARIES})
 
