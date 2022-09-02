@@ -41,8 +41,6 @@ int main(int argc, char **argv)
   auto node = std::make_shared<StartDevice>();
   RCLCPP_INFO(rclcpp::get_logger("start_device_handler"), "Start device handler ready.");
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
   rclcpp::spin(node);
