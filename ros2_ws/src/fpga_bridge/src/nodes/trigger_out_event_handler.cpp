@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
   RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Trigger out event handler ready.");
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "setting memory opt");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
