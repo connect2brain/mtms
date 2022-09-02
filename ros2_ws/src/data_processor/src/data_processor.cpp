@@ -6,6 +6,10 @@
 
 using namespace std::chrono_literals;
 
+double fRand(double fMin, double fMax) {
+  double f = (double) rand() / RAND_MAX;
+  return fMin + f * (fMax - fMin);
+}
 
 class DataProcessor : public rclcpp::Node {
 public:
@@ -24,15 +28,27 @@ public:
     }
 
     auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-      processor->data_received(13);
+      processor->data_received(*message);
     };
 
     eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                           10,
                                                                                           subscription_callback);
-
+    mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
+    for (auto i = 0; i < 62; i++) {
+      message.channel_datapoint.push_back(fRand(0, 100));
+    }
     processor->init();
-    processor->data_received(13);
+    auto events = processor->data_received(message);
+
+    for (auto event: events) {
+      std::cout << event.pieces.size() << std::endl;
+      std::cout << event.channel << std::endl;
+      std::cout << event.event_info.execution_condition << std::endl;
+      std::cout << event.event_info.time_us << std::endl;
+      std::cout << event.event_info.event_id << std::endl;
+    }
+
   }
 
   int shutdown() {

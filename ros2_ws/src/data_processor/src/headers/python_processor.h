@@ -12,14 +12,19 @@
 class PythonProcessor : public ProcessorWrapper {
 public:
   PythonProcessor(std::string script_path);
+
   void init();
 
-  void data_received(int data);
+  std::vector<fpga_interfaces::msg::StimulationPulseEvent> data_received(mtms_interfaces::msg::EegDatapoint data);
 
   int close();
 
 private:
-  std::string python_init_name, python_data_received_name;
+  PyObject *make_list(std::vector<double> data);
+
+  std::vector<fpga_interfaces::msg::StimulationPulseEvent> parse_pyobject_events(std::vector<PyObject *> events);
+
+  PyObject *python_init_name, *python_data_received_name;
   PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance, *python_args, *python_value;
 };
 
