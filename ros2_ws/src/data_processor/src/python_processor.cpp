@@ -67,11 +67,11 @@ PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
     auto stimulation_event = fpga_interfaces::msg::StimulationPulseEvent();
 
     auto channel_as_pyobject = PyObject_GetAttrString(event, "channel");
-    if (!PyList_Check(channel_as_pyobject)) {
-      std::cout << "error" << std::endl;
-      PyErr_Print();
-    }
-    auto channel = (uint8_t) PyLong_AsLong(channel_as_pyobject);
+    std::cout << "channel as py object: " << channel_as_pyobject << std::endl;
+    auto channel = PyLong_AsUnsignedLong(channel_as_pyobject);
+    std::cout << "channel as size_t: " << channel << std::endl;
+    std::cout << "channel as (uint8_t): " << (uint8_t) channel << std::endl;
+
 
     auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
     auto event_id = PyObject_GetAttrString(event_info_as_pyobject, "event_id");
@@ -91,11 +91,16 @@ PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
       stimulation_event.pieces.push_back(piece);
     }
 
-    stimulation_event.channel = channel;
+    //stimulation_event.set__channel((uint8_t) channel);
+    stimulation_event.channel = (uint8_t) channel;
     stimulation_event.event_info.event_id = PyLong_AsSize_t(event_id);
     stimulation_event.event_info.execution_condition = PyLong_AsSize_t(execution_condition);
     stimulation_event.event_info.time_us = PyLong_AsSize_t(time_us);
     stimulation_events.push_back(stimulation_event);
+
+    std::cout << "stimulation_event.channel: " << stimulation_event.channel << std::endl;
+
+
   }
 
   return stimulation_events;
@@ -124,6 +129,7 @@ PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
 
   auto stimulation_events = parse_pyobject_events(events);
   std::cout << "stimulation_events count: " << stimulation_events.size() << std::endl;
+  std::cout << "stimulation_event 0 : " << stimulation_events[0].channel << std::endl;
   return stimulation_events;
 }
 
