@@ -43,7 +43,7 @@ public:
 
     for (auto event: events) {
       std::cout << event.pieces.size() << std::endl;
-      std::cout << event.channel << std::endl;
+      std::cout << "channel:" << event.channel << std::endl;
       std::cout << event.event_info.execution_condition << std::endl;
       std::cout << event.event_info.time_us << std::endl;
       std::cout << event.event_info.event_id << std::endl;
