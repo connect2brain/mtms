@@ -3,8 +3,10 @@
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "headers/processor.h"
 #include "headers/python_processor.h"
+#include "headers/scheduling_utils.h"
 
 using namespace std::chrono_literals;
+using namespace std::chrono;
 
 double fRand(double fMin, double fMax) {
   double f = (double) rand() / RAND_MAX;
@@ -22,6 +24,9 @@ public:
     this->declare_parameter<std::string>("processor_script", "");
     this->get_parameter("processor_script", processor_script_path);
 
+    int loop_count;
+    this->declare_parameter<int>("loop_count", 10);
+    this->get_parameter("loop_count", loop_count);
 
     if (processor_type == "python") {
       processor = new PythonProcessor(processor_script_path);
@@ -31,24 +36,41 @@ public:
       processor->data_received(*message);
     };
 
-    eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
-                                                                                          10,
-                                                                                          subscription_callback);
     mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
     for (auto i = 0; i < 62; i++) {
       message.channel_datapoint.push_back(fRand(0, 100));
     }
     processor->init();
-    auto events = processor->data_received(message);
 
-    for (auto event: events) {
-      std::cout << "pieces count: " <<event.pieces.size() << std::endl;
-      std::cout << "channel: " << int{event.channel} << std::endl;
-      std::cout << "execution cond:" << int{event.event_info.execution_condition} << std::endl;
-      std::cout << "event info time us: " << event.event_info.time_us << std::endl;
-      std::cout << "event id: " << event.event_info.event_id << std::endl;
+    eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
+                                                                                          10,
+                                                                                          subscription_callback);
+    measure(loop_count);
+  }
+
+  void measure(int repeats) {
+    std::vector<mtms_interfaces::msg::EegDatapoint> events;
+    for (auto j = 0; j < repeats; j++) {
+      mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
+      for (auto i = 0; i < 62; i++) {
+        message.channel_datapoint.push_back(fRand(0, 100));
+      }
+      events.push_back(message);
     }
+    std::vector<std::chrono::microseconds> times;
+    std::chrono::microseconds total = std::chrono::microseconds(0s);
+    for (auto i = 0; i < repeats; i++) {
+      auto start = high_resolution_clock::now();
 
+      auto a = processor->data_received(events[i]);
+
+      auto stop = high_resolution_clock::now();
+      auto duration = duration_cast<microseconds>(stop - start);
+      times.push_back(duration);
+      total = duration_cast<microseconds>(duration + total);
+    }
+    RCLCPP_INFO(this->get_logger(), "Duration total: %lu us", total.count());
+    RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
   }
 
   int shutdown() {
@@ -68,6 +90,11 @@ private:
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
   auto node = std::make_shared<DataProcessor>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
+#endif
+
   rclcpp::spin(node);
   node->shutdown();
   rclcpp::shutdown();
