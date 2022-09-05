@@ -62,8 +62,7 @@ public:
     for (auto i = 0; i < repeats; i++) {
       auto start = high_resolution_clock::now();
 
-      auto a = processor->data_received(events[i]);
-
+      auto fpga_events = processor->data_received(events[i]);
       auto stop = high_resolution_clock::now();
       auto duration = duration_cast<microseconds>(stop - start);
       times.push_back(duration);
