@@ -84,13 +84,18 @@ PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
       piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
       stimulation_event.pieces.push_back(piece);
+      Py_DECREF(mode);
+      Py_DECREF(duration_in_ticks);
     }
     stimulation_event.channel = PyLong_AsUnsignedLong(channel);
     stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
     stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
     stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
     stimulation_events.push_back(stimulation_event);
-
+    Py_DECREF(channel);
+    Py_DECREF(event_info_as_pyobject);
+    Py_DECREF(event_id);
+    Py_DECREF(time_us);
   }
 
   return stimulation_events;
@@ -117,8 +122,6 @@ PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   }
 
   auto stimulation_events = parse_pyobject_events(events);
-  std::cout << "stimulation_events count: " << stimulation_events.size() << std::endl;
-  std::cout << "stimulation_event 0 : " << stimulation_events[0].channel << std::endl;
   return stimulation_events;
 }
 
