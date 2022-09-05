@@ -59,50 +59,123 @@ PyObject *PythonProcessor::make_list(std::vector<double> data) {
   return l;
 }
 
-std::vector<fpga_interfaces::msg::StimulationPulseEvent>
-PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
-  std::vector<fpga_interfaces::msg::StimulationPulseEvent> stimulation_events;
+fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *event) {
+  auto charge_event = fpga_interfaces::msg::ChargeEvent();
 
-  for (auto event: events) {
-    auto stimulation_event = fpga_interfaces::msg::StimulationPulseEvent();
-
-    auto channel = PyObject_GetAttrString(event, "channel");
-
-    auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-    auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
-    auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
-    auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
-
-    auto pieces = PyObject_GetAttrString(event, "pieces");
-    for (auto i = 0; i < PyList_Size(pieces); i++) {
-      auto piece_as_pyobject = PyList_GetItem(pieces, i);
-      auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
-      auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
-
-      auto piece = fpga_interfaces::msg::StimulationPulsePiece();
-      piece.mode = PyLong_AsUnsignedLong(mode);
-      piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
-
-      stimulation_event.pieces.push_back(piece);
-      Py_DECREF(mode);
-      Py_DECREF(duration_in_ticks);
-    }
-    stimulation_event.channel = PyLong_AsUnsignedLong(channel);
-    stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
-    stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
-    stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
-    stimulation_events.push_back(stimulation_event);
-    Py_DECREF(channel);
-    Py_DECREF(event_info_as_pyobject);
-    Py_DECREF(event_id);
-    Py_DECREF(time_us);
+  auto channel = PyObject_GetAttrString(event, "channel");
+  if (channel == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event channel" << std::endl;
   }
 
-  return stimulation_events;
+  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
+  if (event_info_as_pyobject == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event_info_as_pyobject channel" << std::endl;
+  }
+  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
+  if (event_id == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event_id channel" << std::endl;
+  }
+  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
+  if (execution_condition == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on execution_condition channel" << std::endl;
+  }
+  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
+  if (time_us == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on time_us channel" << std::endl;
+  }
+  auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
+  if (target_voltage == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on target_voltage channel" << std::endl;
+  }
+
+  charge_event.channel = PyLong_AsUnsignedLong(channel);
+  charge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
+  charge_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
+  charge_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+  charge_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
+  Py_DECREF(channel);
+  Py_DECREF(target_voltage);
+  Py_DECREF(event_info_as_pyobject);
+  Py_DECREF(event_id);
+  Py_DECREF(time_us);
+
+  return charge_event;
 }
 
-std::vector<fpga_interfaces::msg::StimulationPulseEvent>
-PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_event(PyObject *event) {
+  auto stimulation_event = fpga_interfaces::msg::StimulationPulseEvent();
+
+  auto channel = PyObject_GetAttrString(event, "channel");
+  if (channel == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event channel" << std::endl;
+  }
+
+  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
+  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
+  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
+  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
+
+  auto pieces = PyObject_GetAttrString(event, "pieces");
+  for (auto i = 0; i < PyList_Size(pieces); i++) {
+    auto piece_as_pyobject = PyList_GetItem(pieces, i);
+    auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
+    auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
+
+    auto piece = fpga_interfaces::msg::StimulationPulsePiece();
+    piece.mode = PyLong_AsUnsignedLong(mode);
+    piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
+
+    stimulation_event.pieces.push_back(piece);
+    Py_DECREF(mode);
+    Py_DECREF(duration_in_ticks);
+  }
+
+  stimulation_event.channel = PyLong_AsUnsignedLong(channel);
+  stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
+  stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+  stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
+  Py_DECREF(channel);
+  Py_DECREF(event_info_as_pyobject);
+  Py_DECREF(event_id);
+  Py_DECREF(time_us);
+
+  return stimulation_event;
+}
+
+std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
+  std::vector<FpgaEvent> fpga_events;
+
+  for (auto event_as_pyobject: events) {
+    FpgaEvent event;
+
+    auto event_type_as_pyobject = PyObject_GetAttrString(event_as_pyobject, "event_type");
+    auto event_type = PyUnicode_AsUTF8(event_type_as_pyobject);
+
+    if (strcmp(event_type, "stimulation") == 0) {
+      auto stimulation_event = parse_stimulation_event(event_as_pyobject);
+      event.stimulation_pulse_event = stimulation_event;
+      event.event_type = STIMULATION_PULSE_EVENT;
+    } else if (strcmp(event_type, "charge") == 0) {
+      auto charge_event = parse_charge_event(event_as_pyobject);
+      event.charge_event = charge_event;
+      event.event_type = CHARGE_EVENT;
+    } else {
+      std::wcout << "Unknown event type" << std::endl;
+    }
+    fpga_events.push_back(event);
+  }
+
+  return fpga_events;
+}
+
+std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   auto list = make_list(data.channel_datapoint);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
@@ -121,8 +194,8 @@ PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto stimulation_events = parse_pyobject_events(events);
-  return stimulation_events;
+  auto fpga_events = parse_pyobject_events(events);
+  return fpga_events;
 }
 
 int PythonProcessor::close() {
