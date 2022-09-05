@@ -66,40 +66,30 @@ PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
   for (auto event: events) {
     auto stimulation_event = fpga_interfaces::msg::StimulationPulseEvent();
 
-    auto channel_as_pyobject = PyObject_GetAttrString(event, "channel");
-    std::cout << "channel as py object: " << channel_as_pyobject << std::endl;
-    auto channel = PyLong_AsUnsignedLong(channel_as_pyobject);
-    std::cout << "channel as size_t: " << channel << std::endl;
-    std::cout << "channel as (uint8_t): " << (uint8_t) channel << std::endl;
-
+    auto channel = PyObject_GetAttrString(event, "channel");
 
     auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-    auto event_id = PyObject_GetAttrString(event_info_as_pyobject, "event_id");
-    auto execution_condition = PyObject_GetAttrString(event_info_as_pyobject, "execution_condition");
-    auto time_us = PyObject_GetAttrString(event_info_as_pyobject, "time_us");
+    auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
+    auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
+    auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
 
     auto pieces = PyObject_GetAttrString(event, "pieces");
     for (auto i = 0; i < PyList_Size(pieces); i++) {
       auto piece_as_pyobject = PyList_GetItem(pieces, i);
-      auto mode = PyObject_GetAttrString(piece_as_pyobject, "mode");
-      auto duration_in_ticks = PyObject_GetAttrString(piece_as_pyobject, "duration_in_ticks");
+      auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
+      auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
       auto piece = fpga_interfaces::msg::StimulationPulsePiece();
-      piece.mode = PyLong_AsSize_t(mode);
-      piece.duration_in_ticks = PyLong_AsSize_t(duration_in_ticks);
+      piece.mode = PyLong_AsUnsignedLong(mode);
+      piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
       stimulation_event.pieces.push_back(piece);
     }
-
-    //stimulation_event.set__channel((uint8_t) channel);
-    stimulation_event.channel = (uint8_t) channel;
-    stimulation_event.event_info.event_id = PyLong_AsSize_t(event_id);
-    stimulation_event.event_info.execution_condition = PyLong_AsSize_t(execution_condition);
-    stimulation_event.event_info.time_us = PyLong_AsSize_t(time_us);
+    stimulation_event.channel = PyLong_AsUnsignedLong(channel);
+    stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
+    stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+    stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
     stimulation_events.push_back(stimulation_event);
-
-    std::cout << "stimulation_event.channel: " << stimulation_event.channel << std::endl;
-
 
   }
 
@@ -125,7 +115,6 @@ PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   for (auto i = 0; i < PyList_Size(result); i++) {
     events.push_back(PyList_GetItem(result, i));
   }
-  std::cout << "event count: " << events.size() << std::endl;
 
   auto stimulation_events = parse_pyobject_events(events);
   std::cout << "stimulation_events count: " << stimulation_events.size() << std::endl;
