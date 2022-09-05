@@ -42,11 +42,11 @@ public:
     auto events = processor->data_received(message);
 
     for (auto event: events) {
-      std::cout << event.pieces.size() << std::endl;
-      std::cout << "channel:" << event.channel << std::endl;
-      std::cout << event.event_info.execution_condition << std::endl;
-      std::cout << event.event_info.time_us << std::endl;
-      std::cout << event.event_info.event_id << std::endl;
+      std::cout << "pieces count: " <<event.pieces.size() << std::endl;
+      std::cout << "channel: " << int{event.channel} << std::endl;
+      std::cout << "execution cond:" << int{event.event_info.execution_condition} << std::endl;
+      std::cout << "event info time us: " << event.event_info.time_us << std::endl;
+      std::cout << "event id: " << event.event_info.event_id << std::endl;
     }
 
   }
