@@ -3,6 +3,7 @@
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "headers/processor.h"
 #include "headers/python_processor.h"
+#include "headers/matlab_processor.h"
 #include "headers/scheduling_utils.h"
 
 using namespace std::chrono_literals;
@@ -16,6 +17,7 @@ double fRand(double fMin, double fMax) {
 class DataProcessor : public rclcpp::Node {
 public:
   DataProcessor() : Node("data_processor") {
+    RCLCPP_INFO(this->get_logger(), "in data_processor constructor");
     std::string processor_type;
     this->declare_parameter<std::string>("processor_type", "python");
     this->get_parameter("processor_type", processor_type);
@@ -28,8 +30,11 @@ public:
     this->declare_parameter<int>("loop_count", 10);
     this->get_parameter("loop_count", loop_count);
 
+    RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
     if (processor_type == "python") {
       processor = new PythonProcessor(processor_script_path);
+    } else if (processor_type == "matlab") {
+      processor = new MatlabProcessor(processor_script_path);
     }
 
     auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
@@ -45,7 +50,7 @@ public:
     eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                           10,
                                                                                           subscription_callback);
-    measure(loop_count);
+    //measure(loop_count);
   }
 
   void measure(int repeats) {
