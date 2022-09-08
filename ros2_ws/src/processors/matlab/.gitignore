@@ -1,0 +1,7 @@
+codegen
+compiler/*.so*
+compiler/Processor.cpp
+compiler/Processor.h
+compiler/Makefile
+*.prj
+*.asv
