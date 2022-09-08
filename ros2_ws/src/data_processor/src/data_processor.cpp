@@ -1,9 +1,12 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
+
 #include "headers/processor.h"
 #include "headers/python_processor.h"
 #include "headers/matlab_processor.h"
+#include "headers/cpp_processor.h"
+
 #include "headers/scheduling_utils.h"
 
 using namespace std::chrono_literals;
@@ -35,10 +38,19 @@ public:
       processor = new PythonProcessor(processor_script_path);
     } else if (processor_type == "matlab") {
       processor = new MatlabProcessor(processor_script_path);
+    } else if (processor_type == "cpp") {
+      processor = new CPPProcessor(processor_script_path);
     }
 
     auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-      processor->data_received(*message);
+      auto start = high_resolution_clock::now();
+
+      auto fpga_events = processor->data_received(*message);
+
+      auto stop = high_resolution_clock::now();
+      auto total = duration_cast<microseconds>(stop - start);
+      RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
+
     };
 
     mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
