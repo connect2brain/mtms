@@ -18,7 +18,7 @@ find_package(Matlab)
 if (Matlab_FOUND)
     # Following 5 lines taken from https://stackoverflow.com/questions/8880802/cmake-linking-shared-library
     # Fixes runtime error "error while loading shared libraries: libMatlabDataArray.so: cannot open shared object file: No such file or directory"
-    SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    SET(CMAKE_SKIP_BUILD_RPATH FALSE)
     SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
     SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib64")
     SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
@@ -38,10 +38,20 @@ add_executable(
         src/headers/processor.h
         src/python_processor.cpp
         src/matlab_processor.cpp
+        src/cpp_processor.cpp
+        src/cpp_processor_interface.cpp
         src/headers/matlab_processor.h
         src/headers/python_processor.h
+        src/headers/cpp_processor.h
         src/headers/scheduling_utils.h
-        src/headers/scheduling_utils.cpp)
+        src/headers/scheduling_utils.cpp
+        src/headers/cpp_processor_interface.h
+)
+
+target_include_directories(data_processor
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
+        $<INSTALL_INTERFACE:lib>)
 
 ament_target_dependencies(data_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
