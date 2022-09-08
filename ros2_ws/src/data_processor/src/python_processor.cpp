@@ -45,6 +45,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   }
   python_data_received_name = PyUnicode_FromString("data_received");
   python_init_name = PyUnicode_FromString("init");
+  python_close_name = PyUnicode_FromString("close");
 }
 
 void PythonProcessor::init() {
@@ -199,6 +200,6 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
 }
 
 int PythonProcessor::close() {
-  std::cout << "finalized python" << std::endl;
+  PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
   return Py_FinalizeEx();
 }
