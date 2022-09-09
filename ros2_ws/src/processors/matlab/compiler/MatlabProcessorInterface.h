@@ -24,15 +24,10 @@ public:
   virtual MatlabProcessorInterface *init(unsigned int b_window_size,
                                  unsigned short channel_count);
   virtual void data_received(const double channel_data[62],
-                     coder::array<struct0_T, 1U> &ret);
-
-private:
-  virtual void enqueue(const double element[62]);
-
-public:
+                     coder::array<stimulation_pulse_event, 1U> &ret);
   coder::array<double, 2U> data;
   unsigned int window_size;
-  coder::array<struct0_T, 1U> pulses;
+  coder::array<stimulation_pulse_event, 1U> pulses;
 };
 
 #endif
