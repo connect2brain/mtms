@@ -3,8 +3,16 @@
 //
 #include "headers/cpp_processor_interface.h"
 
-void CppProcessorInterface::enqueue(const double *element) {}
 
-CppProcessorInterface *CppProcessorInterface::init(unsigned int b_window_size) {}
+MatlabProcessorInterface *MatlabProcessorInterface::init(unsigned int b_window_size, unsigned short channel_count) {
+  std::cout
+      << "ERROR: in cpp_processor_interface init, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
+      << std::endl;
 
-void CppProcessorInterface::data_received(const double *channel_data) {}
+}
+
+void MatlabProcessorInterface::data_received(const double *channel_data) {
+  std::cout
+      << "ERROR, in cpp_processor_interface data_received, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
+      << std::endl;
+}
