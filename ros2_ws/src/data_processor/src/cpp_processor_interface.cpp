@@ -11,7 +11,8 @@ MatlabProcessorInterface *MatlabProcessorInterface::init(unsigned int b_window_s
 
 }
 
-void MatlabProcessorInterface::data_received(const double *channel_data) {
+void MatlabProcessorInterface::data_received(const double channel_data[62],
+                                             coder::array<stimulation_pulse_event, 1U> &ret) {
   std::cout
       << "ERROR, in cpp_processor_interface data_received, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
