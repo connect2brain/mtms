@@ -39,14 +39,14 @@ add_executable(
         src/python_processor.cpp
         src/matlab_processor.cpp
         src/cpp_processor.cpp
-        src/cpp_processor_interface.cpp
+        src/matlab_processor_interface.cpp
         src/headers/matlab_processor.h
         src/headers/python_processor.h
         src/headers/cpp_processor.h
         src/headers/scheduling_utils.h
         src/headers/scheduling_utils.cpp
-        src/headers/cpp_processor_interface.h
-)
+        src/headers/matlab_processor_interface.h
+        )
 
 target_include_directories(data_processor
         PUBLIC
@@ -64,8 +64,11 @@ endif ()
 # Python
 find_package(PythonLibs)
 if (PYTHONLIBS_FOUND)
+    message(STATUS "Python found")
     include_directories(${PYTHON_INCLUDE_DIRS})
     target_link_libraries(data_processor ${PYTHON_LIBRARIES})
+else()
+    message(STATUS "Python not found")
 endif ()
 
 install(TARGETS

@@ -55,7 +55,7 @@ classdef MatlabProcessorInterface < handle
         function command = create_pulse_command(obj)
             % Create pulse command
             event_info.event_id = uint16(0);
-            event_info.wait_for_trigger = false;
+            event_info.execution_condition = uint8(0);
             event_info.time_us = uint64(0);
             
             piece1.mode = uint8(0);
