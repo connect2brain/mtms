@@ -100,11 +100,11 @@ fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *
   charge_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
   charge_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
   charge_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
-  Py_DECREF(channel);
-  Py_DECREF(target_voltage);
-  Py_DECREF(event_info_as_pyobject);
-  Py_DECREF(event_id);
-  Py_DECREF(time_us);
+  //Py_DECREF(channel);
+  //Py_DECREF(target_voltage);
+  //Py_DECREF(event_info_as_pyobject);
+  //Py_DECREF(event_id);
+  //Py_DECREF(time_us);
 
   return charge_event;
 }
@@ -134,18 +134,18 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
     stimulation_event.pieces.push_back(piece);
-    Py_DECREF(mode);
-    Py_DECREF(duration_in_ticks);
+    //Py_DECREF(mode);
+    //Py_DECREF(duration_in_ticks);
   }
 
   stimulation_event.channel = PyLong_AsUnsignedLong(channel);
   stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
   stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
   stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
-  Py_DECREF(channel);
-  Py_DECREF(event_info_as_pyobject);
-  Py_DECREF(event_id);
-  Py_DECREF(time_us);
+  //Py_DECREF(channel);
+  //Py_DECREF(event_info_as_pyobject);
+  //Py_DECREF(event_id);
+  //Py_DECREF(time_us);
 
   return stimulation_event;
 }
@@ -180,6 +180,7 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
   auto list = make_list(data.channel_datapoint);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
+  //std::cout << "in data received" << std::endl;
 
   auto result = PyObject_CallMethodObjArgs(python_instance, python_data_received_name, list, time,
                                            first_sample_of_experiment, nullptr);
