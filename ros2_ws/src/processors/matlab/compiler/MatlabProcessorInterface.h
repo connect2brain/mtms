@@ -12,6 +12,7 @@
 #define MATLABPROCESSORINTERFACE_H
 
 // Include files
+#include "Thresholding.h"
 #include "rtwtypes.h"
 #include "run_processor_types.h"
 #include "coder_array.h"
@@ -28,6 +29,7 @@ public:
   coder::array<double, 2U> data;
   unsigned int window_size;
   coder::array<stimulation_pulse_event, 1U> pulses;
+  Thresholding peak_detection;
 };
 
 #endif
