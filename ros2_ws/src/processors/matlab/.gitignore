@@ -5,3 +5,8 @@ compiler/Processor.h
 compiler/Makefile
 *.prj
 *.asv
+compiler/CMakeFiles
+compiler/CMakeCache.txt
+compiler/cmake_install.cmake
+compiler/run_processor*.h
+compiler/run_processor*.cpp

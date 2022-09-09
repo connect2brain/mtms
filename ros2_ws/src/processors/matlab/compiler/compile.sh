@@ -1,10 +1,8 @@
 #!/bin/bash
-find . ! (-name 'MatlabProcessorInterface.h' -o -name 'MatlabProcessorInterface.cpp') -type f \( -iname \*.h -o -iname \*.cpp \)  -exec cat {} +
+find . ! \( -name 'processor_factory.h' -o -name 'processor_factory.cpp' -o -name 'tmwtypes.h' \) -type f \( -iname \*.h -o -iname \*.cpp \) -exec rm -f {} +
 
- rm -f {} +
-
-cp ../codegen/lib/run_processor/MatlabProcessorInterface.cpp .
-cp ../codegen/lib/run_processor/MatlabProcessorInterface.h .
+# cp ../codegen/lib/run_processor/MatlabProcessorInterface.cpp .
+# cp ../codegen/lib/run_processor/MatlabProcessorInterface.h .
 cp ../codegen/lib/run_processor/*.h .
 cp ../codegen/lib/run_processor/*.cpp .
 

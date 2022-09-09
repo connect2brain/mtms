@@ -15,7 +15,15 @@ classdef MatlabProcessorInterface < handle
             obj.window_size = window_size;
             obj.channel_count = channel_count;
             pulse = obj.create_pulse_command();
-            number_of_pulses = int32(0 + (15-0) .* rand(1,1));
+            %display(pulse);
+            coder.cstructname(pulse, 'stimulation_pulse_event');
+            coder.cstructname(pulse.event_info, 'event_info');
+            coder.cstructname(pulse.pieces, 'stimulation_pulse_piece');
+            
+            number_of_pulses = 5;
+            if number_of_pulses > window_size
+                number_of_pulses = 20;
+            end
             obj.pulses = repmat(pulse, number_of_pulses, 1);
         end
         function ret = init_experiment(obj)
@@ -25,7 +33,11 @@ classdef MatlabProcessorInterface < handle
             obj.enqueue(channel_data);
             % a trick to allocate an array of structs
             pulse = obj.create_pulse_command();
-            number_of_pulses = int32(0 + (15-0) .* rand(1,1));
+            if sum(channel_data) > 1
+                number_of_pulses = 5;
+            else
+                number_of_pulses = 0;
+            end
             obj.pulses = repmat(pulse, number_of_pulses, 1);
             ret = obj.pulses;
         end
@@ -53,11 +65,16 @@ classdef MatlabProcessorInterface < handle
             piece3.mode = uint8(1);
             piece3.duration_in_ticks = uint16(160);
             
-            pulse_info.pieces = [piece1, piece2, piece3];
+            pieces = [piece1, piece2, piece3];
             
-            pulse_command.channel = 5;
+            pulse_command.channel = uint8(5);
             pulse_command.event_info = event_info;
-            pulse_command.pulse_info = pulse_info;
+            pulse_command.pieces = pieces;
+            
+            coder.cstructname(pulse_command, 'stimulation_pulse_event');
+            coder.cstructname(pulse_command.event_info, 'event_info');
+            coder.cstructname(pulse_command.pieces, 'stimulation_pulse_piece');
+
             command = pulse_command;
         end
     end
