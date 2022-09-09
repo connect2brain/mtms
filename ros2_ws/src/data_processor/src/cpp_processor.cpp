@@ -16,8 +16,8 @@ CPPProcessor::CPPProcessor(std::string script_path) {
     std::cerr << "Cannot load processor_factory: " << dlerror() << std::endl;
   }
   std::cout << "loaded factory" << std::endl;
-  create_processor *create_processor_func = (create_processor *) dlsym(processor_factory, "create_processor");
-  destroy *destroy_processor_func = (destroy *) dlsym(processor_factory, "destroy");
+  auto *create_processor_func = (create_processor *) dlsym(processor_factory, "create_processor");
+  auto *destroy_processor_func = (destroy *) dlsym(processor_factory, "destroy");
 
 
   if (!create_processor_func) {

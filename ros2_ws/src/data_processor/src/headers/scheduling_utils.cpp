@@ -5,6 +5,7 @@
 #include "scheduling_utils.h"
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority) {
+#if defined(ON_UNIX)
   struct sched_param param;
   param.sched_priority = sched_priority;
   auto ret = pthread_setschedparam(thread, policy, &param);
@@ -12,4 +13,5 @@ void set_thread_scheduling(std::thread::native_handle_type thread, int policy, i
     throw std::runtime_error(
         "Couldn't set scheduling priority and policy. Error code: " + std::string(strerror(errno)));
   }
+#endif
 }

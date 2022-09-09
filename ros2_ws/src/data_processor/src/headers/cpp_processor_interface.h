@@ -6,21 +6,21 @@
 #define DATA_PROCESSOR_CPP_PROCESSOR_INTERFACE_H
 
 #include "coder_array.h"
+#include <iostream>
 
-class CppProcessorInterface {
+
+class MatlabProcessorInterface {
 public:
-  CppProcessorInterface *init(unsigned int b_window_size);
-
-  void enqueue(const double element[62]);
-
+  MatlabProcessorInterface *init(unsigned int b_window_size,
+                                 unsigned short channel_count);
   void data_received(const double channel_data[62]);
-
   coder::array<double, 2U> data;
   unsigned int window_size;
 };
 
-typedef CppProcessorInterface *create_processor();
 
-typedef void destroy(CppProcessorInterface *);
+typedef MatlabProcessorInterface *create_processor();
+
+typedef void destroy(MatlabProcessorInterface *);
 
 #endif //DATA_PROCESSOR_CPP_PROCESSOR_INTERFACE_H
