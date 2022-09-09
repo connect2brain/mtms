@@ -26,7 +26,7 @@ CPPProcessor::CPPProcessor(std::string script_path) {
   if (!destroy_processor_func) {
     std::cerr << "Cannot load destroy_processor_func symbols: " << dlerror() << std::endl;
   }
-  auto inner_processor = create_processor_func();
+  auto inner_processor = create_processor_func(20, 62);
 
   std::cout << "inner processor: " << inner_processor << std::endl;
 
@@ -34,21 +34,18 @@ CPPProcessor::CPPProcessor(std::string script_path) {
   for (auto i = 0; i < 62; i++) {
     sample.push_back(ffRand(0, 100));
   }
-  std::cout << "window size before init" << std::endl;
-  std::cout << inner_processor->window_size << std::endl;
-
-  inner_processor->init(20);
-  std::cout << "window size after init" << std::endl;
-  std::cout << inner_processor->window_size << std::endl;
+  std::cout << "window size: " << inner_processor->window_size << std::endl;
 
   std::cout << "data size: " << inner_processor->data.size() << std::endl;
-  std::cout << "a: ";
-  auto a = inner_processor->data.at(3,3);
-  std::cout << a << std::endl;
-  std::cout << "data: " << inner_processor->data.at(1,2) << std::endl;
-  inner_processor->data_received(sample.data());
-  inner_processor->data_received(sample.data());
-  std::cout << inner_processor->data.data()[0] << std::endl;
+  auto a = inner_processor->data.at(3, 3);
+  std::cout << "a: " << a << std::endl;
+
+  coder::array<stimulation_pulse_event, 1U> data;
+  std::vector<stimulation_pulse_event> data_vector;
+
+  inner_processor->data_received(sample.data(), data);
+  inner_processor->data_received(sample.data(), data);
+  std::cout << +data.at(0).channel << std::endl;
 
 }
 
