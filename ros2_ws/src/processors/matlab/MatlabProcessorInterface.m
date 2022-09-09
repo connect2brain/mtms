@@ -5,6 +5,7 @@ classdef MatlabProcessorInterface < handle
         window_size
         channel_count
         pulses
+        peak_detection
     end
 
 
@@ -25,16 +26,20 @@ classdef MatlabProcessorInterface < handle
                 number_of_pulses = 20;
             end
             obj.pulses = repmat(pulse, number_of_pulses, 1);
+            obj.peak_detection = Thresholding(zeros(window_size, 1), window_size, 5.5, 0.5);
         end
         function ret = init_experiment(obj)
             ret = [];
         end
         function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
             obj.enqueue(channel_data);
-            % a trick to allocate an array of structs
+            c3 = channel_data(5);
+
+            signal = obj.peak_detection.thresholding_algo(c3);
+            
             pulse = obj.create_pulse_command();
-            if sum(channel_data) > 1
-                number_of_pulses = 5;
+            if signal == 1
+                number_of_pulses = 1;
             else
                 number_of_pulses = 0;
             end
