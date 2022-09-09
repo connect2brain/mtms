@@ -2,18 +2,19 @@
 
 #include "iostream"
 
-extern "C" Processor *create_processor() {
-  Processor* p = new Processor();
+extern "C" MatlabProcessorInterface *create_processor(unsigned int b_window_size,
+                                                      unsigned short channel_count) {
+  auto *p = new MatlabProcessorInterface();
+  p->init(b_window_size, channel_count);
   return p;
 }
 
-extern "C" void destroy(Processor *p) {
+extern "C" void destroy(MatlabProcessorInterface *p) {
   delete p;
 }
 
 int main() {
-  auto p = create_processor();
+  auto p = create_processor(20, 62);
   std::cout << p->window_size << std::endl;
-  p->init(20);
   std::cout << p->window_size << std::endl;
 }
