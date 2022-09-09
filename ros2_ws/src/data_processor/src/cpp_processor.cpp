@@ -24,7 +24,7 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
   if (!destroy_processor_func) {
     std::cerr << "Cannot load destroy_processor_func symbols: " << dlerror() << std::endl;
   }
-  inner_processor = create_processor_func(20, 62);
+  inner_processor = create_processor_func(50, 62);
 
   std::cout << "inner processor: " << inner_processor << std::endl;
 }
