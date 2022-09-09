@@ -7,12 +7,22 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
-# Declare the library target.
-add_library(${PROJECT_NAME} SHARED
-        processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h
+file(GLOB processor_src
+        "*.h"
+        "*.cpp"
         )
 
-add_executable(processor_factory_exec processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h)
+
+# Declare the library target.
+#add_library(${PROJECT_NAME} SHARED
+#        processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h
+#        )
+
+# add_executable(processor_factory_exec processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h)
+
+add_library(${PROJECT_NAME} SHARED ${processor_src})
+add_executable(${PROJECT_NAME}_exec ${processor_src})
+
 
 # Configure the directories to search for header files.
 target_include_directories(${PROJECT_NAME} PRIVATE source)
