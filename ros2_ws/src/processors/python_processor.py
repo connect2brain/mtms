@@ -54,4 +54,4 @@ class Processor:
         pulse_event = StimulationEvent(channel, pieces, event_info, event_type)
         charge_event = ChargeEvent(channel, 1200, event_info, "charge")
 
-        return [pulse_event, charge_event, pulse_event]
+        return [pulse_event, charge_event, pulse_event, charge_event, pulse_event]

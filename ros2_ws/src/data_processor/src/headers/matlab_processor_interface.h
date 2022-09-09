@@ -2,8 +2,8 @@
 // Created by alqio on 8.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_CPP_PROCESSOR_INTERFACE_H
-#define DATA_PROCESSOR_CPP_PROCESSOR_INTERFACE_H
+#ifndef DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
+#define DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
 
 #include "coder_array.h"
 #include "run_processor_types.h"
@@ -28,4 +28,4 @@ typedef MatlabProcessorInterface *create_processor(unsigned int b_window_size,
 
 typedef void destroy(MatlabProcessorInterface *);
 
-#endif //DATA_PROCESSOR_CPP_PROCESSOR_INTERFACE_H
+#endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H

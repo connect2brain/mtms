@@ -62,7 +62,7 @@ public:
     eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                           10,
                                                                                           subscription_callback);
-    //measure(loop_count);
+    measure(loop_count);
   }
 
   void measure(int repeats) {

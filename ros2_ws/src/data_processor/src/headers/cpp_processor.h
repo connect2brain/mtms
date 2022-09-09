@@ -8,22 +8,24 @@
 #include "processor.h"
 #include "iostream"
 #include <dlfcn.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
+#include "matlab_processor_interface.h"
 
 
 class CPPProcessor : public ProcessorWrapper {
 public:
-  CPPProcessor(std::string script_path);
+  explicit CPPProcessor(const std::string& script_path);
 
-  void init();
+  void init() override;
 
-  std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data);
+  std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data) override;
 
-  int close();
+  int close() override;
 
 private:
   void *processor_factory;
+  MatlabProcessorInterface* inner_processor;
 };
 
 

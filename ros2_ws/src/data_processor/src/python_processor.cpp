@@ -200,6 +200,7 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
 }
 
 int PythonProcessor::close() {
+  std::cout << "python close" << std::endl;
   PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
   return Py_FinalizeEx();
 }
