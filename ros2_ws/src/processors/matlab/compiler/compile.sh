@@ -11,3 +11,4 @@ sed -i -e 's/class MatlabProcessor/class MatlabProcessor : public MatlabProcesso
 sed -i -e '/Include files/a #include "matlab_processor_interface.h"' $PROCESSOR_H
 cmake .
 make all
+
