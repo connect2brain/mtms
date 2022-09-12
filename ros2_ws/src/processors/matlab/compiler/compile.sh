@@ -6,7 +6,8 @@ cp ../codegen/lib/run_processor/*.cpp .
 
 PROCESSOR_H=MatlabProcessor.h
 sed -i -e 's/MatlabProcessor \*init/virtual MatlabProcessor \*init/' $PROCESSOR_H
-sed -i -e 's/void/virtual void/' $PROCESSOR_H
+# double space to not rename create_command
+sed -i -e 's/  void/virtual void/' $PROCESSOR_H
 sed -i -e 's/class MatlabProcessor/class MatlabProcessor : public MatlabProcessorInterface/' $PROCESSOR_H
 sed -i -e '/Include files/a #include "matlab_processor_interface.h"' $PROCESSOR_H
 cmake .
