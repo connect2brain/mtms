@@ -55,7 +55,7 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
     output.push_back(fpga_event);
   }
   if (!output.empty()) {
-    std::cout << "Pulse count: " << output.size() << std::endl;
+    //std::cout << "Pulse count: " << output.size() << std::endl;
   }
 
   return output;
