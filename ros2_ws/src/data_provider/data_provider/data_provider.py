@@ -21,9 +21,10 @@ class DataProvider(Node):
         self.create_timer(1 / SAMPLING_FREQUENCY, self.publish_data)
 
     def publish_data(self):
-        try:
-            line = self.file.readline()
-        except ValueError:
+        line = self.file.readline()
+
+        # if EOF, start from the beginning
+        if line == "":
             self.file = open(self.data_file_name, 'r')
             line = self.file.readline()
 

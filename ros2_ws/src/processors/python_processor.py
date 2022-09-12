@@ -52,6 +52,7 @@ class real_time_peak_detection():
         self.lag = lag
         self.threshold = threshold
         self.influence = influence
+
         self.signals = [0] * len(self.y)
         self.filteredY = np.array(self.y).tolist()
         self.avgFilter = [0] * len(self.y)

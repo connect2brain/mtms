@@ -30,7 +30,7 @@ public:
     this->get_parameter("processor_script", processor_script_path);
 
     int loop_count;
-    this->declare_parameter<int>("loop_count", 10);
+    this->declare_parameter<int>("loop_count", 0);
     this->get_parameter("loop_count", loop_count);
 
     RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
@@ -42,14 +42,14 @@ public:
       processor = new CPPProcessor(processor_script_path);
     }
 
-    auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
+    auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint>& message) -> void {
       auto start = high_resolution_clock::now();
 
       auto fpga_events = processor->data_received(*message);
 
       auto stop = high_resolution_clock::now();
       auto total = duration_cast<microseconds>(stop - start);
-      RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
+     // RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
 
     };
 
@@ -62,7 +62,7 @@ public:
     eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                           10,
                                                                                           subscription_callback);
-    //measure(loop_count);
+    measure(loop_count);
   }
 
   void measure(int repeats) {
