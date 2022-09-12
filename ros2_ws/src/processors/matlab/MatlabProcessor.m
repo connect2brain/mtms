@@ -1,4 +1,4 @@
-classdef MatlabProcessorInterface < handle
+classdef MatlabProcessor < handle
 
     properties
         data
@@ -12,7 +12,7 @@ classdef MatlabProcessorInterface < handle
     end
 
     methods 
-        function obj = MatlabProcessorInterface(window_size, channel_count)
+        function obj = MatlabProcessor(window_size, channel_count)
             obj.data = zeros(channel_count, window_size);
             % obj.data = zeros(1, window_size);
             obj.window_size = window_size;
