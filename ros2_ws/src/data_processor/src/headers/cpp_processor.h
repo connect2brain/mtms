@@ -15,7 +15,7 @@
 
 class CPPProcessor : public ProcessorWrapper {
 public:
-  explicit CPPProcessor(const std::string& script_path);
+  explicit CPPProcessor(const std::string &script_path);
 
   void init() override;
 
@@ -25,7 +25,7 @@ public:
 
 private:
   void *processor_factory;
-  MatlabProcessorInterface* inner_processor;
+  std::unique_ptr<MatlabProcessorInterface> inner_processor;
 };
 
 

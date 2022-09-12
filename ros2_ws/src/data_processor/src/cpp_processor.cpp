@@ -15,8 +15,8 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
     std::cerr << "Cannot load processor_factory: " << dlerror() << std::endl;
   }
   std::cout << "loaded factory" << std::endl;
-  auto *create_processor_func = (create_processor *) dlsym(processor_factory, "create_processor");
-  auto *destroy_processor_func = (destroy *) dlsym(processor_factory, "destroy");
+  auto *create_processor_func = reinterpret_cast<create_processor >(dlsym(processor_factory, "create_processor"));
+  auto *destroy_processor_func = reinterpret_cast<destroy_processor >(dlsym(processor_factory, "destroy_processor"));
 
   if (!create_processor_func) {
     std::cerr << "Cannot load create_processor_func symbols: " << dlerror() << std::endl;
@@ -24,18 +24,14 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
   if (!destroy_processor_func) {
     std::cerr << "Cannot load destroy_processor_func symbols: " << dlerror() << std::endl;
   }
-  inner_processor = create_processor_func(50, 62);
 
-  std::cout << "inner processor: " << inner_processor << std::endl;
+  inner_processor = std::unique_ptr<MatlabProcessorInterface>(create_processor_func(50, 62));
+
 }
 
 std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  //std::cout << "sample size: " << sample.size() << std::endl;
-
   coder::array<stimulation_pulse_event, 1U> pulses;
   inner_processor->data_received(data.channel_datapoint.data(), pulses);
-
-  //std::cout << "pulses size: " << pulses.size() << std::endl;
 
   std::vector<FpgaEvent> output;
   for (auto i = pulses.begin(); i != pulses.end(); i++) {
@@ -58,7 +54,7 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
     }
     output.push_back(fpga_event);
   }
-  //std::cout << "output size: " << output.size() << std::endl;
+  std::cout << "Pulse count: " << output.size() << std::endl;
 
   return output;
 }
