@@ -13,7 +13,7 @@ find_package(fpga_interfaces REQUIRED)
 
 set(MATLAB_FIND_DEBUG true)
 # MATLAB
-# set(Matlab_ROOT_DIR /home/alqio/app/matlab)
+set(Matlab_ROOT_DIR /home/alqio/app/matlab/)
 find_package(Matlab)
 if (Matlab_FOUND)
     # Following 5 lines taken from https://stackoverflow.com/questions/8880802/cmake-linking-shared-library
