@@ -30,33 +30,55 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
 }
 
 std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  coder::array<stimulation_pulse_event, 1U> pulses;
+  coder::array<matlab_fpga_event, 1U> pulses;
   inner_processor->data_received(data.channel_datapoint.data(), pulses);
 
   std::vector<FpgaEvent> output;
   for (auto i = pulses.begin(); i != pulses.end(); i++) {
     auto event = *i;
     FpgaEvent fpga_event;
-    fpga_event.event_type = STIMULATION_PULSE_EVENT;
-    fpga_event.stimulation_pulse_event = fpga_interfaces::msg::StimulationPulseEvent();
+    if (event.event_type == 0) {
+      fpga_event.event_type = CHARGE_EVENT;
+      fpga_event.charge_event = fpga_interfaces::msg::ChargeEvent();
+      fpga_event.charge_event.event_info.event_id = event.b_event_info.event_id;
+      fpga_event.charge_event.event_info.execution_condition = event.b_event_info.execution_condition;
+      fpga_event.charge_event.event_info.time_us = event.b_event_info.time_us;
+      fpga_event.charge_event.channel = event.channel;
+      fpga_event.charge_event.target_voltage = event.target_voltage;
 
-    fpga_event.stimulation_pulse_event.channel = event.channel;
+    } else if (event.event_type == 1) {
+      fpga_event.event_type = STIMULATION_PULSE_EVENT;
+      fpga_event.stimulation_pulse_event = fpga_interfaces::msg::StimulationPulseEvent();
 
-    fpga_event.stimulation_pulse_event.event_info.event_id = event.b_event_info.event_id;
-    fpga_event.stimulation_pulse_event.event_info.execution_condition = event.b_event_info.wait_for_trigger;
-    fpga_event.stimulation_pulse_event.event_info.time_us = event.b_event_info.time_us;
+      for (auto piece: event.pieces) {
+        auto fpga_piece = fpga_interfaces::msg::StimulationPulsePiece();
+        fpga_piece.duration_in_ticks = piece.duration_in_ticks;
+        fpga_piece.mode = piece.mode;
+        fpga_event.stimulation_pulse_event.pieces.push_back(fpga_piece);
+      }
+      fpga_event.stimulation_pulse_event.event_info.event_id = event.b_event_info.event_id;
+      fpga_event.stimulation_pulse_event.event_info.execution_condition = event.b_event_info.execution_condition;
+      fpga_event.stimulation_pulse_event.event_info.time_us = event.b_event_info.time_us;
+      fpga_event.stimulation_pulse_event.channel = event.channel;
 
-    for (auto piece: event.pieces) {
-      auto fpga_piece = fpga_interfaces::msg::StimulationPulsePiece();
-      fpga_piece.duration_in_ticks = piece.duration_in_ticks;
-      fpga_piece.mode = piece.mode;
-      fpga_event.stimulation_pulse_event.pieces.push_back(fpga_piece);
+    } else {
+      fpga_event.event_type = DISCHARGE_EVENT;
+      fpga_event.discharge_event = fpga_interfaces::msg::DischargeEvent();
+      fpga_event.discharge_event.event_info.event_id = event.b_event_info.event_id;
+      fpga_event.discharge_event.event_info.execution_condition = event.b_event_info.execution_condition;
+      fpga_event.discharge_event.event_info.time_us = event.b_event_info.time_us;
+      fpga_event.discharge_event.channel = event.channel;
+      fpga_event.discharge_event.target_voltage = event.target_voltage;
     }
     output.push_back(fpga_event);
   }
   if (!output.empty()) {
-    //std::cout << "Pulse count: " << output.size() << std::endl;
+    std::cout << "Received " << output.size() << " events" << std::endl;
+    for (auto event: output) {
+      std::cout << "event type: " << event.to_string() << std::endl;
+    }
   }
+
 
   return output;
 }
