@@ -14,18 +14,13 @@ public:
   virtual MatlabProcessorInterface *init(unsigned int b_window_size,
                                          unsigned short channel_count);
 
+  virtual ~MatlabProcessorInterface() = default;
+
   virtual void data_received(const double channel_data[62],
                              coder::array<stimulation_pulse_event, 1U> &ret);
-
-  coder::array<double, 2U> data;
-  unsigned int window_size;
-  coder::array<stimulation_pulse_event, 1U> pulses;
 };
 
-
-typedef MatlabProcessorInterface *create_processor(unsigned int b_window_size,
-                                                   unsigned short channel_count);
-
-typedef void destroy(MatlabProcessorInterface *);
+using create_processor = MatlabProcessorInterface *(*)(unsigned int b_window_size, unsigned short channel_count);
+using destroy_processor = void *(*)();
 
 #endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
