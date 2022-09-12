@@ -42,14 +42,14 @@ public:
       processor = new CPPProcessor(processor_script_path);
     }
 
-    auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint>& message) -> void {
+    auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
       auto start = high_resolution_clock::now();
 
       auto fpga_events = processor->data_received(*message);
 
       auto stop = high_resolution_clock::now();
       auto total = duration_cast<microseconds>(stop - start);
-     // RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
+      RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
 
     };
 
