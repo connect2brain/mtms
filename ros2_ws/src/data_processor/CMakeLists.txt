@@ -46,7 +46,8 @@ add_executable(
         src/headers/scheduling_utils.h
         src/headers/scheduling_utils.cpp
         src/headers/matlab_processor_interface.h
-        src/headers/fpga_event.h)
+        src/headers/fpga_event.h
+        src/headers/data_processor.h)
 
 target_include_directories(data_processor
         PUBLIC

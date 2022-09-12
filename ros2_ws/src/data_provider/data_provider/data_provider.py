@@ -30,7 +30,7 @@ class DataProvider(Node):
 
         data = [float(number) for number in line.split(",")]
         msg = EegDatapoint()
-        msg.channel_datapoint = data
+        msg.channel_datapoint = data[:62]
         msg.first_sample_of_experiment = False
         msg.time = float(self.get_clock().now().nanoseconds)
         self.publisher.publish(msg)
