@@ -16,13 +16,9 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
   }
   std::cout << "loaded factory" << std::endl;
   auto *create_processor_func = reinterpret_cast<create_processor >(dlsym(processor_factory, "create_processor"));
-  auto *destroy_processor_func = reinterpret_cast<destroy_processor >(dlsym(processor_factory, "destroy_processor"));
 
   if (!create_processor_func) {
     std::cerr << "Cannot load create_processor_func symbols: " << dlerror() << std::endl;
-  }
-  if (!destroy_processor_func) {
-    std::cerr << "Cannot load destroy_processor_func symbols: " << dlerror() << std::endl;
   }
 
   inner_processor = std::unique_ptr<MatlabProcessorInterface>(create_processor_func(50, 62));
@@ -30,11 +26,13 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
 }
 
 std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  coder::array<matlab_fpga_event, 1U> pulses;
-  inner_processor->data_received(data.channel_datapoint.data(), pulses);
-
+  //std::cout << "cpp data received 1" << std::endl;
+  coder::array<matlab_fpga_event, 1U> events;
+  //std::cout << data.channel_datapoint.size() << std::endl;
+  inner_processor->data_received(data.channel_datapoint.data(), events);
+  //std::cout << "cpp data received 2" << std::endl;
   std::vector<FpgaEvent> output;
-  for (auto i = pulses.begin(); i != pulses.end(); i++) {
+  for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
     FpgaEvent fpga_event;
     if (event.event_type == 0) {
@@ -74,11 +72,11 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
   }
   if (!output.empty()) {
     std::cout << "Received " << output.size() << " events" << std::endl;
-    for (auto event: output) {
+    for (const auto& event: output) {
       std::cout << "event type: " << event.to_string() << std::endl;
     }
   }
-
+  //std::cout << "cpp data received 3" << std::endl;
 
   return output;
 }
@@ -88,6 +86,11 @@ void CPPProcessor::init() {
 }
 
 int CPPProcessor::close() {
+  //inner_processor->close();
+
+  //Empty the pointer
+  //inner_processor.reset();
+
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
