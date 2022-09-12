@@ -18,19 +18,15 @@ classdef MatlabProcessor < handle
             obj.window_size = window_size;
             obj.channel_count = channel_count;
             pulse = obj.create_pulse_command();
-            %display(pulse);
-            coder.cstructname(pulse, 'stimulation_pulse_event');
-            coder.cstructname(pulse.event_info, 'event_info');
-            coder.cstructname(pulse.pieces, 'stimulation_pulse_piece');
             
             number_of_pulses = 5;
             if number_of_pulses > window_size
                 number_of_pulses = 20;
             end
             obj.pulses = repmat(pulse, number_of_pulses, 1);
-            obj.peak_detection = Thresholding(zeros(window_size, 1), window_size, 5.5, 0.5);
-            obj.file_id = fopen("eeg_data.csv", "r");
-            fprintf(obj.file_id, "c3,filtered,spike");
+            obj.peak_detection = Thresholding(zeros(window_size, 1), window_size, 5.5, 1);
+            obj.file_id = fopen("eeg_data.csv", "w");
+            fprintf(obj.file_id, "c3,filtered,spike\n");
         end
         function ret = init_experiment(obj)
             ret = [];
@@ -41,9 +37,9 @@ classdef MatlabProcessor < handle
         function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
             obj.enqueue(channel_data);
             c3 = channel_data(5);
+            fprintf("length %f\n", obj.peak_detection.length);
 
             signal = obj.peak_detection.thresholding_algo(c3);
-            
             pulse = obj.create_pulse_command();
             spike_mark = "f";
             if signal == 1
@@ -52,7 +48,11 @@ classdef MatlabProcessor < handle
             else
                 number_of_pulses = 0;
             end
-            fprintf("%6.2f, %f, %s", c3, 1, spike_mark);
+            if signal ~= 0
+                fprintf("%f\n", signal);
+            end
+
+            fprintf(obj.file_id, "%6.2f, %f, %s\n", c3, 1, spike_mark);
             obj.pulses = repmat(pulse, number_of_pulses, 1);
             ret = obj.pulses;
         end
