@@ -4,7 +4,7 @@ classdef MatlabProcessor < handle
         data
         window_size
         channel_count
-        pulses
+        commands
         peak_detection
         spike_over
     end
@@ -18,13 +18,14 @@ classdef MatlabProcessor < handle
             % obj.data = zeros(1, window_size);
             obj.window_size = window_size;
             obj.channel_count = channel_count;
-            pulse = obj.create_pulse_command();
+            pulse = obj.create_command("pulse_event", 0);
             
             number_of_pulses = 5;
             if number_of_pulses > window_size
                 number_of_pulses = 20;
             end
-            obj.pulses = repmat(pulse, number_of_pulses, 1);
+            obj.commands = repmat(pulse, number_of_pulses, 1);
+
             obj.peak_detection = Thresholding(zeros(window_size, 1), 30, 5.5, 0.7);
             obj.file_id = fopen("eeg_data.csv", "w");
             fprintf(obj.file_id, "c3,filtered,spike\n");
@@ -41,12 +42,12 @@ classdef MatlabProcessor < handle
             c3 = channel_data(5);
 
             signal = obj.peak_detection.thresholding_algo(c3);
-            % fprintf("%f\n", signal);
             if signal == 0 && ~obj.spike_over
                 obj.spike_over = true;
             end
             
-            pulse = obj.create_pulse_command();
+            pulse = obj.create_command("pulse_event", 0);
+            charge = obj.create_command("charge_event", 50);
             spike_mark = "f";
 
             if signal == 1 && obj.spike_over
@@ -56,10 +57,14 @@ classdef MatlabProcessor < handle
             else
                 number_of_pulses = 0;
             end
-
+            
             fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, spike_mark);
-            obj.pulses = repmat(pulse, number_of_pulses, 1);
-            ret = obj.pulses;
+
+            number_of_pulses = 2;
+
+            obj.commands = repmat(pulse, number_of_pulses, 1);
+            obj.commands(1) = charge;
+            ret = obj.commands;
         end
     end
     methods(Access=private)
@@ -72,8 +77,7 @@ classdef MatlabProcessor < handle
             obj.data(:,end) = element;
             ret = temp;
         end
-        function command = create_pulse_command(obj)
-            % Create pulse command
+        function command = create_command(obj, event_type, target_voltage)
             event_info.event_id = uint16(0);
             event_info.execution_condition = uint8(0);
             event_info.time_us = uint64(0);
@@ -87,15 +91,22 @@ classdef MatlabProcessor < handle
             
             pieces = [piece1, piece2, piece3];
             
-            pulse_command.channel = uint8(5);
-            pulse_command.event_info = event_info;
-            pulse_command.pieces = pieces;
-            
-            coder.cstructname(pulse_command, 'stimulation_pulse_event');
-            coder.cstructname(pulse_command.event_info, 'event_info');
-            coder.cstructname(pulse_command.pieces, 'stimulation_pulse_piece');
+            command.channel = uint8(5);
+            command.event_info = event_info;
+            command.pieces = pieces;
+            if event_type == "pulse_event"
+                command.event_type = uint8(0);
+            elseif event_type == "charge_event"
+                command.event_type = uint8(1);
+            else
+                command.event_type = uint8(2);
+            end
 
-            command = pulse_command;
+            command.target_voltage = uint16(target_voltage);
+
+            coder.cstructname(command, 'matlab_fpga_event');
+            coder.cstructname(command.event_info, 'event_info');
+            coder.cstructname(command.pieces, 'stimulation_pulse_piece');
         end
     end
 end

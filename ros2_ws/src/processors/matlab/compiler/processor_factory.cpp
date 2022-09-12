@@ -4,11 +4,8 @@
 
 extern "C" MatlabProcessor *create_processor(unsigned int b_window_size,
                                              unsigned short channel_count) {
-  std::cout << "in processor_factory create_processor " << std::endl;
   auto *p = new MatlabProcessor();
   p->init(b_window_size, channel_count);
-  std::cout << "in processor_factory create_processor window size " << p->window_size << std::endl;
-  std::cout << "in processor_factory create_processor data at" << p->data.at(0, 1) << std::endl;
   return p;
 }
 

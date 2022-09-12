@@ -16,8 +16,10 @@ public:
 
   virtual ~MatlabProcessorInterface() = default;
 
+  virtual void close() const;
+
   virtual void data_received(const double channel_data[62],
-                             coder::array<stimulation_pulse_event, 1U> &ret);
+                             coder::array<matlab_fpga_event, 1U> &ret);
 };
 
 #endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
