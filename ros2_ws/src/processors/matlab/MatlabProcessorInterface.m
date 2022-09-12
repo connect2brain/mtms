@@ -7,7 +7,9 @@ classdef MatlabProcessorInterface < handle
         pulses
         peak_detection
     end
-
+    properties(Access=private)
+        file_id
+    end
 
     methods 
         function obj = MatlabProcessorInterface(window_size, channel_count)
@@ -27,9 +29,14 @@ classdef MatlabProcessorInterface < handle
             end
             obj.pulses = repmat(pulse, number_of_pulses, 1);
             obj.peak_detection = Thresholding(zeros(window_size, 1), window_size, 5.5, 0.5);
+            obj.file_id = fopen("eeg_data.csv", "r");
+            fprintf(obj.file_id, "c3,filtered,spike");
         end
         function ret = init_experiment(obj)
             ret = [];
+        end
+        function close(obj)
+            fclose(obj.file_id);
         end
         function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
             obj.enqueue(channel_data);
@@ -38,11 +45,14 @@ classdef MatlabProcessorInterface < handle
             signal = obj.peak_detection.thresholding_algo(c3);
             
             pulse = obj.create_pulse_command();
+            spike_mark = "f";
             if signal == 1
                 number_of_pulses = 1;
+                spike_mark = "t";
             else
                 number_of_pulses = 0;
             end
+            fprintf("%6.2f, %f, %s", c3, 1, spike_mark);
             obj.pulses = repmat(pulse, number_of_pulses, 1);
             ret = obj.pulses;
         end
