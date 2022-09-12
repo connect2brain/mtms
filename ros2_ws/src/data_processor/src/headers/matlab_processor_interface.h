@@ -23,6 +23,5 @@ public:
 };
 
 using create_processor = MatlabProcessorInterface *(*)(unsigned int b_window_size, unsigned short channel_count);
-using destroy_processor = void *(*)();
 
 #endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
