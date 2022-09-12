@@ -5,12 +5,12 @@
 #ifndef COMPILER_PROCESSOR_FACTORY_H
 #define COMPILER_PROCESSOR_FACTORY_H
 
-#include "MatlabProcessorInterface.h"
+#include "MatlabProcessor.h"
 
 
-extern "C" MatlabProcessorInterface *create_processor(unsigned int b_window_size,
-                                                      unsigned short channel_count);
+extern "C" MatlabProcessor *create_processor(unsigned int b_window_size,
+                                             unsigned short channel_count);
 
-extern "C" void destroy(MatlabProcessorInterface *p);
+extern "C" void destroy_processor(MatlabProcessor *p);
 
 #endif //COMPILER_PROCESSOR_FACTORY_H
