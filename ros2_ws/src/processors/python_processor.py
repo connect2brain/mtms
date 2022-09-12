@@ -101,7 +101,7 @@ class real_time_peak_detection():
 
 
 class Processor:
-    def init(self) -> None:
+    def __init__(self) -> None:
         self.eeg_data_index = 0
         self.data = []
         self.file = None
@@ -109,7 +109,7 @@ class Processor:
         self.peak_detection = real_time_peak_detection([0] * 50, 50, 5.5, 0)
         self.spike_over = False
 
-    def __init__(self):
+    def init(self):
         print("in python init")
         self.file = open('eeg_data.csv', 'w')
         self.file.write('c3,filtered,spike\n')
@@ -144,8 +144,7 @@ class Processor:
             spike_mark = 't'
             send_pulse = True
 
-        spike_mark = 't' if spike else 'f'
-
+        #spike_mark = 't' if spike else 'f'
         if self.file:
             self.file.write(f"{c3},{filtered},{spike_mark}\n")
 
