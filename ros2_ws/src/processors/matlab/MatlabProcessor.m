@@ -7,6 +7,7 @@ classdef MatlabProcessor < handle
         commands
         peak_detection
         spike_over
+        events_sent
     end
     properties(Access=private)
         file_id
@@ -15,7 +16,9 @@ classdef MatlabProcessor < handle
     methods 
         function obj = MatlabProcessor(window_size, channel_count)
             obj.data = zeros(channel_count, window_size);
-            % obj.data = zeros(1, window_size);
+            
+            obj.events_sent = uint32(0);
+
             obj.window_size = window_size;
             obj.channel_count = channel_count;
             pulse = obj.create_command("pulse_event", 0);
@@ -35,16 +38,14 @@ classdef MatlabProcessor < handle
         function ret = init_experiment(obj)
             ret = [];
         end
-        function close(obj)
+        function ret = end_experiment(obj)
+            fprintf("Ending experiment\n");
             fclose(obj.file_id);
+            ret = obj.events_sent;
         end
         function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
-            fprintf("matlab data received \n");
-            fprintf("%f\n", channel_data(1));
-            fprintf("%d\n", int32(obj.window_size));
             obj.enqueue(channel_data);
             c3 = channel_data(5);
-            fprintf("c3: %f\n", c3);
 
             signal = obj.peak_detection.thresholding_algo(c3);
             if signal == 0 && ~obj.spike_over
@@ -52,7 +53,7 @@ classdef MatlabProcessor < handle
             end
             
             pulse = obj.create_command("pulse_event", 0);
-            % charge = obj.create_command("charge_event", 50);
+            charge = obj.create_command("charge_event", 50);
             spike_mark = "f";
 
             if signal == 1 && obj.spike_over
@@ -63,13 +64,14 @@ classdef MatlabProcessor < handle
                 number_of_pulses = 0;
             end
             
-            fprintf("%s\n", spike_mark);
             fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, spike_mark);
 
-            % number_of_pulses = 2;
+            number_of_pulses = 2;
 
             obj.commands = repmat(pulse, number_of_pulses, 1);
-            % obj.commands(1) = charge;
+            obj.commands(1) = charge;
+            obj.commands(2) = pulse;
+            obj.events_sent = obj.events_sent + number_of_pulses;
             ret = obj.commands;
         end
     end
