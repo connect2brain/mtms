@@ -16,7 +16,7 @@ public:
 
   virtual ~MatlabProcessorInterface() = default;
 
-  virtual void close() const;
+  virtual unsigned int end_experiment() const;
 
   virtual void data_received(const double channel_data[62],
                              coder::array<matlab_fpga_event, 1U> &ret);
