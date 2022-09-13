@@ -30,7 +30,7 @@ classdef MatlabProcessor < handle
             obj.commands = repmat(pulse, number_of_pulses, 1);
 
             obj.peak_detection = Thresholding(zeros(window_size, 1), 30, 5.5, 0.7);
-            obj.file_id = fopen("eeg_data.csv", "w");
+            obj.file_id = fopen("eeg_matlab.csv", "w");
             fprintf(obj.file_id, "c3,filtered,peak\n");
             obj.peak_over = true;
             fprintf("matlab processor init\n");
@@ -64,7 +64,7 @@ classdef MatlabProcessor < handle
                 number_of_pulses = 0;
             end
             
-            fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, peak_mark);
+            %fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, peak_mark);
 
             number_of_pulses = 2;
 
