@@ -40,7 +40,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
     auto stop = high_resolution_clock::now();
     auto total = duration_cast<microseconds>(stop - start);
     //RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
-    //f << std::to_string(total.count()) << "\n";
+    f << std::to_string(total.count()) << "\n";
 
   };
 
@@ -54,9 +54,11 @@ DataProcessor::DataProcessor() : Node("data_processor") {
                                                                                         10,
                                                                                         subscription_callback);
 
-  //f.open("data");
+  f.open("data.txt", std::ios::out | std::ios::trunc);
 
-  measure(loop_count);
+  if (loop_count > 0) {
+    measure(loop_count);
+  }
 
 }
 
