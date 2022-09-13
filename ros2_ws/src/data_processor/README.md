@@ -1,8 +1,10 @@
 # Usage
 
-`ros2 launch data_processor data_processor.launch.py processor-type:=python processor-script:=processors.python_processor log-level:=info loop-count:=10000`
+`ros2 launch data_processor data_processor.launch.py processor-type:=python processor-script:=processors.python.python_processor log-level:=info loop-count:=10000`
 
 `ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=cpp processor-script:=/home/alqio/workspace/mtms/ros2_ws/src/processors/matlab/compiler/libprocessor_factory.so loop-count:=100000`
+
+`ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=matlab processor-script:=. loop-count:=0`
 
 Add MATLAB install folder to path
 

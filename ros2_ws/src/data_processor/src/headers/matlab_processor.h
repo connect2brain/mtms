@@ -12,7 +12,7 @@
 
 class MatlabProcessor : public ProcessorWrapper {
 public:
-  MatlabProcessor(std::string script_path);
+  MatlabProcessor(const std::string& script_path);
 
   void init();
 
