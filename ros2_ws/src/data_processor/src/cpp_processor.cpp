@@ -9,7 +9,6 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
   if (processor_factory == nullptr) {
     std::cerr << "Cannot load processor_factory: " << dlerror() << std::endl;
   }
-  std::cout << "loaded factory" << std::endl;
   auto *create_processor_func = reinterpret_cast<create_processor >(dlsym(processor_factory, "create_processor"));
 
   if (!create_processor_func) {
@@ -65,14 +64,14 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
     }
     output.push_back(fpga_event);
   }
+  /*
   if (!output.empty()) {
     std::cout << "Received " << output.size() << " events" << std::endl;
     for (const auto& event: output) {
       std::cout << "event type: " << event.to_string() << std::endl;
     }
   }
-  //std::cout << "cpp data received 3" << std::endl;
-
+*/
   return output;
 }
 
