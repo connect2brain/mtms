@@ -16,3 +16,8 @@ specific:
 * OS X: The installed versions of Matlab are given by the MATLAB paths in ``/Application``. If no such application is
   found, it falls back to the one that might be accessible from the PATH.
 * Unix: The desired Matlab should be accessible from the PATH. This means the matlab/bin folder
+
+
+## Development notes
+
+* matlab_processor_interface.h method order must be same everywhere and possibly with MatlabProcessor.h. If in wrong order, calling a method will call the wrong method
