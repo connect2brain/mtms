@@ -33,5 +33,6 @@ struct matlab_fpga_event {
   unsigned char event_type;
   unsigned short target_voltage;
 };
+
 #endif
 // End of code generation (run_processor_types.h)

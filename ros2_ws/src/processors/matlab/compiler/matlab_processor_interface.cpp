@@ -18,8 +18,9 @@ void MatlabProcessorInterface::data_received(const double channel_data[62],
       << std::endl;
 }
 
-void MatlabProcessorInterface::close() const {
+unsigned int MatlabProcessorInterface::end_experiment() const {
   std::cout
-      << "ERROR, in cpp_processor_interface close, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
+      << "ERROR, in cpp_processor_interface end_experiment, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
+  return 0;
 }

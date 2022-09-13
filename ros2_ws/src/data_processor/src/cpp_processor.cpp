@@ -4,11 +4,6 @@
 
 #include "headers/cpp_processor.h"
 
-double ffRand(double fMin, double fMax) {
-  double f = (double) rand() / RAND_MAX;
-  return fMin + f * (fMax - fMin);
-}
-
 CPPProcessor::CPPProcessor(const std::string &script_path) {
   processor_factory = dlopen(script_path.c_str(), RTLD_NOW);
   if (processor_factory == nullptr) {
@@ -26,16 +21,16 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
 }
 
 std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  //std::cout << "cpp data received 1" << std::endl;
   coder::array<matlab_fpga_event, 1U> events;
-  //std::cout << data.channel_datapoint.size() << std::endl;
+
   inner_processor->data_received(data.channel_datapoint.data(), events);
-  //std::cout << "cpp data received 2" << std::endl;
+
   std::vector<FpgaEvent> output;
+
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
     FpgaEvent fpga_event;
-    if (event.event_type == 0) {
+    if (event.event_type == CHARGE_EVENT) {
       fpga_event.event_type = CHARGE_EVENT;
       fpga_event.charge_event = fpga_interfaces::msg::ChargeEvent();
       fpga_event.charge_event.event_info.event_id = event.b_event_info.event_id;
@@ -44,7 +39,7 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
       fpga_event.charge_event.channel = event.channel;
       fpga_event.charge_event.target_voltage = event.target_voltage;
 
-    } else if (event.event_type == 1) {
+    } else if (event.event_type == STIMULATION_PULSE_EVENT) {
       fpga_event.event_type = STIMULATION_PULSE_EVENT;
       fpga_event.stimulation_pulse_event = fpga_interfaces::msg::StimulationPulseEvent();
 
@@ -86,7 +81,7 @@ void CPPProcessor::init() {
 }
 
 int CPPProcessor::close() {
-  //inner_processor->close();
+  inner_processor->end_experiment();
 
   //Empty the pointer
   //inner_processor.reset();
