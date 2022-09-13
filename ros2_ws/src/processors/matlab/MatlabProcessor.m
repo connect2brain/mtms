@@ -64,7 +64,7 @@ classdef MatlabProcessor < handle
                 number_of_pulses = 0;
             end
             
-            fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, spike_mark);
+            %fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, spike_mark);
 
             number_of_pulses = 2;
 
