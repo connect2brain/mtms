@@ -6,7 +6,7 @@ classdef MatlabProcessor < handle
         channel_count
         commands
         peak_detection
-        spike_over
+        peak_over
         events_sent
     end
     properties(Access=private)
@@ -31,8 +31,8 @@ classdef MatlabProcessor < handle
 
             obj.peak_detection = Thresholding(zeros(window_size, 1), 30, 5.5, 0.7);
             obj.file_id = fopen("eeg_data.csv", "w");
-            fprintf(obj.file_id, "c3,filtered,spike\n");
-            obj.spike_over = true;
+            fprintf(obj.file_id, "c3,filtered,peak\n");
+            obj.peak_over = true;
             fprintf("matlab processor init\n");
         end
         function ret = init_experiment(obj)
@@ -48,23 +48,23 @@ classdef MatlabProcessor < handle
             c3 = channel_data(5);
 
             signal = obj.peak_detection.thresholding_algo(c3);
-            if signal == 0 && ~obj.spike_over
-                obj.spike_over = true;
+            if signal == 0 && ~obj.peak_over
+                obj.peak_over = true;
             end
             
             pulse = obj.create_command("pulse_event", 0);
             charge = obj.create_command("charge_event", 50);
-            spike_mark = "f";
+            peak_mark = "f";
 
-            if signal == 1 && obj.spike_over
+            if signal == 1 && obj.peak_over
                 number_of_pulses = 1;
-                spike_mark = "t";
-                obj.spike_over = false;
+                peak_mark = "t";
+                obj.peak_over = false;
             else
                 number_of_pulses = 0;
             end
             
-            %fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, spike_mark);
+            fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, peak_mark);
 
             number_of_pulses = 2;
 
