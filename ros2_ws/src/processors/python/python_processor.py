@@ -61,24 +61,24 @@ class real_time_peak_detection():
         self.stdFilter[self.lag - 1] = np.std(self.y[0:self.lag]).tolist()
 
     def thresholding_algo(self, new_value):
-        self.y.append(new_value)
         i = len(self.y) - 1
-        self.length = len(self.y)
-        if i < self.lag:
-            return 0
-        elif i == self.lag:
-            self.signals = [0] * len(self.y)
-            self.filteredY = np.array(self.y).tolist()
-            self.avgFilter = [0] * len(self.y)
-            self.stdFilter = [0] * len(self.y)
-            self.avgFilter[self.lag] = np.mean(self.y[0:self.lag]).tolist()
-            self.stdFilter[self.lag] = np.std(self.y[0:self.lag]).tolist()
-            return 0
+        self.y.append(new_value)
 
         self.signals += [0]
         self.filteredY += [0]
         self.avgFilter += [0]
         self.stdFilter += [0]
+
+        if len(self.y) > self.length:
+            self.y.pop(0)
+        if len(self.signals) > self.length:
+            self.signals.pop(0)
+        if len(self.filteredY) > self.length:
+            self.filteredY.pop(0)
+        if len(self.avgFilter) > self.length:
+            self.avgFilter.pop(0)
+        if len(self.stdFilter) > self.length:
+            self.stdFilter.pop(0)
 
         if abs(self.y[i] - self.avgFilter[i - 1]) > (self.threshold * self.stdFilter[i - 1]):
 
@@ -105,8 +105,8 @@ class Processor:
         self.data = []
         self.file = None
         self.peak_at = 0
-        self.peak_detection = real_time_peak_detection([0] * 50, 50, 4, 0.5)
-        self.peak_over = False
+        self.peak_detection = real_time_peak_detection([0] * 50, 30, 5.5, 0.7)
+        self.peak_over = True
         self.peaks_detected = 0
 
     def init(self):
@@ -146,24 +146,21 @@ class Processor:
             self.peak_over = True
 
         peak = signal != 0
-        if peak:
-            print("Peak detected")
 
         peak_mark = 'f'
         send_pulse = False
         if peak and self.peak_over:
             self.peak_over = False
-            # print(f"Last peak at {self.peak_at}, new peak at {self.eeg_data_index}")
             self.peak_at = self.eeg_data_index
             peak_mark = 't'
             send_pulse = True
             self.peaks_detected += 1
 
-        peak_mark = 't' if peak else 'f'
-        if self.file:
-            self.file.write(f"{c3},{filtered},{peak_mark}\n")
+        # peak_mark = 't' if peak else 'f'
+        #if self.file:
+        #    self.file.write(f"{c3},{filtered},{peak_mark}\n")
 
-        if send_pulse:
-            return [pulse_event]
+        #if send_pulse:
+        #    return [pulse_event]
 
-        return []
+        return [pulse_event, charge_event]
