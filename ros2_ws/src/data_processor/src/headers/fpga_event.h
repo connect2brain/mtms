@@ -11,9 +11,9 @@
 #include "fpga_interfaces/msg/stimulation_pulse_piece.hpp"
 
 enum FpgaEventType {
-  STIMULATION_PULSE_EVENT,
-  CHARGE_EVENT,
-  DISCHARGE_EVENT
+  STIMULATION_PULSE_EVENT = 0,
+  CHARGE_EVENT = 1,
+  DISCHARGE_EVENT = 2
 };
 
 struct FpgaEvent {
