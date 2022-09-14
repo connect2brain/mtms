@@ -47,7 +47,9 @@ add_executable(
         src/headers/scheduling_utils.cpp
         src/headers/matlab_processor_interface.h
         src/headers/fpga_event.h
-        src/headers/data_processor.h)
+        src/headers/data_processor.h
+        src/headers/matlab_helpers.h
+        src/matlab_helpers.cpp)
 
 target_include_directories(data_processor
         PUBLIC
@@ -68,7 +70,7 @@ if (PYTHONLIBS_FOUND)
     message(STATUS "Python found")
     include_directories(${PYTHON_INCLUDE_DIRS})
     target_link_libraries(data_processor ${PYTHON_LIBRARIES})
-else()
+else ()
     message(STATUS "Python not found")
 endif ()
 

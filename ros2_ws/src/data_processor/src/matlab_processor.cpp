@@ -15,16 +15,46 @@ MatlabProcessor::MatlabProcessor(const std::string &script_path) {
   auto path = "addpath " + script_path;
   std::cout << path << std::endl;
   matlab->eval(matlab::engine::convertUTF8StringToUTF16String(path));
+
+  //matlab_data = factory.createArray<double>({50, 62});
+  //matlab_data.resize(50, std::vector<double>(62, -1));
+  matlab_data.resize(50 * 62, -1);
 }
 
 void MatlabProcessor::init() {
 }
 
+void print_vector2d(std::vector<std::vector<double>> vec) {
+
+  for (unsigned i = 0; i < vec.size(); i++) {
+    for (unsigned j = 0; j < vec[i].size(); j++) {
+      std::cout << vec[i][j] << " ";
+    }
+    std::cout << std::endl;
+  }
+}
+
+void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
+
+  for (unsigned i = 0; i < rows; i++) {
+    for (unsigned j = 0; j < cols; j++) {
+      std::cout << vec[i * cols + j] << " ";
+    }
+    std::cout << std::endl;
+  }
+}
 
 std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  matlab::data::ArrayFactory factory;
+  std::vector<FpgaEvent> fpga_events;
 
-  auto matlab_data_array = factory.createArray<double>({50, 62});
+  matlab::data::TypedArray<double> matlab_data_array = factory.createArray(
+      {50, 62},
+      matlab_data.begin(),
+      matlab_data.end(),
+      matlab::data::InputLayout::ROW_MAJOR
+  );
+  auto matlab_data_array_dims = matlab_data_array.getDimensions();
+
   auto dim = matlab::data::ArrayDimensions(data.channel_datapoint.size());
   auto matlab_new_sample = factory.createArray<double>(
       {1, data.channel_datapoint.size()},
@@ -39,45 +69,109 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
                                         });
 
   std::vector<matlab::data::Array> results = matlab->feval(u"MatlabProcessorScript", 2, args);
-  std::cout << "feval done" << std::endl;
 
   auto new_data = results[0];
   auto new_data_typed = (matlab::data::TypedArray<double>) new_data;
 
+  matlab::data::ArrayDimensions new_data_dims = new_data_typed.getDimensions();
+  std::cout << "new_data_dims size is: " << new_data_dims[0] << " by " << new_data_dims[1] << std::endl;
+
+  for (unsigned i = 0; i < new_data_dims[0]; i++) {
+    for (unsigned j = 0; j < new_data_dims[1]; j++) {
+      matlab_data[i * new_data_dims[1] + j] = new_data_typed[i][j];
+    }
+  }
   for (auto i: new_data_typed) {
     //std::cout << i << std::endl;
+    //matlab_data[i] = new_data_typed[i];
   }
 
   auto events = results[1];
-  auto events_typed = (matlab::data::StructArray) events;
+  auto events_struct_array = (matlab::data::StructArray) events;
 
-  auto fields = events_typed.getFieldNames();
+  matlab::data::ArrayDimensions dims = events_struct_array.getDimensions();
+  std::cout << "events_struct_array size is: " << dims[0] << " by " << dims[1] << std::endl;
+
+  auto fields = events_struct_array.getFieldNames();
   std::vector<matlab::data::MATLABFieldIdentifier> field_names(fields.begin(), fields.end());
 
-  for (unsigned event_index = 0; event_index < events_typed.getNumberOfElements(); event_index++) {
-    std::cout << "event index " << event_index << std::endl;
+  for (unsigned event_index = 0; event_index < events_struct_array.getNumberOfElements(); event_index++) {
+    matlab_fpga_event event;
+
     for (auto field: field_names) {
       auto field_name = field.operator std::string();
-      std::cout << field_name << ": " << std::endl;
-      ///std::cout << field_value[0] << std::endl;
 
       if (field_name == "channel") {
-        matlab::data::TypedArrayRef<uint8_t> field_value = events_typed[event_index][field];
-        std::cout << +field_value[0] << std::endl;
-      } else if (field_name == "event_type") {
-        matlab::data::StringArray field_value = events_typed[event_index][field];
-        std::cout << "here" << std::endl;
-        auto str = field_value[0].operator std::string();
-        std::cout << "casted to str" << std::endl;
-        std::cout << str << std::endl;
-      } else {
-        std::cout << std::endl;
-      }
-    }
-  }
+        matlab::data::TypedArrayRef<uint8_t> field_value = events_struct_array[event_index][field];
+        event.channel = field_value[0];
 
-  std::vector<FpgaEvent> ret;
-  return ret;
+      } else if (field_name == "event_type") {
+        matlab::data::TypedArrayRef<uint8_T> field_value = events_struct_array[event_index][field];
+        event.event_type = field_value[0];
+
+      } else if (field_name == "target_voltage") {
+        matlab::data::TypedArrayRef<uint16_t> field_value = events_struct_array[event_index][field];
+        event.target_voltage = field_value[0];
+
+      } else if (field_name == "event_info") {
+        matlab::data::StructArray event_info = events_struct_array[event_index][field];
+        auto sub_struct_fields = event_info.getFieldNames();
+        std::vector<matlab::data::MATLABFieldIdentifier> sub_struct_field_names(sub_struct_fields.begin(),
+                                                                                sub_struct_fields.end());
+
+        for (auto sub_struct_field: sub_struct_field_names) {
+          auto sub_struct_field_name = sub_struct_field.operator std::string();
+          if (sub_struct_field_name == "event_id") {
+            matlab::data::TypedArrayRef<uint16_t> field_value = event_info[0][sub_struct_field];
+            event.b_event_info.event_id = field_value[0];
+
+          } else if (sub_struct_field_name == "execution_condition") {
+            matlab::data::TypedArrayRef<uint8_t> field_value = event_info[0][sub_struct_field];
+            event.b_event_info.execution_condition = field_value[0];
+
+          } else if (sub_struct_field_name == "time_us") {
+            matlab::data::TypedArrayRef<uint64_t> field_value = event_info[0][sub_struct_field];
+            event.b_event_info.time_us = field_value[0];
+
+          } else {
+            std::cout << "unknown event type" << std::endl;
+          }
+        }
+      } else if (field_name == "pieces") {
+        matlab::data::StructArray pieces = events_struct_array[event_index][field];
+        auto sub_struct_fields = pieces.getFieldNames();
+        std::vector<matlab::data::MATLABFieldIdentifier> sub_struct_field_names(sub_struct_fields.begin(),
+                                                                                sub_struct_fields.end());
+
+        matlab::data::ArrayDimensions pieces_dims = pieces.getDimensions();
+
+        for (auto sub_struct_field: sub_struct_field_names) {
+          auto sub_struct_field_name = sub_struct_field.operator std::string();
+          for (unsigned i = 0; i < pieces_dims[1]; i++) {
+            if (sub_struct_field_name == "mode") {
+              matlab::data::TypedArrayRef<uint8_t> field_value = pieces[i][sub_struct_field];
+              event.pieces[i].mode = field_value[0];
+
+            } else if (sub_struct_field_name == "duration_in_ticks") {
+              matlab::data::TypedArrayRef<uint16_t> field_value = pieces[i][sub_struct_field];
+              event.pieces[i].duration_in_ticks = field_value[0];
+
+            } else {
+              std::cout << "unknown event type" << std::endl;
+            }
+          }
+        }
+      } else {
+        std::cout << "unknown event type" << std::endl;
+      }
+
+    }
+    print_matlab_fpga_event(event);
+    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
+    fpga_events.push_back(fpga_event);
+  }
+  print_vector(matlab_data, 50, 62);
+  return fpga_events;
 }
 
 int MatlabProcessor::close() {
