@@ -19,10 +19,10 @@ function [updated_data, events] = MatlabProcessorScript(data, new_data_point)
     end
     
     
-    event = create_command("pulse_event", 0);
-    disp(event);
+    event = create_command("pulse_event", 500);
+    % disp(event);
     updated_data = data;
     events = (event);
-    disp(events);
-    disp(data);
+    % disp(events);
+    disp(data(:,end));
 end

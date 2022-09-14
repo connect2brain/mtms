@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include "matlab_processor_interface.h"
-
+#include "matlab_helpers.h"
 
 class CPPProcessor : public ProcessorWrapper {
 public:
