@@ -74,23 +74,19 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   auto new_data_typed = (matlab::data::TypedArray<double>) new_data;
 
   matlab::data::ArrayDimensions new_data_dims = new_data_typed.getDimensions();
-  std::cout << "new_data_dims size is: " << new_data_dims[0] << " by " << new_data_dims[1] << std::endl;
+  //std::cout << "new_data_dims size is: " << new_data_dims[0] << " by " << new_data_dims[1] << std::endl;
 
   for (unsigned i = 0; i < new_data_dims[0]; i++) {
     for (unsigned j = 0; j < new_data_dims[1]; j++) {
       matlab_data[i * new_data_dims[1] + j] = new_data_typed[i][j];
     }
   }
-  for (auto i: new_data_typed) {
-    //std::cout << i << std::endl;
-    //matlab_data[i] = new_data_typed[i];
-  }
 
   auto events = results[1];
   auto events_struct_array = (matlab::data::StructArray) events;
 
   matlab::data::ArrayDimensions dims = events_struct_array.getDimensions();
-  std::cout << "events_struct_array size is: " << dims[0] << " by " << dims[1] << std::endl;
+  //std::cout << "events_struct_array size is: " << dims[0] << " by " << dims[1] << std::endl;
 
   auto fields = events_struct_array.getFieldNames();
   std::vector<matlab::data::MATLABFieldIdentifier> field_names(fields.begin(), fields.end());
@@ -166,15 +162,16 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
       }
 
     }
-    print_matlab_fpga_event(event);
+    //print_matlab_fpga_event(event);
     auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
     fpga_events.push_back(fpga_event);
   }
-  print_vector(matlab_data, 50, 62);
+  //print_vector(matlab_data, 50, 62);
   return fpga_events;
 }
 
 int MatlabProcessor::close() {
-  std::cout << "finalized matlab" << std::endl;
   matlab::engine::terminateEngineClient();
+  std::cout << "Closed matlab engine client" << std::endl;
+  return 0;
 }
