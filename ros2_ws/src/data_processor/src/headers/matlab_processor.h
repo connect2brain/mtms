@@ -8,8 +8,10 @@
 #include "processor.h"
 #include "iostream"
 #include "MatlabDataArray.hpp"
+#include "MatlabDataArray/InputLayout.hpp"
 #include "MatlabEngine.hpp"
 #include "run_processor_types.h"
+#include "matlab_helpers.h"
 
 struct MatlabProcessorReturn {
   matlab::data::TypedArray<double> data;
@@ -19,7 +21,7 @@ struct MatlabProcessorReturn {
 
 class MatlabProcessor : public ProcessorWrapper {
 public:
-  MatlabProcessor(const std::string& script_path);
+  MatlabProcessor(const std::string &script_path);
 
   void init();
 
@@ -30,7 +32,10 @@ public:
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;
   matlab::data::Array processor_instance;
-  std::vector<std::vector<double>> matlab_data;
+  //matlab::data::TypedArray<double> matlab_data;
+  //std::vector<std::vector<double> > matlab_data;
+  std::vector<double> matlab_data;
+  matlab::data::ArrayFactory factory;
 };
 
 
