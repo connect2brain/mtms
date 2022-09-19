@@ -11,7 +11,7 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   } else if (event.event_type == CHARGE_EVENT) {
     std::cout << "Charge event" << std::endl;
   } else if (event.event_type == DISCHARGE_EVENT) {
-    std::cout << "Stimulation pulse event" << std::endl;
+    std::cout << "Discharge event" << std::endl;
   } else {
     std::cout << "Uknown event type " << +event.event_type << std::endl;
   }
