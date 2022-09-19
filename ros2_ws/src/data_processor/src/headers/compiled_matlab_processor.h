@@ -17,11 +17,11 @@ class CompiledMatlabProcessor : public ProcessorWrapper {
 public:
   explicit CompiledMatlabProcessor(const std::string &script_path);
 
-  void init() override;
+  std::vector<FpgaEvent> init() override;
 
   std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data) override;
 
-  int close() override;
+  std::vector<FpgaEvent> close() override;
 
 private:
   void *processor_factory;

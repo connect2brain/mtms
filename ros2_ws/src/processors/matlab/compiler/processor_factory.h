@@ -9,8 +9,7 @@
 #include <chrono>
 
 
-extern "C" MatlabProcessor *create_processor(unsigned int b_window_size,
-                                             unsigned short channel_count);
+extern "C" MatlabProcessor *create_processor();
 
 extern "C" void destroy_processor(MatlabProcessor *p);
 

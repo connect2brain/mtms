@@ -6,20 +6,23 @@
 #define DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
 
 #include "coder_array.h"
-#include "run_processor_types.h"
+#include "run_processor_internal_types.h"
 #include <iostream>
 
 class MatlabProcessorInterface {
 public:
-  virtual MatlabProcessorInterface *init(unsigned int b_window_size,
-                                         unsigned short channel_count);
-
   virtual ~MatlabProcessorInterface() = default;
 
-  virtual unsigned int end_experiment() const;
+  virtual MatlabProcessorInterface *init();
 
-  virtual void data_received(const double channel_data[62],
+  virtual void init_experiment(coder::array<matlab_fpga_event, 1U> &ret);
+
+  virtual void end_experiment(coder::array<matlab_fpga_event, 1U> &ret);
+
+  virtual void data_received(const double channel_data_data[], int channel_data_size,
+                             unsigned long time_us,
+                             boolean_T first_sample_of_experiment,
                              coder::array<matlab_fpga_event, 1U> &ret);
-};
 
+};
 #endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H

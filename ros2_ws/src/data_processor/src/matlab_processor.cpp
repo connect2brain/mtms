@@ -21,7 +21,9 @@ MatlabProcessor::MatlabProcessor(const std::string &script_path) {
   matlab_data.resize(50 * 62, -1);
 }
 
-void MatlabProcessor::init() {
+std::vector<FpgaEvent> MatlabProcessor::init() {
+  std::vector<FpgaEvent> events;
+  return events;
 }
 
 void print_vector2d(std::vector<std::vector<double>> vec) {
@@ -170,8 +172,11 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   return fpga_events;
 }
 
-int MatlabProcessor::close() {
+std::vector<FpgaEvent> MatlabProcessor::close() {
   matlab::engine::terminateEngineClient();
   std::cout << "Closed matlab engine client" << std::endl;
-  return 0;
+
+  std::vector<FpgaEvent> events;
+
+  return events;
 }

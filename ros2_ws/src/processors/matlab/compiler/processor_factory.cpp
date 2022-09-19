@@ -2,10 +2,9 @@
 
 #include "iostream"
 
-extern "C" MatlabProcessor *create_processor(unsigned int b_window_size,
-                                             unsigned short channel_count) {
+extern "C" MatlabProcessor *create_processor() {
   auto *p = new MatlabProcessor();
-  p->init(b_window_size, channel_count);
+  p->init();
   return p;
 }
 
@@ -21,26 +20,27 @@ double fRand(double fMin, double fMax) {
 int main() {
   MatlabProcessorInterface *processor;
   auto *p = new MatlabProcessor();
-  p->init(20, 62);
+  p->init();
   processor = p;
 
   auto start = std::chrono::high_resolution_clock::now();
   auto stop = std::chrono::high_resolution_clock::now();
   auto total = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
-  auto repeats = 10000;
+  auto repeats = 10;
   for (auto i = 0; i < repeats; i++) {
     std::vector<double> data;
     for (auto j = 0; j < 62; j++) {
       data.push_back(fRand(0, 100));
     }
     coder::array<matlab_fpga_event, 1U> events;
-    p->data_received(data.data(), events);
+    p->data_received(data.data(), data.size(), 100, false, events);
 
     for (auto e = events.begin(); e != events.end(); e++) {
       std::cout << "received event: " << +e->event_type << std::endl;
     }
   }
-  auto events = p->end_experiment();
+  coder::array<matlab_fpga_event, 1U> events;
+  p->end_experiment(events);
 
 }
