@@ -15,14 +15,20 @@ CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path)
     std::cerr << "Cannot load create_processor_func symbols: " << dlerror() << std::endl;
   }
 
-  inner_processor = std::unique_ptr<MatlabProcessorInterface>(create_processor_func(50, 62));
+  inner_processor = std::unique_ptr<MatlabProcessorInterface>(create_processor_func());
 
 }
 
 std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   coder::array<matlab_fpga_event, 1U> events;
 
-  inner_processor->data_received(data.channel_datapoint.data(), events);
+  inner_processor->data_received(
+      data.channel_datapoint.data(),
+      data.channel_datapoint.size(),
+      100,
+      false,
+      events
+  );
 
   std::vector<FpgaEvent> output;
 
@@ -42,18 +48,37 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
   return output;
 }
 
-void CompiledMatlabProcessor::init() {
+std::vector<FpgaEvent> CompiledMatlabProcessor::init() {
   std::cout << "in CPPPprocessor init" << std::endl;
+
+  std::vector<FpgaEvent> fpga_events;
+  coder::array<matlab_fpga_event, 1U> events;
+  inner_processor->init_experiment(events);
+
+  for (auto i = events.begin(); i != events.end(); i++) {
+    auto event = *i;
+    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
+    fpga_events.push_back(fpga_event);
+  }
+  return fpga_events;
 }
 
-int CompiledMatlabProcessor::close() {
-  inner_processor->end_experiment();
+std::vector<FpgaEvent> CompiledMatlabProcessor::close() {
+  coder::array<matlab_fpga_event, 1U> events;
+  inner_processor->end_experiment(events);
 
   //Empty the pointer
   //inner_processor.reset();
+  std::vector<FpgaEvent> fpga_events;
+
+  for (auto i = events.begin(); i != events.end(); i++) {
+    auto event = *i;
+    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
+    fpga_events.push_back(fpga_event);
+  }
 
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
-  return 0;
+  return fpga_events;
 }

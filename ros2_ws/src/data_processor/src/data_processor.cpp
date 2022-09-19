@@ -90,7 +90,9 @@ void DataProcessor::measure(int repeats) {
 int DataProcessor::shutdown() {
   RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Shutting down data processor");
   if (processor) {
-    return processor->close();
+    processor->close();
+    //TODO: parse events
+    return 0;
   }
   if (f) {
     f.close();

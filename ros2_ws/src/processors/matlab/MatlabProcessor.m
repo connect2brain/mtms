@@ -1,56 +1,28 @@
-classdef MatlabProcessor < handle
+classdef MatlabProcessor < AbstractMatlabProcessor
 
-    properties
-        data
-        window_size
-        channel_count
-        commands
-        peak_detection
-        peak_over
-        events_sent
-    end
     properties(Access=private)
         file_id
+        peak_detection
+        peak_over
     end
 
-    methods 
-        function obj = MatlabProcessor(window_size, channel_count)
-            obj.data = double(1);
-            obj.data = zeros(channel_count, window_size);
-            
-            obj.events_sent = uint32(0);
+    methods
+        function obj = constructor(obj)
+            disp("in ConcreteMatlabProcessor constructor");
 
-            obj.window_size = window_size;
-            obj.channel_count = channel_count;
-            pulse = obj.create_command("pulse_event", 0);
-            
-            number_of_pulses = 5;
-            if number_of_pulses > window_size
-                number_of_pulses = 20;
-            end
-            obj.commands = repmat(pulse, number_of_pulses, 1);
+            obj.set_channel_count(63);
+            obj.set_window_size(50);
 
-            obj.peak_detection = Thresholding(zeros(window_size, 1), 30, 5.5, 0.7);
+            obj.peak_detection = Thresholding(zeros(obj.window_size, 1), 30, 5.5, 0.7);
             obj.file_id = fopen("eeg_matlab.csv", "w");
             fprintf(obj.file_id, "c3,filtered,peak\n");
             obj.peak_over = true;
             fprintf("matlab processor init\n");
         end
-        function val = getData(obj)
-          val = obj.data; 
+        function on_init_experiment(obj)
+            obj.commands = [];
         end
-        function obj = setData(obj,val)
-          obj.data = val;
-        end    
-        function ret = init_experiment(obj)
-            ret = [];
-        end
-        function ret = end_experiment(obj)
-            fprintf("Ending experiment\n");
-            fclose(obj.file_id);
-            ret = obj.events_sent;
-        end
-        function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
+        function on_data_received(obj, channel_data, time_us, first_sample_of_experiment)
             obj.enqueue(channel_data);
             c3 = channel_data(5);
 
@@ -58,9 +30,9 @@ classdef MatlabProcessor < handle
             if signal == 0 && ~obj.peak_over
                 obj.peak_over = true;
             end
-            
-            pulse = obj.create_command("pulse_event", 0);
-            charge = obj.create_command("charge_event", 50);
+
+            pulse = create_command(obj.events_sent + 1, "pulse_event", 0);
+            charge = create_command(obj.events_sent + 2, "charge_event", 50);
             peak_mark = "f";
 
             if signal == 1 && obj.peak_over
@@ -70,58 +42,19 @@ classdef MatlabProcessor < handle
             else
                 number_of_pulses = 0;
             end
-            
-            %fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, peak_mark);
 
+            fprintf(obj.file_id, "%6.2f,%f,%s\n", c3, 1, peak_mark);
             number_of_pulses = 2;
 
             obj.commands = repmat(pulse, number_of_pulses, 1);
             obj.commands(1) = charge;
             obj.commands(2) = pulse;
-            obj.events_sent = obj.events_sent + number_of_pulses;
-            ret = obj.commands;
         end
-    end
-    methods(Access=private)
-        function ret = enqueue(obj, element)
-            coder.inline("always");
-            temp = obj.data(1);
-            for i = 1:obj.window_size - 1
-                obj.data(i) = obj.data(i + 1);
-            end
-            obj.data(:,end) = element;
-            ret = temp;
-        end
-        function command = create_command(obj, event_type, target_voltage)
-            event_info.event_id = uint16(0);
-            event_info.execution_condition = uint8(0);
-            event_info.time_us = uint64(0);
-            
-            piece1.mode = uint8(0);
-            piece1.duration_in_ticks = uint16(200);
-            piece2.mode = uint8(2);
-            piece2.duration_in_ticks = uint16(160);
-            piece3.mode = uint8(1);
-            piece3.duration_in_ticks = uint16(160);
-            
-            pieces = [piece1, piece2, piece3];
-            
-            command.channel = uint8(5);
-            command.event_info = event_info;
-            command.pieces = pieces;
-            if event_type == "pulse_event"
-                command.event_type = uint8(0);
-            elseif event_type == "charge_event"
-                command.event_type = uint8(1);
-            else
-                command.event_type = uint8(2);
-            end
+        function on_end_experiment(obj)
+            fclose(obj.file_id);
 
-            command.target_voltage = uint16(target_voltage);
-
-            coder.cstructname(command, 'matlab_fpga_event');
-            coder.cstructname(command.event_info, 'event_info');
-            coder.cstructname(command.pieces, 'stimulation_pulse_piece');
+            obj.commands = [];
         end
     end
 end
+
