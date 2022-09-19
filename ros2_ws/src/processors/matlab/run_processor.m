@@ -1,8 +1,30 @@
 function out = run_processor(window_size, channel_count, data_sample, time_us, first_sample_of_experiment)
-    obj = MatlabProcessor(window_size, channel_count);
+    actual_window_size = uint32(20);
+    
+    if window_size < 50
+        actual_window_size = window_size;
+    elseif window_size > 100
+        actual_window_size = uint32(40);
+    else
+        actual_window_size = uint32(window_size);
+    end
+    actual_data_sample = zeros(actual_window_size, 1);
+    obj = MatlabProcessor(actual_window_size, channel_count);
     %obj.enqueue(data_sample);
-    data = obj.data_received(data_sample, time_us, first_sample_of_experiment);
+    data = obj.data_received(actual_data_sample, time_us, first_sample_of_experiment);
     % display(data);
     events = obj.end_experiment();
-    out = data(2);
+    % out = data(2);
+
+    if window_size < 10
+        obj = obj.setData(1:10);
+    else
+        obj = obj.setData([]);
+    end
+    for i = 1:window_size
+        obj = obj.setData([obj.getData(), double(i)]);
+    end
+
+    out = obj.getData();
+    
 end
