@@ -48,8 +48,10 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   python_close_name = PyUnicode_FromString("close");
 }
 
-void PythonProcessor::init() {
+std::vector<FpgaEvent> PythonProcessor::init() {
   PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
+  std::vector<FpgaEvent> events;
+  return events;
 }
 
 PyObject *PythonProcessor::make_list(std::vector<double> data) {
@@ -200,8 +202,10 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
   return fpga_events;
 }
 
-int PythonProcessor::close() {
+std::vector<FpgaEvent> PythonProcessor::close() {
   std::cout << "python close" << std::endl;
   PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
-  return Py_FinalizeEx();
+  Py_FinalizeEx();
+  std::vector<FpgaEvent> events;
+  return events;
 }
