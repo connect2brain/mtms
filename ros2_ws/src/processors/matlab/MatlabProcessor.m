@@ -15,6 +15,7 @@ classdef MatlabProcessor < handle
 
     methods 
         function obj = MatlabProcessor(window_size, channel_count)
+            obj.data = double(1);
             obj.data = zeros(channel_count, window_size);
             
             obj.events_sent = uint32(0);
@@ -35,6 +36,12 @@ classdef MatlabProcessor < handle
             obj.peak_over = true;
             fprintf("matlab processor init\n");
         end
+        function val = getData(obj)
+          val = obj.data; 
+        end
+        function obj = setData(obj,val)
+          obj.data = val;
+        end    
         function ret = init_experiment(obj)
             ret = [];
         end
