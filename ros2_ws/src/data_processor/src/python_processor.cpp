@@ -44,8 +44,8 @@ PythonProcessor::PythonProcessor(std::string script_path) {
     return;
   }
   python_data_received_name = PyUnicode_FromString("data_received");
-  python_init_name = PyUnicode_FromString("init");
-  python_close_name = PyUnicode_FromString("close");
+  python_init_name = PyUnicode_FromString("init_experiment");
+  python_close_name = PyUnicode_FromString("end_experiment");
 }
 
 std::vector<FpgaEvent> PythonProcessor::init() {
@@ -62,6 +62,40 @@ PyObject *PythonProcessor::make_list(std::vector<double> data) {
   return l;
 }
 
+fpga_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
+  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
+  if (event_info_as_pyobject == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event_info_as_pyobject" << std::endl;
+  }
+  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
+  if (event_id == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event_id" << std::endl;
+  }
+  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
+  if (execution_condition == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on execution_condition" << std::endl;
+  }
+  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
+  if (time_us == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on time_us" << std::endl;
+  }
+  fpga_interfaces::msg::EventInfo event_info;
+  event_info.time_us = PyLong_AsUnsignedLong(time_us);
+  event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+  event_info.event_id = PyLong_AsUnsignedLong(event_id);
+
+  Py_DECREF(execution_condition);
+  Py_DECREF(event_id);
+  Py_DECREF(event_info_as_pyobject);
+  Py_DECREF(time_us);
+
+  return event_info;
+}
+
 fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *event) {
   auto charge_event = fpga_interfaces::msg::ChargeEvent();
 
@@ -71,26 +105,6 @@ fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *
     std::cout << "Error on event channel" << std::endl;
   }
 
-  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-  if (event_info_as_pyobject == nullptr) {
-    PyErr_Print();
-    std::cout << "Error on event_info_as_pyobject channel" << std::endl;
-  }
-  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
-  if (event_id == nullptr) {
-    PyErr_Print();
-    std::cout << "Error on event_id channel" << std::endl;
-  }
-  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
-  if (execution_condition == nullptr) {
-    PyErr_Print();
-    std::cout << "Error on execution_condition channel" << std::endl;
-  }
-  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
-  if (time_us == nullptr) {
-    PyErr_Print();
-    std::cout << "Error on time_us channel" << std::endl;
-  }
   auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
   if (target_voltage == nullptr) {
     PyErr_Print();
@@ -99,16 +113,38 @@ fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *
 
   charge_event.channel = PyLong_AsUnsignedLong(channel);
   charge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
-  charge_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
-  charge_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
-  charge_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
-  //Py_DECREF(channel);
-  //Py_DECREF(target_voltage);
-  //Py_DECREF(event_info_as_pyobject);
-  //Py_DECREF(event_id);
-  //Py_DECREF(time_us);
+
+  charge_event.event_info = parse_event_info(event);
+
+  Py_CLEAR(channel);
+  Py_CLEAR(target_voltage);
 
   return charge_event;
+}
+
+fpga_interfaces::msg::DischargeEvent PythonProcessor::parse_discharge_event(PyObject *event) {
+  auto discharge_event = fpga_interfaces::msg::DischargeEvent();
+
+  auto channel = PyObject_GetAttrString(event, "channel");
+  if (channel == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event channel" << std::endl;
+  }
+
+  auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
+  if (target_voltage == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on target_voltage channel" << std::endl;
+  }
+
+  discharge_event.channel = PyLong_AsUnsignedLong(channel);
+  discharge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
+  discharge_event.event_info = parse_event_info(event);
+
+  Py_DECREF(channel);
+  Py_DECREF(target_voltage);
+
+  return discharge_event;
 }
 
 fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_event(PyObject *event) {
@@ -120,13 +156,15 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     std::cout << "Error on event channel" << std::endl;
   }
 
-  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
-  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
-  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
-
   auto pieces = PyObject_GetAttrString(event, "pieces");
-  for (auto i = 0; i < PyList_Size(pieces); i++) {
+  if (pieces == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event pieces" << std::endl;
+  }
+
+  //Loop from top to bot, so we can dereference piece_as_pyobject as we go, see Py_DECREF documentation for more info
+  //https://docs.python.org/3/c-api/refcounting.html
+  for (auto i = PyList_Size(pieces) - 1; i > 0; i--) {
     auto piece_as_pyobject = PyList_GetItem(pieces, i);
     auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
@@ -135,19 +173,16 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     piece.mode = PyLong_AsUnsignedLong(mode);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
-    stimulation_event.pieces.push_back(piece);
-    //Py_DECREF(mode);
-    //Py_DECREF(duration_in_ticks);
+    stimulation_event.pieces.insert(stimulation_event.pieces.begin(), piece);
+    Py_DECREF(mode);
+    Py_DECREF(duration_in_ticks);
+    Py_DECREF(piece_as_pyobject);
   }
 
   stimulation_event.channel = PyLong_AsUnsignedLong(channel);
-  stimulation_event.event_info.event_id = PyLong_AsUnsignedLong(event_id);
-  stimulation_event.event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
-  stimulation_event.event_info.time_us = PyLong_AsUnsignedLong(time_us);
-  //Py_DECREF(channel);
-  //Py_DECREF(event_info_as_pyobject);
-  //Py_DECREF(event_id);
-  //Py_DECREF(time_us);
+  stimulation_event.event_info = parse_event_info(event);
+  Py_DECREF(channel);
+  Py_DECREF(pieces);
 
   return stimulation_event;
 }
@@ -159,20 +194,29 @@ std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObje
     FpgaEvent event;
 
     auto event_type_as_pyobject = PyObject_GetAttrString(event_as_pyobject, "event_type");
-    auto event_type = PyUnicode_AsUTF8(event_type_as_pyobject);
+    auto event_type = PyLong_AsUnsignedLong(event_type_as_pyobject);
 
-    if (strcmp(event_type, "stimulation") == 0) {
+    if (event_type == STIMULATION_PULSE_EVENT) {
       auto stimulation_event = parse_stimulation_event(event_as_pyobject);
       event.stimulation_pulse_event = stimulation_event;
       event.event_type = STIMULATION_PULSE_EVENT;
-    } else if (strcmp(event_type, "charge") == 0) {
+
+    } else if (event_type == CHARGE_EVENT) {
       auto charge_event = parse_charge_event(event_as_pyobject);
       event.charge_event = charge_event;
       event.event_type = CHARGE_EVENT;
+
+    } else if (event_type == DISCHARGE_EVENT) {
+      auto discharge_event = parse_discharge_event(event_as_pyobject);
+      event.discharge_event = discharge_event;
+      event.event_type = DISCHARGE_EVENT;
+
     } else {
       std::wcout << "Unknown event type" << std::endl;
     }
     fpga_events.push_back(event);
+    Py_DECREF(event_type_as_pyobject);
+    //Py_DECREF(event_as_pyobject); // TODO
   }
 
   return fpga_events;

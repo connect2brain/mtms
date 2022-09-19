@@ -16,11 +16,11 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script", "");
+  this->declare_parameter<std::string>("processor_script", "processors.python.python_processor");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;
-  this->declare_parameter<int>("loop_count", 0);
+  this->declare_parameter<int>("loop_count", 5);
   this->get_parameter("loop_count", loop_count);
 
   RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
@@ -82,6 +82,12 @@ void DataProcessor::measure(int repeats) {
     auto duration = duration_cast<microseconds>(stop - start);
     times.push_back(duration);
     total = duration_cast<microseconds>(duration + total);
+
+    for (auto event : fpga_events) {
+      event.print();
+      std::cout << "---" << std::endl;
+    }
+
   }
   RCLCPP_INFO(this->get_logger(), "Duration total: %lu us", total.count());
   RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
