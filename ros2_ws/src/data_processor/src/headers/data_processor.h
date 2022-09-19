@@ -10,7 +10,7 @@
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "python_processor.h"
 #include "matlab_processor.h"
-#include "cpp_processor.h"
+#include "compiled_matlab_processor.h"
 #include "processor.h"
 
 #include <string>

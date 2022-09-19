@@ -13,9 +13,9 @@
 #include "matlab_processor_interface.h"
 #include "matlab_helpers.h"
 
-class CPPProcessor : public ProcessorWrapper {
+class CompiledMatlabProcessor : public ProcessorWrapper {
 public:
-  explicit CPPProcessor(const std::string &script_path);
+  explicit CompiledMatlabProcessor(const std::string &script_path);
 
   void init() override;
 
