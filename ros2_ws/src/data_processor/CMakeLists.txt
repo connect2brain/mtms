@@ -38,11 +38,11 @@ add_executable(
         src/headers/processor.h
         src/python_processor.cpp
         src/matlab_processor.cpp
-        src/cpp_processor.cpp
+        src/compiled_matlab_processor.cpp
         src/matlab_processor_interface.cpp
         src/headers/matlab_processor.h
         src/headers/python_processor.h
-        src/headers/cpp_processor.h
+        src/headers/compiled_matlab_processor.h
         src/headers/scheduling_utils.h
         src/headers/scheduling_utils.cpp
         src/headers/matlab_processor_interface.h
