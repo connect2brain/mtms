@@ -29,7 +29,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   } else if (processor_type == "matlab") {
     processor = new MatlabProcessor(processor_script_path);
   } else if (processor_type == "cpp") {
-    processor = new CPPProcessor(processor_script_path);
+    processor = new CompiledMatlabProcessor(processor_script_path);
   }
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {

@@ -2,9 +2,9 @@
 // Created by alqio on 1.9.2022.
 //
 
-#include "headers/cpp_processor.h"
+#include "headers/compiled_matlab_processor.h"
 
-CPPProcessor::CPPProcessor(const std::string &script_path) {
+CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path) {
   processor_factory = dlopen(script_path.c_str(), RTLD_NOW);
   if (processor_factory == nullptr) {
     std::cerr << "Cannot load processor_factory: " << dlerror() << std::endl;
@@ -19,7 +19,7 @@ CPPProcessor::CPPProcessor(const std::string &script_path) {
 
 }
 
-std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   coder::array<matlab_fpga_event, 1U> events;
 
   inner_processor->data_received(data.channel_datapoint.data(), events);
@@ -42,11 +42,11 @@ std::vector<FpgaEvent> CPPProcessor::data_received(mtms_interfaces::msg::EegData
   return output;
 }
 
-void CPPProcessor::init() {
+void CompiledMatlabProcessor::init() {
   std::cout << "in CPPPprocessor init" << std::endl;
 }
 
-int CPPProcessor::close() {
+int CompiledMatlabProcessor::close() {
   inner_processor->end_experiment();
 
   //Empty the pointer
