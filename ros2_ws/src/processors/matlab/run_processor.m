@@ -20,10 +20,15 @@ function out = run_processor(window_size, channel_count, data_sample, time_us, f
 
     data = obj.data_received(actual_data_sample, time_us, first_sample_of_experiment);
     % display(data);
-    events = obj.end_experiment();
+    data = obj.end_experiment();
+
+    auto_enqueue = obj.auto_enqueue;
+    
+    in_progress = obj.experiment_in_progress;
+
     % out = data(2);
     time_us = obj.last_sample_received_at_us;
-    experiment_started = obj.experiment_started;
+    experiment_started = obj.experiment_in_progress;
 
 
     if window_size < 10
