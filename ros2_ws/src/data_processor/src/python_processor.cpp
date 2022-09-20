@@ -1,5 +1,7 @@
 //
 // Created by alqio on 1.9.2022.
+// Recommended reading about reference counting: https://docs.python.org/3/c-api/intro.html#reference-count-details
+// Note the difference between "New reference" and "Borrowed reference" and what kind of reference each function returns
 //
 
 #include "headers/python_processor.h"
@@ -88,10 +90,7 @@ fpga_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *even
   event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
   event_info.event_id = PyLong_AsUnsignedLong(event_id);
 
-  Py_DECREF(execution_condition);
-  Py_DECREF(event_id);
   Py_DECREF(event_info_as_pyobject);
-  Py_DECREF(time_us);
 
   return event_info;
 }
@@ -116,8 +115,8 @@ fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *
 
   charge_event.event_info = parse_event_info(event);
 
-  Py_CLEAR(channel);
-  Py_CLEAR(target_voltage);
+  Py_DECREF(channel);
+  Py_DECREF(target_voltage);
 
   return charge_event;
 }
@@ -134,11 +133,12 @@ fpga_interfaces::msg::DischargeEvent PythonProcessor::parse_discharge_event(PyOb
   auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
   if (target_voltage == nullptr) {
     PyErr_Print();
-    std::cout << "Error on target_voltage channel" << std::endl;
+    std::cout << "Error on target_voltage" << std::endl;
   }
 
   discharge_event.channel = PyLong_AsUnsignedLong(channel);
   discharge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
+
   discharge_event.event_info = parse_event_info(event);
 
   Py_DECREF(channel);
@@ -162,9 +162,7 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     std::cout << "Error on event pieces" << std::endl;
   }
 
-  //Loop from top to bot, so we can dereference piece_as_pyobject as we go, see Py_DECREF documentation for more info
-  //https://docs.python.org/3/c-api/refcounting.html
-  for (auto i = PyList_Size(pieces) - 1; i > 0; i--) {
+  for (auto i = 0; i < PyList_Size(pieces); i++) {
     auto piece_as_pyobject = PyList_GetItem(pieces, i);
     auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
@@ -173,10 +171,7 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     piece.mode = PyLong_AsUnsignedLong(mode);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
-    stimulation_event.pieces.insert(stimulation_event.pieces.begin(), piece);
-    Py_DECREF(mode);
-    Py_DECREF(duration_in_ticks);
-    Py_DECREF(piece_as_pyobject);
+    stimulation_event.pieces.push_back(piece);
   }
 
   stimulation_event.channel = PyLong_AsUnsignedLong(channel);
@@ -214,9 +209,10 @@ std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObje
     } else {
       std::wcout << "Unknown event type" << std::endl;
     }
-    fpga_events.push_back(event);
+
+    fpga_events.insert(fpga_events.begin(), event);
+
     Py_DECREF(event_type_as_pyobject);
-    //Py_DECREF(event_as_pyobject); // TODO
   }
 
   return fpga_events;
@@ -226,7 +222,6 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
   auto list = make_list(data.channel_datapoint);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
-  //std::cout << "in data received" << std::endl;
 
   auto result = PyObject_CallMethodObjArgs(python_instance, python_data_received_name, list, time,
                                            first_sample_of_experiment, nullptr);
@@ -236,6 +231,10 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
     PyErr_Print();
   }
 
+  Py_DECREF(list);
+  Py_DECREF(time);
+  Py_DECREF(first_sample_of_experiment);
+
   std::vector<PyObject *> events;
 
   for (auto i = 0; i < PyList_Size(result); i++) {
@@ -243,12 +242,17 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
   }
 
   auto fpga_events = parse_pyobject_events(events);
+
+  Py_DECREF(result);
+
   return fpga_events;
 }
 
 std::vector<FpgaEvent> PythonProcessor::close() {
   std::cout << "python close" << std::endl;
+
   PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
+
   Py_FinalizeEx();
   std::vector<FpgaEvent> events;
   return events;
