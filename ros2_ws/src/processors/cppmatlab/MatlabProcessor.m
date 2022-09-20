@@ -1,15 +1,7 @@
 classdef MatlabProcessor < AbstractMatlabProcessor
 
-    properties(Access=private)
-        file_id
-        peak_detection
-        peak_over
-    end
-
     methods
         function obj = constructor(obj)
-            disp("in ConcreteMatlabProcessor constructor");
-
             obj.set_channel_count(63);
             obj.set_window_size(50);
             obj.set_auto_enqueue(true);
