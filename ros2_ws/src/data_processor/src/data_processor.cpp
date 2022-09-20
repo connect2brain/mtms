@@ -33,11 +33,11 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   }
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-    auto start = high_resolution_clock::now();
+    auto start = steady_clock::now();
 
     auto fpga_events = processor->data_received(*message);
 
-    auto stop = high_resolution_clock::now();
+    auto stop = steady_clock::now();
     auto total = duration_cast<microseconds>(stop - start);
     //RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
     f << std::to_string(total.count()) << "\n";
@@ -108,11 +108,12 @@ int DataProcessor::shutdown() {
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<DataProcessor>();
-
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
+  auto node = std::make_shared<DataProcessor>();
+
 
   rclcpp::spin(node);
   node->shutdown();

@@ -47,6 +47,18 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
         end
 
+        function set_commands(obj, commands)
+            number_of_events = size(commands, 2);
+            if number_of_events > 0
+                obj.commands = repmat(create_command(0, "pulse_event", 0), number_of_events, 1);
+                for i=1:number_of_events
+                    obj.commands(i) = commands(i);
+                end
+            else
+                obj.commands = [];
+            end
+        end
+
         function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
             coder.inline("never");
 
@@ -65,6 +77,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
             ret = obj.commands;
         end
+
         function ret = init_experiment(obj)
             coder.inline("never");
 
