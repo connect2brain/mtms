@@ -31,6 +31,12 @@ def generate_launch_description():
         description="Processor script loop count",
     )
 
+    file_arg = DeclareLaunchArgument(
+        "file",
+        default_value=[""],
+        description="Processor script file name",
+    )
+
 
     logger = LaunchConfiguration("log-level")
 
@@ -44,7 +50,8 @@ def generate_launch_description():
             {
                 "processor_type": LaunchConfiguration("processor-type"),
                 "processor_script": LaunchConfiguration("processor-script"),
-                "loop_count": LaunchConfiguration("loop-count")
+                "loop_count": LaunchConfiguration("loop-count"),
+                "file": LaunchConfiguration("file")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -54,5 +61,6 @@ def generate_launch_description():
     ld.add_action(processor_type_arg)
     ld.add_action(processor_script_arg)
     ld.add_action(loop_count_arg)
+    ld.add_action(file_arg)
 
     return ld

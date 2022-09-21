@@ -90,3 +90,4 @@ if (BUILD_TESTING)
 endif ()
 
 ament_package()
+message("TARGET: ${CMAKE_BUILD_TYPE}")
