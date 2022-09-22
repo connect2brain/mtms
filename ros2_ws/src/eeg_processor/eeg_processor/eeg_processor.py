@@ -3,7 +3,8 @@ from rclpy.node import Node
 import time
 
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, SendStimulationPulseEvent, SendChargeEvent
+from fpga_interfaces.srv import SendTriggerOutEvent, StartDevice, StartExperiment, StopExperiment, \
+    SendStimulationPulseEvent, SendChargeEvent
 from fpga_interfaces.msg import TriggerOutEvent, EventInfo
 
 TRIGGER_DURATION_US = 10000
@@ -17,12 +18,10 @@ class EegProcessor(Node):
     def __init__(self):
         super().__init__('eeg_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
-        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
+        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received',
+                                                           self.trigger_reader_callback, 10)
 
         self.trigger_client = self.create_client(SendTriggerOutEvent, '/fpga/send_trigger_out_event')
-        self.stimulation_pulse_client = self.create_client(SendStimulationPulseEvent, '/fpga/send_stimulation_pulse_event')
-        self.charge_client = self.create_client(SendChargeEvent, '/fpga/send_charge_event')
-        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
@@ -72,12 +71,10 @@ class EegProcessor(Node):
 
         self.request.trigger_out_event = trigger_event
 
-
     def restart_experiment(self):
         self.stop_experiment_client.call_async(StopExperiment.Request())
         time.sleep(0.1)
         self.start_experiment_client.call_async(StartExperiment.Request())
-
 
     def spin(self):
         while rclpy.ok():
@@ -100,6 +97,7 @@ def main():
     rclpy.init()
     eeg_processor = EegProcessor()
     eeg_processor.spin()
+
 
 if __name__ == '__main__':
     main()
