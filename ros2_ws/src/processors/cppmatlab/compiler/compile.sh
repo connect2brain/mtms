@@ -1,0 +1,15 @@
+#!/bin/bash
+find . ! \( -name 'processor_factory.h' -o -name 'processor_factory.cpp' -o -name 'tmwtypes.h' -o -name 'matlab_processor_interface.h' -o -name 'matlab_processor_interface.cpp' \) -type f \( -iname \*.h -o -iname \*.cpp \) -exec rm -f {} +
+
+cp ../codegen/lib/run_processor/*.h .
+cp ../codegen/lib/run_processor/*.cpp .
+
+PROCESSOR_H=MatlabProcessor.h
+sed -i -e 's/MatlabProcessor \*init/virtual MatlabProcessor \*init/' $PROCESSOR_H
+# double space to not rename create_command
+sed -i -e 's/  void/virtual void/' $PROCESSOR_H
+sed -i -e 's/class MatlabProcessor/class MatlabProcessor : public MatlabProcessorInterface/' $PROCESSOR_H
+sed -i -e '/Include files/a #include "matlab_processor_interface.h"' $PROCESSOR_H
+cmake .
+make all
+
