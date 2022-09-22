@@ -32,6 +32,9 @@ private:
   std::fstream f;
   std::shared_ptr<fpga_interfaces::srv::SendTriggerOutEvent_Request_<std::allocator<void>>> req;
 
+  std::vector<double> durations;
+  uint32_t index;
+
   fpga_interfaces::srv::SendTriggerOutEvent::Request trigger_out_request;
   rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
   rclcpp::Subscription<mtms_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
