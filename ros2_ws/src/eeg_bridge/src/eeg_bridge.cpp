@@ -10,6 +10,8 @@
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "scheduling_utils.h"
+#include "memory_utils.h"
 
 #define BUFFER_LENGTH 250
 #define PORT 50000
@@ -53,7 +55,7 @@ public:
     static const rmw_qos_profile_t qos_profile = {
         RMW_QOS_POLICY_HISTORY_KEEP_LAST,
         1,
-        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+        RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
         RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
         RMW_QOS_DEADLINE_DEFAULT,
         RMW_QOS_LIFESPAN_DEFAULT,
@@ -316,9 +318,24 @@ private:
 
 
 int main(int argc, char *argv[]) {
-
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EegBridge>());
+
+  //RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "memory optimization: %d", MEMORY_OPTIMIZATION);
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<EegBridge>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }
