@@ -70,11 +70,23 @@ int main(int argc, char **argv) {
   }
 
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<SystemStateMonitorBridge>();
-  RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "System state monitor bridge ready.");
+
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "Setting thread scheduling and memory lock");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
+
+  auto node = std::make_shared<SystemStateMonitorBridge>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  RCLCPP_INFO(rclcpp::get_logger("system_state_monitor_state"), "System state monitor bridge ready.");
+
+
   rclcpp::spin(node);
   rclcpp::shutdown();
 
