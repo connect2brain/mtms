@@ -8,8 +8,7 @@
 #include "scheduling_utils.h"
 
 void start_experiment(const std::shared_ptr<fpga_interfaces::srv::StartExperiment::Request> request,
-          std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response)
-{
+                      std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response) {
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Startexperiment, true));
 
@@ -17,32 +16,41 @@ void start_experiment(const std::shared_ptr<fpga_interfaces::srv::StartExperimen
   RCLCPP_INFO(rclcpp::get_logger("fpga"), "Started experiment");
 }
 
-class StartExperiment : public rclcpp::Node
-{
-  public:
-    StartExperiment()
-    : Node("start_experiment")
-    {
-      start_experiment_service_ = this->create_service<fpga_interfaces::srv::StartExperiment>("/fpga/start_experiment", start_experiment);
-    }
+class StartExperiment : public rclcpp::Node {
+public:
+  StartExperiment()
+      : Node("start_experiment") {
+    start_experiment_service_ = this->create_service<fpga_interfaces::srv::StartExperiment>("/fpga/start_experiment",
+                                                                                            start_experiment);
+  }
 
-  private:
-    rclcpp::Service<fpga_interfaces::srv::StartExperiment>::SharedPtr start_experiment_service_;
+private:
+  rclcpp::Service<fpga_interfaces::srv::StartExperiment>::SharedPtr start_experiment_service_;
 };
 
-int main(int argc, char **argv)
-{
-  if (!init_fpga())
-  {
+int main(int argc, char **argv) {
+  if (!init_fpga()) {
     return 1;
   }
 
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<StartExperiment>();
-  RCLCPP_INFO(rclcpp::get_logger("start_experiment_handler"), "Start experiment handler ready.");
+
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("start_experiment_handler"), "Setting thread scheduling and memory lock");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
+
+  auto node = std::make_shared<StartExperiment>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("start_experiment_handler"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  RCLCPP_INFO(rclcpp::get_logger("start_experiment_handler"), "Start experiment handler ready.");
+
+
   rclcpp::spin(node);
   rclcpp::shutdown();
 

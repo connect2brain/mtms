@@ -40,11 +40,17 @@ int main(int argc, char **argv) {
 
   rclcpp::init(argc, argv);
 
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Setting thread scheduling and memory lock");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
+#endif
+
   auto node = std::make_shared<DisableChecksHandler>();
-  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Disable checks handler ready.");
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
+  RCLCPP_INFO(rclcpp::get_logger("disable_checks_handler"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
   rclcpp::spin(node);

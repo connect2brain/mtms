@@ -15,6 +15,7 @@ set(MATLAB_FIND_DEBUG true)
 # MATLAB
 set(Matlab_ROOT_DIR /home/alqio/app/matlab/)
 find_package(Matlab)
+message(STATUS "MATLAB ROOTDIR: ${Matlab_ROOT_DIR}")
 if (Matlab_FOUND)
     # Following 5 lines taken from https://stackoverflow.com/questions/8880802/cmake-linking-shared-library
     # Fixes runtime error "error while loading shared libraries: libMatlabDataArray.so: cannot open shared object file: No such file or directory"
@@ -49,7 +50,10 @@ add_executable(
         src/headers/fpga_event.h
         src/headers/data_processor.h
         src/headers/matlab_helpers.h
-        src/matlab_helpers.cpp)
+        src/matlab_helpers.cpp
+        src/headers/memory_utils.h
+        src/memory_utils.cpp
+)
 
 target_include_directories(data_processor
         PUBLIC

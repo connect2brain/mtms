@@ -62,11 +62,23 @@ int main(int argc, char **argv) {
   }
 
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<SettingsHandler>();
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Settings handler ready.");
+
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Setting thread scheduling and memory lock");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
+
+  auto node = std::make_shared<SettingsHandler>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Settings handler ready.");
+
+
   rclcpp::spin(node);
   rclcpp::shutdown();
 
