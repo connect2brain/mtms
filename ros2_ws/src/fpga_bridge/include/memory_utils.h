@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include <iostream>
 
+#define MEMORY_OPTIMIZATION
+
 void preallocate_memory(size_t memory_size);
 void lock_memory();
 void set_default_thread_stacksize(size_t stacksize);

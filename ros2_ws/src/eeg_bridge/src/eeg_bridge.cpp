@@ -55,7 +55,7 @@ public:
     static const rmw_qos_profile_t qos_profile = {
         RMW_QOS_POLICY_HISTORY_KEEP_LAST,
         1,
-        RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
         RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
         RMW_QOS_DEADLINE_DEFAULT,
         RMW_QOS_LIFESPAN_DEFAULT,
@@ -322,7 +322,7 @@ int main(int argc, char *argv[]) {
 
   //RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "memory optimization: %d", MEMORY_OPTIMIZATION);
 
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
