@@ -24,6 +24,10 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   this->declare_parameter<int>("loop_count", 5);
   this->get_parameter("loop_count", loop_count);
 
+  std::string output_file_name;
+  this->declare_parameter<std::string>("file", "output.data");
+  this->get_parameter("file", output_file_name);
+
   RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
 
   if (processor_type == "python") {
@@ -66,7 +70,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
                                                                                         10,
                                                                                         subscription_callback);
 
-  f.open("data.txt", std::ios::out | std::ios::trunc);
+  f.open(output_file_name, std::ios::out | std::ios::trunc);
 
   if (loop_count > 0) {
     measure(loop_count);
@@ -122,7 +126,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   rclcpp::spin(node);
-  //node->shutdown();
+  node->shutdown();
   rclcpp::shutdown();
   return 0;
 }
