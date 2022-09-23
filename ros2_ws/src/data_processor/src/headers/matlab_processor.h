@@ -13,12 +13,6 @@
 #include "run_processor_types.h"
 #include "matlab_helpers.h"
 
-struct MatlabProcessorReturn {
-  matlab::data::TypedArray<double> data;
-  //matlab::data::TypedArray<matlab_fpga_event> events;
-  std::vector<matlab_fpga_event> events;
-};
-
 class MatlabProcessor : public ProcessorWrapper {
 public:
   MatlabProcessor(const std::string &script_path);
@@ -32,8 +26,6 @@ public:
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;
   matlab::data::Array processor_instance;
-  //matlab::data::TypedArray<double> matlab_data;
-  //std::vector<std::vector<double> > matlab_data;
   std::vector<double> matlab_data;
   matlab::data::ArrayFactory factory;
 };

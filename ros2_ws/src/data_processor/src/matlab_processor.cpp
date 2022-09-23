@@ -16,8 +16,6 @@ MatlabProcessor::MatlabProcessor(const std::string &script_path) {
   std::cout << path << std::endl;
   matlab->eval(matlab::engine::convertUTF8StringToUTF16String(path));
 
-  //matlab_data = factory.createArray<double>({50, 62});
-  //matlab_data.resize(50, std::vector<double>(62, -1));
   matlab_data.resize(50 * 62, -1);
 }
 
@@ -76,7 +74,6 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   auto new_data_typed = (matlab::data::TypedArray<double>) new_data;
 
   matlab::data::ArrayDimensions new_data_dims = new_data_typed.getDimensions();
-  //std::cout << "new_data_dims size is: " << new_data_dims[0] << " by " << new_data_dims[1] << std::endl;
 
   for (unsigned i = 0; i < new_data_dims[0]; i++) {
     for (unsigned j = 0; j < new_data_dims[1]; j++) {
@@ -88,7 +85,6 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   auto events_struct_array = (matlab::data::StructArray) events;
 
   matlab::data::ArrayDimensions dims = events_struct_array.getDimensions();
-  //std::cout << "events_struct_array size is: " << dims[0] << " by " << dims[1] << std::endl;
 
   auto fields = events_struct_array.getFieldNames();
   std::vector<matlab::data::MATLABFieldIdentifier> field_names(fields.begin(), fields.end());
