@@ -2,7 +2,7 @@
 // Created by alqio on 5.9.2022.
 //
 
-#include "scheduling_utils.h"
+#include "headers/scheduling_utils.h"
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority) {
 #if defined(ON_UNIX)
