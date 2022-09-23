@@ -13,7 +13,7 @@ find_package(fpga_interfaces REQUIRED)
 
 set(MATLAB_FIND_DEBUG true)
 # MATLAB
-set(Matlab_ROOT_DIR /home/alqio/app/matlab/)
+
 find_package(Matlab)
 message(STATUS "MATLAB ROOTDIR: ${Matlab_ROOT_DIR}")
 if (Matlab_FOUND)
