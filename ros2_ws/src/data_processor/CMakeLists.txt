@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12)
 project(data_processor)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -35,22 +35,20 @@ endif ()
 add_executable(
         data_processor
         src/data_processor.cpp
-        src/processor.cpp
         src/headers/processor.h
-        src/python_processor.cpp
-        src/matlab_processor.cpp
+        src/headers/data_processor.h
+
         src/compiled_matlab_processor.cpp
         src/matlab_processor_interface.cpp
-        src/headers/matlab_processor.h
-        src/headers/python_processor.h
         src/headers/compiled_matlab_processor.h
-        src/headers/scheduling_utils.h
-        src/headers/scheduling_utils.cpp
         src/headers/matlab_processor_interface.h
         src/headers/fpga_event.h
-        src/headers/data_processor.h
         src/headers/matlab_helpers.h
         src/matlab_helpers.cpp
+
+        src/headers/scheduling_utils.h
+        src/scheduling_utils.cpp
+
         src/headers/memory_utils.h
         src/memory_utils.cpp
 )
@@ -63,17 +61,39 @@ target_include_directories(data_processor
 ament_target_dependencies(data_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
 if (Matlab_FOUND)
+
+    target_sources(
+            data_processor
+            PRIVATE
+            src/matlab_processor.cpp
+            src/headers/matlab_processor.h
+    )
+
     # MATLAB, Linker to libMatlabEngine in link_directories
     target_link_libraries(data_processor MatlabDataArray)
     target_link_libraries(data_processor MatlabEngine)
+
+    target_compile_definitions(data_processor PUBLIC MATLAB_FOUND)
+
 endif ()
 
 # Python
 find_package(PythonLibs)
 if (PYTHONLIBS_FOUND)
     message(STATUS "Python found")
+
+    target_sources(
+            data_processor
+            PRIVATE
+            src/python_processor.cpp
+            src/headers/python_processor.h
+    )
+
     include_directories(${PYTHON_INCLUDE_DIRS})
     target_link_libraries(data_processor ${PYTHON_LIBRARIES})
+
+    target_compile_definitions(data_processor PUBLIC PYTHON_FOUND)
+
 else ()
     message(STATUS "Python not found")
 endif ()
