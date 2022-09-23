@@ -1,9 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-
 #include "headers/scheduling_utils.h"
-
 #include "headers/eeg_trigger_processor.h"
 #include "headers/memory_utils.h"
 
@@ -11,7 +9,6 @@ using namespace std::chrono_literals;
 using namespace std::chrono;
 
 EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
-
   int data_size;
   this->declare_parameter<int>("data_size", 10000);
   this->get_parameter("data_size", data_size);
@@ -34,7 +31,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
       //RCLCPP_INFO(this->get_logger(), "index: %d", index);
       if (index % 1000 == 0) {
         RCLCPP_INFO(this->get_logger(), "Index: %d", index);
-      } 
+      }
       if (index == durations.size()) {
         RCLCPP_INFO(this->get_logger(), "Writing durations...");
         for (uint32_t i = 0; i < index; i++) {
@@ -62,14 +59,15 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
       false
   };
 
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history,qos_profile.depth),qos_profile);
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
 
   trigger_subscription = this->create_subscription<mtms_interfaces::msg::Trigger>("/eeg/trigger_received",
                                                                                   qos,
                                                                                   trigger_subscription_callback);
 
-  trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event", qos_profile);
+  trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event",
+                                                                                      qos_profile);
 
   req = std::make_shared<fpga_interfaces::srv::SendTriggerOutEvent::Request>();
   auto event = fpga_interfaces::msg::TriggerOutEvent();
@@ -83,7 +81,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
 
   f.open(filename, std::ios::out | std::ios::trunc);
 
-  durations = std::vector<double>(100000, 0);
+  durations = std::vector<double>(data_size, 0);
   RCLCPP_INFO(this->get_logger(), "durations size: %lu", durations.size());
 
 }
