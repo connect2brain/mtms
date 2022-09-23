@@ -7,8 +7,6 @@
 #define ON_UNIX
 #endif
 
-#define MEMORY_OPTIMIZATION
-
 bool init_fpga(void);
 bool close_fpga(void);
 bool run_fpga(void);

@@ -39,10 +39,12 @@ DataProcessor::DataProcessor() : Node("data_processor") {
 
       if (index < durations.size()) {
         durations[index++] = message->time_us;
+      } else {
+        index++;
       }
 
       //RCLCPP_INFO(this->get_logger(), "index: %d", index);
-      if (index % 10000 == 0) {
+      if (index % 1000 == 0) {
         RCLCPP_INFO(this->get_logger(), "Index: %d", index);
       } 
       if (index == durations.size()) {
@@ -67,7 +69,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   static const rmw_qos_profile_t qos_profile = {
       RMW_QOS_POLICY_HISTORY_KEEP_LAST,
       1,
-      RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
       RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
       RMW_QOS_DEADLINE_DEFAULT,
       RMW_QOS_LIFESPAN_DEFAULT,
@@ -107,7 +109,7 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Setting thread scheduling and memory lock");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
