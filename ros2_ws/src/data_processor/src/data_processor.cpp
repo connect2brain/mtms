@@ -25,10 +25,21 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   this->get_parameter("loop_count", loop_count);
 
   RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
+
   if (processor_type == "python") {
+#ifdef PYTHON_FOUND
     processor = new PythonProcessor(processor_script_path);
+#else
+    std::err << "ERROR: Trying to use python processor but compiled without python" << std::endl;
+#endif
+
   } else if (processor_type == "matlab") {
+#ifdef MATLAB_FOUND
     processor = new MatlabProcessor(processor_script_path);
+#else
+    std::err << "ERROR: Trying to use MATLAB processor but compiled without python" << std::endl;
+#endif
+
   } else if (processor_type == "cpp") {
     processor = new CompiledMatlabProcessor(processor_script_path);
   }
