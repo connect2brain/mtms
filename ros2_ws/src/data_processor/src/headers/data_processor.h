@@ -8,8 +8,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "mtms_interfaces/msg/trigger.hpp"
-#include "fpga_interfaces/srv/send_trigger_out_event.hpp"
 #include "python_processor.h"
 #include "matlab_processor.h"
 #include "compiled_matlab_processor.h"
@@ -18,27 +16,24 @@
 #include <string>
 #include <fstream>
 
-
+double fRand(double fMin, double fMax) {
+  double f = (double) rand() / RAND_MAX;
+  return fMin + f * (fMax - fMin);
+}
 
 class DataProcessor : public rclcpp::Node {
 public:
   DataProcessor();
 
+  int shutdown();
+
 private:
+  void measure(int repeats);
 
   rclcpp::TimerBase::SharedPtr timer_;
-
-  uint64_t first_trigger_time_us;
-  std::fstream f;
-  std::shared_ptr<fpga_interfaces::srv::SendTriggerOutEvent_Request_<std::allocator<void>>> req;
-
-  std::vector<double> durations;
-  uint32_t index;
-
-  fpga_interfaces::srv::SendTriggerOutEvent::Request trigger_out_request;
   rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
-  rclcpp::Subscription<mtms_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
-  rclcpp::Client<fpga_interfaces::srv::SendTriggerOutEvent>::SharedPtr trigger_out_client;
+  ProcessorWrapper *processor;
+  std::fstream f;
 };
 
 #endif //DATA_PROCESSOR_DATA_PROCESSOR_H
