@@ -8,10 +8,20 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "python_processor.h"
-#include "matlab_processor.h"
 #include "compiled_matlab_processor.h"
 #include "processor.h"
+
+#if defined(MATLAB_FOUND)
+
+#include "matlab_processor.h"
+
+#endif
+
+#if defined(PYTHON_FOUND)
+
+#include "python_processor.h"
+
+#endif
 
 #include <string>
 #include <fstream>
