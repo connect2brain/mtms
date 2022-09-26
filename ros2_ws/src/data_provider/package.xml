@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>eeg_processor</name>
+  <name>data_provider</name>
   <version>0.0.1</version>
-  <description>EEG data processor</description>
-  <maintainer email="kim.valen@aalto.fi">Kim Valén</maintainer>
+  <description>Data provider</description>
+  <maintainer email="kyosti.alkio@aalto.fi">Kyösti Alkio</maintainer>
   <license>TODO</license>
 
   <depend>rclpy</depend>
