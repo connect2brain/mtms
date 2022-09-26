@@ -16,7 +16,7 @@ TIME_CONSTANT_US = int(1e6) * 1
 class EegProcessor(Node):
 
     def __init__(self):
-        super().__init__('eeg_processor')
+        super().__init__('eeg_trigger_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received',
                                                            self.trigger_reader_callback, 10)
