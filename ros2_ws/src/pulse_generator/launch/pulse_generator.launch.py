@@ -16,8 +16,8 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-            package="eeg_processor",
-            executable="eeg_processor",
+            package="pulse_generator",
+            executable="pulse_generator",
             arguments=['--ros-args', '--log-level', logger]
         )
     ld.add_action(node)
