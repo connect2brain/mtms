@@ -56,7 +56,7 @@ std::vector<FpgaEvent> PythonProcessor::init() {
   return events;
 }
 
-PyObject *PythonProcessor::make_list(std::vector<double> data) {
+PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
   PyObject *l = PyList_New(data.size());
   for (size_t i = 0; i < data.size(); i++) {
     PyList_SetItem(l, i, PyFloat_FromDouble(data[i]));
@@ -210,7 +210,7 @@ std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObje
       std::wcout << "Unknown event type" << std::endl;
     }
 
-    fpga_events.insert(fpga_events.begin(), event);
+    fpga_events.push_back(event);
 
     Py_DECREF(event_type_as_pyobject);
   }
@@ -219,7 +219,7 @@ std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObje
 }
 
 std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  auto list = make_list(data.channel_datapoint);
+  auto list = convert_vector_to_pyobject(data.channel_datapoint);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
 
@@ -249,11 +249,21 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
 }
 
 std::vector<FpgaEvent> PythonProcessor::close() {
-  std::cout << "python close" << std::endl;
+  auto result = PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
 
-  PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
+  if (!PyList_Check(result)) {
+    std::cout << "error in call method" << std::endl;
+    PyErr_Print();
+  }
+  std::vector<PyObject *> events;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    events.push_back(PyList_GetItem(result, i));
+  }
+
+  auto fpga_events = parse_pyobject_events(events);
 
   Py_FinalizeEx();
-  std::vector<FpgaEvent> events;
-  return events;
+
+  return fpga_events;
 }

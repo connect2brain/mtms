@@ -23,17 +23,6 @@ struct FpgaEvent {
   fpga_interfaces::msg::DischargeEvent discharge_event;
   FpgaEventType event_type = STIMULATION_PULSE_EVENT;
 
-  template<typename T>
-  T event() {
-    if (event_type == STIMULATION_PULSE_EVENT) {
-      return stimulation_pulse_event;
-    } else if (event_type == CHARGE_EVENT) {
-      return charge_event;
-    } else {
-      return discharge_event;
-    }
-  }
-
   [[nodiscard]] std::string to_string() const {
     if (event_type == STIMULATION_PULSE_EVENT) {
       return "Stimulation pulse event";

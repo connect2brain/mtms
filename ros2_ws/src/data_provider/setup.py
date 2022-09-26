@@ -17,9 +17,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Kim Valén',
-    maintainer_email='kim.valen@aalto.fi',
-    description='EEG data processor',
+    maintainer='Kyösti Alkio',
+    maintainer_email='kyosti.alkio@aalto.fi',
+    description='Data provider',
     license='TODO',
     tests_require=['pytest'],
     entry_points={

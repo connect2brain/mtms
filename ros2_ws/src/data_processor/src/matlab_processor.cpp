@@ -25,7 +25,6 @@ std::vector<FpgaEvent> MatlabProcessor::init() {
 }
 
 void print_vector2d(std::vector<std::vector<double>> vec) {
-
   for (unsigned i = 0; i < vec.size(); i++) {
     for (unsigned j = 0; j < vec[i].size(); j++) {
       std::cout << vec[i][j] << " ";
@@ -35,7 +34,6 @@ void print_vector2d(std::vector<std::vector<double>> vec) {
 }
 
 void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
-
   for (unsigned i = 0; i < rows; i++) {
     for (unsigned j = 0; j < cols; j++) {
       std::cout << vec[i * cols + j] << " ";
