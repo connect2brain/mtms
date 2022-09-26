@@ -22,7 +22,7 @@ public:
 private:
   static PyObject *convert_vector_to_pyobject(std::vector<double> data);
 
-  static std::vector<FpgaEvent> parse_pyobject_events(std::vector<PyObject *> events);
+  static std::vector<FpgaEvent> convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events);
 
   static fpga_interfaces::msg::ChargeEvent parse_charge_event(PyObject *event);
   static fpga_interfaces::msg::DischargeEvent parse_discharge_event(PyObject *event);
