@@ -57,24 +57,10 @@ public:
       response->success = true;
     };
 
-    static const rmw_qos_profile_t qos_profile = {
-        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-        1,
-        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-        RMW_QOS_DEADLINE_DEFAULT,
-        RMW_QOS_LIFESPAN_DEFAULT,
-        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-        false
-    };
-
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
-
 
     serialized_message = SerializedMessage();
     send_trigger_out_event_service_ = this->create_service<fpga_interfaces::srv::SendTriggerOutEvent>(
-        "/fpga/send_trigger_out_event", service_callback, qos_profile);
+        "/fpga/send_trigger_out_event", service_callback);
   }
 
 private:
