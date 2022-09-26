@@ -8,9 +8,11 @@ class Processor(BaseProcessor):
 
     def init_experiment(self):
         print("PYTHON: initialized experiment")
+        return []
 
     def end_experiment(self):
         print("PYTHON: ended experiment")
+        return []
 
     def data_received(self, data, time_us, first_sample_of_experiment):
         self.eeg_data_index += 1
