@@ -9,6 +9,10 @@
 #include "run_processor_internal_types.h"
 #include <iostream>
 
+//The same class can be found from ros2_ws/src/data_processor/src/headers/. The method order and signature must be
+//exactly the same as here. If in wrong order, calling a method will call the wrong method
+
+
 class MatlabProcessorInterface {
 public:
   virtual ~MatlabProcessorInterface() = default;
