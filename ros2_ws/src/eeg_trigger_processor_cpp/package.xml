@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>eeg_trigger_processor</name>
+  <name>eeg_trigger_processor_cpp</name>
   <version>0.0.1</version>
   <description>EEG trigger processor</description>
   <maintainer email="kyosti.alkio@aalto.fi">Kyösti Alkio</maintainer>

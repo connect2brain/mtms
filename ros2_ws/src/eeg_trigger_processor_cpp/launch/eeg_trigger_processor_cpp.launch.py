@@ -28,9 +28,9 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="data_processor",
-        executable="data_processor",
-        name="data_processor",
+        package="eeg_trigger_processor_cpp",
+        executable="eeg_trigger_processor",
+        name="eeg_trigger_processor",
         output="screen",
         emulate_tty=True,
         parameters=[
