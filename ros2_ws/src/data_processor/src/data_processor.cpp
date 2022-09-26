@@ -11,7 +11,6 @@ using namespace std::chrono_literals;
 using namespace std::chrono;
 
 DataProcessor::DataProcessor() : Node("data_processor") {
-  RCLCPP_INFO(this->get_logger(), "in data_processor constructor");
   std::string processor_type;
   this->declare_parameter<std::string>("processor_type", "python");
   this->get_parameter("processor_type", processor_type);
@@ -41,10 +40,10 @@ DataProcessor::DataProcessor() : Node("data_processor") {
 #ifdef MATLAB_FOUND
     processor = new MatlabProcessor(processor_script_path);
 #else
-    std::err << "ERROR: Trying to use MATLAB processor but compiled without python" << std::endl;
+    std::err << "ERROR: Trying to use MATLAB processor but compiled without MATLAB" << std::endl;
 #endif
 
-  } else if (processor_type == "cpp") {
+  } else if (processor_type == "compiledmatlab") {
     processor = new CompiledMatlabProcessor(processor_script_path);
   }
 
@@ -60,17 +59,13 @@ DataProcessor::DataProcessor() : Node("data_processor") {
 
   };
 
-  mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
-  for (auto i = 0; i < 62; i++) {
-    message.channel_datapoint.push_back(fRand(0, 100));
-  }
-  processor->init();
-
   eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                         10,
                                                                                         subscription_callback);
 
   f.open(output_file_name, std::ios::out | std::ios::trunc);
+
+  processor->init();
 
   if (loop_count > 0) {
     measure(loop_count);
@@ -90,10 +85,12 @@ void DataProcessor::measure(int repeats) {
   std::vector<std::chrono::microseconds> times;
   std::chrono::microseconds total = std::chrono::microseconds(0s);
   for (auto i = 0; i < repeats; i++) {
-    auto start = high_resolution_clock::now();
+    auto start = steady_clock::now();
 
     auto fpga_events = processor->data_received(events[i]);
-    auto stop = high_resolution_clock::now();
+
+    auto stop = steady_clock::now();
+
     auto duration = duration_cast<microseconds>(stop - start);
     times.push_back(duration);
     total = duration_cast<microseconds>(duration + total);
@@ -113,7 +110,7 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Setting thread scheduling and memory lock");
+  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 

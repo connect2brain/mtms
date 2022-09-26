@@ -25,8 +25,8 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
   inner_processor->data_received(
       data.channel_datapoint.data(),
       data.channel_datapoint.size(),
-      100,
-      false,
+      data.time,
+      data.first_sample_of_experiment,
       events
   );
 
@@ -49,8 +49,6 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
 }
 
 std::vector<FpgaEvent> CompiledMatlabProcessor::init() {
-  std::cout << "in CPPPprocessor init" << std::endl;
-
   std::vector<FpgaEvent> fpga_events;
   coder::array<matlab_fpga_event, 1U> events;
   inner_processor->init_experiment(events);
@@ -67,8 +65,6 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::close() {
   coder::array<matlab_fpga_event, 1U> events;
   inner_processor->end_experiment(events);
 
-  //Empty the pointer
-  //inner_processor.reset();
   std::vector<FpgaEvent> fpga_events;
 
   for (auto i = events.begin(); i != events.end(); i++) {
@@ -76,6 +72,9 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::close() {
     auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
     fpga_events.push_back(fpga_event);
   }
+
+  //Empty the pointer
+  //inner_processor.reset();
 
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
