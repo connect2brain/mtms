@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'eeg_processor'
+package_name = 'eeg_trigger_processor_py'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'eeg_processor = eeg_processor.eeg_processor:main',
+            'eeg_trigger_processor_py = eeg_trigger_processor_py.eeg_trigger_processor:main',
         ],
     },
 )
