@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
 
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_trigger_processor"), "Setting thread scheduling and memory lock");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_trigger_processor"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 
