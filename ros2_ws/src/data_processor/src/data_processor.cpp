@@ -105,6 +105,17 @@ void DataProcessor::measure(int repeats) {
   RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
 }
 
+int DataProcessor::shutdown() {
+  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Shutting down data processor");
+  if (processor) {
+    processor->close();
+    return 0;
+  }
+  if (f) {
+    f.close();
+  }
+  return 0;
+}
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);

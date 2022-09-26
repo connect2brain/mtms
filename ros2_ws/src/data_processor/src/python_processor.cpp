@@ -7,7 +7,7 @@
 #include "headers/python_processor.h"
 
 PythonProcessor::PythonProcessor(std::string script_path) {
-  setenv("PYTHONPATH", ".", 1);
+  setenv("PYTHONPATH", "../../", 1);
   Py_Initialize();
 
   script_name = PyUnicode_FromString(script_path.c_str());
@@ -52,7 +52,10 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 
 std::vector<FpgaEvent> PythonProcessor::init() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
-
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
   std::vector<PyObject *> events;
 
   for (auto i = 0; i < PyList_Size(result); i++) {
@@ -235,7 +238,7 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
                                            first_sample_of_experiment, nullptr);
 
   if (!PyList_Check(result)) {
-    std::cout << "error in call method" << std::endl;
+    std::cout << "Error in call data_received method. Ensure you are returning a list" << std::endl;
     PyErr_Print();
   }
 
@@ -260,7 +263,7 @@ std::vector<FpgaEvent> PythonProcessor::close() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
 
   if (!PyList_Check(result)) {
-    std::cout << "error in call method" << std::endl;
+    std::cout << "Error in call close method. Ensure you are returning a list" << std::endl;
     PyErr_Print();
   }
   std::vector<PyObject *> events;
