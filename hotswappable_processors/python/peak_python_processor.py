@@ -3,7 +3,7 @@ from .thresholding import RealtimePeakDetection
 
 
 class Processor(BaseProcessor):
-    def __init__(self) -> None:
+    def __init__(self):
         self.eeg_data_index = 0
         self.data = []
         self.file = None

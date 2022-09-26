@@ -51,9 +51,17 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 }
 
 std::vector<FpgaEvent> PythonProcessor::init() {
-  PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
-  std::vector<FpgaEvent> events;
-  return events;
+  auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
+
+  std::vector<PyObject *> events;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    events.push_back(PyList_GetItem(result, i));
+  }
+
+  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+
+  return fpga_events;
 }
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
@@ -182,7 +190,7 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
   return stimulation_event;
 }
 
-std::vector<FpgaEvent> PythonProcessor::parse_pyobject_events(std::vector<PyObject *> events) {
+std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events) {
   std::vector<FpgaEvent> fpga_events;
 
   for (auto event_as_pyobject: events) {
@@ -241,7 +249,7 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = parse_pyobject_events(events);
+  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
 
   Py_DECREF(result);
 
@@ -261,7 +269,7 @@ std::vector<FpgaEvent> PythonProcessor::close() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = parse_pyobject_events(events);
+  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
 
   Py_FinalizeEx();
 
