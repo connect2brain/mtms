@@ -47,27 +47,12 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
     }
   };
 
-  static const rmw_qos_profile_t qos_profile = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      RMW_QOS_DEADLINE_DEFAULT,
-      RMW_QOS_LIFESPAN_DEFAULT,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
-
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
-
 
   trigger_subscription = this->create_subscription<mtms_interfaces::msg::Trigger>("/eeg/trigger_received",
                                                                                   qos,
                                                                                   trigger_subscription_callback);
 
-  trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event",
-                                                                                      qos_profile);
+  trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event");
 
   req = std::make_shared<fpga_interfaces::srv::SendTriggerOutEvent::Request>();
   auto event = fpga_interfaces::msg::TriggerOutEvent();
