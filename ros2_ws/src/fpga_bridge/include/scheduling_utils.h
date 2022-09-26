@@ -13,8 +13,11 @@
 #include <thread>
 #include <cstring>
 
+#define SCHEDULING_OPTIMIZATION
+
 #define DEFAULT_SCHEDULING_POLICY SCHED_RR
-#define DEFAULT_SCHEDULING_PRIORITY 98
+#define DEFAULT_REALTIME_SCHEDULING_PRIORITY 98
+#define DEFAULT_NORMAL_SCHEDULING_PRIORITY 20
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority);
 

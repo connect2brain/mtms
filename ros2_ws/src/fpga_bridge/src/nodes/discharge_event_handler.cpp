@@ -77,14 +77,20 @@ int main(int argc, char **argv) {
 
   rclcpp::init(argc, argv);
 
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("discharge_event_handler"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
   auto node = std::make_shared<DischargeEventHandler>();
-  RCLCPP_INFO(rclcpp::get_logger("discharge_event_handler"), "Discharge event handler ready.");
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("discharge_event_handler"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
+
+  RCLCPP_INFO(rclcpp::get_logger("discharge_event_handler"), "Discharge event handler ready.");
 
   rclcpp::spin(node);
   rclcpp::shutdown();

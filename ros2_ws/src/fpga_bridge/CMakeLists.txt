@@ -30,7 +30,8 @@ ament_target_dependencies(run_fpga rclcpp std_msgs fpga_interfaces)
 add_executable(discharge_controller_bridge
   src/nodes/discharge_controller_bridge.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c)
+  src/lib/NiFpga.c
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(discharge_controller_bridge
   PUBLIC
@@ -44,7 +45,8 @@ ament_target_dependencies(discharge_controller_bridge rclcpp std_msgs fpga_inter
 add_executable(safety_monitor_bridge
   src/nodes/safety_monitor_bridge.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c)
+  src/lib/NiFpga.c
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(safety_monitor_bridge
   PUBLIC
@@ -58,7 +60,8 @@ ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 add_executable(system_state_monitor_bridge
         src/nodes/system_state_monitor_bridge.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(system_state_monitor_bridge
         PUBLIC
@@ -72,7 +75,8 @@ ament_target_dependencies(system_state_monitor_bridge rclcpp std_msgs fpga_inter
 add_executable(status_monitor_bridge
         src/nodes/status_monitor_bridge.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 target_include_directories(status_monitor_bridge
         PUBLIC
@@ -86,7 +90,9 @@ ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
 add_executable(start_device_handler
   src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c)
+  src/lib/NiFpga.c
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(start_device_handler
   PUBLIC
@@ -100,7 +106,9 @@ ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
 add_executable(start_experiment_handler
         src/nodes/start_experiment_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(start_experiment_handler
         PUBLIC
@@ -114,7 +122,9 @@ ament_target_dependencies(start_experiment_handler rclcpp std_msgs fpga_interfac
 add_executable(stop_experiment_handler
         src/nodes/stop_experiment_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(stop_experiment_handler
         PUBLIC
@@ -128,7 +138,9 @@ ament_target_dependencies(stop_experiment_handler rclcpp std_msgs fpga_interface
 add_executable(stop_device_handler
         src/nodes/stop_device_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(stop_device_handler
         PUBLIC
@@ -143,7 +155,8 @@ add_executable(disable_checks_handler
         src/nodes/disable_checks_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        )
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(disable_checks_handler
         PUBLIC
@@ -234,7 +247,9 @@ ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
 add_executable(feedback_monitor_bridge
   src/nodes/feedback_monitor_bridge.cpp
   src/lib/fpga.cpp
-  src/lib/NiFpga.c)
+  src/lib/NiFpga.c
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(feedback_monitor_bridge
   PUBLIC
@@ -246,7 +261,9 @@ ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interface
 add_executable(settings_handler
         src/nodes/settings_handler.cpp
         src/lib/fpga.cpp
-        src/lib/NiFpga.c)
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
 
 target_include_directories(settings_handler
         PUBLIC
