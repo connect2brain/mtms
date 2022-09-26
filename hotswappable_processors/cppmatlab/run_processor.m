@@ -1,6 +1,8 @@
 function out = run_processor(window_size, channel_count, data_sample, time_us, first_sample_of_experiment)
+
+    % HACK: to make variable sizes data samples
     actual_window_size = uint32(20);
-    
+
     if window_size < 50
         actual_window_size = window_size;
     elseif window_size > 100

@@ -13,7 +13,7 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   } else if (event.event_type == DISCHARGE_EVENT) {
     std::cout << "Discharge event" << std::endl;
   } else {
-    std::cout << "Uknown event type " << +event.event_type << std::endl;
+    std::cout << "Unknown event type " << +event.event_type << std::endl;
   }
   std::cout << "Channel: " << +event.channel << std::endl;
   std::cout << "Target voltage: " << event.target_voltage << std::endl;

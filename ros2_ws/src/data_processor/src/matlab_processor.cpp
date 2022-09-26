@@ -98,7 +98,7 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
         event.channel = field_value[0];
 
       } else if (field_name == "event_type") {
-        matlab::data::TypedArrayRef<uint8_T> field_value = events_struct_array[event_index][field];
+        matlab::data::TypedArrayRef<uint8_t> field_value = events_struct_array[event_index][field];
         event.event_type = field_value[0];
 
       } else if (field_name == "target_voltage") {

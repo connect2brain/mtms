@@ -1,7 +1,4 @@
 classdef (Abstract) AbstractMatlabProcessor < handle
-    %ABSTRACTMATLABPROCESSOR Summary of this class goes here
-    %   Detailed explanation goes here
-
     properties
         data
         window_size
@@ -85,6 +82,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
             ret = obj.commands;
         end
+
         function ret = end_experiment(obj)
             coder.inline("never");
             
@@ -101,24 +99,29 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.window_size = uint16(new_window_size);
             obj.data = zeros(obj.channel_count, obj.window_size);
         end
+
         function obj = set_channel_count(obj, new_channel_count)
             %set_channel_count Set channel count
             %   Resets data to zeros as its dimensions change
             obj.channel_count = uint16(new_channel_count);
             obj.data = zeros(obj.channel_count, obj.window_size);
         end
+
         function obj = set_auto_enqueue(obj, new_auto_enqueue)
             %set_channel_count Set auto enqueue
             %   Sets whether new data samples should be auto enqueued into
             %   data variable
             obj.auto_enqueue = new_auto_enqueue;
         end
+
         function val = getData(obj)
             val = obj.data;
         end
+
         function obj = setData(obj, val)
             obj.data = val;
         end
+
         function ret = enqueue(obj, element)
             temp = obj.data(1);
             for i = 1:obj.window_size - 1
@@ -127,6 +130,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.data(:,end) = element;
             ret = temp;
         end
+
     end
 end
 
