@@ -31,7 +31,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.last_sample_received_at_us = uint64(0);
             obj.auto_enqueue = false;
 
-            % Tells the compiler to make commands a variable sized list
+            % HACK: Tells the compiler to make commands a variable sized list
             number_of_pulses = 5;
             if number_of_pulses > obj.window_size
                 number_of_pulses = 20;
