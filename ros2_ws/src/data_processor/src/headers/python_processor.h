@@ -20,7 +20,7 @@ public:
   std::vector<FpgaEvent> close();
 
 private:
-  static PyObject *make_list(std::vector<double> data);
+  static PyObject *convert_vector_to_pyobject(std::vector<double> data);
 
   static std::vector<FpgaEvent> parse_pyobject_events(std::vector<PyObject *> events);
 

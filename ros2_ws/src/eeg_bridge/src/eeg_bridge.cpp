@@ -320,8 +320,6 @@ private:
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-  //RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "memory optimization: %d", MEMORY_OPTIMIZATION);
-
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
