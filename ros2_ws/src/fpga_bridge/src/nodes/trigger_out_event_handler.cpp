@@ -57,6 +57,7 @@ public:
       response->success = true;
     };
 
+
     serialized_message = SerializedMessage();
     send_trigger_out_event_service_ = this->create_service<fpga_interfaces::srv::SendTriggerOutEvent>(
         "/fpga/send_trigger_out_event", service_callback);
@@ -74,16 +75,20 @@ int main(int argc, char **argv) {
 
   rclcpp::init(argc, argv);
 
+
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
   auto node = std::make_shared<TriggerOutEventHandler>();
 
-  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Trigger out event handler ready.");
-
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "setting memory opt");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
+  RCLCPP_INFO(rclcpp::get_logger("trigger_out_event_handler"), "Trigger out event handler ready.");
 
   rclcpp::spin(node);
 

@@ -29,16 +29,16 @@ public:
 
       fpga_interfaces::msg::EventInfo event_info = stimulation_pulse_event.event_info;
 
-  uint16_t event_id = event_info.event_id;
-  uint8_t execution_condition = event_info.execution_condition;
-  uint64_t time_us = event_info.time_us;
+      uint16_t event_id = event_info.event_id;
+      uint8_t execution_condition = event_info.execution_condition;
+      uint64_t time_us = event_info.time_us;
 
-  serialized_message.init(channel);
-  serialized_message.add_uint16(event_id);
-  serialized_message.add_byte(execution_condition);
-  serialized_message.add_uint64(time_us);
+      serialized_message.init(channel);
+      serialized_message.add_uint16(event_id);
+      serialized_message.add_byte(execution_condition);
+      serialized_message.add_uint64(time_us);
 
-  /* Serialize stimulation pulse. */
+      /* Serialize stimulation pulse. */
 
       uint8_t n_pieces = (uint8_t) stimulation_pulse_event.pieces.size();
       serialized_message.add_byte(n_pieces);
@@ -64,7 +64,8 @@ public:
                                             NiFpga_InfiniteTimeout,
                                             NULL));
 
-      RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Sent stimulation request for channel %d", channel);
+      RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Sent stimulation request for channel %d",
+                  channel);
 
       response->success = true;
     };
@@ -86,14 +87,20 @@ int main(int argc, char **argv) {
 
   rclcpp::init(argc, argv);
 
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
   auto node = std::make_shared<StimulationPulseEventHandler>();
-  RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Stimulation pulse event handler ready.");
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
+
+  RCLCPP_INFO(rclcpp::get_logger("stimulation_pulse_event_handler"), "Stimulation pulse event handler ready.");
 
   rclcpp::spin(node);
   rclcpp::shutdown();

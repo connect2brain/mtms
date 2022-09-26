@@ -1,0 +1,12 @@
+codegen
+*.prj
+*.asv
+compiler/*
+
+!compiler/CMakeLists.txt
+!compiler/compile.sh
+!compiler/processor_factory.cpp
+!compiler/processor_factory.h
+!compiler/tmwtypes.h
+!compiler/matlab_processor_interface.cpp
+!compiler/matlab_processor_interface.h
