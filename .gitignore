@@ -8,6 +8,7 @@ install/*
 __pycache__
 .vscode
 cmake-build-debug
+cmake-build-release
 front/cypress/videos
 front/cypress/screenshots
 ros2_ws/src/install/

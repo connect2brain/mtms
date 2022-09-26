@@ -9,6 +9,8 @@
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
+#include "memory_utils.h"
+#include "scheduling_utils.h"
 
 #define CHANNEL_COUNT 5
 
@@ -30,63 +32,73 @@ NiFpga_mTMS_IndicatorU16 temperature_indicators[CHANNEL_COUNT] = {
     NiFpga_mTMS_IndicatorU16_Coil5Temperature
 };
 
-class StatusMonitorBridge : public rclcpp::Node
-{
-  public:
-    StatusMonitorBridge()
-    : Node("status_monitor_bridge")
-    {
-      status_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::StatusMonitorState>("/fpga/status_monitor_state", 10);
-      timer_ = this->create_wall_timer(20ms, std::bind(&StatusMonitorBridge::publish_status_monitor_state, this));
+class StatusMonitorBridge : public rclcpp::Node {
+public:
+  StatusMonitorBridge()
+      : Node("status_monitor_bridge") {
+    status_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::StatusMonitorState>(
+        "/fpga/status_monitor_state", 10);
+    timer_ = this->create_wall_timer(20ms, std::bind(&StatusMonitorBridge::publish_status_monitor_state, this));
+  }
+
+private:
+  void publish_status_monitor_state() {
+
+    fpga_interfaces::msg::StatusMonitorState state = fpga_interfaces::msg::StatusMonitorState();
+
+    for (auto i = 0; i < CHANNEL_COUNT; i++) {
+      fpga_interfaces::msg::ChannelStatus channel_status = fpga_interfaces::msg::ChannelStatus();
+      channel_status.channel_index = i;
+
+      NiFpga_MergeStatus(&status,
+                         NiFpga_ReadU16(
+                             session,
+                             voltage_indicators[i],
+                             &channel_status.voltage
+                         ));
+
+      NiFpga_MergeStatus(&status,
+                         NiFpga_ReadU16(
+                             session,
+                             temperature_indicators[i],
+                             &channel_status.temperature
+                         ));
+
+      state.channel_statuses.push_back(channel_status);
     }
 
-  private:
-    void publish_status_monitor_state()
-    {
+    status_monitor_publisher_->publish(state);
 
-      fpga_interfaces::msg::StatusMonitorState state = fpga_interfaces::msg::StatusMonitorState();
+  }
 
-      for (auto i = 0; i < CHANNEL_COUNT; i++) {
-        fpga_interfaces::msg::ChannelStatus channel_status = fpga_interfaces::msg::ChannelStatus();
-        channel_status.channel_index = i;
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_ReadU16(
-                               session,
-                               voltage_indicators[i],
-                               &channel_status.voltage
-                           ));
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_ReadU16(
-                               session,
-                               temperature_indicators[i],
-                               &channel_status.temperature
-                           ));
-
-        state.channel_statuses.push_back(channel_status);
-      }
-
-      status_monitor_publisher_->publish(state);
-
-    }
-
-    rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<fpga_interfaces::msg::StatusMonitorState>::SharedPtr status_monitor_publisher_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Publisher<fpga_interfaces::msg::StatusMonitorState>::SharedPtr status_monitor_publisher_;
 };
 
-int main(int argc, char **argv)
-{
-  if (!init_fpga())
-  {
+int main(int argc, char **argv) {
+  if (!init_fpga()) {
     return 1;
   }
 
   rclcpp::init(argc, argv);
 
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<StatusMonitorBridge>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
   RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Status monitor bridge ready.");
 
-  rclcpp::spin(std::make_shared<StatusMonitorBridge>());
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
 
   close_fpga();
