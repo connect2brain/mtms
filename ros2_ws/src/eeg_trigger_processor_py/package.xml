@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>eeg_processor</name>
+  <name>eeg_trigger_processor_py</name>
   <version>0.0.1</version>
-  <description>EEG data processor</description>
+  <description>EEG trigger processor</description>
   <maintainer email="kim.valen@aalto.fi">Kim Valén</maintainer>
   <license>TODO</license>
 
