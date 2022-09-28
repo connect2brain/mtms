@@ -11,6 +11,15 @@ function out = run_processor(window_size, channel_count, data_sample, time_us, f
         actual_window_size = uint32(window_size);
     end
     actual_data_sample = zeros(actual_window_size, 1);
+    if actual_window_size > 10
+        for i=1:actual_window_size
+            actual_data_sample(i) = i;
+        end
+    else
+        for i=1:actual_window_size
+            actual_data_sample(i) = i * 5;
+        end
+    end
     
     obj = MatlabProcessor();
     
@@ -21,6 +30,8 @@ function out = run_processor(window_size, channel_count, data_sample, time_us, f
     data = obj.init_experiment();
 
     data = obj.data_received(actual_data_sample, time_us, first_sample_of_experiment);
+    actual_data_sample2 = ones(actual_window_size, 1);
+    data = obj.data_received(actual_data_sample2, time_us + 1, false);
     % display(data);
     data = obj.end_experiment();
 
