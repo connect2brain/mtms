@@ -61,6 +61,10 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.enqueue(c3);
             obj.samples_collected = obj.samples_collected + 1;
 
+            if ~obj.estimated
+                fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
+            end
+
             if ~obj.print_c3 && obj.estimated && obj.samples_collected > obj.FS + obj.FS / 2
                 %fprintf(obj.c3_file_id, "%f\n", c3);
                 data = obj.data(1:10:end);
@@ -72,7 +76,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
                 % fprintf(obj.file_id, "%f,0,0\n", c3);
-                
+                obj.estimated = true;
                 %downsampled = obj.data(1:10:end);
 
                 data = filter(obj.lpf, obj.A, obj.data);
@@ -94,14 +98,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                     fprintf(obj.ampl_file_id, "%f\n", ampl);
                     fprintf(obj.phase_file_id, "%f\n", phase);
                 end
-
-            else
-                if ~obj.estimated
-                    fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
-                    %fprintf(obj.ampl_file_id, '%f\n', 0);
-                    %fprintf(obj.phase_file_id, '%f\n', 0);
-                end
-                obj.set_commands([]);
             end
             obj.set_commands([]);
             
