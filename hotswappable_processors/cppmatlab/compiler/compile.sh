@@ -1,5 +1,6 @@
 #!/bin/bash
-find . ! \( -name 'processor_factory.h' -o -name 'processor_factory.cpp' -o -name 'tmwtypes.h' -o -name 'matlab_processor_interface.h' -o -name 'matlab_processor_interface.cpp' \) -type f \( -iname \*.h -o -iname \*.cpp -o -iname \*.c \) -exec rm -f {} +
+
+bash ./clean.sh
 
 find ../codegen -name "*.h"   -not \( -path "*/interface/*" -prune \) -not \( -path "*/examples/*" -prune \) -exec cp "{}" . \;
 find ../codegen -name "*.cpp" -not \( -path "*/interface/*" -prune \) -not \( -path "*/examples/*" -prune \) -exec cp "{}" . \;
@@ -13,6 +14,6 @@ sed -i -e 's/MatlabProcessor \*init/virtual MatlabProcessor \*init/' $PROCESSOR_
 sed -i -e 's/  void/virtual void/' $PROCESSOR_H
 sed -i -e 's/class MatlabProcessor/class MatlabProcessor : public MatlabProcessorInterface/' $PROCESSOR_H
 sed -i -e '/Include files/a #include "matlab_processor_interface.h"' $PROCESSOR_H
-cmake . --fresh -- -j8
+cmake .
 make all -j8
 
