@@ -7,6 +7,7 @@ channel_count = uint16(62);
 cfg = coder.config("lib");
 cfg.TargetLang = "C++";
 cfg.InlineBetweenUserFunctions = "Readability";
+cfg.RuntimeChecks = true;
 % cfg.CustomInclude = "cs.h";
 % cfg.FilePartitionMethod = '';
 tic
