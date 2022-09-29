@@ -9,4 +9,6 @@ cfg.TargetLang = "C++";
 cfg.InlineBetweenUserFunctions = "Readability";
 % cfg.CustomInclude = "cs.h";
 % cfg.FilePartitionMethod = '';
+tic
 codegen -config cfg run_processor -args {window_size,channel_count,data_sample,time_us,first_sample_of_experiment} -report
+toc
