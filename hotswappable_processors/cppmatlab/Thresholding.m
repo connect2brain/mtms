@@ -88,6 +88,9 @@ classdef Thresholding < handle
             obj.enqueue_y(new_value);
             obj.enqueue_signals(0);
             obj.enqueue_filtered_y(0);
+            
+            disp(size(obj.filteredY));
+
             obj.enqueue_avg_filter(0);
             obj.enqueue_std_filter(0);
             i = obj.length;
@@ -106,9 +109,10 @@ classdef Thresholding < handle
                 obj.stdFilter(i) = std(obj.filteredY((i - obj.lag):i));
             else
                 obj.signals(i) = 0;
-                obj.filteredY = obj.y(i);
-                obj.avgFilter(i) = mean(obj.filteredY((i - obj.lag):i));
-                obj.stdFilter(i) = std(obj.filteredY((i - obj.lag):i));
+                obj.filteredY = obj.y(i, :);
+                d = obj.filteredY((i - obj.lag) : i);
+                obj.avgFilter(i) = mean(d);
+                obj.stdFilter(i) = std(d);
             end
             % fprintf("y %f, signals %f, filteredY %f, avgFilter %f, stdFilter %f\n", obj.y(end), obj.signals(end), obj.filteredY(end), obj.avgFilter(end), obj.stdFilter(end));
             signal = obj.signals(i);
