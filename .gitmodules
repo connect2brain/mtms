@@ -6,4 +6,4 @@
 	url = https://github.com/connect2brain/invesalius3
 [submodule "ros2_ws/src/efield/efield_libraries"]
 	path = ros2_ws/src/efield/efield_libraries
-	url = https://version.aalto.fi/gitlab/matsudr1/efield_integration.git
+	url = https://version.aalto.fi/gitlab/sotoda1/efield_integration
