@@ -28,6 +28,9 @@ RUN apt-get install -y \
     locales \
     python3-pip
 
+RUN pip install pyacvd==0.2.7
+RUN pip install pyvista
+
 RUN locale-gen  \
     en_US.UTF-8 \
     en_GB.UTF-8
@@ -52,7 +55,7 @@ RUN python3 setup.py build_ext --inplace
 
 WORKDIR /app
 COPY ros2_ws/src/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation_pkg/invesalius3/
-
+RUN pip install /app/ros2_ws/src/neuronavigation_pkg/invesalius3/pypolaris-0.0.3-py3-none-any.whl
 ## Copy rest of the ROS workspace
 
 WORKDIR /app

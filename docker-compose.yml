@@ -42,6 +42,7 @@ services:
     # Requires by linux when opening projects, otherwise segfaults
     privileged: true
   efield:
+    privileged: true
     build:
       context: .
       dockerfile: ros2_ws/src/efield/Dockerfile
