@@ -11,17 +11,16 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
+find_package(efield_estimation REQUIRED)
 
-add_executable(efield src/efield.cpp)
-add_executable(efield_publisher src/efield_publisher.cpp)
-ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces shape_msgs)
-ament_target_dependencies(efield_publisher rclcpp std_msgs neuronavigation_interfaces shape_msgs)
+add_executable(efield_service src/efield_service.cpp)
+ament_target_dependencies(efield_service rclcpp std_msgs neuronavigation_interfaces shape_msgs efield_estimation)
+
+target_link_directories(efield_service PUBLIC efield_libraries/lib)
+target_include_directories(efield_service PUBLIC efield_libraries/include)
 
 install(TARGETS
-  efield
-  DESTINATION lib/${PROJECT_NAME})
-install(TARGETS
-  efield_publisher
+  efield_service
   DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
