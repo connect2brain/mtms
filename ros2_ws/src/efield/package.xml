@@ -12,11 +12,6 @@
   <depend>geometry_msgs</depend>
   <depend>shape_msgs</depend>
   <depend>neuronavigation_interfaces</depend>
-  <depend>linalg</depend>
-  <depend>tmsutil</depend>
-  <depend>phi</depend>
-  <depend>tms</depend>
-  <depend>efield_estimation</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
