@@ -36,7 +36,7 @@ function [phase, amplitude] = phastimate(data, D, edge, ord, hilbertwindow, vara
     end
 
     % demean the data
-    data = data - mean(data, 2);
+    data = data - mean(data);
     % filter the data
     data_filtered = filtfilt(D, double(1), double(data)); %note that filtfilt uses reflection and sets the initial values
     data_filtered_withoutedge = data_filtered(edge + 1:end - edge, :);
@@ -62,6 +62,7 @@ function [phase, amplitude] = phastimate(data, D, edge, ord, hilbertwindow, vara
     % plot((size(data_filtered_withoutedge_predicted,1)-hilbertwindow+1):size(data_filtered_withoutedge_predicted,1), angle(data_filtered_withoutedge_predicted_hilbertwindow_analytic).*max(data_filtered_withoutedge_predicted_hilbertwindow(:))/pi)
     % xpos = (size(data_filtered_withoutedge_predicted,1)-iterations+edge);
     % line([xpos xpos], ylim(gca))
-    phase = angle(data_filtered_withoutedge_predicted_hilbertwindow_analytic(end - iterations + edge + offset_correction, :));
-    amplitude = mean(abs(data_filtered_withoutedge_predicted_hilbertwindow_analytic));
+    phase = angle(data_filtered_withoutedge_predicted_hilbertwindow_analytic);
+    amplitude = data_filtered_withoutedge_predicted_hilbertwindow;% abs(data_filtered_withoutedge_predicted_hilbertwindow_analytic);
+
 end

@@ -41,7 +41,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.bpf = firls(80, [0 6 9 13 16 (500/2)]/(500/2), [0 0 1 1 0 0], [1 1 1]);
 
             obj.set_channel_count(1);
-            obj.set_window_size(obj.FS / 2);
+            obj.set_window_size(obj.FS);
             obj.set_auto_enqueue(false);
             
             obj.estimated = false;
@@ -69,38 +69,30 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             if ~obj.estimated && mod(obj.samples_collected, 100) == 0
                 fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
             end
-
-            if ~obj.print_c3 && obj.estimated && obj.samples_collected > obj.FS
-                data = obj.data(1:10:end);
-                for i=1:numel(data)
-                    fprintf(obj.c3_file_id, "%f\n", data(i));
-                end
-                fprintf("Saved c3 values\n");
-                fclose(obj.c3_file_id);
-
-                obj.print_c3 = true;
-            end
             
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
-                obj.estimated = true;
-                % obj.data = sin(2*pi*60*(0:1/2500:1));
-                %obj.data = 1:2500;
                 data = obj.data(1:2500);
-                data = obj.data - mean(data);
-                data = filter(obj.lpf, obj.A, data);
-                downsampled = data(1:10:end);
+
+                data = data - mean(data);
+                %figure; plot(data); hold on;
                 
-                figure;plot(data);
-                figure;plot(downsampled);
+                tic
+                filtfilted = filtfilt(obj.lpf, obj.A, data);
+                toc
+                figure; plot(filtfilted); hold on;
+                
+                tic
+                data = filter(obj.lpf, obj.A, data);
+                toc
+                plot(data); hold on;
+
+                downsampled = data(1:10:end);
+
+
 
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
-                figure;plot(estimated_phases); hold on; plot(estimated_amplitudes); hold on;
-                xline(33); 
-                figure;plot(estimated_amplitudes); hold on
-                xline(33);
 
-                s = size(estimated_phases);
-                
+                s = size(estimated_phases);                
                 fprintf("num of estimated phases: %f, %f\n", s(1), s(2));
                 s = size(estimated_amplitudes);
                 fprintf("num of estimated amplitudes: %f, %f\n", s(1), s(2));
@@ -109,22 +101,53 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 fprintf("Estimation done\n");
                 obj.estimated = true;
                 
-                
-                for i=1:numel(data)
-                    fprintf(obj.lpf_file_id, "%f\n", data(i));
-                end
-                fprintf("Saved lpf values\n");
                 fclose(obj.lpf_file_id);
 
-                for index=1:numel(estimated_amplitudes)
-                    ampl = estimated_amplitudes(index);
-                    phase = estimated_phases(index);
-                    fprintf(obj.ampl_file_id, "%f\n", ampl);
-                    fprintf(obj.phase_file_id, "%f\n", phase);
+                
+                [~, xline_index] = min(abs(estimated_phases-0));
+                
+                start_of_estimation = 250 - 32;
+                end_of_estimation = 250 + 32;
+                data = obj.data(1:5000);
+                data = data - mean(data);
+                data = filter(obj.lpf, obj.A, data);
+                downsampled = data(1:10:end);
+                data_filtered = filtfilt(obj.bpf, double(1), double(downsampled));
+                amplitudes = zeros(500, 1);
+                phases = zeros(500, 1);
+
+                % disp(data_filtered);
+
+                for i=1:500
+                    
+                    fprintf(obj.c3_file_id, "%f\n", data_filtered(i));
+
+                    if i > start_of_estimation && i < end_of_estimation
+                        estimate_index = i - start_of_estimation;
+                        
+                        phase = estimated_phases(estimate_index);
+                        ampl = estimated_amplitudes(estimate_index);
+                        
+                        fprintf(obj.ampl_file_id, "%f\n", ampl);
+                        fprintf(obj.phase_file_id, "%f\n", phase);
+                        
+                        amplitudes(i) = ampl;
+                        phases(i) = phase;
+                    else
+                        fprintf(obj.ampl_file_id, "%f\n", 0);
+                        fprintf(obj.phase_file_id, "%f\n", 0);
+                        amplitudes(i) = 0;
+                        phases(i) = 0;
+                    end
                 end
+                
+                figure;plot(data_filtered);hold on; plot(amplitudes); %hold on; xline(start_of_estimation + xline_index); hold on; xline(250);
+                figure;plot(phases); %hold on; xline(start_of_estimation + xline_index); hold on; yline(0);  hold on; xline(250);
+
                 fprintf("Saved ampl and phase values\n");
                 fclose(obj.ampl_file_id);
                 fclose(obj.phase_file_id);
+                fclose(obj.c3_file_id);
             end
             obj.set_commands([]);
             
