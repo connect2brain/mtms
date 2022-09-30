@@ -124,7 +124,6 @@ class NeuronavigationNode(Node):
             orientation = [0.0, 0.0, 0.0]
 
         msg = PoseUsingEulerAngles()
-
         msg.position.x, msg.position.y, msg.position.z = position
         msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = orientation
 
@@ -157,16 +156,16 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def update_efield(self, position, orientation):
+    def update_efield(self, position, orientation, T_rot):
         self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
         self.req.coordinate.orientation.alpha, self.req.coordinate.orientation.beta, self.req.coordinate.orientation.gamma = orientation
-
+        self.req.trot = T_rot
         self.future = self.cli.call_async(self.req)
         while self.future.done() is False:
             pass
         try:
             response = self.future.result()
-            self.get_logger().info('Publishing to the server ')
+            self.get_logger().info("Responding to the service request /neuronavigation/efield")
             return response.efield_data
         except Exception as e:
             self.get_logger().info(
@@ -229,11 +228,13 @@ class Connection(Thread):
             polygons=polygons,
         )
 
-    def update_efield(self, position, orientation):
+    def update_efield(self, position, orientation, T_rot):
         return self.node.update_efield(
-            position=position,
-            orientation=orientation,
-        )
+                    position=position,
+                    orientation=orientation,
+                    T_rot=T_rot,
+                )
+
 
     def set_callback__set_markers(self, callback):
         self.node.set_callback__set_markers(callback)
