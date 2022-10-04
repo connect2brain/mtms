@@ -49,7 +49,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
 
 
   trigger_subscription = this->create_subscription<mtms_interfaces::msg::Trigger>("/eeg/trigger_received",
-                                                                                  qos,
+                                                                                  10,
                                                                                   trigger_subscription_callback);
 
   trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event");
