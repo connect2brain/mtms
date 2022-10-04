@@ -16,10 +16,21 @@ services:
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+  data_provider:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/data_provider/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './ros2_ws/src/data_provider:/app/ros2_ws/src/data_provider/'
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
   planner:
     build:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
@@ -27,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
