@@ -88,9 +88,6 @@ classdef Thresholding < handle
             obj.enqueue_y(new_value);
             obj.enqueue_signals(0);
             obj.enqueue_filtered_y(0);
-            
-            disp(size(obj.filteredY));
-
             obj.enqueue_avg_filter(0);
             obj.enqueue_std_filter(0);
             i = obj.length;
