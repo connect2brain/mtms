@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { EulerAngles, Position, PositionMessage, StateMessage } from 'types/target'
-import { clearRosState, positionListener, stateListener } from 'services/ros'
+import { clearRosState, coilPositionSubscriber, plannerStateSubscriber } from 'services/ros'
 import { expand, objectKeysToCamelCase } from 'utils'
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
@@ -40,8 +40,8 @@ const Targets = () => {
   }
 
   useEffect(() => {
-    stateListener.subscribe(updateState)
-    positionListener.subscribe(updatePosition)
+    plannerStateSubscriber.subscribe(updateState)
+    coilPositionSubscriber.subscribe(updatePosition)
   }, [])
 
   const addTarget = () => {
