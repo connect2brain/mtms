@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from mtms_interfaces.msg import EegDatapoint
 
-SAMPLING_FREQUENCY = 5000
+DEFAULT_SAMPLING_FREQUENCY = 5000.0
 
 
 class DataProvider(Node):
@@ -14,13 +14,18 @@ class DataProvider(Node):
         self.declare_parameter('data_file', "")
         self.data_file_name = self.get_parameter('data_file').value
 
+        self.declare_parameter('sampling_frequency', DEFAULT_SAMPLING_FREQUENCY)
+        sampling_frequency = self.get_parameter('sampling_frequency').value
+
         self.get_logger().info(f"data file name {self.data_file_name}")
 
         self.file = open(self.data_file_name, 'r')
 
-        self.create_timer(1 / SAMPLING_FREQUENCY, self.publish_data)
+        self.create_timer(1 / sampling_frequency, self.publish_data)
 
     def publish_data(self):
+        self.get_logger().info("Publishing data")
+
         line = self.file.readline()
 
         # if EOF, start from the beginning
