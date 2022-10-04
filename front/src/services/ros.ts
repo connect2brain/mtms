@@ -1,6 +1,7 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
 import { PositionMessage, StateMessage } from '../types/target'
+import { EegDatapointMessage, EegTriggerMessage } from '../types/eeg'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -18,7 +19,7 @@ ros.on('close', () => {
   console.log('ROS closed ws connection')
 })
 
-export const positionListener = new ROSLIB.Topic<PositionMessage>({
+export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
   ros: ros,
   name: '/neuronavigation/focus',
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
@@ -46,10 +47,24 @@ const coilAtTargetListener = new ROSLIB.Topic({
 //coilAtTargetListener.subscribe(updateCoilAtTarget);
 
 /* Set up listener for planner state. */
-export const stateListener = new ROSLIB.Topic<StateMessage>({
+export const plannerStateSubscriber = new ROSLIB.Topic<StateMessage>({
   ros: ros,
   name: '/planner/state',
   messageType: 'mtms_interfaces/PlannerState',
+})
+
+/* Set up listener for eeg data. */
+export const eegDataSubscriber = new ROSLIB.Topic<EegDatapointMessage>({
+  ros: ros,
+  name: '/eeg/raw_data',
+  messageType: 'mtms_interfaces/EegDatapoint',
+})
+
+/* Set up listener for planner state. */
+export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
+  ros: ros,
+  name: '/planner/trigger_received',
+  messageType: 'mtms_interfaces/Trigger',
 })
 
 /* Set up start_experiment service */
