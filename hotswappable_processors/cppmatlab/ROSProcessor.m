@@ -1,6 +1,4 @@
 classdef ROSProcessor < handle
-    %ROSPROCESSOR Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties
         node
@@ -11,8 +9,6 @@ classdef ROSProcessor < handle
     
     methods
         function obj = ROSProcessor()
-            %ROSPROCESSOR Construct an instance of this class
-            %   Detailed explanation goes here
             setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp");
             obj.node = ros2node("ros_processor");
 
@@ -33,12 +29,6 @@ classdef ROSProcessor < handle
                 obj.processor.data_received(channel_data, time_us, first_sample_of_experiment); 
             end
             %toc
-        end
-        function wait_forever(obj)
-            %wait_forever Wait forever
-            while true
-                pause(0.00001);
-            end
         end
     end
 end
