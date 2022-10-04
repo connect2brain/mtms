@@ -1,7 +1,7 @@
 import ROSLIB from 'roslib'
 import { ROS_URL } from '../utils/constants'
 import { PositionMessage, StateMessage } from '../types/target'
-import { EegDatapointMessage, EegTriggerMessage } from '../types/eeg'
+import { EegBatchMessage, EegDatapointMessage, EegTriggerMessage } from '../types/eeg'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -54,10 +54,10 @@ export const plannerStateSubscriber = new ROSLIB.Topic<StateMessage>({
 })
 
 /* Set up listener for eeg data. */
-export const eegDataSubscriber = new ROSLIB.Topic<EegDatapointMessage>({
+export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
   ros: ros,
-  name: '/eeg/raw_data',
-  messageType: 'mtms_interfaces/EegDatapoint',
+  name: '/eeg/batch_data',
+  messageType: 'mtms_interfaces/EegBatch',
 })
 
 /* Set up listener for planner state. */
