@@ -16,6 +16,12 @@ const options = {
   animation: {
     duration: 0, // general animation time
   },
+  scales: {
+    y: {
+      min: 3070,
+      max: 3150,
+    },
+  },
   plugins: {
     legend: {
       position: 'top' as const,
@@ -40,6 +46,7 @@ export const EegChart = ({ data }: EegChartProps) => {
         data: data,
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        pointRadius: 0,
       },
     ],
   }
