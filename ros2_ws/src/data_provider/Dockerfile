@@ -14,7 +14,6 @@ RUN apt-get install -y \
 WORKDIR /app
 COPY ros2_ws/src/data_provider ros2_ws/src/data_provider/
 COPY ros2_ws/src/mtms_interfaces ros2_ws/src/mtms_interfaces/
-COPY ros2_ws/src/oscillation_data.csv ros2_ws/src/
 
 # Build ROS packages
 
