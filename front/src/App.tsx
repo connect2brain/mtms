@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
 import Experiment from './views/Experiment'
+import DataVisualize from './views/DataVisualize'
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Routes>
           <Route path='/' element={<Targets />} />
           <Route path='/experiment' element={<Experiment />} />
+          <Route path='/plot' element={<DataVisualize />} />
         </Routes>
       </Wrapper>
     </Providers>
