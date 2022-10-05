@@ -12,9 +12,16 @@ DataBatcher::DataBatcher() : Node("data_batcher") {
   this->declare_parameter<int>("batch_size", 100);
   this->get_parameter("batch_size", batch_size);
 
+  this->declare_parameter<int>("downsample_ratio", 10);
+  this->get_parameter("downsample_ratio", downsample_ratio);
+
   auto eeg_data_subscription_callback = [this](
       const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-    batch[batch_index++] = *message;
+    if (send_counter % downsample_ratio == 0) {
+      batch[batch_index++] = *message;
+    }
+
+    send_counter++;
 
     RCLCPP_INFO(rclcpp::get_logger("data_batcher"), "Received message index %d / %d", batch_index, batch_size);
 
@@ -23,6 +30,7 @@ DataBatcher::DataBatcher() : Node("data_batcher") {
       batch_message.batch = batch;
       batch_publisher->publish(batch_message);
       batch_index = 0;
+      send_counter = 0;
     }
   };
 
