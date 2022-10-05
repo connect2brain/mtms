@@ -22,6 +22,8 @@ private:
   std::vector<mtms_interfaces::msg::EegDatapoint> batch;
   unsigned int batch_index;
   unsigned int batch_size;
+  unsigned int downsample_ratio;
+  unsigned int send_counter;
 
   rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_subscription;
   rclcpp::Publisher<mtms_interfaces::msg::EegBatch>::SharedPtr batch_publisher;
