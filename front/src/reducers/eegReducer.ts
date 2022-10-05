@@ -10,7 +10,7 @@ interface EegState {
 const initialState: EegState = {
   eeg: [],
   triggers: [],
-  maxLength: 25000,
+  maxLength: 1000,
 }
 
 const eegSlice = createSlice({
