@@ -19,6 +19,12 @@ def generate_launch_description():
         description="How many samples to include in a batch",
     )
 
+    downsample_ratio_arg = DeclareLaunchArgument(
+        "downsample-ratio",
+        default_value=[""],
+        description="How much to downsample",
+    )
+
     logger = LaunchConfiguration("log-level")
 
     node = Node(
@@ -28,6 +34,7 @@ def generate_launch_description():
         parameters=[
             {
                 "batch_size": LaunchConfiguration("batch-size"),
+                "downsmaple_ratio": LaunchConfiguration("downsample-ratio"),
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -35,5 +42,6 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(batch_size_arg)
+    ld.add_action(downsample_ratio_arg)
 
     return ld
