@@ -10,7 +10,7 @@ class DataProvider(Node):
     def __init__(self):
         super().__init__('data_provider')
         self.eeg_publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
-        self.trigger_publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
+        self.trigger_publisher = self.create_publisher(Trigger, '/eeg/trigger_received', 10)
 
         self.declare_parameter('data_file', "")
         self.data_file_name = self.get_parameter('data_file').value
@@ -46,11 +46,11 @@ class DataProvider(Node):
     def publish_trigger(self):
         self.get_logger().info("Publishing trigger")
 
-
         msg = Trigger()
         msg.index = 0
         msg.time_us = self.get_clock().now().nanoseconds
         self.trigger_publisher.publish(msg)
+
 
 def main():
     rclpy.init()
