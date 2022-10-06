@@ -40,7 +40,7 @@ const options: ChartOptions<'line' | 'bar'> = {
     x: {
       type: 'realtime' as const,
       realtime: {
-        duration: 3000,
+        duration: 5000,
       },
       // Change options only for THIS AXIS
     },
@@ -85,6 +85,7 @@ export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
         data: [triggerData],
         borderColor: 'rgb(255, 99, 132)',
         backgroundColor: 'rgba(255, 99, 132, 0.5)',
+        barThickness: 1,
       },
     ],
   })
@@ -106,9 +107,10 @@ export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
         {
           type: 'bar' as const,
           label: 'Triggers',
-          data: triggerOldData, //triggerOldData.concat(triggerData),
-          borderColor: 'rgb(255, 99, 132)',
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          data: triggerOldData.concat(triggerData),
+          borderColor: 'rgb(0, 99, 132)',
+          backgroundColor: 'rgba(0, 99, 132, 0.5)',
+          barThickness: 1,
         },
       ],
     }
@@ -121,6 +123,8 @@ export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
     const eegOldData = chartData.datasets[0].data
     const triggerOldData = chartData.datasets[1].data
     console.log('in here')
+    console.log(triggerData)
+    console.log(triggerOldData.length)
     const newChartData = {
       datasets: [
         {
@@ -135,13 +139,14 @@ export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
           type: 'bar' as const,
           label: 'Triggers',
           data: triggerOldData.concat(triggerData),
-          borderColor: 'rgb(255, 99, 132)',
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
+          borderColor: 'rgb(0, 99, 132)',
+          backgroundColor: 'rgba(0, 99, 132, 0.5)',
+          barThickness: 1,
         },
       ],
     }
 
-    //setChartData(newChartData)
+    setChartData(newChartData)
     chartRef.current?.update('quiet')
   }, [triggerData])
 

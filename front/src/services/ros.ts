@@ -63,7 +63,7 @@ export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
 /* Set up listener for planner state. */
 export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   ros: ros,
-  name: '/planner/trigger_received',
+  name: '/eeg/trigger_received',
   messageType: 'mtms_interfaces/Trigger',
 })
 

@@ -42,7 +42,7 @@ const DataVisualize = () => {
     console.log(message)
     setTrigger({
       y: 100000,
-      x: message.time_us,
+      x: message.time_us / 1000000,
     })
   }
 
