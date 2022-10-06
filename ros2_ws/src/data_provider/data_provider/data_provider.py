@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from mtms_interfaces.msg import EegDatapoint
+from mtms_interfaces.msg import EegDatapoint, Trigger
 
 DEFAULT_SAMPLING_FREQUENCY = 5000.0
 
@@ -9,7 +9,8 @@ class DataProvider(Node):
 
     def __init__(self):
         super().__init__('data_provider')
-        self.publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
+        self.eeg_publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
+        self.trigger_publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
 
         self.declare_parameter('data_file', "")
         self.data_file_name = self.get_parameter('data_file').value
@@ -22,6 +23,8 @@ class DataProvider(Node):
         self.file = open(self.data_file_name, 'r')
 
         self.create_timer(1 / sampling_frequency, self.publish_data)
+
+        self.create_timer(5, self.publish_trigger)
 
     def publish_data(self):
         self.get_logger().info("Publishing data")
@@ -38,8 +41,16 @@ class DataProvider(Node):
         msg.channel_datapoint = data[:62]
         msg.first_sample_of_experiment = False
         msg.time = float(self.get_clock().now().nanoseconds)
-        self.publisher.publish(msg)
+        self.eeg_publisher.publish(msg)
 
+    def publish_trigger(self):
+        self.get_logger().info("Publishing trigger")
+
+
+        msg = Trigger()
+        msg.index = 0
+        msg.time_us = self.get_clock().now().nanoseconds
+        self.trigger_publisher.publish(msg)
 
 def main():
     rclpy.init()
