@@ -3,7 +3,6 @@ import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
 import { EegBatch, EegBatchMessage, EegDatapoint, EegDatapointMessage, EegTriggerMessage } from 'types/eeg'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { addBatch, addEegDatapoint, addEegTrigger, setEeg } from 'reducers/eegReducer'
-import { EegChart } from 'components/EegChart'
 import { Datapoint, EegChartSteaming } from '../components/EegChartStreaming'
 
 const DataVisualize = () => {
