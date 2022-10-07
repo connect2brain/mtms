@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Target.msg"
   "msg/PlannerState.msg"
   "msg/EegDatapoint.msg"
+  "msg/EegBatch.msg"
   "msg/ChannelInfo.msg"
   "msg/Experiment.msg"
   "msg/PulseSequence.msg"
