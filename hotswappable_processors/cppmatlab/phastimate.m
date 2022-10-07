@@ -1,3 +1,8 @@
+% Adapted phastimate. Originally by
+% Zrenner, C., Desideri, D., Belardinelli, P., & Ziemann, U. (2018). Real-time EEG-defined excitability states determine efficacy of TMS-induced plasticity in human motor cortex. Brain stimulation, 11(2), 374-389.
+% and
+% Zrenner, C., Galevska, D., Nieminen, J. O., Baur, D., Stefanou, M. I., & Ziemann, U. (2020). The shaky ground truth of real-time phase estimation. Neuroimage, 214, 116761.
+
 function [phase, amplitude] = phastimate(data, D, edge, ord, hilbertwindow, varargin)
     %PHASTIMATE Pre-stimulus phase estimation
     %   phase = PHASTIMATE(data, D, edge, ord, hilbertwindow, [offset_correction], [iterations], [armethod]) estimates the phase of the matrix data
