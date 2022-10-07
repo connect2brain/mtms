@@ -13,7 +13,7 @@ Designed to work with Linux. Works also on WSL, but memory and scheduling optimi
 `ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=python processor-script:=hotswappable_processors.python.python_processor loop-count:=1 file:=example.data`
 
 ## Compiled MATLAB
-`ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=compiledmatlab processor-script:=./../hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so loop-count:=100000 file:=example.data`
+`ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=compiledmatlab processor-script:=../../hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so loop-count:=100000 file:=example.data`
 
 ## MATLAB (slow, not recommended)
 `ros2 launch data_processor data_processor.launch.py log-level:=info processor-type:=matlab processor-script:==../../hotswappable_processors/matlab/ loop-count:=0 file:=example.data`

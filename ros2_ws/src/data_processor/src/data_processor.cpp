@@ -33,14 +33,14 @@ DataProcessor::DataProcessor() : Node("data_processor") {
 #ifdef PYTHON_FOUND
     processor = new PythonProcessor(processor_script_path);
 #else
-    std::err << "ERROR: Trying to use python processor but compiled without python" << std::endl;
+    std::cerr << "ERROR: Trying to use python processor but compiled without python" << std::endl;
 #endif
 
   } else if (processor_type == "matlab") {
 #ifdef MATLAB_FOUND
     processor = new MatlabProcessor(processor_script_path);
 #else
-    std::err << "ERROR: Trying to use MATLAB processor but compiled without MATLAB" << std::endl;
+    std::cerr << "ERROR: Trying to use MATLAB processor but compiled without MATLAB" << std::endl;
 #endif
 
   } else if (processor_type == "compiledmatlab") {
