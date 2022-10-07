@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'data_provider'
+package_name = 'eeg_simulator'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'data_provider = data_provider.data_provider:main',
+            'eeg_simulator = eeg_simulator.eeg_simulator:main',
         ],
     },
 )
