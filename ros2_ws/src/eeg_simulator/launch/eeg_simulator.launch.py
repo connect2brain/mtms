@@ -19,15 +19,21 @@ def generate_launch_description():
         description="Data file from which to read data to provide",
     )
 
+    sampling_frequency_arg = DeclareLaunchArgument(
+        "sampling-frequency",
+        default_value=["5000"],
+        description="Sampling frequency",
+    )
+
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="data_provider",
-        executable="data_provider",
+        package="eeg_simulator",
+        executable="eeg_simulator",
         parameters=[
             {
-                "data_file":
-                    LaunchConfiguration("data-file")
+                "data_file": LaunchConfiguration("data-file"),
+                "sampling_frequency": LaunchConfiguration("sampling-frequency")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -35,5 +41,6 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(data_file_arg)
+    ld.add_action(sampling_frequency_arg)
 
     return ld
