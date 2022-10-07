@@ -8,7 +8,7 @@ DEFAULT_SAMPLING_FREQUENCY = 5000.0
 class DataProvider(Node):
 
     def __init__(self):
-        super().__init__('data_provider')
+        super().__init__('eeg_simulator')
         self.eeg_publisher = self.create_publisher(EegDatapoint, '/eeg/raw_data', 10)
         self.trigger_publisher = self.create_publisher(Trigger, '/eeg/trigger_received', 10)
 
@@ -54,8 +54,8 @@ class DataProvider(Node):
 
 def main():
     rclpy.init()
-    data_provider = DataProvider()
-    rclpy.spin(data_provider)
+    eeg_simulator = DataProvider()
+    rclpy.spin(eeg_simulator)
     rclpy.shutdown()
 
 
