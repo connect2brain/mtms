@@ -28,8 +28,8 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="data_provider",
-        executable="data_provider",
+        package="eeg_simulator",
+        executable="eeg_simulator",
         parameters=[
             {
                 "data_file": LaunchConfiguration("data-file"),
