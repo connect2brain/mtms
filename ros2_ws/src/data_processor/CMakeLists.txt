@@ -11,6 +11,8 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
 find_package(fpga_interfaces REQUIRED)
 
+find_package(OpenMP)
+
 set(MATLAB_FIND_DEBUG true)
 # MATLAB
 

@@ -1,4 +1,4 @@
-classdef MatlabProcessor < AbstractMatlabProcessor
+classdef PeakMatlabProcessor < AbstractMatlabProcessor
 
     properties(Access=private)
         file_id
@@ -8,10 +8,10 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
     methods
         function obj = constructor(obj)
-            obj.set_channel_count(63);
+            obj.set_channel_count(62);
             obj.set_window_size(50);
             obj.set_auto_enqueue(true);
-            obj.peak_detection = Thresholding(zeros(obj.window_size), obj.window_size, 4.5, 0.5);
+            obj.peak_detection = Thresholding(zeros(obj.window_size), obj.window_size - 1, 4.5, 0.5);
         end
         function on_init_experiment(obj)
             obj.commands = [];

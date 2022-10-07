@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.9)
 project(processor_factory VERSION 0.0.1 DESCRIPTION "testing")
 set(CMAKE_CXX_STANDARD 14)
 
@@ -7,22 +7,23 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
+find_package(OpenMP)
+
 file(GLOB processor_src
         "*.h"
         "*.cpp"
+        "*.c"
         )
 
 
-# Declare the library target.
-#add_library(${PROJECT_NAME} SHARED
-#        processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h
-#        )
-
-# add_executable(processor_factory_exec processor_factory.cpp MatlabProcessorInterface.cpp MatlabProcessorInterface.h processor_factory.h rtwtypes.h tmwtypes.h coder_array.h)
 
 add_library(${PROJECT_NAME} SHARED ${processor_src})
 add_executable(${PROJECT_NAME}_exec ${processor_src})
 
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(${PROJECT_NAME}_exec PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 # Configure the directories to search for header files.
 target_include_directories(${PROJECT_NAME} PRIVATE source)

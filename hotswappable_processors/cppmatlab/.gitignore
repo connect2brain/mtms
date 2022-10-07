@@ -2,6 +2,7 @@ codegen
 *.prj
 *.asv
 compiler/*
+*.csv
 
 !compiler/CMakeLists.txt
 !compiler/compile.sh
