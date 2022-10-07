@@ -19,7 +19,6 @@ const eegSlice = createSlice({
   reducers: {
     setEeg: (state, action: PayloadAction<EegDatapoint[]>) => {
       state.eeg = action.payload
-      //state.eeg.splice(0, state.maxLength - state.eeg.length)
     },
     addBatch: (state, action: PayloadAction<EegDatapoint[]>) => {
       state.eeg.push(...action.payload)
