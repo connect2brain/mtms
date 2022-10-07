@@ -42,7 +42,6 @@ const options: ChartOptions<'line' | 'bar'> = {
       realtime: {
         duration: 5000,
       },
-      // Change options only for THIS AXIS
     },
   },
 }
