@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  eeg_simulator:
+    # image: localhost:5000/mtms:mtms_eeg_simulator
+    image: okahilak/mtms:eeg_simulator
+    environment:
+      - EEG_SIMULATOR_DATA_FILE_NAME=/app/ros2_ws/src/eeg_simulator/oscillation_data.csv
+      - EEG_SIMULATOR_SAMPLING_FREQUENCY=50.0
+      - ROS_LOG_LEVEL=info
+    volumes:
+      - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
+      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
+    pid: host
+    network_mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - dockervlan
+
+  data_batcher_wrapper:
+    #image: localhost:5000/mtms:mtms_data_batcher
+    #image: docker
+    #command: docker run --privileged --env-file=/.env localhost:5000/mtms:mtms_data_batcher
+    image: okahilak/mtms:data_batcher
+    environment:
+      - ROS_LOG_LEVEL=info
+      - DATA_BATCHER_BATCH_SIZE=100
+      - DATA_BATCHER_DOWNSAMPLE_RATIO=10
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      #- './.env:/.env'
+    pid: host
+    network_mode: host
+    privileged: true
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+    networks:
+      - dockervlan
+
+
+networks:
+  dockervlan:
+    name: dockervlan
+    driver: macvlan
+    driver_opts:
+      parent: enxa02919fe2304
+    ipam:
+      config:
+        - subnet: "192.168.0.0/24"
+          #gateway: "192.168.0.1"
+          #ip_range: "192.168.0.64/26"
