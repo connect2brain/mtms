@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  registry:
+    image: registry
+    ports:
+      - target: 5000
+        published: 5000
+        mode: host
