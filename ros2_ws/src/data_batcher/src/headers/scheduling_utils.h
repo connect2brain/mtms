@@ -12,6 +12,7 @@
 #include <memory>
 #include <thread>
 #include <cstring>
+#include <stdexcept>
 
 #ifdef __unix__
 #define ON_UNIX
