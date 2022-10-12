@@ -143,3 +143,11 @@ BUSID  DEVICE                                                        STATE
 - Run `usbipd wsl attach --busid 1-10` (or similar if you have different bus id for the serial device).
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
+
+
+# Production environment
+
+First, create network
+and install
+`docker network create --driver weaveworks/net-plugin:latest_release --opt works.weave.multicast=true weavenet`
+
