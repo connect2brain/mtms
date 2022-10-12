@@ -18,8 +18,9 @@ services:
       placement:
         constraints:
           - node.role == manager
-    networks:
-      - dockervlan
+   # networks:
+   #   - dockervlan
+
 
   data_batcher_wrapper:
     #image: localhost:5000/mtms:mtms_data_batcher
@@ -40,18 +41,10 @@ services:
       placement:
         constraints:
           - node.role == worker
-    networks:
-      - dockervlan
-
+    #networks:
+    #  - dockervlan
 
 networks:
-  dockervlan:
-    name: dockervlan
-    driver: macvlan
-    driver_opts:
-      parent: enxa02919fe2304
-    ipam:
-      config:
-        - subnet: "192.168.0.0/24"
-          #gateway: "192.168.0.1"
-          #ip_range: "192.168.0.64/26"
+  default:
+    external: true
+    name: weavenet
