@@ -7,7 +7,7 @@ NiFpga_Session session;
 NiFpga_Status status;
 bool fpga_opened = false;
 
-bool init_fpga(void) {
+bool init_fpga() {
   /* must be called before any other calls */
   status = NiFpga_Initialize();
   if (NiFpga_IsError(status)) {
@@ -19,16 +19,25 @@ bool init_fpga(void) {
 
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
 
-  /* TODO: Remove hardcoded bitfile. */
-  NiFpga_MergeStatus(&status, NiFpga_Open("/home/mtms/workspace/mtms/bitfiles/NiFpga_mtms_0_3_0.lvbitx",
-          NiFpga_mTMS_Signature,
-          "PXI1Slot4",
-          NiFpga_OpenAttribute_NoRun,
-          &session));
+  auto bitfile = std::getenv("FPGA_BRIDGE_BITFILE");
+  std::string bitfile_path;
+  if (bitfile) {
+    bitfile_path = "/app/ros2_ws/bitfiles/" + std::string(bitfile);
+  } else {
+    //default bitfile path
+    bitfile_path = "/home/mtms/workspace/mtms/bitfiles/NiFpga_mtms_0_3_0.lvbitx";
+  }
+
+  NiFpga_MergeStatus(&status, NiFpga_Open(
+      bitfile_path.c_str(),
+      NiFpga_mTMS_Signature,
+      "PXI1Slot4",
+      NiFpga_OpenAttribute_NoRun,
+      &session));
 
   if (NiFpga_IsError(status)) {
-      RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
-      return false;
+    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
+    return false;
   }
 
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA initialized.");
@@ -37,7 +46,7 @@ bool init_fpga(void) {
   return true;
 }
 
-bool close_fpga(void) {
+bool close_fpga() {
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Closing FPGA.");
 
   if (fpga_opened) {
@@ -51,7 +60,7 @@ bool close_fpga(void) {
   return true;
 }
 
-bool run_fpga(void) {
+bool run_fpga() {
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Running FPGA.");
 
   NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
