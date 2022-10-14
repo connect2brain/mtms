@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for eeg bridge
+# Copy ROS workspace for eeg processor
 
 WORKDIR /app
 COPY ros2_ws/src/eeg_processor ros2_ws/src/eeg_processor/
@@ -22,10 +22,19 @@ WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build --symlink-install
 
+
+# Create a directory for hotswappable processors
+
+RUN mkdir -p hotswappable_processors
+# RUN touch hotswappable_processor/__init__.py
+
+
 # Copy entrypoint
 
-COPY ros2_ws/src/eeg/ros_entrypoint.sh .
+COPY ros2_ws/src/eeg_processor/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
+
+ENV docker=true
 
 ENTRYPOINT ["./ros_entrypoint.sh"]
