@@ -2,8 +2,8 @@
 // Created by alqio on 9/12/22.
 //
 
-#ifndef DATA_PROCESSOR_FPGA_EVENT_H
-#define DATA_PROCESSOR_FPGA_EVENT_H
+#ifndef EEG_PROCESSOR_FPGA_EVENT_H
+#define EEG_PROCESSOR_FPGA_EVENT_H
 
 #include "fpga_interfaces/msg/stimulation_pulse_event.hpp"
 #include "fpga_interfaces/msg/charge_event.hpp"
@@ -72,4 +72,4 @@ struct FpgaEvent {
 
 };
 
-#endif //DATA_PROCESSOR_FPGA_EVENT_H
+#endif //EEG_PROCESSOR_FPGA_EVENT_H
