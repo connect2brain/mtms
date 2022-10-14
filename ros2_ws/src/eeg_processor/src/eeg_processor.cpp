@@ -4,13 +4,13 @@
 
 #include "headers/scheduling_utils.h"
 
-#include "headers/data_processor.h"
+#include "headers/eeg_processor.h"
 #include "headers/memory_utils.h"
 
 using namespace std::chrono_literals;
 using namespace std::chrono;
 
-DataProcessor::DataProcessor() : Node("data_processor") {
+EegProcessor::EegProcessor() : Node("eeg_processor") {
   std::string processor_type;
   this->declare_parameter<std::string>("processor_type", "python");
   this->get_parameter("processor_type", processor_type);
@@ -27,7 +27,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
   this->declare_parameter<std::string>("file", "output.data");
   this->get_parameter("file", output_file_name);
 
-  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "processor type: %s", processor_type.c_str());
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "processor type: %s", processor_type.c_str());
 
   if (processor_type == "python") {
 #ifdef PYTHON_FOUND
@@ -73,7 +73,7 @@ DataProcessor::DataProcessor() : Node("data_processor") {
 
 }
 
-void DataProcessor::measure(int repeats) {
+void EegProcessor::measure(int repeats) {
   std::vector<mtms_interfaces::msg::EegDatapoint> events;
   for (auto j = 0; j < repeats; j++) {
     mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
@@ -105,8 +105,8 @@ void DataProcessor::measure(int repeats) {
   RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
 }
 
-int DataProcessor::shutdown() {
-  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Shutting down data processor");
+int EegProcessor::shutdown() {
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Shutting down data processor");
   if (processor) {
     processor->close();
     return 0;
@@ -121,14 +121,14 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<DataProcessor>();
+  auto node = std::make_shared<EegProcessor>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("data_processor"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif

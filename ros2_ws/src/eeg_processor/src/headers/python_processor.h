@@ -2,8 +2,8 @@
 // Created by alqio on 1.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_PYTHON_PROCESSOR_H
-#define DATA_PROCESSOR_PYTHON_PROCESSOR_H
+#ifndef EEG_PROCESSOR_PYTHON_PROCESSOR_H
+#define EEG_PROCESSOR_PYTHON_PROCESSOR_H
 
 #include "Python.h"
 #include "processor.h"
@@ -35,4 +35,4 @@ private:
 };
 
 
-#endif //DATA_PROCESSOR_PYTHON_PROCESSOR_H
+#endif //EEG_PROCESSOR_PYTHON_PROCESSOR_H
