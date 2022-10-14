@@ -25,6 +25,17 @@ services:
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
       - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+    privileged: true
+
   data_batcher:
     build:
       context: .
