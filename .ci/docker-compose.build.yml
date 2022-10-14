@@ -7,13 +7,17 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/planner/Dockerfile
+
   pulse_sequence_controller_test:
     networks:
       - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+
   neuronavigation_test:
+    networks:
+      - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
@@ -21,21 +25,84 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     # Requires by linux when opening projects, otherwise segfaults
     privileged: true
+
   efield_test:
+    networks:
+      - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/efield/Dockerfile
+
   pedal_listener_test:
+    networks:
+      - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
+
   trigger_controller_test:
+    networks:
+      - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/trigger_controller/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
+    privileged: true
+
+  eeg_simulator:
+    networks:
+      - cinetwork
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
+
+  eeg_processor:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
+  eeg_bridge:
+    networks:
+      - cinetwork
+    ports:
+      - "50000:50000/udp"
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
+  fpga_bridge:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+    # The container needs to be privileged to access FPGA
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
+
+  data_batcher:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/data_batcher/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     privileged: true
 
 networks:

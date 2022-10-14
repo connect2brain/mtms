@@ -26,7 +26,6 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
 
   eeg_processor:
     build:
@@ -48,6 +47,17 @@ services:
       - ${ENV_FILE}
     privileged: true
 
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+    # The container needs to be privileged to access FPGA
+    privileged: true
+    volumes:
+      - './bitfiles:/app/ros2_ws/bitfiles/'
+    env_file:
+      - ${ENV_FILE}
+
   data_batcher:
     build:
       context: .
@@ -63,7 +73,6 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
 
   pulse_sequence_controller:
@@ -73,8 +82,6 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
       - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
 
   neuronavigation:
