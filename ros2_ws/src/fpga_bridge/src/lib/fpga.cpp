@@ -20,13 +20,15 @@ bool init_fpga() {
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
 
   auto bitfile = std::getenv("FPGA_BRIDGE_BITFILE");
-  std::string bitfile_path;
-  if (bitfile) {
-    bitfile_path = "/app/ros2_ws/bitfiles/" + std::string(bitfile);
-  } else {
-    //default bitfile path
-    bitfile_path = "/home/mtms/workspace/mtms/bitfiles/NiFpga_mtms_0_3_0.lvbitx";
+  auto bitfile_directory = std::getenv("FPGA_BRIDGE_BITFILE_DIRECTORY");
+
+  if (!bitfile || !bitfile_directory) {
+    RCLCPP_ERROR(rclcpp::get_logger("run_fpga"),
+                 "No FPGA bitfile found from path. Ensure FPGA_BRIDGE_BITFILE and FPGA_BRIDGE_BITFILE_DIRECTORY environment variables are set.");
+    return false;
   }
+
+  std::string bitfile_path = std::string(bitfile_directory) + std::string(bitfile);
 
   NiFpga_MergeStatus(&status, NiFpga_Open(
       bitfile_path.c_str(),

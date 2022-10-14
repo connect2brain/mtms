@@ -7,8 +7,7 @@
 #include "headers/python_processor.h"
 
 PythonProcessor::PythonProcessor(std::string script_path) {
-  std::cout << "docker env: " << std::getenv("docker") << std::endl;
-  if (std::getenv("docker")) {
+  if (std::getenv("DOCKER")) {
     setenv("PYTHONPATH", ".", 1);
   } else {
     setenv("PYTHONPATH", "../../", 1);
