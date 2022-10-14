@@ -2,8 +2,8 @@
 // Created by alqio on 8.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
-#define DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
+#ifndef EEG_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
+#define EEG_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
 
 #include "coder_array.h"
 #include "run_processor_types.h"
@@ -32,4 +32,4 @@ public:
 
 using create_processor = MatlabProcessorInterface *(*)();
 
-#endif //DATA_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H
+#endif //EEG_PROCESSOR_MATLAB_PROCESSOR_INTERFACE_H

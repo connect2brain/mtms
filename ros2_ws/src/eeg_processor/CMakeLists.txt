@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(data_processor)
+project(eeg_processor)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -35,10 +35,10 @@ else ()
 endif ()
 
 add_executable(
-        data_processor
-        src/data_processor.cpp
+        eeg_processor
+        src/eeg_processor.cpp
         src/headers/processor.h
-        src/headers/data_processor.h
+        src/headers/eeg_processor.h
 
         src/compiled_matlab_processor.cpp
         src/matlab_processor_interface.cpp
@@ -55,27 +55,27 @@ add_executable(
         src/memory_utils.cpp
 )
 
-target_include_directories(data_processor
+target_include_directories(eeg_processor
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
-ament_target_dependencies(data_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
+ament_target_dependencies(eeg_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
 if (Matlab_FOUND)
 
     target_sources(
-            data_processor
+            eeg_processor
             PRIVATE
             src/matlab_processor.cpp
             src/headers/matlab_processor.h
     )
 
     # MATLAB, Linker to libMatlabEngine in link_directories
-    target_link_libraries(data_processor MatlabDataArray)
-    target_link_libraries(data_processor MatlabEngine)
+    target_link_libraries(eeg_processor MatlabDataArray)
+    target_link_libraries(eeg_processor MatlabEngine)
 
-    target_compile_definitions(data_processor PUBLIC MATLAB_FOUND)
+    target_compile_definitions(eeg_processor PUBLIC MATLAB_FOUND)
 
 endif ()
 
@@ -85,23 +85,23 @@ if (PYTHONLIBS_FOUND)
     message(STATUS "Python found")
 
     target_sources(
-            data_processor
+            eeg_processor
             PRIVATE
             src/python_processor.cpp
             src/headers/python_processor.h
     )
 
     include_directories(${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(data_processor ${PYTHON_LIBRARIES})
+    target_link_libraries(eeg_processor ${PYTHON_LIBRARIES})
 
-    target_compile_definitions(data_processor PUBLIC PYTHON_FOUND)
+    target_compile_definitions(eeg_processor PUBLIC PYTHON_FOUND)
 
 else ()
     message(STATUS "Python not found")
 endif ()
 
 install(TARGETS
-        data_processor
+        eeg_processor
         DESTINATION lib/${PROJECT_NAME}
         )
 
