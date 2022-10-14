@@ -7,7 +7,12 @@
 #include "headers/python_processor.h"
 
 PythonProcessor::PythonProcessor(std::string script_path) {
-  setenv("PYTHONPATH", "../../", 1);
+  std::cout << "docker env: " << std::getenv("docker") << std::endl;
+  if (std::getenv("docker")) {
+    setenv("PYTHONPATH", ".", 1);
+  } else {
+    setenv("PYTHONPATH", "../../", 1);
+  }
   Py_Initialize();
 
   script_name = PyUnicode_FromString(script_path.c_str());
