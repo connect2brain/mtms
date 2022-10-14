@@ -57,8 +57,6 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
-    env_file:
-      - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
 
@@ -68,8 +66,6 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/eeg_processor/Dockerfile
-    env_file:
-      - ${ENV_FILE}
     privileged: true
 
   eeg_bridge:
@@ -80,8 +76,6 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
-    env_file:
-      - ${ENV_FILE}
     privileged: true
 
   fpga_bridge:
@@ -92,8 +86,6 @@ services:
       dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
     # The container needs to be privileged to access FPGA
     privileged: true
-    env_file:
-      - ${ENV_FILE}
 
   data_batcher:
     networks:
@@ -101,8 +93,6 @@ services:
     build:
       context: ..
       dockerfile: ros2_ws/src/data_batcher/Dockerfile
-    env_file:
-      - ${ENV_FILE}
     privileged: true
 
 networks:
