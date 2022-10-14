@@ -55,7 +55,7 @@ services:
     networks:
       - cinetwork
     build:
-      context: .
+      context: ..
       dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
