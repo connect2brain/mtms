@@ -22,12 +22,9 @@ WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build --symlink-install
 
-
 # Create a directory for hotswappable processors
 
 RUN mkdir -p hotswappable_processors
-# RUN touch hotswappable_processor/__init__.py
-
 
 # Copy entrypoint
 
@@ -35,6 +32,6 @@ COPY ros2_ws/src/eeg_processor/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-ENV docker=true
+ENV DOCKER=true
 
 ENTRYPOINT ["./ros_entrypoint.sh"]
