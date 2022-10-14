@@ -31,7 +31,7 @@ private:
   static fpga_interfaces::msg::StimulationPulseEvent parse_stimulation_event(PyObject *event);
 
   PyObject *python_init_name, *python_data_received_name, *python_close_name;
-  PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance, *python_args, *python_value;
+  PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance;
 };
 
 
