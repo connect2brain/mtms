@@ -144,10 +144,12 @@ BUSID  DEVICE                                                        STATE
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
 
+---
 
 # Production environment
 Production environment utilizes Docker Swarm to deploy and manage nodes across two host machines. Ensure that the machines are connected to the same router.
-At least one of the host machines needs to be Linux, and in these instructions it will be used as the manager.  
+
+<!-- At least one of the host machines needs to be Linux, and in these instructions it will be used as the manager.-->  
 
 The Docker Swarm configuration utilizes [weavenet](https://github.com/weaveworks/weave) to enable multicast across docker nodes. As stated in its documentation: "Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery."
 
@@ -157,21 +159,34 @@ The Docker Swarm configuration utilizes [weavenet](https://github.com/weaveworks
 - Service: a docker container that is running on some host. Our services all contain a single ros2 node
 
 Note that node means different things in ros2 and docker terminology:  
-Node in docker = a host machine  
+Node in docker swarm = a host machine  
 Node in ros2 = a ros2 node
 
 
 ### First time set up
-1. If you have Windows hosts, install Docker Desktop.
+1. If you have Windows hosts, install Docker Desktop and X Server (instruction in Docker -> Window section)
 2. On all machines, install docker network adapter weavenet `docker plugin install weaveworks/net-plugin:latest_release`.
 3. On the manager machine, log in to Dockerhub with an account that has access to our images `docker login`
-4. 
 
 ### Running
 If you have Windows hosts, start Docker Desktop before running any of these commands.
-Run the following commands on the selected manager machine.
-1. Create docker swarm `docker swarm init`
-2. Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
-3. (Optional) Ensure that you can see both nodes in the network `docker node ls`
-4. Deploy docker stack `docker stack deploy -c docker-compose.prod.yml mtms --with-registry-auth`
-5. (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service>`
+
+#### Neuronavigation config
+On the host that neuronavigation will be used, do the following:
+
+##### Windows:
+- Start X Server (as instructed in the Docker -> Windows section)
+- Check WSL2 ip with ipconfig. Set docker-compose.prod.yml neuronavigation DISPLAY to `<ip>:0.0`
+Configure docker-compose.prod.yml neuronavigation DISPLAY variable to be the correct for the target host
+
+##### Linux:
+- Run `xhost local:root`
+- Set docker-compose.prod.yml neuronavigation DISPLAY to `:0` or `:0.0`
+
+
+After the previous steps are done, run the following commands to start the swarm cluster.
+1. Host: Create docker swarm `docker swarm init`
+2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
+3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
+4. Host: Deploy docker stack `docker stack deploy -c docker-compose.prod.yml mtms --with-registry-auth`
+5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service>`
