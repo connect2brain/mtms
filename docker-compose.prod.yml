@@ -69,13 +69,14 @@ services:
 
   fpga_bridge_wrapper:
     image: docker
-    command: docker run --privileged --net=weavenet -v /bitfiles:/app/ros2_ws/bitfiles --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge
+    command: sh -c 'docker run --privileged --net=weavenet -v $${BITFILES_PROCESSOR_PATH_IN_HOST}:/app/ros2_ws/bitfiles --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge'
     environment:
       - ROS_LOG_LEVEL=info
       - FPGA_BRIDGE_BITFILE=NiFpga_mtms_0_3_0.lvbitx
+      - BITFILES_PROCESSOR_PATH_IN_HOST=/home/alqio/workspace/mtms/bitfiles
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
-      - './bitfiles:/bitfiles/'
+      - '${HOME}:${HOME}'
     deploy:
       placement:
         constraints:
