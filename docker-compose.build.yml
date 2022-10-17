@@ -2,47 +2,31 @@ version: '3.8'
 
 services:
   front:
-    build: ./front/
-    ports:
-      - "3000:3000"
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - './front:/app'
-      - '/app/node_modules'
+    build:
+      context: .
+      dockerfile: front/Dockerfile.prod
 
   rosbridge:
     build:
       context: .
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
-    ports:
-      - "9090:9090"
 
   eeg_simulator:
     build:
       context: .
       dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
-    environment:
-      - EEG_SIMULATOR_DATA_FILE_NAME=/app/ros2_ws/src/eeg_simulator/oscillation_data.csv
-      - EEG_SIMULATOR_SAMPLING_FREQUENCY=50.0
-      - ROS_LOG_LEVEL=info
-    volumes:
-      - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/'
 
   data_batcher:
     build:
       context: .
       dockerfile: ros2_ws/src/data_batcher/Dockerfile
-    environment:
-      - ROS_LOG_LEVEL=info
-      - DATA_BATCHER_BATCH_SIZE=100
-      - DATA_BATCHER_DOWNSAMPLE_RATIO=10
-    #volumes:
-    #  - './ros2_ws/src/data_batcher:/app/ros2_ws/src/data_batcher/'
-    #  - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-    privileged: true
+
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+    env_file:
+      - ${ENV_FILE}
 
   registry:
     image: registry
