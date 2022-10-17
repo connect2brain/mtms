@@ -10,12 +10,14 @@ services:
     volumes:
       - './front:/app'
       - '/app/node_modules'
+
   rosbridge:
     build:
       context: .
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+
   eeg_simulator:
     build:
       context: .
@@ -24,17 +26,46 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+    privileged: true
+
+  eeg_bridge:
+    ports:
+      - "50000:50000/udp"
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+    # The container needs to be privileged to access FPGA
+    privileged: true
+    volumes:
+      - './bitfiles:/app/ros2_ws/bitfiles/'
+    env_file:
+      - ${ENV_FILE}
+
   data_batcher:
     build:
       context: .
       dockerfile: ros2_ws/src/data_batcher/Dockerfile
     env_file:
       - ${ENV_FILE}
-    volumes:
-      - './ros2_ws/src/data_batcher:/app/ros2_ws/src/data_batcher/'
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
     privileged: true
+
   planner:
     build:
       context: .
@@ -42,8 +73,8 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
+
   pulse_sequence_controller:
     build:
       context: .
@@ -51,9 +82,8 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
       - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
+
   neuronavigation:
     build:
       context: .
@@ -64,12 +94,14 @@ services:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     # Requires by linux when opening projects, otherwise segfaults
     privileged: true
+
   efield:
     build:
       context: .
       dockerfile: ros2_ws/src/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+
   pedal_listener:
     build:
       context: .
@@ -78,6 +110,7 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
   trigger_controller:
     build:
       context: .

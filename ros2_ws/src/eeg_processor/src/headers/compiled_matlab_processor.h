@@ -2,8 +2,8 @@
 // Created by alqio on 1.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_CPP_PROCESSOR_H
-#define DATA_PROCESSOR_CPP_PROCESSOR_H
+#ifndef EEG_PROCESSOR_CPP_PROCESSOR_H
+#define EEG_PROCESSOR_CPP_PROCESSOR_H
 
 #include "processor.h"
 #include "iostream"
@@ -29,4 +29,4 @@ private:
 };
 
 
-#endif //DATA_PROCESSOR_CPP_PROCESSOR_H
+#endif //EEG_PROCESSOR_CPP_PROCESSOR_H

@@ -2,8 +2,8 @@
 // Created by alqio on 9/12/22.
 //
 
-#ifndef DATA_PROCESSOR_DATA_PROCESSOR_H
-#define DATA_PROCESSOR_DATA_PROCESSOR_H
+#ifndef EEG_PROCESSOR_DATA_PROCESSOR_H
+#define EEG_PROCESSOR_DATA_PROCESSOR_H
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -31,9 +31,9 @@ double fRand(double fMin, double fMax) {
   return fMin + f * (fMax - fMin);
 }
 
-class DataProcessor : public rclcpp::Node {
+class EegProcessor : public rclcpp::Node {
 public:
-  DataProcessor();
+  EegProcessor();
 
   int shutdown();
 
@@ -46,4 +46,4 @@ private:
   std::fstream f;
 };
 
-#endif //DATA_PROCESSOR_DATA_PROCESSOR_H
+#endif //EEG_PROCESSOR_EEG_PROCESSOR_H
