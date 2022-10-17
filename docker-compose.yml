@@ -26,6 +26,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
 
   eeg_processor:
     build:
@@ -57,8 +58,6 @@ services:
       - './bitfiles:/app/ros2_ws/bitfiles/'
     env_file:
       - ${ENV_FILE}
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
 
   data_batcher:
     build:
