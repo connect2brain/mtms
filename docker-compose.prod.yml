@@ -18,6 +18,8 @@ services:
   eeg_bridge_wrapper:
     image: docker
     command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL okahilak/mtms:eeg_bridge
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
     environment:
       - ROS_LOG_LEVEL=info
     deploy:
@@ -27,18 +29,21 @@ services:
 
   eeg_processor_wrapper:
     image: docker
-    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env EEG_PROCESSOR_TYPE --env EEG_PROCESSOR_TEST_MEASURE_COUNT --env EEG_PROCESSOR_DURATION_FILE okahilak/mtms:eeg_processor
+    # requires sh -c '<command>' to access the HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST environment variable
+    command: sh -c 'docker run --privileged --net=weavenet -v $${HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST}:/app/ros2_ws/hotswappable_processors --env ROS_LOG_LEVEL --env EEG_PROCESSOR_TYPE --env EEG_PROCESSOR_TEST_MEASURE_COUNT --env EEG_PROCESSOR_DURATION_FILE okahilak/mtms:eeg_processor'
     environment:
       - ROS_LOG_LEVEL=info
       - EEG_PROCESSOR_TYPE=python
-      - EEG_PROCESSOR_TEST_MEASURE_COUNT=0
+      - EEG_PROCESSOR_TEST_MEASURE_COUNT=1
       - EEG_PROCESSOR_DURATION_FILE=durations.txt
+      - HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST=/home/alqio/workspace/mtms/hotswappable_processors
     deploy:
       placement:
         constraints:
           - node.role == manager
     volumes:
-      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - '${HOME}:${HOME}'
+      - '/var/run/docker.sock:/var/run/docker.sock'
 
   eeg_simulator:
     image: okahilak/mtms:eeg_simulator
@@ -64,10 +69,13 @@ services:
 
   fpga_bridge_wrapper:
     image: docker
-    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge
+    command: docker run --privileged --net=weavenet -v /bitfiles:/app/ros2_ws/bitfiles --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge
     environment:
       - ROS_LOG_LEVEL=info
       - FPGA_BRIDGE_BITFILE=NiFpga_mtms_0_3_0.lvbitx
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './bitfiles:/bitfiles/'
     deploy:
       placement:
         constraints:
@@ -80,7 +88,10 @@ services:
         constraints:
           - node.role == worker
     ports:
-      - "80:80"
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
 
   neuronavigation:
     image: okahilak/mtms:neuronavigation
