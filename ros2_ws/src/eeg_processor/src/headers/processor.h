@@ -2,8 +2,8 @@
 // Created by alqio on 1.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_PROCESSOR_H
-#define DATA_PROCESSOR_PROCESSOR_H
+#ifndef EEG_PROCESSOR_PROCESSOR_H
+#define EEG_PROCESSOR_PROCESSOR_H
 
 #include "string"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
@@ -21,4 +21,4 @@ public:
 
 };
 
-#endif //DATA_PROCESSOR_PROCESSOR_H
+#endif //EEG_PROCESSOR_PROCESSOR_H
