@@ -2,8 +2,8 @@
 // Created by alqio on 5.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_SCHEDULING_UTILS_H
-#define DATA_PROCESSOR_SCHEDULING_UTILS_H
+#ifndef EEG_PROCESSOR_SCHEDULING_UTILS_H
+#define EEG_PROCESSOR_SCHEDULING_UTILS_H
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -25,4 +25,4 @@
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority);
 
-#endif //DATA_PROCESSOR_SCHEDULING_UTILS_H
+#endif //EEG_PROCESSOR_SCHEDULING_UTILS_H

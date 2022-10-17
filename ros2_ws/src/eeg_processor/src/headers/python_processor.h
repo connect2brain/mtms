@@ -2,8 +2,8 @@
 // Created by alqio on 1.9.2022.
 //
 
-#ifndef DATA_PROCESSOR_PYTHON_PROCESSOR_H
-#define DATA_PROCESSOR_PYTHON_PROCESSOR_H
+#ifndef EEG_PROCESSOR_PYTHON_PROCESSOR_H
+#define EEG_PROCESSOR_PYTHON_PROCESSOR_H
 
 #include "Python.h"
 #include "processor.h"
@@ -31,8 +31,8 @@ private:
   static fpga_interfaces::msg::StimulationPulseEvent parse_stimulation_event(PyObject *event);
 
   PyObject *python_init_name, *python_data_received_name, *python_close_name;
-  PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance, *python_args, *python_value;
+  PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance;
 };
 
 
-#endif //DATA_PROCESSOR_PYTHON_PROCESSOR_H
+#endif //EEG_PROCESSOR_PYTHON_PROCESSOR_H

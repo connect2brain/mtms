@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -o pipefail
+
 bash ./clean.sh
 
 find ../codegen -name "*.h"   -not \( -path "*/interface/*" -prune \) -not \( -path "*/examples/*" -prune \) -exec cp "{}" . \;
