@@ -110,7 +110,8 @@ These two links should be useful for troubleshooting:
 
 - Start XLaunch. Tick the checkbox "Disable access control".
 
-- Run `ipconfig`, replace the IP address in DISPLAY variable in `.env` file with the host IP address reported by `ipconfig`.
+- Run `ipconfig`, replace the IP address in DISPLAY variable in `.env` file with the host IP address reported by `ipconfig`, under the
+section `Ethernet adapter vEthernet (WSL)`, and add `:0.0` to the end of the IP address, e.g., `DISPLAY=172.31.32.1:0.0`.
 
 ##### Setting up the pedal
 
