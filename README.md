@@ -190,3 +190,8 @@ After the previous steps are done, run the following commands to start the swarm
 3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
 4. Host: Deploy docker stack `docker stack deploy -c docker-compose.prod.yml mtms --with-registry-auth`
 5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service>`
+
+Useful commands:
+- See simple information of all services: `docker service ls`
+- See more information of all services: `docker service ps mtms_eeg_bridge_wrapper mtms_data_batcher_wrapper mtms_eeg_simulator mtms_neuronavigation mtms_efield mtms_rosbridge mtms_pulse_sequence_controller mtms_planner mtms_front mtms_fpga_bridge_wrapper mtms_eeg_processor_wrapper mtms_eeg_processor_wrapper --no-trunc`
+- 
