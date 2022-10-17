@@ -59,8 +59,6 @@ services:
       - ${ENV_FILE}
       - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
       - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
-    network_mode: host
-    pid: host
 
   data_batcher:
     build:
@@ -69,8 +67,6 @@ services:
     env_file:
       - ${ENV_FILE}
     privileged: true
-    network_mode: host
-    pid: host
 
   planner:
     build:
