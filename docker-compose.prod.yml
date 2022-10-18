@@ -84,17 +84,15 @@ services:
 
   front:
     image: okahilak/mtms:front
-    ports:
-      - "80:80"
     deploy:
       placement:
         constraints:
           - node.role == manager
-   # ports:
-   #   - target: 80
-   #     published: 80
-   #     protocol: tcp
-   #     mode: host
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
 
   neuronavigation:
     image: okahilak/mtms:neuronavigation
@@ -123,12 +121,17 @@ services:
         constraints:
           - node.role == worker
 
-  rosbridge:
+  rosbridge_suite:
     image: okahilak/mtms:rosbridge
+    ports:
+      - target: 9090
+        published: 9090
+        protocol: tcp
+        mode: host
     deploy:
       placement:
         constraints:
-          - node.role == worker
+          - node.role == manager
 
 networks:
   default:
