@@ -84,15 +84,17 @@ services:
 
   front:
     image: okahilak/mtms:front
+    ports:
+      - "80:80"
     deploy:
       placement:
         constraints:
-          - node.role == worker
-    ports:
-      - target: 80
-        published: 80
-        protocol: tcp
-        mode: host
+          - node.role == manager
+   # ports:
+   #   - target: 80
+   #     published: 80
+   #     protocol: tcp
+   #     mode: host
 
   neuronavigation:
     image: okahilak/mtms:neuronavigation
