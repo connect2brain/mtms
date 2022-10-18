@@ -17,7 +17,7 @@ services:
 
   eeg_bridge_wrapper:
     image: docker
-    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL okahilak/mtms:eeg_bridge
+    command: docker run --privileged --net=weavenet -p 50000:50000/udp --env ROS_LOG_LEVEL okahilak/mtms:eeg_bridge
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
     environment:
