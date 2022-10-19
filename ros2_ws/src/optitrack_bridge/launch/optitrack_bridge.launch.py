@@ -12,23 +12,27 @@ def generate_launch_description():
         default_value=["info"],
         description="Logging level",
     )
+    server_index_arg = DeclareLaunchArgument(
+        "server-index",
+        default_value=["1"],
+        description="Server index",
+    )
 
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="NatNet_bridge",
-        executable="NatNet_bridge",
-        name="NatNet_bridge",
-        output="coordinates",
-        emulate_tty=True,
+        package="optitrack_bridge",
+        executable="optitrack_bridge",
+        name="optitrack_bridge",
         parameters=[
             {
-                "server Index": 1.0, # Must be float
+                "server_index": LaunchConfiguration("server-index")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
     )
     ld.add_action(node)
     ld.add_action(log_arg)
+    ld.add_action(server_index_arg)
 
     return ld

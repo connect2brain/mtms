@@ -13,8 +13,13 @@
 class OptitrackBridge : public rclcpp::Node {
 public:
   OptitrackBridge();
+
   void shutdown();
+
+  //has to be static for compatability with NatNet libraries
   static void data_received_callback(sFrameOfMocapData *data, void *pUserData);
+
+  //has to be static so it can be used in data_received_callback
   static rclcpp::Publisher<neuronavigation_interfaces::msg::MotivePositions>::SharedPtr publisher;
 private:
   OptitrackClient client;
