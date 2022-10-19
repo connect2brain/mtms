@@ -149,9 +149,9 @@ BUSID  DEVICE                                                        STATE
 # Production environment
 Production environment utilizes Docker Swarm to deploy and manage nodes across two host machines. Ensure that the machines are connected to the same router.
 
-<!-- At least one of the host machines needs to be Linux, and in these instructions it will be used as the manager.-->  
-
 The Docker Swarm configuration utilizes [weavenet](https://github.com/weaveworks/weave) to enable multicast across docker nodes. As stated in its documentation: "Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery."
+
+Some services utilize Docker in Docker concept. This is because Docker Swarm does not natively support privileged containers and docker in docker is a way to bypass that.
 
 ### Terminology
 - Manager: the host that runs the docker swarm and manages the services and workers
@@ -189,12 +189,13 @@ After the previous steps are done, run the following commands to start the swarm
 2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
 3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
 4. Host: Deploy docker stack `docker stack deploy -c docker-compose.prod.yml mtms --with-registry-auth`
-5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service>`
+5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service(s)>`
 
 Useful commands:
 - See simple information of all services: `docker service ls`
 - See more information of all services: `docker service ps mtms_eeg_bridge_wrapper mtms_data_batcher_wrapper mtms_eeg_simulator mtms_neuronavigation mtms_efield mtms_rosbridge mtms_pulse_sequence_controller mtms_planner mtms_front mtms_fpga_bridge_wrapper mtms_eeg_processor_wrapper mtms_eeg_processor_wrapper --no-trunc`
 - Remove all services `docker service rm mtms_data_batcher_wrapper mtms_eeg_processor_wrapper mtms_eeg_simulator mtms_efield mtms_fpga_bridge_wrapper mtms_front mtms_neuronavigation mtms_planner mtms_pulse_sequence_controller mtms_rosbridge`
+- Delete all dangling docker containers `docker kill $(docker ps -q)`
 
 ### Notes
-Docker in docker container are left dangling even if the services are removed so at the moment they need to be manually removed.
+Docker in docker containers are left dangling even if the services are removed so at the moment they need to be manually removed.
