@@ -9,6 +9,7 @@ services:
       - DATA_BATCHER_BATCH_SIZE=100
       - DATA_BATCHER_DOWNSAMPLE_RATIO=10
     volumes:
+      # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
     deploy:
       placement:
@@ -19,6 +20,7 @@ services:
     image: docker
     command: docker run --privileged --net=weavenet -p 50000:50000/udp --env ROS_LOG_LEVEL okahilak/mtms:eeg_bridge
     volumes:
+        # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
     environment:
       - ROS_LOG_LEVEL=info
@@ -42,7 +44,9 @@ services:
         constraints:
           - node.role == manager
     volumes:
+      # this is the way to map a volume to docker-in-docker
       - '${HOME}:${HOME}'
+      # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
 
   eeg_simulator:
@@ -69,14 +73,13 @@ services:
 
   fpga_bridge_wrapper:
     image: docker
-    command: sh -c 'docker run --privileged --net=weavenet -v $${BITFILES_PROCESSOR_PATH_IN_HOST}:/app/ros2_ws/bitfiles --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge'
+    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge'
     environment:
       - ROS_LOG_LEVEL=info
       - FPGA_BRIDGE_BITFILE=NiFpga_mtms_0_3_0.lvbitx
-      - BITFILES_PROCESSOR_PATH_IN_HOST=/home/alqio/workspace/mtms/bitfiles
     volumes:
+      # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
-      - '${HOME}:${HOME}'
     deploy:
       placement:
         constraints:
@@ -121,7 +124,7 @@ services:
         constraints:
           - node.role == worker
 
-  rosbridge_suite:
+  rosbridge:
     image: okahilak/mtms:rosbridge
     ports:
       - target: 9090
