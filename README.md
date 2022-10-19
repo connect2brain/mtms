@@ -144,6 +144,19 @@ BUSID  DEVICE                                                        STATE
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
 
+
+---
+
+# Building
+You can build the project docker images with `docker-compose.build.yml` by running `docker-compose -f docker-compose.build.yml build`. 
+
+Use `tag-docker-images.sh` and `push-docker-tags.sh` to tag the built images and push them to Docker Hub.
+
+Deploy new images workflow:
+1. `docker-compose -f docker-compose.build.yml build`
+2. `./tag-docker-images.sh`
+3. `./push-docker-tags.sh`
+
 ---
 
 # Production environment
