@@ -84,7 +84,7 @@ docker-compose up
 
 - Install Docker and Docker compose
 
-- Check your `$DISPLAY` variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
+- Check your `$DISPLAY` variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0` or `:0.0`.
 
 - Run the following commands on the root directory of the repository
 
@@ -144,3 +144,72 @@ BUSID  DEVICE                                                        STATE
 - Run `usbipd wsl attach --busid 1-10` (or similar if you have different bus id for the serial device).
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
+
+
+---
+
+# Building
+You can build the project docker images with `docker-compose.build.yml` by running `docker-compose -f docker-compose.build.yml build`. 
+
+Use `tag-docker-images.sh` and `push-docker-tags.sh` to tag the built images and push them to Docker Hub.
+
+Deploy new images workflow:
+1. `docker-compose -f docker-compose.build.yml build`
+2. `./tag-docker-images.sh`
+3. `./push-docker-tags.sh`
+
+---
+
+# Production environment
+Production environment utilizes Docker Swarm to deploy and manage nodes across two host machines. Ensure that the machines are connected to the same router.
+
+The Docker Swarm configuration utilizes [weavenet](https://github.com/weaveworks/weave) to enable multicast across docker nodes. As stated in its documentation: "Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery."
+
+Some services utilize Docker in Docker (DiD) as Docker Swarm does not natively support privileged containers. DiD is a way to bypass that.
+
+### Terminology
+- Manager: the host that runs the docker swarm and manages the services and workers
+- Worker: a host that is controlled by the manager
+- Service: a docker container that is running on some host. Our services all contain a single ros2 node
+
+Note that node means different things in ros2 and docker terminology:  
+Node in docker swarm = a host machine  
+Node in ros2 = a ros2 node
+
+
+### First time set up
+1. If you have Windows hosts, install Docker Desktop and X Server (instructions in Docker -> Window section)
+2. On all machines, install docker network adapter weavenet `docker plugin install weaveworks/net-plugin:latest_release`.
+3. On the manager machine, log in to Dockerhub with an account that has access to our images `docker login`
+
+### Running
+If you have Windows hosts, start Docker Desktop before running any of these commands.
+
+#### Neuronavigation config
+On the host that neuronavigation will be used, do the following:
+
+##### Windows:
+- Start X Server (as instructed in the Docker -> Windows section)
+- Check WSL2 ip with ipconfig. Set docker-compose.prod.yml neuronavigation DISPLAY to `<ip>:0.0`
+Configure docker-compose.prod.yml neuronavigation DISPLAY variable to be the correct for the target host
+
+##### Linux:
+- Run `xhost local:root`
+- Set docker-compose.prod.yml neuronavigation DISPLAY to `:0` or `:0.0`
+
+
+After the previous steps are done, run the following commands to start the swarm cluster.
+1. Host: Create docker swarm `docker swarm init`
+2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
+3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
+4. Host: Deploy docker stack `docker stack deploy -c docker-stack.yml mtms --with-registry-auth`
+5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service(s)>`
+
+Useful commands:
+- See simple information of all services: `docker service ls`
+- See more information of all services: `docker service ps mtms_eeg_bridge_wrapper mtms_data_batcher_wrapper mtms_eeg_simulator mtms_neuronavigation mtms_efield mtms_rosbridge mtms_pulse_sequence_controller mtms_planner mtms_front mtms_fpga_bridge_wrapper mtms_eeg_processor_wrapper mtms_eeg_processor_wrapper --no-trunc`
+- Remove all services `docker service rm mtms_data_batcher_wrapper mtms_eeg_processor_wrapper mtms_eeg_simulator mtms_efield mtms_fpga_bridge_wrapper mtms_front mtms_neuronavigation mtms_planner mtms_pulse_sequence_controller mtms_rosbridge`
+- Delete all dangling docker containers `docker kill $(docker ps -q)`
+
+### Notes
+Docker in docker containers are left dangling even if the services are removed so at the moment they need to be manually removed.

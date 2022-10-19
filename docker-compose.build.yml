@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  data_batcher:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/data_batcher/Dockerfile
+
+  eeg_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
+
+  efield:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/efield/Dockerfile
+
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile.prod
+
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+
+  planner:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/planner/Dockerfile
+
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+
+  rosbridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/rosbridge/Dockerfile
