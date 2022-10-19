@@ -188,7 +188,7 @@ After the previous steps are done, run the following commands to start the swarm
 1. Host: Create docker swarm `docker swarm init`
 2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
 3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
-4. Host: Deploy docker stack `docker stack deploy -c docker-compose.prod.yml mtms --with-registry-auth`
+4. Host: Deploy docker stack `docker stack deploy -c docker-stack.yml mtms --with-registry-auth`
 5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service(s)>`
 
 Useful commands:
