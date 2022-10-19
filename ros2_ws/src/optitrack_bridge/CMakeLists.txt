@@ -13,6 +13,9 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 
+set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
 add_executable(
         optitrack_bridge
 
@@ -28,7 +31,9 @@ target_include_directories(optitrack_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-add_library(libNatNet SHARED IMPORTED GLOBAL)
+message(STATUS "current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_library(libNatNet SHARED IMPORTED)
 set_target_properties(libNatNet PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libNatNet.so)
 target_link_libraries(optitrack_bridge libNatNet)
 
@@ -39,6 +44,11 @@ install(TARGETS
         optitrack_bridge
         DESTINATION lib/${PROJECT_NAME}
         )
+
+install(
+        DIRECTORY lib
+        DESTINATION lib/${PROJECT_NAME}
+)
 
 install(
         DIRECTORY launch

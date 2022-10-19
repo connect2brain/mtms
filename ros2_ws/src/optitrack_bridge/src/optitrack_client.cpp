@@ -23,70 +23,7 @@
 #include <NatNetTypes.h>
 #include <NatNetCAPI.h>
 #include <NatNetClient.h>
-#include "Optitrack_NatNet.h"
 
-optr OptitrackClient::myOp;
-
-
-void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUserData) {
-  // Rigid Bodies
-  int i = 0;
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid Bodies [Count=%d]", data->nRigidBodies);
-  for (i = 0; i < data->nRigidBodies; i++) {
-    if (data->RigidBodies[i].ID == 999) {
-      myOp.PositionToolTipX1 = data->RigidBodies[i].x;
-      myOp.PositionToolTipY1 = data->RigidBodies[i].y;
-      myOp.PositionToolTipZ1 = data->RigidBodies[i].z;
-      myOp.qxToolTip = data->RigidBodies[i].qx;
-      myOp.qyToolTip = data->RigidBodies[i].qy;
-      myOp.qzToolTip = data->RigidBodies[i].qz;
-      myOp.qwToolTip = data->RigidBodies[i].qw;
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipX1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipY1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipZ1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxToolTip);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyToolTip);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzToolTip);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwToolTip);
-    } else if (data->RigidBodies[i].ID == 1003) {
-      myOp.PositionHeadX1 = data->RigidBodies[i].x;
-      myOp.PositionHeadY1 = data->RigidBodies[i].y;
-      myOp.PositionHeadZ1 = data->RigidBodies[i].z;
-      myOp.qxHead = data->RigidBodies[i].qx;
-      myOp.qyHead = data->RigidBodies[i].qy;
-      myOp.qzHead = data->RigidBodies[i].qz;
-      myOp.qwHead = data->RigidBodies[i].qw;
-
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadX1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadY1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadZ1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxHead);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyHead);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzHead);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwHead);
-    } else if (data->RigidBodies[i].ID == 1002) {
-      myOp.PositionCoilX1 = data->RigidBodies[i].x;
-      myOp.PositionCoilY1 = data->RigidBodies[i].y;
-      myOp.PositionCoilZ1 = data->RigidBodies[i].z;
-      myOp.qxCoil = data->RigidBodies[i].qx;
-      myOp.qyCoil = data->RigidBodies[i].qy;
-      myOp.qzCoil = data->RigidBodies[i].qz;
-      myOp.qwCoil = data->RigidBodies[i].qw;
-
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilX1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilY1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilZ1);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxCoil);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyCoil);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzCoil);
-      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwCoil);
-    }
-
-  }
-}
 
 // Establish a NatNet Client connection
 int OptitrackClient::connect_client() {
