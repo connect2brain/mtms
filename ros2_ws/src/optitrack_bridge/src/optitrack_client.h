@@ -10,12 +10,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "rclcpp/rclcpp.hpp"
+
 #ifdef _WIN32
-#   include <conio.h>
+#include <conio.h>
 #else
 
-#   include <unistd.h>
-#   include <termios.h>
+#include <unistd.h>
+#include <termios.h>
 
 #endif
 
@@ -28,8 +30,8 @@
 
 class OptitrackClient {
 public:
-  static void NATNET_CALLCONV
-  server_discovered_callback(const sNatNetDiscoveredServer *pDiscoveredServer, void *pUserContext);
+
+  int create_client(NatNetFrameReceivedCallback data_received_callback);
 
   int connect_client();
 
@@ -39,15 +41,21 @@ public:
 
   static void receive_rigidbody_data(sFrameOfMocapData *data, void *pUserData);
 
-  void connect_to_server(int argc, int serverIndex);
-
-  void get_datastream();
-
-  char getch();
+  int discover_motive_servers(int serverIndex);
 
   static optr myOp;
 
 private:
+
+  static const ConnectionType kDefaultConnectionType = ConnectionType_Multicast;
+
+  NatNetClient *natnet_client = nullptr;
+
+  static std::vector<sNatNetDiscoveredServer> discovered_servers;
+  sNatNetClientConnectParams connect_parameters;
+  char g_discoveredMulticastGroupAddr[kNatNetIpv4AddrStrLenMax] = NATNET_DEFAULT_MULTICAST_ADDRESS;
+  int g_analogSamplesPerMocapFrame = 0;
+  sServerDescription g_serverDescription;
 
 };
 

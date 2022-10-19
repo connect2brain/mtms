@@ -16,19 +16,22 @@ find_package(neuronavigation_interfaces REQUIRED)
 add_executable(
         optitrack_bridge
 
-        src/optitrack_bridge.cpp
         src/optitrack_bridge.h
-)
+        src/optitrack_bridge.cpp
 
-target_include_directories(optitrack_bridge
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
-        $<INSTALL_INTERFACE:lib>)
+        src/optitrack_client.h
+        src/optitrack_client.cpp
+)
 
 target_include_directories(optitrack_bridge
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+
+add_library(libNatNet SHARED IMPORTED GLOBAL)
+set_target_properties(libNatNet PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libNatNet.so)
+target_link_libraries(optitrack_bridge libNatNet)
+
 
 ament_target_dependencies(optitrack_bridge rclcpp std_msgs neuronavigation_interfaces)
 
