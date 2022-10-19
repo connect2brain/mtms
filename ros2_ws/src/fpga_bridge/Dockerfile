@@ -46,6 +46,8 @@ COPY ros2_ws/src/fpga_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
+COPY bitfiles/ /app/ros2_ws/bitfiles/
+
 ENV FPGA_BRIDGE_BITFILE_DIRECTORY=/app/ros2_ws/bitfiles/
 
 ENTRYPOINT ["./ros_entrypoint.sh"]

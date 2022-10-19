@@ -40,8 +40,6 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
-    env_file:
-      - ${ENV_FILE}
 
   planner:
     build:
