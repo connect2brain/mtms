@@ -54,8 +54,6 @@ services:
       dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
     # The container needs to be privileged to access FPGA
     privileged: true
-    volumes:
-      - './bitfiles:/app/ros2_ws/bitfiles/'
     env_file:
       - ${ENV_FILE}
 
