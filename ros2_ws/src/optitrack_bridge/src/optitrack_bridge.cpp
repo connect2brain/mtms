@@ -59,9 +59,13 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connecting to motive");
 
   auto client_created = client.create_client(data_received_callback);
+  if (client_created != 0) {
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start optitrack bridge");
+    return;
+  }
 
   auto success = client.discover_motive_servers(server_index);
-  if (success == 1) {
+  if (success != 0) {
     RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start optitrack bridge");
     shutdown();
     return;
