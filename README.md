@@ -151,7 +151,7 @@ Production environment utilizes Docker Swarm to deploy and manage nodes across t
 
 The Docker Swarm configuration utilizes [weavenet](https://github.com/weaveworks/weave) to enable multicast across docker nodes. As stated in its documentation: "Weave Net creates a virtual network that connects Docker containers across multiple hosts and enables their automatic discovery."
 
-Some services utilize Docker in Docker concept. This is because Docker Swarm does not natively support privileged containers and docker in docker is a way to bypass that.
+Some services utilize Docker in Docker (DiD) as Docker Swarm does not natively support privileged containers. DiD is a way to bypass that.
 
 ### Terminology
 - Manager: the host that runs the docker swarm and manages the services and workers
@@ -164,7 +164,7 @@ Node in ros2 = a ros2 node
 
 
 ### First time set up
-1. If you have Windows hosts, install Docker Desktop and X Server (instruction in Docker -> Window section)
+1. If you have Windows hosts, install Docker Desktop and X Server (instructions in Docker -> Window section)
 2. On all machines, install docker network adapter weavenet `docker plugin install weaveworks/net-plugin:latest_release`.
 3. On the manager machine, log in to Dockerhub with an account that has access to our images `docker login`
 
