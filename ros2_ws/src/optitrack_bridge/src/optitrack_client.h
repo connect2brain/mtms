@@ -26,7 +26,6 @@
 #include "NatNetTypes.h"
 #include "NatNetCAPI.h"
 #include "NatNetClient.h"
-#include "Optitrack_NatNet.h"
 
 class OptitrackClient {
 public:
@@ -39,11 +38,7 @@ public:
 
   void connect_to_motive();
 
-  static void receive_rigidbody_data(sFrameOfMocapData *data, void *pUserData);
-
   int discover_motive_servers(int serverIndex);
-
-  static optr myOp;
 
 private:
 
