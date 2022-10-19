@@ -10,7 +10,7 @@
 #include <NatNetCAPI.h>
 #include <NatNetClient.h>
 #include <Optitrack_NatNet.h>
-static const ConnectionType kDefaultConnectionType = ConnectionType_Multicast;
+/*static const ConnectionType kDefaultConnectionType = ConnectionType_Multicast;
 
 NatNetClient* g_pClient = NULL;
 
@@ -19,4 +19,5 @@ sNatNetClientConnectParams g_connectParams;
 char g_discoveredMulticastGroupAddr[kNatNetIpv4AddrStrLenMax] = NATNET_DEFAULT_MULTICAST_ADDRESS;
 int g_analogSamplesPerMocapFrame = 0;
 sServerDescription g_serverDescription;
-#endif //OPTITRACK_NATNET_DEFINITIONS_H
+*/
+ #endif //OPTITRACK_NATNET_DEFINITIONS_H

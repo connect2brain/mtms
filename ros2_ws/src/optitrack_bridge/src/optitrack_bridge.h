@@ -6,13 +6,19 @@
 #define FPGA_BRIDGE_OPTITRACK_BRIDGE_H
 
 #include "optitrack_client.h"
+#include "rclcpp/rclcpp.hpp"
+#include "neuronavigation_interfaces/msg/motive_positions.hpp"
 
-class OptitrackBridge {
+
+class OptitrackBridge : public rclcpp::Node {
 public:
   OptitrackBridge();
+  void shutdown();
+  static void data_received_callback(sFrameOfMocapData *data, void *pUserData);
+  static rclcpp::Publisher<neuronavigation_interfaces::msg::MotivePositions>::SharedPtr publisher;
 private:
   OptitrackClient client;
-  rclcpp::Publisher<mtms_interfaces::msg::EegBatch>::SharedPtr batch_publisher;
+  int server_index;
 };
 
 

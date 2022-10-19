@@ -24,45 +24,14 @@
 #include <NatNetCAPI.h>
 #include <NatNetClient.h>
 #include "Optitrack_NatNet.h"
-#include "Definitions.h"
 
 optr OptitrackClient::myOp;
 
-char OptitrackClient::getch() {
-  char buf = 0;
-  termios old = {0};
-
-  fflush(stdout);
-
-  if (tcgetattr(0, &old) < 0)
-    perror("tcsetattr()");
-
-  old.c_lflag &= ~ICANON;
-  old.c_lflag &= ~ECHO;
-  old.c_cc[VMIN] = 1;
-  old.c_cc[VTIME] = 0;
-
-  if (tcsetattr(0, TCSANOW, &old) < 0)
-    perror("tcsetattr ICANON");
-
-  if (read(0, &buf, 1) < 0)
-    perror("read()");
-
-  old.c_lflag |= ICANON;
-  old.c_lflag |= ECHO;
-
-  if (tcsetattr(0, TCSADRAIN, &old) < 0)
-    perror("tcsetattr ~ICANON");
-
-  //printf( "%c\n", buf );
-
-  return buf;
-}
 
 void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUserData) {
   // Rigid Bodies
   int i = 0;
-  printf("Rigid Bodies [Count=%d]\n", data->nRigidBodies);
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid Bodies [Count=%d]", data->nRigidBodies);
   for (i = 0; i < data->nRigidBodies; i++) {
     if (data->RigidBodies[i].ID == 999) {
       myOp.PositionToolTipX1 = data->RigidBodies[i].x;
@@ -72,14 +41,14 @@ void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUse
       myOp.qyToolTip = data->RigidBodies[i].qy;
       myOp.qzToolTip = data->RigidBodies[i].qz;
       myOp.qwToolTip = data->RigidBodies[i].qw;
-      printf("\tRigid Bodies \n");
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.PositionToolTipX1);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.PositionToolTipY1);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.PositionToolTipZ1);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qxToolTip);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qyToolTip);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qzToolTip);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qwToolTip);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipX1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipY1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.PositionToolTipZ1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxToolTip);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyToolTip);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzToolTip);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwToolTip);
     } else if (data->RigidBodies[i].ID == 1003) {
       myOp.PositionHeadX1 = data->RigidBodies[i].x;
       myOp.PositionHeadY1 = data->RigidBodies[i].y;
@@ -89,14 +58,14 @@ void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUse
       myOp.qzHead = data->RigidBodies[i].qz;
       myOp.qwHead = data->RigidBodies[i].qw;
 
-      printf("\tRigid Bodies \n");
-      printf("\tHead\t%3.2f\n", myOp.PositionHeadX1);
-      printf("\tHead\t%3.2f\n", myOp.PositionHeadY1);
-      printf("\tHead\t%3.2f\n", myOp.PositionHeadZ1);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qxHead);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qyHead);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qzHead);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qwHead);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadX1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadY1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tHead\t%3.2f", myOp.PositionHeadZ1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxHead);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyHead);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzHead);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwHead);
     } else if (data->RigidBodies[i].ID == 1002) {
       myOp.PositionCoilX1 = data->RigidBodies[i].x;
       myOp.PositionCoilY1 = data->RigidBodies[i].y;
@@ -106,14 +75,14 @@ void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUse
       myOp.qzCoil = data->RigidBodies[i].qz;
       myOp.qwCoil = data->RigidBodies[i].qw;
 
-      printf("\tRigid Bodies \n");
-      printf("\tCoil\t%3.2f\n", myOp.PositionCoilX1);
-      printf("\tCoil\t%3.2f\n", myOp.PositionCoilY1);
-      printf("\tCoil\t%3.2f\n", myOp.PositionCoilZ1);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qxCoil);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qyCoil);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qzCoil);
-      printf("\tMeasurement Probe\t%3.2f\n", myOp.qwCoil);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Bodies ");
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilX1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilY1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tCoil\t%3.2f", myOp.PositionCoilZ1);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qxCoil);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qyCoil);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qzCoil);
+      RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tMeasurement Probe\t%3.2f", myOp.qwCoil);
     }
 
   }
@@ -122,12 +91,15 @@ void OptitrackClient::receive_rigidbody_data(sFrameOfMocapData *data, void *pUse
 // Establish a NatNet Client connection
 int OptitrackClient::connect_client() {
   // Release previous server
-  g_pClient->Disconnect();
+  if (natnet_client) {
+    natnet_client->Disconnect();
+  }
 
   // Init Client and connect to NatNet server
-  int retCode = g_pClient->Connect(g_connectParams);
+  int retCode = natnet_client->Connect(connect_parameters);
   if (retCode != ErrorCode_OK) {
-    printf("Unable to connect to server.  Error code: %d. Exiting.\n", retCode);
+    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Unable to connect to server.  Error code: %d. Exiting.",
+                retCode);
     return ErrorCode_Internal;
   } else {
     // connection succeeded
@@ -140,114 +112,77 @@ void OptitrackClient::connect_to_motive() {    // Connect to Motive
   int iResult;
   iResult = connect_client();
   if (iResult != ErrorCode_OK) {
-    printf("Error initializing client. See log for details. Exiting.\n");
+    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Error initializing client. See log for details. Exiting.");
 
   } else {
-    printf("Client initialized and ready.\n");
+    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Client initialized and ready.");
   }
 }
 
 int OptitrackClient::disconnect_client() { // Done - clean up.
-  if (g_pClient) {
-    g_pClient->Disconnect();
-    delete g_pClient;
-    g_pClient = NULL;
+  if (natnet_client) {
+    natnet_client->Disconnect();
+    delete natnet_client;
+    natnet_client = nullptr;
   }
   return ErrorCode_OK;
 }
 
-void OptitrackClient::connect_to_server(int argc, int serverIndex) {
+int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_callback) {
   unsigned char ver[4];
   NatNet_GetVersion(ver);
-  printf("NatNet Sample Client (NatNet ver. %d.%d.%d.%d)\n", ver[0], ver[1], ver[2], ver[3]);
-
-  // Install logging callback
-  //NatNet_SetLogCallback( MessageHandler );
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "NatNet Sample Client (NatNet ver. %d.%d.%d.%d)", ver[0], ver[1],
+              ver[2], ver[3]);
 
   // create NatNet client
-  g_pClient = new NatNetClient();
-  g_pClient->SetFrameReceivedCallback(receive_rigidbody_data, g_pClient);
-  // set the frame callback handler
-  //g_pClient->SetFrameReceivedCallback( DataHandler, g_pClient );	// this function will receive data from the server
-  // If no arguments were specified on the command line,
-  // attempt to discover servers on the local network.
-  if (argc == 1) {
-    // An example of synchronous server discovery.
-#if 0
-    const unsigned int kDiscoveryWaitTimeMillisec = 5 * 1000; // Wait 5 seconds for responses.
-    const int kMaxDescriptions = 10; // Get info for, at most, the first 10 servers to respond.
-    sNatNetDiscoveredServer servers[kMaxDescriptions];
-    int actualNumDescriptions = kMaxDescriptions;
-    NatNet_BroadcastServerDiscovery( servers, &actualNumDescriptions );
+  natnet_client = new NatNetClient();
+  natnet_client->SetFrameReceivedCallback(data_received_callback, natnet_client);
 
-    if ( actualNumDescriptions < kMaxDescriptions )
-    {
-        // If this happens, more servers responded than the array was able to store.
-    }
-#endif
-
-    // Do asynchronous server discovery.
-    printf("Looking for servers on the local network.\n");
-    printf("Press the number key that corresponds to any discovered server to connect to that server.\n");
-    printf("Press Q at any time to quit.\n\n");
-
-    NatNetDiscoveryHandle discovery;
-    NatNet_CreateAsyncServerDiscovery(&discovery, server_discovered_callback);
-    sleep(5);
-
-    const sNatNetDiscoveredServer &discoveredServer = g_discoveredServers[serverIndex - 1];
-
-    if (discoveredServer.serverDescription.bConnectionInfoValid) {
-      // Build the connection parameters.
-
-      snprintf(
-
-          g_discoveredMulticastGroupAddr, sizeof g_discoveredMulticastGroupAddr,
-          "%" PRIu8 ".%" PRIu8".%" PRIu8".%" PRIu8"",
-          discoveredServer.serverDescription.ConnectionMulticastAddress[0],
-          discoveredServer.serverDescription.ConnectionMulticastAddress[1],
-          discoveredServer.serverDescription.ConnectionMulticastAddress[2],
-          discoveredServer.serverDescription.ConnectionMulticastAddress[3]
-      );
-
-      g_connectParams.connectionType = discoveredServer.serverDescription.ConnectionMulticast ? ConnectionType_Multicast
-                                                                                              : ConnectionType_Unicast;
-      g_connectParams.serverCommandPort = discoveredServer.serverCommandPort;
-      g_connectParams.serverDataPort = discoveredServer.serverDescription.ConnectionDataPort;
-      g_connectParams.serverAddress = discoveredServer.serverAddress;
-      g_connectParams.localAddress = discoveredServer.localAddress;
-      g_connectParams.multicastAddress = g_discoveredMulticastGroupAddr;
-    }
-
-    NatNet_FreeAsyncServerDiscovery(discovery);
-  }
-
+  return 0;
 }
 
-void NATNET_CALLCONV
-OptitrackClient::server_discovered_callback(const sNatNetDiscoveredServer *pDiscoveredServer, void *pUserContext) {
-  char serverHotkey = '.';
-  if (g_discoveredServers.size() < 9) {
-    serverHotkey = static_cast<char>('1' + g_discoveredServers.size());
+int OptitrackClient::discover_motive_servers(int serverIndex) {
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Looking for servers on the local network.");
+
+  //const unsigned discover_wait_time_ms = 5 * 1000; // Wait 5 seconds for responses.
+  const int max_discovers = 1;
+  sNatNetDiscoveredServer servers[max_discovers];
+  int actual_number_of_discovers = max_discovers;
+  NatNet_BroadcastServerDiscovery(servers, &actual_number_of_discovers);
+
+  if (actual_number_of_discovers > max_discovers) {
+    RCLCPP_WARN(rclcpp::get_logger("optitrack_bridge"),
+                "Discovered more motive servers than expected. Number of discovered servers: %d, expected: %d",
+                actual_number_of_discovers, max_discovers);
+  } else if (actual_number_of_discovers == 0) {
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "No motive server found.");
+    return 1;
   }
 
-  printf("[%c] %s %d.%d at %s ",
-         serverHotkey,
-         pDiscoveredServer->serverDescription.szHostApp,
-         pDiscoveredServer->serverDescription.HostAppVersion[0],
-         pDiscoveredServer->serverDescription.HostAppVersion[1],
-         pDiscoveredServer->serverAddress);
+  const sNatNetDiscoveredServer &discovered_server = servers[serverIndex - 1];
 
-  if (pDiscoveredServer->serverDescription.bConnectionInfoValid) {
-    printf("(%s)\n", pDiscoveredServer->serverDescription.ConnectionMulticast ? "multicast" : "unicast");
-  } else {
-    printf("(WARNING: Legacy server, could not autodetect settings. Auto-connect may not work reliably.)\n");
+  if (discovered_server.serverDescription.bConnectionInfoValid) {
+    // Build the connection parameters.
+
+    snprintf(
+        g_discoveredMulticastGroupAddr, sizeof g_discoveredMulticastGroupAddr,
+        "%" PRIu8 ".%" PRIu8".%" PRIu8".%" PRIu8"",
+        discovered_server.serverDescription.ConnectionMulticastAddress[0],
+        discovered_server.serverDescription.ConnectionMulticastAddress[1],
+        discovered_server.serverDescription.ConnectionMulticastAddress[2],
+        discovered_server.serverDescription.ConnectionMulticastAddress[3]
+    );
+
+    connect_parameters.connectionType = discovered_server.serverDescription.ConnectionMulticast
+                                        ? ConnectionType_Multicast
+                                        : ConnectionType_Unicast;
+    connect_parameters.serverCommandPort = discovered_server.serverCommandPort;
+    connect_parameters.serverDataPort = discovered_server.serverDescription.ConnectionDataPort;
+    connect_parameters.serverAddress = discovered_server.serverAddress;
+    connect_parameters.localAddress = discovered_server.localAddress;
+    connect_parameters.multicastAddress = g_discoveredMulticastGroupAddr;
+
+    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Discovered address: %s", g_discoveredMulticastGroupAddr);
   }
-
-  g_discoveredServers.push_back(*pDiscoveredServer);
-}
-
-void OptitrackClient::get_datastream() {
-  g_pClient->SetFrameReceivedCallback(receive_rigidbody_data, g_pClient);
-
+  return 0;
 }

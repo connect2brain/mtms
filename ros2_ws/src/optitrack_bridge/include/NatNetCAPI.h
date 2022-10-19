@@ -25,15 +25,18 @@ extern "C" {
 #endif
 
 
-typedef struct NatNetDiscovery_t* NatNetDiscoveryHandle;
+typedef struct NatNetDiscovery_t *NatNetDiscoveryHandle;
 
 
-NATNET_API void NATNET_CALLCONV NatNet_GetVersion( unsigned char outVersion[4] );
-NATNET_API void NATNET_CALLCONV NatNet_SetLogCallback( NatNetLogCallback pfnLogCallback );
+NATNET_API void NATNET_CALLCONV NatNet_GetVersion(unsigned char outVersion[4]);
+NATNET_API void NATNET_CALLCONV NatNet_SetLogCallback(NatNetLogCallback pfnLogCallback);
 
-NATNET_API void NATNET_CALLCONV NatNet_DecodeID( int compositeId, int* pOutEntityId, int* pOutMemberId );
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_DecodeTimecode( unsigned int timecode, unsigned int timecodeSubframe, int* pOutHour, int* pOutMinute, int* pOutSecond, int* pOutFrame, int* pOutSubframe );
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_TimecodeStringify( unsigned int timecode, unsigned int timecodeSubframe, char* outBuffer, int outBufferSize );
+NATNET_API void NATNET_CALLCONV NatNet_DecodeID(int compositeId, int *pOutEntityId, int *pOutMemberId);
+NATNET_API ErrorCode NATNET_CALLCONV
+NatNet_DecodeTimecode(unsigned int timecode, unsigned int timecodeSubframe, int *pOutHour, int *pOutMinute,
+                      int *pOutSecond, int *pOutFrame, int *pOutSubframe);
+NATNET_API ErrorCode NATNET_CALLCONV
+NatNet_TimecodeStringify(unsigned int timecode, unsigned int timecodeSubframe, char *outBuffer, int outBufferSize);
 
 /// <summary>
 ///     Helper that performs a deep copy from <paramref name="pSrc"/> into <paramref name="pDst"/>.
@@ -42,7 +45,7 @@ NATNET_API ErrorCode NATNET_CALLCONV NatNet_TimecodeStringify( unsigned int time
 ///     Some members of <paramref name="pDst"/> will be dynamically allocated. Call <see cref="NatNet_FreeFrame"/> to
 ///     deallocate them.
 /// </remarks>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_CopyFrame( sFrameOfMocapData* pSrc, sFrameOfMocapData* pDst );
+NATNET_API ErrorCode NATNET_CALLCONV NatNet_CopyFrame(sFrameOfMocapData *pSrc, sFrameOfMocapData *pDst);
 
 /// <summary>
 ///     Frees the dynamically allocated members of a frame copy created using <see cref="NatNet_CopyFrame"/>.
@@ -54,27 +57,29 @@ NATNET_API ErrorCode NATNET_CALLCONV NatNet_CopyFrame( sFrameOfMocapData* pSrc, 
 ///     Warning: Do not call this on any <paramref name="pFrame"/> that was not the destination of a call to
 ///              <see cref="NatNet_CopyFrame"/>.
 /// </remarks>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeFrame( sFrameOfMocapData* pFrame );
+NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeFrame(sFrameOfMocapData *pFrame);
 
 
 /// <summary>
 ///     Deallocates <paramref name="pDesc"/> and all of its members; after this call, the object is no longer valid.
 /// </summary>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeDescriptions( sDataDescriptions* pDesc );
+NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeDescriptions(sDataDescriptions *pDesc);
 
 
 // "xxx.xxx.xxx.xxx" + null terminator
-enum { kNatNetIpv4AddrStrLenMax = 16 };
+enum {
+  kNatNetIpv4AddrStrLenMax = 16
+};
 
-typedef struct sNatNetDiscoveredServer
-{
-    char localAddress[kNatNetIpv4AddrStrLenMax];
-    char serverAddress[kNatNetIpv4AddrStrLenMax];
-    uint16_t serverCommandPort;
-    sServerDescription serverDescription;
+typedef struct sNatNetDiscoveredServer {
+  char localAddress[kNatNetIpv4AddrStrLenMax];
+  char serverAddress[kNatNetIpv4AddrStrLenMax];
+  uint16_t serverCommandPort;
+  sServerDescription serverDescription;
 } sNatNetDiscoveredServer;
 
-typedef void (NATNET_CALLCONV* NatNetServerDiscoveryCallback)( const sNatNetDiscoveredServer* pNewServer, void* pUserContext );
+typedef void (NATNET_CALLCONV *NatNetServerDiscoveryCallback)(const sNatNetDiscoveredServer *pNewServer,
+                                                              void *pUserContext);
 
 /// <summary>
 ///     Sends broadcast messages to discover active NatNet servers and blocks for a specified time to gather responses.
@@ -92,7 +97,9 @@ typedef void (NATNET_CALLCONV* NatNetServerDiscoveryCallback)( const sNatNetDisc
 /// <param name="timeoutMillisec">
 ///     Amount of time, in milliseconds, to wait for responses to the broadcast before returning.
 /// </param>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_BroadcastServerDiscovery( sNatNetDiscoveredServer* outServers, int* pInOutNumServers, unsigned int timeoutMillisec = 1000 );
+NATNET_API ErrorCode NATNET_CALLCONV
+NatNet_BroadcastServerDiscovery(sNatNetDiscoveredServer *outServers, int *pInOutNumServers,
+                                unsigned int timeoutMillisec = 1000);
 
 /// <summary>
 ///     Begins sending periodic broadcast messages to discover active NatNet servers in the background.
@@ -109,7 +116,9 @@ NATNET_API ErrorCode NATNET_CALLCONV NatNet_BroadcastServerDiscovery( sNatNetDis
 /// <param name="pUserContext">
 ///     User-specified context data to be passed to the provided <paramref name="pfnCallback"/> when invoked.
 /// </param>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_CreateAsyncServerDiscovery( NatNetDiscoveryHandle* pOutDiscovery, NatNetServerDiscoveryCallback pfnCallback, void* pUserContext = NULL );
+NATNET_API ErrorCode NATNET_CALLCONV
+NatNet_CreateAsyncServerDiscovery(NatNetDiscoveryHandle *pOutDiscovery, NatNetServerDiscoveryCallback pfnCallback,
+                                  void *pUserContext = NULL);
 
 /// <summary>
 ///     Ends a previously created asynchronous server discovery process, and cleans up the associated resources.
@@ -118,7 +127,7 @@ NATNET_API ErrorCode NATNET_CALLCONV NatNet_CreateAsyncServerDiscovery( NatNetDi
 ///     The handle representing the asynchronous discovery process. Returned by
 ///     <see cref="NatNet_CreateAsyncServerDiscovery"/>.
 /// </param>
-NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeAsyncServerDiscovery( NatNetDiscoveryHandle discovery );
+NATNET_API ErrorCode NATNET_CALLCONV NatNet_FreeAsyncServerDiscovery(NatNetDiscoveryHandle discovery);
 
 
 #if defined( __cplusplus )
