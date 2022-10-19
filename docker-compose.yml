@@ -26,6 +26,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
 
   eeg_processor:
     build:
@@ -53,8 +54,6 @@ services:
       dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
     # The container needs to be privileged to access FPGA
     privileged: true
-    volumes:
-      - './bitfiles:/app/ros2_ws/bitfiles/'
     env_file:
       - ${ENV_FILE}
 
