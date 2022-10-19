@@ -66,12 +66,6 @@ int OptitrackClient::disconnect_client() { // Done - clean up.
 }
 
 int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_callback) {
-  unsigned char ver[4];
-  NatNet_GetVersion(ver);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "NatNet Sample Client (NatNet ver. %d.%d.%d.%d)", ver[0], ver[1],
-              ver[2], ver[3]);
-
-  // create NatNet client
   natnet_client = new NatNetClient();
   natnet_client->SetFrameReceivedCallback(data_received_callback, natnet_client);
 
