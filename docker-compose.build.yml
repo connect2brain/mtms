@@ -4,32 +4,32 @@ services:
   data_batcher:
     build:
       context: .
-      dockerfile: ros2_ws/src/data_batcher/Dockerfile
+      dockerfile: ros2_ws/src/data_batcher/Dockerfile.prod
 
   eeg_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile.prod
 
   eeg_processor:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile.prod
 
   eeg_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
+      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile.prod
 
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/efield/Dockerfile
+      dockerfile: ros2_ws/src/efield/Dockerfile.prod
 
   fpga_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile.prod
 
   front:
     build:
@@ -44,12 +44,13 @@ services:
   planner:
     build:
       context: .
-      dockerfile: ros2_ws/src/planner/Dockerfile
+      dockerfile: ros2_ws/src/planner/Dockerfile.prod
+
 
   pulse_sequence_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile.prod
 
   rosbridge:
     build:
