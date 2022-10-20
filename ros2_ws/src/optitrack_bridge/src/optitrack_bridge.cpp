@@ -3,7 +3,7 @@
 //
 
 #include "optitrack_bridge.h"
-rclcpp::Publisher<neuronavigation_interfaces::msg::MotivePositions>::SharedPtr OptitrackBridge::publisher;
+rclcpp::Publisher<neuronavigation_interfaces::msg::OptitrackPoses>::SharedPtr OptitrackBridge::publisher;
 
 void
 log_rigid_body_message(geometry_msgs::msg::Transform_<std::allocator<void>> rigid_body, const std::string &entity) {
@@ -56,24 +56,24 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
   this->declare_parameter<int>("server_index", 1);
   this->get_parameter("server_index", server_index);
 
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connecting to motive");
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connecting to Motive...");
 
   auto client_created = client.create_client(data_received_callback);
   if (client_created != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start optitrack bridge");
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start Optitrack bridge.");
     return;
   }
 
   auto success = client.discover_motive_servers(server_index);
   if (success != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start optitrack bridge");
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start Optitrack bridge.");
     shutdown();
     return;
   }
   client.connect_to_motive();
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connected to motive");
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connected to Motive.");
 
-  publisher = this->create_publisher<neuronavigation_interfaces::msg::MotivePositions>("/neuronavigation/motive_positions", 10);
+  publisher = this->create_publisher<neuronavigation_interfaces::msg::OptitrackPoses>("/neuronavigation/optitrack_poses", 10);
 }
 
 void OptitrackBridge::shutdown() {
