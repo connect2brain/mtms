@@ -10,6 +10,7 @@ if [ "$EEG_PROCESSOR_TYPE" = "compiledmatlab" ]; then
   PROCESSOR_SCRIPT=hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so
 fi
 
+
 ros2 launch eeg_processor eeg_processor.launch.py \
     log-level:="$ROS_LOG_LEVEL" \
     processor-type:="$EEG_PROCESSOR_TYPE" \
