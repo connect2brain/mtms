@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  data_batcher:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/data_batcher/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
+  eeg_bridge:
+    ports:
+      - "50000:50000/udp"
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_processor/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+    privileged: true
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+    # volumes:
+    #   - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
+
+  efield:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/efield/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile.prod
+    # The container needs to be privileged to access FPGA
+    privileged: true
+    volumes:
+      - './bitfiles:/app/ros2_ws/bitfiles/'
+    env_file:
+      - ${ENV_FILE}
+
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile.prod
+
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+
+  planner:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/planner/Dockerfile.prod
+    env_file:
+      - ${ENV_FILE}
+
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+
+  rosbridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/rosbridge/Dockerfile
