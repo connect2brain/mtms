@@ -35,8 +35,6 @@ services:
       dockerfile: ros2_ws/src/eeg_simulator/Dockerfile.prod
     env_file:
       - ${ENV_FILE}
-    # volumes:
-    #   - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
 
   efield:
     build:
