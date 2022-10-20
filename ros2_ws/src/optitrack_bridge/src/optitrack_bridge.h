@@ -7,7 +7,7 @@
 
 #include "optitrack_client.h"
 #include "rclcpp/rclcpp.hpp"
-#include "neuronavigation_interfaces/msg/motive_positions.hpp"
+#include "neuronavigation_interfaces/msg/motive_poses.hpp"
 
 
 class OptitrackBridge : public rclcpp::Node {
@@ -20,7 +20,7 @@ public:
   static void data_received_callback(sFrameOfMocapData *data, void *pUserData);
 
   //has to be static so it can be used in data_received_callback
-  static rclcpp::Publisher<neuronavigation_interfaces::msg::MotivePositions>::SharedPtr publisher;
+  static rclcpp::Publisher<neuronavigation_interfaces::msg::OptitrackPoses>::SharedPtr publisher;
 private:
   OptitrackClient client;
   int server_index;
