@@ -9,3 +9,4 @@ docker tag mtms_pulse_sequence_controller okahilak/mtms:pulse_sequence_controlle
 docker tag mtms_eeg_simulator okahilak/mtms:eeg_simulator
 docker tag mtms_data_batcher okahilak/mtms:data_batcher
 docker tag mtms_front okahilak/mtms:front
+docker tag mtms_optitrack_bridge okahilak/mtms:optitrack_bridge

@@ -101,6 +101,14 @@ services:
     env_file:
       - ${ENV_FILE}
 
+  optitrack_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/optitrack_bridge/Dockerfile
+    network_mode: host
+    env_file:
+      - ${ENV_FILE}
+
   pedal_listener:
     build:
       context: .
@@ -116,13 +124,5 @@ services:
       dockerfile: ros2_ws/src/trigger_controller/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
     privileged: true
-    env_file:
-      - ${ENV_FILE}
-
-  optitrack_bridge:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/optitrack_bridge/Dockerfile
-    network_mode: host
     env_file:
       - ${ENV_FILE}
