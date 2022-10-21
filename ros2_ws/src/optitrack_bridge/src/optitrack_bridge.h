@@ -7,7 +7,7 @@
 
 #include "optitrack_client.h"
 #include "rclcpp/rclcpp.hpp"
-#include "neuronavigation_interfaces/msg/motive_poses.hpp"
+#include "neuronavigation_interfaces/msg/optitrack_poses.hpp"
 
 
 class OptitrackBridge : public rclcpp::Node {
