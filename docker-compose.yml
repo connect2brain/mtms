@@ -126,3 +126,11 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  optitrack_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/optitrack_bridge/Dockerfile
+    network_mode: host
+    env_file:
+      - ${ENV_FILE}
