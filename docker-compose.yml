@@ -124,5 +124,6 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/optitrack_bridge/Dockerfile
+    network_mode: host
     env_file:
       - ${ENV_FILE}

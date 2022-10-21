@@ -31,7 +31,7 @@ geometry_msgs::msg::Transform_<std::allocator<void>> create_ros_transform_from_r
 }
 
 void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *pUserData) {
-  auto message = neuronavigation_interfaces::msg::MotivePositions();
+  auto message = neuronavigation_interfaces::msg::OptitrackPoses();
   int i = 0;
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid bodies received: %d", data->nRigidBodies);
   for (i = 0; i < data->nRigidBodies; i++) {
