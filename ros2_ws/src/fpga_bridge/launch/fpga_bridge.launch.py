@@ -29,8 +29,7 @@ def generate_launch_description():
         "discharge_event_handler",
         "event_trigger_handler",
         "feedback_monitor_bridge",
-        "system_state_monitor_bridge",
-        "status_monitor_bridge",
+        "system_state_bridge",
         "disable_checks_handler",
         "settings_handler"
     ]

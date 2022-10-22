@@ -55,35 +55,20 @@ target_include_directories(safety_monitor_bridge
 
 ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
 
-# Install system state monitor bridge.
+# Install system state bridge.
 
-add_executable(system_state_monitor_bridge
-        src/nodes/system_state_monitor_bridge.cpp
+add_executable(system_state_bridge
+        src/nodes/system_state_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
         src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(system_state_monitor_bridge
+target_include_directories(system_state_bridge
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_monitor_bridge rclcpp std_msgs fpga_interfaces)
-
-# Install status monitor bridge.
-
-add_executable(status_monitor_bridge
-        src/nodes/status_monitor_bridge.cpp
-        src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(status_monitor_bridge
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs fpga_interfaces)
 
 # Install start device handler.
 
@@ -277,7 +262,7 @@ install(TARGETS
   run_fpga
   #discharge_controller_bridge
   #safety_monitor_bridge
-  status_monitor_bridge
+  system_state_bridge
   start_device_handler
   stop_device_handler
   start_experiment_handler
@@ -288,7 +273,6 @@ install(TARGETS
   trigger_out_event_handler
   event_trigger_handler
   feedback_monitor_bridge
-  system_state_monitor_bridge
   disable_checks_handler
   settings_handler
   DESTINATION lib/${PROJECT_NAME})
