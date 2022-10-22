@@ -4,7 +4,7 @@
 
 #include "fpga_interfaces/msg/version.hpp"
 
-#include "fpga_interfaces/msg/status_monitor_state.hpp"
+#include "fpga_interfaces/msg/system_state.hpp"
 #include "fpga_interfaces/msg/channel_status.hpp"
 
 #include "fpga.h"
@@ -59,19 +59,19 @@ NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Exp
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_time;
 
-class StatusMonitorBridge : public rclcpp::Node {
+class SystemStateBridge : public rclcpp::Node {
 public:
-  StatusMonitorBridge()
-      : Node("status_monitor_bridge") {
-    status_monitor_publisher_ = this->create_publisher<fpga_interfaces::msg::StatusMonitorState>(
-        "/fpga/status_monitor_state", 10);
-    timer_ = this->create_wall_timer(20ms, std::bind(&StatusMonitorBridge::publish_status_monitor_state, this));
+  SystemStateBridge()
+      : Node("system_state_bridge") {
+    system_state_publisher_ = this->create_publisher<fpga_interfaces::msg::SystemState>(
+        "/fpga/system_state", 10);
+    timer_ = this->create_wall_timer(20ms, std::bind(&SystemStateBridge::publish_system_state, this));
   }
 
 private:
-  void publish_status_monitor_state() {
+  void publish_system_state() {
 
-    fpga_interfaces::msg::StatusMonitorState state = fpga_interfaces::msg::StatusMonitorState();
+    fpga_interfaces::msg::SystemState state = fpga_interfaces::msg::SystemState();
 
     for (auto i = 0; i < CHANNEL_COUNT; i++) {
       fpga_interfaces::msg::ChannelStatus channel_status = fpga_interfaces::msg::ChannelStatus();
@@ -157,11 +157,11 @@ private:
                             &state.time
                         ));
 
-    status_monitor_publisher_->publish(state);
+    system_state_publisher_->publish(state);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<fpga_interfaces::msg::StatusMonitorState>::SharedPtr status_monitor_publisher_;
+  rclcpp::Publisher<fpga_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
 };
 
 int main(int argc, char **argv) {
@@ -172,19 +172,19 @@ int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("system_state_bridge"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<StatusMonitorBridge>();
+  auto node = std::make_shared<SystemStateBridge>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("system_state_bridge"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  RCLCPP_INFO(rclcpp::get_logger("status_monitor_bridge"), "Status monitor bridge ready.");
+  RCLCPP_INFO(rclcpp::get_logger("system_state_bridge"), "System state bridge ready.");
 
 
   rclcpp::spin(node);
