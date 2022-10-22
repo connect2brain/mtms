@@ -32,6 +32,33 @@ NiFpga_mTMS_IndicatorU16 temperature_indicators[CHANNEL_COUNT] = {
     NiFpga_mTMS_IndicatorU16_Coil5Temperature
 };
 
+NiFpga_mTMS_IndicatorU32 pulse_count_indicators[CHANNEL_COUNT] = {
+    NiFpga_mTMS_IndicatorU32_Coil1Pulsecount,
+    NiFpga_mTMS_IndicatorU32_Coil2Pulsecount,
+    NiFpga_mTMS_IndicatorU32_Coil3Pulsecount,
+    NiFpga_mTMS_IndicatorU32_Coil4Pulsecount,
+    NiFpga_mTMS_IndicatorU32_Coil5Pulsecount
+};
+
+NiFpga_mTMS_IndicatorU16 channel_error_indicators[CHANNEL_COUNT] = {
+    NiFpga_mTMS_IndicatorU16_Channel1ErrorsDC,
+    NiFpga_mTMS_IndicatorU16_Channel2ErrorsDC,
+    NiFpga_mTMS_IndicatorU16_Channel3ErrorsDC,
+    NiFpga_mTMS_IndicatorU16_Channel4ErrorsDC,
+    NiFpga_mTMS_IndicatorU16_Channel5ErrorsDC
+};
+
+NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_CumulativeerrorsSM;
+NiFpga_mTMS_IndicatorU16 current_error_indicator = NiFpga_mTMS_IndicatorU16_CurrenterrorsSM;
+NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_EmergencyerrorsSM;
+
+NiFpga_mTMS_IndicatorU16 startup_sequence_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
+
+NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
+NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Experimentstate;
+
+NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_time;
+
 class StatusMonitorBridge : public rclcpp::Node {
 public:
   StatusMonitorBridge()
@@ -64,11 +91,73 @@ private:
                              &channel_status.temperature
                          ));
 
+      NiFpga_MergeStatus(&status,
+                         NiFpga_ReadU32(
+                             session,
+                             pulse_count_indicators[i],
+                             &channel_status.pulse_count
+                         ));
+
+      NiFpga_MergeStatus(&status,
+                         NiFpga_ReadU16(
+                             session,
+                             channel_error_indicators[i],
+                             &channel_status.error
+                         ));
+
       state.channel_statuses.push_back(channel_status);
     }
 
-    status_monitor_publisher_->publish(state);
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU16(
+                            session,
+                            cumulative_error_indicator,
+                            &state.cumulative_error
+                        ));
 
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU16(
+                            session,
+                            current_error_indicator,
+                            &state.current_error
+                        ));
+
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU16(
+                            session,
+                            emergency_error_indicator,
+                            &state.emergency_error
+                        ));
+
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU16(
+                            session,
+                            startup_sequence_error_indicator,
+                            &state.startup_sequence_error
+                        ));
+
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU8(
+                            session,
+                            device_state_indicator,
+                            &state.device_state
+                        ));
+
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU8(
+                            session,
+                            experiment_state_indicator,
+                            &state.experiment_state
+                        ));
+
+    NiFpga_MergeStatus(&status,
+                        NiFpga_ReadU64(
+                            session,
+                            time_indicator,
+                            &state.time
+                        ));
+
+    status_monitor_publisher_->publish(state);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
