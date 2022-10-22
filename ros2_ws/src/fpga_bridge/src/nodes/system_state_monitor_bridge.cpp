@@ -13,7 +13,7 @@
 
 using namespace std::chrono_literals;
 
-NiFpga_mTMS_IndicatorU8 system_state_register = NiFpga_mTMS_IndicatorU8_Systemstate;
+NiFpga_mTMS_IndicatorU8 system_state_register = NiFpga_mTMS_IndicatorU8_Devicestate;
 
 class SystemStateMonitorBridge : public rclcpp::Node {
 public:
