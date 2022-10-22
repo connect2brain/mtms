@@ -28,7 +28,7 @@ bool init_fpga() {
     return false;
   }
 
-  std::string bitfile_path = std::string(bitfile_directory) + std::string(bitfile);
+  std::string bitfile_path = std::string(bitfile_directory) + "/" + std::string(bitfile);
 
   NiFpga_MergeStatus(&status, NiFpga_Open(
       bitfile_path.c_str(),
