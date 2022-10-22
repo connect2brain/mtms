@@ -17,8 +17,6 @@ def generate_launch_description():
 
     node_executables = [
         "run_fpga",
-        #"safety_monitor_bridge",
-        #"discharge_controller_bridge",
         "start_device_handler",
         "stop_device_handler",
         "start_experiment_handler",
