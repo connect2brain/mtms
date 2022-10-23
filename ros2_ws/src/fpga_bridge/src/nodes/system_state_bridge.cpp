@@ -13,6 +13,7 @@
 #include "scheduling_utils.h"
 
 #define CHANNEL_COUNT 5
+#define CLOCK_FREQUENCY_HZ 40000000
 
 using namespace std::chrono_literals;
 
@@ -150,12 +151,15 @@ private:
                             &state.experiment_state
                         ));
 
+    uint64_t time;
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU64(
                             session,
                             time_indicator,
-                            &state.time
+                            &time
                         ));
+
+    state.time = (double)time / CLOCK_FREQUENCY_HZ;
 
     system_state_publisher_->publish(state);
   }
