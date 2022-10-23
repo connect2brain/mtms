@@ -135,11 +135,6 @@ class MTMSApi:
     def send_event_trigger(self):
         self.node.send_event_trigger()
 
-        # HACK: This should probably be a feedback message that is received from the FPGA, informing that the
-        #   event trigger was successfully generated, similar to the feedback messages from the actual events.
-        #
-        print('{}Event trigger{}'.format(bcolors.OKGREEN, bcolors.ENDC))
-
     # Testing and debugging (undocumented)
 
     def start_device_without_waiting(self):
