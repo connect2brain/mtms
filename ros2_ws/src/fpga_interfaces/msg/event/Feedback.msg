@@ -1,7 +1,4 @@
-# Contains information of an event
+# Contains feedback of an event
 
-uint8 channel
-
-uint16 event_id
-
-uint8 status
+uint16 id
+uint8 status_code
