@@ -4,6 +4,6 @@
 #
 # Response: Boolean indicating if stimulation pulse event was sent successfully.
 
-StimulationPulseEvent stimulation_pulse_event
+Pulse pulse
 ---
 bool success
