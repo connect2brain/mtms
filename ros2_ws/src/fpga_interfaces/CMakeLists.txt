@@ -30,7 +30,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/event/EventInfo.msg"
         "msg/event/Feedback.msg"
 
-        "msg/ChannelStatus.msg"
+        "msg/ChannelState.msg"
         "msg/SystemState.msg"
 
         "msg/Settings.msg"

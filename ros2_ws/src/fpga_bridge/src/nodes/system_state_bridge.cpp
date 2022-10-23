@@ -5,7 +5,7 @@
 #include "fpga_interfaces/msg/version.hpp"
 
 #include "fpga_interfaces/msg/system_state.hpp"
-#include "fpga_interfaces/msg/channel_status.hpp"
+#include "fpga_interfaces/msg/channel_state.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -74,38 +74,38 @@ private:
     fpga_interfaces::msg::SystemState state = fpga_interfaces::msg::SystemState();
 
     for (auto i = 0; i < CHANNEL_COUNT; i++) {
-      fpga_interfaces::msg::ChannelStatus channel_status = fpga_interfaces::msg::ChannelStatus();
-      channel_status.channel_index = i;
+      fpga_interfaces::msg::ChannelState channel_state = fpga_interfaces::msg::ChannelState();
+      channel_state.channel_index = i;
 
       NiFpga_MergeStatus(&status,
                          NiFpga_ReadU16(
                              session,
                              voltage_indicators[i],
-                             &channel_status.voltage
+                             &channel_state.voltage
                          ));
 
       NiFpga_MergeStatus(&status,
                          NiFpga_ReadU16(
                              session,
                              temperature_indicators[i],
-                             &channel_status.temperature
+                             &channel_state.temperature
                          ));
 
       NiFpga_MergeStatus(&status,
                          NiFpga_ReadU32(
                              session,
                              pulse_count_indicators[i],
-                             &channel_status.pulse_count
+                             &channel_state.pulse_count
                          ));
 
       NiFpga_MergeStatus(&status,
                          NiFpga_ReadU16(
                              session,
                              channel_error_indicators[i],
-                             &channel_status.error
+                             &channel_state.error
                          ));
 
-      state.channel_statuses.push_back(channel_status);
+      state.channel_states.push_back(channel_state);
     }
 
     NiFpga_MergeStatus(&status,
