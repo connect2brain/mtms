@@ -106,6 +106,12 @@ class MTMSApiPrinter():
             error_str
         ))
 
+    def print_event_trigger(self):
+        # HACK: This should probably be a feedback message that is received from the FPGA, informing that the
+        #   event trigger was successfully generated, similar to the feedback messages from the actual events.
+        #
+        print('{}Event trigger{}'.format(bcolors.OKGREEN, bcolors.ENDC))
+
     def print_heading(self, text):
         print('')
         print('{}{}{}{}{}{}'.format("", bcolors.HEADER, "\033[1m", text, "\033[0m", bcolors.ENDC))
