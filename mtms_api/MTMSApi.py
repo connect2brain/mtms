@@ -179,6 +179,15 @@ class MTMSApi:
         ]
         return waveform
 
+    # Targeting
+    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
+        return self.bridge.get_channel_voltages(
+            displacement_x=displacement_x,
+            displacement_y=displacement_y,
+            rotation_angle=rotation_angle,
+            intensity=intensity,
+        )
+
     # Other
 
     def print_system_state(self):
