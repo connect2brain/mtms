@@ -10,6 +10,9 @@ from .enums.PulseMode import PulseMode
 from .MTMSApiNode import MTMSApiNode
 
 class MTMSApi:
+    # TODO: Channel count hardcoded for now.
+    N_CHANNELS = 5
+
     def __init__(self):
         rclpy.init(args=None)
         self.node = MTMSApiNode()
@@ -180,6 +183,7 @@ class MTMSApi:
         return waveform
 
     # Targeting
+
     def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
         return self.node.get_channel_voltages(
             displacement_x=displacement_x,
@@ -187,6 +191,42 @@ class MTMSApi:
             rotation_angle=rotation_angle,
             intensity=intensity,
         )
+
+    # Compound events
+
+    def charge_all_channels_instantly(self, target_voltages, starting_id=1):
+        assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
+            len(target_voltages), self.N_CHANNELS)
+
+        for i in range(self.N_CHANNELS):
+            target_voltage = target_voltages[i]
+            channel = i + 1
+            id = starting_id + i
+
+            self.send_charge(
+                id=id,
+                execution_condition=ExecutionCondition.INSTANT,
+                time=0,
+                channel=channel,
+                target_voltage=target_voltage,
+            )
+
+    def discharge_all_channels_instantly(self, target_voltages, starting_id=1):
+        assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
+            len(target_voltages), self.N_CHANNELS)
+
+        for i in range(self.N_CHANNELS):
+            target_voltage = target_voltages[i]
+            channel = i + 1
+            id = starting_id + i
+
+            self.send_discharge(
+                id=id,
+                execution_condition=ExecutionCondition.INSTANT,
+                time=0,
+                channel=channel,
+                target_voltage=target_voltage,
+            )
 
     # Other
 
