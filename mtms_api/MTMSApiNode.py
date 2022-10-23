@@ -4,6 +4,8 @@ from rclpy.node import Node
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 from fpga_interfaces.msg import SystemState, PulsePiece, Feedback, Event
 
+from mtms_interfaces.srv import GetChannelVoltages
+
 from .MTMSApiPrinter import MTMSApiPrinter
 
 from .enums.ChargeError import ChargeError
@@ -12,6 +14,7 @@ from .enums.PulseError import PulseError
 from .enums.SignalOutError import SignalOutError
 
 class MTMSApiNode(Node):
+    # To FPGA
     ROS_SERVICE_START_DEVICE = ('/fpga/start_device', StartDevice)
     ROS_SERVICE_STOP_DEVICE = ('/fpga/stop_device', StopDevice)
     ROS_SERVICE_START_EXPERIMENT = ('/fpga/start_experiment', StartExperiment)
@@ -21,6 +24,9 @@ class MTMSApiNode(Node):
     ROS_SERVICE_SEND_CHARGE = ('/fpga/send_charge', SendCharge)
     ROS_SERVICE_SEND_DISCHARGE = ('/fpga/send_discharge', SendDischarge)
     ROS_SERVICE_SEND_SIGNAL_OUT = ('/fpga/send_signal_out', SendSignalOut)
+
+    # To other parts of the system
+    ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -32,6 +38,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_SEND_CHARGE,
         ROS_SERVICE_SEND_DISCHARGE,
         ROS_SERVICE_SEND_SIGNAL_OUT,
+        ROS_SERVICE_GET_CHANNEL_VOLTAGES,
     )
 
     def __init__(self):
@@ -238,6 +245,25 @@ class MTMSApiNode(Node):
 
     def handle_signal_out_feedback(self, feedback):
         self.printer.print_feedback('Signal out', SignalOutError, feedback)
+
+    # Targeting
+
+    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
+        topic, service_object = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
+
+        ros_service = self.ros_services[topic]
+        client = ros_service['client']
+        request = ros_service['request']
+
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+        request.intensity = intensity
+
+        value = self.call_service(client, request)
+        assert value.success, "Invalid displacement, rotation angle, or intensity values."
+
+        return value.voltages, value.reversed_polarities
 
     # System state
 
