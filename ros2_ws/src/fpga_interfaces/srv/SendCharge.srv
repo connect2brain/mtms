@@ -4,6 +4,6 @@
 #
 # Response: Boolean indicating if charge event was sent successfully.
 
-ChargeEvent charge_event
+Charge charge
 ---
 bool success

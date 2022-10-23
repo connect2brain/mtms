@@ -4,6 +4,6 @@
 #
 # Response: Boolean indicating if discharge event was sent successfully.
 
-DischargeEvent discharge_event
+Discharge discharge
 ---
 bool success
