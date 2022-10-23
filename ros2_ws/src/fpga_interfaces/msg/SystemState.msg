@@ -1,4 +1,4 @@
-ChannelStatus[] channel_statuses
+ChannelState[] channel_states
 
 uint16 cumulative_error
 uint16 current_error
