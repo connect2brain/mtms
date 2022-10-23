@@ -37,9 +37,10 @@ public:
 
 private:
 
-  void read_fifo_and_publish(NiFpga_mTMS_TargetToHostFifoU8 fifo,
+  void read_fifo_and_publish(std::string event_type,
+                             NiFpga_mTMS_TargetToHostFifoU8 fifo,
                              std::map<uint8_t, std::vector<uint8_t>> map,
-                             std::string event_type) {
+                             rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
     size_t elements_remaining = 0;
     NiFpga_Status read_status;
     std::vector<uint8_t> data(2);
@@ -76,40 +77,39 @@ private:
       if (map[channel].size() > 2) {
         auto event_id = map[channel][0] * 256 + map[channel][1];
         uint8_t status_code = map[channel][2];
-        publish_feedback(event_type, channel, event_id, status_code);
+        publish_feedback(event_type, channel, event_id, status_code, publisher);
       }
 
     }
 
   }
 
-  void publish_feedback(std::string event_type, uint8_t channel, int event_id, uint8_t status_code) {
+  void publish_feedback(std::string event_type,
+                        uint8_t channel,
+                        int event_id,
+                        uint8_t status_code,
+                        rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+
     fpga_interfaces::msg::Feedback feedback;
     feedback.channel = channel;
     feedback.event_id = event_id;
     feedback.status = status_code;
 
     RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
-                "Publishing data to %s feedback: {channel: %d, event_id: %d, status: %d}", event_type.data(),
-                channel, event_id, status_code);
+                "Publishing data to %s feedback: {channel: %d, event_id: %d, status: %d}",
+                event_type.data(),
+                channel,
+                event_id,
+                status_code);
 
-    if (event_type == "Pulse") {
-      pulse_feedback_publisher_->publish(feedback);
-    } else if (event_type == "Charge") {
-      charge_feedback_publisher_->publish(feedback);
-    } else if (event_type == "Discharge") {
-      discharge_feedback_publisher_->publish(feedback);
-    } else {
-      signal_out_feedback_publisher_->publish(feedback);
-    }
-
+    (*publisher)->publish(feedback);
   }
 
   void update_feedback_topics() {
-    read_fifo_and_publish(pulse_feedback_fifo, pulse_data, "Pulse");
-    read_fifo_and_publish(charge_feedback_fifo, charge_data, "Charge");
-    read_fifo_and_publish(discharge_feedback_fifo, discharge_data, "Discharge");
-    read_fifo_and_publish(signal_out_feedback_fifo, signal_out_data, "Signal out");
+    read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data, &pulse_feedback_publisher_);
+    read_fifo_and_publish("Charge", charge_feedback_fifo, charge_data, &charge_feedback_publisher_);
+    read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data, &discharge_feedback_publisher_);
+    read_fifo_and_publish("Signal out", signal_out_feedback_fifo, signal_out_data, &signal_out_feedback_publisher_);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
