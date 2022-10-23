@@ -96,6 +96,7 @@ class MTMSApi:
 
     def send_charge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0):
         time_us = int(time * 10**6)
+        target_voltage = int(target_voltage)
         self.node.send_charge(
             id=id,
             execution_condition=execution_condition,
@@ -106,6 +107,7 @@ class MTMSApi:
 
     def send_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0):
         time_us = int(time * 10**6)
+        target_voltage = int(target_voltage)
         self.node.send_discharge(
             id=id,
             execution_condition=execution_condition,
