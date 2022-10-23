@@ -175,18 +175,18 @@ class MTMSApi:
             falling_phase_duration_in_ticks = 1776
 
         waveform = [
-                        {
-                            'mode': PulseMode.RISING,
-                            'duration_in_ticks': 2400
-                        },
-                        {
-                            'mode': PulseMode.HOLD,
-                            'duration_in_ticks': 1200
-                        },
-                        {
-                            'mode': PulseMode.FALLING,
-                            'duration_in_ticks': falling_phase_duration_in_ticks,
-                        },
+            {
+                'mode': PulseMode.RISING,
+                'duration_in_ticks': 2400
+            },
+            {
+                'mode': PulseMode.HOLD,
+                'duration_in_ticks': 1200
+            },
+            {
+                'mode': PulseMode.FALLING,
+                'duration_in_ticks': falling_phase_duration_in_ticks,
+            },
         ]
         return waveform
 
