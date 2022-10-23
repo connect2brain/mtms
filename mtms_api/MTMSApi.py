@@ -1,4 +1,5 @@
 import time
+import copy
 
 import rclpy
 
@@ -84,14 +85,19 @@ class MTMSApi:
         return self.node.system_state.time
 
     # Events
-    def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0):
+    def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0, reverse_polarity=False):
         time_us = int(time * 10**6)
+
+        waveform_ = copy.deepcopy(waveform)
+        if reverse_polarity:
+            waveform_ = self.reverse_polarity(waveform_)
+
         self.node.send_pulse(
             id=id,
             execution_condition=execution_condition,
             time_us=time_us,
             channel=channel,
-            waveform=waveform,
+            waveform=waveform_,
         )
 
     def send_charge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0):
@@ -184,6 +190,22 @@ class MTMSApi:
         ]
         return waveform
 
+    def reverse_polarity(self, waveform):
+        for i in range(len(waveform)):
+            mode = waveform[i]['mode']
+            if mode == PulseMode.RISING:
+                reversed_mode = PulseMode.FALLING
+            elif mode == PulseMode.FALLING:
+                reversed_mode = PulseMode.RISING
+            elif mode == PulseMode.HOLD:
+                reversed_mode = PulseMode.ALTERNATIVE_HOLD
+            elif mode == PulseMode.ALTERNATIVE_HOLD:
+                reversed_mode = PulseMode.HOLD
+
+            waveform[i]['mode'] = reversed_mode
+
+        return waveform
+
     # Targeting
 
     def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
@@ -228,6 +250,24 @@ class MTMSApi:
                 time=0,
                 channel=channel,
                 target_voltage=target_voltage,
+            )
+
+    def send_pulse_to_all_channels(self, waveform, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1):
+        assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
+            len(reverse_polarities), self.N_CHANNELS)
+
+        for i in range(self.N_CHANNELS):
+            reverse_polarity = reverse_polarities[i]
+            channel = i + 1
+            id = starting_id + i
+
+            self.send_pulse(
+                id=id,
+                execution_condition=execution_condition,
+                time=time,
+                channel=channel,
+                waveform=waveform,
+                reverse_polarity=reverse_polarity,
             )
 
     # Other
