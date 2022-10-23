@@ -247,7 +247,7 @@ class MTMSApi:
                 target_voltage=target_voltage,
             )
 
-    def send_pulse_to_all_channels(self, waveform, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1):
+    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1):
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -255,6 +255,7 @@ class MTMSApi:
             reverse_polarity = reverse_polarities[i]
             channel = i + 1
             id = starting_id + i
+            waveform = self.get_default_waveform(channel=channel)
 
             self.send_pulse(
                 id=id,
