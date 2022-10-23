@@ -22,12 +22,12 @@ endif ()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-        "msg/event/ChargeEvent.msg"
-        "msg/event/DischargeEvent.msg"
-        "msg/event/StimulationPulsePiece.msg"
-        "msg/event/StimulationPulseEvent.msg"
-        "msg/event/TriggerOutEvent.msg"
-        "msg/event/EventInfo.msg"
+        "msg/event/Charge.msg"
+        "msg/event/Discharge.msg"
+        "msg/event/PulsePiece.msg"
+        "msg/event/Pulse.msg"
+        "msg/event/SignalOut.msg"
+        "msg/event/Event.msg"
         "msg/event/Feedback.msg"
 
         "msg/ChannelState.msg"
@@ -36,11 +36,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/Settings.msg"
         "msg/Version.msg"
 
-        "srv/SendChargeEvent.srv"
-        "srv/SendDischargeEvent.srv"
+        "srv/SendCharge.srv"
+        "srv/SendDischarge.srv"
         "srv/SendEventTrigger.srv"
-        "srv/SendStimulationPulseEvent.srv"
-        "srv/SendTriggerOutEvent.srv"
+        "srv/SendPulse.srv"
+        "srv/SendSignalOut.srv"
 
         "srv/StartDevice.srv"
         "srv/StopDevice.srv"
