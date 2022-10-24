@@ -303,6 +303,17 @@ class MTMSApi:
             starting_id=starting_id,
         )
 
+    def send_charge_or_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0):
+        voltage = self.get_voltage(channel=channel)
+        function = self.send_charge if voltage < target_voltage else self.send_discharge
+        function(
+            id=id,
+            channel=channel,
+            target_voltage=target_voltage,
+            execution_condition=execution_condition,
+            time=time,
+        )
+
     # Other
 
     def print_system_state(self):
