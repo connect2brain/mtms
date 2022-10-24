@@ -24,11 +24,11 @@ private:
 
   static std::vector<FpgaEvent> convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events);
 
-  static fpga_interfaces::msg::ChargeEvent parse_charge_event(PyObject *event);
-  static fpga_interfaces::msg::DischargeEvent parse_discharge_event(PyObject *event);
-  static fpga_interfaces::msg::EventInfo parse_event_info(PyObject *event);
+  static fpga_interfaces::msg::Charge parse_charge(PyObject *event);
+  static fpga_interfaces::msg::Discharge parse_discharge(PyObject *event);
+  static fpga_interfaces::msg::Event parse_event(PyObject *event);
 
-  static fpga_interfaces::msg::StimulationPulseEvent parse_stimulation_event(PyObject *event);
+  static fpga_interfaces::msg::Pulse parse_pulse(PyObject *event);
 
   PyObject *python_init_name, *python_data_received_name, *python_close_name;
   PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance;
