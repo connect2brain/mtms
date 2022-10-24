@@ -248,7 +248,7 @@ class MTMSApi:
 
     # Compound events
 
-    def send_instant_charge_to_all_channels(self, target_voltages, starting_id=1, wait_for_feedback=True):
+    def send_instant_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_feedback=True):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -259,30 +259,7 @@ class MTMSApi:
             target_voltage = target_voltages[i]
             channel = i + 1
 
-            self.send_charge(
-                id=id,
-                execution_condition=ExecutionCondition.INSTANT,
-                time=0,
-                channel=channel,
-                target_voltage=target_voltage,
-                wait_for_feedback=False,
-            )
-
-        if wait_for_feedback:
-            self.wait_for_feedbacks(ids=ids)
-
-    def send_instant_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_feedback=True):
-        assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
-            len(target_voltages), self.N_CHANNELS)
-
-        ids = range(starting_id, starting_id + self.N_CHANNELS)
-
-        for i in range(self.N_CHANNELS):
-            id = ids[i]
-            target_voltage = target_voltages[i]
-            channel = i + 1
-
-            self.send_discharge(
+            self.send_charge_or_discharge(
                 id=id,
                 execution_condition=ExecutionCondition.INSTANT,
                 time=0,
@@ -297,7 +274,7 @@ class MTMSApi:
     def send_instant_full_discharge_to_all_channels(self, starting_id=1, wait_for_feedback=True):
         target_voltages = self.N_CHANNELS * [0]
 
-        self.send_instant_discharge_to_all_channels(
+        self.send_instant_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
             starting_id=starting_id,
             wait_for_feedback=wait_for_feedback,
