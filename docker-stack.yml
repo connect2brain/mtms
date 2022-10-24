@@ -85,15 +85,6 @@ services:
         constraints:
           - node.role == manager
 
-  targeting:
-    image: okahilak/mtms:targeting
-    environment:
-      - ROS_LOG_LEVEL=info
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-
   front:
     image: okahilak/mtms:front
     deploy:
@@ -140,6 +131,15 @@ services:
         published: 9090
         protocol: tcp
         mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  targeting:
+    image: okahilak/mtms:targeting
+    environment:
+      - ROS_LOG_LEVEL=info
     deploy:
       placement:
         constraints:
