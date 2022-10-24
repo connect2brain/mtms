@@ -61,6 +61,11 @@ class MTMSApi:
         while self.get_time() < time:
             self.node.wait_for_new_state()
 
+    def wait_for_event_feedback(self, id):
+        self.node.wait_for_new_state()
+        while self.node.get_event_feedback(id) is None:
+            self.node.wait_for_new_state()
+
     def wait(self, time):
         start_time = self.get_wallclock_time()
 
@@ -93,6 +98,9 @@ class MTMSApi:
     def get_time(self):
         self.node.wait_for_new_state()
         return self.node.system_state.time
+
+    def get_event_feedback(self, id):
+        return self.node.get_event_feedback(id)
 
     # Events
     def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0, reverse_polarity=False):
