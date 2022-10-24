@@ -98,7 +98,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 pulse_event = create_command(obj.events_sent, "pulse", 1, event_time, 500);
                 obj.set_commands(pulse_event);
-                fprintf("Timed pulse at %d\n", event_time);
+                fprintf("Timed pulse at %lu\n", event_time);
                 
                 obj.estimated = true;
 
