@@ -61,7 +61,7 @@ export type Datapoint = {
   x: number
   y: number
 }
-type EegChartProps = {
+export type EegChartProps = {
   eegData: Datapoint[]
   triggerData: Datapoint
 }
