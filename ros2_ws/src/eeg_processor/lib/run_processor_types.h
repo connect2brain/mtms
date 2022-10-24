@@ -15,21 +15,21 @@
 #include "rtwtypes.h"
 
 // Type Definitions
-struct event_info {
-  unsigned short event_id;
+struct event {
+  unsigned short id;
   unsigned char execution_condition;
   unsigned long time_us;
 };
 
-struct stimulation_pulse_piece {
+struct pulse_piece {
   unsigned char mode;
   unsigned short duration_in_ticks;
 };
 
 struct matlab_fpga_event {
   unsigned char channel;
-  event_info b_event_info;
-  stimulation_pulse_piece pieces[3];
+  event b_event;
+  pulse_piece pieces[3];
   unsigned char event_type;
   unsigned short target_voltage;
 };
