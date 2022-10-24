@@ -116,9 +116,9 @@ private:
         return;
       }
 
-      uint16_t event_id = data[0] * 256 + data[1];
+      uint16_t id = data[0] * 256 + data[1];
       uint8_t status_code = data[2];
-      publish_feedback(event_type, event_id, status_code, publisher);
+      publish_feedback(event_type, id, status_code, publisher);
     }
   }
 
@@ -132,7 +132,7 @@ private:
     feedback.status_code = status_code;
 
     RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
-                "Publishing data to %s feedback: {event_id: %d, status: %d}",
+                "Publishing data to %s feedback: {id: %d, status: %d}",
                 event_type.data(),
                 id,
                 status_code);

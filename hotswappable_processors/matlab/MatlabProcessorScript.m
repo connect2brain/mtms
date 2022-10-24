@@ -28,7 +28,7 @@ function [updated_data, events] = MatlabProcessorScript(data, new_data_point)
 
 
     pulse = create_command(1, "pulse_event", 500);
-    charge = create_command(2, "charge_event", 500);
+    charge = create_command(2, "charge", 500);
     updated_data = data;
     events = [pulse, charge];
 

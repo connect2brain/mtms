@@ -79,39 +79,39 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
-fpga_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
-  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-  if (event_info_as_pyobject == nullptr) {
+fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
+  auto event_as_pyobject = PyObject_GetAttrString(event, "event");
+  if (event_as_pyobject == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event_info_as_pyobject" << std::endl;
+    std::cout << "Error on event_as_pyobject" << std::endl;
   }
-  auto event_id = PyDict_GetItemString(event_info_as_pyobject, "event_id");
-  if (event_id == nullptr) {
+  auto id = PyDict_GetItemString(event_as_pyobject, "id");
+  if (id == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event_id" << std::endl;
+    std::cout << "Error on id" << std::endl;
   }
-  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
+  auto execution_condition = PyDict_GetItemString(event_as_pyobject, "execution_condition");
   if (execution_condition == nullptr) {
     PyErr_Print();
     std::cout << "Error on execution_condition" << std::endl;
   }
-  auto time_us = PyDict_GetItemString(event_info_as_pyobject, "time_us");
+  auto time_us = PyDict_GetItemString(event_as_pyobject, "time_us");
   if (time_us == nullptr) {
     PyErr_Print();
     std::cout << "Error on time_us" << std::endl;
   }
-  fpga_interfaces::msg::EventInfo event_info;
-  event_info.time_us = PyLong_AsUnsignedLong(time_us);
-  event_info.execution_condition = PyLong_AsUnsignedLong(execution_condition);
-  event_info.event_id = PyLong_AsUnsignedLong(event_id);
+  fpga_interfaces::msg::Event event_msg;
+  event_msg.time_us = PyLong_AsUnsignedLong(time_us);
+  event_msg.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+  event_msg.id = PyLong_AsUnsignedLong(id);
 
-  Py_DECREF(event_info_as_pyobject);
+  Py_DECREF(event_as_pyobject);
 
-  return event_info;
+  return event_msg;
 }
 
-fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *event) {
-  auto charge_event = fpga_interfaces::msg::ChargeEvent();
+fpga_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
+  auto charge = fpga_interfaces::msg::Charge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -125,19 +125,19 @@ fpga_interfaces::msg::ChargeEvent PythonProcessor::parse_charge_event(PyObject *
     std::cout << "Error on target_voltage channel" << std::endl;
   }
 
-  charge_event.channel = PyLong_AsUnsignedLong(channel);
-  charge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
+  charge.channel = PyLong_AsUnsignedLong(channel);
+  charge.target_voltage = PyLong_AsUnsignedLong(target_voltage);
 
-  charge_event.event_info = parse_event_info(event);
+  charge.event = parse_event(event);
 
   Py_DECREF(channel);
   Py_DECREF(target_voltage);
 
-  return charge_event;
+  return charge;
 }
 
-fpga_interfaces::msg::DischargeEvent PythonProcessor::parse_discharge_event(PyObject *event) {
-  auto discharge_event = fpga_interfaces::msg::DischargeEvent();
+fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
+  auto discharge = fpga_interfaces::msg::Discharge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -151,19 +151,19 @@ fpga_interfaces::msg::DischargeEvent PythonProcessor::parse_discharge_event(PyOb
     std::cout << "Error on target_voltage" << std::endl;
   }
 
-  discharge_event.channel = PyLong_AsUnsignedLong(channel);
-  discharge_event.target_voltage = PyLong_AsUnsignedLong(target_voltage);
+  discharge.channel = PyLong_AsUnsignedLong(channel);
+  discharge.target_voltage = PyLong_AsUnsignedLong(target_voltage);
 
-  discharge_event.event_info = parse_event_info(event);
+  discharge.event = parse_event(event);
 
   Py_DECREF(channel);
   Py_DECREF(target_voltage);
 
-  return discharge_event;
+  return discharge;
 }
 
-fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_event(PyObject *event) {
-  auto stimulation_event = fpga_interfaces::msg::StimulationPulseEvent();
+fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
+  auto pulse = fpga_interfaces::msg::Pulse();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -182,19 +182,19 @@ fpga_interfaces::msg::StimulationPulseEvent PythonProcessor::parse_stimulation_e
     auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
-    auto piece = fpga_interfaces::msg::StimulationPulsePiece();
+    auto piece = fpga_interfaces::msg::PulsePiece();
     piece.mode = PyLong_AsUnsignedLong(mode);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
-    stimulation_event.pieces.push_back(piece);
+    pulse.pieces.push_back(piece);
   }
 
-  stimulation_event.channel = PyLong_AsUnsignedLong(channel);
-  stimulation_event.event_info = parse_event_info(event);
+  pulse.channel = PyLong_AsUnsignedLong(channel);
+  pulse.event = parse_event(event);
   Py_DECREF(channel);
   Py_DECREF(pieces);
 
-  return stimulation_event;
+  return pulse;
 }
 
 std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events) {
@@ -206,20 +206,20 @@ std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(s
     auto event_type_as_pyobject = PyObject_GetAttrString(event_as_pyobject, "event_type");
     auto event_type = PyLong_AsUnsignedLong(event_type_as_pyobject);
 
-    if (event_type == STIMULATION_PULSE_EVENT) {
-      auto stimulation_event = parse_stimulation_event(event_as_pyobject);
-      event.stimulation_pulse_event = stimulation_event;
-      event.event_type = STIMULATION_PULSE_EVENT;
+    if (event_type == PULSE) {
+      auto pulse = parse_pulse(event_as_pyobject);
+      event.pulse = pulse;
+      event.event_type = PULSE;
 
-    } else if (event_type == CHARGE_EVENT) {
-      auto charge_event = parse_charge_event(event_as_pyobject);
-      event.charge_event = charge_event;
-      event.event_type = CHARGE_EVENT;
+    } else if (event_type == CHARGE) {
+      auto charge = parse_charge(event_as_pyobject);
+      event.charge = charge;
+      event.event_type = CHARGE;
 
-    } else if (event_type == DISCHARGE_EVENT) {
-      auto discharge_event = parse_discharge_event(event_as_pyobject);
-      event.discharge_event = discharge_event;
-      event.event_type = DISCHARGE_EVENT;
+    } else if (event_type == DISCHARGE) {
+      auto discharge = parse_discharge(event_as_pyobject);
+      event.discharge = discharge;
+      event.event_type = DISCHARGE;
 
     } else {
       std::wcout << "Unknown event type" << std::endl;
