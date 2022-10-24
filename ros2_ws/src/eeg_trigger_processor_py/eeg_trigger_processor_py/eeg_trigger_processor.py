@@ -7,7 +7,7 @@ from fpga_interfaces.srv import SendSignalOut, StartDevice, StartExperiment, Sto
     SendPulse, SendCharge
 from fpga_interfaces.msg import SignalOut, Event
 
-TRIGGER_DURATION_US = 10000
+SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 EVENT_ID = 1
 TIME_CONSTANT_US = int(1e6) * 1
@@ -21,7 +21,7 @@ class EegProcessor(Node):
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received',
                                                            self.trigger_reader_callback, 10)
 
-        self.trigger_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
+        self.signal_out_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
@@ -47,7 +47,7 @@ class EegProcessor(Node):
         if msg.index == 1:
             self.first_trigger_time = msg.time_us
             self.set_trigger_request(1, msg.time_us)
-            self.client_futures.append(self.trigger_client.call_async(self.request))
+            self.client_futures.append(self.signal_out_client.call_async(self.request))
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time_us
@@ -66,7 +66,7 @@ class EegProcessor(Node):
 
         signal_out = SignalOut()
         signal_out.port = port
-        signal_out.duration_us = TRIGGER_DURATION_US
+        signal_out.duration_us = SIGNAL_OUT_DURATION_US
         signal_out.event = event
 
         self.request.signal_out = signal_out

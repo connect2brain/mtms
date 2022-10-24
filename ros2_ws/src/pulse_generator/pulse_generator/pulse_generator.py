@@ -6,7 +6,7 @@ from fpga_interfaces.srv import SendSignalOut, StartDevice, StartExperiment, Sto
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
 
-TRIGGER_DURATION_US = 10000
+SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 TIME_CONSTANT_US = int(1e6) * 1
 
@@ -33,7 +33,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.signal_out_request.signal_out = generate_signal_out_command(1, 0, 2, TRIGGER_DURATION_US)
+        self.signal_out_request.signal_out = generate_signal_out_command(1, 0, 2, SIGNAL_OUT_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
