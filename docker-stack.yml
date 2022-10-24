@@ -73,10 +73,11 @@ services:
 
   fpga_bridge_wrapper:
     image: docker
-    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env FPGA_BRIDGE_BITFILE okahilak/mtms:fpga_bridge'
+    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:fpga_bridge'
     environment:
       - ROS_LOG_LEVEL=info
-      - FPGA_BRIDGE_BITFILE=NiFpga_mtms_0_3_0.lvbitx
+      - BITFILE=NiFpga_mTMS_Tubingen_0.4.2.lvbitx
+      - BITFILE_SIGNATURE=325DE9B3E0A386F7E898A899A8287C0E
     volumes:
       # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
@@ -131,6 +132,15 @@ services:
         published: 9090
         protocol: tcp
         mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  targeting:
+    image: okahilak/mtms:targeting
+    environment:
+      - ROS_LOG_LEVEL=info
     deploy:
       placement:
         constraints:
