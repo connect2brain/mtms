@@ -36,7 +36,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             if number_of_pulses > obj.window_size
                 number_of_pulses = 20;
             end
-            obj.commands = repmat(create_command(0, "pulse_event", 0), number_of_pulses, 1);
+            obj.commands = repmat(create_command(0, "pulse_event", 1, 0, 0), number_of_pulses, 1);
 
             obj.events_sent = uint32(0);
             
@@ -47,7 +47,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         function set_commands(obj, commands)
             number_of_events = size(commands, 2);
             if number_of_events > 0
-                obj.commands = repmat(create_command(0, "pulse_event", 0), number_of_events, 1);
+                obj.commands = repmat(create_command(0, "pulse_event", 1, 0, 0), number_of_events, 1);
                 for i=1:number_of_events
                     obj.commands(i) = commands(i);
                 end

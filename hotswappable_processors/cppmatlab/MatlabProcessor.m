@@ -14,15 +14,14 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
         lpf
         bpf
-        
-        c3_file_id
-        ampl_file_id
-        phase_file_id
-        lpf_file_id
 
         estimated
         samples_collected
         print_c3
+
+        isi_samples
+        isi_seconds
+
     end
 
     methods
@@ -48,28 +47,31 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.print_c3 = false;
             obj.samples_collected = 0;
 
-            obj.c3_file_id = fopen('data.csv', 'w');
-            obj.ampl_file_id = fopen('amplitudes.csv', 'w');
-            obj.phase_file_id = fopen('phases.csv', 'w');
-            obj.lpf_file_id = fopen('lpf.csv', 'w');
-
-            fprintf(obj.c3_file_id, 'c3\n');
-            fprintf(obj.ampl_file_id, 'estimated_amplitude\n');
-            fprintf(obj.phase_file_id, 'estimated_phase\n');
-            fprintf(obj.lpf_file_id, 'lpf\n');
+            obj.isi_seconds = 2;
+            obj.isi_samples = obj.FS * obj.isi_seconds;
+            
         end
         function on_init_experiment(obj)
             obj.commands = [];
         end
-        function on_data_received(obj, channel_data, time, first_sample_of_experiment)
-            c3 = channel_data(5) - 0.25 * (channel_data(21) + channel_data(23) + channel_data(25) + channel_data(27));
-            obj.enqueue(c3);
+        function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
+            if obj.estimated && obj.samples_collected == obj.isi_samples
+                obj.estimated = false;
+                obj.samples_collected = 0;
+            end
+
+            if ~obj.estimated
+                c3 = channel_data(5) - 0.25 * (channel_data(21) + channel_data(23) + channel_data(25) + channel_data(27));
+                obj.enqueue(c3);
+            end
+
             obj.samples_collected = obj.samples_collected + 1;
 
             if ~obj.estimated && mod(obj.samples_collected, 100) == 0
                 fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
             end
             
+
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
                 data = obj.data(1:2500);
 
@@ -83,16 +85,23 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 downsampled = data(1:10:end);
 
                 fprintf("Phastimating\n");
+                tic
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
-                obj.estimated = true;
-                
+                toc
+
                 nof_estimated_samples = numel(estimated_phases);
-                future_samples = estimated_phases(nof_estimated_samples / 2:end);
+                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
 
                 [~, index_of_peak] = min(abs(future_samples - 0));
-                event_time = time_us + index_of_peak * (1 / obj.FS);
-                pulse_event = create_command(obj.events_sent, "pulse", event_time, 500);
+                
+                event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
+
+                pulse_event = create_command(obj.events_sent, "pulse", 1, event_time, 500);
                 obj.set_commands(pulse_event);
+                fprintf("Timed pulse at %d\n", event_time);
+                
+                obj.estimated = true;
+
             else
                 obj.set_commands([]);
             end
