@@ -76,7 +76,8 @@ services:
     command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:fpga_bridge'
     environment:
       - ROS_LOG_LEVEL=info
-      - BITFILE=NiFpga_mTMS_Tubingen_0.4.1.lvbitx
+      - BITFILE=NiFpga_mTMS_Tubingen_0.4.2.lvbitx
+      - BITFILE_SIGNATURE=325DE9B3E0A386F7E898A899A8287C0E
     volumes:
       # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
