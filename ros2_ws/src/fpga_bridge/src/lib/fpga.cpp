@@ -19,20 +19,27 @@ bool init_fpga() {
 
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
 
-  auto bitfile = std::getenv("FPGA_BRIDGE_BITFILE");
-  auto bitfile_directory = std::getenv("FPGA_BRIDGE_BITFILE_DIRECTORY");
+  auto bitfile = std::getenv("BITFILE");
+  auto bitfile_directory = std::getenv("BITFILE_DIRECTORY");
+  auto bitfile_signature = std::getenv("BITFILE_SIGNATURE");
 
   if (!bitfile || !bitfile_directory) {
     RCLCPP_ERROR(rclcpp::get_logger("run_fpga"),
-                 "No FPGA bitfile found from path. Ensure FPGA_BRIDGE_BITFILE and FPGA_BRIDGE_BITFILE_DIRECTORY environment variables are set.");
+                 "No BITFILE or BITFILE_DIRECTORY environment variable set.");
+    return false;
+  }
+  if (!bitfile_signature) {
+    RCLCPP_ERROR(rclcpp::get_logger("run_fpga"),
+                 "No BITFILE_SIGNATURE environment variable set.");
     return false;
   }
 
-  std::string bitfile_path = std::string(bitfile_directory) + std::string(bitfile);
+  std::string bitfile_path_str = std::string(bitfile_directory) + "/" + std::string(bitfile);
+  std::string bitfile_signature_str = std::string(bitfile_signature);
 
   NiFpga_MergeStatus(&status, NiFpga_Open(
-      bitfile_path.c_str(),
-      NiFpga_mTMS_Signature,
+      bitfile_path_str.c_str(),
+      bitfile_signature_str.c_str(),
       "PXI1Slot4",
       NiFpga_OpenAttribute_NoRun,
       &session));

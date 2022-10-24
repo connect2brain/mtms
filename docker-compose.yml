@@ -36,6 +36,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+    # The container needs to be privileged to set real-time priority.
     privileged: true
 
   eeg_bridge:
@@ -46,13 +47,14 @@ services:
       dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
     env_file:
       - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
     privileged: true
 
   fpga_bridge:
     build:
       context: .
       dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
-    # The container needs to be privileged to access FPGA
+    # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
       - ${ENV_FILE}
@@ -91,7 +93,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    # Requires by linux when opening projects, otherwise segfaults
+    # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
 
   efield:
@@ -109,6 +111,16 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: "host"
 
   trigger_controller:
     build:

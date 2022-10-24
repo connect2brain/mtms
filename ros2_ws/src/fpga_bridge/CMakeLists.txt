@@ -25,65 +25,20 @@ target_include_directories(run_fpga
 
 ament_target_dependencies(run_fpga rclcpp std_msgs fpga_interfaces)
 
-# Install discharge controller bridge.
+# Install system state bridge.
 
-add_executable(discharge_controller_bridge
-  src/nodes/discharge_controller_bridge.cpp
-  src/lib/fpga.cpp
-  src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(discharge_controller_bridge
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(discharge_controller_bridge rclcpp std_msgs fpga_interfaces)
-
-# Install safety monitor bridge.
-
-add_executable(safety_monitor_bridge
-  src/nodes/safety_monitor_bridge.cpp
-  src/lib/fpga.cpp
-  src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(safety_monitor_bridge
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(safety_monitor_bridge rclcpp std_msgs fpga_interfaces)
-
-# Install system state monitor bridge.
-
-add_executable(system_state_monitor_bridge
-        src/nodes/system_state_monitor_bridge.cpp
+add_executable(system_state_bridge
+        src/nodes/system_state_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
         src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(system_state_monitor_bridge
+target_include_directories(system_state_bridge
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_monitor_bridge rclcpp std_msgs fpga_interfaces)
-
-# Install status monitor bridge.
-
-add_executable(status_monitor_bridge
-        src/nodes/status_monitor_bridge.cpp
-        src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(status_monitor_bridge
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(status_monitor_bridge rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs fpga_interfaces)
 
 # Install start device handler.
 
@@ -165,69 +120,69 @@ target_include_directories(disable_checks_handler
 
 ament_target_dependencies(disable_checks_handler rclcpp std_msgs fpga_interfaces)
 
-# Install stimulation pulse event handler.
+# Install pulse handler.
 
-add_executable(stimulation_pulse_event_handler
-  src/nodes/stimulation_pulse_event_handler.cpp
+add_executable(pulse_handler
+  src/nodes/pulse_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(stimulation_pulse_event_handler
+target_include_directories(pulse_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stimulation_pulse_event_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(pulse_handler rclcpp std_msgs fpga_interfaces)
 
-# Install trigger out pulse event handler.
+# Install signal out handler.
 
-add_executable(trigger_out_event_handler
-  src/nodes/trigger_out_event_handler.cpp
+add_executable(signal_out_handler
+  src/nodes/signal_out_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(trigger_out_event_handler
+target_include_directories(signal_out_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(trigger_out_event_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(signal_out_handler rclcpp std_msgs fpga_interfaces)
 
-# Install charge event handler.
+# Install charge handler.
 
-add_executable(charge_event_handler
-  src/nodes/charge_event_handler.cpp
+add_executable(charge_handler
+  src/nodes/charge_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(charge_event_handler
+target_include_directories(charge_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(charge_event_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(charge_handler rclcpp std_msgs fpga_interfaces)
 
-# Install discharge event handler.
+# Install discharge handler.
 
-add_executable(discharge_event_handler
-  src/nodes/discharge_event_handler.cpp
+add_executable(discharge_handler
+  src/nodes/discharge_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(discharge_event_handler
+target_include_directories(discharge_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(discharge_event_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(discharge_handler rclcpp std_msgs fpga_interfaces)
 
 # Install send event trigger handler.
 
@@ -275,20 +230,20 @@ ament_target_dependencies(settings_handler rclcpp std_msgs fpga_interfaces)
 
 install(TARGETS
   run_fpga
-  #discharge_controller_bridge
-  #safety_monitor_bridge
-  status_monitor_bridge
+  system_state_bridge
+
   start_device_handler
   stop_device_handler
   start_experiment_handler
   stop_experiment_handler
-  charge_event_handler
-  discharge_event_handler
-  stimulation_pulse_event_handler
-  trigger_out_event_handler
+
+  charge_handler
+  discharge_handler
+  pulse_handler
+  signal_out_handler
+
   event_trigger_handler
   feedback_monitor_bridge
-  system_state_monitor_bridge
   disable_checks_handler
   settings_handler
   DESTINATION lib/${PROJECT_NAME})
