@@ -247,6 +247,14 @@ class MTMSApi:
                 target_voltage=target_voltage,
             )
 
+    def send_instant_full_discharge_to_all_channels(self, starting_id=1):
+        target_voltages = self.N_CHANNELS * [0]
+
+        self.send_instant_discharge_to_all_channels(
+            target_voltages=target_voltages,
+            starting_id=starting_id,
+        )
+
     def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1):
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
