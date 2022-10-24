@@ -106,19 +106,19 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
         event.target_voltage = field_value[0];
 
       } else if (field_name == "event") {
-        matlab::data::StructArray event = events_struct_array[event_index][field];
-        auto sub_struct_fields = event.getFieldNames();
+        matlab::data::StructArray event_info = events_struct_array[event_index][field];
+        auto sub_struct_fields = event_info.getFieldNames();
         std::vector<matlab::data::MATLABFieldIdentifier> sub_struct_field_names(sub_struct_fields.begin(),
                                                                                 sub_struct_fields.end());
 
         for (auto sub_struct_field: sub_struct_field_names) {
           auto sub_struct_field_name = sub_struct_field.operator std::string();
           if (sub_struct_field_name == "id") {
-            matlab::data::TypedArrayRef<uint16_t> field_value = event[0][sub_struct_field];
+            matlab::data::TypedArrayRef<uint16_t> field_value = event_info[0][sub_struct_field];
             event.b_event.id = field_value[0];
 
           } else if (sub_struct_field_name == "execution_condition") {
-            matlab::data::TypedArrayRef<uint8_t> field_value = event[0][sub_struct_field];
+            matlab::data::TypedArrayRef<uint8_t> field_value = event_info[0][sub_struct_field];
             event.b_event.execution_condition = field_value[0];
 
           } else if (sub_struct_field_name == "time") {
