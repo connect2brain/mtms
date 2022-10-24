@@ -19,7 +19,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
 
   auto trigger_subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Trigger> message) -> void {
     if (message->index == 1) {
-      trigger_out_client->async_send_request(req);
+      signal_out_client->async_send_request(req);
     } else if (message->index == 2) {
 
       if (index < durations.size()) {
@@ -52,17 +52,17 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
                                                                                   10,
                                                                                   trigger_subscription_callback);
 
-  trigger_out_client = this->create_client<fpga_interfaces::srv::SendTriggerOutEvent>("/fpga/send_trigger_out_event");
+  signal_out_client = this->create_client<fpga_interfaces::srv::SendSignalOut>("/fpga/send_signal_out");
 
-  req = std::make_shared<fpga_interfaces::srv::SendTriggerOutEvent::Request>();
-  auto event = fpga_interfaces::msg::TriggerOutEvent();
-  event.index = 3;
+  req = std::make_shared<fpga_interfaces::srv::SendSignalOut::Request>();
+  auto event = fpga_interfaces::msg::SignalOut();
+  event.port = 3;
   event.duration_us = 10000;
-  event.event_info.time_us = 0;
-  event.event_info.execution_condition = 2;
-  event.event_info.event_id = 1;
+  event.event.time_us = 0;
+  event.event.execution_condition = 2;
+  event.event.id = 1;
 
-  req->trigger_out_event = event;
+  req->signal_out = event;
 
   f.open(filename, std::ios::out | std::ios::trunc);
 

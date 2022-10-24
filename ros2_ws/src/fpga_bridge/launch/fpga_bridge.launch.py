@@ -17,20 +17,20 @@ def generate_launch_description():
 
     node_executables = [
         "run_fpga",
-        #"safety_monitor_bridge",
-        #"discharge_controller_bridge",
+
         "start_device_handler",
         "stop_device_handler",
         "start_experiment_handler",
         "stop_experiment_handler",
-        "stimulation_pulse_event_handler",
-        "trigger_out_event_handler",
-        "charge_event_handler",
-        "discharge_event_handler",
+
+        "pulse_handler",
+        "signal_out_handler",
+        "charge_handler",
+        "discharge_handler",
+
         "event_trigger_handler",
         "feedback_monitor_bridge",
-        "system_state_monitor_bridge",
-        "status_monitor_bridge",
+        "system_state_bridge",
         "disable_checks_handler",
         "settings_handler"
     ]

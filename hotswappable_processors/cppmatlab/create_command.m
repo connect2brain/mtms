@@ -1,7 +1,7 @@
-function command = create_command(event_id, event_type, target_voltage)
-    event_info.event_id = uint16(event_id);
-    event_info.execution_condition = uint8(2);
-    event_info.time_us = uint64(69999);
+function command = create_command(id, event_type, target_voltage)
+    event.id = uint16(id);
+    event.execution_condition = uint8(2);
+    event.time_us = uint64(69999);
     
     piece1.mode = uint8(0);
     piece1.duration_in_ticks = uint16(200);
@@ -13,11 +13,11 @@ function command = create_command(event_id, event_type, target_voltage)
     pieces = [piece1, piece2, piece3];
     
     command.channel = uint8(5);
-    command.event_info = event_info;
+    command.event = event;
     command.pieces = pieces;
     if event_type == "pulse_event"
         command.event_type = uint8(0);
-    elseif event_type == "charge_event"
+    elseif event_type == "charge"
         command.event_type = uint8(1);
     else
         command.event_type = uint8(2);
@@ -26,6 +26,6 @@ function command = create_command(event_id, event_type, target_voltage)
     command.target_voltage = uint16(target_voltage);
     
     coder.cstructname(command, 'matlab_fpga_event');
-    coder.cstructname(command.event_info, 'event_info');
-    coder.cstructname(command.pieces, 'stimulation_pulse_piece');
+    coder.cstructname(command.event, 'event');
+    coder.cstructname(command.pieces, 'pulse_piece');
 end

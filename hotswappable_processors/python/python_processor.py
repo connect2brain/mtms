@@ -1,4 +1,4 @@
-from .base_python_processor import BaseProcessor, ChargeEvent, EventType, StimulationEvent
+from .base_python_processor import BaseProcessor, Charge, EventType, Pulse
 
 
 class Processor(BaseProcessor):
@@ -16,8 +16,8 @@ class Processor(BaseProcessor):
 
     def data_received(self, data, time_us, first_sample_of_experiment):
         self.eeg_data_index += 1
-        event_info = {
-            "event_id": 69,
+        event = {
+            "id": 69,
             "execution_condition": 3,
             "time_us": 100 * self.eeg_data_index
         }
@@ -35,7 +35,7 @@ class Processor(BaseProcessor):
                 "duration_in_ticks": 500
             }
         ]
-        # charge_event = ChargeEvent(3, 1200, event_info, EventType.CHARGE_EVENT.value)
-        # return [charge_event, charge_event, charge_event]
-        pulse_event = StimulationEvent(3, pieces, event_info, EventType.STIMULATION_PULSE_EVENT.value)
-        return [pulse_event]
+        # charge = Charge(3, 1200, event, EventType.CHARGE.value)
+        # return [charge, charge, charge]
+        pulse = Pulse(3, pieces, event, EventType.PULSE.value)
+        return [pulse]

@@ -27,7 +27,7 @@ classdef PeakMatlabProcessor < AbstractMatlabProcessor
             end
             
             pulse = create_command(obj.events_sent + 1, "pulse_event", 0);
-            charge = create_command(obj.events_sent + 2, "charge_event", 1200);
+            charge = create_command(obj.events_sent + 2, "charge", 1200);
             obj.set_commands([pulse, charge]);
         end
         function on_end_experiment(obj)
