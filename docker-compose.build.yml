@@ -46,7 +46,6 @@ services:
       context: .
       dockerfile: ros2_ws/src/planner/Dockerfile.prod
 
-
   pulse_sequence_controller:
     build:
       context: .
@@ -56,3 +55,8 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/rosbridge/Dockerfile
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/Dockerfile

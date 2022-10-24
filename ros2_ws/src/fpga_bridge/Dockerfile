@@ -48,6 +48,6 @@ RUN chmod +x ros_entrypoint.sh
 
 COPY bitfiles/ /app/ros2_ws/bitfiles/
 
-ENV FPGA_BRIDGE_BITFILE_DIRECTORY=/app/ros2_ws/bitfiles/
+ENV BITFILE_DIRECTORY=/app/ros2_ws/bitfiles/
 
 ENTRYPOINT ["./ros_entrypoint.sh"]

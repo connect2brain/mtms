@@ -36,15 +36,25 @@ public:
   }
 
 private:
+  /* HACK: There are essentially two ways to pass event feedback from FPGA, one is handled by read_fifo_and_publish
+           function below (used by pulse, discharge, and signal out events), and the other is handled by
+           read_non_multiplexed_fifo_and_publish.
 
-  void read_fifo_and_publish(NiFpga_mTMS_TargetToHostFifoU8 fifo,
+           They should be unified on the FPGA. The ideal way to do that might be drop the channel information and
+           send feedback for all event types in the way it is done with charging at the moment. However, to
+           confirm that, more SW components needs to be written that use the event feedback data. (Note that
+           channel is already disregarded so that we are able to use a single ROS message type for all event
+           feedback.) */
+
+  void read_fifo_and_publish(std::string event_type,
+                             NiFpga_mTMS_TargetToHostFifoU8 fifo,
                              std::map<uint8_t, std::vector<uint8_t>> map,
-                             std::string event_type) {
+                             rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
     size_t elements_remaining = 0;
     NiFpga_Status read_status;
     std::vector<uint8_t> data(2);
 
-    //start by checking if there is enough data in the fifo
+    // Start by checking if there is enough data in the FIFO.
     read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 0, NiFpga_InfiniteTimeout,
                                     &elements_remaining);
     if (NiFpga_IsError(read_status)) {
@@ -64,7 +74,7 @@ private:
 
       uint8_t channel = data[0];
 
-      //if key does not exist in map yet, add the key and
+      // If a key does not exist in map yet, add the key.
       if (map.find(channel) == map.end()) {
         std::vector<uint8_t> message_data;
         map.insert(std::make_pair(channel, message_data));
@@ -72,44 +82,69 @@ private:
 
       map[channel].push_back(data[1]);
 
-      //a whole message has been read
+      // A whole message has been read.
       if (map[channel].size() > 2) {
-        auto event_id = map[channel][0] * 256 + map[channel][1];
+        uint16_t id = map[channel][0] * 256 + map[channel][1];
         uint8_t status_code = map[channel][2];
-        publish_feedback(event_type, channel, event_id, status_code);
+        publish_feedback(event_type, id, status_code, publisher);
       }
-
     }
-
   }
 
-  void publish_feedback(std::string event_type, uint8_t channel, int event_id, uint8_t status_code) {
-    fpga_interfaces::msg::Feedback feedback;
-    feedback.channel = channel;
-    feedback.event_id = event_id;
-    feedback.status = status_code;
+  void read_non_multiplexed_fifo_and_publish(std::string event_type,
+                                             NiFpga_mTMS_TargetToHostFifoU8 fifo,
+                                             rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+    size_t elements_remaining = 0;
+    NiFpga_Status read_status;
+    std::vector<uint8_t> data(3);
 
-    RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
-                "Publishing data to %s feedback: {channel: %d, event_id: %d, status: %d}", event_type.data(),
-                channel, event_id, status_code);
-
-    if (event_type == "Pulse") {
-      pulse_feedback_publisher_->publish(feedback);
-    } else if (event_type == "Charge") {
-      charge_feedback_publisher_->publish(feedback);
-    } else if (event_type == "Discharge") {
-      discharge_feedback_publisher_->publish(feedback);
-    } else {
-      signal_out_feedback_publisher_->publish(feedback);
+    // Start by checking if there is enough data in the FIFO.
+    read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 0, NiFpga_InfiniteTimeout,
+                                    &elements_remaining);
+    if (NiFpga_IsError(read_status)) {
+      RCLCPP_ERROR(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d", read_status);
+      return;
     }
 
+    while (elements_remaining > 2) {
+      read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 3, NiFpga_InfiniteTimeout,
+                                      &elements_remaining);
+
+      if (NiFpga_IsError(read_status)) {
+        RCLCPP_ERROR(rclcpp::get_logger("feedback_monitor_bridge"), "Error reading data from fifo %d",
+                     read_status);
+        return;
+      }
+
+      uint16_t id = data[0] * 256 + data[1];
+      uint8_t status_code = data[2];
+      publish_feedback(event_type, id, status_code, publisher);
+    }
+  }
+
+  void publish_feedback(std::string event_type,
+                        uint16_t id,
+                        uint8_t status_code,
+                        rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+
+    fpga_interfaces::msg::Feedback feedback;
+    feedback.id = id;
+    feedback.status_code = status_code;
+
+    RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
+                "Publishing data to %s feedback: {id: %d, status: %d}",
+                event_type.data(),
+                id,
+                status_code);
+
+    (*publisher)->publish(feedback);
   }
 
   void update_feedback_topics() {
-    read_fifo_and_publish(pulse_feedback_fifo, pulse_data, "Pulse");
-    read_fifo_and_publish(charge_feedback_fifo, charge_data, "Charge");
-    read_fifo_and_publish(discharge_feedback_fifo, discharge_data, "Discharge");
-    read_fifo_and_publish(signal_out_feedback_fifo, signal_out_data, "Signal out");
+    read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data, &pulse_feedback_publisher_);
+    read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data, &discharge_feedback_publisher_);
+    read_fifo_and_publish("Signal out", signal_out_feedback_fifo, signal_out_data, &signal_out_feedback_publisher_);
+    read_non_multiplexed_fifo_and_publish("Charge", charge_feedback_fifo, &charge_feedback_publisher_);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -120,7 +155,6 @@ private:
 
   //channel index, data
   std::map<uint8_t, std::vector<uint8_t>> pulse_data = {};
-  std::map<uint8_t, std::vector<uint8_t>> charge_data = {};
   std::map<uint8_t, std::vector<uint8_t>> discharge_data = {};
   std::map<uint8_t, std::vector<uint8_t>> signal_out_data = {};
 };

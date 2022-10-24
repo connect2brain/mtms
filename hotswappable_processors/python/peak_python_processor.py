@@ -1,4 +1,4 @@
-from .base_python_processor import BaseProcessor, charge_event, discharge_event, pulse_event
+from .base_python_processor import BaseProcessor, Charge, Discharge, Pulse
 from .thresholding import RealtimePeakDetection
 
 
@@ -64,6 +64,6 @@ class Processor(BaseProcessor):
         #    self.file.write(f"{c3},{filtered},{peak_mark}\n")
 
         # if send_pulse:
-        #    return [pulse_event]
+        #    return [pulse]
 
-        return [charge_event]
+        return [charge]
