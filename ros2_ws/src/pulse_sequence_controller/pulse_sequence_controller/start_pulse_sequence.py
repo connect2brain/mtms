@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.srv import StartPulseSequence
-from fpga_interfaces.msg import StimulationPulseEvent, EventInfo
+from fpga_interfaces.msg import Pulse, Event
 from .pulses import generate_pulse, pulse_duration_in_us
 from .testResult import TestResult
 
@@ -98,11 +98,11 @@ class StartPulseSequenceNode(Node):
     def calculate_time_us(self, train_interval, burst_interval, stimulus_interval):
         return int(self.start_time + self.start_delay + train_interval + burst_interval + stimulus_interval)
 
-    def send_stimulation_pulse_event(self, event):
+    def send_pulse(self, event):
         self.get_logger().info('SENDING: ' + str(event))
 
-    def send_charge_event(self, channel_info):
-        charge_event = {
+    def send_charge(self, channel_info):
+        charge = {
             'channel': channel_info.channel_index,
             'voltage': channel_info.voltage
         }
@@ -122,9 +122,9 @@ class StartPulseSequenceNode(Node):
         # TODO: wait for charging to finish. Loop until FPGA publishes to a topic that all channels are ready or
         #  until async (or sync?) service calls finish?
         for channel_info in pulse_sequence.channel_info:
-            self.send_charge_event(channel_info)
+            self.send_charge(channel_info)
 
-        event_id = 0
+        id = 0
         train_interval = 0
         burst_interval = 0
 
@@ -144,21 +144,22 @@ class StartPulseSequenceNode(Node):
                         # isi for the first pulse is 0 as there are no preceding pulses to "wait" for
                         isi = 0 if pulse_index == 0 else pulse_sequence.isis[pulse_index - 1]
 
-                        event_info = EventInfo()
-                        event_info.event_id = event_id
-                        event_info.wait_for_trigger = False
-                        event_info.time_us = self.calculate_time_us(train_interval, burst_interval, isi)
-                        event_info.delay_us = 0
+                        event = Event()
+                        event.id = id
+                        # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
+                        event.wait_for_trigger = False
+                        event.time_us = self.calculate_time_us(train_interval, burst_interval, isi)
+                        event.delay_us = 0
 
-                        stimulation_pulse_event = StimulationPulseEvent()
-                        stimulation_pulse_event.pieces = pulse
-                        stimulation_pulse_event.channel = channel_index
-                        stimulation_pulse_event.event_info = event_info
+                        pulse = Pulse()
+                        pulse.pieces = pulse
+                        pulse.channel = channel_index
+                        pulse.event = event
 
-                        self.send_stimulation_pulse_event(stimulation_pulse_event)
-                        sequence.append(stimulation_pulse_event)
+                        self.send_pulse(pulse)
+                        sequence.append(pulse)
 
-                        event_id += 1
+                        id += 1
                 burst_interval += pulse_sequence.ibi
 
             train_interval += pulse_sequence.iti

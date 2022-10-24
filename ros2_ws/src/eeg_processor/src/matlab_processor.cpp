@@ -105,25 +105,25 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
         matlab::data::TypedArrayRef<uint16_t> field_value = events_struct_array[event_index][field];
         event.target_voltage = field_value[0];
 
-      } else if (field_name == "event_info") {
-        matlab::data::StructArray event_info = events_struct_array[event_index][field];
-        auto sub_struct_fields = event_info.getFieldNames();
+      } else if (field_name == "event") {
+        matlab::data::StructArray event = events_struct_array[event_index][field];
+        auto sub_struct_fields = event.getFieldNames();
         std::vector<matlab::data::MATLABFieldIdentifier> sub_struct_field_names(sub_struct_fields.begin(),
                                                                                 sub_struct_fields.end());
 
         for (auto sub_struct_field: sub_struct_field_names) {
           auto sub_struct_field_name = sub_struct_field.operator std::string();
-          if (sub_struct_field_name == "event_id") {
-            matlab::data::TypedArrayRef<uint16_t> field_value = event_info[0][sub_struct_field];
-            event.b_event_info.event_id = field_value[0];
+          if (sub_struct_field_name == "id") {
+            matlab::data::TypedArrayRef<uint16_t> field_value = event[0][sub_struct_field];
+            event.b_event.id = field_value[0];
 
           } else if (sub_struct_field_name == "execution_condition") {
-            matlab::data::TypedArrayRef<uint8_t> field_value = event_info[0][sub_struct_field];
-            event.b_event_info.execution_condition = field_value[0];
+            matlab::data::TypedArrayRef<uint8_t> field_value = event[0][sub_struct_field];
+            event.b_event.execution_condition = field_value[0];
 
           } else if (sub_struct_field_name == "time_us") {
-            matlab::data::TypedArrayRef<uint64_t> field_value = event_info[0][sub_struct_field];
-            event.b_event_info.time_us = field_value[0];
+            matlab::data::TypedArrayRef<uint64_t> field_value = event[0][sub_struct_field];
+            event.b_event.time_us = field_value[0];
 
           } else {
             std::cout << "unknown event type" << std::endl;
