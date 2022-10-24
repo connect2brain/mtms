@@ -50,16 +50,6 @@ services:
     # The container needs to be privileged to set real-time priority.
     privileged: true
 
-  targeting:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/targeting/Dockerfile
-    env_file:
-      - ${ENV_FILE}
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
-    network_mode: "host"
-
   fpga_bridge:
     build:
       context: .
@@ -121,6 +111,16 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: "host"
 
   trigger_controller:
     build:
