@@ -14,6 +14,16 @@ class MTMSApi:
     # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
 
+    # TIME_EPSILON is used to implement events that are to be executed instantly but
+    # wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
+    # and execute all the events at that time.
+    #
+    # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
+    # the mTMS device, but not too large so that the events are not executed 'instantly'.
+    # Settle for 0.1 s (100 ms) for now, but change if needed.
+    #
+    TIME_EPSILON = 0.1
+
     def __init__(self):
         rclpy.init(args=None)
         self.node = MTMSApiNode()
@@ -273,6 +283,17 @@ class MTMSApi:
                 waveform=waveform,
                 reverse_polarity=reverse_polarity,
             )
+
+    def send_instant_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1):
+        execution_condition = ExecutionCondition.TIMED
+        time = self.get_time() + self.TIME_EPSILON
+
+        self.send_default_pulse_to_all_channels(
+            reverse_polarities=reverse_polarities,
+            execution_condition=execution_condition,
+            time=time,
+            starting_id=starting_id,
+        )
 
     # Other
 
