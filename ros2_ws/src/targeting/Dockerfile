@@ -19,7 +19,7 @@ COPY ros2_ws/src/mtms_interfaces ros2_ws/src/mtms_interfaces/
 
 WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
-    colcon build --symlink-install
+    colcon build
 
 # Copy data files
 COPY ros2_ws/src/targeting/data/targeting.csv .

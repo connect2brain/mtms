@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-COPY ros2_ws/src/eeg_bridge/ros_entrypoint.sh .
+COPY ros2_ws/src/targeting/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
