@@ -4,6 +4,7 @@ import { EegBatch, EegBatchMessage, EegDatapoint, EegDatapointMessage, EegTrigge
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { addBatch, addEegDatapoint, addEegTrigger, setEeg } from 'reducers/eegReducer'
 import { Datapoint, EegChartSteaming } from '../components/EegChartStreaming'
+import { WebGLPlot } from '../components/WebGLPlot'
 
 const DataVisualize = () => {
   const { eeg } = useAppSelector((state) => state.eegData)
@@ -19,7 +20,7 @@ const DataVisualize = () => {
 
   useEffect(() => {
     console.log('Subscribing to eeg data')
-    eegDataSubscriber.subscribe(newEegBatch)
+    eegDataSubscriber.subscribe(newEegBatchWebGL)
     triggerSubscriber.subscribe(newTrigger)
   }, [])
 
@@ -34,11 +35,38 @@ const DataVisualize = () => {
         x: Math.round(time),
       }
     })
+
     setLatestBatch(mappedData)
   }
 
+  const newEegBatchWebGL = (message: EegBatchMessage) => {
+    let max = 0
+    let s = 0
+    const data = []
+    for (let i = 0; i < message.batch.length; i++) {
+      const point = message.batch[i]
+      const filtered = c3(point.channel_datapoint)
+      if (filtered> max) {
+        max = filtered
+      }
+      s += filtered
+      data.push(filtered)
+    }
+
+    const avg = s / message.batch.length
+
+    const scaledData = data.map(point => {
+      return {
+        x: 0,
+        y: (point - avg) / max * 50
+      }
+    })
+
+    setLatestBatch(scaledData)
+  }
+
   const newTrigger = (message: EegTriggerMessage) => {
-    console.log(message)
+    //console.log('Trigger received')
     setTrigger({
       y: 100000,
       x: message.time,
@@ -47,7 +75,8 @@ const DataVisualize = () => {
 
   return (
     <div>
-      <EegChartSteaming eegData={latestBatch} triggerData={trigger} />
+      {/*<EegChartSteaming eegData={latestBatch} triggerData={trigger} />*/}
+      <WebGLPlot eegData={latestBatch} triggerData={trigger} />
     </div>
   )
 }
