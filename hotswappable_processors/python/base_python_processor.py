@@ -4,37 +4,37 @@ import numpy as np
 from enum import Enum
 
 
-class StimulationEvent:
-    def __init__(self, channel, pieces, event_info, event_type) -> None:
+class Pulse:
+    def __init__(self, channel, pieces, event, event_type) -> None:
         self.channel = channel
         self.pieces = pieces
-        self.event_info = event_info
+        self.event = event
         self.event_type = event_type
 
 
-class ChargeEvent:
-    def __init__(self, channel, target_voltage, event_info, event_type) -> None:
+class Charge:
+    def __init__(self, channel, target_voltage, event, event_type) -> None:
         self.channel = channel
         self.target_voltage = target_voltage
-        self.event_info = event_info
+        self.event = event
         self.event_type = event_type
 
 
-class DischargeEvent:
-    def __init__(self, channel, target_voltage, event_info, event_type) -> None:
+class Discharge:
+    def __init__(self, channel, target_voltage, event, event_type) -> None:
         self.channel = channel
         self.target_voltage = target_voltage
-        self.event_info = event_info
+        self.event = event
         self.event_type = event_type
 
 
 class EventType(Enum):
-    STIMULATION_PULSE_EVENT = 0
-    CHARGE_EVENT = 1
-    DISCHARGE_EVENT = 2
+    PULSE = 0
+    CHARGE = 1
+    DISCHARGE = 2
 
 
-event_type = "stimulation"
+event_type = "pulse"
 channel = 3
 pieces = [
     {
@@ -50,15 +50,15 @@ pieces = [
         "duration_in_ticks": 500
     }
 ]
-event_info = {
-    "event_id": 69,
+event = {
+    "id": 69,
     "execution_condition": 3,
     "time_us": 10392930
 }
 
-pulse_event = StimulationEvent(3, pieces, event_info, EventType.STIMULATION_PULSE_EVENT.value)
-charge_event = ChargeEvent(3, 1200, event_info, EventType.CHARGE_EVENT.value)
-discharge_event = DischargeEvent(3, 20, event_info, EventType.DISCHARGE_EVENT.value)
+pulse = Pulse(3, pieces, event, EventType.PULSE.value)
+charge = Charge(3, 1200, event, EventType.CHARGE.value)
+discharge = Discharge(3, 20, event, EventType.DISCHARGE.value)
 
 SAMPLING_RATE = 5000
 

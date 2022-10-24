@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Stimulation pulse event handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Pulse handler ready.");
 
   rclcpp::spin(node);
   rclcpp::shutdown();
