@@ -213,7 +213,7 @@ class MTMSApi:
 
     # Compound events
 
-    def charge_all_channels_instantly(self, target_voltages, starting_id=1):
+    def send_instant_charge_to_all_channels(self, target_voltages, starting_id=1):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -230,7 +230,7 @@ class MTMSApi:
                 target_voltage=target_voltage,
             )
 
-    def discharge_all_channels_instantly(self, target_voltages, starting_id=1):
+    def send_instant_discharge_to_all_channels(self, target_voltages, starting_id=1):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
