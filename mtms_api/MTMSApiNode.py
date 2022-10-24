@@ -66,6 +66,8 @@ class MTMSApiNode(Node):
         self.discharge_feedback_subscriber = self.create_subscription(Feedback, '/fpga/discharge_feedback', self.handle_discharge_feedback, 10)
         self.signal_out_feedback_subscriber = self.create_subscription(Feedback, '/fpga/signal_out_feedback', self.handle_signal_out_feedback, 10)
 
+        self.event_feedback = {}
+
     def call_service(self, client, request):
         self.future = client.call_async(request)
         rclpy.spin_until_future_complete(self, self.future)
@@ -146,6 +148,8 @@ class MTMSApiNode(Node):
             channel=channel,
         )
 
+        self.event_feedback[id] = None
+
         return value
 
     def send_charge(self, id, execution_condition, time_us, channel, target_voltage):
@@ -170,6 +174,8 @@ class MTMSApiNode(Node):
             event=event,
             channel=channel,
         )
+
+        self.event_feedback[id] = None
 
         return value
 
@@ -196,6 +202,8 @@ class MTMSApiNode(Node):
             channel=channel,
         )
 
+        self.event_feedback[id] = None
+
         return value
 
     def send_signal_out(self, id, execution_condition, time_us, port, duration_us):
@@ -221,21 +229,39 @@ class MTMSApiNode(Node):
             port=port,
         )
 
+        self.event_feedback[id] = None
+
         return value
 
     # Feedback
 
+    def update_event_feedback(self, feedback):
+        id = feedback.id
+        status_code = feedback.status_code
+
+        self.event_feedback[id] = status_code
+
+    def get_event_feedback(self, id):
+        if id not in self.event_feedback:
+            return None
+
+        return self.event_feedback[id]
+
     def handle_pulse_feedback(self, feedback):
         self.printer.print_feedback('Pulse', PulseError, feedback)
+        self.update_event_feedback(feedback)
 
     def handle_charge_feedback(self, feedback):
         self.printer.print_feedback('Charge', ChargeError, feedback)
+        self.update_event_feedback(feedback)
 
     def handle_discharge_feedback(self, feedback):
         self.printer.print_feedback('Discharge', DischargeError, feedback)
+        self.update_event_feedback(feedback)
 
     def handle_signal_out_feedback(self, feedback):
         self.printer.print_feedback('Signal out', SignalOutError, feedback)
+        self.update_event_feedback(feedback)
 
     # Targeting
 
