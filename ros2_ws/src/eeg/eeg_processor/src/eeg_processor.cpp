@@ -53,15 +53,27 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     auto fpga_events = processor->data_received(*message);
 
     auto stop = steady_clock::now();
+
+    send_fpga_events(fpga_events);
+
     auto total = duration_cast<microseconds>(stop - start);
-    //RCLCPP_INFO(this->get_logger(), "Duration: %lu us", total.count());
-    f << std::to_string(total.count()) << "\n";
+    //RCLCPP_INFO(this->get_logger(), "Processing took: %lu us", total.count());
+    //f << std::to_string(total.count()) << "\n";
 
   };
 
   eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
                                                                                         10,
                                                                                         subscription_callback);
+
+  pulse_client = this->create_client<fpga_interfaces::srv::SendPulse>("/fpga/send_pulse");
+  pulse_request = std::make_shared<fpga_interfaces::srv::SendPulse::Request>();
+
+  charge_client = this->create_client<fpga_interfaces::srv::SendCharge>("/fpga/send_charge");
+  charge_request = std::make_shared<fpga_interfaces::srv::SendCharge::Request>();
+
+  discharge_client = this->create_client<fpga_interfaces::srv::SendDischarge>("/fpga/send_discharge");
+  discharge_request = std::make_shared<fpga_interfaces::srv::SendDischarge::Request>();
 
   f.open(output_file_name, std::ios::out | std::ios::trunc);
 
@@ -71,6 +83,33 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     measure(loop_count);
   }
 
+}
+
+void EegProcessor::send_fpga_events(const std::vector<FpgaEvent> &events) {
+  for (const auto &event: events) {
+    switch (event.event_type) {
+      case PULSE:
+        pulse_request->pulse = event.pulse;
+        pulse_client->async_send_request(pulse_request);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga pulse event.");
+        break;
+
+      case CHARGE:
+        charge_request->charge = event.charge;
+        charge_client->async_send_request(charge_request);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga charge event.");
+        break;
+
+      case DISCHARGE:
+        discharge_request->discharge = event.discharge;
+        discharge_client->async_send_request(discharge_request);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga discharge event.");
+        break;
+
+      default:
+        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown fpga event type: %d", event.event_type);
+    }
+  }
 }
 
 void EegProcessor::measure(int repeats) {

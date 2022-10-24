@@ -7,9 +7,13 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "compiled_matlab_processor.h"
 #include "processor.h"
+
+#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "fpga_interfaces/srv/send_pulse.hpp"
+#include "fpga_interfaces/srv/send_charge.hpp"
+#include "fpga_interfaces/srv/send_discharge.hpp"
 
 #if defined(MATLAB_FOUND)
 
@@ -39,11 +43,20 @@ public:
 
 private:
   void measure(int repeats);
+  void send_fpga_events(const std::vector<FpgaEvent>& events);
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
   ProcessorWrapper *processor;
   std::fstream f;
+
+  rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
+
+  rclcpp::Client<fpga_interfaces::srv::SendPulse>::SharedPtr pulse_client;
+  std::shared_ptr<fpga_interfaces::srv::SendPulse::Request> pulse_request;
+  rclcpp::Client<fpga_interfaces::srv::SendCharge>::SharedPtr charge_client;
+  std::shared_ptr<fpga_interfaces::srv::SendCharge::Request> charge_request;
+  rclcpp::Client<fpga_interfaces::srv::SendDischarge>::SharedPtr discharge_client;
+  std::shared_ptr<fpga_interfaces::srv::SendDischarge::Request> discharge_request;
 };
 
 #endif //EEG_PROCESSOR_EEG_PROCESSOR_H
