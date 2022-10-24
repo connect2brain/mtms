@@ -14,14 +14,14 @@ TIME_CONSTANT_US = int(1e6) * 1
 class PulseGenerator(Node):
     def __init__(self):
         super().__init__('pulse_generator')
-        self.trigger_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
+        self.signal_out_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
         self.pulse_client = self.create_client(SendPulse, '/fpga/send_pulse')
         self.charge_client = self.create_client(SendCharge, '/fpga/send_charge')
         self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
-        self.trigger_request = SendSignalOut.Request()
+        self.signal_out_request = SendSignalOut.Request()
         self.pulse_request = SendPulse.Request()
         self.charge_request = SendCharge.Request()
 
@@ -33,7 +33,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.trigger_request.signal_out = generate_signal_out_command(1, 0, 2, TRIGGER_DURATION_US)
+        self.signal_out_request.signal_out = generate_signal_out_command(1, 0, 2, TRIGGER_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
@@ -64,8 +64,8 @@ class PulseGenerator(Node):
             self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event.id}")
 
     def timer_callback(self):
-        self.trigger_client.call_async(self.trigger_request)
-        self.get_logger().info(f"Sent trigger out for index {self.trigger_request.signal_out.port}")
+        self.signal_out_client.call_async(self.signal_out_request)
+        self.get_logger().info(f"Sent signal out for port {self.signal_out_request.signal_out.port}")
 
         for pulse in self.pulses:
             self.pulse_request.pulse = pulse
