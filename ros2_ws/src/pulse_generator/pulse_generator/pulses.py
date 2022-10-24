@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import EventInfo, StimulationPulsePiece, StimulationPulseEvent, ChargeEvent, TriggerOutEvent
+from fpga_interfaces.msg import Event, PulsePiece, Pulse, Charge, SignalOut
 
 US_TO_TICKS_CONVERSION_RATIO = 40
 
@@ -21,109 +21,110 @@ time_list = [
 
 # Generate standard pulse command, values in us
 
-def generate_trigger_out_command(index, time_us, execution_condition, duration):
-    event_info = EventInfo()
-    event_info.event_id = 1
-    event_info.execution_condition = execution_condition
-    event_info.time_us = time_us
+def generate_signal_out_command(port, time_us, execution_condition, duration):
+    event = Event()
+    event.id = 1
+    event.execution_condition = execution_condition
+    event.time_us = time_us
 
-    trigger_event = TriggerOutEvent()
-    trigger_event.index = index
-    trigger_event.duration_us = duration
-    trigger_event.event_info = event_info
+    signal_out = SignalOut()
+    signal_out.port = port
+    signal_out.duration_us = duration
+    signal_out.event = event
 
-    return trigger_event
+    return signal_out
 
 
 
 def generate_standard_pulse_command():
     assert len(mode_list) == len(time_list)
 
-    events = []
+    pulses = []
     for i, _ in enumerate(time_list):
         pieces = []
         for j, _ in enumerate(time_list[i]):
-            piece = StimulationPulsePiece()
+            piece = PulsePiece()
             piece.mode = mode_list[i][j]
             piece.duration_in_ticks = int(time_list[i][j] * US_TO_TICKS_CONVERSION_RATIO)
             pieces.append(piece)
 
-        event_info = EventInfo()
-        event_info.event_id = i
-        event_info.execution_condition = 2
-        event_info.time_us = 0
+        event = Event()
+        event.id = i
+        event.execution_condition = 2
+        event.time_us = 0
 
-        event = StimulationPulseEvent()
-        event.event_info = event_info
-        event.channel = i + 1
-        event.pieces = pieces
+        pulse = Pulse()
+        pulse.event = event
+        pulse.channel = i + 1
+        pulse.pieces = pieces
 
-        events.append(event)
+        pulses.append(pulse)
 
-    return events
+    return pulses
 
 WAIT = 10
 
 def generate_timed_pulses(count):
     assert len(mode_list) == len(time_list)
 
-    events = []
+    pulses = []
     for i in range(count):
         pieces = []
         for j, _ in enumerate(time_list[0]):
-            piece = StimulationPulsePiece()
+            piece = PulsePiece()
             piece.mode = mode_list[0][j]
             piece.duration_in_ticks = int(time_list[0][j] * US_TO_TICKS_CONVERSION_RATIO)
             pieces.append(piece)
 
-        event_info = EventInfo()
-        event_info.event_id = i
-        event_info.execution_condition = 0
-        event_info.time_us = int(1e6 * i + WAIT)
+        event = Event()
+        event.id = i
+        event.execution_condition = 0
+        event.time_us = int(1e6 * i + WAIT)
 
-        event = StimulationPulseEvent()
-        event.event_info = event_info
-        event.channel = 1
-        event.pieces = pieces
+        pulse = Pulse()
+        pulse.event = event
+        pulse.channel = 1
+        pulse.pieces = pieces
 
-        events.append(event)
+        pulses.append(pulse)
 
-    return events
+    return pulses
 
 
 def generate_timed_charges(count, voltage):
     assert len(mode_list) == len(time_list)
 
-    events = []
+    charges = []
     for i in range(count):
-        event_info = EventInfo()
-        event_info.event_id = i
-        event_info.execution_condition = 2
-        event_info.time_us = int(1e6 * i + 1e6/2 + WAIT)
+        event = Event()
+        event.id = i
+        event.execution_condition = 2
+        event.time_us = int(1e6 * i + 1e6/2 + WAIT)
 
-        event = ChargeEvent()
-        event.channel = 1
-        event.target_voltage = voltage
-        event.event_info = event_info
-        events.append(event)
+        charge = Charge()
+        charge.channel = 1
+        charge.target_voltage = voltage
+        charge.event = event
 
-    return events
+        charges.append(charge)
+
+    return charges
 
 
 
 def generate_standard_charge_command(voltage):
-    events = []
+    charges = []
     for i, _ in enumerate(time_list):
-        event_info = EventInfo()
-        event_info.event_id = i
-        event_info.execution_condition = 2
-        event_info.time_us = 0
+        event = Event()
+        event.id = i
+        event.execution_condition = 2
+        event.time_us = 0
 
-        event = ChargeEvent()
-        event.channel = i + 1
-        event.target_voltage = voltage
-        event.event_info = event_info
+        charge = Charge()
+        charge.channel = i + 1
+        charge.target_voltage = voltage
+        charge.event = event
 
-        events.append(event)
+        charges.append(charge)
 
-    return events
+    return charges

@@ -1,15 +1,16 @@
-from fpga_interfaces.msg import StimulationPulsePiece
+from fpga_interfaces.msg import PulsePiece
 
 fullEvent = {
-    'stimulation_pulse_event': {
+    'pulse': {
         'pieces': [
             {'mode': 4, 'duration_in_ticks': 10000},
             {'mode': 3, 'duration_in_ticks': 30000},
             {'mode': 2, 'duration_in_ticks': 50000}
         ],
         'channel': 2,
-        'event_info': {
-            'event_id': 20,
+        'event': {
+            'id': 20,
+            # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
             'wait_for_trigger': True,
             'time_us': 10000000,
             'delay_us': 0
@@ -28,7 +29,7 @@ TICK_DURATION_IN_US = 25
 
 
 def pulse_piece_from_dict(pulse_dict):
-    piece = StimulationPulsePiece()
+    piece = PulsePiece()
     piece.mode = pulse_dict['mode']
     piece.duration_in_ticks = pulse_dict['duration_in_ticks']
     return piece
