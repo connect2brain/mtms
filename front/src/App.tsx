@@ -6,11 +6,20 @@ import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
 import Experiment from './views/Experiment'
 import DataVisualize from './views/DataVisualize'
+import { ExperimentControl } from './components/ExperimentControl'
+import { SystemState } from './components/SystemState'
 
 function App() {
   return (
     <Providers>
       <Header>mTMS control panel</Header>
+
+      <Wrapper>
+        <ExperimentControl />
+        <SystemState />
+      </Wrapper>
+      <hr />
+
       <Wrapper>
         <Routes>
           <Route path='/' element={<Targets />} />
