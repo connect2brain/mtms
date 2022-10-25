@@ -32,9 +32,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
         "msg/state/ChannelState.msg"
         "msg/state/ChannelError.msg"
+        "msg/state/DeviceState.msg"
+        "msg/state/ExperimentState.msg"
+        "msg/state/StartupError.msg"
         "msg/state/SystemState.msg"
         "msg/state/SystemError.msg"
-        "msg/state/StartupError.msg"
 
         "msg/Settings.msg"
         "msg/Version.msg"
