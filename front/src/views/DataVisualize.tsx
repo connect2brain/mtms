@@ -5,9 +5,9 @@ import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { addBatch, addEegDatapoint, addEegTrigger, setEeg } from 'reducers/eegReducer'
 import { Datapoint, EegChartSteaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
+import styled from 'styled-components'
 
 const DataVisualize = () => {
-
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
 
   const [trigger, setTrigger] = useState<Datapoint>({
@@ -43,7 +43,7 @@ const DataVisualize = () => {
     for (let i = 0; i < message.batch.length; i++) {
       const point = message.batch[i]
       const filtered = c3(point.channel_datapoint)
-      if (filtered> max) {
+      if (filtered > max) {
         max = filtered
       }
       s += filtered
@@ -52,10 +52,10 @@ const DataVisualize = () => {
 
     const avg = s / message.batch.length
 
-    const scaledData = data.map(point => {
+    const scaledData = data.map((point) => {
       return {
         x: 0,
-        y: (point - avg) / max * 50
+        y: ((point - avg) / max) * 50,
       }
     })
 
@@ -63,7 +63,6 @@ const DataVisualize = () => {
   }
 
   const newTrigger = (message: EegTriggerMessage) => {
-    //console.log('Trigger received')
     setTrigger({
       y: 100000,
       x: message.time,
@@ -71,11 +70,14 @@ const DataVisualize = () => {
   }
 
   return (
-    <div>
+    <ChartContainer>
       <EegChartSteaming eegData={latestBatch} triggerData={trigger} />
-      {/*<WebGLPlot eegData={latestBatch} triggerData={trigger} />*/}
-    </div>
+    </ChartContainer>
   )
 }
+
+const ChartContainer = styled.div`
+  
+`
 
 export default DataVisualize
