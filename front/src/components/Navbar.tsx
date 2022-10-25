@@ -1,9 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 export const Navbar = () => {
   const navigate = useNavigate()
+  const location = useLocation()
 
   const goToUrl = (url: string) => {
     navigate(url, { replace: true })
@@ -11,14 +12,32 @@ export const Navbar = () => {
 
   return (
     <Nav>
-      <Ul>
-        <ListElement onClick={() => goToUrl('/')}>Targets table</ListElement>
-        <ListElement onClick={() => goToUrl('/experiment')}>Experiment</ListElement>
-        <ListElement onClick={() => goToUrl('/plot')}>Plot</ListElement>
-      </Ul>
+      <TabButton selected={location.pathname === '/'} onClick={() => goToUrl('/')}>
+        Targets table
+      </TabButton>
+      <TabButton selected={location.pathname === '/experiment'} onClick={() => goToUrl('/experiment')}>
+        Experiment
+      </TabButton>
+      <TabButton selected={location.pathname === '/plot'} onClick={() => goToUrl('/plot')}>
+        Plot
+      </TabButton>
     </Nav>
   )
 }
+
+const TabButton = styled.button<{
+  selected: boolean
+}>`
+  all: unset;
+  background-color: ${(p) => (p.selected ? p.theme.colors.lightergray : p.theme.colors.lightgray)};
+  padding: 0.3rem;
+  border: 1px solid ${(p) => p.theme.colors.gray};
+
+  :hover {
+    background-color: ${(p) => p.theme.colors.gray};
+  }
+  
+`
 
 const Nav = styled.nav`
   margin: 0;
@@ -36,13 +55,13 @@ const Ul = styled.ul`
 
 const ListElement = styled.li`
   cursor: pointer;
-  font-size: ${p => p.theme.typography.medium};
+  font-size: ${(p) => p.theme.typography.medium};
   padding-right: 0.5em;
   padding-left: 0.5em;
   box-shadow: inset 0 -1px 0 ${(p) => p.theme.colors.gray};
-  
+
   background-color: ${(p) => p.theme.colors.lightergray};
-  
+
   :hover {
     background-color: ${(p) => p.theme.colors.lightgray};
   }
