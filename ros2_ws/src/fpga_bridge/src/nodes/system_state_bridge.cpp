@@ -58,7 +58,7 @@ NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_C
 NiFpga_mTMS_IndicatorU16 current_error_indicator = NiFpga_mTMS_IndicatorU16_CurrenterrorsSM;
 NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_EmergencyerrorsSM;
 
-NiFpga_mTMS_IndicatorU16 startup_sequence_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
+NiFpga_mTMS_IndicatorU16 startup_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
 NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Experimentstate;
@@ -107,25 +107,6 @@ private:
     msg.safety_bus_startup_error = CHECK_BIT(error, 4);
     msg.acceptable_voltage_not_reached_startup_error = CHECK_BIT(error, 5);
     msg.maximum_safe_voltage_exceeded_startup_error = CHECK_BIT(error, 6);
-
-    return msg;
-  }
-
-  fpga_interfaces::msg::StartupError startup_error_to_msg(uint16_t error) {
-    auto msg = fpga_interfaces::msg::StartupError();
-
-    msg.uart_initialization_error = error == 1;
-    msg.board_startup_error = error == 2;
-    msg.board_status_message_error = error == 3;
-    msg.safety_monitor_error = error == 4;
-    msg.discharge_controller_error = error == 5;
-    msg.charger_error = error == 6;
-    msg.sensorboard_error = error == 7;
-    msg.discharge_controller_voltage_error = error == 8;
-    msg.charger_voltage_error = error == 9;
-    msg.igbt_feedback_error = error == 10;
-    msg.temperature_sensor_presence_error = error == 11;
-    msg.coil_memory_presence_error = error == 12;
 
     return msg;
   }
@@ -202,11 +183,9 @@ private:
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU16(
                             session,
-                            startup_sequence_error_indicator,
-                            &error
+                            startup_error_indicator,
+                            &state.startup_error.error
                         ));
-
-    state.startup_error = startup_error_to_msg(error);
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
