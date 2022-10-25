@@ -10,7 +10,7 @@ export const SystemState = () => {
   const [experimentState, setExperimentState] = useState<string>()
   const [startupSequenceError, setStartupSequenceError] = useState<string>()
 
-  const [channelStates, setChannelStates] = useState<ChannelStateType[]>()
+  const [channelStates, setChannelStates] = useState<ChannelStateType[]>([])
 
   useEffect(() => {
     systemStateSubscriber.subscribe(systemStateCallback)
@@ -38,9 +38,11 @@ export const SystemState = () => {
           </tr>
         </Thead>
         <tbody>
-          {channelStates?.map((channel) => (
-            <ChannelState key={`channel-${channel.channelIndex}`} {...channel} />
-          ))}
+          {channelStates
+            .sort((a, b) => a.channelIndex - b.channelIndex)
+            .map((channel) => (
+              <ChannelState key={`channel-${channel.channelIndex}`} {...channel} />
+            ))}
         </tbody>
       </ChannelTable>
     )
@@ -61,7 +63,6 @@ const ChannelTableContainer = styled.div`
   overflow-x: hidden;
   width: fit-content;
   max-height: 600px;
-  max-width: 60%;
 `
 
 const ChannelTable = styled.table`
