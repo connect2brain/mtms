@@ -1,4 +1,4 @@
-# All possible system-wide errors.
+# System-wide errors
 
 bool heartbeat_error
 bool latched_fault_error
