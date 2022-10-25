@@ -22,6 +22,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         isi_samples
         isi_seconds
 
+        target_voltage
+
     end
 
     methods
@@ -49,10 +51,13 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
             obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
+
+            obj.target_voltage = 500;
             
         end
         function on_init_experiment(obj)
-            obj.commands = [];
+            charge = create_charge_command(obj.events_sent + 1, 1, 2, 0, obj.target_voltage);
+            obj.set_commands(charge);
         end
         function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
             if obj.estimated && obj.samples_collected == obj.isi_samples
@@ -96,10 +101,13 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 
                 event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
 
-                pulse_event = create_command(obj.events_sent, "pulse", 1, event_time, 500);
-                obj.set_commands(pulse_event);
+                pulse_event = create_pulse_command(obj.events_sent + 1, 1, 0, event_time);
+                charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 500000, obj.target_voltage);
+                obj.set_commands([pulse_event, charge_event]);
+
                 fprintf("Timed pulse at %lu\n", event_time);
-                
+                fprintf("Timed charge at %lu\n", event_time + 500000);
+
                 obj.estimated = true;
 
             else
@@ -108,7 +116,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
         end
         function on_end_experiment(obj)
-            obj.commands = [];
+            charge = create_discharge_command(obj.events_sent + 1, 1, 2, 0, 0);
+            obj.set_commands(charge);
         end
     end
 end
