@@ -62,9 +62,49 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
 
   };
 
-  eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data",
-                                                                                        10,
-                                                                                        subscription_callback);
+  auto start_experiment_callback = [this](
+      const std::shared_ptr<fpga_interfaces::srv::StartExperiment::Request> request,
+      std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response) -> void {
+
+    start_experiment_client->async_send_request(start_experiment_request);
+    auto fpga_events = processor->init();
+    send_fpga_events(fpga_events);
+
+    response->success = true;
+  };
+
+  auto stop_experiment_callback = [this](
+      const std::shared_ptr<fpga_interfaces::srv::StopExperiment::Request> request,
+      std::shared_ptr<fpga_interfaces::srv::StopExperiment::Response> response) -> void {
+
+    processor->close();
+    stop_experiment_client->async_send_request(stop_experiment_request);
+
+    response->success = true;
+  };
+
+  eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>(
+      "/eeg/raw_data",
+      10,
+      subscription_callback
+  );
+
+  start_experiment_service = this->create_service<fpga_interfaces::srv::StartExperiment>(
+      "/experiment/start_experiment",
+      start_experiment_callback
+  );
+
+  stop_experiment_service = this->create_service<fpga_interfaces::srv::StopExperiment>(
+      "/experiment/stop_experiment",
+      stop_experiment_callback
+  );
+
+  start_experiment_client = this->create_client<fpga_interfaces::srv::StartExperiment>("/fpga/start_experiment");
+  start_experiment_request = std::make_shared<fpga_interfaces::srv::StartExperiment::Request>();
+
+  stop_experiment_client = this->create_client<fpga_interfaces::srv::StopExperiment>("/fpga/stop_experiment");
+  stop_experiment_request = std::make_shared<fpga_interfaces::srv::StopExperiment::Request>();
+
 
   pulse_client = this->create_client<fpga_interfaces::srv::SendPulse>("/fpga/send_pulse");
   pulse_request = std::make_shared<fpga_interfaces::srv::SendPulse::Request>();
