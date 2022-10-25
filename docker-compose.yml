@@ -14,24 +14,24 @@ services:
   rosbridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/rosbridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
 
   eeg_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
+      dockerfile: ros2_ws/src/realtime/eeg_simulator/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/eeg_simulator:/app/ros2_ws/src/eeg_simulator/'
-      - './oscillation_data.csv:/app/ros2_ws/src/eeg_simulator/oscillation_data.csv'
+      - './ros2_ws/src/realtime/eeg_simulator:/app/ros2_ws/src/realtime/eeg_simulator/'
+      - './oscillation_data.csv:/app/ros2_ws/src/realtime/eeg_simulator/oscillation_data.csv'
 
   eeg_processor:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+      dockerfile: ros2_ws/src/realtime/eeg_processor/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
@@ -44,7 +44,7 @@ services:
       - "50000:50000/udp"
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
     env_file:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -53,7 +53,7 @@ services:
   fpga_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile
     # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
@@ -62,7 +62,7 @@ services:
   data_batcher:
     build:
       context: .
-      dockerfile: ros2_ws/src/data_batcher/Dockerfile
+      dockerfile: ros2_ws/src/realtime/data_batcher/Dockerfile
     env_file:
       - ${ENV_FILE}
     privileged: true
@@ -70,25 +70,25 @@ services:
   planner:
     build:
       context: .
-      dockerfile: ros2_ws/src/planner/Dockerfile
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
+      - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
 
   pulse_sequence_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+      dockerfile: ros2_ws/src/realtime/pulse_sequence_controller/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
+      - './ros2_ws/src/realtime/pulse_sequence_controller:/app/ros2_ws/src/realtime/pulse_sequence_controller/'
 
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation_pkg/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
@@ -99,14 +99,14 @@ services:
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/efield/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
 
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
@@ -115,7 +115,7 @@ services:
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/targeting/Dockerfile
     env_file:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -125,7 +125,7 @@ services:
   trigger_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/trigger_controller/Dockerfile
+      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
     privileged: true
     env_file:

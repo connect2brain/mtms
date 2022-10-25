@@ -23,7 +23,7 @@ git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 - Install the dependencies needed by InVesalius3 (see installation instructions in [Wiki](https://github.com/invesalius/invesalius3/wiki))
 
 - Build the Cython modules needed by InVesalius3 (likewise, see installation instructions). Note that InVesalius
-  resides in the directory `invesalius_ros/ros2_ws/src/neuronavigation_pkg/invesalius3`, therefore the modules
+  resides in the directory `invesalius_ros/ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3`, therefore the modules
   need to be built in that directory.
 
 - You can check that the installation succeeded by running `python3 app.py` in the above directory and checking
