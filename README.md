@@ -1,4 +1,4 @@
-# ROS wrapper for InVesalius
+# mTMS project
 
 ## Cloning the repository
 
