@@ -1,4 +1,4 @@
-# All possible channel-specific errors.
+# Channel-specific errors
 
 bool overvoltage_error
 bool emergency_discharge_backup_power_error
