@@ -1,14 +1,23 @@
-# All possible startup errors.
+# TODO: Startup error is inherently one (and only one) value out of several
+# options (cf. SystemError and ChannelError, which can have several concurrent
+# errors), thus enum is the natural structure to represent it. However,
+# enums are not yet supported by ROS2, therefore simulate it by
+# using constants (see link below for an example).
+#
+# https://github.com/ros2/rosidl/issues/260
 
-bool uart_initialization_error
-bool board_startup_error
-bool board_status_message_error
-bool safety_monitor_error
-bool discharge_controller_error
-bool charger_error
-bool sensorboard_error
-bool discharge_controller_voltage_error
-bool charger_voltage_error
-bool igbt_feedback_error
-bool temperature_sensor_presence_error
-bool coil_memory_presence_error
+uint8 NO_ERROR=0
+uint8 UART_INITIALIZATION_ERROR=1
+uint8 BOARD_STARTUP_ERROR=2
+uint8 BOARD_STATUS_MESSAGE_ERROR=3
+uint8 SAFETY_MONITOR_ERROR=4
+uint8 DISCHARGE_CONTROLLER_ERROR=5
+uint8 CHARGER_ERROR=6
+uint8 SENSORBOARD_ERROR=7
+uint8 DISCHARGE_CONTROLLER_VOLTAGE_ERROR=8
+uint8 CHARGER_VOLTAGE_ERROR=9
+uint8 IGBT_FEEDBACK_ERROR=10
+uint8 TEMPERATURE_SENSOR_PRESENCE_ERROR=11
+uint8 COIL_MEMORY_PRESENCE_ERROR=12
+
+uint8 error
