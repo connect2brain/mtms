@@ -7,7 +7,6 @@ import { Datapoint, EegChartSteaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
 
 const DataVisualize = () => {
-  const { eeg } = useAppSelector((state) => state.eegData)
 
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
 
@@ -16,11 +15,9 @@ const DataVisualize = () => {
     x: 1,
   })
 
-  const dispatch = useAppDispatch()
-
   useEffect(() => {
     console.log('Subscribing to eeg data')
-    eegDataSubscriber.subscribe(newEegBatchWebGL)
+    eegDataSubscriber.subscribe(newEegBatch)
     triggerSubscriber.subscribe(newTrigger)
   }, [])
 
@@ -75,8 +72,8 @@ const DataVisualize = () => {
 
   return (
     <div>
-      {/*<EegChartSteaming eegData={latestBatch} triggerData={trigger} />*/}
-      <WebGLPlot eegData={latestBatch} triggerData={trigger} />
+      <EegChartSteaming eegData={latestBatch} triggerData={trigger} />
+      {/*<WebGLPlot eegData={latestBatch} triggerData={trigger} />*/}
     </div>
   )
 }
