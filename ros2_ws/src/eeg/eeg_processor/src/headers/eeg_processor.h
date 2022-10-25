@@ -14,6 +14,8 @@
 #include "fpga_interfaces/srv/send_pulse.hpp"
 #include "fpga_interfaces/srv/send_charge.hpp"
 #include "fpga_interfaces/srv/send_discharge.hpp"
+#include "fpga_interfaces/srv/start_experiment.hpp"
+#include "fpga_interfaces/srv/stop_experiment.hpp"
 
 #if defined(MATLAB_FOUND)
 
@@ -50,6 +52,14 @@ private:
   std::fstream f;
 
   rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
+
+  rclcpp::Service<fpga_interfaces::srv::StartExperiment>::SharedPtr start_experiment_service;
+  rclcpp::Service<fpga_interfaces::srv::StopExperiment>::SharedPtr stop_experiment_service;
+
+  rclcpp::Client<fpga_interfaces::srv::StartExperiment>::SharedPtr start_experiment_client;
+  std::shared_ptr<fpga_interfaces::srv::StartExperiment::Request> start_experiment_request;
+  rclcpp::Client<fpga_interfaces::srv::StopExperiment>::SharedPtr stop_experiment_client;
+  std::shared_ptr<fpga_interfaces::srv::StopExperiment::Request> stop_experiment_request;
 
   rclcpp::Client<fpga_interfaces::srv::SendPulse>::SharedPtr pulse_client;
   std::shared_ptr<fpga_interfaces::srv::SendPulse::Request> pulse_request;
