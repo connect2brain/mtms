@@ -4,11 +4,13 @@
 
 #include "fpga_interfaces/msg/version.hpp"
 
-#include "fpga_interfaces/msg/system_state.hpp"
-#include "fpga_interfaces/msg/system_error.hpp"
 #include "fpga_interfaces/msg/channel_state.hpp"
 #include "fpga_interfaces/msg/channel_error.hpp"
+#include "fpga_interfaces/msg/device_state.hpp"
+#include "fpga_interfaces/msg/experiment_state.hpp"
 #include "fpga_interfaces/msg/startup_error.hpp"
+#include "fpga_interfaces/msg/system_state.hpp"
+#include "fpga_interfaces/msg/system_error.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -195,14 +197,14 @@ private:
                         NiFpga_ReadU8(
                             session,
                             device_state_indicator,
-                            &state.device_state
+                            &state.device_state.state
                         ));
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
                             experiment_state_indicator,
-                            &state.experiment_state
+                            &state.experiment_state.state
                         ));
 
     uint64_t time;
