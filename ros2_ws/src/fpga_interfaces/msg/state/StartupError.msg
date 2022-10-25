@@ -1,0 +1,14 @@
+# All possible startup errors.
+
+bool uart_initialization_error
+bool board_startup_error
+bool board_status_message_error
+bool safety_monitor_error
+bool discharge_controller_error
+bool charger_error
+bool sensorboard_error
+bool discharge_controller_voltage_error
+bool charger_voltage_error
+bool igbt_feedback_error
+bool temperature_sensor_presence_error
+bool coil_memory_presence_error
