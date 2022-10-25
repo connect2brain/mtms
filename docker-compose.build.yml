@@ -4,32 +4,32 @@ services:
   data_batcher:
     build:
       context: .
-      dockerfile: ros2_ws/src/data_batcher/Dockerfile.prod
+      dockerfile: ros2_ws/src/realtime/data_batcher/Dockerfile.prod
 
   eeg_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile.prod
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile.prod
 
   eeg_processor:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_processor/Dockerfile.prod
+      dockerfile: ros2_ws/src/realtime/eeg_processor/Dockerfile.prod
 
   eeg_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile.prod
+      dockerfile: ros2_ws/src/realtime/eeg_simulator/Dockerfile.prod
 
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/efield/Dockerfile.prod
+      dockerfile: ros2_ws/src/neuronavigation/efield/Dockerfile.prod
 
   fpga_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile.prod
+      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile.prod
 
   front:
     build:
@@ -39,24 +39,24 @@ services:
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation_pkg/Dockerfile
 
   planner:
     build:
       context: .
-      dockerfile: ros2_ws/src/planner/Dockerfile.prod
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile.prod
 
   pulse_sequence_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile.prod
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile.prod
 
   rosbridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/rosbridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
 
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/targeting/Dockerfile
