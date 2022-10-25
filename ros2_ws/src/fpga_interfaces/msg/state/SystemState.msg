@@ -6,7 +6,7 @@ SystemError system_error_emergency
 
 StartupError startup_error
 
-uint8 device_state
-uint8 experiment_state
+DeviceState device_state
+ExperimentState experiment_state
 
 float64 time
