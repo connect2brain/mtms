@@ -19,7 +19,11 @@ const theme = {
     darkgray: '#707070',
   },
   spacing: {},
-  typography: {},
+  typography: {
+    large: pxToRem(24),
+    medium: pxToRem(18),
+    small: pxToRem(12),
+  },
   borderRadius: pxToRem(5),
 }
 
