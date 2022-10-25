@@ -8,6 +8,7 @@ import Experiment from './views/Experiment'
 import DataVisualize from './views/DataVisualize'
 import { ExperimentControl } from './components/ExperimentControl'
 import { SystemState } from './components/SystemState'
+import { Navbar } from './components/Navbar'
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
         <SystemState />
       </Wrapper>
       <hr />
-
+      <Navbar />
       <Wrapper>
         <Routes>
           <Route path='/' element={<Targets />} />
