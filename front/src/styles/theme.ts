@@ -2,6 +2,8 @@
 
 //const css = cssFn as unknown as ThemedCssFunction<never>;
 
+import styled from 'styled-components'
+
 const pxToRem = (px: number) => `${px / 16}rem`
 
 const theme = {
