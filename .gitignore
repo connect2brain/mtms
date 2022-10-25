@@ -14,6 +14,6 @@ front/cypress/screenshots
 ros2_ws/src/install/
 ros2_ws/src/log/
 ros2_ws/src/build/
-ros2_ws/src/rosbridge/build
-ros2_ws/src/rosbridge/log
-ros2_ws/src/rosbridge/install
+ros2_ws/src/bridges/ros_bridge/build
+ros2_ws/src/bridges/ros_bridge/log
+ros2_ws/src/bridges/ros_bridge/install
