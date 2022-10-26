@@ -39,12 +39,12 @@ services:
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile.prod
 
   optitrack_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile.prod
 
   planner:
     build:
@@ -64,4 +64,4 @@ services:
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
+      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile.prod
