@@ -111,11 +111,6 @@ services:
     environment:
       - ROS_LOG_LEVEL=info
       - OPTITRACK_BRIDGE_SERVER_INDEX=1
-    #ports:
-    #  - target: 1511
-    #    published: 1511
-    #    protocol: tcp
-    #    mode: host
     ports:
       - "1511:1511"
     deploy:
