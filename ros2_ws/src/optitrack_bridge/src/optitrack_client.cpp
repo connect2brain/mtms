@@ -33,9 +33,8 @@ int OptitrackClient::connect_to_motive() {
   int ret_code = natnet_client->Connect(connect_parameters);
   if (ret_code != ErrorCode_OK) {
     RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Error connecting client to Motive. Error code: %d", ret_code);
-    return ErrorCode_Internal;
   }
-  return ErrorCode_OK;
+  return ret_code;
 }
 
 int OptitrackClient::disconnect_client() {
