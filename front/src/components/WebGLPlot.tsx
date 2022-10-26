@@ -3,7 +3,7 @@ import { WebglPlot, WebglLine, ColorRGBA } from 'webgl-plot'
 import { EegChartProps } from './EegChartStreaming'
 import styled from 'styled-components'
 
-export const WebGLPlot = ({ eegData, triggerData }: EegChartProps) => {
+export const WebGLPlot = ({ eegData, latestEvent }: EegChartProps) => {
   const canvasMain = useRef<HTMLCanvasElement>(null)
 
   const [webGLPlot, setWebGLPlot] = useState<WebglPlot>()

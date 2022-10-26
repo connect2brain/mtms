@@ -1,6 +1,7 @@
 import ROSLIB from 'roslib'
 import { ros } from './ros'
 import { SystemStateMessage } from 'types/fpga'
+import { MTMSEventMessage } from '../types/eeg'
 
 const startExperimentService = new ROSLIB.Service({
   ros: ros,
@@ -28,6 +29,12 @@ export const systemStateSubscriber = new ROSLIB.Topic<SystemStateMessage>({
   ros: ros,
   name: '/fpga/system_state',
   messageType: 'fpga_interfaces/SystemState',
+})
+
+export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
+  ros: ros,
+  name: '/mtms/events',
+  messageType: 'mtms_interfaces/Event',
 })
 
 export const startExperiment = () => {

@@ -16,7 +16,6 @@ class DataProvider(Node):
         self.trigger_publisher = self.create_publisher(Trigger, '/eeg/trigger_received', 10)
 
         self.declare_parameter('data_file', "")
-        self.declare_parameter('sampling_frequency', DEFAULT_SAMPLING_FREQUENCY)
 
         self.data_file_name = self.get_parameter('data_file').value
 

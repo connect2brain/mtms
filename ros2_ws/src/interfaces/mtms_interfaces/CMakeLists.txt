@@ -24,6 +24,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
+  "msg/Event.msg"
   "msg/PoseUsingEulerAngles.msg"
   "msg/Target.msg"
   "msg/PlannerState.msg"
