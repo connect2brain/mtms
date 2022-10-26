@@ -4,8 +4,13 @@
 
 #include "fpga_interfaces/msg/version.hpp"
 
-#include "fpga_interfaces/msg/system_state.hpp"
 #include "fpga_interfaces/msg/channel_state.hpp"
+#include "fpga_interfaces/msg/channel_error.hpp"
+#include "fpga_interfaces/msg/device_state.hpp"
+#include "fpga_interfaces/msg/experiment_state.hpp"
+#include "fpga_interfaces/msg/startup_error.hpp"
+#include "fpga_interfaces/msg/system_state.hpp"
+#include "fpga_interfaces/msg/system_error.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -14,6 +19,8 @@
 
 #define CHANNEL_COUNT 5
 #define CLOCK_FREQUENCY_HZ 40000000
+
+#define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
 
 using namespace std::chrono_literals;
 
@@ -53,7 +60,8 @@ NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_C
 NiFpga_mTMS_IndicatorU16 current_error_indicator = NiFpga_mTMS_IndicatorU16_CurrenterrorsSM;
 NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_EmergencyerrorsSM;
 
-NiFpga_mTMS_IndicatorU16 startup_sequence_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
+/* TODO: Could as well be U8: only 8 bits are ever needed. */
+NiFpga_mTMS_IndicatorU16 startup_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
 NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Experimentstate;
@@ -70,9 +78,46 @@ public:
   }
 
 private:
-  void publish_system_state() {
+  fpga_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
+    auto msg = fpga_interfaces::msg::SystemError();
 
+    msg.heartbeat_error = CHECK_BIT(error, 0);
+    msg.latched_fault_error = CHECK_BIT(error, 1);
+    msg.powersupply_error = CHECK_BIT(error, 2);
+    msg.safety_bus_error = CHECK_BIT(error, 3);
+    msg.coil_error = CHECK_BIT(error, 4);
+    msg.emergency_button_error = CHECK_BIT(error, 5);
+    msg.door_error = CHECK_BIT(error, 6);
+    msg.charger_overvoltage_error = CHECK_BIT(error, 7);
+    msg.charger_overtemperature_error = CHECK_BIT(error, 8);
+    msg.monitored_voltage_over_maximum_error = CHECK_BIT(error, 9);
+    msg.patient_safety_error = CHECK_BIT(error, 10);
+    msg.device_safety_error = CHECK_BIT(error, 11);
+    msg.charger_powerup_error = CHECK_BIT(error, 12);
+    msg.opto_error = CHECK_BIT(error, 13);
+    msg.charger_power_enabled_twice_error = CHECK_BIT(error, 14);
+
+    return msg;
+  }
+
+  fpga_interfaces::msg::ChannelError channel_error_to_msg(uint16_t error) {
+    auto msg = fpga_interfaces::msg::ChannelError();
+
+    msg.overvoltage_error = CHECK_BIT(error, 0);
+    msg.emergency_discharge_backup_power_error = CHECK_BIT(error, 1);
+    msg.safety_bus_error = CHECK_BIT(error, 2);
+    msg.powersupply_error = CHECK_BIT(error, 3);
+    msg.safety_bus_startup_error = CHECK_BIT(error, 4);
+    msg.acceptable_voltage_not_reached_startup_error = CHECK_BIT(error, 5);
+    msg.maximum_safe_voltage_exceeded_startup_error = CHECK_BIT(error, 6);
+
+    return msg;
+  }
+
+  void publish_system_state() {
     fpga_interfaces::msg::SystemState state = fpga_interfaces::msg::SystemState();
+
+    uint16_t error;
 
     for (auto i = 0; i < CHANNEL_COUNT; i++) {
       fpga_interfaces::msg::ChannelState channel_state = fpga_interfaces::msg::ChannelState();
@@ -103,8 +148,10 @@ private:
                          NiFpga_ReadU16(
                              session,
                              channel_error_indicators[i],
-                             &channel_state.error
+                             &error
                          ));
+
+      channel_state.channel_error = channel_error_to_msg(error);
 
       state.channel_states.push_back(channel_state);
     }
@@ -112,43 +159,52 @@ private:
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU16(
                             session,
-                            cumulative_error_indicator,
-                            &state.cumulative_error
+                            current_error_indicator,
+                            &error
                         ));
+
+    state.system_error_current = system_error_to_msg(error);
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU16(
                             session,
-                            current_error_indicator,
-                            &state.current_error
+                            cumulative_error_indicator,
+                            &error
                         ));
+
+    state.system_error_cumulative = system_error_to_msg(error);
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU16(
                             session,
                             emergency_error_indicator,
-                            &state.emergency_error
+                            &error
                         ));
+
+    state.system_error_emergency = system_error_to_msg(error);
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU16(
                             session,
-                            startup_sequence_error_indicator,
-                            &state.startup_sequence_error
+                            startup_error_indicator,
+                            &error
                         ));
+
+    /* TODO: Change the startup error register to U8 to get rid of this line. */
+    state.startup_error.error = (uint8_t) error;
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
                             device_state_indicator,
-                            &state.device_state
+                            &state.device_state.state
                         ));
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
                             experiment_state_indicator,
-                            &state.experiment_state
+                            &state.experiment_state.state
                         ));
 
     uint64_t time;
