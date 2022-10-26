@@ -3,23 +3,26 @@
 //
 
 #include "optitrack_bridge.h"
+
 rclcpp::Publisher<neuronavigation_interfaces::msg::OptitrackPoses>::SharedPtr OptitrackBridge::publisher;
 
 void
-log_rigid_body_message(geometry_msgs::msg::Transform_<std::allocator<void>> rigid_body, const std::string &entity) {
-  auto entity_as_c_string = entity.c_str();
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\tRigid Body:");
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.translation.x);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.translation.y);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.translation.z);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.rotation.x);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.rotation.x);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.rotation.x);
-  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "\t%s\t%3.2f", entity_as_c_string, rigid_body.rotation.x);
+log_rigid_body_message(geometry_msgs::msg::Transform rigid_body, const std::string &entity) {
+  RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"),
+              "%s: Translation (x, y, z): (%3.2f, %3.2f, %3.2f), Rotation: (x, y, z, w): (%3.2f, %3.2f, %3.2f, %3.2f)",
+              entity.c_str(),
+              rigid_body.translation.x,
+              rigid_body.translation.y,
+              rigid_body.translation.z,
+              rigid_body.rotation.x,
+              rigid_body.rotation.y,
+              rigid_body.rotation.z,
+              rigid_body.rotation.w
+  );
 }
 
-geometry_msgs::msg::Transform_<std::allocator<void>> create_ros_transform_from_rigid_body(sRigidBodyData rigid_body_data) {
-  geometry_msgs::msg::Transform_<std::allocator<void>> transform;
+geometry_msgs::msg::Transform create_ros_transform_from_rigid_body(sRigidBodyData rigid_body_data) {
+  geometry_msgs::msg::Transform transform;
   transform.translation.x = rigid_body_data.x;
   transform.translation.y = rigid_body_data.y;
   transform.translation.z = rigid_body_data.z;
@@ -56,7 +59,8 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
 
   auto client_created = client.create_client(data_received_callback);
   if (client_created != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to initialize NatNet Client. Failed to start Optitrack bridge.");
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"),
+                 "Failed to initialize NatNet Client. Failed to start Optitrack bridge.");
     return;
   }
 
@@ -69,7 +73,8 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
   client.connect_to_motive();
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connected to Motive.");
 
-  publisher = this->create_publisher<neuronavigation_interfaces::msg::OptitrackPoses>("/neuronavigation/optitrack_poses", 10);
+  publisher = this->create_publisher<neuronavigation_interfaces::msg::OptitrackPoses>(
+      "/neuronavigation/optitrack_poses", 10);
 }
 
 void OptitrackBridge::shutdown() {
