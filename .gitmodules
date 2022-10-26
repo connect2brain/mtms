@@ -3,4 +3,4 @@
 	url = https://github.com/RobotWebTools/rosbridge_suite
 [submodule "ros2_ws/src/neuronavigation/neuronavigation/invesalius3"]
 	path = ros2_ws/src/neuronavigation/neuronavigation/invesalius3
-	url = https://github.com/connect2brain/invesalius3
+	url = https://github.com/invesalius/invesalius3
