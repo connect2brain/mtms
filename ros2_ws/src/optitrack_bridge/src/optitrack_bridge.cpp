@@ -36,8 +36,8 @@ void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *user
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid bodies received: %d", data->nRigidBodies);
   for (i = 0; i < data->nRigidBodies; i++) {
     if (data->RigidBodies[i].ID == 999) {
-      message.tool_tip = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
-      log_rigid_body_message(message.tool_tip, "Measurement probe");
+      message.probe = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
+      log_rigid_body_message(message.probe, "Measurement probe");
 
     } else if (data->RigidBodies[i].ID == 1003) {
       message.head = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
