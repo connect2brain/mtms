@@ -6,56 +6,56 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/planner/Dockerfile
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile
 
   pulse_sequence_controller:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
 
   neuronavigation:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
 
   efield:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/efield/Dockerfile
+      dockerfile: ros2_ws/src/targeting/efield/Dockerfile
 
   pedal_listener:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
 
   trigger_controller:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/trigger_controller/Dockerfile
+      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
 
   eeg_simulator:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/eeg_simulator/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
 
   eeg_processor:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/eeg_processor/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
 
   eeg_bridge:
     networks:
@@ -64,28 +64,28 @@ services:
       - "50000:50000/udp"
     build:
       context: ..
-      dockerfile: ros2_ws/src/eeg_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
 
   fpga_bridge:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/fpga_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile
 
   data_batcher:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/data_batcher/Dockerfile
+      dockerfile: ros2_ws/src/eeg/data_batcher/Dockerfile
 
   optitrack_bridge:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/optitrack_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
 
 networks:
   cinetwork:
