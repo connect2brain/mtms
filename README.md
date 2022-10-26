@@ -1,5 +1,23 @@
 # mTMS project
 
+## Copyright and permitted use
+
+All rights to the code in this repository (excluding the submodules) belongs to either Connect2Brain project in Aalto University
+or external collaborators.
+
+Currently, its permitted use is limited to people within Connect2Brain project in Aalto University, the Eberhard Karl University of Tübingen,
+and D'Annunzio University of Chieti–Pescara.
+
+The software also uses external software and libraries, which reside in their own repositories, are connected to this
+repository using Git submodules, and have their own copyright owners. Here is the list of the external repositories
+and where they are located in the directory structure:
+
+[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/neuronavigation_pkg/invesalius3`
+[rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite/), `ros2_ws/src/rosbridge_suite`
+e-field library, `ros2_ws/src/efield/src`
+
+Please see the repository roots of the external repositories for their respective authors and licenses.
+
 ## Cloning the repository
 
 - Run:
