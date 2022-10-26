@@ -10,7 +10,9 @@
 #include "compiled_matlab_processor.h"
 #include "processor.h"
 
+#include "mtms_interfaces/msg/event.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
+
 #include "fpga_interfaces/srv/send_pulse.hpp"
 #include "fpga_interfaces/srv/send_charge.hpp"
 #include "fpga_interfaces/srv/send_discharge.hpp"
@@ -44,12 +46,16 @@ public:
   int shutdown();
 
 private:
+  bool should_publish_events;
+  void publish_events(const std::vector<FpgaEvent> &events);
   void measure(int repeats);
   void send_fpga_events(const std::vector<FpgaEvent>& events);
 
   rclcpp::TimerBase::SharedPtr timer_;
   ProcessorWrapper *processor;
   std::fstream f;
+
+  rclcpp::Publisher<mtms_interfaces::msg::Event>::SharedPtr event_publisher;
 
   rclcpp::Subscription<mtms_interfaces::msg::EegDatapoint>::SharedPtr eeg_data_subscription;
 
