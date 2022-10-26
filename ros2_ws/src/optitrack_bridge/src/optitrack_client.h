@@ -5,10 +5,7 @@
 #ifndef OPTITRACK_NATNET_CLIENT_OPTI_H
 #define OPTITRACK_NATNET_CLIENT_OPTI_H
 
-#include <inttypes.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cinttypes>
 
 #include "rclcpp/rclcpp.hpp"
 
