@@ -21,17 +21,17 @@ services:
   eeg_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/realtime/eeg_simulator/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/realtime/eeg_simulator:/app/ros2_ws/src/realtime/eeg_simulator/'
-      - './oscillation_data.csv:/app/ros2_ws/src/realtime/eeg_simulator/oscillation_data.csv'
+      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
 
   eeg_processor:
     build:
       context: .
-      dockerfile: ros2_ws/src/realtime/eeg_processor/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
@@ -62,7 +62,7 @@ services:
   data_batcher:
     build:
       context: .
-      dockerfile: ros2_ws/src/realtime/data_batcher/Dockerfile
+      dockerfile: ros2_ws/src/eeg/data_batcher/Dockerfile
     env_file:
       - ${ENV_FILE}
     privileged: true
@@ -99,7 +99,7 @@ services:
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation/efield/Dockerfile
+      dockerfile: ros2_ws/src/targeting/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
 
@@ -115,7 +115,7 @@ services:
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation/targeting/Dockerfile
+      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
     env_file:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.

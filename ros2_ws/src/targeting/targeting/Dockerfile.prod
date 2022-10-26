@@ -9,16 +9,15 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-COPY ros2_ws/src/realtime/eeg_processor/ros_entrypoint.sh .
+COPY ros2_ws/src/targeting/targeting/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-# Copy ROS workspace for eeg processor
+# Copy ROS workspace for targeting
 
 WORKDIR /app
-COPY ros2_ws/src/realtime/eeg_processor ros2_ws/eeg_processor/
+COPY ros2_ws/src/targeting/targeting ros2_ws/targeting/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/mtms_interfaces/
-COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/fpga_interfaces/
 
 # Build ROS packages
 
@@ -26,14 +25,14 @@ WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
     colcon build
 
+# Copy data files
+COPY ros2_ws/src/targeting/targeting/data/targeting.csv .
+
 # Production environment
 FROM osrf/ros:galactic-desktop
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
 COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/
-
-RUN mkdir -p hotswappable_processors
-ENV DOCKER=true
 
 # Copy entrypoint
 COPY --from=builder ros_entrypoint.sh .

@@ -9,21 +9,19 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for planner
+# Copy ROS workspace for e-field
 
 WORKDIR /app
-COPY ros2_ws/src/realtime/eeg_simulator ros2_ws/src/realtime/eeg_simulator/
-COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
+COPY ros2_ws/src/targeting/efield ros2_ws/src/targeting/efield/
+COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && \
-    colcon build --symlink-install
+    colcon build
 
-# Copy entrypoint
-
-COPY ros2_ws/src/realtime/eeg_simulator/ros_entrypoint.sh .
+COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

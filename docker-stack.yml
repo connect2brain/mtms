@@ -52,13 +52,13 @@ services:
   eeg_simulator:
     image: okahilak/mtms:eeg_simulator
     environment:
-      - EEG_SIMULATOR_DATA_FILE_NAME=/app/ros2_ws/src/realtime/eeg_simulator/oscillation_data.csv
+      - EEG_SIMULATOR_DATA_FILE_NAME=/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv
       - EEG_SIMULATOR_SAMPLING_FREQUENCY=50.0
       - ROS_LOG_LEVEL=info
     volumes:
-      - './ros2_ws/src/realtime/eeg_simulator:/app/ros2_ws/src/realtime/eeg_simulator/'
+      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
       - './ros2_ws/src/interfaces/mtms_interfaces:/app/ros2_ws/src/interfaces/mtms_interfaces/'
-      - './oscillation_data.csv:/app/ros2_ws/src/realtime/eeg_simulator/oscillation_data.csv'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
     deploy:
       placement:
         constraints:
