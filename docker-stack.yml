@@ -107,6 +107,18 @@ services:
         constraints:
           - node.role == worker
 
+  optitrack_bridge:
+    image: okahilak/mtms:optitrack_bridge
+    environment:
+      - ROS_LOG_LEVEL=info
+      - OPTITRACK_BRIDGE_SERVER_INDEX=1
+    ports:
+      - "1511:1511"
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
   planner:
     image: okahilak/mtms:planner
     environment:
