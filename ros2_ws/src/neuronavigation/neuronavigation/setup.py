@@ -36,13 +36,13 @@ def generate_data_files():
             list_entry = (install_dir, [os.path.join(dirpath, f) for f in filenames if not f.startswith('.')])
             data_files.append(list_entry)
 
-    data_files.append(('share/ament_index/resource_index/packages', ['resource/neuronavigation_pkg']))
-    data_files.append(('share/neuronavigation_pkg', ['package.xml']))
+    data_files.append(('share/ament_index/resource_index/packages', ['resource/neuronavigation']))
+    data_files.append(('share/neuronavigation', ['package.xml']))
 
     return data_files
 
 setup(
-    name='neuronavigation_pkg',
+    name='neuronavigation',
     version='0.0.1',
     packages=packages,
     package_dir=package_dir,

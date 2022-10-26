@@ -39,7 +39,7 @@ services:
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
 
   planner:
     build:

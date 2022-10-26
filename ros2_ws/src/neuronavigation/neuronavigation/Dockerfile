@@ -43,20 +43,20 @@ WORKDIR /app
 
 # Copy and build Cython modules
 
-COPY ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3/invesalius_cy ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3/invesalius_cy/
-COPY ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3/setup.py ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3/
-WORKDIR /app/ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3
+COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3/invesalius_cy ros2_ws/src/neuronavigation/neuronavigation/invesalius3/invesalius_cy/
+COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3/setup.py ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
+WORKDIR /app/ros2_ws/src/neuronavigation/neuronavigation/invesalius3
 RUN python3 setup.py build_ext --inplace
 
 # Copy rest of InVesalius
 
 WORKDIR /app
-COPY ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3 ros2_ws/src/neuronavigation/neuronavigation_pkg/invesalius3/
+COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
 
 ## Copy rest of the ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/neuronavigation/neuronavigation_pkg ros2_ws/src/neuronavigation/neuronavigation_pkg/
+COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
 
@@ -67,7 +67,7 @@ RUN cd ros2_ws && \
     source /opt/ros/galactic/setup.bash && \
     colcon build
 
-COPY ros2_ws/src/neuronavigation/neuronavigation_pkg/ros_entrypoint.sh .
+COPY ros2_ws/src/neuronavigation/neuronavigation/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

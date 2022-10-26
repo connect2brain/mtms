@@ -20,7 +20,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/neuronavigation/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     # Requires by linux when opening projects, otherwise segfaults

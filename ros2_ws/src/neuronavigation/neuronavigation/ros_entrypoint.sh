@@ -4,4 +4,4 @@ set -e
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 
-ros2 run neuronavigation_pkg start
+ros2 run neuronavigation start
