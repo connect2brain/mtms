@@ -24,6 +24,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
+  "msg/OptitrackPoses.msg"
   "msg/PoseUsingEulerAngles.msg"
   "srv/Efield.srv"
   "srv/OpenOrientationDialog.srv"

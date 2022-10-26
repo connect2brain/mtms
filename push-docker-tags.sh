@@ -26,3 +26,6 @@ docker push okahilak/mtms:data_batcher
 
 echo "Pushing okahilak/mtms:front"
 docker push okahilak/mtms:front
+
+echo "Pushing okahilak/mtms:optitrack_bridge"
+docker push okahilak/mtms:optitrack_bridge
