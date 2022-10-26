@@ -16,6 +16,7 @@ import StreamingPlugin from 'chartjs-plugin-streaming'
 
 import { Line, Chart } from 'react-chartjs-2'
 import React, { useEffect, useRef, useState } from 'react'
+import theme from '../styles/theme'
 
 const options: ChartOptions<'line' | 'bar'> = {
   responsive: true,
@@ -61,56 +62,90 @@ export type Datapoint = {
   x: number
   y: number
 }
-export type EegChartProps = {
-  eegData: Datapoint[]
-  triggerData: Datapoint
+
+export type DatapointWithEventType = {
+  x: number
+  y: number
+  eventType: number
 }
 
-export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
+export type EegChartProps = {
+  eegData: Datapoint[]
+  latestEvent: DatapointWithEventType
+}
+
+const datasetDefaults = [
+  {
+    borderColor: theme.colors.red,
+    backgroundColor: theme.colors.red,
+    pointRadius: 0,
+    label: 'Eeg data',
+  },
+  {
+    type: 'bar' as const,
+    label: 'Pulse',
+    borderColor: theme.colors.blue,
+    backgroundColor: theme.colors.blue,
+    barThickness: 1,
+  },
+  {
+    type: 'bar' as const,
+    label: 'Charge',
+    borderColor: theme.colors.yellow,
+    backgroundColor: theme.colors.yellow,
+    barThickness: 1,
+  },
+  {
+    type: 'bar' as const,
+    label: 'Discharge',
+    borderColor: theme.colors.brown,
+    backgroundColor: theme.colors.brown,
+    barThickness: 1,
+  },
+  {
+    type: 'bar' as const,
+    label: 'Signal out',
+    borderColor: theme.colors.green,
+    backgroundColor: theme.colors.green,
+    barThickness: 1,
+  },
+]
+
+export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
   const chartRef = useRef<any>(null)
 
   const [chartData, setChartData] = useState<ChartData<'line' | 'bar'>>({
     datasets: [
       {
-        label: 'Eeg data',
         data: eegData,
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        pointRadius: 0,
+        ...datasetDefaults[0],
       },
-      {
-        type: 'bar',
-        label: 'Triggers',
-        data: [triggerData],
-        borderColor: 'rgb(255, 99, 132)',
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        barThickness: 1,
-      },
+      ...datasetDefaults.slice(1).map((dataset) => {
+        return {
+          ...dataset,
+          data: [latestEvent],
+        }
+      }),
     ],
   })
 
   useEffect(() => {
     const eegOldData = chartData.datasets[0].data
-    const triggerOldData = chartData.datasets[1].data
 
     const newChartData = {
       datasets: [
         {
-          type: 'line' as const,
-          label: 'Eeg data',
           data: eegOldData.concat(eegData),
-          borderColor: 'rgb(255, 99, 132)',
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          pointRadius: 0,
+          ...datasetDefaults[0],
         },
-        {
-          type: 'bar' as const,
-          label: 'Triggers',
-          data: triggerOldData.concat(triggerData),
-          borderColor: 'rgb(0, 99, 132)',
-          backgroundColor: 'rgba(0, 99, 132, 0.5)',
-          barThickness: 1,
-        },
+        ...datasetDefaults.slice(1).map((dataset, index) => {
+
+          return {
+            ...dataset,
+            data:
+              latestEvent.eventType === index ? chartData.datasets[index + 1].data : chartData.datasets[index + 1].data,
+          }
+        }),
       ],
     }
 
@@ -120,34 +155,28 @@ export const EegChartSteaming = ({ eegData, triggerData }: EegChartProps) => {
 
   useEffect(() => {
     const eegOldData = chartData.datasets[0].data
-    const triggerOldData = chartData.datasets[1].data
-    console.log('in here')
-    console.log(triggerData)
-    console.log(triggerOldData.length)
+
     const newChartData = {
       datasets: [
         {
-          type: 'line' as const,
-          label: 'Eeg data',
           data: eegOldData,
-          borderColor: 'rgb(255, 99, 132)',
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-          pointRadius: 0,
+          ...datasetDefaults[0],
         },
-        {
-          type: 'bar' as const,
-          label: 'Triggers',
-          data: triggerOldData.concat(triggerData),
-          borderColor: 'rgb(0, 99, 132)',
-          backgroundColor: 'rgba(0, 99, 132, 0.5)',
-          barThickness: 1,
-        },
+        ...datasetDefaults.slice(1).map((dataset, index) => {
+          return {
+            ...dataset,
+            data:
+              latestEvent.eventType === index
+                ? chartData.datasets[index + 1].data.concat(latestEvent)
+                : chartData.datasets[index + 1].data,
+          }
+        }),
       ],
     }
 
     setChartData(newChartData)
     chartRef.current?.update('quiet')
-  }, [triggerData])
+  }, [latestEvent])
 
   return <Chart type={'line'} id={'eeg-chart'} ref={chartRef} data={chartData} options={options} />
 }
