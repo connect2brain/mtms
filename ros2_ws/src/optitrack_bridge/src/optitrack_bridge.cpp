@@ -32,18 +32,17 @@ geometry_msgs::msg::Transform_<std::allocator<void>> create_ros_transform_from_r
 
 void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *user_data) {
   auto message = neuronavigation_interfaces::msg::OptitrackPoses();
-  int i = 0;
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid bodies received: %d", data->nRigidBodies);
-  for (i = 0; i < data->nRigidBodies; i++) {
-    if (data->RigidBodies[i].ID == 999) {
+  for (int i = 0; i < data->nRigidBodies; i++) {
+    if (data->RigidBodies[i].ID == MEASUREMENT_PROBE_RIGID_BODY_ID) {
       message.probe = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
       log_rigid_body_message(message.probe, "Measurement probe");
 
-    } else if (data->RigidBodies[i].ID == 1003) {
+    } else if (data->RigidBodies[i].ID == HEAD_RIGID_BODY_ID) {
       message.head = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
       log_rigid_body_message(message.head, "Head");
 
-    } else if (data->RigidBodies[i].ID == 1002) {
+    } else if (data->RigidBodies[i].ID == COIL_RIGID_BODY_ID) {
       message.coil = create_ros_transform_from_rigid_body(data->RigidBodies[i]);
       log_rigid_body_message(message.head, "Coil");
 
