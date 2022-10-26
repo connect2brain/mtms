@@ -5,24 +5,14 @@
 #ifndef OPTITRACK_NATNET_CLIENT_OPTI_H
 #define OPTITRACK_NATNET_CLIENT_OPTI_H
 
-#include <cinttypes>
-
 #include "rclcpp/rclcpp.hpp"
-
-#ifdef _WIN32
-#include <conio.h>
-#else
-
-#include <unistd.h>
-#include <termios.h>
-
-#endif
-
-#include <vector>
 
 #include "NatNetTypes.h"
 #include "NatNetCAPI.h"
 #include "NatNetClient.h"
+
+#define DISCOVER_WAIT_TIME_MS 5000
+
 
 class OptitrackClient {
 public:
@@ -38,7 +28,6 @@ public:
 private:
 
   NatNetClient *natnet_client = nullptr;
-
   static std::vector<sNatNetDiscoveredServer> discovered_servers;
   sNatNetClientConnectParams connect_parameters;
   char g_discoveredMulticastGroupAddr[kNatNetIpv4AddrStrLenMax] = NATNET_DEFAULT_MULTICAST_ADDRESS;

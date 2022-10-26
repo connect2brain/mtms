@@ -3,22 +3,7 @@
 //
 
 #include "optitrack_client.h"
-
-#ifdef _WIN32
-#include <conio.h>
-#else
-
-#include <unistd.h>
-#include <termios.h>
-
-#endif
-
-#include <vector>
-
-#include <NatNetTypes.h>
-#include <NatNetCAPI.h>
-#include <NatNetClient.h>
-
+#include <cinttypes>
 
 int OptitrackClient::connect_to_motive() {
   // Release previous server
@@ -52,7 +37,6 @@ int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_cal
 int OptitrackClient::discover_motive_servers() {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Looking for servers on the local network.");
 
-  const unsigned discover_wait_time_ms = 5 * 1000;
   const int max_discovers = 1;
   sNatNetDiscoveredServer servers[max_discovers];
   int actual_number_of_discovers = max_discovers;
@@ -60,7 +44,7 @@ int OptitrackClient::discover_motive_servers() {
   NatNet_BroadcastServerDiscovery(
       servers,
       &actual_number_of_discovers,
-      discover_wait_time_ms
+      DISCOVER_WAIT_TIME_MS
   );
 
   if (actual_number_of_discovers > max_discovers) {
