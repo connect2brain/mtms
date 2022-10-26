@@ -1,0 +1,36 @@
+# Build environment
+FROM osrf/ros:galactic-desktop as builder
+SHELL ["/bin/bash", "-c"]
+
+# Install dependencies
+
+RUN apt-get update
+
+RUN apt-get install -y \
+    dos2unix
+
+COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .
+RUN dos2unix ros_entrypoint.sh
+RUN chmod +x ros_entrypoint.sh
+
+# Copy ROS workspace for e-field
+
+WORKDIR /app
+COPY ros2_ws/src/targeting/efield ros2_ws/efield/
+COPY ros2_ws/src/neuronavigation/neuronavigation_interfaces ros2_ws/neuronavigation_interfaces/
+
+# Build ROS packages
+
+WORKDIR /app/ros2_ws
+RUN source /opt/ros/galactic/setup.bash && \
+    colcon build
+
+# Production environment
+FROM osrf/ros:galactic-desktop
+WORKDIR /app
+COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
+COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/
+
+# Copy entrypoint
+COPY --from=builder ros_entrypoint.sh .
+ENTRYPOINT ["./ros_entrypoint.sh"]
