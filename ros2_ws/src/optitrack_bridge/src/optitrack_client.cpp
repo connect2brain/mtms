@@ -53,7 +53,7 @@ int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_cal
   return 0;
 }
 
-int OptitrackClient::discover_motive_servers(int serverIndex) {
+int OptitrackClient::discover_motive_servers() {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Looking for servers on the local network.");
 
   const unsigned discover_wait_time_ms = 5 * 1000;
@@ -76,7 +76,7 @@ int OptitrackClient::discover_motive_servers(int serverIndex) {
     return 1;
   }
 
-  const sNatNetDiscoveredServer &discovered_server = servers[serverIndex - 1];
+  const sNatNetDiscoveredServer &discovered_server = servers[0];
 
   if (discovered_server.serverDescription.bConnectionInfoValid) {
     // Build the connection parameters.
