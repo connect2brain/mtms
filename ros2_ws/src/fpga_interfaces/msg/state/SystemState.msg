@@ -1,0 +1,12 @@
+ChannelState[] channel_states
+
+SystemError system_error_cumulative
+SystemError system_error_current
+SystemError system_error_emergency
+
+StartupError startup_error
+
+DeviceState device_state
+ExperimentState experiment_state
+
+float64 time
