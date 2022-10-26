@@ -30,7 +30,7 @@ geometry_msgs::msg::Transform_<std::allocator<void>> create_ros_transform_from_r
   return transform;
 }
 
-void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *pUserData) {
+void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *user_data) {
   auto message = neuronavigation_interfaces::msg::OptitrackPoses();
   int i = 0;
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Rigid bodies received: %d", data->nRigidBodies);
@@ -60,7 +60,7 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
 
   auto client_created = client.create_client(data_received_callback);
   if (client_created != 0) {
-    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start Optitrack bridge.");
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to initialize NatNet Client. Failed to start Optitrack bridge.");
     return;
   }
 
