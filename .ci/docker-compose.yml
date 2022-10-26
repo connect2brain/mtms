@@ -16,7 +16,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/rosbridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
   planner_test:
@@ -24,13 +24,13 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/planner/Dockerfile
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile
   pulse_sequence_controller_test:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
 
 networks:
   cinetwork:
