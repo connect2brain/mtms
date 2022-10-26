@@ -12,9 +12,9 @@ The software also uses external software and libraries, which reside in their ow
 repository using Git submodules, and have their own copyright owners. Here is the list of the external repositories
 and where they are located in the directory structure:
 
-[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/neuronavigation_pkg/invesalius3`
-[rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite/), `ros2_ws/src/rosbridge_suite`
-e-field library, `ros2_ws/src/efield/src`
+[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/neuronavigation/neuronavigation/invesalius3`
+[rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite/), `ros2_ws/src/bridges/rosbridge_suite`
+e-field library, `ros2_ws/src/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
 
@@ -41,7 +41,7 @@ git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 - Install the dependencies needed by InVesalius3 (see installation instructions in [Wiki](https://github.com/invesalius/invesalius3/wiki))
 
 - Build the Cython modules needed by InVesalius3 (likewise, see installation instructions). Note that InVesalius
-  resides in the directory `invesalius_ros/ros2_ws/src/neuronavigation_pkg/invesalius3`, therefore the modules
+  resides in the directory `invesalius_ros/ros2_ws/src/neuronavigation/neuronavigation/invesalius3`, therefore the modules
   need to be built in that directory.
 
 - You can check that the installation succeeded by running `python3 app.py` in the above directory and checking
@@ -56,7 +56,7 @@ cd ros2_ws
 call c:\dev\ros2_galactic\local_setup.bat
 colcon build
 call install\local_setup.bat
-ros2 run neuronavigation_pkg start
+ros2 run neuronavigation start
 ```
 
 - In Linux, run the following commands:
@@ -66,7 +66,7 @@ cd ros2_ws
 . ~/ros2_galactic/ros2-linux/setup.bash
 colcon build
 . install/local_setup.bash
-ros2 run neuronavigation_pkg start
+ros2 run neuronavigation start
 ```
 
 ## Troubleshooting
