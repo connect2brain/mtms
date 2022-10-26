@@ -5,16 +5,15 @@
 #include "optitrack_client.h"
 
 #include <inttypes.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
 #ifdef _WIN32
-#   include <conio.h>
+#include <conio.h>
 #else
 
-#   include <unistd.h>
-#   include <termios.h>
+#include <unistd.h>
+#include <termios.h>
 
 #endif
 
@@ -25,38 +24,21 @@
 #include <NatNetClient.h>
 
 
-// Establish a NatNet Client connection
-int OptitrackClient::connect_client() {
+int OptitrackClient::connect_to_motive() {
   // Release previous server
   if (natnet_client) {
     natnet_client->Disconnect();
   }
 
-  // Init Client and connect to NatNet server
-  int retCode = natnet_client->Connect(connect_parameters);
-  if (retCode != ErrorCode_OK) {
-    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Unable to connect to server.  Error code: %d. Exiting.",
-                retCode);
+  int ret_code = natnet_client->Connect(connect_parameters);
+  if (ret_code != ErrorCode_OK) {
+    RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Error connecting client to Motive. Error code: %d", ret_code);
     return ErrorCode_Internal;
-  } else {
-    // connection succeeded
   }
-
   return ErrorCode_OK;
 }
 
-void OptitrackClient::connect_to_motive() {    // Connect to Motive
-  int iResult;
-  iResult = connect_client();
-  if (iResult != ErrorCode_OK) {
-    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Error initializing client. See log for details. Exiting.");
-
-  } else {
-    RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Client initialized and ready.");
-  }
-}
-
-int OptitrackClient::disconnect_client() { // Done - clean up.
+int OptitrackClient::disconnect_client() {
   if (natnet_client) {
     natnet_client->Disconnect();
     delete natnet_client;
@@ -75,11 +57,16 @@ int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_cal
 int OptitrackClient::discover_motive_servers(int serverIndex) {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Looking for servers on the local network.");
 
-  //const unsigned discover_wait_time_ms = 5 * 1000; // Wait 5 seconds for responses.
+  const unsigned discover_wait_time_ms = 5 * 1000;
   const int max_discovers = 1;
   sNatNetDiscoveredServer servers[max_discovers];
   int actual_number_of_discovers = max_discovers;
-  NatNet_BroadcastServerDiscovery(servers, &actual_number_of_discovers);
+
+  NatNet_BroadcastServerDiscovery(
+      servers,
+      &actual_number_of_discovers,
+      discover_wait_time_ms
+  );
 
   if (actual_number_of_discovers > max_discovers) {
     RCLCPP_WARN(rclcpp::get_logger("optitrack_bridge"),

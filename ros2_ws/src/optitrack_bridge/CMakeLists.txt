@@ -31,8 +31,6 @@ target_include_directories(optitrack_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-message(STATUS "current source dir: ${CMAKE_CURRENT_SOURCE_DIR}")
-
 add_library(libNatNet SHARED IMPORTED)
 set_target_properties(libNatNet PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/lib/libNatNet.so)
 target_link_libraries(optitrack_bridge libNatNet)

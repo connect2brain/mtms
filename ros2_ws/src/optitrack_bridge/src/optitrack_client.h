@@ -32,25 +32,19 @@ public:
 
   int create_client(NatNetFrameReceivedCallback data_received_callback);
 
-  int connect_client();
-
   int disconnect_client();
 
-  void connect_to_motive();
+  int connect_to_motive();
 
   int discover_motive_servers(int serverIndex);
 
 private:
-
-  static const ConnectionType kDefaultConnectionType = ConnectionType_Multicast;
 
   NatNetClient *natnet_client = nullptr;
 
   static std::vector<sNatNetDiscoveredServer> discovered_servers;
   sNatNetClientConnectParams connect_parameters;
   char g_discoveredMulticastGroupAddr[kNatNetIpv4AddrStrLenMax] = NATNET_DEFAULT_MULTICAST_ADDRESS;
-  int g_analogSamplesPerMocapFrame = 0;
-  sServerDescription g_serverDescription;
 
 };
 
