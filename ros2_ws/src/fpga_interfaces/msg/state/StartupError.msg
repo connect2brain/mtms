@@ -2,7 +2,8 @@
 # options (cf. SystemError and ChannelError, which can have several concurrent
 # errors), thus enum is the natural structure to represent it. However,
 # enums are not yet supported by ROS2, therefore simulate it by
-# using constants (see link below for an example).
+# using constants (see link below for an example). Change to actual enum when
+# it is available in ROS2.
 #
 # https://github.com/ros2/rosidl/issues/260
 
