@@ -7,7 +7,7 @@ import { Route, Routes } from 'react-router-dom'
 import Experiment from './views/Experiment'
 import DataVisualize from './views/DataVisualize'
 import { MultipleViews } from './views/MultipleViews'
-import { Header, SmallHeader } from './styles/StyledTypography'
+import { Header } from './styles/StyledTypography'
 
 const App = () => {
   return (

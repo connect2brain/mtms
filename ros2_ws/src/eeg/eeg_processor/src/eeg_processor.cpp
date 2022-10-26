@@ -12,11 +12,11 @@ using namespace std::chrono;
 
 EegProcessor::EegProcessor() : Node("eeg_processor") {
   std::string processor_type;
-  this->declare_parameter<std::string>("processor_type", "python");
+  this->declare_parameter<std::string>("processor_type", "compiledmatlab");
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script", "processors.python.python_processor");
+  this->declare_parameter<std::string>("processor_script", "/home/alqio/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;
@@ -26,6 +26,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   std::string output_file_name;
   this->declare_parameter<std::string>("file", "output.data");
   this->get_parameter("file", output_file_name);
+
+  should_publish_events = true;
 
   RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "processor type: %s", processor_type.c_str());
 
@@ -51,10 +53,17 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     auto start = steady_clock::now();
 
     auto fpga_events = processor->data_received(*message);
-
+    if (fpga_events.size() > 0) {
+      std::cout << fpga_events.size() << std::endl;
+      std::cout << fpga_events[0].event_type << std::endl;
+    }
     auto stop = steady_clock::now();
 
     send_fpga_events(fpga_events);
+
+    if (should_publish_events) {
+      publish_events(fpga_events);
+    }
 
     auto total = duration_cast<microseconds>(stop - start);
     //RCLCPP_INFO(this->get_logger(), "Processing took: %lu us", total.count());
@@ -115,6 +124,10 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   discharge_client = this->create_client<fpga_interfaces::srv::SendDischarge>("/fpga/send_discharge");
   discharge_request = std::make_shared<fpga_interfaces::srv::SendDischarge::Request>();
 
+  if (should_publish_events) {
+    event_publisher = this->create_publisher<mtms_interfaces::msg::Event>("/mtms/events", 10);
+  }
+
   f.open(output_file_name, std::ios::out | std::ios::trunc);
 
   processor->init();
@@ -123,6 +136,44 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     measure(loop_count);
   }
 
+}
+
+void EegProcessor::publish_events(const std::vector<FpgaEvent> &events) {
+  for (FpgaEvent event: events) {
+    mtms_interfaces::msg::Event ros_event;
+
+    ros_event.event_type = event.event_type;
+
+    event.print();
+
+    switch (event.event_type) {
+      case PULSE:
+        ros_event.time_us = event.pulse.event.time_us;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published fpga pulse event timed at %lu.", ros_event.time_us);
+        break;
+
+      case CHARGE:
+        ros_event.time_us = event.charge.event.time_us;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published charge event timed at %lu.", ros_event.time_us);
+        break;
+
+      case DISCHARGE:
+        ros_event.time_us = event.discharge.event.time_us;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published discharge event timed at %lu.", ros_event.time_us);
+        break;
+
+      case SIGNAL_OUT:
+        ros_event.time_us = event.signal_out.event.time_us;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published signal out event timed at %lu.", ros_event.time_us);
+        break;
+
+      default:
+        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown fpga event type: %d", event.event_type);
+    }
+
+    event_publisher->publish(ros_event);
+
+  }
 }
 
 void EegProcessor::send_fpga_events(const std::vector<FpgaEvent> &events) {
