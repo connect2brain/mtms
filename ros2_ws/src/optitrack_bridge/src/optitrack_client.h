@@ -36,7 +36,7 @@ public:
 
   int connect_to_motive();
 
-  int discover_motive_servers(int serverIndex);
+  int discover_motive_servers();
 
 private:
 
