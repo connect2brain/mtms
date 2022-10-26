@@ -27,3 +27,17 @@ export interface EegTriggerMessage extends ROSLIB.Message {
   index: number
   time: number
 }
+
+export interface MTMSEvent {
+  timeUs: number
+  eventType: number
+}
+
+export interface MTMSEventMessage extends ROSLIB.Message {
+  time_us: number
+  event_type: number
+  CHARGE: number
+  PULSE: number
+  DISCHARGE: number
+  SIGNAL_OUT: number
+}

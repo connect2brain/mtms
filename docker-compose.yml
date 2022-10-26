@@ -2,7 +2,9 @@ version: '2'
 
 services:
   front:
-    build: ./front/
+    build:
+      context: .
+      dockerfile: front/Dockerfile
     ports:
       - "3000:3000"
     environment:

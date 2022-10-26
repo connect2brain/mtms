@@ -19,8 +19,7 @@ COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/src/interfaces/fpga_interfac
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
-    colcon build --symlink-install
+RUN source /opt/ros/galactic/setup.bash && colcon build
 
 # Create a directory for hotswappable processors
 

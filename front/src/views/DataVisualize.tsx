@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
-import { EegBatch, EegBatchMessage, EegDatapoint, EegDatapointMessage, EegTriggerMessage } from 'types/eeg'
-import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { addBatch, addEegDatapoint, addEegTrigger, setEeg } from 'reducers/eegReducer'
-import { Datapoint, EegChartSteaming } from '../components/EegChartStreaming'
+import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
+import { Datapoint, DatapointWithEventType, EegChartSteaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
 import styled from 'styled-components'
+import { eventSubscriber } from '../services/experiment'
+import { objectKeysToCamelCase } from '../utils'
 
 const DataVisualize = () => {
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
@@ -15,10 +15,17 @@ const DataVisualize = () => {
     x: 1,
   })
 
+  const [latestEvent, setLatestEvent] = useState<DatapointWithEventType>({
+    y: 1,
+    x: 1,
+    eventType: 0,
+  })
+
   useEffect(() => {
     console.log('Subscribing to eeg data')
     eegDataSubscriber.subscribe(newEegBatch)
     triggerSubscriber.subscribe(newTrigger)
+    eventSubscriber.subscribe(newEvent)
   }, [])
 
   const c3 = (datapoint: number[]) =>
@@ -69,15 +76,26 @@ const DataVisualize = () => {
     })
   }
 
+  const newEvent = (message: MTMSEventMessage) => {
+    const camelCased: MTMSEvent = objectKeysToCamelCase(message)
+    const timeInSeconds = Math.round(camelCased.timeUs / 1000000)
+
+    console.log(`message.time_us: ${message.time_us}, timeInSeconds: ${timeInSeconds}`)
+
+    setLatestEvent({
+      y: 100000,
+      x: timeInSeconds,
+      eventType: camelCased.eventType,
+    })
+  }
+
   return (
     <ChartContainer>
-      <EegChartSteaming eegData={latestBatch} triggerData={trigger} />
+      <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
     </ChartContainer>
   )
 }
 
-const ChartContainer = styled.div`
-  
-`
+const ChartContainer = styled.div``
 
 export default DataVisualize
