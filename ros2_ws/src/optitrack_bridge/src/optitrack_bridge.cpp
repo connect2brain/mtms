@@ -52,9 +52,6 @@ void OptitrackBridge::data_received_callback(sFrameOfMocapData *data, void *user
 }
 
 OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
-  this->declare_parameter<int>("server_index", 1);
-  this->get_parameter("server_index", server_index);
-
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connecting to Motive...");
 
   auto client_created = client.create_client(data_received_callback);
@@ -63,7 +60,7 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
     return;
   }
 
-  auto success = client.discover_motive_servers(server_index);
+  auto success = client.discover_motive_servers();
   if (success != 0) {
     RCLCPP_ERROR(rclcpp::get_logger("optitrack_bridge"), "Failed to start Optitrack bridge.");
     shutdown();
