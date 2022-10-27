@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { WebglPlot, WebglLine, ColorRGBA } from 'webgl-plot'
-import { EegChartProps } from './EegChartStreaming'
+import {Datapoint, EegChartProps} from './EegChartStreaming'
 import styled from 'styled-components'
 
-export const WebGLPlot = ({ eegData, latestEvent }: EegChartProps) => {
+type WebGLPlotProps = {
+  eegData: Datapoint[]
+  pulseData: Datapoint[]
+}
+
+export const WebGLPlot = ({ eegData, pulseData }: WebGLPlotProps) => {
   const canvasMain = useRef<HTMLCanvasElement>(null)
 
   const [webGLPlot, setWebGLPlot] = useState<WebglPlot>()
@@ -25,7 +30,6 @@ export const WebGLPlot = ({ eegData, latestEvent }: EegChartProps) => {
       const line2 = new WebglLine(new ColorRGBA(1, 0, 0, 1), numX)
       webglp.addLine(line1)
       webglp.addLine(line2)
-
 
       line1.arrangeX()
       line2.arrangeX()
