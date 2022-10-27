@@ -36,7 +36,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
             obj.offset_correction = obj.FS * 0.008;
             obj.nr_seconds = 1;
-            obj.nr_samples = obj.nr_seconds * obj.FS;
+            obj.nr_samples = uint32(obj.nr_seconds * obj.FS / 2);
 
             obj.lpf = firls(80, [0 80 250 5000/2]/(5000/2), [1 1 0 0], [1 1]);
             obj.bpf = firls(80, [0 6 9 13 16 (500/2)]/(500/2), [0 0 1 1 0 0], [1 1 1]);
@@ -73,7 +73,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.samples_collected = obj.samples_collected + 1;
 
             if ~obj.estimated && mod(obj.samples_collected, 100) == 0
-                fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
+                fprintf("Samples collected %d / %d\n", uint32(obj.samples_collected), obj.nr_samples);
             end
             
 
@@ -102,11 +102,11 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
 
                 pulse_event = create_pulse_command(obj.events_sent + 1, 1, 0, event_time);
-                charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 500000, obj.target_voltage);
+                charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1000000000, obj.target_voltage);
                 obj.set_commands([pulse_event, charge_event]);
 
                 fprintf("Timed pulse at %lu\n", event_time);
-                fprintf("Timed charge at %lu\n", event_time + 500000);
+                fprintf("Timed charge at %lu\n", event_time + 1000000000);
 
                 obj.estimated = true;
 
