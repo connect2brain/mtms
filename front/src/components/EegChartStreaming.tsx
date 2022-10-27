@@ -17,8 +17,9 @@ import StreamingPlugin from 'chartjs-plugin-streaming'
 import { Line, Chart } from 'react-chartjs-2'
 import React, { useEffect, useRef, useState } from 'react'
 import theme from '../styles/theme'
+import styled from 'styled-components'
 
-const options: ChartOptions<'line' | 'bar'> = {
+const defaultOptions: ChartOptions<'line' | 'bar'> = {
   responsive: true,
   animation: {
     duration: 0,
@@ -114,6 +115,11 @@ const datasetDefaults = [
 export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
   const chartRef = useRef<any>(null)
 
+  const [minY, setMinY] = useState<number>(3550)
+  const [maxY, setMaxY] = useState<number>(3620)
+
+  const [options, setOptions] = useState(defaultOptions)
+
   const [chartData, setChartData] = useState<ChartData<'line' | 'bar'>>({
     datasets: [
       {
@@ -139,7 +145,6 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
           ...datasetDefaults[0],
         },
         ...datasetDefaults.slice(1).map((dataset, index) => {
-
           return {
             ...dataset,
             data:
@@ -152,6 +157,15 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
     setChartData(newChartData)
     chartRef.current?.update('quiet')
   }, [eegData])
+
+  useEffect(() => {
+    const newOptions = { ...options }
+    if (newOptions.scales && newOptions.scales.y) {
+      newOptions.scales.y.min = minY
+      newOptions.scales.y.max = maxY
+    }
+    setOptions(newOptions)
+  }, [minY, maxY])
 
   useEffect(() => {
     const eegOldData = chartData.datasets[0].data
@@ -178,5 +192,29 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
     chartRef.current?.update('quiet')
   }, [latestEvent])
 
-  return <Chart type={'line'} id={'eeg-chart'} ref={chartRef} data={chartData} options={options} />
+  return (
+    <div>
+      <label htmlFor='chart-max-input'>Y max: </label>
+      <AxisLimit
+        defaultValue={maxY}
+        type='number'
+        id='chart-max-input'
+        onChange={(event) => setMaxY(Number(event.target.value))}
+      />
+      <br />
+      <label htmlFor='chart-min-input'>Y min: </label>
+      <AxisLimit
+        defaultValue={minY}
+        type='number'
+        id='chart-min-input'
+        onChange={(event) => setMinY(Number(event.target.value))}
+      />
+
+      <Chart type={'line'} id={'eeg-chart'} ref={chartRef} data={chartData} options={options} />
+    </div>
+  )
 }
+
+const AxisLimit = styled.input`
+  max-width: 50px;
+`
