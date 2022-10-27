@@ -69,8 +69,8 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
             obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
-            obj.events_sent = obj.events_sent + size(obj.commands, 2);
-            obj.last_sample_received_at = time;
+            obj.events_sent = obj.events_sent + numel(obj.commands);
+            obj.last_sample_received_at_us = time;
 
             ret = obj.commands;
         end
@@ -79,7 +79,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             coder.inline("never");
 
             obj.on_init_experiment();
-            obj.events_sent = obj.events_sent + size(obj.commands, 2);
+            obj.events_sent = obj.events_sent + numel(obj.commands);
 
             ret = obj.commands;
         end
@@ -90,7 +90,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.experiment_in_progress = false;
 
             obj.on_end_experiment();
-            obj.events_sent = obj.events_sent + size(obj.commands, 2);
+            obj.events_sent = obj.events_sent + numel(obj.commands);
 
             ret = obj.commands;
         end

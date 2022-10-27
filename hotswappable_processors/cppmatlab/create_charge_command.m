@@ -3,10 +3,10 @@ function command = create_charge_command(event_id, channel, execution_condition,
     event.execution_condition = uint8(execution_condition);
     event.time_us = uint64(time_us);
 
+    command.channel = uint8(channel);
     command.event = event;
     command.pieces = get_default_waveform(channel);
     command.event_type = uint8(1);
-    
     command.target_voltage = uint16(target_voltage);
     
     coder.cstructname(command, 'matlab_fpga_event');
