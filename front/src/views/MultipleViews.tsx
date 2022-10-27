@@ -9,6 +9,7 @@ import { SmallHeader } from '../styles/StyledTypography'
 export const MultipleViews = () => {
   const [displaySystemControl, setDisplaySystemControl] = useState(true)
   const [displayPlot, setDisplayPlot] = useState(false)
+  const [displayWebGLPlot, setDisplayWebGLPlot] = useState(false)
   const [displayTargets, setDisplayTargets] = useState(false)
   const [displayExperiment, setDisplayExperiment] = useState(false)
 
@@ -38,6 +39,15 @@ export const MultipleViews = () => {
         <br />
 
         <input
+          id='toggle-webgl-plot'
+          type='checkbox'
+          checked={displayWebGLPlot}
+          onChange={() => toggleView(displayWebGLPlot, setDisplayWebGLPlot)}
+        />
+        <label htmlFor='toggle-webgl-plot'>EEG WebGL plot</label>
+        <br />
+
+        <input
           id='toggle-targets'
           type='checkbox'
           checked={displayTargets}
@@ -58,7 +68,14 @@ export const MultipleViews = () => {
         {displayPlot ? (
           <Wrapper>
             <SmallHeader>EEG plot</SmallHeader>
-            <DataVisualize />
+            <DataVisualize webgl={false}/>
+          </Wrapper>
+        ) : null}
+
+        {displayWebGLPlot ? (
+          <Wrapper>
+            <SmallHeader>EEG WebGL plot</SmallHeader>
+            <DataVisualize webgl={true}/>
           </Wrapper>
         ) : null}
 

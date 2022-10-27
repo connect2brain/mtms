@@ -7,7 +7,11 @@ import styled from 'styled-components'
 import { eventSubscriber } from '../services/experiment'
 import { objectKeysToCamelCase } from '../utils'
 
-const DataVisualize = () => {
+type Props = {
+  webgl: boolean
+}
+
+const DataVisualize = ({ webgl }: Props) => {
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
 
   const [trigger, setTrigger] = useState<Datapoint>({
@@ -23,7 +27,11 @@ const DataVisualize = () => {
 
   useEffect(() => {
     console.log('Subscribing to eeg data')
-    eegDataSubscriber.subscribe(newEegBatch)
+    if (webgl) {
+      eegDataSubscriber.subscribe(newEegBatchWebGL)
+    } else {
+      eegDataSubscriber.subscribe(newEegBatch)
+    }
     triggerSubscriber.subscribe(newTrigger)
     eventSubscriber.subscribe(newEvent)
   }, [])
@@ -80,7 +88,7 @@ const DataVisualize = () => {
     const camelCased: MTMSEvent = objectKeysToCamelCase(message)
     const timeInSeconds = Math.round(camelCased.timeUs / 1000000)
 
-    console.log(`message.time_us: ${message.time_us}, timeInSeconds: ${timeInSeconds}`)
+    //console.log(`message.time_us: ${message.time_us}, timeInSeconds: ${timeInSeconds}`)
 
     setLatestEvent({
       y: 100000,
@@ -91,7 +99,11 @@ const DataVisualize = () => {
 
   return (
     <ChartContainer>
-      <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
+      {webgl ? (
+        <WebGLPlot eegData={latestBatch} latestEvent={latestEvent} />
+      ) : (
+        <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
+      )}
     </ChartContainer>
   )
 }

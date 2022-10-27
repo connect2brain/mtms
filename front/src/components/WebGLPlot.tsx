@@ -8,6 +8,7 @@ export const WebGLPlot = ({ eegData, latestEvent }: EegChartProps) => {
 
   const [webGLPlot, setWebGLPlot] = useState<WebglPlot>()
   const [eegLine, setEegLine] = useState<WebglLine>()
+  const [pulseLine, setPulseLine] = useState<WebglLine>()
   const [triggerLine, setTriggerLine] = useState<WebglLine>()
 
   useEffect(() => {
@@ -18,16 +19,20 @@ export const WebGLPlot = ({ eegData, latestEvent }: EegChartProps) => {
 
       const webglp = new WebglPlot(canvasMain.current)
       setWebGLPlot(webglp)
-      const numX = 5000
+      const numX = 2500
 
       const line1 = new WebglLine(new ColorRGBA(1, 0, 0, 1), numX)
+      const line2 = new WebglLine(new ColorRGBA(1, 0, 0, 1), numX)
       webglp.addLine(line1)
+      webglp.addLine(line2)
 
 
       line1.arrangeX()
+      line2.arrangeX()
 
       setWebGLPlot(webglp)
       setEegLine(line1)
+      setPulseLine(line2)
     }
   }, [])
 
