@@ -77,7 +77,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             charge = create_charge_command(obj.events_sent + 1, 1, 2, 0, obj.target_voltage);
             obj.set_commands(charge);
         end
-        function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
+        function on_data_received(obj, channel_data, time_us, first_sample_of_experiment)         
             if obj.estimated && obj.samples_collected == obj.isi_samples
                 obj.estimated = false;
                 obj.samples_collected = 0;
@@ -125,6 +125,34 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 phase_diff = phase_at_peak - real_phase_at_estimated_peak;
 
                 fprintf(obj.file_id, "%f, %f \n", phase_at_peak, phase_diff);
+
+                [pxx, f] = pwelch(obj.data, hann(5000), 0, [], 5000);
+                for i=1:numel(pxx)
+                    fprintf(obj.pxx_file_id, "%f,", pxx(i));
+                end
+
+                for i=1:numel(f)
+                    fprintf(obj.f_file_id, "%f,", f(i));
+                end
+
+                fprintf(obj.pxx_file_id, "\n");
+
+                if obj.phase_count < obj.max_phase_count
+                    obj.phase_count = obj.phase_count + 1;
+                    obj.phases(obj.phase_count) = phase_diff;
+                    fprintf("Phases estimated: %f\n", obj.phase_count);
+                end
+                if obj.phase_count >= obj.max_phase_count && ~obj.saved
+                    %save("phases.mat", obj.phases);
+                    %writematrix(obj.phases, "phases.csv");
+                    %for i=1:obj.max_phase_count
+                    %    fprintf(obj.file_id, "%f\n", obj.phases(i));
+                    %end
+                    %obj.saved = true;
+                end
+
+
+                
 
                 event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
 
