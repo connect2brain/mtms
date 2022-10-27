@@ -53,10 +53,7 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     auto start = steady_clock::now();
 
     auto fpga_events = processor->data_received(*message);
-    if (fpga_events.size() > 0) {
-      std::cout << fpga_events.size() << std::endl;
-      std::cout << fpga_events[0].event_type << std::endl;
-    }
+
     auto stop = steady_clock::now();
 
     send_fpga_events(fpga_events);
