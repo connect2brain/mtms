@@ -141,8 +141,6 @@ void EegProcessor::publish_events(const std::vector<FpgaEvent> &events) {
 
     ros_event.event_type = event.event_type;
 
-    event.print();
-
     switch (event.event_type) {
       case PULSE:
         ros_event.time_us = event.pulse.event.time_us;
