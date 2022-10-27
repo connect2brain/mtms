@@ -21,7 +21,7 @@ const App = () => {
           <Route path='/' element={<MultipleViews />} />
           <Route path='/targets' element={<Targets />} />
           <Route path='/experiment' element={<Experiment />} />
-          <Route path='/plot' element={<DataVisualize />} />
+          <Route path='/plot' element={<DataVisualize webgl={false}/>} />
         </Routes>
       </Wrapper>
     </Providers>
