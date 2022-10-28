@@ -7,11 +7,7 @@ import styled from 'styled-components'
 import { eventSubscriber } from '../services/experiment'
 import { objectKeysToCamelCase } from '../utils'
 
-type Props = {
-  webgl: boolean
-}
-
-const DataVisualize = ({ webgl }: Props) => {
+const DataVisualize = () => {
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
 
   const [trigger, setTrigger] = useState<Datapoint>({
@@ -25,14 +21,11 @@ const DataVisualize = ({ webgl }: Props) => {
     eventType: 0,
   })
 
+  const [events, setEvents] = useState<MTMSEvent[]>([])
+
   useEffect(() => {
     console.log('Subscribing to eeg data')
-    if (webgl) {
-      eegDataSubscriber.subscribe(newEegBatchWebGL)
-    } else {
-      eegDataSubscriber.subscribe(newEegBatch)
-    }
-    triggerSubscriber.subscribe(newTrigger)
+    eegDataSubscriber.subscribe(newEegBatch)
     eventSubscriber.subscribe(newEvent)
   }, [])
 
@@ -51,32 +44,6 @@ const DataVisualize = ({ webgl }: Props) => {
     setLatestBatch(mappedData)
   }
 
-  const newEegBatchWebGL = (message: EegBatchMessage) => {
-    let max = 0
-    let s = 0
-    const data = []
-    for (let i = 0; i < message.batch.length; i++) {
-      const point = message.batch[i]
-      const filtered = c3(point.channel_datapoint)
-      if (filtered > max) {
-        max = filtered
-      }
-      s += filtered
-      data.push(filtered)
-    }
-
-    const avg = s / message.batch.length
-
-    const scaledData = data.map((point) => {
-      return {
-        x: 0,
-        y: ((point - avg) / max) * 50,
-      }
-    })
-
-    setLatestBatch(scaledData)
-  }
-
   const newTrigger = (message: EegTriggerMessage) => {
     setTrigger({
       y: 100000,
@@ -86,24 +53,18 @@ const DataVisualize = ({ webgl }: Props) => {
 
   const newEvent = (message: MTMSEventMessage) => {
     const camelCased: MTMSEvent = objectKeysToCamelCase(message)
-    const timeInSeconds = Math.round(camelCased.timeUs / 1000000)
-
-    //console.log(`message.time_us: ${message.time_us}, timeInSeconds: ${timeInSeconds}`)
+    const time = camelCased.timeUs / 1000000
 
     setLatestEvent({
       y: 100000,
-      x: timeInSeconds,
+      x: Math.round(time),
       eventType: camelCased.eventType,
     })
   }
 
   return (
     <ChartContainer>
-      {webgl ? (
-        <WebGLPlot eegData={latestBatch} pulseData={latestBatch} />
-      ) : (
-        <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
-      )}
+      <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
     </ChartContainer>
   )
 }
