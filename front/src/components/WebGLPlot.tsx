@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { WebglPlot, WebglLine, ColorRGBA } from 'webgl-plot'
-import {Datapoint, EegChartProps} from './EegChartStreaming'
+import { Datapoint, EegChartProps } from './EegChartStreaming'
 import styled from 'styled-components'
 
 type WebGLPlotProps = {
@@ -27,7 +27,7 @@ export const WebGLPlot = ({ eegData, pulseData }: WebGLPlotProps) => {
       const numX = 2500
 
       const line1 = new WebglLine(new ColorRGBA(1, 0, 0, 1), numX)
-      const line2 = new WebglLine(new ColorRGBA(1, 0, 0, 1), numX)
+      const line2 = new WebglLine(new ColorRGBA(0, 0, 1, 1), numX)
       webglp.addLine(line1)
       webglp.addLine(line2)
 
@@ -45,7 +45,7 @@ export const WebGLPlot = ({ eegData, pulseData }: WebGLPlotProps) => {
     let id = 0
     let renderPlot = () => {
       //console.log('in render plot')
-      const y = new Float32Array(eegData.map(datapoint => datapoint.y))
+      const y = new Float32Array(eegData.map((datapoint) => datapoint.y))
       //console.log(y)
       eegLine?.shiftAdd(y)
       //eegLine?.
@@ -60,8 +60,24 @@ export const WebGLPlot = ({ eegData, pulseData }: WebGLPlotProps) => {
       renderPlot = () => {}
       cancelAnimationFrame(id)
     }
-
   }, [eegData])
+
+  useEffect(() => {
+    let id = 0
+    let renderPlot = () => {
+      const y = new Float32Array(pulseData.map((datapoint) => datapoint.y))
+      pulseLine?.shiftAdd(y)
+      webGLPlot?.update()
+    }
+
+    id = requestAnimationFrame(renderPlot)
+
+    return () => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      renderPlot = () => {}
+      cancelAnimationFrame(id)
+    }
+  }, [pulseData])
 
   return (
     <div>
