@@ -100,7 +100,7 @@ const DataVisualize = ({ webgl }: Props) => {
   return (
     <ChartContainer>
       {webgl ? (
-        <WebGLPlot eegData={latestBatch} pulseData={} />
+        <WebGLPlot eegData={latestBatch} pulseData={latestBatch} />
       ) : (
         <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
       )}

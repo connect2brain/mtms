@@ -137,6 +137,7 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
 
   useEffect(() => {
     const eegOldData = chartData.datasets[0].data
+    console.log(eegOldData)
 
     const newChartData = {
       datasets: [
@@ -147,8 +148,7 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
         ...datasetDefaults.slice(1).map((dataset, index) => {
           return {
             ...dataset,
-            data:
-              latestEvent.eventType === index ? chartData.datasets[index + 1].data : chartData.datasets[index + 1].data,
+            data: chartData.datasets[index + 1].data,
           }
         }),
       ],

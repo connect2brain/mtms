@@ -48,6 +48,7 @@ export const WebGLPlot = ({ eegData, pulseData }: WebGLPlotProps) => {
       const y = new Float32Array(eegData.map(datapoint => datapoint.y))
       //console.log(y)
       eegLine?.shiftAdd(y)
+      //eegLine?.
       //id = requestAnimationFrame(renderPlot)
       webGLPlot?.update()
     }
