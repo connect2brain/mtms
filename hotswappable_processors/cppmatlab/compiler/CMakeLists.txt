@@ -21,6 +21,7 @@ add_library(${PROJECT_NAME} SHARED ${processor_src})
 add_executable(${PROJECT_NAME}_exec ${processor_src})
 
 if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found!")
     target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
     target_link_libraries(${PROJECT_NAME}_exec PUBLIC OpenMP::OpenMP_CXX)
 endif()
