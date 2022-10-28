@@ -5,6 +5,7 @@ import { SystemState } from '../components/SystemState'
 import Targets from './Targets'
 import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
+import DataVisualizeWebGL from './DataVisualizeWebGL'
 
 export const MultipleViews = () => {
   const [displaySystemControl, setDisplaySystemControl] = useState(true)
@@ -68,14 +69,14 @@ export const MultipleViews = () => {
         {displayPlot ? (
           <Wrapper>
             <SmallHeader>EEG plot</SmallHeader>
-            <DataVisualize webgl={false}/>
+            <DataVisualize />
           </Wrapper>
         ) : null}
 
         {displayWebGLPlot ? (
           <Wrapper>
             <SmallHeader>EEG WebGL plot</SmallHeader>
-            <DataVisualize webgl={true}/>
+            <DataVisualizeWebGL />
           </Wrapper>
         ) : null}
 
