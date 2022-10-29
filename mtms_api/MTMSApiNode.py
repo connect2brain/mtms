@@ -2,16 +2,12 @@ import rclpy
 from rclpy.node import Node
 
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
-from fpga_interfaces.msg import SystemState, PulsePiece, Feedback, Event
+from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, SystemState, \
+    PulsePiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
 
 from mtms_interfaces.srv import GetChannelVoltages
 
 from .MTMSApiPrinter import MTMSApiPrinter
-
-from .enums.ChargeError import ChargeError
-from .enums.DischargeError import DischargeError
-from .enums.PulseError import PulseError
-from .enums.SignalOutError import SignalOutError
 
 class MTMSApiNode(Node):
     # To FPGA
@@ -61,10 +57,10 @@ class MTMSApiNode(Node):
         #
         self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state', self.handle_system_state, 1)
 
-        self.pulse_feedback_subscriber = self.create_subscription(Feedback, '/fpga/pulse_feedback', self.handle_pulse_feedback, 10)
-        self.charge_feedback_subscriber = self.create_subscription(Feedback, '/fpga/charge_feedback', self.handle_charge_feedback, 10)
-        self.discharge_feedback_subscriber = self.create_subscription(Feedback, '/fpga/discharge_feedback', self.handle_discharge_feedback, 10)
-        self.signal_out_feedback_subscriber = self.create_subscription(Feedback, '/fpga/signal_out_feedback', self.handle_signal_out_feedback, 10)
+        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/fpga/pulse_feedback', self.handle_pulse_feedback, 10)
+        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/fpga/charge_feedback', self.handle_charge_feedback, 10)
+        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/fpga/discharge_feedback', self.handle_discharge_feedback, 10)
+        self.signal_out_feedback_subscriber = self.create_subscription(SignalOutFeedback, '/fpga/signal_out_feedback', self.handle_signal_out_feedback, 10)
 
         self.event_feedback = {}
 
@@ -237,9 +233,9 @@ class MTMSApiNode(Node):
 
     def update_event_feedback(self, feedback):
         id = feedback.id
-        status_code = feedback.status_code
+        error = feedback.error
 
-        self.event_feedback[id] = status_code
+        self.event_feedback[id] = error
 
     def get_event_feedback(self, id):
         if id not in self.event_feedback:
@@ -248,19 +244,19 @@ class MTMSApiNode(Node):
         return self.event_feedback[id]
 
     def handle_pulse_feedback(self, feedback):
-        self.printer.print_feedback('Pulse', PulseError, feedback)
+        self.printer.print_feedback('Pulse', feedback)
         self.update_event_feedback(feedback)
 
     def handle_charge_feedback(self, feedback):
-        self.printer.print_feedback('Charge', ChargeError, feedback)
+        self.printer.print_feedback('Charge', feedback)
         self.update_event_feedback(feedback)
 
     def handle_discharge_feedback(self, feedback):
-        self.printer.print_feedback('Discharge', DischargeError, feedback)
+        self.printer.print_feedback('Discharge', feedback)
         self.update_event_feedback(feedback)
 
     def handle_signal_out_feedback(self, feedback):
-        self.printer.print_feedback('Signal out', SignalOutError, feedback)
+        self.printer.print_feedback('Signal out', feedback)
         self.update_event_feedback(feedback)
 
     # Targeting
