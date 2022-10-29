@@ -24,7 +24,7 @@ time_list = [
 def generate_signal_out_command(port, time_us, execution_condition, duration):
     event = Event()
     event.id = 1
-    event.execution_condition = execution_condition
+    event.execution_condition.value = execution_condition
     event.time_us = time_us
 
     signal_out = SignalOut()
@@ -50,7 +50,7 @@ def generate_standard_pulse_command():
 
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = 0
 
         pulse = Pulse()
@@ -78,7 +78,7 @@ def generate_timed_pulses(count):
 
         event = Event()
         event.id = i
-        event.execution_condition = 0
+        event.execution_condition.value = 0
         event.time_us = int(1e6 * i + WAIT)
 
         pulse = Pulse()
@@ -98,7 +98,7 @@ def generate_timed_charges(count, voltage):
     for i in range(count):
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = int(1e6 * i + 1e6/2 + WAIT)
 
         charge = Charge()
@@ -117,7 +117,7 @@ def generate_standard_charge_command(voltage):
     for i, _ in enumerate(time_list):
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = 0
 
         charge = Charge()

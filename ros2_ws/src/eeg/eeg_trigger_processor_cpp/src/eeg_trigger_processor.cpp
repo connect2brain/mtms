@@ -59,7 +59,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   event.port = 3;
   event.duration_us = 10000;
   event.event.time_us = 0;
-  event.event.execution_condition = 2;
+  event.event.execution_condition.value = 2;
   event.event.id = 1;
 
   req->signal_out = event;
