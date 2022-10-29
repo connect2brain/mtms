@@ -129,14 +129,14 @@ class MTMSApiNode(Node):
 
         event = Event()
         event.id = id
-        event.execution_condition = execution_condition.value
+        event.execution_condition.value = execution_condition
         event.time_us = time_us
 
         request.pulse.event = event
         request.pulse.channel = channel
         for piece in waveform:
             new_piece = PulsePiece()
-            new_piece.mode = piece['mode'].value
+            new_piece.current_mode.value = piece['current_mode']
             new_piece.duration_in_ticks = piece['duration_in_ticks']
             request.pulse.pieces.append(new_piece)
 
@@ -160,7 +160,7 @@ class MTMSApiNode(Node):
 
         event = Event()
         event.id = id
-        event.execution_condition = execution_condition.value
+        event.execution_condition.value = execution_condition
         event.time_us = time_us
 
         request.charge.event = event
@@ -187,7 +187,7 @@ class MTMSApiNode(Node):
 
         event = Event()
         event.id = id
-        event.execution_condition = execution_condition.value
+        event.execution_condition.value = execution_condition
         event.time_us = time_us
 
         request.discharge.event = event
@@ -214,7 +214,7 @@ class MTMSApiNode(Node):
 
         event = Event()
         event.id = id
-        event.execution_condition = execution_condition.value
+        event.execution_condition.value = execution_condition
         event.time_us = time_us
 
         request.signal_out.event = event

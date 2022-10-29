@@ -3,10 +3,7 @@ import copy
 
 import rclpy
 
-from .enums.DeviceState import DeviceState
-from .enums.ExecutionCondition import ExecutionCondition
-from .enums.ExperimentState import ExperimentState
-from .enums.PulseMode import PulseMode
+from fpga_interfaces.msg import ExperimentState, DeviceState, ExecutionCondition, CurrentMode
 
 from .MTMSApiNode import MTMSApiNode
 
@@ -81,11 +78,11 @@ class MTMSApi:
 
     def get_device_state(self):
         self.node.wait_for_new_state()
-        return DeviceState(self.node.system_state.device_state)
+        return self.node.system_state.device_state.value
 
     def get_experiment_state(self):
         self.node.wait_for_new_state()
-        return ExperimentState(self.node.system_state.experiment_state)
+        return self.node.system_state.experiment_state.value
 
     def get_voltage(self, channel):
         self.node.wait_for_new_state()
@@ -206,15 +203,15 @@ class MTMSApi:
 
         waveform = [
             {
-                'mode': PulseMode.RISING,
+                'current_mode': CurrentMode.RISING,
                 'duration_in_ticks': 2400
             },
             {
-                'mode': PulseMode.HOLD,
+                'current_mode': CurrentMode.HOLD,
                 'duration_in_ticks': 1200
             },
             {
-                'mode': PulseMode.FALLING,
+                'current_mode': CurrentMode.FALLING,
                 'duration_in_ticks': falling_phase_duration_in_ticks,
             },
         ]
@@ -222,17 +219,17 @@ class MTMSApi:
 
     def reverse_polarity(self, waveform):
         for i in range(len(waveform)):
-            mode = waveform[i]['mode']
-            if mode == PulseMode.RISING:
-                reversed_mode = PulseMode.FALLING
-            elif mode == PulseMode.FALLING:
-                reversed_mode = PulseMode.RISING
-            elif mode == PulseMode.HOLD:
-                reversed_mode = PulseMode.ALTERNATIVE_HOLD
-            elif mode == PulseMode.ALTERNATIVE_HOLD:
-                reversed_mode = PulseMode.HOLD
+            current_mode = waveform[i]['current_mode']
+            if current_mode == CurrentMode.RISING:
+                current_mode_reversed = CurrentMode.FALLING
+            elif current_mode == CurrentMode.FALLING:
+                current_mode_reversed = CurrentMode.RISING
+            elif current_mode == CurrentMode.HOLD:
+                current_mode_reversed = CurrentMode.ALTERNATIVE_HOLD
+            elif current_mode == CurrentMode.ALTERNATIVE_HOLD:
+                current_mode_reversed = CurrentMode.HOLD
 
-            waveform[i]['mode'] = reversed_mode
+            waveform[i]['current_mode'] = current_mode_reversed
 
         return waveform
 
