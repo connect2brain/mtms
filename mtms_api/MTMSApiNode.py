@@ -4,8 +4,8 @@ from rclpy.node import Node
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, SystemState, \
     PulsePiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
-
 from mtms_interfaces.srv import GetChannelVoltages
+from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
 from .MTMSApiPrinter import MTMSApiPrinter
 
@@ -23,6 +23,8 @@ class MTMSApiNode(Node):
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
+    ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveform/get_default', GetDefaultWaveform)
+    ROS_SERVICE_REVERSE_POLARITY = ('/waveform/reverse_polarity', ReversePolarity)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -35,6 +37,8 @@ class MTMSApiNode(Node):
         ROS_SERVICE_SEND_DISCHARGE,
         ROS_SERVICE_SEND_SIGNAL_OUT,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
+        ROS_SERVICE_GET_DEFAULT_WAVEFORM,
+        ROS_SERVICE_REVERSE_POLARITY,
     )
 
     def __init__(self):
@@ -130,11 +134,7 @@ class MTMSApiNode(Node):
 
         request.pulse.event = event
         request.pulse.channel = channel
-        for piece in waveform:
-            new_piece = PulsePiece()
-            new_piece.current_mode.value = piece['current_mode']
-            new_piece.duration_in_ticks = piece['duration_in_ticks']
-            request.pulse.pieces.append(new_piece)
+        request.pulse.pieces = waveform
 
         value = self.call_service(client, request)
 
@@ -273,9 +273,35 @@ class MTMSApiNode(Node):
         request.intensity = intensity
 
         value = self.call_service(client, request)
-        assert value.success, "Invalid displacement, rotation angle, or intensity values."
+        assert value.success, "Invalid displacement, rotation angle, or intensity."
 
         return value.voltages, value.reversed_polarities
+
+    def get_default_waveform(self, channel):
+        topic, service_object = self.ROS_SERVICE_GET_DEFAULT_WAVEFORM
+
+        client = self.ros_service_clients[topic]
+        request = service_object.Request()
+
+        request.channel = channel
+
+        value = self.call_service(client, request)
+        assert value.success, "Invalid channel."
+
+        return value.waveform
+
+    def reverse_polarity(self, waveform):
+        topic, service_object = self.ROS_SERVICE_REVERSE_POLARITY
+
+        client = self.ros_service_clients[topic]
+        request = service_object.Request()
+
+        request.waveform = waveform
+
+        value = self.call_service(client, request)
+        assert value.success, "Failed request."
+
+        return value.waveform
 
     # System state
 
