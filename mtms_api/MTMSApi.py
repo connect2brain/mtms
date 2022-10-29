@@ -192,46 +192,10 @@ class MTMSApi:
     # Helpers
 
     def get_default_waveform(self, channel):
-        assert 1<= channel <= 5
-
-        if channel == 1 or channel == 2:
-            falling_phase_duration_in_ticks = 1480
-        elif channel == 3 or channel == 4:
-            falling_phase_duration_in_ticks = 1564
-        elif channel == 5:
-            falling_phase_duration_in_ticks = 1776
-
-        waveform = [
-            {
-                'current_mode': CurrentMode.RISING,
-                'duration_in_ticks': 2400
-            },
-            {
-                'current_mode': CurrentMode.HOLD,
-                'duration_in_ticks': 1200
-            },
-            {
-                'current_mode': CurrentMode.FALLING,
-                'duration_in_ticks': falling_phase_duration_in_ticks,
-            },
-        ]
-        return waveform
+        return self.node.get_default_waveform(channel=channel)
 
     def reverse_polarity(self, waveform):
-        for i in range(len(waveform)):
-            current_mode = waveform[i]['current_mode']
-            if current_mode == CurrentMode.RISING:
-                current_mode_reversed = CurrentMode.FALLING
-            elif current_mode == CurrentMode.FALLING:
-                current_mode_reversed = CurrentMode.RISING
-            elif current_mode == CurrentMode.HOLD:
-                current_mode_reversed = CurrentMode.ALTERNATIVE_HOLD
-            elif current_mode == CurrentMode.ALTERNATIVE_HOLD:
-                current_mode_reversed = CurrentMode.HOLD
-
-            waveform[i]['current_mode'] = current_mode_reversed
-
-        return waveform
+        return self.node.reverse_polarity(waveform=waveform)
 
     # Targeting
 
