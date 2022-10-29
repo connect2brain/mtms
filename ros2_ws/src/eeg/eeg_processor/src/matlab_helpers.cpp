@@ -23,7 +23,7 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   std::cout << "  Time us: " << event.b_event.time_us << std::endl;
   std::cout << "Pieces: " << std::endl;
   for (auto i = 0; i < 3; i++) {
-    std::cout << "  mode: " << +event.pieces[i].mode << ", duration in ticks: " << event.pieces[i].duration_in_ticks
+    std::cout << "  Current mode: " << +event.pieces[i].current_mode << ", duration in ticks: " << event.pieces[i].duration_in_ticks
               << std::endl;
   }
 }
@@ -34,7 +34,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.event_type = CHARGE;
     fpga_event.charge = fpga_interfaces::msg::Charge();
     fpga_event.charge.event.id = event.b_event.id;
-    fpga_event.charge.event.execution_condition = event.b_event.execution_condition;
+    fpga_event.charge.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.charge.event.time_us = event.b_event.time_us;
     fpga_event.charge.channel = event.channel;
     fpga_event.charge.target_voltage = event.target_voltage;
@@ -46,11 +46,11 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     for (auto piece: event.pieces) {
       auto fpga_piece = fpga_interfaces::msg::PulsePiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
-      fpga_piece.mode = piece.mode;
+      fpga_piece.current_mode.value = piece.current_mode;
       fpga_event.pulse.pieces.push_back(fpga_piece);
     }
     fpga_event.pulse.event.id = event.b_event.id;
-    fpga_event.pulse.event.execution_condition = event.b_event.execution_condition;
+    fpga_event.pulse.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.pulse.event.time_us = event.b_event.time_us;
     fpga_event.pulse.channel = event.channel;
 
@@ -58,7 +58,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.event_type = DISCHARGE;
     fpga_event.discharge = fpga_interfaces::msg::Discharge();
     fpga_event.discharge.event.id = event.b_event.id;
-    fpga_event.discharge.event.execution_condition = event.b_event.execution_condition;
+    fpga_event.discharge.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.discharge.event.time_us = event.b_event.time_us;
     fpga_event.discharge.channel = event.channel;
     fpga_event.discharge.target_voltage = event.target_voltage;
