@@ -1,6 +1,80 @@
-from .enums.util.bcolors import bcolors
+from .util.bcolors import bcolors
 
-from fpga_interfaces.msg import DeviceState, ExperimentState, ExecutionCondition, StartupError
+from fpga_interfaces.msg import DeviceState, ExperimentState, ExecutionCondition, StartupError, \
+    PulseError, DischargeError, ChargeError, SignalOutError
+
+class MTMSApiEnums():
+    DEVICE_STATES = (
+        (DeviceState.NOT_OPERATIONAL, "Not operational", ""),
+        (DeviceState.STARTUP, "Startup", bcolors.OKBLUE),
+        (DeviceState.OPERATIONAL, "Operational", bcolors.OKGREEN),
+        (DeviceState.SHUTDOWN, "Shutdown", bcolors.WARNING),
+    )
+    EXPERIMENT_STATES = (
+        (ExperimentState.STOPPED, "Stopped", bcolors.OKBLUE),
+        (ExperimentState.STARTING, "Starting", bcolors.OKBLUE),
+        (ExperimentState.STARTED, "Started", bcolors.OKGREEN),
+        (ExperimentState.STOPPING, "Stopping", bcolors.WARNING),
+    )
+    STARTUP_ERRORS = (
+        (StartupError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (StartupError.UART_INITIALIZATION_ERROR, "UART initialization error", bcolors.FAIL),
+        (StartupError.BOARD_STARTUP_ERROR, "Board startup error", bcolors.FAIL),
+        (StartupError.BOARD_STATUS_MESSAGE_ERROR, "Board status message error", bcolors.FAIL),
+        (StartupError.SAFETY_MONITOR_ERROR, "Safety monitor error", bcolors.FAIL),
+        (StartupError.DISCHARGE_CONTROLLER_ERROR, "Discharge controller error", bcolors.FAIL),
+        (StartupError.CHARGER_ERROR, "Charger error", bcolors.FAIL),
+        (StartupError.SENSORBOARD_ERROR, "Sensorboard error", bcolors.FAIL),
+        (StartupError.DISCHARGE_CONTROLLER_VOLTAGE_ERROR, "Discharge controller voltage error", bcolors.FAIL),
+        (StartupError.CHARGER_VOLTAGE_ERROR, "Charger voltage error", bcolors.FAIL),
+        (StartupError.IGBT_FEEDBACK_ERROR, "IGBT feedback error", bcolors.FAIL),
+        (StartupError.TEMPERATURE_SENSOR_PRESENCE_ERROR, "Temperature sensor presence error", bcolors.FAIL),
+        (StartupError.COIL_MEMORY_PRESENCE_ERROR, "Coil memory presence error", bcolors.FAIL),
+    )
+    PULSE_ERRORS = (
+        (PulseError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (PulseError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
+        (PulseError.INVALID_CHANNEL, "Invalid channel", bcolors.FAIL),
+        (PulseError.INVALID_NUMBER_OF_PIECES, "Invalid number of pieces", bcolors.FAIL),
+        (PulseError.INVALID_MODES, "Invalid modes", bcolors.FAIL),
+        (PulseError.INVALID_DURATIONS, "Invalid durations", bcolors.FAIL),
+        (PulseError.LATE, "Late", bcolors.FAIL),
+        (PulseError.TOO_MANY_PULSES, "Too many pulses", bcolors.FAIL),
+        (PulseError.OVERLAPPING_WITH_CHARGING, "Overlapping with charging", bcolors.FAIL),
+        (PulseError.OVERLAPPING_WITH_DISCHARGING, "Overlapping with discharging", bcolors.FAIL),
+        (PulseError.TRIGGERING_FAILURE, "Triggering failure", bcolors.FAIL),
+        (PulseError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
+    )
+    CHARGE_ERRORS = (
+        (ChargeError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (ChargeError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
+        (ChargeError.INVALID_CHANNEL, "Invalid channel", bcolors.FAIL),
+        (ChargeError.INVALID_VOLTAGE, "Invalid voltage", bcolors.FAIL),
+        (ChargeError.LATE, "Late", bcolors.FAIL),
+        (ChargeError.OVERLAPPING_WITH_DISCHARGING, "Overlapping with discharging", bcolors.FAIL),
+        (ChargeError.OVERLAPPING_WITH_STIMULATION, "Overlapping with stimulation", bcolors.FAIL),
+        (ChargeError.CHARGING_FAILURE, "Charging failure", bcolors.FAIL),
+        (ChargeError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
+    )
+    DISCHARGE_ERRORS = (
+        (DischargeError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (DischargeError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
+        (DischargeError.INVALID_CHANNEL, "Invalid channel", bcolors.FAIL),
+        (DischargeError.INVALID_VOLTAGE, "Invalid voltage", bcolors.FAIL),
+        (DischargeError.LATE, "Late", bcolors.FAIL),
+        (DischargeError.OVERLAPPING_WITH_CHARGING, "Overlapping with charging", bcolors.FAIL),
+        (DischargeError.OVERLAPPING_WITH_STIMULATION, "Overlapping with stimulation", bcolors.FAIL),
+        (DischargeError.DISCHARGING_FAILURE, "Discharging failure", bcolors.FAIL),
+        (DischargeError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
+    )
+    SIGNAL_OUT_ERRORS = (
+        (SignalOutError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (SignalOutError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
+        (SignalOutError.LATE, "Late", bcolors.FAIL),
+        (SignalOutError.SIGNALOUT_FAILURE, "Signal out failure", bcolors.FAIL),
+        (SignalOutError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
+    )
+
 
 class MTMSApiPrinter():
     TIME_COLOR = bcolors.OKBLUE
@@ -10,7 +84,6 @@ class MTMSApiPrinter():
         'Discharge': bcolors.WARNING,
         'Signal out': bcolors.OKGREEN,
     }
-
     def __init__(self):
 
         # TODO: Hard-coded channel count and temperature and pulse count support for now.
@@ -24,82 +97,12 @@ class MTMSApiPrinter():
     def colored_text(self, text, color):
         return "{}{}{}".format(color, text, bcolors.ENDC)
 
-    def device_state_to_str(self, device_state):
-        if device_state.value == device_state.NOT_OPERATIONAL:
-            return self.colored_text("Not operational", "")
+    def enum_to_str(self, value, enums):
+        for enum, text, color in enums:
+            if value == enum:
+                return self.colored_text(text, color)
 
-        elif device_state.value == device_state.STARTUP:
-            return self.colored_text("Startup", bcolors.OKBLUE)
-
-        elif device_state.value == device_state.OPERATIONAL:
-            return self.colored_text("Operational", bcolors.OKGREEN)
-
-        elif device_state.value == device_state.SHUTDOWN:
-            return self.colored_text("Shutdown", bcolors.WARNING)
-
-        else:
-            assert False, "Invalid device state"
-
-        return "{}{}{}".format(color, text, bcolors.ENDC)
-
-    def experiment_state_to_str(self, experiment_state):
-        if experiment_state.value == experiment_state.STOPPED:
-            return self.colored_text("Stopped", bcolors.OKBLUE)
-
-        elif experiment_state.value == experiment_state.STARTING:
-            return self.colored_text("Starting", bcolors.OKBLUE)
-
-        elif experiment_state.value == experiment_state.STARTED:
-            return self.colored_text("Started", bcolors.OKGREEN)
-
-        elif experiment_state.value == experiment_state.STOPPING:
-            return self.colored_text("Stopping", bcolors.WARNING)
-
-        else:
-            assert False, "Invalid experiment state"
-
-    def startup_error_to_str(self, startup_error):
-        if startup_error.value == startup_error.NO_ERROR:
-            return self.colored_text("No error", bcolors.OKGREEN)
-
-        elif startup_error.value == startup_error.UART_INITIALIZATION_ERROR:
-            return self.colored_text("UART initialization error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.BOARD_STARTUP_ERROR:
-            return self.colored_text("Board startup error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.BOARD_STATUS_MESSAGE_ERROR:
-            return self.colored_text("Board status message error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.SAFETY_MONITOR_ERROR:
-            return self.colored_text("Safety monitor error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.DISCHARGE_CONTROLLER_ERROR:
-            return self.colored_text("Discharge controller error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.CHARGER_ERROR:
-            return self.colored_text("Charger error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.SENSORBOARD_ERROR:
-            return self.colored_text("Sensorboard error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.DISCHARGE_CONTROLLER_VOLTAGE_ERROR:
-            return self.colored_text("Discharge controller voltage error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.CHARGER_VOLTAGE_ERROR:
-            return self.colored_text("Charger voltage error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.IGBT_FEEDBACK_ERROR:
-            return self.colored_text("IGBT feedback error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.TEMPERATURE_SENSOR_PRESENCE_ERROR:
-            return self.colored_text("Temparature sensor presence error", bcolors.FAIL)
-
-        elif startup_error.value == startup_error.COIL_MEMORY_PRESENCE_ERROR:
-            return self.colored_text("Coil memory presence error", bcolors.FAIL)
-
-        else:
-            assert False, "Invalid startup error"
+        assert False, "Invalid value"
 
     def print_system_state(self, state):
         self.system_state_counter += 1
@@ -129,9 +132,9 @@ class MTMSApiPrinter():
         experiment_state = state.experiment_state
 
         time_str = '{}Time (s){}: {:.2f}'.format(self.TIME_COLOR, bcolors.ENDC, state.time)
-        state_str = 'Device state: {}'.format(self.device_state_to_str(device_state))
-        experiment_str = 'Experiment: {}'.format(self.experiment_state_to_str(experiment_state))
-        startup_error_str = 'Startup error: {}'.format(self.startup_error_to_str(startup_error))
+        state_str = 'Device state: {}'.format(self.enum_to_str(device_state.value, MTMSApiEnums.DEVICE_STATES))
+        experiment_str = 'Experiment: {}'.format(self.enum_to_str(experiment_state.value, MTMSApiEnums.EXPERIMENT_STATES))
+        startup_error_str = 'Startup error: {}'.format(self.enum_to_str(startup_error.value, MTMSApiEnums.STARTUP_ERRORS))
 
         status_str = ', '.join(filter(None, [
             time_str,
@@ -172,8 +175,18 @@ class MTMSApiPrinter():
             execution_condition_str
         ))
 
-    def print_feedback(self, event_type, error_enum, feedback):
-        error_str = error_enum(feedback.status_code)
+    def print_feedback(self, event_type, feedback):
+        value = feedback.error.value
+
+        if event_type == "Pulse":
+            error_str = self.enum_to_str(value, MTMSApiEnums.PULSE_ERRORS)
+        elif event_type == "Charge":
+            error_str = self.enum_to_str(value, MTMSApiEnums.CHARGE_ERRORS)
+        elif event_type == "Discharge":
+            error_str = self.enum_to_str(value, MTMSApiEnums.DISCHARGE_ERRORS)
+        elif event_type == "Signal out":
+            error_str = self.enum_to_str(value, MTMSApiEnums.SIGNAL_OUT_ERRORS)
+
         print('{}[Done] {:10.10s} {}  {:7.7s}     Event ID: {}, Status: {}'.format(
             self.EVENT_COLORS[event_type],
             event_type,
