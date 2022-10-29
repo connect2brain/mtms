@@ -24,11 +24,16 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/event/Charge.msg"
         "msg/event/Discharge.msg"
-        "msg/event/PulsePiece.msg"
+
         "msg/event/Pulse.msg"
+        "msg/event/PulsePiece.msg"
+        "msg/event/CurrentMode.msg"
+
         "msg/event/SignalOut.msg"
-        "msg/event/Event.msg"
         "msg/event/Feedback.msg"
+
+        "msg/event/Event.msg"
+        "msg/event/ExecutionCondition.msg"
 
         "msg/state/ChannelState.msg"
         "msg/state/ChannelError.msg"
