@@ -17,6 +17,7 @@ def generate_launch_description():
 
     node_executables = [
         "get_default_waveform",
+        "reverse_polarity",
     ]
 
     for node_executable in node_executables:
