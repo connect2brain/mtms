@@ -102,7 +102,7 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   }
   fpga_interfaces::msg::Event event_msg;
   event_msg.time_us = PyLong_AsUnsignedLong(time_us);
-  event_msg.execution_condition = PyLong_AsUnsignedLong(execution_condition);
+  event_msg.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
   event_msg.id = PyLong_AsUnsignedLong(id);
 
   Py_DECREF(event_as_pyobject);
@@ -179,11 +179,11 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
 
   for (auto i = 0; i < PyList_Size(pieces); i++) {
     auto piece_as_pyobject = PyList_GetItem(pieces, i);
-    auto mode = PyDict_GetItemString(piece_as_pyobject, "mode");
+    auto current_mode = PyDict_GetItemString(piece_as_pyobject, "current_mode");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
     auto piece = fpga_interfaces::msg::PulsePiece();
-    piece.mode = PyLong_AsUnsignedLong(mode);
+    piece.current_mode.value = PyLong_AsUnsignedLong(current_mode);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
     pulse.pieces.push_back(piece);

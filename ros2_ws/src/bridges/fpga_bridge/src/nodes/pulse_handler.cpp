@@ -30,7 +30,7 @@ public:
       fpga_interfaces::msg::Event event = pulse.event;
 
       uint16_t id = event.id;
-      uint8_t execution_condition = event.execution_condition;
+      uint8_t execution_condition = event.execution_condition.value;
       uint64_t time_us = event.time_us;
 
       serialized_message.init(channel);
@@ -46,7 +46,7 @@ public:
       for (uint8_t i = 0; i < n_pieces; i++) {
         fpga_interfaces::msg::PulsePiece piece = pulse.pieces[i];
 
-        serialized_message.add_byte(piece.mode);
+        serialized_message.add_byte(piece.current_mode.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
       }
 
