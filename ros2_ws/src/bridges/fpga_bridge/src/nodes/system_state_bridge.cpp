@@ -191,20 +191,20 @@ private:
                         ));
 
     /* TODO: Change the startup error register to U8 to get rid of this line. */
-    state.startup_error.error = (uint8_t) error;
+    state.startup_error.value = (uint8_t) error;
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
                             device_state_indicator,
-                            &state.device_state.state
+                            &state.device_state.value
                         ));
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
                             experiment_state_indicator,
-                            &state.experiment_state.state
+                            &state.experiment_state.value
                         ));
 
     uint64_t time;
