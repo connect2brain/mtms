@@ -1,5 +1,4 @@
-from mtms_api.enums.ExecutionCondition import ExecutionCondition
-from mtms_api.enums.PulseMode import PulseMode
+from fpga_interfaces.msg import ExecutionCondition, CurrentMode
 
 from mtms_api.MTMSApi import MTMSApi
 
