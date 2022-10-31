@@ -1,28 +1,87 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { systemStateSubscriber } from 'services/experiment'
-import { ChannelState as ChannelStateType, SystemStateMessage } from 'types/fpga'
-import { objectKeysToCamelCase } from 'utils'
+import { ChannelState as ChannelStateType, DeviceState, SystemStateMessage } from 'types/fpga'
+import { getKeyByValue, getTrueKeys, objectKeysToCamelCase } from 'utils'
 import { ChannelState } from './ChannelState'
 
-export const SystemState = () => {
-  const [deviceState, setDeviceState] = useState<string>()
-  const [experimentState, setExperimentState] = useState<string>()
-  const [startupSequenceError, setStartupSequenceError] = useState<string>()
+const initialState = {
+  channel_states: [],
+  system_error_cumulative: {
+    heartbeat_error: false,
+    latched_fault_error: false,
+    powersupply_error: false,
+    safety_bus_error: false,
+    coil_error: false,
+    emergency_button_error: false,
+    door_error: false,
+    charger_overvoltage_error: false,
+    charger_overtemperature_error: false,
+    monitored_voltage_over_maximum_error: false,
+    patient_safety_error: false,
+    device_safety_error: false,
+    charger_powerup_error: false,
+    opto_error: false,
+    charger_power_enabled_twice_error: false,
+  },
+  system_error_current: {
+    heartbeat_error: false,
+    latched_fault_error: false,
+    powersupply_error: false,
+    safety_bus_error: false,
+    coil_error: false,
+    emergency_button_error: false,
+    door_error: false,
+    charger_overvoltage_error: false,
+    charger_overtemperature_error: false,
+    monitored_voltage_over_maximum_error: false,
+    patient_safety_error: false,
+    device_safety_error: false,
+    charger_powerup_error: false,
+    opto_error: false,
+    charger_power_enabled_twice_error: false,
+  },
+  system_error_emergency: {
+    heartbeat_error: false,
+    latched_fault_error: false,
+    powersupply_error: false,
+    safety_bus_error: false,
+    coil_error: false,
+    emergency_button_error: false,
+    door_error: false,
+    charger_overvoltage_error: false,
+    charger_overtemperature_error: false,
+    monitored_voltage_over_maximum_error: false,
+    patient_safety_error: false,
+    device_safety_error: false,
+    charger_powerup_error: false,
+    opto_error: false,
+    charger_power_enabled_twice_error: false,
+  },
+  startup_error: {
+    error: 0,
+  },
+  device_state: {
+    state: 0,
+  },
+  experiment_state: {
+    state: 0,
+  },
+  time: 0,
+}
 
-  const [channelStates, setChannelStates] = useState<ChannelStateType[]>([])
+export const SystemState = () => {
+  const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
 
   useEffect(() => {
+    console.log('Subscribed')
     systemStateSubscriber.subscribe(systemStateCallback)
   }, [])
 
-  const systemStateCallback = (message: SystemStateMessage) => {
-    const formattedMessage: SystemStateMessage = objectKeysToCamelCase(message)
 
-    setDeviceState(formattedMessage.deviceState.toString())
-    setExperimentState(formattedMessage.experimentState.toString())
-    setStartupSequenceError(formattedMessage.startupSequenceError.toString())
-    setChannelStates(formattedMessage.channelStates)
+  const systemStateCallback = (message: SystemStateMessage) => {
+    console.log('new message', message)
+    setSystemState(message)
   }
 
   const channelStatesTable = () => {
@@ -38,21 +97,42 @@ export const SystemState = () => {
           </tr>
         </Thead>
         <tbody>
-          {channelStates
-            .sort((a, b) => a.channelIndex - b.channelIndex)
+          {systemState.channel_states
+            .sort((a, b) => a.channel_index - b.channel_index)
             .map((channel) => (
-              <ChannelState key={`channel-${channel.channelIndex}`} {...channel} />
+              <ChannelState key={`channel-${channel.channel_index}`} {...channel} />
             ))}
         </tbody>
       </ChannelTable>
     )
   }
 
+  const getListValue = (object: any) => {
+    const keys: string[] = getTrueKeys(object)
+
+    if (keys.length > 0) {
+      return keys.map((key) => {
+        return <span key={key}>{key}</span>
+      })
+    } else {
+      return <span>No error(s)</span>
+    }
+  }
+
+
+
   return (
     <div>
-      <p>Device state: {deviceState}</p>
-      <p>Experiment state: {experimentState}</p>
-      <p>Startup Sequence Error: {startupSequenceError}</p>
+      <p>Latest update: {new Date(systemState.time * 1000).toISOString()}</p>
+      <p>Cumulative system errors: {getListValue(systemState.system_error_cumulative)}</p>
+      <p>Current system errors: {getListValue(systemState.system_error_current)}</p>
+      <p>Emergency system errors: {getListValue(systemState.system_error_emergency)}</p>
+      <p>Startup error: {getKeyByValue(DeviceState, systemState.experiment_state) || 'No error'}</p>
+
+      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state) || 'No error'}</p>
+      <p>Experiment state: {getKeyByValue(DeviceState, systemState.experiment_state) || 'No error'}</p>
+
+      <h3>Channels</h3>
       <ChannelTableContainer>{channelStatesTable()}</ChannelTableContainer>
     </div>
   )
