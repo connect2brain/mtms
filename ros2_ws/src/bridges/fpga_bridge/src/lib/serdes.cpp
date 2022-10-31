@@ -19,7 +19,7 @@ void SerializedMessage::init() {
 }
 
 void SerializedMessage::add_byte(uint8_t byte) {
-  if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE || byte == CHANNEL_SWITCH_CHAR) {
+  if (byte == START_OF_MESSAGE || byte == END_OF_MESSAGE || byte == CHANNEL_SWITCH_CHAR || byte == ESCAPE_CHARACTER) {
     serialized_message[length++] = ESCAPE_CHARACTER;
     serialized_message[length++] = byte ^ TRANSPARENCY_MODIFIER;
   } else {
