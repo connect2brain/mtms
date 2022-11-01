@@ -24,6 +24,7 @@ RUN source /opt/ros/galactic/setup.bash && colcon build
 # Create a directory for hotswappable processors
 
 RUN mkdir -p hotswappable_processors
+RUN mkdir -p measurements
 
 # Copy entrypoint
 

@@ -38,6 +38,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
 
