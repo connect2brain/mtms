@@ -26,6 +26,8 @@ services:
       dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
     env_file:
       - ${ENV_FILE}
+    security_opt:
+      - seccomp:unconfined
     volumes:
       - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
       - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
