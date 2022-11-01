@@ -40,7 +40,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.HILBERTWIN = 64;
             obj.EDGE = 35;
             obj.AR_ORDER = 15;
-            obj.FS = 5000;
+            obj.FS = 2500;
 
             obj.offset_correction = obj.FS * 0.008;
             obj.nr_seconds = 1;
@@ -101,18 +101,18 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 data = data - mean(data);
                 
                 %fprintf("Low pass filtering\n");
-                tic
+                %tic
                 data = filter(obj.lpf, obj.A, data);
-                filter_duration = toc;
+                %filter_duration = toc;
 
                 downsampled = data(1:10:end);
 
                 %fprintf("Phastimating\n");
-                tic
+                %tic
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
-                phastimate_duration = toc;
+                %phastimate_duration = toc;
 
-                fprintf(obj.durations_file_id, "%f,%f,%f\n", filter_duration, phastimate_duration, filter_duration + phastimate_duration);
+                %fprintf(obj.durations_file_id, "%f,%f,%f\n", filter_duration, phastimate_duration, filter_duration + phastimate_duration);
 
                 nof_estimated_samples = numel(estimated_phases);
                 future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
@@ -122,7 +122,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 %fprintf("Estimated phase at peak: %f\n", phase_at_peak);
 
-                event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
+                event_time = time_us + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
 
                 pulse_event = create_pulse_command(obj.events_sent + 1, 1, 0, event_time);
                 charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1000000000, obj.target_voltage);
