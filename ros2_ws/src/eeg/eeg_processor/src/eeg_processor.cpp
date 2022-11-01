@@ -66,6 +66,7 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     if (!fpga_events.empty()) {
       RCLCPP_INFO(this->get_logger(), "Processing took: %lu us", total.count());
       f << std::to_string(total.count()) << "\n";
+      f.flush();
     }
 
   };
