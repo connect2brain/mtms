@@ -15,7 +15,10 @@ find_package(targeting_interfaces REQUIRED)
 
 add_executable(get_default_waveform
   src/nodes/get_default_waveform.cpp
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+  src/lib/memory_utils.cpp
+  include/memory_utils.h
+  src/lib/scheduling_utils.cpp
+  include/scheduling_utils.h)
 
 target_include_directories(get_default_waveform
   PUBLIC
@@ -27,8 +30,11 @@ ament_target_dependencies(get_default_waveform rclcpp std_msgs fpga_interfaces t
 # Install reverse_polarity executable.
 
 add_executable(reverse_polarity
-src/nodes/reverse_polarity.cpp
-src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+  src/nodes/reverse_polarity.cpp
+  src/lib/memory_utils.cpp
+  include/memory_utils.h
+  src/lib/scheduling_utils.cpp
+  include/scheduling_utils.h)
 
 target_include_directories(reverse_polarity
 PUBLIC
