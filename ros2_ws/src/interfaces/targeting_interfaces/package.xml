@@ -3,7 +3,7 @@
 <package format="3">
   <name>targeting_interfaces</name>
   <version>0.0.1</version>
-  <description>Interfaces for mTMS</description>
+  <description>Targeting interfaces</description>
   <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>TODO</license>
 
