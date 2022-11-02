@@ -1,8 +1,8 @@
 import rclpy
 from rclpy.node import Node
-from mtms_interfaces.msg import EegDatapoint, Trigger
 
-DEFAULT_SAMPLING_FREQUENCY = 5000.0
+from mtms_interfaces.msg import EegDatapoint, Trigger
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 
 class DataProvider(Node):
@@ -15,7 +15,11 @@ class DataProvider(Node):
         self.declare_parameter('data_file', "")
         self.data_file_name = self.get_parameter('data_file').value
 
-        self.declare_parameter('sampling_frequency', DEFAULT_SAMPLING_FREQUENCY)
+        descriptor = ParameterDescriptor(
+            name='Sampling frequency',
+            type=ParameterType.PARAMETER_INTEGER,
+        )
+        self.declare_parameter('sampling_frequency', descriptor=descriptor)
         sampling_frequency = self.get_parameter('sampling_frequency').value
 
         self.get_logger().info(f"data file name {self.data_file_name}")
