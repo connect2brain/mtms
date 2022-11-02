@@ -44,7 +44,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.pulse = fpga_interfaces::msg::Pulse();
 
     for (auto piece: event.pieces) {
-      auto fpga_piece = fpga_interfaces::msg::PulsePiece();
+      auto fpga_piece = fpga_interfaces::msg::WaveformPiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
       fpga_piece.waveform_phase.value = piece.waveform_phase;
       fpga_event.pulse.pieces.push_back(fpga_piece);

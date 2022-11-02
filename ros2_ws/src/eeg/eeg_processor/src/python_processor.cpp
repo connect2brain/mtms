@@ -182,7 +182,7 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
     auto waveform_phase = PyDict_GetItemString(piece_as_pyobject, "waveform_phase");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
-    auto piece = fpga_interfaces::msg::PulsePiece();
+    auto piece = fpga_interfaces::msg::WaveformPiece();
     piece.waveform_phase.value = PyLong_AsUnsignedLong(waveform_phase);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 

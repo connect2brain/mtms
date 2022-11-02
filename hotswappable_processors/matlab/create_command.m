@@ -29,5 +29,5 @@ function command = create_command(id, event_type, target_voltage)
     
     coder.cstructname(command, 'matlab_fpga_event');
     coder.cstructname(command.event, 'event');
-    coder.cstructname(command.pieces, 'pulse_piece');
+    coder.cstructname(command.pieces, 'waveform_piece');
 end
