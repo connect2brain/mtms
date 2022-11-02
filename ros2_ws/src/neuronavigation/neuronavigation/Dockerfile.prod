@@ -49,24 +49,31 @@ COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3/setup.py ros2_ws/sr
 WORKDIR /app/ros2_ws/src/neuronavigation/neuronavigation/invesalius3
 RUN python3 setup.py build_ext --inplace
 
-# Copy rest of InVesalius
+# HACK: Delete setup.py after running to avoid confusing colcon, which searches for setup.py files.
+#
+RUN rm setup.py
+
+# Copy and build ROS interfaces
 
 WORKDIR /app
-COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
-
-## Copy rest of the ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
 
-# Build ROS packages
-
-WORKDIR /app
 RUN cd ros2_ws && \
     source /opt/ros/galactic/setup.bash && \
-    colcon build
+    colcon build --packages-select neuronavigation_interfaces mtms_interfaces
+
+# Copy rest of InVesalius
+
+COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
+
+# Copy and build Neuronavigation ROS package
+
+COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
+
+RUN cd ros2_ws && \
+    source /opt/ros/galactic/setup.bash && \
+    colcon build --packages-select neuronavigation
 
 COPY ros2_ws/src/neuronavigation/neuronavigation/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
