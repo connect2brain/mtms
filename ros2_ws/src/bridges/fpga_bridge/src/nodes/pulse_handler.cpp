@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "fpga_interfaces/srv/send_pulse.hpp"
-#include "fpga_interfaces/msg/pulse_piece.hpp"
+#include "fpga_interfaces/msg/waveform_piece.hpp"
 #include "fpga_interfaces/msg/pulse.hpp"
 #include "fpga_interfaces/msg/event.hpp"
 
@@ -44,7 +44,7 @@ public:
       serialized_message.add_byte(n_pieces);
 
       for (uint8_t i = 0; i < n_pieces; i++) {
-        fpga_interfaces::msg::PulsePiece piece = pulse.pieces[i];
+        fpga_interfaces::msg::WaveformPiece piece = pulse.pieces[i];
 
         serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);

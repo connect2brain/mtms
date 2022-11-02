@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import PulsePiece
+from fpga_interfaces.msg import WaveformPiece
 
 fullEvent = {
     'pulse': {
@@ -28,8 +28,8 @@ pulses = {}
 TICK_DURATION_IN_US = 25
 
 
-def pulse_piece_from_dict(pulse_dict):
-    piece = PulsePiece()
+def waveform_piece_from_dict(pulse_dict):
+    piece = WaveformPiece()
     piece.waveform_phase.value = pulse_dict['waveform_phase']
     piece.duration_in_ticks = pulse_dict['duration_in_ticks']
     return piece
@@ -47,5 +47,5 @@ def pulse_duration_in_us(pulse):
 
 
 for index in range(0, 6):
-    pieces = list(map(lambda piece: pulse_piece_from_dict(piece), _pulse))
+    pieces = list(map(lambda piece: waveform_piece_from_dict(piece), _pulse))
     pulses[index + 1] = pieces
