@@ -23,15 +23,15 @@ class Processor(BaseProcessor):
         }
         pieces = [
             {
-                "current_mode": 1,
+                "waveform_phase": 1,
                 "duration_in_ticks": 500
             },
             {
-                "current_mode": 2,
+                "waveform_phase": 2,
                 "duration_in_ticks": 500
             },
             {
-                "current_mode": 3,
+                "waveform_phase": 3,
                 "duration_in_ticks": 500
             }
         ]
