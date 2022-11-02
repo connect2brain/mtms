@@ -21,7 +21,7 @@ struct event {
   unsigned long time_us;
 };
 
-struct pulse_piece {
+struct waveform_piece {
   unsigned char waveform_phase;
   unsigned short duration_in_ticks;
 };
@@ -29,7 +29,7 @@ struct pulse_piece {
 struct matlab_fpga_event {
   unsigned char channel;
   event b_event;
-  pulse_piece pieces[3];
+  waveform_piece pieces[3];
   unsigned char event_type;
   unsigned short target_voltage;
 };

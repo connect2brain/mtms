@@ -1,3 +1,3 @@
 uint8 channel
-PulsePiece[] pieces
+WaveformPiece[] pieces
 Event event
