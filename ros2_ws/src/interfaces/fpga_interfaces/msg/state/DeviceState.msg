@@ -10,4 +10,4 @@ uint8 STARTUP=1
 uint8 OPERATIONAL=2
 uint8 SHUTDOWN=3
 
-uint8 state
+uint8 value

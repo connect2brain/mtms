@@ -10,4 +10,4 @@ uint8 STARTING=1
 uint8 STARTED=2
 uint8 STOPPING=3
 
-uint8 state
+uint8 value
