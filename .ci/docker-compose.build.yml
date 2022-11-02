@@ -87,6 +87,11 @@ services:
       context: ..
       dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
 
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
+
 networks:
   cinetwork:
     name: cinetwork
