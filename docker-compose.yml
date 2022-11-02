@@ -138,3 +138,10 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
+    env_file:
+      - ${ENV_FILE}
