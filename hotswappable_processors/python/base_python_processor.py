@@ -5,9 +5,9 @@ from enum import Enum
 
 
 class Pulse:
-    def __init__(self, channel, pieces, event, event_type) -> None:
+    def __init__(self, channel, waveform, event, event_type) -> None:
         self.channel = channel
-        self.pieces = pieces
+        self.waveform = waveform
         self.event = event
         self.event_type = event_type
 
@@ -36,7 +36,7 @@ class EventType(Enum):
 
 event_type = "pulse"
 channel = 3
-pieces = [
+waveform = [
     {
         "waveform_phase": 1,
         "duration_in_ticks": 500
@@ -56,7 +56,7 @@ event = {
     "time_us": 10392930
 }
 
-pulse = Pulse(3, pieces, event, EventType.PULSE.value)
+pulse = Pulse(3, waveform, event, EventType.PULSE.value)
 charge = Charge(3, 1200, event, EventType.CHARGE.value)
 discharge = Discharge(3, 20, event, EventType.DISCHARGE.value)
 

@@ -171,14 +171,14 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
     std::cout << "Error on event channel" << std::endl;
   }
 
-  auto pieces = PyObject_GetAttrString(event, "pieces");
-  if (pieces == nullptr) {
+  auto waveform = PyObject_GetAttrString(event, "waveform");
+  if (waveform == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event pieces" << std::endl;
+    std::cout << "Error on event waveform" << std::endl;
   }
 
-  for (auto i = 0; i < PyList_Size(pieces); i++) {
-    auto piece_as_pyobject = PyList_GetItem(pieces, i);
+  for (auto i = 0; i < PyList_Size(waveform); i++) {
+    auto piece_as_pyobject = PyList_GetItem(waveform, i);
     auto waveform_phase = PyDict_GetItemString(piece_as_pyobject, "waveform_phase");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
@@ -186,13 +186,13 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
     piece.waveform_phase.value = PyLong_AsUnsignedLong(waveform_phase);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
-    pulse.pieces.push_back(piece);
+    pulse.waveform.push_back(piece);
   }
 
   pulse.channel = PyLong_AsUnsignedLong(channel);
   pulse.event = parse_event(event);
   Py_DECREF(channel);
-  Py_DECREF(pieces);
+  Py_DECREF(waveform);
 
   return pulse;
 }

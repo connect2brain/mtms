@@ -21,9 +21,9 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   std::cout << "  Id: " << event.b_event.id << std::endl;
   std::cout << "  Execution condition: " << +event.b_event.execution_condition << std::endl;
   std::cout << "  Time us: " << event.b_event.time_us << std::endl;
-  std::cout << "Pieces: " << std::endl;
+  std::cout << "Waveform: " << std::endl;
   for (auto i = 0; i < 3; i++) {
-    std::cout << "  Phase: " << +event.pieces[i].waveform_phase << ", duration in ticks: " << event.pieces[i].duration_in_ticks
+    std::cout << "  Phase: " << +event.waveform[i].waveform_phase << ", duration in ticks: " << event.waveform[i].duration_in_ticks
               << std::endl;
   }
 }
@@ -43,11 +43,11 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.event_type = PULSE;
     fpga_event.pulse = fpga_interfaces::msg::Pulse();
 
-    for (auto piece: event.pieces) {
+    for (auto piece: event.waveform) {
       auto fpga_piece = fpga_interfaces::msg::WaveformPiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
       fpga_piece.waveform_phase.value = piece.waveform_phase;
-      fpga_event.pulse.pieces.push_back(fpga_piece);
+      fpga_event.pulse.waveform.push_back(fpga_piece);
     }
     fpga_event.pulse.event.id = event.b_event.id;
     fpga_event.pulse.event.execution_condition.value = event.b_event.execution_condition;

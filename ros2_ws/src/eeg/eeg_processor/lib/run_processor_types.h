@@ -29,7 +29,7 @@ struct waveform_piece {
 struct matlab_fpga_event {
   unsigned char channel;
   event b_event;
-  waveform_piece pieces[3];
+  waveform_piece waveform[3];
   unsigned char event_type;
   unsigned short target_voltage;
 };

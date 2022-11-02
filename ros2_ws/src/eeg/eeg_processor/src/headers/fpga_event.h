@@ -43,10 +43,10 @@ struct FpgaEvent {
       std::cout << "  Id: " << pulse.event.id << std::endl;
       std::cout << "  Execution condition: " << +pulse.event.execution_condition.value << std::endl;
       std::cout << "  Time us: " << pulse.event.time_us << std::endl;
-      std::cout << "Pieces: " << std::endl;
+      std::cout << "Waveform: " << std::endl;
       for (auto i = 0; i < 3; i++) {
-        std::cout << "  Phase: " << +pulse.pieces[i].waveform_phase.value << ", duration in ticks: "
-                  << pulse.pieces[i].duration_in_ticks
+        std::cout << "  Phase: " << +pulse.waveform[i].waveform_phase.value << ", duration in ticks: "
+                  << pulse.waveform[i].duration_in_ticks
                   << std::endl;
       }
     } else if (event_type == CHARGE) {
