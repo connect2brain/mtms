@@ -40,11 +40,11 @@ public:
 
       /* Serialize stimulation pulse. */
 
-      uint8_t n_pieces = (uint8_t) pulse.pieces.size();
-      serialized_message.add_byte(n_pieces);
+      uint8_t n_waveform = (uint8_t) pulse.waveform.size();
+      serialized_message.add_byte(n_waveform);
 
-      for (uint8_t i = 0; i < n_pieces; i++) {
-        fpga_interfaces::msg::WaveformPiece piece = pulse.pieces[i];
+      for (uint8_t i = 0; i < n_waveform; i++) {
+        fpga_interfaces::msg::WaveformPiece piece = pulse.waveform[i];
 
         serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);

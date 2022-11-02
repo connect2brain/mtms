@@ -129,24 +129,24 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
             std::cout << "unknown event type" << std::endl;
           }
         }
-      } else if (field_name == "pieces") {
-        matlab::data::StructArray pieces = events_struct_array[event_index][field];
-        auto sub_struct_fields = pieces.getFieldNames();
+      } else if (field_name == "waveform") {
+        matlab::data::StructArray waveform = events_struct_array[event_index][field];
+        auto sub_struct_fields = waveform.getFieldNames();
         std::vector<matlab::data::MATLABFieldIdentifier> sub_struct_field_names(sub_struct_fields.begin(),
                                                                                 sub_struct_fields.end());
 
-        matlab::data::ArrayDimensions pieces_dims = pieces.getDimensions();
+        matlab::data::ArrayDimensions waveform_dims = waveform.getDimensions();
 
         for (auto sub_struct_field: sub_struct_field_names) {
           auto sub_struct_field_name = sub_struct_field.operator std::string();
-          for (unsigned i = 0; i < pieces_dims[1]; i++) {
+          for (unsigned i = 0; i < waveform_dims[1]; i++) {
             if (sub_struct_field_name == "waveform_phase") {
-              matlab::data::TypedArrayRef<uint8_t> field_value = pieces[i][sub_struct_field];
-              event.pieces[i].waveform_phase = field_value[0];
+              matlab::data::TypedArrayRef<uint8_t> field_value = waveform[i][sub_struct_field];
+              event.waveform[i].waveform_phase = field_value[0];
 
             } else if (sub_struct_field_name == "duration_in_ticks") {
-              matlab::data::TypedArrayRef<uint16_t> field_value = pieces[i][sub_struct_field];
-              event.pieces[i].duration_in_ticks = field_value[0];
+              matlab::data::TypedArrayRef<uint16_t> field_value = waveform[i][sub_struct_field];
+              event.waveform[i].duration_in_ticks = field_value[0];
 
             } else {
               std::cout << "unknown event type" << std::endl;
