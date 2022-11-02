@@ -3,9 +3,9 @@ from fpga_interfaces.msg import PulsePiece
 fullEvent = {
     'pulse': {
         'pieces': [
-            {'current_mode': 4, 'duration_in_ticks': 10000},
-            {'current_mode': 3, 'duration_in_ticks': 30000},
-            {'current_mode': 2, 'duration_in_ticks': 50000}
+            {'waveform_phase': 4, 'duration_in_ticks': 10000},
+            {'waveform_phase': 3, 'duration_in_ticks': 30000},
+            {'waveform_phase': 2, 'duration_in_ticks': 50000}
         ],
         'channel': 2,
         'event': {
@@ -19,9 +19,9 @@ fullEvent = {
 }
 
 _pulse = [
-    {'current_mode': 4, 'duration_in_ticks': 10000},
-    {'current_mode': 3, 'duration_in_ticks': 30000},
-    {'current_mode': 2, 'duration_in_ticks': 50000}
+    {'waveform_phase': 4, 'duration_in_ticks': 10000},
+    {'waveform_phase': 3, 'duration_in_ticks': 30000},
+    {'waveform_phase': 2, 'duration_in_ticks': 50000}
 ]
 
 pulses = {}
@@ -30,7 +30,7 @@ TICK_DURATION_IN_US = 25
 
 def pulse_piece_from_dict(pulse_dict):
     piece = PulsePiece()
-    piece.current_mode.value = pulse_dict['current_mode']
+    piece.waveform_phase.value = pulse_dict['waveform_phase']
     piece.duration_in_ticks = pulse_dict['duration_in_ticks']
     return piece
 

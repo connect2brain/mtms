@@ -3,13 +3,13 @@ function command = create_command(id, event_type, target_voltage)
     event.execution_condition = uint8(2);
     event.time_us = uint64(69999);
     
-    piece1.current_mode = uint8(0);
+    piece1.waveform_phase = uint8(0);
     piece1.duration_in_ticks = uint16(200);
 
-    piece2.current_mode = uint8(2);
+    piece2.waveform_phase = uint8(2);
     piece2.duration_in_ticks = uint16(269);
 
-    piece3.current_mode = uint8(1);
+    piece3.waveform_phase = uint8(1);
     piece3.duration_in_ticks = uint16(1);
     
     pieces = [piece1, piece2, piece3];

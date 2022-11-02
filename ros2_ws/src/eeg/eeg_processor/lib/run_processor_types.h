@@ -22,7 +22,7 @@ struct event {
 };
 
 struct pulse_piece {
-  unsigned char current_mode;
+  unsigned char waveform_phase;
   unsigned short duration_in_ticks;
 };
 

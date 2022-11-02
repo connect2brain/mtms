@@ -179,11 +179,11 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
 
   for (auto i = 0; i < PyList_Size(pieces); i++) {
     auto piece_as_pyobject = PyList_GetItem(pieces, i);
-    auto current_mode = PyDict_GetItemString(piece_as_pyobject, "current_mode");
+    auto waveform_phase = PyDict_GetItemString(piece_as_pyobject, "waveform_phase");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
     auto piece = fpga_interfaces::msg::PulsePiece();
-    piece.current_mode.value = PyLong_AsUnsignedLong(current_mode);
+    piece.waveform_phase.value = PyLong_AsUnsignedLong(waveform_phase);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
     pulse.pieces.push_back(piece);
