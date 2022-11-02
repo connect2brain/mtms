@@ -3,4 +3,4 @@
 int8 channel
 ---
 bool success
-fpga_interfaces/PulsePiece[] waveform
+fpga_interfaces/WaveformPiece[] waveform
