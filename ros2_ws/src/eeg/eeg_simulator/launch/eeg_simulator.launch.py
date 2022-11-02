@@ -9,19 +9,16 @@ def generate_launch_description():
 
     log_arg = DeclareLaunchArgument(
         "log-level",
-        default_value=["info"],
         description="Logging level",
     )
 
     data_file_arg = DeclareLaunchArgument(
         "data-file",
-        default_value=[""],
         description="Data file from which to read data to provide",
     )
 
     sampling_frequency_arg = DeclareLaunchArgument(
         "sampling-frequency",
-        default_value=["5000"],
         description="Sampling frequency",
     )
 
