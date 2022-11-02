@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import Event, PulsePiece, Pulse, Charge, SignalOut
+from fpga_interfaces.msg import Event, WaveformPiece, Pulse, Charge, SignalOut
 
 US_TO_TICKS_CONVERSION_RATIO = 40
 
@@ -43,7 +43,7 @@ def generate_standard_pulse_command():
     for i, _ in enumerate(time_list):
         pieces = []
         for j, _ in enumerate(time_list[i]):
-            piece = PulsePiece()
+            piece = WaveformPiece()
             piece.mode = mode_list[i][j]
             piece.duration_in_ticks = int(time_list[i][j] * US_TO_TICKS_CONVERSION_RATIO)
             pieces.append(piece)
@@ -71,7 +71,7 @@ def generate_timed_pulses(count):
     for i in range(count):
         pieces = []
         for j, _ in enumerate(time_list[0]):
-            piece = PulsePiece()
+            piece = WaveformPiece()
             piece.mode = mode_list[0][j]
             piece.duration_in_ticks = int(time_list[0][j] * US_TO_TICKS_CONVERSION_RATIO)
             pieces.append(piece)

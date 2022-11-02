@@ -8,7 +8,7 @@
 #include "fpga_interfaces/msg/pulse.hpp"
 #include "fpga_interfaces/msg/charge.hpp"
 #include "fpga_interfaces/msg/discharge.hpp"
-#include "fpga_interfaces/msg/pulse_piece.hpp"
+#include "fpga_interfaces/msg/waveform_piece.hpp"
 #include "fpga_interfaces/msg/waveform_phase.hpp"
 #include <iostream>
 

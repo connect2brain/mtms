@@ -31,8 +31,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/event/feedback/DischargeError.msg"
 
         "msg/event/Pulse.msg"
-        "msg/event/PulsePiece.msg"
-        "msg/event/CurrentMode.msg"
+        "msg/event/WaveformPiece.msg"
+        "msg/event/WaveformPhase.msg"
         "msg/event/feedback/PulseFeedback.msg"
         "msg/event/feedback/PulseError.msg"
 
