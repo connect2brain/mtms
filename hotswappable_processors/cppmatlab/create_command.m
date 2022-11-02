@@ -10,11 +10,11 @@ function command = create_command(id, event_type, target_voltage)
     piece3.waveform_phase = uint8(1);
     piece3.duration_in_ticks = uint16(1);
     
-    pieces = [piece1, piece2, piece3];
+    waveform = [piece1, piece2, piece3];
     
     command.channel = uint8(5);
     command.event = event;
-    command.pieces = pieces;
+    command.waveform = waveform;
     if event_type == "pulse_event"
         command.event_type = uint8(0);
     elseif event_type == "charge"
@@ -27,5 +27,5 @@ function command = create_command(id, event_type, target_voltage)
     
     coder.cstructname(command, 'matlab_fpga_event');
     coder.cstructname(command.event, 'event');
-    coder.cstructname(command.pieces, 'waveform_piece');
+    coder.cstructname(command.waveform, 'waveform');
 end
