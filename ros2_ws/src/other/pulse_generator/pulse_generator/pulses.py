@@ -41,12 +41,12 @@ def generate_standard_pulse_command():
 
     pulses = []
     for i, _ in enumerate(time_list):
-        pieces = []
+        waveform = []
         for j, _ in enumerate(time_list[i]):
             piece = WaveformPiece()
             piece.mode = mode_list[i][j]
             piece.duration_in_ticks = int(time_list[i][j] * US_TO_TICKS_CONVERSION_RATIO)
-            pieces.append(piece)
+            waveform.append(piece)
 
         event = Event()
         event.id = i
@@ -56,7 +56,7 @@ def generate_standard_pulse_command():
         pulse = Pulse()
         pulse.event = event
         pulse.channel = i + 1
-        pulse.pieces = pieces
+        pulse.waveform = waveform
 
         pulses.append(pulse)
 
@@ -69,12 +69,12 @@ def generate_timed_pulses(count):
 
     pulses = []
     for i in range(count):
-        pieces = []
+        waveform = []
         for j, _ in enumerate(time_list[0]):
             piece = WaveformPiece()
             piece.mode = mode_list[0][j]
             piece.duration_in_ticks = int(time_list[0][j] * US_TO_TICKS_CONVERSION_RATIO)
-            pieces.append(piece)
+            waveform.append(piece)
 
         event = Event()
         event.id = i
@@ -84,7 +84,7 @@ def generate_timed_pulses(count):
         pulse = Pulse()
         pulse.event = event
         pulse.channel = 1
-        pulse.pieces = pieces
+        pulse.waveform = waveform
 
         pulses.append(pulse)
 
