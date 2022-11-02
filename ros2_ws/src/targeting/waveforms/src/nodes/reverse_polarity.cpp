@@ -9,6 +9,7 @@
 using namespace std;
 
 const uint16_t CURRENT_MODE_MAPPING[][2] = {
+  {fpga_interfaces::msg::CurrentMode::NON_CONDUCTIVE, fpga_interfaces::msg::CurrentMode::NON_CONDUCTIVE},
   {fpga_interfaces::msg::CurrentMode::RISING, fpga_interfaces::msg::CurrentMode::FALLING},
   {fpga_interfaces::msg::CurrentMode::FALLING, fpga_interfaces::msg::CurrentMode::RISING},
   {fpga_interfaces::msg::CurrentMode::HOLD, fpga_interfaces::msg::CurrentMode::ALTERNATIVE_HOLD},
