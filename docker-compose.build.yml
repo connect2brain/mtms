@@ -65,3 +65,8 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/targeting/targeting/Dockerfile.prod
+
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile.prod
