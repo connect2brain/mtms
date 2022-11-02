@@ -1,0 +1,6 @@
+uint8 emg_channel
+float64 time
+---
+float64 peak_amplitude
+float64 latency
+---

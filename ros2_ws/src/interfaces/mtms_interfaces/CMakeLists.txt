@@ -62,6 +62,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StartPulseSequence.srv"
   "srv/GetChannelVoltages.srv"
   "srv/ClearState.srv"
+
+  "action/AnalyzeMep.action"
   DEPENDENCIES geometry_msgs
  )
 
