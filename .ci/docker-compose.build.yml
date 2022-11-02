@@ -89,7 +89,7 @@ services:
 
   waveforms:
     build:
-      context: .
+      context: ..
       dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
 
 networks:
