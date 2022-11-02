@@ -23,7 +23,7 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   std::cout << "  Time us: " << event.b_event.time_us << std::endl;
   std::cout << "Pieces: " << std::endl;
   for (auto i = 0; i < 3; i++) {
-    std::cout << "  Current mode: " << +event.pieces[i].current_mode << ", duration in ticks: " << event.pieces[i].duration_in_ticks
+    std::cout << "  Phase: " << +event.pieces[i].waveform_phase << ", duration in ticks: " << event.pieces[i].duration_in_ticks
               << std::endl;
   }
 }
@@ -46,7 +46,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     for (auto piece: event.pieces) {
       auto fpga_piece = fpga_interfaces::msg::PulsePiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
-      fpga_piece.current_mode.value = piece.current_mode;
+      fpga_piece.waveform_phase.value = piece.waveform_phase;
       fpga_event.pulse.pieces.push_back(fpga_piece);
     }
     fpga_event.pulse.event.id = event.b_event.id;
