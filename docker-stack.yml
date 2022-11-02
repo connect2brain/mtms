@@ -158,6 +158,15 @@ services:
         constraints:
           - node.role == manager
 
+  waveforms:
+    image: okahilak/mtms:waveforms
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
 networks:
   default:
     driver: weaveworks/net-plugin:latest_release
