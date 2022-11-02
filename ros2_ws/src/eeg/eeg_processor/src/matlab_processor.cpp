@@ -140,9 +140,9 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
         for (auto sub_struct_field: sub_struct_field_names) {
           auto sub_struct_field_name = sub_struct_field.operator std::string();
           for (unsigned i = 0; i < pieces_dims[1]; i++) {
-            if (sub_struct_field_name == "current_mode") {
+            if (sub_struct_field_name == "waveform_phase") {
               matlab::data::TypedArrayRef<uint8_t> field_value = pieces[i][sub_struct_field];
-              event.pieces[i].current_mode = field_value[0];
+              event.pieces[i].waveform_phase = field_value[0];
 
             } else if (sub_struct_field_name == "duration_in_ticks") {
               matlab::data::TypedArrayRef<uint16_t> field_value = pieces[i][sub_struct_field];
