@@ -46,7 +46,7 @@ public:
       for (uint8_t i = 0; i < n_pieces; i++) {
         fpga_interfaces::msg::PulsePiece piece = pulse.pieces[i];
 
-        serialized_message.add_byte(piece.current_mode.value);
+        serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
       }
 

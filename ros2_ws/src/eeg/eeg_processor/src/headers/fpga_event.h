@@ -9,7 +9,7 @@
 #include "fpga_interfaces/msg/charge.hpp"
 #include "fpga_interfaces/msg/discharge.hpp"
 #include "fpga_interfaces/msg/pulse_piece.hpp"
-#include "fpga_interfaces/msg/current_mode.hpp"
+#include "fpga_interfaces/msg/waveform_phase.hpp"
 #include <iostream>
 
 enum FpgaEventType {
@@ -45,7 +45,7 @@ struct FpgaEvent {
       std::cout << "  Time us: " << pulse.event.time_us << std::endl;
       std::cout << "Pieces: " << std::endl;
       for (auto i = 0; i < 3; i++) {
-        std::cout << "  Current mode: " << +pulse.pieces[i].current_mode.value << ", duration in ticks: "
+        std::cout << "  Phase: " << +pulse.pieces[i].waveform_phase.value << ", duration in ticks: "
                   << pulse.pieces[i].duration_in_ticks
                   << std::endl;
       }
