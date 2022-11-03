@@ -8,7 +8,8 @@
 #include "fpga_interfaces/msg/pulse.hpp"
 #include "fpga_interfaces/msg/charge.hpp"
 #include "fpga_interfaces/msg/discharge.hpp"
-#include "fpga_interfaces/msg/pulse_piece.hpp"
+#include "fpga_interfaces/msg/waveform_piece.hpp"
+#include "fpga_interfaces/msg/waveform_phase.hpp"
 #include <iostream>
 
 enum FpgaEventType {
@@ -40,12 +41,12 @@ struct FpgaEvent {
       std::cout << "Channel: " << +pulse.channel << std::endl;
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << pulse.event.id << std::endl;
-      std::cout << "  Execution condition: " << +pulse.event.execution_condition << std::endl;
+      std::cout << "  Execution condition: " << +pulse.event.execution_condition.value << std::endl;
       std::cout << "  Time us: " << pulse.event.time_us << std::endl;
-      std::cout << "Pieces: " << std::endl;
+      std::cout << "Waveform: " << std::endl;
       for (auto i = 0; i < 3; i++) {
-        std::cout << "  mode: " << +pulse.pieces[i].mode << ", duration in ticks: "
-                  << pulse.pieces[i].duration_in_ticks
+        std::cout << "  Phase: " << +pulse.waveform[i].waveform_phase.value << ", duration in ticks: "
+                  << pulse.waveform[i].duration_in_ticks
                   << std::endl;
       }
     } else if (event_type == CHARGE) {
@@ -54,7 +55,7 @@ struct FpgaEvent {
       std::cout << "Target voltage: " << charge.target_voltage << std::endl;
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << charge.event.id << std::endl;
-      std::cout << "  Execution condition: " << +charge.event.execution_condition << std::endl;
+      std::cout << "  Execution condition: " << +charge.event.execution_condition.value << std::endl;
       std::cout << "  Time us: " << charge.event.time_us << std::endl;
     } else if (event_type == DISCHARGE) {
       std::cout << "Discharge" << std::endl;
@@ -63,7 +64,7 @@ struct FpgaEvent {
       std::cout << "Target voltage: " << discharge.target_voltage << std::endl;
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << discharge.event.id << std::endl;
-      std::cout << "  Execution condition: " << +discharge.event.execution_condition << std::endl;
+      std::cout << "  Execution condition: " << +discharge.event.execution_condition.value << std::endl;
       std::cout << "  Time us: " << discharge.event.time_us << std::endl;
     } else {
       std::cout << "Uknown event type " << +event_type << std::endl;

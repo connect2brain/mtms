@@ -152,7 +152,7 @@ class StartPulseSequenceNode(Node):
                         event.delay_us = 0
 
                         pulse = Pulse()
-                        pulse.pieces = pulse
+                        pulse.waveform = pulse
                         pulse.channel = channel_index
                         pulse.event = event
 
