@@ -1,5 +1,12 @@
 import ROSLIB from 'roslib'
 
+export const EventTypes = {
+  CHARGE: 0,
+  PULSE: 1,
+  DISCHARGE: 2,
+  SIGNAL_OUT: 3,
+}
+
 export interface EegDatapoint {
   eeg_channels: number[]
   time: number
@@ -11,9 +18,11 @@ export interface EegDatapointMessage extends ROSLIB.Message {
   time: number
   first_sample_of_experiment: boolean
 }
+
 export interface EegBatch extends ROSLIB.Message {
   batch: EegDatapoint[]
 }
+
 export interface EegBatchMessage extends ROSLIB.Message {
   batch: EegDatapoint[]
 }

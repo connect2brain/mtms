@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { systemStateSubscriber } from 'services/experiment'
-import { ChannelState as ChannelStateType, DeviceState, SystemStateMessage } from 'types/fpga'
+import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage} from 'types/fpga'
 import { getKeyByValue, getTrueKeys, objectKeysToCamelCase } from 'utils'
 import { ChannelState } from './ChannelState'
 
@@ -91,7 +91,7 @@ export const SystemState = () => {
           <tr>
             <Th>Index</Th>
             <Th>Voltage</Th>
-            <Th>Temperature</Th>
+            {/*<Th>Temperature</Th>*/}
             <Th>Pulse count</Th>
             <Th>Error</Th>
           </tr>
@@ -129,8 +129,8 @@ export const SystemState = () => {
       <p>Emergency system errors: {getListValue(systemState.system_error_emergency)}</p>
       <p>Startup error: {getKeyByValue(DeviceState, systemState.experiment_state) || 'No error'}</p>
 
-      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state) || 'No error'}</p>
-      <p>Experiment state: {getKeyByValue(DeviceState, systemState.experiment_state) || 'No error'}</p>
+      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.state) || 'No error'}</p>
+      <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.state) || 'No error'}</p>
 
       <h3>Channels</h3>
       <ChannelTableContainer>{channelStatesTable()}</ChannelTableContainer>
