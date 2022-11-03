@@ -3,17 +3,17 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "targeting_interfaces/srv/reverse_polarity.hpp"
-#include "fpga_interfaces/msg/current_mode.hpp"
-#include "fpga_interfaces/msg/pulse_piece.hpp"
+#include "fpga_interfaces/msg/waveform_phase.hpp"
+#include "fpga_interfaces/msg/waveform_piece.hpp"
 
 using namespace std;
 
-const uint16_t CURRENT_MODE_MAPPING[][2] = {
-  {fpga_interfaces::msg::CurrentMode::NON_CONDUCTIVE, fpga_interfaces::msg::CurrentMode::NON_CONDUCTIVE},
-  {fpga_interfaces::msg::CurrentMode::RISING, fpga_interfaces::msg::CurrentMode::FALLING},
-  {fpga_interfaces::msg::CurrentMode::FALLING, fpga_interfaces::msg::CurrentMode::RISING},
-  {fpga_interfaces::msg::CurrentMode::HOLD, fpga_interfaces::msg::CurrentMode::ALTERNATIVE_HOLD},
-  {fpga_interfaces::msg::CurrentMode::ALTERNATIVE_HOLD, fpga_interfaces::msg::CurrentMode::HOLD}
+const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
+  {fpga_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, fpga_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
+  {fpga_interfaces::msg::WaveformPhase::RISING, fpga_interfaces::msg::WaveformPhase::FALLING},
+  {fpga_interfaces::msg::WaveformPhase::FALLING, fpga_interfaces::msg::WaveformPhase::RISING},
+  {fpga_interfaces::msg::WaveformPhase::HOLD, fpga_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
+  {fpga_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, fpga_interfaces::msg::WaveformPhase::HOLD}
 };
 
 class ReversePolarity : public rclcpp::Node {
@@ -27,24 +27,24 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
-      fpga_interfaces::msg::PulsePiece piece;
+      fpga_interfaces::msg::WaveformPiece piece;
 
       uint8_t n_pieces = std::size(request->waveform);
       for (uint8_t i = 0; i < n_pieces; i++) {
         piece.duration_in_ticks = request->waveform[i].duration_in_ticks;
 
         /* TODO: Does not check that the current mode is valid, i.e., that the value is in the correct range.
-         *   This will be checked by ROS2 once CurrentMode ROS message type is a proper enum.
+         *   This will be checked by ROS2 once WaveformPhase ROS message type is a proper enum.
          */
-        uint8_t current_mode = request->waveform[i].current_mode.value;
-        uint8_t new_current_mode;
+        uint8_t waveform_phase = request->waveform[i].waveform_phase.value;
+        uint8_t new_waveform_phase;
 
-        for (uint8_t j = 0; j < std::size(CURRENT_MODE_MAPPING); j++) {
-          if (current_mode == CURRENT_MODE_MAPPING[j][0]) {
-            new_current_mode = CURRENT_MODE_MAPPING[j][1];
+        for (uint8_t j = 0; j < std::size(WAVEFORM_PHASE_MAPPING); j++) {
+          if (waveform_phase == WAVEFORM_PHASE_MAPPING[j][0]) {
+            new_waveform_phase = WAVEFORM_PHASE_MAPPING[j][1];
           }
         }
-        piece.current_mode.value = new_current_mode;
+        piece.waveform_phase.value = new_waveform_phase;
 
         response->waveform.push_back(piece);
       }
