@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
 import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
 import { Datapoint, DatapointWithEventType, EegChartSteaming } from '../components/EegChartStreaming'
@@ -11,12 +11,21 @@ const DataVisualizeWebGL = () => {
   const [minY, setMinY] = useState<number>(3550)
   const [maxY, setMaxY] = useState<number>(3620)
 
+  const minYRef = useRef(3550)
+  const maxYRef = useRef(3620)
+
+  const targetYMin = -1
+  const targetYMax = 1
+
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
 
   const [latestEvent, setLatestEvent] = useState<MTMSEvent>()
 
   const [events, setEvents] = useState<MTMSEvent[]>([])
-  const [eventPoints, setEventPoints] = useState<Datapoint[]>([])
+  const [pulsePoints, setPulsePoints] = useState<Datapoint[]>([])
+  const [chargePoints, setChargePoints] = useState<Datapoint[]>([])
+  const [dischargePoints, setDischargePoints] = useState<Datapoint[]>([])
+  const [signalOutPoints, setSignalOutPoints] = useState<Datapoint[]>([])
 
   const [latestTimestamps, setLatestTimestamps] = useState<number[]>([])
 
@@ -29,9 +38,10 @@ const DataVisualizeWebGL = () => {
   const c3 = (datapoint: number[]) =>
     datapoint[4] - 0.25 * (datapoint[21] + datapoint[23] + datapoint[25] + datapoint[27])
 
+  const scaleY = (point: number) =>
+    ((point - minYRef.current) / (maxYRef.current - minYRef.current)) * (targetYMax - targetYMin) + targetYMin
+
   const newEegBatchWebGL = (message: EegBatchMessage) => {
-    let max = 0
-    let s = 0
     const data = []
     const eegTimestamps: number[] = []
     for (let i = 0; i < message.batch.length; i++) {
@@ -39,34 +49,33 @@ const DataVisualizeWebGL = () => {
       eegTimestamps.push(point.time)
 
       const filtered = c3(point.channel_datapoint)
-      if (filtered > max) {
-        max = filtered
+      const y = scaleY(filtered)
+
+      const finalPoint = {
+        x: 0,
+        y,
       }
-      s += filtered
-      data.push(filtered)
+      data.push(finalPoint)
     }
 
-    const avg = s / message.batch.length
-
-    const scaledData = data.map((point) => {
-      return {
-        x: 0,
-        y: ((point - avg) / max) * 50,
-        //y: (-1 - 1) * ((point - minY) / maxY + minY) + minY,
-      }
-    })
-
     setLatestTimestamps(eegTimestamps)
-    setLatestBatch(scaledData)
+    setLatestBatch(data)
   }
 
   useEffect(() => {
     const newEventData = latestTimestamps.map((p) => {
       return {
         x: 0,
-        y: 0,
+        y: -1,
       }
     })
+
+    const newPulseData = [...newEventData]
+    const newChargeData = [...newEventData]
+    const newDischargeData = [...newEventData]
+    const newSignalOutData = [...newEventData]
+
+    const allData = [newChargeData, newPulseData, newDischargeData, newSignalOutData]
 
     const newEvents: MTMSEvent[] = []
 
@@ -76,7 +85,8 @@ const DataVisualizeWebGL = () => {
       for (let i = 0; i < latestTimestamps.length; i++) {
         const ts = latestTimestamps[i]
         if (event.timeUs < ts) {
-          newEventData[i].y = 1
+          console.log(`event: ${event.eventType}, ${event.timeUs}, ${ts}`)
+          allData[event.eventType][i].y = 1
           removeThisEvent = true
           break
         }
@@ -88,7 +98,11 @@ const DataVisualizeWebGL = () => {
     }
 
     setEvents(() => newEvents)
-    setEventPoints(newEventData)
+
+    setChargePoints(newChargeData)
+    setPulsePoints(newPulseData)
+    setDischargePoints(newDischargeData)
+    setSignalOutPoints(newSignalOutData)
   }, [latestTimestamps])
 
   useEffect(() => {
@@ -104,6 +118,16 @@ const DataVisualizeWebGL = () => {
     setLatestEvent(camelCased)
   }
 
+  const updateLimits = (
+    limitFunc: React.Dispatch<React.SetStateAction<number>>,
+    ref: React.MutableRefObject<number>,
+    newLimit: number,
+  ) => {
+    console.log('new limit:', newLimit)
+    limitFunc((oldLimit) => newLimit)
+    ref.current = newLimit
+  }
+
   return (
     <ChartContainer>
       <label htmlFor='chart-max-input'>Y max: </label>
@@ -111,7 +135,7 @@ const DataVisualizeWebGL = () => {
         defaultValue={maxY}
         type='number'
         id='chart-max-input'
-        onChange={(event) => setMaxY(Number(event.target.value))}
+        onChange={(event) => updateLimits(setMaxY, maxYRef, Number(event.target.value))}
       />
       <br />
       <label htmlFor='chart-min-input'>Y min: </label>
@@ -119,9 +143,15 @@ const DataVisualizeWebGL = () => {
         defaultValue={minY}
         type='number'
         id='chart-min-input'
-        onChange={(event) => setMinY(Number(event.target.value))}
+        onChange={(event) => updateLimits(setMinY, minYRef, Number(event.target.value))}
       />
-      <WebGLPlot eegData={latestBatch} pulseData={eventPoints} />
+      <WebGLPlot
+        eegData={latestBatch}
+        pulseData={pulsePoints}
+        chargeData={chargePoints}
+        dischargeData={dischargePoints}
+        signalOutData={signalOutPoints}
+      />
     </ChartContainer>
   )
 }

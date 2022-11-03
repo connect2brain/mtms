@@ -19,7 +19,7 @@ export const ChannelState = (state: ChannelStateType) => {
       <tr>
         <td>{state.channel_index}</td>
         <td>{state.voltage}</td>
-        <td>{state.temperature}</td>
+        {/*<td>{state.temperature}</td>*/}
         <td>{state.pulse_count}</td>
         <td>{getListValue(state.channel_error)}</td>
       </tr>
