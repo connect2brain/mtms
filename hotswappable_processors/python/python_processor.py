@@ -21,21 +21,21 @@ class Processor(BaseProcessor):
             "execution_condition": 3,
             "time_us": 100 * self.eeg_data_index
         }
-        pieces = [
+        waveform = [
             {
-                "mode": 1,
+                "waveform_phase": 1,
                 "duration_in_ticks": 500
             },
             {
-                "mode": 2,
+                "waveform_phase": 2,
                 "duration_in_ticks": 500
             },
             {
-                "mode": 3,
+                "waveform_phase": 3,
                 "duration_in_ticks": 500
             }
         ]
         # charge = Charge(3, 1200, event, EventType.CHARGE.value)
         # return [charge, charge, charge]
-        pulse = Pulse(3, pieces, event, EventType.PULSE.value)
+        pulse = Pulse(3, waveform, event, EventType.PULSE.value)
         return [pulse]

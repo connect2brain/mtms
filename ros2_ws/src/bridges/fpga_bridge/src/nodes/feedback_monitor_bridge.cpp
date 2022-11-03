@@ -3,7 +3,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/msg/feedback.hpp"
+#include "fpga_interfaces/msg/pulse_feedback.hpp"
+#include "fpga_interfaces/msg/charge_feedback.hpp"
+#include "fpga_interfaces/msg/discharge_feedback.hpp"
+#include "fpga_interfaces/msg/signal_out_feedback.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -23,13 +26,13 @@ class FeedbackMonitorBridge : public rclcpp::Node {
 public:
   FeedbackMonitorBridge()
       : Node("feedback_monitor_bridge") {
-    pulse_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::Feedback>(
+    pulse_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::PulseFeedback>(
         "/fpga/pulse_feedback", 10);
-    charge_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::Feedback>(
+    charge_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::ChargeFeedback>(
         "/fpga/charge_feedback", 10);
-    discharge_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::Feedback>(
+    discharge_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::DischargeFeedback>(
         "/fpga/discharge_feedback", 10);
-    signal_out_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::Feedback>(
+    signal_out_feedback_publisher_ = this->create_publisher<fpga_interfaces::msg::SignalOutFeedback>(
         "/fpga/signal_out_feedback", 10);
 
     timer_ = this->create_wall_timer(20ms, std::bind(&FeedbackMonitorBridge::update_feedback_topics, this));
@@ -48,8 +51,7 @@ private:
 
   void read_fifo_and_publish(std::string event_type,
                              NiFpga_mTMS_TargetToHostFifoU8 fifo,
-                             std::map<uint8_t, std::vector<uint8_t>> map,
-                             rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+                             std::map<uint8_t, std::vector<uint8_t>> map) {
     size_t elements_remaining = 0;
     NiFpga_Status read_status;
     std::vector<uint8_t> data(2);
@@ -85,15 +87,14 @@ private:
       // A whole message has been read.
       if (map[channel].size() > 2) {
         uint16_t id = map[channel][0] * 256 + map[channel][1];
-        uint8_t status_code = map[channel][2];
-        publish_feedback(event_type, id, status_code, publisher);
+        uint8_t error = map[channel][2];
+        publish_feedback(event_type, id, error);
       }
     }
   }
 
   void read_non_multiplexed_fifo_and_publish(std::string event_type,
-                                             NiFpga_mTMS_TargetToHostFifoU8 fifo,
-                                             rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+                                             NiFpga_mTMS_TargetToHostFifoU8 fifo) {
     size_t elements_remaining = 0;
     NiFpga_Status read_status;
     std::vector<uint8_t> data(3);
@@ -117,41 +118,62 @@ private:
       }
 
       uint16_t id = data[0] * 256 + data[1];
-      uint8_t status_code = data[2];
-      publish_feedback(event_type, id, status_code, publisher);
+      uint8_t error = data[2];
+      publish_feedback(event_type, id, error);
     }
   }
 
   void publish_feedback(std::string event_type,
                         uint16_t id,
-                        uint8_t status_code,
-                        rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr* publisher) {
+                        uint8_t error) {
 
-    fpga_interfaces::msg::Feedback feedback;
-    feedback.id = id;
-    feedback.status_code = status_code;
+    /* HACK: Not that clean way to implement genericity for this function with regard to event types.
+         For a better solution, reading FIFOs and publishing feedbacks would probably need to be decoupled
+         first. */
+    if (event_type == "Pulse") {
+      fpga_interfaces::msg::PulseFeedback feedback;
+      feedback.id = id;
+      feedback.error.value = error;
+      pulse_feedback_publisher_->publish(feedback);
+
+    } else if (event_type == "Charge") {
+      fpga_interfaces::msg::ChargeFeedback feedback;
+      feedback.id = id;
+      feedback.error.value = error;
+      charge_feedback_publisher_->publish(feedback);
+
+    } else if (event_type == "Discharge") {
+      fpga_interfaces::msg::DischargeFeedback feedback;
+      feedback.id = id;
+      feedback.error.value = error;
+      discharge_feedback_publisher_->publish(feedback);
+
+    } else if (event_type == "Signal out") {
+      fpga_interfaces::msg::SignalOutFeedback feedback;
+      feedback.id = id;
+      feedback.error.value = error;
+      signal_out_feedback_publisher_->publish(feedback);
+    }
 
     RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
-                "Publishing data to %s feedback: {id: %d, status: %d}",
+                "Publishing data to %s feedback: {id: %d, error: %d}",
                 event_type.data(),
                 id,
-                status_code);
-
-    (*publisher)->publish(feedback);
+                error);
   }
 
   void update_feedback_topics() {
-    read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data, &pulse_feedback_publisher_);
-    read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data, &discharge_feedback_publisher_);
-    read_fifo_and_publish("Signal out", signal_out_feedback_fifo, signal_out_data, &signal_out_feedback_publisher_);
-    read_non_multiplexed_fifo_and_publish("Charge", charge_feedback_fifo, &charge_feedback_publisher_);
+    read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data);
+    read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data);
+    read_fifo_and_publish("Signal out", signal_out_feedback_fifo, signal_out_data);
+    read_non_multiplexed_fifo_and_publish("Charge", charge_feedback_fifo);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr pulse_feedback_publisher_;
-  rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr signal_out_feedback_publisher_;
-  rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr charge_feedback_publisher_;
-  rclcpp::Publisher<fpga_interfaces::msg::Feedback>::SharedPtr discharge_feedback_publisher_;
+  rclcpp::Publisher<fpga_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
+  rclcpp::Publisher<fpga_interfaces::msg::SignalOutFeedback>::SharedPtr signal_out_feedback_publisher_;
+  rclcpp::Publisher<fpga_interfaces::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
+  rclcpp::Publisher<fpga_interfaces::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
 
   //channel index, data
   std::map<uint8_t, std::vector<uint8_t>> pulse_data = {};

@@ -27,7 +27,7 @@ public:
       fpga_interfaces::msg::Event event = charge.event;
 
       uint16_t id = event.id;
-      uint8_t execution_condition = event.execution_condition;
+      uint8_t execution_condition = event.execution_condition.value;
       uint64_t time_us = event.time_us;
 
       serialized_message.init();

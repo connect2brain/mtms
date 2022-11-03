@@ -23,12 +23,25 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/event/Charge.msg"
+        "msg/event/feedback/ChargeFeedback.msg"
+        "msg/event/feedback/ChargeError.msg"
+
         "msg/event/Discharge.msg"
-        "msg/event/PulsePiece.msg"
+        "msg/event/feedback/DischargeFeedback.msg"
+        "msg/event/feedback/DischargeError.msg"
+
         "msg/event/Pulse.msg"
+        "msg/event/WaveformPiece.msg"
+        "msg/event/WaveformPhase.msg"
+        "msg/event/feedback/PulseFeedback.msg"
+        "msg/event/feedback/PulseError.msg"
+
         "msg/event/SignalOut.msg"
+        "msg/event/feedback/SignalOutFeedback.msg"
+        "msg/event/feedback/SignalOutError.msg"
+
         "msg/event/Event.msg"
-        "msg/event/Feedback.msg"
+        "msg/event/ExecutionCondition.msg"
 
         "msg/state/ChannelState.msg"
         "msg/state/ChannelError.msg"
