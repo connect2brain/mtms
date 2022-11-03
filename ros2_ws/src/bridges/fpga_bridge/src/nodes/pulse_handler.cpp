@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "fpga_interfaces/srv/send_pulse.hpp"
-#include "fpga_interfaces/msg/pulse_piece.hpp"
+#include "fpga_interfaces/msg/waveform_piece.hpp"
 #include "fpga_interfaces/msg/pulse.hpp"
 #include "fpga_interfaces/msg/event.hpp"
 
@@ -30,7 +30,7 @@ public:
       fpga_interfaces::msg::Event event = pulse.event;
 
       uint16_t id = event.id;
-      uint8_t execution_condition = event.execution_condition;
+      uint8_t execution_condition = event.execution_condition.value;
       uint64_t time_us = event.time_us;
 
       serialized_message.init(channel);
@@ -40,13 +40,13 @@ public:
 
       /* Serialize stimulation pulse. */
 
-      uint8_t n_pieces = (uint8_t) pulse.pieces.size();
-      serialized_message.add_byte(n_pieces);
+      uint8_t n_waveform = (uint8_t) pulse.waveform.size();
+      serialized_message.add_byte(n_waveform);
 
-      for (uint8_t i = 0; i < n_pieces; i++) {
-        fpga_interfaces::msg::PulsePiece piece = pulse.pieces[i];
+      for (uint8_t i = 0; i < n_waveform; i++) {
+        fpga_interfaces::msg::WaveformPiece piece = pulse.waveform[i];
 
-        serialized_message.add_byte(piece.mode);
+        serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
       }
 

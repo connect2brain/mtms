@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import Event, PulsePiece, Pulse, Charge, SignalOut
+from fpga_interfaces.msg import Event, WaveformPiece, Pulse, Charge, SignalOut
 
 US_TO_TICKS_CONVERSION_RATIO = 40
 
@@ -24,7 +24,7 @@ time_list = [
 def generate_signal_out_command(port, time_us, execution_condition, duration):
     event = Event()
     event.id = 1
-    event.execution_condition = execution_condition
+    event.execution_condition.value = execution_condition
     event.time_us = time_us
 
     signal_out = SignalOut()
@@ -41,22 +41,22 @@ def generate_standard_pulse_command():
 
     pulses = []
     for i, _ in enumerate(time_list):
-        pieces = []
+        waveform = []
         for j, _ in enumerate(time_list[i]):
-            piece = PulsePiece()
+            piece = WaveformPiece()
             piece.mode = mode_list[i][j]
             piece.duration_in_ticks = int(time_list[i][j] * US_TO_TICKS_CONVERSION_RATIO)
-            pieces.append(piece)
+            waveform.append(piece)
 
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = 0
 
         pulse = Pulse()
         pulse.event = event
         pulse.channel = i + 1
-        pulse.pieces = pieces
+        pulse.waveform = waveform
 
         pulses.append(pulse)
 
@@ -69,22 +69,22 @@ def generate_timed_pulses(count):
 
     pulses = []
     for i in range(count):
-        pieces = []
+        waveform = []
         for j, _ in enumerate(time_list[0]):
-            piece = PulsePiece()
+            piece = WaveformPiece()
             piece.mode = mode_list[0][j]
             piece.duration_in_ticks = int(time_list[0][j] * US_TO_TICKS_CONVERSION_RATIO)
-            pieces.append(piece)
+            waveform.append(piece)
 
         event = Event()
         event.id = i
-        event.execution_condition = 0
+        event.execution_condition.value = 0
         event.time_us = int(1e6 * i + WAIT)
 
         pulse = Pulse()
         pulse.event = event
         pulse.channel = 1
-        pulse.pieces = pieces
+        pulse.waveform = waveform
 
         pulses.append(pulse)
 
@@ -98,7 +98,7 @@ def generate_timed_charges(count, voltage):
     for i in range(count):
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = int(1e6 * i + 1e6/2 + WAIT)
 
         charge = Charge()
@@ -117,7 +117,7 @@ def generate_standard_charge_command(voltage):
     for i, _ in enumerate(time_list):
         event = Event()
         event.id = i
-        event.execution_condition = 2
+        event.execution_condition.value = 2
         event.time_us = 0
 
         charge = Charge()
