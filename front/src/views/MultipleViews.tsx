@@ -6,6 +6,7 @@ import Targets from './Targets'
 import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
+import { SystemControl } from './SystemControl'
 
 export const MultipleViews = () => {
   const [displaySystemControl, setDisplaySystemControl] = useState(true)
@@ -61,8 +62,7 @@ export const MultipleViews = () => {
         {displaySystemControl ? (
           <Wrapper>
             <SmallHeader>System control</SmallHeader>
-            <ExperimentControl />
-            <SystemState />
+            <SystemControl />
           </Wrapper>
         ) : null}
 
