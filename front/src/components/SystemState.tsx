@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { systemStateSubscriber } from 'services/experiment'
-import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage} from 'types/fpga'
+import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage, StartupError} from 'types/fpga'
 import { getKeyByValue, getTrueKeys, objectKeysToCamelCase } from 'utils'
 import { ChannelState } from './ChannelState'
 
@@ -59,30 +59,28 @@ const initialState = {
     charger_power_enabled_twice_error: false,
   },
   startup_error: {
-    error: 0,
+    value: 0,
   },
   device_state: {
-    state: 0,
+    value: 0,
   },
   experiment_state: {
-    state: 0,
+    value: 0,
   },
   time: 0,
 }
 
-export const SystemState = () => {
-  const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
+type Props = {
+  systemState: SystemStateMessage
+}
+
+export const SystemState = ({systemState}: Props) => {
+
+  const [latestUpdate, setLatestUpdate] = useState<Date>()
 
   useEffect(() => {
-    console.log('Subscribed')
-    systemStateSubscriber.subscribe(systemStateCallback)
-  }, [])
-
-
-  const systemStateCallback = (message: SystemStateMessage) => {
-    console.log('new message', message)
-    setSystemState(message)
-  }
+      setLatestUpdate(new Date())
+  }, [systemState])
 
   const channelStatesTable = () => {
     return (
@@ -123,14 +121,17 @@ export const SystemState = () => {
 
   return (
     <div>
-      <p>Latest update: {new Date(systemState.time * 1000).toISOString()}</p>
+      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</p>
+      <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.value) || 'No error'}</p>
+
+      <br/>
+
+      <p>Latest update: {latestUpdate?.toISOString()}</p>
+      <p>System time: {systemState.time} s</p>
       <p>Cumulative system errors: {getListValue(systemState.system_error_cumulative)}</p>
       <p>Current system errors: {getListValue(systemState.system_error_current)}</p>
       <p>Emergency system errors: {getListValue(systemState.system_error_emergency)}</p>
-      <p>Startup error: {getKeyByValue(DeviceState, systemState.experiment_state) || 'No error'}</p>
-
-      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.state) || 'No error'}</p>
-      <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.state) || 'No error'}</p>
+      <p>Startup error: {getKeyByValue(StartupError, systemState.startup_error.value) || 'No error'}</p>
 
       <h3>Channels</h3>
       <ChannelTableContainer>{channelStatesTable()}</ChannelTableContainer>
