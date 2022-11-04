@@ -78,9 +78,9 @@ class PedalListenerNode(Node):
             if len(value) == 0:
                 return
 
-            if value[0] == 0x01:
+            if value[0] == 0x00:
                 self._handle_pedal_pressed()
-            elif value[0] == 0x00:
+            elif value[0] == 0x01:
                 self._handle_pedal_released()
             else:
                 self.get_logger().error("Unknown message received from the pedal.")
