@@ -45,15 +45,15 @@ export interface SystemStateMessage extends ROSLIB.Message {
 }
 
 export interface ExperimentStateMessage {
-  state: number
+  value: number
 }
 
 export interface DeviceStateMessage {
-  state: number
+  value: number
 }
 
 export interface StartupErrorMessage {
-  error: number
+  value: number
 }
 
 export interface SystemErrorMessage {
