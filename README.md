@@ -211,7 +211,8 @@ Configure docker-compose.prod.yml neuronavigation DISPLAY variable to be the cor
 
 ##### Linux:
 - Run `xhost local:root`
-- Set docker-compose.prod.yml neuronavigation DISPLAY to `:0` or `:0.0`
+- If using docker swarm, set neuronavigation DISPLAY to `:0` or `:0.0` in `docker-stack.yml` file. If using docker-compose,
+check that DISPLAY is set to `:0` or `:0.0` in `.env`.
 
 
 After the previous steps are done, run the following commands to start the swarm cluster.
