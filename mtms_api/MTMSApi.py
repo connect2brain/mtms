@@ -58,14 +58,14 @@ class MTMSApi:
         while self.get_time() < time:
             self.node.wait_for_new_state()
 
-    def wait_for_feedback(self, id):
+    def wait_for_completion(self, id):
         self.node.wait_for_new_state()
         while self.node.get_event_feedback(id) is None:
             self.node.wait_for_new_state()
 
-    def wait_for_feedbacks(self, ids):
+    def wait_for_completions(self, ids):
         for id in ids:
-            self.wait_for_feedback(id)
+            self.wait_for_completion(id)
 
     def wait(self, time):
         start_time = self.get_wallclock_time()
@@ -105,7 +105,7 @@ class MTMSApi:
         return self.node.get_event_feedback(id)
 
     # Events
-    def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0, reverse_polarity=False, wait_for_feedback=True):
+    def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0, reverse_polarity=False, wait_for_completion=True):
         time_us = int(time * 10**6)
 
         waveform_ = copy.deepcopy(waveform)
@@ -120,10 +120,10 @@ class MTMSApi:
             waveform=waveform_,
         )
 
-        if wait_for_feedback:
-            self.wait_for_feedback(id=id)
+        if wait_for_completion:
+            self.wait_for_completion(id=id)
 
-    def send_charge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_feedback=True):
+    def send_charge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         time_us = int(time * 10**6)
         target_voltage = int(target_voltage)
         self.node.send_charge(
@@ -134,10 +134,10 @@ class MTMSApi:
             target_voltage=target_voltage,
         )
 
-        if wait_for_feedback:
-            self.wait_for_feedback(id=id)
+        if wait_for_completion:
+            self.wait_for_completion(id=id)
 
-    def send_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_feedback=True):
+    def send_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         time_us = int(time * 10**6)
         target_voltage = int(target_voltage)
         self.node.send_discharge(
@@ -148,10 +148,10 @@ class MTMSApi:
             target_voltage=target_voltage,
         )
 
-        if wait_for_feedback:
-            self.wait_for_feedback(id=id)
+        if wait_for_completion:
+            self.wait_for_completion(id=id)
 
-    def send_signal_out(self, id, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_feedback=True):
+    def send_signal_out(self, id, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         time_us = int(time * 10**6)
         self.node.send_signal_out(
             id=id,
@@ -161,8 +161,8 @@ class MTMSApi:
             duration_us=duration_us,
         )
 
-        if wait_for_feedback:
-            self.wait_for_feedback(id=id)
+        if wait_for_completion:
+            self.wait_for_completion(id=id)
 
     def send_event_trigger(self):
         self.node.send_event_trigger()
@@ -209,7 +209,7 @@ class MTMSApi:
 
     # Compound events
 
-    def send_instant_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_feedback=True):
+    def send_instant_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_completion=True):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -226,22 +226,22 @@ class MTMSApi:
                 time=0,
                 channel=channel,
                 target_voltage=target_voltage,
-                wait_for_feedback=False,
+                wait_for_completion=False,
             )
 
-        if wait_for_feedback:
-            self.wait_for_feedbacks(ids=ids)
+        if wait_for_completion:
+            self.wait_for_completions(ids=ids)
 
-    def send_instant_full_discharge_to_all_channels(self, starting_id=1, wait_for_feedback=True):
+    def send_instant_full_discharge_to_all_channels(self, starting_id=1, wait_for_completion=True):
         target_voltages = self.N_CHANNELS * [0]
 
         self.send_instant_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
             starting_id=starting_id,
-            wait_for_feedback=wait_for_feedback,
+            wait_for_completion=wait_for_completion,
         )
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1, wait_for_feedback=True):
+    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0, starting_id=1, wait_for_completion=True):
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -260,13 +260,13 @@ class MTMSApi:
                 channel=channel,
                 waveform=waveform,
                 reverse_polarity=reverse_polarity,
-                wait_for_feedback=False,
+                wait_for_completion=False,
             )
 
-        if wait_for_feedback:
-            self.wait_for_feedbacks(ids=ids)
+        if wait_for_completion:
+            self.wait_for_completions(ids=ids)
 
-    def send_instant_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1, wait_for_feedback=True):
+    def send_instant_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1, wait_for_completion=True):
         execution_condition = ExecutionCondition.TIMED
         time = self.get_time() + self.TIME_EPSILON
 
@@ -275,10 +275,10 @@ class MTMSApi:
             execution_condition=execution_condition,
             time=time,
             starting_id=starting_id,
-            wait_for_feedback=wait_for_feedback,
+            wait_for_completion=wait_for_completion,
         )
 
-    def send_charge_or_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_feedback=True):
+    def send_charge_or_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
         charge_or_discharge(
@@ -287,7 +287,7 @@ class MTMSApi:
             target_voltage=target_voltage,
             execution_condition=execution_condition,
             time=time,
-            wait_for_feedback=wait_for_feedback,
+            wait_for_completion=wait_for_completion,
         )
 
     # Other
