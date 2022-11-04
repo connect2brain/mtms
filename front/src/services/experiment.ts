@@ -5,23 +5,23 @@ import { MTMSEventMessage } from '../types/eeg'
 
 const startExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/start_experiment',
+  name: '/fpga/start_experiment',
   serviceType: 'fpga_interfaces/StartExperiment',
 })
 const stopExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/stop_experiment',
+  name: '/fpga/stop_experiment',
   serviceType: 'fpga_interfaces/StopExperiment',
 })
 
 const startDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/start_device',
+  name: '/fpga/start_device',
   serviceType: 'fpga_interfaces/StartDevice',
 })
 const stopDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/stop_device',
+  name: '/fpga/stop_device',
   serviceType: 'fpga_interfaces/StopDevice',
 })
 
