@@ -4,6 +4,8 @@ time = double(50);
 first_sample_of_experiment = false;
 channel_count = uint16(62);
 
+setenv('TMPDIR', './tempdir');
+
 cfg = coder.config("lib");
 cfg.TargetLang = "C++";
 cfg.InlineBetweenUserFunctions = "Readability";
