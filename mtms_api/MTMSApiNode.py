@@ -3,7 +3,7 @@ from rclpy.node import Node
 
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, SystemState, \
-    PulsePiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
+    WaveformPiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
 from mtms_interfaces.srv import GetChannelVoltages
 from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
@@ -23,8 +23,8 @@ class MTMSApiNode(Node):
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
-    ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveform/get_default', GetDefaultWaveform)
-    ROS_SERVICE_REVERSE_POLARITY = ('/waveform/reverse_polarity', ReversePolarity)
+    ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
+    ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -134,7 +134,7 @@ class MTMSApiNode(Node):
 
         request.pulse.event = event
         request.pulse.channel = channel
-        request.pulse.pieces = waveform
+        request.pulse.waveform = waveform
 
         value = self.call_service(client, request)
 
