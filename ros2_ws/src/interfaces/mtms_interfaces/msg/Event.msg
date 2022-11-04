@@ -10,6 +10,6 @@ uint8 PULSE=1
 uint8 DISCHARGE=2
 uint8 SIGNAL_OUT=3
 
-uint64 time_us
+uint64 time
 
 uint8 event_type
