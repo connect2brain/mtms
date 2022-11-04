@@ -35,7 +35,7 @@ class MTMSApiEnums():
         (PulseError.NO_ERROR, "No error", bcolors.OKGREEN),
         (PulseError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
         (PulseError.INVALID_CHANNEL, "Invalid channel", bcolors.FAIL),
-        (PulseError.INVALID_NUMBER_OF_PIECES, "Invalid number of pieces", bcolors.FAIL),
+        (PulseError.INVALID_NUMBER_OF_WAVEFORM_PIECES, "Invalid number of pieces", bcolors.FAIL),
         (PulseError.INVALID_MODES, "Invalid modes", bcolors.FAIL),
         (PulseError.INVALID_DURATIONS, "Invalid durations", bcolors.FAIL),
         (PulseError.LATE, "Late", bcolors.FAIL),

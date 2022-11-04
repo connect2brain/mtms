@@ -3,7 +3,7 @@ import copy
 
 import rclpy
 
-from fpga_interfaces.msg import ExperimentState, DeviceState, ExecutionCondition, CurrentMode
+from fpga_interfaces.msg import ExperimentState, DeviceState, ExecutionCondition, WaveformPhase
 
 from .MTMSApiNode import MTMSApiNode
 
