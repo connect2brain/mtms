@@ -1,7 +1,7 @@
-function command = create_pulse_command(event_id, channel, execution_condition, time_us)
+function command = create_pulse_command(event_id, channel, execution_condition, time)
     event.event_id = uint16(event_id);
     event.execution_condition = uint8(execution_condition);
-    event.time_us = uint64(time_us);
+    event.time = double(time);
 
     command.channel = uint8(channel);
     command.event = event;
@@ -12,5 +12,5 @@ function command = create_pulse_command(event_id, channel, execution_condition, 
     
     coder.cstructname(command, 'matlab_fpga_event');
     coder.cstructname(command.event, 'event');
-    coder.cstructname(command.waveform, 'waveform');
+    %coder.cstructname(command.waveform, 'waveform');
 end
