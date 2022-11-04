@@ -24,7 +24,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
         target_voltage
 
-        file_id
+        durations_file_id
         pxx_file_id
         f_file_id
 
@@ -40,7 +40,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.HILBERTWIN = 64;
             obj.EDGE = 35;
             obj.AR_ORDER = 15;
-            obj.FS = 5000;
+            obj.FS = 2500;
 
             obj.offset_correction = obj.FS * 0.008;
             obj.nr_seconds = 1;
@@ -62,12 +62,12 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
             obj.target_voltage = 500;
 
-            obj.file_id = fopen("peaks.csv", "w");
-            obj.pxx_file_id = fopen("pxx.csv", "w");
-            obj.f_file_id = fopen("f.csv", "w");
+            obj.durations_file_id = fopen("durations.csv", "w");
+            %obj.pxx_file_id = fopen("pxx.csv", "w");
+            %obj.f_file_id = fopen("f.csv", "w");
 
-            fprintf(obj.file_id, "estimated_phase,phase_diff\n");
-            obj.max_phase_count = 1000;
+            fprintf(obj.durations_file_id, "estimated_phase,phase_diff\n");
+            obj.max_phase_count = 100;
             obj.phase_count = 0;
             obj.phases = zeros(obj.max_phase_count, 1);
             obj.saved = false;
@@ -101,12 +101,18 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 data = data - mean(data);
                 
                 %fprintf("Low pass filtering\n");
+                %tic
                 data = filter(obj.lpf, obj.A, data);
+                %filter_duration = toc;
 
                 downsampled = data(1:10:end);
 
                 %fprintf("Phastimating\n");
+                %tic
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
+                %phastimate_duration = toc;
+
+                %fprintf(obj.durations_file_id, "%f,%f,%f\n", filter_duration, phastimate_duration, filter_duration + phastimate_duration);
 
                 nof_estimated_samples = numel(estimated_phases);
                 future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
@@ -114,45 +120,16 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
 
-                
-                
-                real_data = obj.data() - mean(obj.data);
-                real_data = filter(obj.lpf, obj.A, real_data);
-                real_data = real_data(1:10:end);
+                %fprintf("Estimated phase at peak: %f\n", phase_at_peak);
 
-                real_phases = angle(hilbert(real_data));
-                real_phase_at_estimated_peak = real_phases(2500 + index_of_peak);
-                phase_diff = phase_at_peak - real_phase_at_estimated_peak;
-
-                %fprintf("Estimated and real phase at peak: %f, %f\n", phase_at_peak, real_phase_at_estimated_peak);
-
-                fprintf(obj.file_id, "%f, %f\n", phase_at_peak, phase_diff);
-
-                if obj.phase_count < obj.max_phase_count
-                    obj.phase_count = obj.phase_count + 1;
-                    obj.phases(obj.phase_count) = phase_diff;
-                    fprintf("Phases estimated: %f / %f\n", obj.phase_count, obj.max_phase_count);
-                end
-                if obj.phase_count >= obj.max_phase_count && ~obj.saved
-                    %save("phases.mat", obj.phases);
-                    %writematrix(obj.phases, "phases.csv");
-                    %for i=1:obj.max_phase_count
-                    %    fprintf(obj.file_id, "%f\n", obj.phases(i));
-                    %end
-                    %obj.saved = true;
-                end
-
-
-                
-
-                event_time = time_us + index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS);
+                event_time = time_us + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
 
                 pulse_event = create_pulse_command(obj.events_sent + 1, 1, 0, event_time);
-                charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1000000000, obj.target_voltage);
+                charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
                 obj.set_commands([pulse_event, charge_event]);
 
-                %fprintf("Timed pulse at %lu\n", event_time);
-                %fprintf("Timed charge at %lu\n", event_time + 1000000000);
+                fprintf("Timed pulse at %lu\n", event_time);
+                fprintf("Timed charge at %lu\n", event_time + 1);
 
                 obj.estimated = true;
 
@@ -164,7 +141,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         function on_end_experiment(obj)
             charge = create_discharge_command(obj.events_sent + 1, 1, 2, 0, 0);
             obj.set_commands(charge);
-            fclose(obj.file_id);
+            fclose(obj.durations_file_id);
         end
     end
 end
