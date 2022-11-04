@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import ExecutionCondition, CurrentMode
+from fpga_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from mtms_api.MTMSApi import MTMSApi
 
