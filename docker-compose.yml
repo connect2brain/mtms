@@ -145,3 +145,4 @@ services:
       dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
     env_file:
       - ${ENV_FILE}
+    network_mode: "host"
