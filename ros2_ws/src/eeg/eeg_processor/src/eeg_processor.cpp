@@ -146,22 +146,22 @@ void EegProcessor::publish_events(const std::vector<FpgaEvent> &events) {
 
     switch (event.event_type) {
       case PULSE:
-        ros_event.time = event.pulse.event.time;
+        ros_event.time = event.pulse.event.time_us;
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published fpga pulse event timed at %lu.", ros_event.time);
         break;
 
       case CHARGE:
-        ros_event.time = event.charge.event.time;
+        ros_event.time = event.charge.event.time_us;
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published charge event timed at %lu.", ros_event.time);
         break;
 
       case DISCHARGE:
-        ros_event.time = event.discharge.event.time;
+        ros_event.time = event.discharge.event.time_us;
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published discharge event timed at %lu.", ros_event.time);
         break;
 
       case SIGNAL_OUT:
-        ros_event.time = event.signal_out.event.time;
+        ros_event.time = event.signal_out.event.time_us;
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published signal out event timed at %lu.", ros_event.time);
         break;
 
