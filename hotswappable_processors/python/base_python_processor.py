@@ -53,7 +53,7 @@ waveform = [
 event = {
     "id": 69,
     "execution_condition": 3,
-    "time_us": 10392930
+    "time": 10392930.0
 }
 
 pulse = Pulse(3, waveform, event, EventType.PULSE.value)
@@ -73,5 +73,5 @@ class BaseProcessor:
         pass
 
     @abstractmethod
-    def data_received(self, data, time_us, first_sample_of_experiment):
+    def data_received(self, data, time, first_sample_of_experiment):
         pass
