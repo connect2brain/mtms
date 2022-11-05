@@ -62,7 +62,7 @@ class DataProvider(Node):
 
         msg = Trigger()
         msg.index = 0
-        msg.time_us = int(self.current_time * 10 ** 6)
+        msg.time = self.current_time
 
         self.trigger_publisher.publish(msg)
 

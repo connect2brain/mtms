@@ -25,7 +25,7 @@ void MatlabProcessorInterface::end_experiment(coder::array<matlab_fpga_event, 1U
 }
 
 void MatlabProcessorInterface::data_received(const double channel_data_data[], int channel_data_size,
-                                             unsigned long time_us,
+                                             double time,
                                              boolean_T first_sample_of_experiment,
                                              coder::array<matlab_fpga_event, 1U> &ret) {
   std::cout
