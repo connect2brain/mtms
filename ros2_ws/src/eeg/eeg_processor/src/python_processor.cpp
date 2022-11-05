@@ -95,13 +95,13 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
     PyErr_Print();
     std::cout << "Error on execution_condition" << std::endl;
   }
-  auto time_us = PyDict_GetItemString(event_as_pyobject, "time_us");
-  if (time_us == nullptr) {
+  auto time = PyDict_GetItemString(event_as_pyobject, "time");
+  if (time == nullptr) {
     PyErr_Print();
-    std::cout << "Error on time_us" << std::endl;
+    std::cout << "Error on time" << std::endl;
   }
   fpga_interfaces::msg::Event event_msg;
-  event_msg.time_us = PyLong_AsUnsignedLong(time_us);
+  event_msg.time = PyFloat_AsDouble(time);
   event_msg.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
   event_msg.id = PyLong_AsUnsignedLong(id);
 

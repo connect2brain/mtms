@@ -13,6 +13,8 @@
 
 const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetStimulationpulseFIFO;
 
+const uint64_t SECONDS_TO_MICROSECONDS_MULTIPLIER = 1000000;
+
 class PulseHandler : public rclcpp::Node {
 public:
   PulseHandler()
@@ -31,7 +33,8 @@ public:
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
-      uint64_t time_us = event.time_us;
+      double_t time = event.time;
+      uint64_t time_us = (uint64_t)(time * SECONDS_TO_MICROSECONDS_MULTIPLIER);
 
       serialized_message.init(channel);
       serialized_message.add_uint16(id);

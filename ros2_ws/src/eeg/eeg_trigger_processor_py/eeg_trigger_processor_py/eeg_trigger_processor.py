@@ -10,7 +10,7 @@ from fpga_interfaces.msg import SignalOut, Event
 SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 EVENT_ID = 1
-TIME_CONSTANT_US = int(1e6) * 1
+TIME_CONSTANT = 1.0
 
 
 class EegProcessor(Node):
@@ -29,8 +29,8 @@ class EegProcessor(Node):
         self.stimulation_request = SendPulse.Request()
         self.charge_request = SendCharge.Request()
 
-        self.first_trigger_time = 0
-        self.last_trigger_time = 0
+        self.first_trigger_time = 0.0
+        self.last_trigger_time = 0.0
 
         self.client_futures = []
 
@@ -45,24 +45,24 @@ class EegProcessor(Node):
 
     def trigger_reader_callback(self, msg):
         if msg.index == 1:
-            self.first_trigger_time = msg.time_us
-            self.set_trigger_request(1, msg.time_us)
+            self.first_trigger_time = msg.time
+            self.set_trigger_request(1, msg.time)
             self.client_futures.append(self.signal_out_client.call_async(self.request))
 
         elif msg.index == 2:
-            self.last_trigger_time = msg.time_us
-            self.get_logger().info(f'Difference between triggers: {msg.time_us} us')
+            self.last_trigger_time = msg.time
+            self.get_logger().info(f'Difference between triggers: {msg.time} s')
             self.log_to_file(self.last_trigger_time)
 
     def log_to_file(self, time_difference):
         with open('latencies.txt', 'a') as f:
             f.write(str(time_difference) + "\n")
 
-    def set_trigger_request(self, index, time_us):
+    def set_trigger_request(self, index, time):
         event = Event()
         event.id = EVENT_ID
         event.execution_condition = 2
-        event.time_us = time_us + TIME_CONSTANT_US
+        event.time = time + TIME_CONSTANT
 
         signal_out = SignalOut()
         signal_out.port = port
