@@ -121,7 +121,7 @@ class MTMSApiNode(Node):
 
         return value
 
-    def send_pulse(self, id, execution_condition, time_us, channel, waveform):
+    def send_pulse(self, id, execution_condition, time, channel, waveform):
         topic, service_object = self.ROS_SERVICE_SEND_PULSE
 
         client = self.ros_service_clients[topic]
@@ -130,7 +130,7 @@ class MTMSApiNode(Node):
         event = Event()
         event.id = id
         event.execution_condition.value = execution_condition
-        event.time_us = time_us
+        event.time = float(time)
 
         request.pulse.event = event
         request.pulse.channel = channel
@@ -148,7 +148,7 @@ class MTMSApiNode(Node):
 
         return value
 
-    def send_charge(self, id, execution_condition, time_us, channel, target_voltage):
+    def send_charge(self, id, execution_condition, time, channel, target_voltage):
         topic, service_object = self.ROS_SERVICE_SEND_CHARGE
 
         client = self.ros_service_clients[topic]
@@ -157,7 +157,7 @@ class MTMSApiNode(Node):
         event = Event()
         event.id = id
         event.execution_condition.value = execution_condition
-        event.time_us = time_us
+        event.time = float(time)
 
         request.charge.event = event
         request.charge.channel = channel
@@ -175,7 +175,7 @@ class MTMSApiNode(Node):
 
         return value
 
-    def send_discharge(self, id, execution_condition, time_us, channel, target_voltage):
+    def send_discharge(self, id, execution_condition, time, channel, target_voltage):
         topic, service_object = self.ROS_SERVICE_SEND_DISCHARGE
 
         client = self.ros_service_clients[topic]
@@ -184,7 +184,7 @@ class MTMSApiNode(Node):
         event = Event()
         event.id = id
         event.execution_condition.value = execution_condition
-        event.time_us = time_us
+        event.time = float(time)
 
         request.discharge.event = event
         request.discharge.channel = channel
@@ -202,7 +202,7 @@ class MTMSApiNode(Node):
 
         return value
 
-    def send_signal_out(self, id, execution_condition, time_us, port, duration_us):
+    def send_signal_out(self, id, execution_condition, time, port, duration_us):
         topic, service_object = self.ROS_SERVICE_SEND_SIGNAL_OUT
 
         client = self.ros_service_clients[topic]
@@ -211,7 +211,7 @@ class MTMSApiNode(Node):
         event = Event()
         event.id = id
         event.execution_condition.value = execution_condition
-        event.time_us = time_us
+        event.time = float(time)
 
         request.signal_out.event = event
         request.signal_out.port = port
