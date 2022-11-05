@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "B5B3B2DAFB64E53F87C9C0EF36D1D936";
+static const char* const NiFpga_mTMS_Signature = "A2F5F35B30791F558C18A3EE3DD9F2F1";
 
 #if NiFpga_Cpp
 extern "C"
@@ -49,6 +49,7 @@ typedef enum
    NiFpga_mTMS_IndicatorU8_Channel5VersionpatchDC = 0x1808E,
    NiFpga_mTMS_IndicatorU8_Devicestate = 0x1801E,
    NiFpga_mTMS_IndicatorU8_Experimentstate = 0x180F2,
+   NiFpga_mTMS_IndicatorU8_Startuperror = 0x18026,
    NiFpga_mTMS_IndicatorU8_Startupstate = 0x18106,
    NiFpga_mTMS_IndicatorU8_VersionmajorCI = 0x180CA,
    NiFpga_mTMS_IndicatorU8_VersionmajorFPGA = 0x180FA,
@@ -67,15 +68,15 @@ typedef enum
 typedef enum
 {
    NiFpga_mTMS_IndicatorU16_Channel1Capacitorvoltage = 0x1800A,
-   NiFpga_mTMS_IndicatorU16_Channel1ErrorsDC = 0x180AA,
+   NiFpga_mTMS_IndicatorU16_Channel1Errors = 0x180AA,
    NiFpga_mTMS_IndicatorU16_Channel2Capacitorvoltage = 0x1800E,
-   NiFpga_mTMS_IndicatorU16_Channel2ErrorsDC = 0x180AE,
+   NiFpga_mTMS_IndicatorU16_Channel2Errors = 0x180AE,
    NiFpga_mTMS_IndicatorU16_Channel3Capacitorvoltage = 0x18012,
-   NiFpga_mTMS_IndicatorU16_Channel3ErrorsDC = 0x180B2,
+   NiFpga_mTMS_IndicatorU16_Channel3Errors = 0x180B2,
    NiFpga_mTMS_IndicatorU16_Channel4Capacitorvoltage = 0x18016,
-   NiFpga_mTMS_IndicatorU16_Channel4ErrorsDC = 0x180B6,
+   NiFpga_mTMS_IndicatorU16_Channel4Errors = 0x180B6,
    NiFpga_mTMS_IndicatorU16_Channel5Capacitorvoltage = 0x1801A,
-   NiFpga_mTMS_IndicatorU16_Channel5ErrorsDC = 0x180BA,
+   NiFpga_mTMS_IndicatorU16_Channel5Errors = 0x180BA,
    NiFpga_mTMS_IndicatorU16_Channel6Capacitorvoltage = 0x1810A,
    NiFpga_mTMS_IndicatorU16_Coil1Temperature = 0x18042,
    NiFpga_mTMS_IndicatorU16_Coil2Temperature = 0x18046,
@@ -83,10 +84,9 @@ typedef enum
    NiFpga_mTMS_IndicatorU16_Coil4Temperature = 0x1804E,
    NiFpga_mTMS_IndicatorU16_Coil5Temperature = 0x18052,
    NiFpga_mTMS_IndicatorU16_Coil6Temperature = 0x18112,
-   NiFpga_mTMS_IndicatorU16_CumulativeerrorsSM = 0x1809E,
-   NiFpga_mTMS_IndicatorU16_CurrenterrorsSM = 0x180A2,
-   NiFpga_mTMS_IndicatorU16_EmergencyerrorsSM = 0x180A6,
-   NiFpga_mTMS_IndicatorU16_Startupsequenceerror = 0x18026
+   NiFpga_mTMS_IndicatorU16_Cumulativeerrors = 0x1809E,
+   NiFpga_mTMS_IndicatorU16_Currenterrors = 0x180A2,
+   NiFpga_mTMS_IndicatorU16_Emergencyerrors = 0x180A6
 } NiFpga_mTMS_IndicatorU16;
 
 typedef enum
@@ -101,7 +101,7 @@ typedef enum
 
 typedef enum
 {
-   NiFpga_mTMS_IndicatorU64_time = 0x18020
+   NiFpga_mTMS_IndicatorU64_Time = 0x18020
 } NiFpga_mTMS_IndicatorU64;
 
 typedef enum
@@ -121,18 +121,22 @@ typedef enum
 
 typedef enum
 {
-   NiFpga_mTMS_ControlU16_Experimentstarttriggerdurationus = 0x180F6,
    NiFpga_mTMS_ControlU16_Maximumpulsedurationticks = 0x180D6,
-   NiFpga_mTMS_ControlU16_Maximumpulsespertimetimems = 0x180E2,
    NiFpga_mTMS_ControlU16_Maximumrisingfallingdifferenceticks = 0x180DA
 } NiFpga_mTMS_ControlU16;
 
 typedef enum
 {
+   NiFpga_mTMS_ControlU32_Experimentstarttriggerdurationticks = 0x180F4,
+   NiFpga_mTMS_ControlU32_Maximumpulsespertimetimeticks = 0x180E0
+} NiFpga_mTMS_ControlU32;
+
+typedef enum
+{
    NiFpga_mTMS_TargetToHostFifoU8_TargettoHostChargefeedbackFIFO = 3,
    NiFpga_mTMS_TargetToHostFifoU8_TargettoHostDischargefeedbackFIFO = 2,
-   NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO = 1,
-   NiFpga_mTMS_TargetToHostFifoU8_TargettoHostStimulationpulsefeedbackFIFO = 0
+   NiFpga_mTMS_TargetToHostFifoU8_TargettoHostPulsefeedbackFIFO = 1,
+   NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO = 0
 } NiFpga_mTMS_TargetToHostFifoU8;
 
 typedef enum
@@ -144,8 +148,8 @@ typedef enum
 {
    NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetChargeFIFO = 7,
    NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetDischargeFIFO = 6,
-   NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO = 5,
-   NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetStimulationpulseFIFO = 4
+   NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetPulseFIFO = 5,
+   NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO = 4
 } NiFpga_mTMS_HostToTargetFifoU8;
 
 
