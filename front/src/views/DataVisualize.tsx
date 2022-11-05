@@ -28,10 +28,10 @@ const DataVisualize = () => {
 
   const newEegBatch = (message: EegBatchMessage) => {
     const mappedData = message.batch.map((point) => {
-      const timeInSeconds = point.time / 1000000
+      const time = point.time
       return {
         y: c3(point.channel_datapoint),
-        x: Math.round(timeInSeconds),
+        x: Math.round(time),
       }
     })
     setLatestBatch(mappedData)
@@ -41,7 +41,7 @@ const DataVisualize = () => {
     console.log(message)
     setTrigger({
       y: 100000,
-      x: message.time_us / 1000000,
+      x: message.time,
     })
   }
 

@@ -1,4 +1,4 @@
-function out = run_processor(window_size, channel_count, data_sample, time_us, first_sample_of_experiment)
+function out = run_processor(window_size, channel_count, data_sample, time, first_sample_of_experiment)
 
     % HACK: to make variable sizes data samples
     actual_window_size = uint32(20);
@@ -29,9 +29,9 @@ function out = run_processor(window_size, channel_count, data_sample, time_us, f
     %obj.enqueue(data_sample);
     data = obj.init_experiment();
 
-    data = obj.data_received(actual_data_sample, time_us, first_sample_of_experiment);
+    data = obj.data_received(actual_data_sample, time, first_sample_of_experiment);
     actual_data_sample2 = ones(actual_window_size, 1);
-    data = obj.data_received(actual_data_sample2, time_us + 1, false);
+    data = obj.data_received(actual_data_sample2, time + 1, false);
     % display(data);
     data = obj.end_experiment();
 
@@ -40,7 +40,7 @@ function out = run_processor(window_size, channel_count, data_sample, time_us, f
     in_progress = obj.experiment_in_progress;
 
     % out = data(2);
-    time_us = obj.last_sample_received_at_us;
+    time = obj.last_sample_received_at;
     experiment_started = obj.experiment_in_progress;
 
 

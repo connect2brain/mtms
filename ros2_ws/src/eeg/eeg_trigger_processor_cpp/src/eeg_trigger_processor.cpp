@@ -23,7 +23,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
     } else if (message->index == 2) {
 
       if (index < durations.size()) {
-        durations[index++] = message->time_us;
+        durations[index++] = message->time;
       } else {
         index++;
       }
@@ -41,7 +41,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
         f.flush();
         f.close();
       }
-      //RCLCPP_INFO(this->get_logger(), "Difference between triggers: %lu", message->time_us);
+      //RCLCPP_INFO(this->get_logger(), "Difference between triggers: %lu", message->time);
     } else {
       RCLCPP_WARN(rclcpp::get_logger("eeg_trigger_processor"), "Unknown message index %d", message->index);
     }
@@ -58,7 +58,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   auto event = fpga_interfaces::msg::SignalOut();
   event.port = 3;
   event.duration_us = 10000;
-  event.event.time_us = 0;
+  event.event.time = 0.0;
   event.event.execution_condition.value = 2;
   event.event.id = 1;
 
