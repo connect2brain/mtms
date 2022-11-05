@@ -21,11 +21,11 @@ time_list = [
 
 # Generate standard pulse command, values in us
 
-def generate_signal_out_command(port, time_us, execution_condition, duration):
+def generate_signal_out_command(port, time, execution_condition, duration):
     event = Event()
     event.id = 1
     event.execution_condition.value = execution_condition
-    event.time_us = time_us
+    event.time = time
 
     signal_out = SignalOut()
     signal_out.port = port
@@ -51,7 +51,7 @@ def generate_standard_pulse_command():
         event = Event()
         event.id = i
         event.execution_condition.value = 2
-        event.time_us = 0
+        event.time = 0.0
 
         pulse = Pulse()
         pulse.event = event
@@ -62,7 +62,7 @@ def generate_standard_pulse_command():
 
     return pulses
 
-WAIT = 10
+WAIT = 1e-05
 
 def generate_timed_pulses(count):
     assert len(mode_list) == len(time_list)
@@ -79,7 +79,7 @@ def generate_timed_pulses(count):
         event = Event()
         event.id = i
         event.execution_condition.value = 0
-        event.time_us = int(1e6 * i + WAIT)
+        event.time = 1.0 * i + WAIT
 
         pulse = Pulse()
         pulse.event = event
@@ -99,7 +99,7 @@ def generate_timed_charges(count, voltage):
         event = Event()
         event.id = i
         event.execution_condition.value = 2
-        event.time_us = int(1e6 * i + 1e6/2 + WAIT)
+        event.time = 1.0 * i + 0.5 + WAIT
 
         charge = Charge()
         charge.channel = 1
@@ -118,7 +118,7 @@ def generate_standard_charge_command(voltage):
         event = Event()
         event.id = i
         event.execution_condition.value = 2
-        event.time_us = 0
+        event.time = 0.0
 
         charge = Charge()
         charge.channel = i + 1

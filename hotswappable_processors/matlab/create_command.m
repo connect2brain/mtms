@@ -1,7 +1,7 @@
 function command = create_command(id, event_type, target_voltage)
     event.id = uint16(id);
     event.execution_condition = uint8(2);
-    event.time_us = uint64(69999);
+    event.time = double(69999);
     
     piece1.waveform_phase = uint8(0);
     piece1.duration_in_ticks = uint16(200);
