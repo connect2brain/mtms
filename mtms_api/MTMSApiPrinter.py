@@ -152,12 +152,10 @@ class MTMSApiPrinter():
 
         execution_condition = event.execution_condition.value
         id = event.id
-        time_us = event.time_us
-
-        time_s = time_us / 10 ** 6
+        time = event.time
 
         if execution_condition == ExecutionCondition.TIMED:
-            execution_condition_str = 'Timed at (s): {0:g}'.format(time_s)
+            execution_condition_str = 'Timed at (s): {0:g}'.format(time)
         elif execution_condition == ExecutionCondition.TRIGGER:
             execution_condition_str = 'Waiting for trigger'
         elif execution_condition == ExecutionCondition.INSTANT:
