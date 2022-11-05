@@ -17,8 +17,8 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-#define CHANNEL_COUNT 5
-#define CLOCK_FREQUENCY_HZ 40000000
+const uint8_t CHANNEL_COUNT = 5;
+const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 #define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
 
@@ -49,24 +49,23 @@ NiFpga_mTMS_IndicatorU32 pulse_count_indicators[CHANNEL_COUNT] = {
 };
 
 NiFpga_mTMS_IndicatorU16 channel_error_indicators[CHANNEL_COUNT] = {
-    NiFpga_mTMS_IndicatorU16_Channel1ErrorsDC,
-    NiFpga_mTMS_IndicatorU16_Channel2ErrorsDC,
-    NiFpga_mTMS_IndicatorU16_Channel3ErrorsDC,
-    NiFpga_mTMS_IndicatorU16_Channel4ErrorsDC,
-    NiFpga_mTMS_IndicatorU16_Channel5ErrorsDC
+    NiFpga_mTMS_IndicatorU16_Channel1Errors,
+    NiFpga_mTMS_IndicatorU16_Channel2Errors,
+    NiFpga_mTMS_IndicatorU16_Channel3Errors,
+    NiFpga_mTMS_IndicatorU16_Channel4Errors,
+    NiFpga_mTMS_IndicatorU16_Channel5Errors
 };
 
-NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_CumulativeerrorsSM;
-NiFpga_mTMS_IndicatorU16 current_error_indicator = NiFpga_mTMS_IndicatorU16_CurrenterrorsSM;
-NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_EmergencyerrorsSM;
+NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_Cumulativeerrors;
+NiFpga_mTMS_IndicatorU16 current_error_indicator = NiFpga_mTMS_IndicatorU16_Currenterrors;
+NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_Emergencyerrors;
 
-/* TODO: Could as well be U8: only 8 bits are ever needed. */
-NiFpga_mTMS_IndicatorU16 startup_error_indicator = NiFpga_mTMS_IndicatorU16_Startupsequenceerror;
+NiFpga_mTMS_IndicatorU8 startup_error_indicator = NiFpga_mTMS_IndicatorU8_Startuperror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
 NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Experimentstate;
 
-NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_time;
+NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
 class SystemStateBridge : public rclcpp::Node {
 public:
@@ -184,14 +183,11 @@ private:
     state.system_error_emergency = system_error_to_msg(error);
 
     NiFpga_MergeStatus(&status,
-                        NiFpga_ReadU16(
+                        NiFpga_ReadU8(
                             session,
                             startup_error_indicator,
-                            &error
+                            &state.startup_error.value
                         ));
-
-    /* TODO: Change the startup error register to U8 to get rid of this line. */
-    state.startup_error.value = (uint8_t) error;
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
