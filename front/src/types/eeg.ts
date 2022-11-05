@@ -20,10 +20,10 @@ export interface EegBatchMessage extends ROSLIB.Message {
 
 export interface EegTrigger {
   index: number
-  time_us: number
+  time: number
 }
 
 export interface EegTriggerMessage extends ROSLIB.Message {
   index: number
-  time_us: number
+  time: number
 }
