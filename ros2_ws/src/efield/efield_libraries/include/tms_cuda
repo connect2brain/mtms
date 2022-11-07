@@ -1,0 +1,8 @@
+
+#include "CUDA_A_CurrentDipoleSet.cuh"
+#include "CUDA_AlphaQ.cuh"
+#include "CUDA_BpFlux_xyz.cuh"
+#include "CUDA_BetaQ.cuh"
+//#include "CUDA_helpers.cuh"
+#include "CUDA_A_WirePath.cuh"
+#include "TMS_GPU.cuh"
