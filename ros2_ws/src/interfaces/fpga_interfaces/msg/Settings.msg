@@ -1,0 +1,8 @@
+
+uint16 maximum_pulse_duration_ticks
+
+uint16 maximum_rising_falling_difference_ticks
+
+uint8 pulses_in_maximum_pulses_per_time
+
+uint16 time_in_maximum_pulses_per_time_ms
