@@ -2,12 +2,19 @@ import { configureStore } from '@reduxjs/toolkit'
 import targetReducer from 'reducers/targetReducer'
 import sequenceReducer from 'reducers/sequenceReducer'
 import experimentReducer from 'reducers/experimentReducer'
+import eegReducer from 'reducers/eegReducer'
 
 export const store = configureStore({
   reducer: {
     targets: targetReducer,
     sequences: sequenceReducer,
     experiment: experimentReducer,
+    eegData: eegReducer,
+  },
+  middleware: (getDefaultMiddleware) => {
+    return getDefaultMiddleware({
+      serializableCheck: false,
+    })
   },
 })
 

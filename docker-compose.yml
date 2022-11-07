@@ -1,21 +1,6 @@
 version: '2'
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    # TODO: Change hard-coded port to a port read from the env file
-    ports:
-      - "8080:8080"
-    environment:
-      # Fixes hot reload when using Windows/Mac. An explanation:
-      #
-      # https://daten-und-bass.io/blog/enabling-hot-reloading-with-vuejs-and-vue-cli-in-docker/
-      #
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - ./frontend/src:/app/src
   front:
     build: ./front/
     ports:
@@ -25,57 +10,138 @@ services:
     volumes:
       - './front:/app'
       - '/app/node_modules'
+
   rosbridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/rosbridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+
+  eeg_bridge:
+    ports:
+      - "50000:50000/udp"
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile
+    # The container needs to be privileged to access FPGA.
+    privileged: true
+    env_file:
+      - ${ENV_FILE}
+
+  data_batcher:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/data_batcher/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
   planner:
     build:
       context: .
-      dockerfile: ros2_ws/src/planner/Dockerfile
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './ros2_ws/src/planner:/app/ros2_ws/src/planner/'
+      - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
+
   pulse_sequence_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/pulse_sequence_controller/Dockerfile
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
+    env_file:
+      - ${ENV_FILE}
     volumes:
-      - './ros2_ws/src/mtms_interfaces:/app/ros2_ws/src/mtms_interfaces/'
-      - './ros2_ws/src/fpga_interfaces:/app/ros2_ws/src/fpga_interfaces/'
-      - './ros2_ws/src/pulse_sequence_controller:/app/ros2_ws/src/pulse_sequence_controller/'
+      - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
+
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation_pkg/Dockerfile
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
     env_file:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-    # Requires by linux when opening projects, otherwise segfaults
+    # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
+
   efield:
-    privileged: true
     build:
       context: .
-      dockerfile: ros2_ws/src/efield/Dockerfile
+      dockerfile: ros2_ws/src/targeting/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+
+  optitrack_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
+    network_mode: host
+    env_file:
+      - ${ENV_FILE}
+
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: "host"
+
   trigger_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/trigger_controller/Dockerfile
+      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
     privileged: true
+    env_file:
+      - ${ENV_FILE}
+
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
     env_file:
       - ${ENV_FILE}
