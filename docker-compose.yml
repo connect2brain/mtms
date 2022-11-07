@@ -49,6 +49,7 @@ services:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
     privileged: true
+    network_mode: "host"
 
   fpga_bridge:
     build:
