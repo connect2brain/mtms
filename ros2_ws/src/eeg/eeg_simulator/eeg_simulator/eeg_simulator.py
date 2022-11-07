@@ -49,7 +49,7 @@ class DataProvider(Node):
         data = [float(number) for number in line.split(",")]
 
         msg = EegDatapoint()
-        msg.channel_datapoint = data[:62]
+        msg.eeg_channels = data[:62]
         msg.first_sample_of_experiment = False if self.current_time > 0 else True
         msg.time = self.current_time
 
