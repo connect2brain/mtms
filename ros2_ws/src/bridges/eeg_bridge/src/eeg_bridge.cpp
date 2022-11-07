@@ -14,7 +14,6 @@
 #include "memory_utils.h"
 
 #define BUFFER_LENGTH 250
-#define PORT 50000
 
 #define SIGNED_MAX pow(2,23)
 #define UNSIGNED_MAX pow(2,24)
@@ -70,14 +69,19 @@ public:
     publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
     publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-    this->init_socket();
-
     auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
     descriptor.description = "Sampling frequency";
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
     this->declare_parameter("sampling_frequency", NULL, descriptor);
     this->get_parameter("sampling_frequency", sampling_frequency_);
+
+    descriptor.description = "Port";
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+    this->declare_parameter("port", NULL, descriptor);
+    this->get_parameter("port", port_);
+
+    this->init_socket();
 
     auto sampling_interval_int = int(round(1000.0 / sampling_frequency_));
     auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
@@ -102,7 +106,7 @@ public:
 
     memset((char *) &(this->socket_own), 0, sizeof(this->socket_own));
     socket_own.sin_family = AF_INET;
-    socket_own.sin_port = htons(PORT);
+    socket_own.sin_port = htons(this->port_);
     socket_own.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(this->socket_, (struct sockaddr *) &(this->socket_own), sizeof(this->socket_own)) == -1) {
@@ -311,6 +315,8 @@ private:
   double_t latest_trigger_timestamp_;
 
   uint16_t sampling_frequency_;
+
+  uint16_t port_;
   int socket_;
   sockaddr_in socket_own;
   sockaddr_in socket_other;
