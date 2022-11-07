@@ -61,8 +61,8 @@ class MockEegBridge : public rclcpp::Node {
                 result -= 2 * RANDOM_MAX;
             }
 
-            message.channel_datapoint.push_back(result);
-            RCLCPP_INFO(this->get_logger(), "Channel: %d, Result: %f", channel, result);
+            message.eeg_channels.push_back(result);
+            RCLCPP_INFO(this->get_logger(), "EEG channel: %d, Result: %f", channel, result);
         }
 
         if (this->time_ == 0) {

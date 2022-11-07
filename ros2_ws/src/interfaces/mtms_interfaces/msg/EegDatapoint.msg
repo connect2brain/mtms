@@ -1,5 +1,6 @@
-# eeg data points in micro volts
+# EEG and EMG data in microvolts
 
-float64[] channel_datapoint
+float64[] eeg_channels
+float64[] emg_channels
 float64 time
 bool first_sample_of_experiment
