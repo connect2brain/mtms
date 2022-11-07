@@ -139,7 +139,7 @@ public:
     return (double_t)time_us / 1000000.0;
   }
 
-  void trigger_packet_received() {
+  void handle_trigger_packet() {
     RCLCPP_INFO(this->get_logger(), "Trigger packet received.");
 
     double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
@@ -164,7 +164,7 @@ public:
     this->first_sample_of_experiment_ = true;
   }
 
-  void sample_packet_received() {
+  void handle_sample_packet() {
     uint16_t bundles = this->buffer[10] << 8 | buffer[11];
     uint16_t num_channels = this->buffer[8] << 8 | buffer[9];
 
@@ -184,7 +184,7 @@ public:
     auto trigger_channel = num_channels > NUMBER_OF_CHANNELS;
 
     if (trigger_channel && get_trigger_package_from_buffer() != 0) {
-      RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
+      //RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
       this->latest_trigger_timestamp_ = time;
       this->publish_trigger_from_buffer(time);
       this->first_sample_of_experiment_ = true;
@@ -214,6 +214,10 @@ public:
     }
   }
 
+  void handle_measurement_start_packet() {
+    RCLCPP_WARN(rclcpp::get_logger("eeg_bridge"), "Received measurement start packet, not implemented");
+  }
+
   void timer_callback() {
 
     auto success = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0, (struct sockaddr *) &(this->socket_other),
@@ -232,13 +236,13 @@ public:
 
     switch (packet_type) {
       case MEASUREMENT_START_PACKET_ID:
-        RCLCPP_WARN(rclcpp::get_logger("eeg_bridge"), "Received measurement start packet, not implemented");
+        this->handle_measurement_start_packet();
         break;
       case SAMPLE_PACKET_ID:
-        this->sample_packet_received();
+        this->handle_sample_packet();
         break;
       case TRIGGER_PACKET_ID:
-        this->trigger_packet_received();
+        this->handle_trigger_packet();
         break;
       default:
         close(this->socket_);
