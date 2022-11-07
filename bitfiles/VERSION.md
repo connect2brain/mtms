@@ -1,5 +1,11 @@
 ## Version history
 
+### 0.4.4
+- MOD: Change time unit of 'Maximum pulses per time' setting to ticks
+- MOD: Change time unit of 'Experiment startup trigger duration' setting to ticks
+- MOD: Send time as ticks in event requests
+- MOD: Clean up naming of front panel indicators
+
 ### 0.4.3
 - MOD: Allow charging one channel while discharging another and vice versa.
 - FIX: Charging and discharging checks did not work properly with 6-channel (Aalto) device.
