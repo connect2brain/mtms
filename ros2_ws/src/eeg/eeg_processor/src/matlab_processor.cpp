@@ -53,11 +53,11 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   );
   auto matlab_data_array_dims = matlab_data_array.getDimensions();
 
-  auto dim = matlab::data::ArrayDimensions(data.channel_datapoint.size());
+  auto dim = matlab::data::ArrayDimensions(data.eeg_channels.size());
   auto matlab_new_sample = factory.createArray<double>(
-      {1, data.channel_datapoint.size()},
-      data.channel_datapoint.data(),
-      data.channel_datapoint.data() + data.channel_datapoint.size()
+      {1, data.eeg_channels.size()},
+      data.eeg_channels.data(),
+      data.eeg_channels.data() + data.eeg_channels.size()
   );
 
 
