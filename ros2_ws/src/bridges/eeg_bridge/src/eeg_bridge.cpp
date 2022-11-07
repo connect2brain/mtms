@@ -269,7 +269,6 @@ public:
         }
         break;
       default:
-        close(this->socket_);
         RCLCPP_WARN(this->get_logger(), "Unknown packet type.");
     }
   }
