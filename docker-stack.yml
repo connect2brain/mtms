@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  data_batcher_wrapper:
+    image: docker
+    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env DATA_BATCHER_BATCH_SIZE --env DATA_BATCHER_DOWNSAMPLE_RATIO okahilak/mtms:data_batcher
+    environment:
+      - ROS_LOG_LEVEL=info
+      - DATA_BATCHER_BATCH_SIZE=100
+      - DATA_BATCHER_DOWNSAMPLE_RATIO=10
+    volumes:
+      # required to run docker in docker
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  eeg_bridge_wrapper:
+    image: docker
+    command: docker run --privileged --net=weavenet -p 50000:50000/udp --env ROS_LOG_LEVEL okahilak/mtms:eeg_bridge
+    volumes:
+        # required to run docker in docker
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  eeg_processor_wrapper:
+    image: docker
+    # requires sh -c '<command>' to access the HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST environment variable
+    command: sh -c 'docker run --privileged --net=weavenet -v $${HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST}:/app/ros2_ws/hotswappable_processors --env ROS_LOG_LEVEL --env EEG_PROCESSOR_TYPE --env EEG_PROCESSOR_TEST_MEASURE_COUNT --env EEG_PROCESSOR_DURATION_FILE okahilak/mtms:eeg_processor'
+    environment:
+      - ROS_LOG_LEVEL=info
+      - EEG_PROCESSOR_TYPE=python
+      - EEG_PROCESSOR_TEST_MEASURE_COUNT=1
+      - EEG_PROCESSOR_DURATION_FILE=durations.txt
+      - HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST=/home/alqio/workspace/mtms/hotswappable_processors
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    volumes:
+      # this is the way to map a volume to docker-in-docker
+      - '${HOME}:${HOME}'
+      # required to run docker in docker
+      - '/var/run/docker.sock:/var/run/docker.sock'
+
+  eeg_simulator:
+    image: okahilak/mtms:eeg_simulator
+    environment:
+      - EEG_SIMULATOR_DATA_FILE_NAME=/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv
+      - EEG_SIMULATOR_SAMPLING_FREQUENCY=50.0
+      - ROS_LOG_LEVEL=info
+    volumes:
+      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
+      - './ros2_ws/src/interfaces/mtms_interfaces:/app/ros2_ws/src/interfaces/mtms_interfaces/'
+      - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  efield:
+    image: okahilak/mtms:efield
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  fpga_bridge_wrapper:
+    image: docker
+    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:fpga_bridge'
+    environment:
+      - ROS_LOG_LEVEL=info
+      - BITFILE=NiFpga_mTMS_Tubingen_0.4.2.lvbitx
+      - BITFILE_SIGNATURE=325DE9B3E0A386F7E898A899A8287C0E
+    volumes:
+      # required to run docker in docker
+      - '/var/run/docker.sock:/var/run/docker.sock'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  front:
+    image: okahilak/mtms:front
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: host
+
+  neuronavigation:
+    image: okahilak/mtms:neuronavigation
+    environment:
+      - DISPLAY=172.19.96.1:0.0
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
+  optitrack_bridge:
+    image: okahilak/mtms:optitrack_bridge
+    environment:
+      - ROS_LOG_LEVEL=info
+      - OPTITRACK_BRIDGE_SERVER_INDEX=1
+    ports:
+      - "1511:1511"
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
+  planner:
+    image: okahilak/mtms:planner
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
+  pulse_sequence_controller:
+    image: okahilak/mtms:pulse_sequence_controller
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == worker
+
+  rosbridge:
+    image: okahilak/mtms:rosbridge
+    ports:
+      - target: 9090
+        published: 9090
+        protocol: tcp
+        mode: host
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  targeting:
+    image: okahilak/mtms:targeting
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+  waveforms:
+    image: okahilak/mtms:waveforms
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  default:
+    driver: weaveworks/net-plugin:latest_release
+    attachable: true
+    name: weavenet
+    driver_opts:
+      works.weave.multicast: "true"
