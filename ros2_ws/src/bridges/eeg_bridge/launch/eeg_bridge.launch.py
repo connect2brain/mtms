@@ -12,11 +12,6 @@ def generate_launch_description():
         description="Logging level",
     )
 
-    sampling_frequency_arg = DeclareLaunchArgument(
-        "sampling-frequency",
-        description="Sampling frequency",
-    )
-
     port_arg = DeclareLaunchArgument(
         "port",
         description="Port",
@@ -30,7 +25,6 @@ def generate_launch_description():
             name="eeg_bridge",
             parameters=[
                 {
-                    "sampling_frequency": LaunchConfiguration("sampling-frequency"),
                     "port": LaunchConfiguration("port"),
                 }
             ],
@@ -41,7 +35,6 @@ def generate_launch_description():
 
     ld.add_action(node)
     ld.add_action(log_arg)
-    ld.add_action(sampling_frequency_arg)
     ld.add_action(port_arg)
 
     return ld
