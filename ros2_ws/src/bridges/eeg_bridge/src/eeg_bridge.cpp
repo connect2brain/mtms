@@ -26,9 +26,15 @@
 
 #define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
 #define MEASUREMENT_START_PACKET_N_CHANNELS_INDEX 16
+#define MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX 18
+
+/* HACK: If source channel matches the value below, it indicates the existence
+ *  of trigger in the sample packet. This is documented in NeurOne's manual.
+ *  However, it would be cleaner to have a separate field in measurement start
+ *  packet to indicate the existence of trigger. */
+#define SOURCE_CHANNEL_FOR_TRIGGER 65535
 
 #define SAMPLE_PACKET_N_BUNDLES_INDEX 10
-#define SAMPLE_PACKET_N_CHANNELS_INDEX 12
 
 #define FIRST_CHANNEL_INDEX 28
 #define SAMPLE_PACKET_FIRST_TIME_INDEX 20
@@ -230,9 +236,6 @@ public:
     uint16_t bundles = this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX] << 8 |
                        this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX + 1];
 
-    uint16_t n_channels_packet = this->buffer[SAMPLE_PACKET_N_CHANNELS_INDEX] << 8 |
-                                 this->buffer[SAMPLE_PACKET_N_CHANNELS_INDEX + 1];
-
     if (bundles != 1) {
       RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
     }
@@ -244,11 +247,7 @@ public:
 
     double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
 
-    /* If the actual number of sent channels is larger than the number of channels, it means that we are using a
-     * protocol where the triggers are sent as a part of EEG data instead of as separate packet. */
-    bool is_trigger_channel = n_channels_packet > this->n_channels_;
-
-    if (is_trigger_channel && get_trigger_package_from_buffer() != 0) {
+    if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
       //RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
       this->latest_trigger_timestamp_ = time;
       this->publish_trigger_from_buffer(time);
@@ -292,6 +291,25 @@ public:
     this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                         (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
     RCLCPP_INFO(this->get_logger(), "Number of channels set to %d.", this->n_channels_);
+
+    this->send_trigger_as_channel = false;
+    for (uint8_t i = 0; i < this->n_channels_; i++) {
+      uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
+                                buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
+      if (source_channel == SOURCE_CHANNEL_FOR_TRIGGER) {
+        this->send_trigger_as_channel = true;
+      }
+    }
+
+    if (this->send_trigger_as_channel) {
+      RCLCPP_INFO(this->get_logger(), "Trigger is sent as a channel.");
+
+      this->n_channels_excluding_trigger_ = this->n_channels_ - 1;
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Trigger is sent as a packet.");
+
+      this->n_channels_excluding_trigger_ = this->n_channels_;
+    }
   }
 
   void handle_eeg_data_packet() {
@@ -317,7 +335,7 @@ public:
   }
 
   int get_trigger_package_from_buffer() {
-    auto index = FIRST_CHANNEL_INDEX + this->n_channels_ * 3;
+    auto index = FIRST_CHANNEL_INDEX + this->n_channels_excluding_trigger_ * 3;
 
     return (uint8_t) buffer[index] << 16 |
            (uint8_t) buffer[index + 1] << 8 |
@@ -346,7 +364,7 @@ public:
     message.time = time_since_trigger;
 
     int i = FIRST_CHANNEL_INDEX;
-    for (int channel = 1; channel <= this->n_channels_; channel++) {
+    for (int channel = 1; channel <= this->n_channels_excluding_trigger_; channel++) {
 
       int result = (uint8_t) buffer[i] << 16 |
                    (uint8_t) buffer[i + 1] << 8 |
@@ -390,6 +408,7 @@ private:
 
   bool measurement_start_packet_received_;
   uint16_t n_channels_;
+  uint16_t n_channels_excluding_trigger_;
 
   /* TODO: Sampling frequency is unused for now. It could be published either as ROS message
    *   or as metadata of EEG data.
@@ -406,6 +425,7 @@ private:
 
   enum ChannelType {EEG, EMG};
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
+  bool send_trigger_as_channel;
 
   uint8_t eeg_channels_primary_amplifier_;
   uint8_t emg_channels_primary_amplifier_;
