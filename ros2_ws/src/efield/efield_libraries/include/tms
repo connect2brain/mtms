@@ -1,0 +1,18 @@
+#include "AVX_A_CurrentDipoleSet.hpp"
+#include "AVX_AlphaQ.hpp"
+#include "AVX_A_WirePath.hpp"
+#include "AVX_BpFlux_xyz.hpp"
+#include "AVX_BetaQ.hpp"
+#include "BetaDipoles.hpp"
+#include "BetaQDipoles.hpp"
+#include "Coil.hpp"
+#include "Mesh.hpp"
+#include "Timer.hpp"
+#include "JsonIO.hpp"
+#include "WeightedPhi.hpp"
+#include "TMS_CPU.hpp"
+
+#ifdef USE_CUDA
+    #include <tms_cuda>
+#endif
+
