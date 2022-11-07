@@ -1,13 +1,13 @@
 import ROSLIB from 'roslib'
 
 export interface EegDatapoint {
-  channel_datapoint: number[]
+  eeg_channels: number[]
   time: number
   first_sample_of_experiment: boolean
 }
 
 export interface EegDatapointMessage extends ROSLIB.Message {
-  channel_datapoint: number[]
+  eeg_channels: number[]
   time: number
   first_sample_of_experiment: boolean
 }

@@ -13,6 +13,8 @@
 #include "scheduling_utils.h"
 #include "memory_utils.h"
 
+#define MAX_NUMBER_OF_CHANNELS 80
+
 #define BUFFER_LENGTH 250
 
 #define SIGNED_MAX pow(2,23)
@@ -78,11 +80,52 @@ public:
     descriptor.description = "Port";
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
     this->declare_parameter("port", NULL, descriptor);
-    this->get_parameter("port", port_);
+    this->get_parameter("port", this->port_);
+
+    /* HACK: Unfortunately, this is a terribly messy way of dividing the channels into EEG and EMG channels.
+       Instead of trying to clean it up, we should ask for the manufacturer to provide more detailed
+       information about individual channels in the measurement start packet. */
+
+    descriptor.description = "EEG channel count for primary amplifier";
+    this->declare_parameter("eeg_channels_primary_amplifier", NULL, descriptor);
+    this->get_parameter("eeg_channels_primary_amplifier", this->eeg_channels_primary_amplifier_);
+
+    descriptor.description = "EMG channel count for primary amplifier";
+    this->declare_parameter("emg_channels_primary_amplifier", NULL, descriptor);
+    this->get_parameter("emg_channels_primary_amplifier", this->emg_channels_primary_amplifier_);
+
+    descriptor.description = "EEG channel count for secondary amplifier";
+    this->declare_parameter("eeg_channels_secondary_amplifier", NULL, descriptor);
+    this->get_parameter("eeg_channels_secondary_amplifier", this->eeg_channels_secondary_amplifier_);
+
+    descriptor.description = "EMG channel count for secondary amplifier";
+    this->declare_parameter("emg_channels_secondary_amplifier", NULL, descriptor);
+    this->get_parameter("emg_channels_secondary_amplifier", this->emg_channels_secondary_amplifier_);
+
+    this->set_channel_types();
 
     this->init_socket();
 
     this->first_sample_of_experiment_ = false;
+  }
+
+  void set_channel_types() {
+    uint8_t channels_primary = this->eeg_channels_primary_amplifier_ + this->emg_channels_primary_amplifier_;
+    uint8_t channels_secondary = this->eeg_channels_secondary_amplifier_ + this->emg_channels_secondary_amplifier_;
+
+    uint8_t channels_total = channels_primary + channels_secondary;
+
+    ChannelType type;
+    for (uint8_t i = 1; i <= channels_total; i++) {
+      if (i > channels_total - this->emg_channels_secondary_amplifier_) {
+        type = this->ChannelType::EMG;
+      } else if (i > this->eeg_channels_primary_amplifier_ && i <= channels_primary) {
+        type = this->ChannelType::EMG;
+      } else {
+        type = this->ChannelType::EEG;
+      }
+      this->channel_types[i - 1] = type;
+    }
   }
 
   void spin() {
@@ -231,7 +274,7 @@ public:
                   "Warning: Sample packet arrived %.4f seconds before the trigger. Skipping.",
                   this->latest_trigger_timestamp_ - time);
     } else {
-      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "latest trigger timestamp %.4f, time %.4f",
+      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Latest trigger timestamp %.4f, time %.4f",
                   this->latest_trigger_timestamp_, time);
     }
   }
@@ -317,7 +360,11 @@ public:
       result_uv *= DC_MODE_SCALE;
       result_uv /= NANO_TO_MICRO_CONVERSION;
 
-      message.channel_datapoint.push_back(result_uv);
+      if (channel_types[channel - 1] == ChannelType::EEG) {
+        message.eeg_channels.push_back(result_uv);
+      } else {
+        message.emg_channels.push_back(result_uv);
+      }
 
       i += 3;
     }
@@ -356,6 +403,14 @@ private:
   socklen_t socket_length;
   uint8_t buffer[BUFFER_LENGTH];
   bool first_sample_of_experiment_;
+
+  enum ChannelType {EEG, EMG};
+  ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
+
+  uint8_t eeg_channels_primary_amplifier_;
+  uint8_t emg_channels_primary_amplifier_;
+  uint8_t eeg_channels_secondary_amplifier_;
+  uint8_t emg_channels_secondary_amplifier_;
 };
 
 
