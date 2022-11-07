@@ -72,10 +72,14 @@ public:
 
     this->init_socket();
 
-    this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
+    auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+
+    descriptor.description = "Sampling frequency";
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+    this->declare_parameter("sampling_frequency", NULL, descriptor);
     this->get_parameter("sampling_frequency", sampling_frequency_);
 
-    auto sampling_interval_int = int(round(1000 / sampling_frequency_));
+    auto sampling_interval_int = int(round(1000.0 / sampling_frequency_));
     auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
 
     this->first_sample_of_experiment_ = false;
@@ -306,7 +310,7 @@ private:
   double_t first_trigger_timestamp_;
   double_t latest_trigger_timestamp_;
 
-  float sampling_frequency_;
+  uint16_t sampling_frequency_;
   int socket_;
   sockaddr_in socket_own;
   sockaddr_in socket_other;
