@@ -4,4 +4,4 @@ set -e
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 
-ros2 launch eeg_bridge eeg_bridge.launch.py log-level:="$ROS_LOG_LEVEL" sampling-frequency:="$EEG_SAMPLING_FREQUENCY"
+ros2 launch eeg_bridge eeg_bridge.launch.py log-level:="$ROS_LOG_LEVEL" sampling-frequency:="$EEG_SAMPLING_FREQUENCY" port:="$EEG_PORT"
