@@ -78,7 +78,7 @@ void EegProcessor::measure(int repeats) {
   for (auto j = 0; j < repeats; j++) {
     mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
     for (auto i = 0; i < 62; i++) {
-      message.channel_datapoint.push_back(fRand(0, 100));
+      message.eeg_channels.push_back(fRand(0, 100));
     }
     events.push_back(message);
   }
