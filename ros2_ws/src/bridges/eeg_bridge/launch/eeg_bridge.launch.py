@@ -17,6 +17,11 @@ def generate_launch_description():
         description="Sampling frequency",
     )
 
+    port_arg = DeclareLaunchArgument(
+        "port",
+        description="Port",
+    )
+
     logger = LaunchConfiguration("log-level")
 
     node = Node(
@@ -26,6 +31,7 @@ def generate_launch_description():
             parameters=[
                 {
                     "sampling_frequency": LaunchConfiguration("sampling-frequency"),
+                    "port": LaunchConfiguration("port"),
                 }
             ],
             output="screen",
@@ -36,5 +42,6 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(sampling_frequency_arg)
+    ld.add_action(port_arg)
 
     return ld
