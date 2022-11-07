@@ -9,8 +9,12 @@ def generate_launch_description():
 
     log_arg = DeclareLaunchArgument(
         "log-level",
-        default_value=["info"],
         description="Logging level",
+    )
+
+    sampling_frequency_arg = DeclareLaunchArgument(
+        "sampling-frequency",
+        description="Sampling frequency",
     )
 
     logger = LaunchConfiguration("log-level")
@@ -19,16 +23,18 @@ def generate_launch_description():
             package="eeg_bridge",
             executable="eeg_bridge",
             name="eeg_bridge",
-            output="screen",
-            emulate_tty=True,
             parameters=[
                 {
-                    "sampling_frequency": 5000.0, # Must be float
+                    "sampling_frequency": LaunchConfiguration("sampling-frequency"),
                 }
             ],
+            output="screen",
+            emulate_tty=True,
             arguments=['--ros-args', '--log-level', logger]
         )
+
     ld.add_action(node)
     ld.add_action(log_arg)
+    ld.add_action(sampling_frequency_arg)
 
     return ld
