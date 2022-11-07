@@ -1,0 +1,9 @@
+# Send a charge event.
+#
+# Request: A charge event.
+#
+# Response: Boolean indicating if charge event was sent successfully.
+
+Charge charge
+---
+bool success

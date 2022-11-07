@@ -1,9 +1,0 @@
-# Send a stimulation pulse event.
-#
-# Request: A stimulation pulse event.
-#
-# Response: Boolean indicating if stimulation pulse event was sent successfully.
-
-StimulationPulseEvent stimulation_pulse_event
----
-bool success

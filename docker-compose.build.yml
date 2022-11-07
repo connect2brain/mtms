@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  data_batcher:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/data_batcher/Dockerfile.prod
+
+  eeg_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile.prod
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile.prod
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile.prod
+
+  efield:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/efield/Dockerfile.prod
+
+  fpga_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile.prod
+
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile.prod
+
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile.prod
+
+  optitrack_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile.prod
+
+  planner:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile.prod
+
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile.prod
+
+  rosbridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile.prod
+
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile.prod
