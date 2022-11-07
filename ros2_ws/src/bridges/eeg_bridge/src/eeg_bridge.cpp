@@ -83,14 +83,17 @@ public:
 
     this->init_socket();
 
-    auto sampling_interval_int = int(round(1000.0 / sampling_frequency_));
-    auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
-
     this->first_sample_of_experiment_ = false;
-
-    timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&EegBridge::timer_callback, this));
   }
 
+  void spin() {
+    while (rclcpp::ok()) {
+      if (this->read_eeg_data_from_socket()) {
+        this->handle_eeg_data_packet();
+      }
+      rclcpp::spin_some(this->get_node_base_interface());
+    }
+  }
 
   void init_socket() {
 
@@ -118,7 +121,6 @@ public:
     read_timeout.tv_usec = 0;
     setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
   }
-
 
   void err(const char *message) {
 
@@ -218,7 +220,7 @@ public:
     RCLCPP_WARN(rclcpp::get_logger("eeg_bridge"), "Received measurement start packet, not implemented");
   }
 
-  void timer_callback() {
+  bool read_eeg_data_from_socket() {
 
     auto success = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0, (struct sockaddr *) &(this->socket_other),
                             &(this->socket_length));
@@ -229,9 +231,13 @@ public:
       auto stream_msg = std_msgs::msg::Bool();
       stream_msg.data = false;
       this->publisher_streaming_->publish(stream_msg);
-      return;
-    }
 
+      return false;
+    }
+    return true;
+  }
+
+  void handle_eeg_data_packet() {
     auto packet_type = this->buffer[0];
 
     switch (packet_type) {
@@ -346,7 +352,7 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::spin(node);
+  node->spin();
   rclcpp::shutdown();
   return 0;
 }
