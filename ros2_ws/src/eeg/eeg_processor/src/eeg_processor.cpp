@@ -16,7 +16,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script", "/home/alqio/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so");
+  this->declare_parameter<std::string>("processor_script",
+                                       "/home/alqio/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;
@@ -124,6 +125,9 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   discharge_client = this->create_client<fpga_interfaces::srv::SendDischarge>("/fpga/send_discharge");
   discharge_request = std::make_shared<fpga_interfaces::srv::SendDischarge::Request>();
 
+  signal_out_client = this->create_client<fpga_interfaces::srv::SendSignalOut>("/fpga/send_signal_out");
+  signal_out_request = std::make_shared<fpga_interfaces::srv::SendSignalOut::Request>();
+
   if (should_publish_events) {
     event_publisher = this->create_publisher<mtms_interfaces::msg::Event>("/mtms/events", 10);
   }
@@ -195,8 +199,15 @@ void EegProcessor::send_fpga_events(const std::vector<FpgaEvent> &events) {
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga discharge event.");
         break;
 
+      case SIGNAL_OUT:
+        signal_out_request->signal_out = event.signal_out;
+        signal_out_client->async_send_request(signal_out_request);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga signal out event.");
+        break;
+
       default:
-        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown fpga event type: %d", event.event_type);
+        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, trying to send unknown fpga event type: %d",
+                    event.event_type);
     }
   }
 }

@@ -16,6 +16,7 @@
 #include "fpga_interfaces/srv/send_pulse.hpp"
 #include "fpga_interfaces/srv/send_charge.hpp"
 #include "fpga_interfaces/srv/send_discharge.hpp"
+#include "fpga_interfaces/srv/send_signal_out.hpp"
 #include "fpga_interfaces/srv/start_experiment.hpp"
 #include "fpga_interfaces/srv/stop_experiment.hpp"
 
@@ -73,6 +74,8 @@ private:
   std::shared_ptr<fpga_interfaces::srv::SendCharge::Request> charge_request;
   rclcpp::Client<fpga_interfaces::srv::SendDischarge>::SharedPtr discharge_client;
   std::shared_ptr<fpga_interfaces::srv::SendDischarge::Request> discharge_request;
+  rclcpp::Client<fpga_interfaces::srv::SendSignalOut>::SharedPtr signal_out_client;
+  std::shared_ptr<fpga_interfaces::srv::SendSignalOut::Request> signal_out_request;
 };
 
 #endif //EEG_PROCESSOR_EEG_PROCESSOR_H
