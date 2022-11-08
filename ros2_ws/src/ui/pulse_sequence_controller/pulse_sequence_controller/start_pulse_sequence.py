@@ -11,8 +11,8 @@ class StartPulseSequenceNode(Node):
     def __init__(self):
         super().__init__('start_pulse_sequence')
         self.create_service(StartPulseSequence, '/stimulation/start_experiment', self.start_pulse_sequence_callback)
-        self.start_time = self.get_clock().now().nanoseconds / 1000
-        self.start_delay = 100
+        self.start_time = self.get_clock().now().microseconds / 1e6
+        self.start_delay = 1e-4
 
         # self.ibi_start_duration = 50
         # self.ibi_end_duration = 50
@@ -95,8 +95,8 @@ class StartPulseSequenceNode(Node):
         return 100
 
     # All times are relative to self.start_time, which is the time when the experiment command was received
-    def calculate_time_us(self, train_interval, burst_interval, stimulus_interval):
-        return int(self.start_time + self.start_delay + train_interval + burst_interval + stimulus_interval)
+    def calculate_time(self, train_interval, burst_interval, stimulus_interval):
+        return self.start_time + self.start_delay + train_interval + burst_interval + stimulus_interval
 
     def send_pulse(self, event):
         self.get_logger().info('SENDING: ' + str(event))
@@ -148,8 +148,7 @@ class StartPulseSequenceNode(Node):
                         event.id = id
                         # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
                         event.wait_for_trigger = False
-                        event.time_us = self.calculate_time_us(train_interval, burst_interval, isi)
-                        event.delay_us = 0
+                        event.time = self.calculate_time(train_interval, burst_interval, isi)
 
                         pulse = Pulse()
                         pulse.waveform = pulse
