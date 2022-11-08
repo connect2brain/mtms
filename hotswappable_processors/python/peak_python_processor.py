@@ -31,7 +31,7 @@ class Processor(BaseProcessor):
         combined = [c3] + others
         return sum(combined) / len(combined)
 
-    def data_received(self, data, time_us, first_sample_of_experiment):
+    def data_received(self, data, time, first_sample_of_experiment):
         self.eeg_data_index += 1
 
         c3 = data[4]

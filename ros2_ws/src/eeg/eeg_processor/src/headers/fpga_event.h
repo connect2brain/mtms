@@ -42,7 +42,7 @@ struct FpgaEvent {
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << pulse.event.id << std::endl;
       std::cout << "  Execution condition: " << +pulse.event.execution_condition.value << std::endl;
-      std::cout << "  Time us: " << pulse.event.time_us << std::endl;
+      std::cout << "  Time: " << pulse.event.time << std::endl;
       std::cout << "Waveform: " << std::endl;
       for (auto i = 0; i < 3; i++) {
         std::cout << "  Phase: " << +pulse.waveform[i].waveform_phase.value << ", duration in ticks: "
@@ -56,7 +56,7 @@ struct FpgaEvent {
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << charge.event.id << std::endl;
       std::cout << "  Execution condition: " << +charge.event.execution_condition.value << std::endl;
-      std::cout << "  Time us: " << charge.event.time_us << std::endl;
+      std::cout << "  Time: " << charge.event.time << std::endl;
     } else if (event_type == DISCHARGE) {
       std::cout << "Discharge" << std::endl;
 
@@ -65,7 +65,7 @@ struct FpgaEvent {
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << discharge.event.id << std::endl;
       std::cout << "  Execution condition: " << +discharge.event.execution_condition.value << std::endl;
-      std::cout << "  Time us: " << discharge.event.time_us << std::endl;
+      std::cout << "  Time: " << discharge.event.time << std::endl;
     } else {
       std::cout << "Uknown event type " << +event_type << std::endl;
     }

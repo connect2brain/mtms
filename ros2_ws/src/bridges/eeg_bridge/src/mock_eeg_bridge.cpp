@@ -37,8 +37,12 @@ class MockEegBridge : public rclcpp::Node {
         this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
         this->get_parameter("sampling_frequency", sampling_frequency_);
 
-        auto sampling_interval_int = int(round(1000 / this->sampling_frequency_));
-        auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
+        this->sampling_interval_ = 1.0 / this->sampling_frequency_;
+
+        /* TODO: Setting up the timer could be cleaned up to use sampling_interval calculated above.
+         */
+        auto sampling_interval_ms_int = int(round(1000 / this->sampling_frequency_));
+        auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_ms_int);
 
         this->time_ = 0;
 
@@ -70,7 +74,7 @@ class MockEegBridge : public rclcpp::Node {
         }
 
         message.time = this->time_;
-        this->time_ += int(round(1000 / this->sampling_frequency_));
+        this->time_ += this->sampling_interval_;
 
         this->publisher_data_->publish(message);
 
@@ -84,7 +88,8 @@ class MockEegBridge : public rclcpp::Node {
     rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
     float sampling_frequency_;
-    double time_;
+    double_t sampling_interval_;
+    double_t time_;
 };
 
 int main(int argc, char * argv[]) {

@@ -21,12 +21,12 @@ classdef ROSProcessor < handle
             obj.data_received = obj.data_received + 1;
 
             channel_data = message.channel_datapoint;
-            time_us = message.time;
+            time = message.time;
             first_sample_of_experiment = message.first_sample_of_experiment;
 
             %tic
             if obj.data_received <= 5000
-                obj.processor.data_received(channel_data, time_us, first_sample_of_experiment); 
+                obj.processor.data_received(channel_data, time, first_sample_of_experiment);
             end
             %toc
         end

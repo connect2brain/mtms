@@ -119,21 +119,22 @@ public:
     exit(1);
   }
 
-  uint64_t read_time_from_buffer(uint8_t index) {
-    return (uint64_t) buffer[index] << 56 |
-           (uint64_t) buffer[index + 1] << 48 |
-           (uint64_t) buffer[index + 2] << 40 |
-           (uint64_t) buffer[index + 3] << 32 |
-           (uint64_t) buffer[index + 4] << 24 |
-           (uint64_t) buffer[index + 5] << 16 |
-           (uint64_t) buffer[index + 6] << 8 |
-           (uint64_t) buffer[index + 7];
+  double_t read_time_from_buffer(uint8_t index) {
+    uint64_t time_us = (uint64_t) buffer[index] << 56 |
+                       (uint64_t) buffer[index + 1] << 48 |
+                       (uint64_t) buffer[index + 2] << 40 |
+                       (uint64_t) buffer[index + 3] << 32 |
+                       (uint64_t) buffer[index + 4] << 24 |
+                       (uint64_t) buffer[index + 5] << 16 |
+                       (uint64_t) buffer[index + 6] << 8 |
+                       (uint64_t) buffer[index + 7];
+    return (double_t)time_us / 1000000.0;
   }
 
   void trigger_packet_received() {
     RCLCPP_INFO(this->get_logger(), "Trigger packet received.");
 
-    uint64_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
+    double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
     uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
     RCLCPP_INFO(this->get_logger(), "Trigger coming from port: %u\n", trigger_index);
@@ -141,9 +142,9 @@ public:
     auto trigger_msg = mtms_interfaces::msg::Trigger();
     if (trigger_index == 1) {
       this->first_trigger_timestamp_ = new_trigger_timestamp;
-      trigger_msg.time_us = 0;
+      trigger_msg.time = 0;
     } else {
-      trigger_msg.time_us = new_trigger_timestamp - this->first_trigger_timestamp_;
+      trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_;
     }
 
     this->latest_trigger_timestamp_ = new_trigger_timestamp;
@@ -151,7 +152,7 @@ public:
     trigger_msg.index = trigger_index;
     this->publisher_trigger_->publish(trigger_msg);
 
-    RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %lu\n", this->latest_trigger_timestamp_);
+    RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %.2f\n", this->latest_trigger_timestamp_);
     this->first_sample_of_experiment_ = true;
   }
 
@@ -168,7 +169,7 @@ public:
       RCLCPP_INFO(this->get_logger(), "Number of bundles in this packet: %d", bundles);
     }
 
-    uint64_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
+    double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
 
     /* If the actual number of sent channels is larger than NUMBER_OF_CHANNELS, it means that we are using a
      * protocol where the triggers are sent as a part of EEG data instead of as separate packet */
@@ -182,25 +183,25 @@ public:
     }
 
     if (this->latest_trigger_timestamp_ > 0 && time >= this->latest_trigger_timestamp_) {
-      double_t time_diff_ms = (time - this->latest_trigger_timestamp_) / 1000;
+      double_t time_diff = time - this->latest_trigger_timestamp_;
 
       if (VERBOSE) {
-        RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->latest_trigger_timestamp_);
-        RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
-        RCLCPP_INFO(this->get_logger(), "Time since last trigger (ms): %f\n", time_diff_ms);
+        RCLCPP_INFO(this->get_logger(), "Last trigger timestamp:  %.4f", this->latest_trigger_timestamp_);
+        RCLCPP_INFO(this->get_logger(), "Sample timestamp:        %.4f", time);
+        RCLCPP_INFO(this->get_logger(), "Time since last trigger: %.4f", time_diff);
       }
 
-      this->publish_eeg_datapoint(time_diff_ms);
+      this->publish_eeg_datapoint(time_diff);
       this->first_sample_of_experiment_ = false;
 
     } else if (time < this->latest_trigger_timestamp_) {
-      RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %lu", this->latest_trigger_timestamp_);
-      RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %lu", time);
+      RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %.4f", this->latest_trigger_timestamp_);
+      RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %.4f", time);
       RCLCPP_WARN(this->get_logger(),
-                  "Warning: Sample packet arrived %ld milliseconds before the trigger. Skipping.\n",
-                  (this->latest_trigger_timestamp_ - time) / 1000);
+                  "Warning: Sample packet arrived %.4f seconds before the trigger. Skipping.",
+                  this->latest_trigger_timestamp_ - time);
     } else {
-      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "latest trigger timestamp %lu, time, %lu",
+      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "latest trigger timestamp %.4f, time %.4f",
                   this->latest_trigger_timestamp_, time);
     }
   }
@@ -245,7 +246,7 @@ public:
            (uint8_t) buffer[index + 2];
   }
 
-  void publish_trigger_from_buffer(uint64_t time) {
+  void publish_trigger_from_buffer(double_t time) {
     int trigger_channel_package = get_trigger_package_from_buffer();
 
     auto trigger_msg = mtms_interfaces::msg::Trigger();
@@ -253,17 +254,15 @@ public:
     if (trigger_channel_package == TRIGGER_A_IN) {
       trigger_msg.index = 1;
       first_trigger_timestamp_ = time;
-      trigger_msg.time_us = 0;
+      trigger_msg.time = 0.0;
     } else if (trigger_channel_package == TRIGGER_B_IN) {
       trigger_msg.index = 2;
-      trigger_msg.time_us = time - first_trigger_timestamp_;
+      trigger_msg.time = time - first_trigger_timestamp_;
     }
-
     this->publisher_trigger_->publish(trigger_msg);
-
   }
 
-  void publish_eeg_datapoint(double time_since_trigger) {
+  void publish_eeg_datapoint(double_t time_since_trigger) {
 
     auto message = mtms_interfaces::msg::EegDatapoint();
     message.time = time_since_trigger;
@@ -304,8 +303,8 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
   rclcpp::Publisher<mtms_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
 
-  uint64_t first_trigger_timestamp_;
-  uint64_t latest_trigger_timestamp_;
+  double_t first_trigger_timestamp_;
+  double_t latest_trigger_timestamp_;
 
   float sampling_frequency_;
   int socket_;
