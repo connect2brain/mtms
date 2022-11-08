@@ -30,7 +30,7 @@ const DataVisualize = () => {
     const mappedData = message.batch.map((point) => {
       const time = point.time
       return {
-        y: c3(point.channel_datapoint),
+        y: c3(point.eeg_channels),
         x: Math.round(time),
       }
     })
