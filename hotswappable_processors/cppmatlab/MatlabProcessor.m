@@ -57,7 +57,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.print_c3 = false;
             obj.samples_collected = 0;
 
-            obj.isi_seconds = 3;
+            obj.isi_seconds = 6;
             obj.isi_samples = obj.FS * obj.isi_seconds;
 
             obj.target_voltage = 500;
