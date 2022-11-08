@@ -77,7 +77,7 @@ struct FpgaEvent {
       std::cout << "Port: " << +signal_out.port << std::endl;
       std::cout << "Event: " << std::endl;
       std::cout << "  Id: " << signal_out.event.id << std::endl;
-      std::cout << "  Execution condition: " << +signal_out.event.execution_condition << std::endl;
+      std::cout << "  Execution condition: " << +signal_out.event.execution_condition.value << std::endl;
       std::cout << "  Time: " << signal_out.event.time << std::endl;
     } else {
       std::cout << "Unknown event type " << +event_type << std::endl;
