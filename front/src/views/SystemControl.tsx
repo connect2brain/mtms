@@ -1,16 +1,28 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { systemStateSubscriber } from 'services/experiment'
+import {
+  chargeFeedbackSubscriber,
+  dischargeFeedbackSubscriber,
+  pulseFeedbackSubscriber,
+  signalOutFeedbackSubscriber,
+  systemStateSubscriber,
+} from 'services/experiment'
 import {
   ChannelState as ChannelStateType,
   DeviceState,
   ExperimentState,
   SystemStateMessage,
   StartupError,
+  PulseFeedbackMessage,
+  Feedback,
+  ChargeFeedbackMessage,
+  DischargeFeedbackMessage,
+  SignalOutFeedbackMessage,
 } from 'types/fpga'
 import { getKeyByValue, getTrueKeys, objectKeysToCamelCase } from 'utils'
 import { SystemState } from 'components/SystemState'
 import { ExperimentControl } from 'components/ExperimentControl'
+import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
   channel_states: [],
@@ -78,19 +90,51 @@ const initialState = {
 }
 
 export const SystemControl = () => {
-  const [systemState, setSystemState] =
-    useState<SystemStateMessage>(initialState)
-
-  //const [deviceState, setDeviceState] = useState<number>(0)
-  //const [experimentState, setExperimentState] = useState<number>(0)
+  const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
+  const [feedback, setFeedback] = useState<Feedback>()
 
   useEffect(() => {
     console.log('Subscribed')
     systemStateSubscriber.subscribe(systemStateCallback)
+    pulseFeedbackSubscriber.subscribe(pulseFeedbackCallback)
+    chargeFeedbackSubscriber.subscribe(chargeFeedbackCallback)
+    dischargeFeedbackSubscriber.subscribe(dischargeFeedbackCallback)
+    signalOutFeedbackSubscriber.subscribe(signalOutFeedbackCallback)
   }, [])
 
+  const pulseFeedbackCallback = (message: PulseFeedbackMessage) => {
+    console.log('new message', message)
+    setFeedback({
+      ...message,
+      type: 'pulse',
+    })
+  }
+
+  const chargeFeedbackCallback = (message: ChargeFeedbackMessage) => {
+    console.log('new message', message)
+    setFeedback({
+      ...message,
+      type: 'charge',
+    })
+  }
+
+  const dischargeFeedbackCallback = (message: DischargeFeedbackMessage) => {
+    console.log('new message', message)
+    setFeedback({
+      ...message,
+      type: 'discharge',
+    })
+  }
+
+  const signalOutFeedbackCallback = (message: SignalOutFeedbackMessage) => {
+    console.log('new message', message)
+    setFeedback({
+      ...message,
+      type: 'signalOut',
+    })
+  }
+
   const systemStateCallback = (message: SystemStateMessage) => {
-    //console.log('new message', message)
     setSystemState(message)
   }
 
@@ -101,6 +145,7 @@ export const SystemControl = () => {
         experimentState={systemState.experiment_state.value}
       />
       <SystemState systemState={systemState} />
+      <EventFeedbacks feedback={feedback} />
     </div>
   )
 }
