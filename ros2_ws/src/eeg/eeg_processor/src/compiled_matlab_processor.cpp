@@ -23,8 +23,8 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
   coder::array<matlab_fpga_event, 1U> events;
 
   inner_processor->data_received(
-      data.channel_datapoint.data(),
-      data.channel_datapoint.size(),
+      data.eeg_channels.data(),
+      data.eeg_channels.size(),
       data.time,
       data.first_sample_of_experiment,
       events

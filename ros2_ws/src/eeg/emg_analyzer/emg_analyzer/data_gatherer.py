@@ -109,7 +109,7 @@ class DataGatherer:
 
     def handle_state__gather_data(self, current_time, msg):
         if current_time < self.start_time + self.MEP_DURATION_S:
-            self.emg_buffer[self.n_samples] = msg.channel_datapoint[self.emg_channel]
+            self.emg_buffer[self.n_samples] = msg.eeg_channels[self.emg_channel]
             self.time_buffer[self.n_samples] = current_time - self.start_time
 
             self.n_samples += 1

@@ -234,7 +234,7 @@ std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(s
 }
 
 std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  auto list = convert_vector_to_pyobject(data.channel_datapoint);
+  auto list = convert_vector_to_pyobject(data.eeg_channels);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
 

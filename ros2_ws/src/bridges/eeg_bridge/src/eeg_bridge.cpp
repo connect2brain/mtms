@@ -13,8 +13,9 @@
 #include "scheduling_utils.h"
 #include "memory_utils.h"
 
+#define MAX_NUMBER_OF_CHANNELS 80
+
 #define BUFFER_LENGTH 250
-#define PORT 50000
 
 #define SIGNED_MAX pow(2,23)
 #define UNSIGNED_MAX pow(2,24)
@@ -23,12 +24,22 @@
 #define AC_MODE_SCALE 20
 #define NANO_TO_MICRO_CONVERSION 1000
 
+#define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
+#define MEASUREMENT_START_PACKET_N_CHANNELS_INDEX 16
+#define MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX 18
+
+/* HACK: If source channel matches the value below, it indicates the existence
+ *  of trigger in the sample packet. This is documented in NeurOne's manual.
+ *  However, it would be cleaner to have a separate field in measurement start
+ *  packet to indicate the existence of trigger. */
+#define SOURCE_CHANNEL_FOR_TRIGGER 65535
+
+#define SAMPLE_PACKET_N_BUNDLES_INDEX 10
+
 #define FIRST_CHANNEL_INDEX 28
 #define SAMPLE_PACKET_FIRST_TIME_INDEX 20
 #define TRIGGER_PACKET_FIRST_TIME_INDEX 8
 #define TRIGGER_PORT_INDEX 24
-
-#define NUMBER_OF_CHANNELS 62
 
 #define MEASUREMENT_START_PACKET_ID 1
 #define SAMPLE_PACKET_ID 2
@@ -70,19 +81,69 @@ public:
     publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
     publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
+    auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+
+    descriptor.description = "Port";
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+    this->declare_parameter("port", NULL, descriptor);
+    this->get_parameter("port", this->port_);
+
+    /* HACK: Unfortunately, this is a terribly messy way of dividing the channels into EEG and EMG channels.
+       Instead of trying to clean it up, we should ask for the manufacturer to provide more detailed
+       information about individual channels in the measurement start packet. */
+
+    descriptor.description = "EEG channel count for primary amplifier";
+    this->declare_parameter("eeg_channels_primary_amplifier", NULL, descriptor);
+    this->get_parameter("eeg_channels_primary_amplifier", this->eeg_channels_primary_amplifier_);
+
+    descriptor.description = "EMG channel count for primary amplifier";
+    this->declare_parameter("emg_channels_primary_amplifier", NULL, descriptor);
+    this->get_parameter("emg_channels_primary_amplifier", this->emg_channels_primary_amplifier_);
+
+    descriptor.description = "EEG channel count for secondary amplifier";
+    this->declare_parameter("eeg_channels_secondary_amplifier", NULL, descriptor);
+    this->get_parameter("eeg_channels_secondary_amplifier", this->eeg_channels_secondary_amplifier_);
+
+    descriptor.description = "EMG channel count for secondary amplifier";
+    this->declare_parameter("emg_channels_secondary_amplifier", NULL, descriptor);
+    this->get_parameter("emg_channels_secondary_amplifier", this->emg_channels_secondary_amplifier_);
+
+    this->set_channel_types();
+
     this->init_socket();
 
-    this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
-    this->get_parameter("sampling_frequency", sampling_frequency_);
-
-    auto sampling_interval_int = int(round(1000 / sampling_frequency_));
-    auto sampling_interval_ms = std::chrono::milliseconds(sampling_interval_int);
-
     this->first_sample_of_experiment_ = false;
-
-    timer_ = this->create_wall_timer(sampling_interval_ms, std::bind(&EegBridge::timer_callback, this));
   }
 
+  void set_channel_types() {
+    uint8_t channels_primary = this->eeg_channels_primary_amplifier_ + this->emg_channels_primary_amplifier_;
+    uint8_t channels_secondary = this->eeg_channels_secondary_amplifier_ + this->emg_channels_secondary_amplifier_;
+
+    uint8_t channels_total = channels_primary + channels_secondary;
+
+    ChannelType type;
+    for (uint8_t i = 1; i <= channels_total; i++) {
+      if (i > channels_total - this->emg_channels_secondary_amplifier_) {
+        type = this->ChannelType::EMG;
+      } else if (i > this->eeg_channels_primary_amplifier_ && i <= channels_primary) {
+        type = this->ChannelType::EMG;
+      } else {
+        type = this->ChannelType::EEG;
+      }
+      this->channel_types[i - 1] = type;
+    }
+  }
+
+  void spin() {
+    RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet.");
+
+    while (rclcpp::ok()) {
+      if (this->read_eeg_data_from_socket()) {
+        this->handle_eeg_data_packet();
+      }
+      rclcpp::spin_some(this->get_node_base_interface());
+    }
+  }
 
   void init_socket() {
 
@@ -98,7 +159,7 @@ public:
 
     memset((char *) &(this->socket_own), 0, sizeof(this->socket_own));
     socket_own.sin_family = AF_INET;
-    socket_own.sin_port = htons(PORT);
+    socket_own.sin_port = htons(this->port_);
     socket_own.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(this->socket_, (struct sockaddr *) &(this->socket_own), sizeof(this->socket_own)) == -1) {
@@ -111,12 +172,27 @@ public:
     setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
   }
 
-
   void err(const char *message) {
 
     RCLCPP_INFO(this->get_logger(), "Error.");
     perror(message);
     exit(1);
+  }
+
+  bool read_eeg_data_from_socket() {
+    auto success = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0, (struct sockaddr *) &(this->socket_other),
+                            &(this->socket_length));
+
+    if (success == -1) {
+      RCLCPP_WARN(this->get_logger(), "No data received, reason: %s", strerror(errno));
+
+      auto stream_msg = std_msgs::msg::Bool();
+      stream_msg.data = false;
+      this->publisher_streaming_->publish(stream_msg);
+
+      return false;
+    }
+    return true;
   }
 
   double_t read_time_from_buffer(uint8_t index) {
@@ -131,7 +207,7 @@ public:
     return (double_t)time_us / 1000000.0;
   }
 
-  void trigger_packet_received() {
+  void handle_trigger_packet() {
     RCLCPP_INFO(this->get_logger(), "Trigger packet received.");
 
     double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
@@ -156,9 +232,9 @@ public:
     this->first_sample_of_experiment_ = true;
   }
 
-  void sample_packet_received() {
-    uint16_t bundles = this->buffer[10] << 8 | buffer[11];
-    uint16_t num_channels = this->buffer[8] << 8 | buffer[9];
+  void handle_sample_packet() {
+    uint16_t bundles = this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX] << 8 |
+                       this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX + 1];
 
     if (bundles != 1) {
       RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
@@ -171,12 +247,8 @@ public:
 
     double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
 
-    /* If the actual number of sent channels is larger than NUMBER_OF_CHANNELS, it means that we are using a
-     * protocol where the triggers are sent as a part of EEG data instead of as separate packet */
-    auto trigger_channel = num_channels > NUMBER_OF_CHANNELS;
-
-    if (trigger_channel && get_trigger_package_from_buffer() != 0) {
-      RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
+    if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
+      //RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
       this->latest_trigger_timestamp_ = time;
       this->publish_trigger_from_buffer(time);
       this->first_sample_of_experiment_ = true;
@@ -201,45 +273,69 @@ public:
                   "Warning: Sample packet arrived %.4f seconds before the trigger. Skipping.",
                   this->latest_trigger_timestamp_ - time);
     } else {
-      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "latest trigger timestamp %.4f, time %.4f",
+      RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Latest trigger timestamp %.4f, time %.4f",
                   this->latest_trigger_timestamp_, time);
     }
   }
 
-  void timer_callback() {
+  void handle_measurement_start_packet() {
+    RCLCPP_INFO(this->get_logger(), "Measurement start packet received.");
+    this->measurement_start_packet_received_ = true;
 
-    auto success = recvfrom(this->socket_, this->buffer, BUFFER_LENGTH, 0, (struct sockaddr *) &(this->socket_other),
-                            &(this->socket_length));
+    this->sampling_frequency_ = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
+                                (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
+                                (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
+                                (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
+    RCLCPP_INFO(this->get_logger(), "Sampling frequency set to %d Hz.", this->sampling_frequency_);
 
-    if (success == -1) {
-      RCLCPP_WARN(this->get_logger(), "No data received, reason: %s", strerror(errno));
+    this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
+                        (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
+    RCLCPP_INFO(this->get_logger(), "Number of channels set to %d.", this->n_channels_);
 
-      auto stream_msg = std_msgs::msg::Bool();
-      stream_msg.data = false;
-      this->publisher_streaming_->publish(stream_msg);
-      return;
+    this->send_trigger_as_channel = false;
+    for (uint8_t i = 0; i < this->n_channels_; i++) {
+      uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
+                                buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
+      if (source_channel == SOURCE_CHANNEL_FOR_TRIGGER) {
+        this->send_trigger_as_channel = true;
+      }
     }
 
-    auto packet_type = this->buffer[0];
+    if (this->send_trigger_as_channel) {
+      RCLCPP_INFO(this->get_logger(), "Trigger is sent as a channel.");
+
+      this->n_channels_excluding_trigger_ = this->n_channels_ - 1;
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Trigger is sent as a packet.");
+
+      this->n_channels_excluding_trigger_ = this->n_channels_;
+    }
+  }
+
+  void handle_eeg_data_packet() {
+    uint8_t packet_type = this->buffer[0];
 
     switch (packet_type) {
       case MEASUREMENT_START_PACKET_ID:
-        RCLCPP_WARN(rclcpp::get_logger("eeg_bridge"), "Received measurement start packet, not implemented");
+        this->handle_measurement_start_packet();
         break;
       case SAMPLE_PACKET_ID:
-        this->sample_packet_received();
+        if (this->measurement_start_packet_received_) {
+          this->handle_sample_packet();
+        }
         break;
       case TRIGGER_PACKET_ID:
-        this->trigger_packet_received();
+        if (this->measurement_start_packet_received_) {
+          this->handle_trigger_packet();
+        }
         break;
       default:
-        close(this->socket_);
         RCLCPP_WARN(this->get_logger(), "Unknown packet type.");
     }
   }
 
   int get_trigger_package_from_buffer() {
-    auto index = FIRST_CHANNEL_INDEX + NUMBER_OF_CHANNELS * 3;
+    auto index = FIRST_CHANNEL_INDEX + this->n_channels_excluding_trigger_ * 3;
 
     return (uint8_t) buffer[index] << 16 |
            (uint8_t) buffer[index + 1] << 8 |
@@ -268,7 +364,7 @@ public:
     message.time = time_since_trigger;
 
     int i = FIRST_CHANNEL_INDEX;
-    for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
+    for (int channel = 1; channel <= this->n_channels_excluding_trigger_; channel++) {
 
       int result = (uint8_t) buffer[i] << 16 |
                    (uint8_t) buffer[i + 1] << 8 |
@@ -282,7 +378,11 @@ public:
       result_uv *= DC_MODE_SCALE;
       result_uv /= NANO_TO_MICRO_CONVERSION;
 
-      message.channel_datapoint.push_back(result_uv);
+      if (channel_types[channel - 1] == ChannelType::EEG) {
+        message.eeg_channels.push_back(result_uv);
+      } else {
+        message.emg_channels.push_back(result_uv);
+      }
 
       i += 3;
     }
@@ -306,13 +406,31 @@ private:
   double_t first_trigger_timestamp_;
   double_t latest_trigger_timestamp_;
 
-  float sampling_frequency_;
+  bool measurement_start_packet_received_;
+  uint16_t n_channels_;
+  uint16_t n_channels_excluding_trigger_;
+
+  /* TODO: Sampling frequency is unused for now. It could be published either as ROS message
+   *   or as metadata of EEG data.
+   */
+  uint32_t sampling_frequency_;
+
+  uint16_t port_;
   int socket_;
   sockaddr_in socket_own;
   sockaddr_in socket_other;
   socklen_t socket_length;
   uint8_t buffer[BUFFER_LENGTH];
   bool first_sample_of_experiment_;
+
+  enum ChannelType {EEG, EMG};
+  ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
+  bool send_trigger_as_channel;
+
+  uint8_t eeg_channels_primary_amplifier_;
+  uint8_t emg_channels_primary_amplifier_;
+  uint8_t eeg_channels_secondary_amplifier_;
+  uint8_t emg_channels_secondary_amplifier_;
 };
 
 
@@ -332,7 +450,7 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::spin(node);
+  node->spin();
   rclcpp::shutdown();
   return 0;
 }
