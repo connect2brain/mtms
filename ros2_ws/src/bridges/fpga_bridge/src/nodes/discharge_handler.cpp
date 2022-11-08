@@ -12,6 +12,8 @@
 
 const NiFpga_mTMS_HostToTargetFifoU8 discharge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetDischargeFIFO;
 
+const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
+
 class DischargeHandler : public rclcpp::Node {
 public:
   DischargeHandler()
@@ -29,12 +31,13 @@ public:
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
-      uint64_t time_us = event.time_us;
+      double_t time = event.time;
+      uint64_t time_ticks = (uint64_t)(time * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(channel);
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
-      serialized_message.add_uint64(time_us);
+      serialized_message.add_uint64(time_ticks);
 
       /* Serialize discharge. */
 

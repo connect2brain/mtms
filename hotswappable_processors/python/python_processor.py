@@ -14,12 +14,12 @@ class Processor(BaseProcessor):
         print("PYTHON: ended experiment")
         return []
 
-    def data_received(self, data, time_us, first_sample_of_experiment):
+    def data_received(self, data, time, first_sample_of_experiment):
         self.eeg_data_index += 1
         event = {
             "id": 69,
             "execution_condition": 3,
-            "time_us": 100 * self.eeg_data_index
+            "time": 100.0 * self.eeg_data_index
         }
         waveform = [
             {
