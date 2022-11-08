@@ -57,7 +57,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.print_c3 = false;
             obj.samples_collected = 0;
 
-            obj.isi_seconds = 1;
+            obj.isi_seconds = 3;
             obj.isi_samples = obj.FS * obj.isi_seconds;
 
             obj.target_voltage = 500;
@@ -122,14 +122,14 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 %fprintf("Estimated phase at peak: %f\n", phase_at_peak);
 
-                event_time = time_us + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
+                event_time = time + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
 
                 pulse_event = create_pulse_command(obj.events_sent + 1, 1, 0, event_time);
                 charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
                 obj.set_commands([pulse_event, charge_event]);
 
-                fprintf("Timed pulse at %lu\n", event_time);
-                fprintf("Timed charge at %lu\n", event_time + 1);
+                fprintf("Timed pulse at %f\n", event_time);
+                fprintf("Timed charge at %f\n", event_time + 1);
 
                 obj.estimated = true;
 
