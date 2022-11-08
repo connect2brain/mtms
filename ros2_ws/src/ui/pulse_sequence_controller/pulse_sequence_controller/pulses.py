@@ -12,8 +12,7 @@ fullEvent = {
             'id': 20,
             # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
             'wait_for_trigger': True,
-            'time_us': 10000000,
-            'delay_us': 0
+            'time': 10.0,
         }
     }
 }

@@ -6,6 +6,6 @@ uint16 id
 #
 ExecutionCondition execution_condition
 
-# Time in microseconds when the event is triggered.
+# Time in seconds when the event is triggered.
 #
-uint64 time_us
+float64 time

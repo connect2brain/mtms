@@ -13,11 +13,11 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-#define CHANNEL_COUNT 5
+const uint8_t CHANNEL_COUNT = 5;
 
 using namespace std::chrono_literals;
 
-NiFpga_mTMS_TargetToHostFifoU8 pulse_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostStimulationpulsefeedbackFIFO;
+NiFpga_mTMS_TargetToHostFifoU8 pulse_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostPulsefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 charge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostChargefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 discharge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostDischargefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 signal_out_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO;
