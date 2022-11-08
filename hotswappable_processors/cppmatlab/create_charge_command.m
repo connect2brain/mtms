@@ -1,5 +1,5 @@
 function command = create_charge_command(event_id, channel, execution_condition, time, target_voltage)
-    event.event_id = uint16(event_id);
+    event.id = uint16(event_id);
     event.execution_condition = uint8(execution_condition);
     event.time = double(time);
 
