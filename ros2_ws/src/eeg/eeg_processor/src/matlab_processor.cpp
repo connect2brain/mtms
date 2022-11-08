@@ -122,7 +122,7 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
             event.b_event.execution_condition = field_value[0];
 
           } else if (sub_struct_field_name == "time") {
-            matlab::data::TypedArrayRef<double_t> field_value = event[0][sub_struct_field];
+            matlab::data::TypedArrayRef<double_t> field_value = event_info[0][sub_struct_field];
             event.b_event.time = field_value[0];
 
           } else {
