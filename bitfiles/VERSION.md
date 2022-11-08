@@ -1,5 +1,9 @@
 ## Version history
 
+### 0.4.5
+- FIX: Updating pulse count only worked for first channel.
+- FIX: Default values for settings were in micro- or milliseconds, not ticks.
+
 ### 0.4.4
 - MOD: Change time unit of 'Maximum pulses per time' setting to ticks
 - MOD: Change time unit of 'Experiment startup trigger duration' setting to ticks
