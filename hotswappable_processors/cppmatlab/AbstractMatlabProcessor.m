@@ -6,7 +6,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         commands
         events_sent
         experiment_in_progress
-        last_sample_received_at_us
+        last_sample_received_at
         auto_enqueue
     end
 
@@ -28,7 +28,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.channel_count = uint16(62);
             obj.data = zeros(obj.channel_count, obj.window_size);
             obj.experiment_in_progress = false;
-            obj.last_sample_received_at_us = uint64(0);
+            obj.last_sample_received_at = double(0);
             obj.auto_enqueue = false;
 
             % HACK: Tells the compiler to make commands a variable sized list
@@ -70,7 +70,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
             obj.events_sent = obj.events_sent + numel(obj.commands);
-            obj.last_sample_received_at_us = time;
+            obj.last_sample_received_at = time;
 
             ret = obj.commands;
         end

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
-import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
-import { Datapoint, DatapointWithEventType, EegChartSteaming } from '../components/EegChartStreaming'
-import { WebGLPlot } from '../components/WebGLPlot'
+import React, {useEffect, useRef, useState} from 'react'
+import {eegDataSubscriber, triggerSubscriber} from 'services/ros'
+import {EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage} from 'types/eeg'
+import {Datapoint, DatapointWithEventType, EegChartSteaming} from '../components/EegChartStreaming'
+import {WebGLPlot} from '../components/WebGLPlot'
 import styled from 'styled-components'
-import { eventSubscriber } from '../services/experiment'
-import { objectKeysToCamelCase } from '../utils'
+import {eventSubscriber} from '../services/experiment'
+import {objectKeysToCamelCase} from '../utils'
 
 const DataVisualizeWebGL = () => {
   const [minY, setMinY] = useState<number>(3550)
@@ -48,7 +48,7 @@ const DataVisualizeWebGL = () => {
       const point = message.batch[i]
       eegTimestamps.push(point.time)
 
-      const filtered = c3(point.channel_datapoint)
+      const filtered = c3(point.eeg_channels)
       const y = scaleY(filtered)
 
       const finalPoint = {
@@ -70,12 +70,22 @@ const DataVisualizeWebGL = () => {
       }
     })
 
-    const newPulseData = [...newEventData]
-    const newChargeData = [...newEventData]
-    const newDischargeData = [...newEventData]
-    const newSignalOutData = [...newEventData]
 
-    const allData = [newChargeData, newPulseData, newDischargeData, newSignalOutData]
+    const initData = () => {
+      return latestTimestamps.map((p) => {
+        return {
+          x: 0,
+          y: -1,
+        }
+      })
+    }
+
+    const newPulseData = initData()
+    const newChargeData = initData()
+    const newDischargeData = initData()
+    const newSignalOutData = initData()
+
+    const allData = [newPulseData, newChargeData, newDischargeData, newSignalOutData]
 
     const newEvents: MTMSEvent[] = []
 
@@ -84,8 +94,8 @@ const DataVisualizeWebGL = () => {
       let removeThisEvent = false
       for (let i = 0; i < latestTimestamps.length; i++) {
         const ts = latestTimestamps[i]
-        if (event.timeUs < ts) {
-          console.log(`event: ${event.eventType}, ${event.timeUs}, ${ts}`)
+        if (event.time < ts) {
+          console.log(`event: ${event.eventType}, ${event.time}, ${ts}`)
           allData[event.eventType][i].y = 1
           removeThisEvent = true
           break
@@ -137,7 +147,7 @@ const DataVisualizeWebGL = () => {
         id='chart-max-input'
         onChange={(event) => updateLimits(setMaxY, maxYRef, Number(event.target.value))}
       />
-      <br />
+      <br/>
       <label htmlFor='chart-min-input'>Y min: </label>
       <AxisLimit
         defaultValue={minY}
