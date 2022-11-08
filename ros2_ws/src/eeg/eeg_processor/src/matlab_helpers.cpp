@@ -54,7 +54,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.pulse.event.time = event.b_event.time;
     fpga_event.pulse.channel = event.channel;
 
-  } else {
+  } else if (event.event_type == DISCHARGE) {
     fpga_event.event_type = DISCHARGE;
     fpga_event.discharge = fpga_interfaces::msg::Discharge();
     fpga_event.discharge.event.id = event.b_event.id;
@@ -62,6 +62,13 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.discharge.event.time = event.b_event.time;
     fpga_event.discharge.channel = event.channel;
     fpga_event.discharge.target_voltage = event.target_voltage;
+  } else {
+    fpga_event.event_type = SIGNAL_OUT;
+    fpga_event.signal_out = fpga_interfaces::msg::SignalOut();
+    fpga_event.signal_out.event.id = event.b_event.id;
+    fpga_event.signal_out.event.execution_condition.value = event.b_event.execution_condition;
+    fpga_event.signal_out.event.time = event.b_event.time;
+    fpga_event.signal_out.port = event.channel;
   }
   return fpga_event;
 }
