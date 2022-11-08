@@ -30,8 +30,11 @@ const defaultOptions: ChartOptions<'line' | 'bar'> = {
     },
     title: {
       display: true,
-      text: 'Chart.js Line Chart',
+      text: 'EEG & system events',
     },
+    streaming: {
+      frameRate: 60,
+    }
   },
   scales: {
     y: {

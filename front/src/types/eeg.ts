@@ -9,6 +9,7 @@ export const EventTypes = {
 
 export interface EegDatapoint {
   eeg_channels: number[]
+  emg_channels: number[]
   time: number
   first_sample_of_experiment: boolean
 }
@@ -38,7 +39,7 @@ export interface EegTriggerMessage extends ROSLIB.Message {
 }
 
 export interface MTMSEvent {
-  timeUs: number
+  time: number
   eventType: number
 }
 

@@ -9,6 +9,7 @@ import { objectKeysToCamelCase } from '../utils'
 
 const DataVisualize = () => {
   const [latestBatch, setLatestBatch] = useState<Datapoint[]>([])
+  const [startTime, setStartTime] = useState(new Date())
 
   const [trigger, setTrigger] = useState<Datapoint>({
     y: 1,
@@ -34,10 +35,9 @@ const DataVisualize = () => {
 
   const newEegBatch = (message: EegBatchMessage) => {
     const mappedData = message.batch.map((point) => {
-      const time = point.time
       return {
         y: c3(point.eeg_channels),
-        x: Math.round(time),
+        x: startTime.getTime() + point.time * 1000,
       }
     })
 
@@ -53,11 +53,11 @@ const DataVisualize = () => {
 
   const newEvent = (message: MTMSEventMessage) => {
     const camelCased: MTMSEvent = objectKeysToCamelCase(message)
-    const time = camelCased.timeUs / 1000000
+    const time = camelCased.time
 
     setLatestEvent({
       y: 100000,
-      x: Math.round(time),
+      x: time,
       eventType: camelCased.eventType,
     })
   }

@@ -19,6 +19,7 @@ services:
       dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+    network_mode: host
 
   eeg_simulator:
     build:
