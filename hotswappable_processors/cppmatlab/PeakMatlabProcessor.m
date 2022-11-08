@@ -16,7 +16,7 @@ classdef PeakMatlabProcessor < AbstractMatlabProcessor
         function on_init_experiment(obj)
             obj.commands = [];
         end
-        function on_data_received(obj, channel_data, time_us, first_sample_of_experiment)
+        function on_data_received(obj, channel_data, time, first_sample_of_experiment)
             c3 = channel_data(5);
 
             signal = obj.peak_detection.thresholding_algo(c3);

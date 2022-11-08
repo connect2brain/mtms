@@ -12,7 +12,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
     methods (Abstract)
         constructor(obj, arg1, arg2)
-        on_data_received(obj, channel_data, time_us, first_sample_of_experiment)
+        on_data_received(obj, channel_data, time, first_sample_of_experiment)
         on_init_experiment(obj)
         on_end_experiment(obj)
     end
@@ -56,7 +56,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             end
         end
 
-        function ret = data_received(obj, channel_data, time_us, first_sample_of_experiment)
+        function ret = data_received(obj, channel_data, time, first_sample_of_experiment)
             coder.inline("never");
 
             if first_sample_of_experiment
@@ -67,10 +67,10 @@ classdef (Abstract) AbstractMatlabProcessor < handle
                 obj.enqueue(channel_data)
             end
 
-            obj.on_data_received(channel_data, time_us, first_sample_of_experiment);
+            obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
             obj.events_sent = obj.events_sent + size(obj.commands, 2);
-            obj.last_sample_received_at_us = time_us;
+            obj.last_sample_received_at = time;
 
             ret = obj.commands;
         end

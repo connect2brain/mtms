@@ -7,6 +7,8 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
+const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
+
 void send_settings(const std::shared_ptr<fpga_interfaces::srv::SendSettings::Request> request,
                    std::shared_ptr<fpga_interfaces::srv::SendSettings::Response> response) {
 
@@ -24,11 +26,13 @@ void send_settings(const std::shared_ptr<fpga_interfaces::srv::SendSettings::Req
                                      NiFpga_mTMS_ControlU16_Maximumpulsedurationticks,
                                      settings.maximum_pulse_duration_ticks));
 
+  uint16_t time_ms = settings.time_in_maximum_pulses_per_time_ms;
+  uint32_t time_ticks = CLOCK_FREQUENCY_HZ / 1000 * time_ms;
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteU16(session,
-                                     NiFpga_mTMS_ControlU16_Maximumpulsespertimetimems,
-                                     settings.time_in_maximum_pulses_per_time_ms));
+                                     NiFpga_mTMS_ControlU32_Maximumpulsespertimetimeticks,
+                                     time_ticks));
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteU8(session,
