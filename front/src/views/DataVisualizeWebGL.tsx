@@ -63,14 +63,6 @@ const DataVisualizeWebGL = () => {
   }
 
   useEffect(() => {
-    const newEventData = latestTimestamps.map((p) => {
-      return {
-        x: 0,
-        y: -1,
-      }
-    })
-
-
     const initData = () => {
       return latestTimestamps.map((p) => {
         return {
