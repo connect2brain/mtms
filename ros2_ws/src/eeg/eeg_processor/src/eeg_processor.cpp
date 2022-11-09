@@ -16,8 +16,7 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script",
-                                       "/home/alqio/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so");
+  this->declare_parameter<std::string>("processor_script","");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;

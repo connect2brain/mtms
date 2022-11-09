@@ -25,8 +25,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         target_voltage
 
         durations_file_id
-        pxx_file_id
-        f_file_id
 
         phases
         phase_count
@@ -63,8 +61,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.target_voltage = 500;
 
             obj.durations_file_id = fopen("durations.csv", "w");
-            %obj.pxx_file_id = fopen("pxx.csv", "w");
-            %obj.f_file_id = fopen("f.csv", "w");
 
             fprintf(obj.durations_file_id, "estimated_phase,phase_diff\n");
             obj.max_phase_count = 100;
@@ -89,38 +85,22 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             end
 
             obj.samples_collected = obj.samples_collected + 1;
-
-            if ~obj.estimated && mod(obj.samples_collected, 100) == 0
-                %fprintf("Samples collected %f / %f\n", obj.samples_collected, obj.nr_samples);
-            end
             
 
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
                 data = obj.data(1:2500);
-
                 data = data - mean(data);
-                
-                %fprintf("Low pass filtering\n");
-                %tic
                 data = filter(obj.lpf, obj.A, data);
-                %filter_duration = toc;
 
                 downsampled = data(1:10:end);
 
-                %fprintf("Phastimating\n");
-                %tic
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
-                %phastimate_duration = toc;
-
-                %fprintf(obj.durations_file_id, "%f,%f,%f\n", filter_duration, phastimate_duration, filter_duration + phastimate_duration);
 
                 nof_estimated_samples = numel(estimated_phases);
                 future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
 
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
-
-                %fprintf("Estimated phase at peak: %f\n", phase_at_peak);
 
                 event_time = time + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
 
