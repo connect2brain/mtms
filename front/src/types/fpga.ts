@@ -1,6 +1,19 @@
 import ROSLIB from 'roslib'
 import { ChannelErrorMessage, SystemErrorMessage } from './fpgaErrors'
 
+export const DeviceState = {
+  NOT_OPERATIONAL: 0,
+  STARTUP: 1,
+  OPERATIONAL: 2,
+  SHUTDOWN: 3,
+}
+export const ExperimentState = {
+  STOPPED: 0,
+  STARTING: 1,
+  STARTED: 2,
+  STOPPING: 3,
+}
+
 export type Feedback =
   | PulseFeedbackMessage
   | ChargeFeedbackMessage

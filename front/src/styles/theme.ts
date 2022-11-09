@@ -2,8 +2,6 @@
 
 //const css = cssFn as unknown as ThemedCssFunction<never>;
 
-import styled from 'styled-components'
-
 const pxToRem = (px: number) => `${px / 16}rem`
 
 const theme = {
@@ -23,7 +21,6 @@ const theme = {
     blue: '#4591d0',
     brown: '#bb611a',
     yellow: '#d9cf2b',
-
   },
   spacing: {},
   typography: {
