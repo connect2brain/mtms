@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { ChannelState as ChannelStateType, SystemStateMessage } from 'types/fpga'
+import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage} from 'types/fpga'
 import { getKeyByValue, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
-import { DeviceState, ExperimentState, StartupError } from 'types/fpgaErrors'
+import { StartupError } from 'types/fpgaErrors'
 
 type Props = {
   systemState: SystemStateMessage

@@ -12,5 +12,4 @@ function command = create_signal_out_command(event_id, port, execution_condition
     
     coder.cstructname(command, 'matlab_fpga_event');
     coder.cstructname(command.event, 'event');
-    %coder.cstructname(command.waveform, 'waveform');
 end
