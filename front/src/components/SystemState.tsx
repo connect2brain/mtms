@@ -1,21 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { systemStateSubscriber } from 'services/experiment'
-import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage, StartupError} from 'types/fpga'
-import { getKeyByValue, getTrueKeys, objectKeysToCamelCase } from 'utils'
+import { ChannelState as ChannelStateType, SystemStateMessage } from 'types/fpga'
+import { getKeyByValue, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
-
+import { DeviceState, ExperimentState, StartupError } from 'types/fpgaErrors'
 
 type Props = {
   systemState: SystemStateMessage
 }
 
-export const SystemState = ({systemState}: Props) => {
-
+export const SystemState = ({ systemState }: Props) => {
   const [latestUpdate, setLatestUpdate] = useState<Date>()
 
   useEffect(() => {
-      setLatestUpdate(new Date())
+    setLatestUpdate(new Date())
   }, [systemState])
 
   const channelStatesTable = () => {
@@ -32,8 +30,8 @@ export const SystemState = ({systemState}: Props) => {
         </Thead>
         <tbody>
           {systemState.channel_states
-            .sort((a, b) => a.channel_index - b.channel_index)
-            .map((channel) => (
+            .sort((a: ChannelStateType, b: ChannelStateType) => a.channel_index - b.channel_index)
+            .map((channel: ChannelStateType) => (
               <ChannelState key={`channel-${channel.channel_index}`} {...channel} />
             ))}
         </tbody>
@@ -53,14 +51,12 @@ export const SystemState = ({systemState}: Props) => {
     }
   }
 
-
-
   return (
     <div>
       <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</p>
       <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.value) || 'No error'}</p>
 
-      <br/>
+      <br />
 
       <p>Latest update: {latestUpdate?.toISOString()}</p>
       <p>System time: {systemState.time} s</p>
