@@ -15,8 +15,6 @@ function waveform = get_default_waveform(channel)
     piece3.duration_in_ticks = uint16(falling_phase_duration_in_ticks);
     
     coder.cstructname(piece1, 'waveform_piece');
-    %coder.cstructname(piece1, 'waveform_piece');
-    %coder.cstructname(piece1, 'waveform_piece');
 
     waveform = [piece1, piece2, piece3];
 

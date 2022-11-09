@@ -46,8 +46,4 @@ export interface MTMSEvent {
 export interface MTMSEventMessage extends ROSLIB.Message {
   time_us: number
   event_type: number
-  CHARGE: number
-  PULSE: number
-  DISCHARGE: number
-  SIGNAL_OUT: number
 }
