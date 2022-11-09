@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { Feedback, errorsByType } from 'types/fpga'
+import { Feedback } from 'types/fpga'
 import { getKeyByValue } from 'utils'
+import { errorsByType } from 'types/fpgaErrors'
 
 type Props = {
   feedback: Feedback | undefined
