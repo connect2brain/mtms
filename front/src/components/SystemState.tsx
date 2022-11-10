@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import {ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage} from 'types/fpga'
+import { ChannelState as ChannelStateType, SystemStateMessage } from 'types/fpga'
 import { getKeyByValue, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
-import { StartupError } from 'types/fpgaErrors'
 
 type Props = {
   systemState: SystemStateMessage
@@ -53,8 +52,8 @@ export const SystemState = ({ systemState }: Props) => {
 
   return (
     <div>
-      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</p>
-      <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.value) || 'No error'}</p>
+      <p>Device state: {getKeyByValue(systemState.device_state, systemState.device_state.value) || 'No error'}</p>
+      <p>Experiment state: {getKeyByValue(systemState.experiment_state, systemState.experiment_state.value) || 'No error'}</p>
 
       <br />
 
@@ -63,7 +62,7 @@ export const SystemState = ({ systemState }: Props) => {
       <p>Cumulative system errors: {getListValue(systemState.system_error_cumulative)}</p>
       <p>Current system errors: {getListValue(systemState.system_error_current)}</p>
       <p>Emergency system errors: {getListValue(systemState.system_error_emergency)}</p>
-      <p>Startup error: {getKeyByValue(StartupError, systemState.startup_error.value) || 'No error'}</p>
+      <p>Startup error: {getKeyByValue(systemState.startup_error, systemState.startup_error.value) || 'No error'}</p>
 
       <h3>Channels</h3>
       <ChannelTableContainer>{channelStatesTable()}</ChannelTableContainer>
