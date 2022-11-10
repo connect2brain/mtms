@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
 import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
-import { Datapoint, DatapointWithEventType, EegChartSteaming } from '../components/EegChartStreaming'
+import { Datapoint, DatapointWithEventType, EegChartStreaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
 import styled from 'styled-components'
 import { eventSubscriber } from '../services/experiment'
@@ -64,7 +64,7 @@ const DataVisualize = () => {
 
   return (
     <ChartContainer>
-      <EegChartSteaming eegData={latestBatch} latestEvent={latestEvent} />
+      <EegChartStreaming eegData={latestBatch} latestEvent={latestEvent} />
     </ChartContainer>
   )
 }
