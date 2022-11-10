@@ -1,71 +1,69 @@
-export const StartupError = {
-  NO_ERROR: 0,
-  UART_INITIALIZATION_ERROR: 1,
-  BOARD_STARTUP_ERROR: 2,
-  BOARD_STATUS_MESSAGE_ERROR: 3,
-  SAFETY_MONITOR_ERROR: 4,
-  DISCHARGE_CONTROLLER_ERROR: 5,
-  CHARGER_ERROR: 6,
-  SENSORBOARD_ERROR: 7,
-  DISCHARGE_CONTROLLER_VOLTAGE_ERROR: 8,
-  CHARGER_VOLTAGE_ERROR: 9,
-  IGBT_FEEDBACK_ERROR: 10,
-  TEMPERATURE_SENSOR_PRESENCE_ERROR: 11,
-  COIL_MEMORY_PRESENCE_ERROR: 12,
+export interface StartupError {
+  NO_ERROR: 0
+  UART_INITIALIZATION_ERROR: 1
+  BOARD_STARTUP_ERROR: 2
+  BOARD_STATUS_MESSAGE_ERROR: 3
+  SAFETY_MONITOR_ERROR: 4
+  DISCHARGE_CONTROLLER_ERROR: 5
+  CHARGER_ERROR: 6
+  SENSORBOARD_ERROR: 7
+  DISCHARGE_CONTROLLER_VOLTAGE_ERROR: 8
+  CHARGER_VOLTAGE_ERROR: 9
+  IGBT_FEEDBACK_ERROR: 10
+  TEMPERATURE_SENSOR_PRESENCE_ERROR: 11
+  COIL_MEMORY_PRESENCE_ERROR: 12
+  value: number
 }
 
-export const ChargeError = {
-  NO_ERROR: 0,
-  INVALID_EXECUTION_CONDITION: 1,
-  INVALID_CHANNEL: 2,
-  INVALID_VOLTAGE: 3,
-  LATE: 4,
-  OVERLAPPING_WITH_DISCHARGING: 5,
-  OVERLAPPING_WITH_STIMULATION: 6,
-  CHARGING_FAILURE: 7,
-  UNKNOWN_ERROR: 8,
+export interface ChargeError {
+  value: number
+  NO_ERROR: number
+  INVALID_EXECUTION_CONDITION: number
+  INVALID_CHANNEL: number
+  INVALID_VOLTAGE: number
+  LATE: number
+  OVERLAPPING_WITH_DISCHARGING: number
+  OVERLAPPING_WITH_STIMULATION: number
+  CHARGING_FAILURE: number
+  UNKNOWN_ERROR: number
 }
 
-export const PulseError = {
-  NO_ERROR: 0,
-  INVALID_EXECUTION_CONDITION: 1,
-  INVALID_CHANNEL: 2,
-  INVALID_NUMBER_OF_WAVEFORM_PIECES: 3,
-  INVALID_MODES: 4,
-  INVALID_DURATIONS: 5,
-  LATE: 6,
-  TOO_MANY_PULSES: 7,
-  OVERLAPPING_WITH_CHARGING: 8,
-  OVERLAPPING_WITH_DISCHARGING: 9,
-  TRIGGERING_FAILURE: 10,
-  UNKNOWN_ERROR: 11,
+export interface PulseError {
+  value: number
+  NO_ERROR: number
+  INVALID_EXECUTION_CONDITION: number
+  INVALID_CHANNEL: number
+  INVALID_NUMBER_OF_WAVEFORM_PIECES: number
+  INVALID_MODES: number
+  INVALID_DURATIONS: number
+  LATE: number
+  TOO_MANY_PULSES: number
+  OVERLAPPING_WITH_CHARGING: number
+  OVERLAPPING_WITH_DISCHARGING: number
+  TRIGGERING_FAILURE: number
+  UNKNOWN_ERROR: number
 }
 
-export const SignalOutError = {
-  NO_ERROR: 0,
-  INVALID_EXECUTION_CONDITION: 1,
-  LATE: 2,
-  SIGNALOUT_FAILURE: 3,
-  UNKNOWN_ERROR: 4,
+export interface SignalOutError {
+  value: number
+  NO_ERROR: number
+  INVALID_EXECUTION_CONDITION: number
+  LATE: number
+  SIGNALOUT_FAILURE: number
+  UNKNOWN_ERROR: number
 }
 
-export const DischargeError = {
-  NO_ERROR: 0,
-  INVALID_EXECUTION_CONDITION: 1,
-  INVALID_CHANNEL: 2,
-  INVALID_VOLTAGE: 3,
-  LATE: 4,
-  OVERLAPPING_WITH_CHARGING: 5,
-  OVERLAPPING_WITH_STIMULATION: 6,
-  DISCHARGING_FAILURE: 7,
-  UNKNOWN_ERROR: 8,
-}
-
-export const errorsByType = {
-  pulse: PulseError,
-  signalOut: SignalOutError,
-  charge: ChargeError,
-  discharge: DischargeError,
+export interface DischargeError {
+  value: number
+  NO_ERROR: number
+  INVALID_EXECUTION_CONDITION: number
+  INVALID_CHANNEL: number
+  INVALID_VOLTAGE: number
+  LATE: number
+  OVERLAPPING_WITH_CHARGING: number
+  OVERLAPPING_WITH_STIMULATION: number
+  DISCHARGING_FAILURE: number
+  UNKNOWN_ERROR: number
 }
 
 export interface SystemErrorMessage {
@@ -85,6 +83,7 @@ export interface SystemErrorMessage {
   opto_error: boolean
   charger_power_enabled_twice_error: boolean
 }
+
 export interface ChannelErrorMessage {
   overvoltage_error: boolean
   emergency_discharge_backup_power_error: boolean
