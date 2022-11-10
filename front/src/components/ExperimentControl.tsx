@@ -1,46 +1,42 @@
-import React, { useState } from 'react'
+import React from 'react'
 import styled from 'styled-components'
-import {
-  startDevice,
-  startExperiment,
-  stopDevice,
-  stopExperiment,
-} from '../services/experiment'
+import { startDevice, startExperiment, stopDevice, stopExperiment } from 'services/experiment'
+import { DeviceStateMessage, ExperimentStateMessage } from 'types/fpga'
 
 type Props = {
-  deviceState: number
-  experimentState: number
+  deviceState: DeviceStateMessage
+  experimentState: ExperimentStateMessage
 }
 
 export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
   const deviceText = () => {
-    if (deviceState == 0) return 'Start'
-    if (deviceState == 1) return 'Starting'
-    if (deviceState == 2) return 'Stop'
-    if (deviceState == 3) return 'Stopping'
+    if (deviceState.value === deviceState.NOT_OPERATIONAL) return 'Start'
+    if (deviceState.value === deviceState.STARTUP) return 'Starting'
+    if (deviceState.value === deviceState.OPERATIONAL) return 'Stop'
+    if (deviceState.value === deviceState.SHUTDOWN) return 'Stopping'
     return '???'
   }
 
   const experimentText = () => {
-    if (experimentState == 0) return 'Start'
-    if (experimentState == 1) return 'Starting'
-    if (experimentState == 2) return 'Stop'
-    if (experimentState == 3) return 'Stopping'
+    if (experimentState.value === experimentState.STOPPED) return 'Start'
+    if (experimentState.value === experimentState.STARTING) return 'Starting'
+    if (experimentState.value === experimentState.STARTED) return 'Stop'
+    if (experimentState.value === experimentState.STOPPING) return 'Stopping'
     return '???'
   }
 
   const toggleDevice = () => {
-    if (deviceState == 0) {
+    if (deviceState.value === deviceState.NOT_OPERATIONAL) {
       startDevice()
-    } else if (deviceState == 2) {
+    } else if (deviceState.value === deviceState.OPERATIONAL) {
       stopDevice()
     }
   }
 
   const toggleExperiment = () => {
-    if (experimentState == 0) {
+    if (experimentState.value === experimentState.STOPPED) {
       startExperiment()
-    } else if (experimentState == 2) {
+    } else if (experimentState.value === experimentState.STARTED) {
       stopExperiment()
     }
   }
@@ -49,14 +45,16 @@ export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
     <div>
       <StyledButton
         onClick={toggleDevice}
-        disabled={deviceState == 1 || deviceState == 3}
+        disabled={deviceState.value === deviceState.STARTUP || deviceState.value === deviceState.SHUTDOWN}
       >
         {deviceText()} device
       </StyledButton>
       <br />
       <StyledButton
         onClick={toggleExperiment}
-        disabled={experimentState == 1 || experimentState == 3}
+        disabled={
+          experimentState.value === experimentState.STARTING || experimentState.value === experimentState.STOPPING
+        }
       >
         {experimentText()} experiment
       </StyledButton>
