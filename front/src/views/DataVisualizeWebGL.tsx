@@ -1,16 +1,13 @@
-import React, {useEffect, useRef, useState} from 'react'
-import {eegDataSubscriber, triggerSubscriber} from 'services/ros'
-import {EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage} from 'types/eeg'
-import {Datapoint, DatapointWithEventType, EegChartSteaming} from '../components/EegChartStreaming'
-import {WebGLPlot} from '../components/WebGLPlot'
+import React, { useEffect, useRef, useState } from 'react'
+import { eegDataSubscriber } from 'services/ros'
+import { EegBatchMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
+import { Datapoint } from 'components/EegChartStreaming'
+import { WebGLPlot } from 'components/WebGLPlot'
 import styled from 'styled-components'
-import {eventSubscriber} from '../services/experiment'
-import {objectKeysToCamelCase} from '../utils'
+import { eventSubscriber } from 'services/experiment'
+import { objectKeysToCamelCase } from 'utils'
 
 const DataVisualizeWebGL = () => {
-  const [minY, setMinY] = useState<number>(3550)
-  const [maxY, setMaxY] = useState<number>(3620)
-
   const minYRef = useRef(3550)
   const maxYRef = useRef(3620)
 
@@ -31,7 +28,7 @@ const DataVisualizeWebGL = () => {
 
   useEffect(() => {
     console.log('Subscribing to eeg data')
-    eegDataSubscriber.subscribe(newEegBatchWebGL)
+    eegDataSubscriber.subscribe(newEegBatch)
     eventSubscriber.subscribe(newEvent)
   }, [])
 
@@ -41,7 +38,7 @@ const DataVisualizeWebGL = () => {
   const scaleY = (point: number) =>
     ((point - minYRef.current) / (maxYRef.current - minYRef.current)) * (targetYMax - targetYMin) + targetYMin
 
-  const newEegBatchWebGL = (message: EegBatchMessage) => {
+  const newEegBatch = (message: EegBatchMessage) => {
     const data = []
     const eegTimestamps: number[] = []
     for (let i = 0; i < message.batch.length; i++) {
@@ -120,32 +117,22 @@ const DataVisualizeWebGL = () => {
     setLatestEvent(camelCased)
   }
 
-  const updateLimits = (
-    limitFunc: React.Dispatch<React.SetStateAction<number>>,
-    ref: React.MutableRefObject<number>,
-    newLimit: number,
-  ) => {
-    console.log('new limit:', newLimit)
-    limitFunc((oldLimit) => newLimit)
-    ref.current = newLimit
-  }
-
   return (
     <ChartContainer>
       <label htmlFor='chart-max-input'>Y max: </label>
       <AxisLimit
-        defaultValue={maxY}
+        defaultValue={maxYRef.current}
         type='number'
         id='chart-max-input'
-        onChange={(event) => updateLimits(setMaxY, maxYRef, Number(event.target.value))}
+        onChange={(event) => (maxYRef.current = Number(event.target.value))}
       />
-      <br/>
+      <br />
       <label htmlFor='chart-min-input'>Y min: </label>
       <AxisLimit
-        defaultValue={minY}
+        defaultValue={minYRef.current}
         type='number'
         id='chart-min-input'
-        onChange={(event) => updateLimits(setMinY, minYRef, Number(event.target.value))}
+        onChange={(event) => (minYRef.current = Number(event.target.value))}
       />
       <WebGLPlot
         eegData={latestBatch}

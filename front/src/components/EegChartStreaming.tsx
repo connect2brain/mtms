@@ -115,7 +115,7 @@ const datasetDefaults = [
   },
 ]
 
-export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
+export const EegChartStreaming = ({ eegData, latestEvent }: EegChartProps) => {
   const chartRef = useRef<any>(null)
 
   const [minY, setMinY] = useState<number>(3550)
@@ -140,7 +140,6 @@ export const EegChartSteaming = ({ eegData, latestEvent }: EegChartProps) => {
 
   useEffect(() => {
     const eegOldData = chartData.datasets[0].data
-    console.log(eegOldData)
 
     const newChartData = {
       datasets: [
