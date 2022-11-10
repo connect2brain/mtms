@@ -44,6 +44,6 @@ export interface MTMSEvent {
 }
 
 export interface MTMSEventMessage extends ROSLIB.Message {
-  time_us: number
+  time: number
   event_type: number
 }

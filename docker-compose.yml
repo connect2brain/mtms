@@ -19,7 +19,7 @@ services:
       dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
-    network_mode: host
+    # network_mode: host
 
   eeg_simulator:
     build:
@@ -27,6 +27,8 @@ services:
       dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
     env_file:
       - ${ENV_FILE}
+    # this option is needed for the container to achieve the same performance as without docker. Optionally, also
+    # privileged: true can be used
     security_opt:
       - seccomp:unconfined
     volumes:
