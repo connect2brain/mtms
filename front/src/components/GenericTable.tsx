@@ -172,7 +172,6 @@ const TargetsContainer = styled.div`
   overflow-x: hidden;
   width: fit-content;
   max-height: 600px;
-  max-width: 60%;
 `
 
 const TargetsTable = styled.table`
