@@ -73,12 +73,33 @@ const initialState = {
   },
   startup_error: {
     value: 0,
+    NO_ERROR: 0,
+    UART_INITIALIZATION_ERROR: 1,
+    BOARD_STARTUP_ERROR: 2,
+    BOARD_STATUS_MESSAGE_ERROR: 3,
+    SAFETY_MONITOR_ERROR: 4,
+    DISCHARGE_CONTROLLER_ERROR: 5,
+    CHARGER_ERROR: 6,
+    SENSORBOARD_ERROR: 7,
+    DISCHARGE_CONTROLLER_VOLTAGE_ERROR: 8,
+    CHARGER_VOLTAGE_ERROR: 9,
+    IGBT_FEEDBACK_ERROR: 10,
+    TEMPERATURE_SENSOR_PRESENCE_ERROR: 11,
+    COIL_MEMORY_PRESENCE_ERROR: 12,
   },
   device_state: {
     value: 0,
+    NOT_OPERATIONAL: 0,
+    STARTUP: 1,
+    OPERATIONAL: 2,
+    SHUTDOWN: 3,
   },
   experiment_state: {
     value: 0,
+    STOPPED: 0,
+    STARTING: 1,
+    STARTED: 2,
+    STOPPING: 3,
   },
   time: 0,
 }
@@ -130,12 +151,9 @@ export const SystemControl = () => {
 
   return (
     <div>
-      <ExperimentControl
-        deviceState={systemState.device_state.value}
-        experimentState={systemState.experiment_state.value}
-      />
+      <ExperimentControl deviceState={systemState.device_state} experimentState={systemState.experiment_state} />
       <SystemState systemState={systemState} />
-      <hr/>
+      <hr />
       <EventFeedbacks feedback={feedback} />
     </div>
   )
