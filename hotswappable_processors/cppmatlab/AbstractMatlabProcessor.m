@@ -6,7 +6,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         commands
         events_sent
         experiment_in_progress
-        last_sample_received_at_us
+        last_sample_received_at
         auto_enqueue
     end
 
@@ -28,7 +28,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.channel_count = uint16(62);
             obj.data = zeros(obj.channel_count, obj.window_size);
             obj.experiment_in_progress = false;
-            obj.last_sample_received_at_us = uint64(0);
+            obj.last_sample_received_at = double(0);
             obj.auto_enqueue = false;
 
             % HACK: Tells the compiler to make commands a variable sized list
@@ -36,7 +36,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             if number_of_pulses > obj.window_size
                 number_of_pulses = 20;
             end
-            obj.commands = repmat(create_command(0, "pulse_event", 0), number_of_pulses, 1);
+            obj.commands = repmat(create_pulse_command(0,1, 2, 0), number_of_pulses, 1);
 
             obj.events_sent = uint32(0);
             
@@ -47,7 +47,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         function set_commands(obj, commands)
             number_of_events = size(commands, 2);
             if number_of_events > 0
-                obj.commands = repmat(create_command(0, "pulse_event", 0), number_of_events, 1);
+                obj.commands = repmat(create_pulse_command(0,1, 2, 0), number_of_events, 1);
                 for i=1:number_of_events
                     obj.commands(i) = commands(i);
                 end
@@ -69,7 +69,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
             obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
-            obj.events_sent = obj.events_sent + size(obj.commands, 2);
+            obj.events_sent = obj.events_sent + numel(obj.commands);
             obj.last_sample_received_at = time;
 
             ret = obj.commands;
@@ -79,6 +79,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             coder.inline("never");
 
             obj.on_init_experiment();
+            obj.events_sent = obj.events_sent + numel(obj.commands);
 
             ret = obj.commands;
         end
@@ -89,6 +90,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.experiment_in_progress = false;
 
             obj.on_end_experiment();
+            obj.events_sent = obj.events_sent + numel(obj.commands);
 
             ret = obj.commands;
         end
@@ -124,10 +126,9 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
         function ret = enqueue(obj, element)
             temp = obj.data(1);
-            for i = 1:obj.window_size - 1
-                obj.data(i) = obj.data(i + 1);
-            end
-            obj.data(:,end) = element;
+            obj.data = circshift(obj.data, -1);
+            obj.data(:, end) = element;
+
             ret = temp;
         end
 
