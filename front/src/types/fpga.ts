@@ -4,7 +4,7 @@ import {
   ChargeError,
   DischargeError,
   PulseError,
-  SignalOutError,
+  SignalOutError, StartupError,
   SystemErrorMessage
 } from './fpgaErrors'
 
@@ -46,7 +46,7 @@ export interface SystemStateMessage extends ROSLIB.Message {
   system_error_current: SystemErrorMessage
   system_error_emergency: SystemErrorMessage
 
-  startup_error: StartupErrorMessage
+  startup_error: StartupError
 
   device_state: DeviceStateMessage
   experiment_state: ExperimentStateMessage
@@ -70,22 +70,6 @@ export interface DeviceStateMessage {
   SHUTDOWN: number
 }
 
-export interface StartupErrorMessage {
-  value: number
-  NO_ERROR: number
-  UART_INITIALIZATION_ERROR: number
-  BOARD_STARTUP_ERROR: number
-  BOARD_STATUS_MESSAGE_ERROR: number
-  SAFETY_MONITOR_ERROR: number
-  DISCHARGE_CONTROLLER_ERROR: number
-  CHARGER_ERROR: number
-  SENSORBOARD_ERROR: number
-  DISCHARGE_CONTROLLER_VOLTAGE_ERROR: number
-  CHARGER_VOLTAGE_ERROR: number
-  IGBT_FEEDBACK_ERROR: number
-  TEMPERATURE_SENSOR_PRESENCE_ERROR: number
-  COIL_MEMORY_PRESENCE_ERROR: number
-}
 
 export interface ChannelState {
   channel_index: number
