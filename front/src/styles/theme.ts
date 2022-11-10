@@ -17,9 +17,17 @@ const theme = {
     lightgray: '#e0e0e0',
     gray: '#b0b0b0',
     darkgray: '#707070',
+    green: '#52d045',
+    blue: '#4591d0',
+    brown: '#bb611a',
+    yellow: '#d9cf2b',
   },
   spacing: {},
-  typography: {},
+  typography: {
+    large: pxToRem(24),
+    medium: pxToRem(18),
+    small: pxToRem(12),
+  },
   borderRadius: pxToRem(5),
 }
 

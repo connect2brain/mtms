@@ -62,6 +62,11 @@ target_include_directories(eeg_processor
 
 ament_target_dependencies(eeg_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found!")
+    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+endif()
+
 if (Matlab_FOUND)
 
     target_sources(
@@ -116,4 +121,4 @@ if (BUILD_TESTING)
 endif ()
 
 ament_package()
-message("TARGET: ${CMAKE_BUILD_TYPE}")
+message(STATUS "TARGET: ${CMAKE_BUILD_TYPE}")
