@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './App.css'
 import Providers from './providers/Providers'
 import styled from 'styled-components'
@@ -6,14 +6,20 @@ import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
 import Experiment from './views/Experiment'
 import DataVisualize from './views/DataVisualize'
+import { MultipleViews } from './views/MultipleViews'
+import { Header } from './styles/StyledTypography'
 
-function App() {
+const App = () => {
   return (
     <Providers>
       <Header>mTMS control panel</Header>
+
+      <hr />
+
       <Wrapper>
         <Routes>
-          <Route path='/' element={<Targets />} />
+          <Route path='/' element={<MultipleViews />} />
+          <Route path='/targets' element={<Targets />} />
           <Route path='/experiment' element={<Experiment />} />
           <Route path='/plot' element={<DataVisualize />} />
         </Routes>
@@ -24,10 +30,7 @@ function App() {
 
 const Wrapper = styled.div`
   padding: 0.5rem;
-`
-
-const Header = styled.h1`
-  color: ${(p) => p.theme.colors.primary};
+  margin: 0.5rem;
 `
 
 export default App

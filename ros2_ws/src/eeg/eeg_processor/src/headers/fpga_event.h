@@ -10,18 +10,21 @@
 #include "fpga_interfaces/msg/discharge.hpp"
 #include "fpga_interfaces/msg/waveform_piece.hpp"
 #include "fpga_interfaces/msg/waveform_phase.hpp"
+#include "fpga_interfaces/msg/signal_out.hpp"
 #include <iostream>
 
 enum FpgaEventType {
   PULSE = 0,
   CHARGE = 1,
-  DISCHARGE = 2
+  DISCHARGE = 2,
+  SIGNAL_OUT = 3
 };
 
 struct FpgaEvent {
   fpga_interfaces::msg::Pulse pulse;
   fpga_interfaces::msg::Charge charge;
   fpga_interfaces::msg::Discharge discharge;
+  fpga_interfaces::msg::SignalOut signal_out;
   FpgaEventType event_type = PULSE;
 
   [[nodiscard]] std::string to_string() const {
@@ -29,6 +32,8 @@ struct FpgaEvent {
       return "Pulse";
     } else if (event_type == CHARGE) {
       return "Charge";
+    } else if (event_type == SIGNAL_OUT) {
+      return "Signal out";
     } else {
       return "Discharge";
     }
@@ -66,8 +71,16 @@ struct FpgaEvent {
       std::cout << "  Id: " << discharge.event.id << std::endl;
       std::cout << "  Execution condition: " << +discharge.event.execution_condition.value << std::endl;
       std::cout << "  Time: " << discharge.event.time << std::endl;
+    } else if (event_type == SIGNAL_OUT) {
+      std::cout << "Signal out" << std::endl;
+
+      std::cout << "Port: " << +signal_out.port << std::endl;
+      std::cout << "Event: " << std::endl;
+      std::cout << "  Id: " << signal_out.event.id << std::endl;
+      std::cout << "  Execution condition: " << +signal_out.event.execution_condition.value << std::endl;
+      std::cout << "  Time: " << signal_out.event.time << std::endl;
     } else {
-      std::cout << "Uknown event type " << +event_type << std::endl;
+      std::cout << "Unknown event type " << +event_type << std::endl;
     }
   }
 

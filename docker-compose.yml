@@ -2,7 +2,9 @@ version: '2'
 
 services:
   front:
-    build: ./front/
+    build:
+      context: .
+      dockerfile: front/Dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -17,6 +19,7 @@ services:
       dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     ports:
       - "9090:9090"
+    # network_mode: host
 
   eeg_simulator:
     build:
@@ -24,6 +27,10 @@ services:
       dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
     env_file:
       - ${ENV_FILE}
+    # this option is needed for the container to achieve the same performance as without docker. Optionally, also
+    # privileged: true can be used
+    security_opt:
+      - seccomp:unconfined
     volumes:
       - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
       - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
@@ -36,6 +43,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
 

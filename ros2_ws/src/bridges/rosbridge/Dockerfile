@@ -19,6 +19,7 @@ RUN pip install \
 WORKDIR /app/ros2_ws
 COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite
 COPY ros2_ws/src/interfaces/mtms_interfaces src/interfaces/mtms_interfaces
+COPY ros2_ws/src/interfaces/fpga_interfaces src/fpga_interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .
@@ -31,7 +32,7 @@ RUN shopt -s globstar && dos2unix **
 # Build ROS packages
 
 RUN source /opt/ros/galactic/setup.bash && \
-    colcon build --symlink-install
+    colcon build
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux
 
