@@ -1,41 +1,66 @@
-#include <memory>
-
+//
+// Created by alqio on 11.11.2022.
+//
+#include "scheduling_utils.h"
+#include "memory_utils.h"
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/string.hpp"
-#include "neuronavigation_interfaces/msg/pose_using_euler_angles.hpp"
-#include "shape_msgs/msg/mesh.hpp"
+#include "neuronavigation_interfaces/srv/efield.hpp"
+#include "efield_estimation.h"
 
-using std::placeholders::_1;
 
-class EfieldSubscriber : public rclcpp::Node
-{
-  public:
-    EfieldSubscriber() : Node("efield")
-    {
-      subscription_pose_ = this->create_subscription<neuronavigation_interfaces::msg::PoseUsingEulerAngles>(
-      "neuronavigation/coil_pose", 10, std::bind(&EfieldSubscriber::topic_callback_pose, this, _1));
-       subscription_mesh_ = this->create_subscription<shape_msgs::msg::Mesh>(
-      "neuronavigation/coil_mesh", 10, std::bind(&EfieldSubscriber::topic_callback_mesh, this, _1));
-    }
+class EField : public rclcpp::Node {
+public:
+  EField() : Node("efield") {
 
-  private:
-    void topic_callback_pose(const neuronavigation_interfaces::msg::PoseUsingEulerAngles::SharedPtr msg) const
-    {
-      RCLCPP_INFO(this->get_logger(), "X: %f Y: %f Z: %f", msg->position.x, msg->position.y, msg->position.z);
-    }
-    rclcpp::Subscription<neuronavigation_interfaces::msg::PoseUsingEulerAngles>::SharedPtr subscription_pose_;
+    auto service_callback = [this](
+        const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
+        std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response) -> void {
 
-    void topic_callback_mesh(const shape_msgs::msg::Mesh::SharedPtr msg) const
-    {
-      RCLCPP_INFO(this->get_logger(), "vertices: %f triangles: %f", msg->vertices[0].x, msg->triangles);
-    }
-    rclcpp::Subscription<shape_msgs::msg::Mesh>::SharedPtr subscription_mesh_;
+      RCLCPP_INFO(rclcpp::get_logger("efield"), "Request received");
+
+      std::vector<float> position;
+      std::vector<double> orientation;
+
+      position.push_back(static_cast<float>(request->coordinate.position.x));
+      position.push_back(static_cast<float>(request->coordinate.position.y));
+      position.push_back(static_cast<float>(request->coordinate.position.z));
+      orientation.push_back(request->coordinate.orientation.alpha);
+      orientation.push_back(request->coordinate.orientation.beta);
+      orientation.push_back(request->coordinate.orientation.gamma);
+
+      std::vector<double> efield_vector;
+      efield_estimation(position, orientation, request->transducer_rotation, response->efield_data);
+
+    };
+
+
+    efield_service = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield", service_callback);
+
+    init_efield();
+  }
+
+private:
+  rclcpp::Service<neuronavigation_interfaces::srv::Efield>::SharedPtr efield_service;
 };
 
-int main(int argc, char * argv[])
-{
+
+int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EfieldSubscriber>());
+
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<EField>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("efield"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }
