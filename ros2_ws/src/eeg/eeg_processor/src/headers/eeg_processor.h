@@ -20,6 +20,8 @@
 #include "fpga_interfaces/srv/start_experiment.hpp"
 #include "fpga_interfaces/srv/stop_experiment.hpp"
 
+#include "cpp_processor.h"
+
 #if defined(MATLAB_FOUND)
 
 #include "matlab_processor.h"
