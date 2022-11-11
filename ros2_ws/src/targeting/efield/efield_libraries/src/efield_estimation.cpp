@@ -1,7 +1,7 @@
 //The functions in this file are partially based on hbftms_cpp library example codes written by M. Stenroos
 //This library is not free to use without written permission from the owner Matti Stenroos
 
-#define DATAROOT "/app/ros2_ws/src/efield/efield_libraries/data/"
+#define DATAROOT "/app/ros2_ws/src/targeting/efield/efield_libraries/data/"
 #define FLAG_MAGSTIM70 1 // set to 1 to use 42-dipole Magstim 70 model
 
 #include <phi_lc>
@@ -11,8 +11,8 @@
 
 
 std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius1/";
-std::string meshfile = meshroot + "scalp_E.bin";
-std::string cortexfile = meshroot + "brain_E.bin";
+std::string meshfile = meshroot + "S2-scalp.bin";
+std::string cortexfile = meshroot + "S2-brainc.bin";
 std::string coilfile = std::string(DATAROOT) + "coilmodels/magstim70/magstim70_42.bin";
 
 std::vector<double> efield_vector;
