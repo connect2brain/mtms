@@ -18,7 +18,11 @@ from mtms_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
 
+from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
 
+
+# TODO: Divide this large class into several nodes.
+#
 class NeuronavigationNode(Node):
     # The colors have been picked from mTMS software prototype created in Adobe XD.
     #
@@ -54,7 +58,7 @@ class NeuronavigationNode(Node):
 
         self.cli = self.create_client(Efield, 'efield')
         while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('efield service not available, waiting again...')
+            self.get_logger().info('efield service not available, waiting...')
         self.req = Efield.Request()
 
     def set_callback__set_markers(self, callback):
@@ -124,6 +128,7 @@ class NeuronavigationNode(Node):
             orientation = [0.0, 0.0, 0.0]
 
         msg = PoseUsingEulerAngles()
+
         msg.position.x, msg.position.y, msg.position.z = position
         msg.orientation.alpha, msg.orientation.beta, msg.orientation.gamma = orientation
 
@@ -195,9 +200,14 @@ class Connection(Thread):
 
         rclpy.init(args=None)
         self.node = NeuronavigationNode()
+        self.neuronavigation_pedal_bridge = NeuronavigationPedalBridge()
+
+        self.executor = rclpy.executors.MultiThreadedExecutor()
+        self.executor.add_node(self.node)
+        self.executor.add_node(self.neuronavigation_pedal_bridge)
 
     def run(self):
-        rclpy.spin(self.node)
+        self.executor.spin()
         rclpy.shutdown()
 
     def update_focus(self, position, orientation):
@@ -236,12 +246,21 @@ class Connection(Thread):
             T_rot=T_rot,
         )
 
-
     def set_callback__set_markers(self, callback):
         self.node.set_callback__set_markers(callback)
 
     def set_callback__open_orientation_dialog(self, callback):
         self.node.set_callback__open_orientation_dialog(callback)
+
+    def add_pedal_callback(self, name, callback, remove_when_released=False):
+        self.neuronavigation_pedal_bridge.add_pedal_callback(
+            name=name,
+            callback=callback,
+            remove_when_released=remove_when_released,
+        )
+
+    def remove_pedal_callback(self, name):
+        self.neuronavigation_pedal_bridge.remove_pedal_callback(name=name)
 
 
 def main():
