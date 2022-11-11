@@ -5,12 +5,12 @@
 #ifndef COMPILER_PROCESSOR_FACTORY_H
 #define COMPILER_PROCESSOR_FACTORY_H
 
-#include "processor.h"
+#include "MatlabProcessor.h"
 #include <chrono>
 
 
-extern "C" Processor *create_processor();
+extern "C" MatlabProcessor *create_processor();
 
-extern "C" void destroy_processor(Processor *p);
+extern "C" void destroy_processor(MatlabProcessor *p);
 
 #endif //COMPILER_PROCESSOR_FACTORY_H
