@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 project(efield)
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
+if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
@@ -12,27 +12,38 @@ find_package(std_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 
-add_executable(efield src/efield.cpp)
-add_executable(efield_publisher src/efield_publisher.cpp)
+set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+add_executable(efield
+        src/efield.cpp
+        src/efield_estimation.h
+        )
+
+target_include_directories(efield
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+add_library(libefield_estimation SHARED IMPORTED)
+set_target_properties(libefield_estimation PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries/libefield_estimation.so)
+target_link_libraries(efield libefield_estimation)
+
 ament_target_dependencies(efield rclcpp std_msgs neuronavigation_interfaces shape_msgs)
-ament_target_dependencies(efield_publisher rclcpp std_msgs neuronavigation_interfaces shape_msgs)
 
 install(TARGETS
-  efield
-  DESTINATION lib/${PROJECT_NAME})
-install(TARGETS
-  efield_publisher
-  DESTINATION lib/${PROJECT_NAME})
+        efield
+        DESTINATION lib/${PROJECT_NAME}
+        )
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
+install(
+        DIRECTORY launch
+        DESTINATION share/${PROJECT_NAME}
+)
+
+if (BUILD_TESTING)
+    find_package(ament_lint_auto REQUIRED)
+    ament_lint_auto_find_test_dependencies()
+endif ()
 
 ament_package()
