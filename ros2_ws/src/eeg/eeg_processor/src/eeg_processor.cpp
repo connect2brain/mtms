@@ -12,11 +12,11 @@ using namespace std::chrono;
 
 EegProcessor::EegProcessor() : Node("eeg_processor") {
   std::string processor_type;
-  this->declare_parameter<std::string>("processor_type", "compiledmatlab");
+  this->declare_parameter<std::string>("processor_type", "cpp");
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script","");
+  this->declare_parameter<std::string>("processor_script","/home/alqio/workspace/mtms/hotswappable_processors/cpp/libprocessor_factory.so");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;
@@ -47,6 +47,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
 
   } else if (processor_type == "compiledmatlab") {
     processor = new CompiledMatlabProcessor(processor_script_path);
+  } else if (processor_type == "cpp") {
+    processor = new CppProcessor(processor_script_path);
   }
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {

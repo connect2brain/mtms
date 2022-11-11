@@ -15,6 +15,11 @@ file(GLOB processor_src
 add_library(${PROJECT_NAME} SHARED ${processor_src})
 add_executable(${PROJECT_NAME}_exec ${processor_src})
 
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found!")
+    target_link_libraries(${PROJECT_NAME} PUBLIC OpenMP::OpenMP_CXX)
+    target_link_libraries(${PROJECT_NAME}_exec PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 # Configure the directories to search for header files.
 target_include_directories(${PROJECT_NAME} PRIVATE source)
@@ -24,4 +29,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION ${PROJECT_VERSION_MAJOR})
 # Set the public header property to the one with the actual API.
 set_target_properties(${PROJECT_NAME} PROPERTIES PUBLIC_HEADER processor_factory.h)
-
