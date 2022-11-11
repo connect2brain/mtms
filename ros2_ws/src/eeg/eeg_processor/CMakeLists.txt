@@ -40,10 +40,16 @@ add_executable(
         src/headers/processor.h
         src/headers/eeg_processor.h
 
+        src/headers/cpp_processor.h
+        src/headers/cpp_processor_interface.h
+        src/cpp_processor.cpp
+        src/cpp_processor_interface.cpp
+
         src/compiled_matlab_processor.cpp
         src/matlab_processor_interface.cpp
         src/headers/compiled_matlab_processor.h
         src/headers/matlab_processor_interface.h
+
         src/headers/fpga_event.h
         src/headers/matlab_helpers.h
         src/matlab_helpers.cpp

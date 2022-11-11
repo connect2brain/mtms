@@ -16,15 +16,9 @@ struct event {
   double time;
 };
 
-struct struct_T {
-  int xstart;
-  int xend;
-  int depth;
-};
-
 struct fpga_event {
   unsigned char channel;
-  event event_info;
+  event b_event;
   waveform_piece waveform[3];
   unsigned char event_type;
   unsigned short target_voltage;
