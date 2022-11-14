@@ -36,29 +36,35 @@ endif ()
 
 add_executable(
         eeg_processor
+
+        src/processor.h
+        src/eeg_processor.h
+        src/fpga_event.h
         src/eeg_processor.cpp
-        src/headers/processor.h
-        src/headers/eeg_processor.h
 
-        src/headers/cpp_processor.h
-        src/headers/cpp_processor_interface.h
-        src/cpp_processor.cpp
-        src/cpp_processor_interface.cpp
+        src/compiled_matlab_processor/compiled_matlab_processor.h
+        src/compiled_matlab_processor/compiled_matlab_processor.cpp
+        src/compiled_matlab_processor/matlab_processor_interface.h
+        src/compiled_matlab_processor/matlab_processor_interface.cpp
 
-        src/compiled_matlab_processor.cpp
-        src/matlab_processor_interface.cpp
-        src/headers/compiled_matlab_processor.h
-        src/headers/matlab_processor_interface.h
+        src/cpp_processor/cpp_processor.h
+        src/cpp_processor/cpp_processor.cpp
+        src/cpp_processor/cpp_processor_interface.h
+        src/cpp_processor/cpp_processor_interface.cpp
 
-        src/headers/fpga_event.h
-        src/headers/matlab_helpers.h
-        src/matlab_helpers.cpp
+        src/python_processor/python_processor.h
+        src/python_processor/python_processor.cpp
 
-        src/headers/scheduling_utils.h
-        src/scheduling_utils.cpp
+        src/matlab_processor/matlab_processor.h
+        src/matlab_processor/matlab_processor.cpp
 
-        src/headers/memory_utils.h
-        src/memory_utils.cpp
+        src/utils/scheduling_utils.h
+        src/utils/scheduling_utils.cpp
+        src/utils/memory_utils.h
+        src/utils/memory_utils.cpp
+        src/utils/matlab_helpers.h
+        src/utils/matlab_helpers.cpp
+
 )
 
 target_include_directories(eeg_processor
@@ -66,20 +72,32 @@ target_include_directories(eeg_processor
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
+target_include_directories(eeg_processor
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/utils>
+        $<INSTALL_INTERFACE:utils>
+        )
+
+target_include_directories(eeg_processor
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
+        $<INSTALL_INTERFACE:>
+        )
+
 ament_target_dependencies(eeg_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
-if(OpenMP_CXX_FOUND)
+if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found!")
     target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
-endif()
+endif ()
 
 if (Matlab_FOUND)
 
     target_sources(
             eeg_processor
             PRIVATE
-            src/matlab_processor.cpp
-            src/headers/matlab_processor.h
+            src/matlab_processor/matlab_processor.h
+            src/matlab_processor/matlab_processor.cpp
     )
 
     # MATLAB, Linker to libMatlabEngine in link_directories
@@ -98,8 +116,8 @@ if (PYTHONLIBS_FOUND)
     target_sources(
             eeg_processor
             PRIVATE
-            src/python_processor.cpp
-            src/headers/python_processor.h
+            src/python_processor/python_processor.h
+            src/python_processor/python_processor.cpp
     )
 
     include_directories(${PYTHON_INCLUDE_DIRS})

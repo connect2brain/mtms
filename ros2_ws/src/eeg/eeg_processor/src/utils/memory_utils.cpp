@@ -4,7 +4,7 @@
 // Apache 2.0 License. No major changes
 //
 
-#include "headers/memory_utils.h"
+#include "memory_utils.h"
 
 void lock_memory() {
   // Lock all current and future pages
