@@ -2,10 +2,10 @@
 #include "std_msgs/msg/bool.hpp"
 
 
-#include "headers/scheduling_utils.h"
+#include "scheduling_utils.h"
 
-#include "headers/eeg_processor.h"
-#include "headers/memory_utils.h"
+#include "eeg_processor.h"
+#include "memory_utils.h"
 
 using namespace std::chrono_literals;
 using namespace std::chrono;
@@ -16,7 +16,7 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   this->get_parameter("processor_type", processor_type);
 
   std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script","");
+  this->declare_parameter<std::string>("processor_script", "");
   this->get_parameter("processor_script", processor_script_path);
 
   int loop_count;
@@ -27,9 +27,10 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   this->declare_parameter<std::string>("file", "output.data");
   this->get_parameter("file", output_file_name);
 
-  should_publish_events = true;
+  this->declare_parameter<bool>("publish_events", false);
+  this->get_parameter("publish_events", should_publish_events);
 
-  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "processor type: %s", processor_type.c_str());
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Processor type: %s", processor_type.c_str());
 
   if (processor_type == "python") {
 #ifdef PYTHON_FOUND
@@ -246,7 +247,7 @@ void EegProcessor::measure(int repeats) {
 }
 
 int EegProcessor::shutdown() {
-  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Shutting down data processor");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Shutting down eeg processor");
   if (processor) {
     processor->close();
     return 0;

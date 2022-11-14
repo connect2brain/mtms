@@ -2,8 +2,8 @@
 // Created by alqio on 1.9.2022.
 //
 
-#include "headers/cpp_processor.h"
-#include "headers/matlab_helpers.h"
+#include "cpp_processor.h"
+#include "matlab_helpers.h"
 
 CppProcessor::CppProcessor(const std::string &script_path) {
   processor_factory = dlopen(script_path.c_str(), RTLD_NOW);
