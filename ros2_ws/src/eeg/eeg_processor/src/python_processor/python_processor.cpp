@@ -4,7 +4,7 @@
 // Note the difference between "New reference" and "Borrowed reference" and what kind of reference each function returns
 //
 
-#include "headers/python_processor.h"
+#include "python_processor.h"
 
 PythonProcessor::PythonProcessor(std::string script_path) {
   if (std::getenv("DOCKER")) {
