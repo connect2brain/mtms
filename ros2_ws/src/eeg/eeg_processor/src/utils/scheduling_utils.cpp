@@ -2,7 +2,7 @@
 // Created by alqio on 5.9.2022.
 //
 
-#include "headers/scheduling_utils.h"
+#include "scheduling_utils.h"
 #include "rclcpp/rclcpp.hpp"
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority) {

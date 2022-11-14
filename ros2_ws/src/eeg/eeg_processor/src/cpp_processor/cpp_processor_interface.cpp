@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <iostream>
-#include "headers/cpp_processor_interface.h"
+#include "cpp_processor_interface.h"
 
 std::vector<matlab_fpga_event> CppProcessorInterface::init_experiment() {
   std::cout

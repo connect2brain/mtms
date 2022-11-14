@@ -5,8 +5,8 @@
 //
 
 
-#ifndef FPGA_BRIDGE_MEMORY_UTILS_H
-#define FPGA_BRIDGE_MEMORY_UTILS_H
+#ifndef EEG_PROCESSOR_MEMORY_UTILS_H
+#define EEG_PROCESSOR_MEMORY_UTILS_H
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -24,4 +24,4 @@ void preallocate_memory(size_t memory_size);
 void lock_memory();
 void set_default_thread_stacksize(size_t stacksize);
 
-#endif //FPGA_BRIDGE_MEMORY_UTILS_H
+#endif //EEG_PROCESSOR_MEMORY_UTILS_H
