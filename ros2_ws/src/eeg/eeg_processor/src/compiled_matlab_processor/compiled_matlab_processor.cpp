@@ -2,7 +2,7 @@
 // Created by alqio on 1.9.2022.
 //
 
-#include "headers/compiled_matlab_processor.h"
+#include "compiled_matlab_processor.h"
 
 CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path) {
   processor_factory = dlopen(script_path.c_str(), RTLD_NOW);
