@@ -1,7 +1,7 @@
 //
 // Created by alqio on 8.9.2022.
 //
-#include "headers/matlab_processor_interface.h"
+#include "matlab_processor_interface.h"
 
 
 MatlabProcessorInterface *MatlabProcessorInterface::init() {
