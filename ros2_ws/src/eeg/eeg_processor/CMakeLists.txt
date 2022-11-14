@@ -52,12 +52,6 @@ add_executable(
         src/cpp_processor/cpp_processor_interface.h
         src/cpp_processor/cpp_processor_interface.cpp
 
-        src/python_processor/python_processor.h
-        src/python_processor/python_processor.cpp
-
-        src/matlab_processor/matlab_processor.h
-        src/matlab_processor/matlab_processor.cpp
-
         src/utils/scheduling_utils.h
         src/utils/scheduling_utils.cpp
         src/utils/memory_utils.h
