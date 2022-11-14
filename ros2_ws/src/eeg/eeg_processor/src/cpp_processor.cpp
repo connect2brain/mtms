@@ -17,11 +17,9 @@ CppProcessor::CppProcessor(const std::string &script_path) {
   }
 
   inner_processor = std::unique_ptr<CppProcessorInterface>(create_processor_func());
-  std::cout << "inner processor created" << std::endl;
 }
 
 std::vector<FpgaEvent> CppProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  std::cout << "in cpp processor data received" << std::endl;
   auto events = inner_processor->data_received(
       data.eeg_channels,
       data.time,
@@ -35,22 +33,13 @@ std::vector<FpgaEvent> CppProcessor::data_received(mtms_interfaces::msg::EegData
     auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
     output.push_back(fpga_event);
   }
-  /*
-  if (!output.empty()) {
-    std::cout << "Received " << output.size() << " events" << std::endl;
-    for (const auto& event: output) {
-      std::cout << "event type: " << event.to_string() << std::endl;
-    }
-  }
-*/
+
   return output;
 }
 
 std::vector<FpgaEvent> CppProcessor::init() {
-  std::cout << "in init" << std::endl;
   std::vector<FpgaEvent> fpga_events;
   auto events = inner_processor->init_experiment();
-  std::cout << "Received events: " << events.size() << std::endl;
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
@@ -63,7 +52,6 @@ std::vector<FpgaEvent> CppProcessor::init() {
 std::vector<FpgaEvent> CppProcessor::close() {
   std::vector<FpgaEvent> fpga_events;
   auto events = inner_processor->end_experiment();
-  std::cout << "Received events: " << events.size() << std::endl;
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
