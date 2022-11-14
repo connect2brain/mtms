@@ -37,6 +37,11 @@ def generate_launch_description():
         description="Processor script file name",
     )
 
+    publish_events_arg = DeclareLaunchArgument(
+        "publish-events",
+        description="Publish fpga events also also to a topic",
+    )
+
 
     logger = LaunchConfiguration("log-level")
 
@@ -51,7 +56,8 @@ def generate_launch_description():
                 "processor_type": LaunchConfiguration("processor-type"),
                 "processor_script": LaunchConfiguration("processor-script"),
                 "loop_count": LaunchConfiguration("loop-count"),
-                "file": LaunchConfiguration("file")
+                "file": LaunchConfiguration("file"),
+                "publish_events": LaunchConfiguration("publish-events")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -62,5 +68,6 @@ def generate_launch_description():
     ld.add_action(processor_script_arg)
     ld.add_action(loop_count_arg)
     ld.add_action(file_arg)
+    ld.add_action(publish_events_arg)
 
     return ld

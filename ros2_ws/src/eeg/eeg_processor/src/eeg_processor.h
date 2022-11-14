@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "compiled_matlab_processor.h"
+#include "compiled_matlab_processor/compiled_matlab_processor.h"
 #include "processor.h"
 
 #include "mtms_interfaces/msg/event.hpp"
@@ -20,15 +20,17 @@
 #include "fpga_interfaces/srv/start_experiment.hpp"
 #include "fpga_interfaces/srv/stop_experiment.hpp"
 
+#include "cpp_processor/cpp_processor.h"
+
 #if defined(MATLAB_FOUND)
 
-#include "matlab_processor.h"
+#include "matlab_processor/matlab_processor.h"
 
 #endif
 
 #if defined(PYTHON_FOUND)
 
-#include "python_processor.h"
+#include "python_processor/python_processor.h"
 
 #endif
 

@@ -2,7 +2,7 @@
 // Created by alqio on 1.9.2022.
 //
 
-#include "headers/matlab_processor.h"
+#include "matlab_processor.h"
 
 
 MatlabProcessor::MatlabProcessor(const std::string &script_path) {
