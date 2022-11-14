@@ -2,7 +2,7 @@
 // Created by alqio on 14.9.2022.
 //
 
-#include "headers/matlab_helpers.h"
+#include "matlab_helpers.h"
 
 void print_matlab_fpga_event(matlab_fpga_event event) {
   std::cout << "Event type: ";
