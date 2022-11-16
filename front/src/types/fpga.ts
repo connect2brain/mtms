@@ -4,9 +4,27 @@ import {
   ChargeError,
   DischargeError,
   PulseError,
-  SignalOutError, StartupError,
-  SystemErrorMessage
+  SignalOutError,
+  StartupError,
+  SystemErrorMessage,
 } from './fpgaErrors'
+
+export const DeviceState = {
+  NOT_OPERATIONAL: 0,
+  STARTUP: 1,
+  OPERATIONAL: 2,
+  SHUTDOWN: 3,
+}
+export const ExperimentState = {
+  STOPPED: 0,
+  STARTING: 1,
+  STARTED: 2,
+  STOPPING: 3,
+}
+
+interface Error {
+  value: number
+}
 
 export type Feedback =
   | PulseFeedbackMessage
@@ -14,28 +32,27 @@ export type Feedback =
   | DischargeFeedbackMessage
   | SignalOutFeedbackMessage
 
-
 export interface PulseFeedbackMessage extends ROSLIB.Message {
   id: number
-  error: PulseError
+  error: Error
   type: 'pulse'
 }
 
 export interface ChargeFeedbackMessage extends ROSLIB.Message {
   id: number
-  error: ChargeError
+  error: Error
   type: 'charge'
 }
 
 export interface DischargeFeedbackMessage extends ROSLIB.Message {
   id: number
-  error: DischargeError
+  error: Error
   type: 'discharge'
 }
 
 export interface SignalOutFeedbackMessage extends ROSLIB.Message {
   id: number
-  error: SignalOutError
+  error: Error
   type: 'signalOut'
 }
 
@@ -46,7 +63,7 @@ export interface SystemStateMessage extends ROSLIB.Message {
   system_error_current: SystemErrorMessage
   system_error_emergency: SystemErrorMessage
 
-  startup_error: StartupError
+  startup_error: Error
 
   device_state: DeviceStateMessage
   experiment_state: ExperimentStateMessage
@@ -56,20 +73,11 @@ export interface SystemStateMessage extends ROSLIB.Message {
 
 export interface ExperimentStateMessage {
   value: number
-  STOPPED: number
-  STARTING: number
-  STARTED: number
-  STOPPING: number
 }
 
 export interface DeviceStateMessage {
   value: number
-  NOT_OPERATIONAL: number
-  STARTUP: number
-  OPERATIONAL: number
-  SHUTDOWN: number
 }
-
 
 export interface ChannelState {
   channel_index: number
