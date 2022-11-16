@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { ChannelState as ChannelStateType, SystemStateMessage } from 'types/fpga'
+import { ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage } from 'types/fpga'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
 
@@ -52,15 +52,8 @@ export const SystemState = ({ systemState }: Props) => {
 
   return (
     <div>
-      <p>
-        Device state:{' '}
-        {getKeyByValueExcluding(systemState.device_state, 'value', systemState.device_state.value) || 'No error'}
-      </p>
-      <p>
-        Experiment state:{' '}
-        {getKeyByValueExcluding(systemState.experiment_state, 'value', systemState.experiment_state.value) ||
-          'No error'}
-      </p>
+      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</p>
+      <p>Experiment state: {getKeyByValue(ExperimentState, systemState.experiment_state.value) || 'No error'}</p>
 
       <br />
 
