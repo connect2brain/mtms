@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Feedback } from 'types/fpga'
 import { getKeyByValue } from 'utils'
+import { errorsByType } from '../types/fpgaErrors'
 
 type Props = {
   feedback: Feedback | undefined
@@ -32,7 +33,8 @@ export const EventFeedbacks = ({ feedback }: Props) => {
       {failedEvents.map((failedEvent) => {
         return (
           <p key={`failed-event-${failedEvent.id}`}>
-            Event failed: {failedEvent.id}, reason: {getKeyByValue(failedEvent.error, failedEvent.error.value)}
+            Event failed: {failedEvent.id}, reason:{' '}
+            {getKeyByValue(errorsByType[failedEvent.type], failedEvent.error.value)}
           </p>
         )
       })}
