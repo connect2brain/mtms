@@ -32,6 +32,7 @@ struct matlab_fpga_event {
   waveform_piece waveform[3];
   unsigned char event_type;
   unsigned short target_voltage;
+  unsigned int duration_us;
 };
 
 #endif
