@@ -30,6 +30,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         phase_count
         max_phase_count
         saved
+
+        sample_duration
     end
 
     methods
@@ -38,7 +40,9 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.HILBERTWIN = 64;
             obj.EDGE = 35;
             obj.AR_ORDER = 15;
-            obj.FS = 2500;
+            
+            obj.FS = 5000;
+            obj.sample_duration = 1 / obj.FS;
 
             obj.offset_correction = obj.FS * 0.008;
             obj.nr_seconds = 1;
@@ -56,7 +60,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.samples_collected = 0;
 
             obj.isi_seconds = 6;
-            obj.isi_samples = obj.FS * obj.isi_seconds;
+            obj.isi_samples = (obj.FS/2) * obj.isi_seconds;
 
             obj.target_voltage = 500;
 
@@ -98,19 +102,19 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 nof_estimated_samples = numel(estimated_phases);
                 future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
-
+                
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
-
-                event_time = time + (index_of_peak * (1 / obj.FS) - obj.offset_correction * (1 / obj.FS)) * 10;
-
-                pulse_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
-                %charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
-                obj.set_commands([pulse_event]);
                 
-                fprintf("EEG time: %f\n", time);
-                fprintf("Timed pulse at %f\n", event_time);
-                fprintf("Timed charge at %f\n", event_time + 1);
+                event_time = time + (index_of_peak * 10 * obj.sample_duration - obj.offset_correction * obj.sample_duration);
+
+                signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
+                %charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
+                obj.set_commands([signal_out_event]);
+
+                fprintf("EEG time:  %f\n", time);
+                fprintf("Event time %f at index %f\n", event_time, index_of_peak);
+                % fprintf("Timed charge at %f\n", event_time + 1);
 
                 obj.estimated = true;
 
