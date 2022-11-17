@@ -69,6 +69,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.signal_out.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.signal_out.event.time = event.b_event.time;
     fpga_event.signal_out.port = event.channel;
+    fpga_event.signal_out.duration_us = event.duration_us;
   }
   return fpga_event;
 }
