@@ -139,6 +139,14 @@ services:
     privileged: true
     network_mode: "host"
 
+  topic_frequency:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/topic_frequency/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
+
   trigger_controller:
     build:
       context: .
