@@ -118,6 +118,11 @@ These two links should be useful for troubleshooting:
 
 #### Setup (done only once)
 
+##### Setting up environment variables
+
+- Add MTMS_PATH variable to system environment variables, pointing to the directory into which mTMS repository is cloned. This enables
+using scripts stored in `scripts` directory to start the system.
+
 ##### Setting up Docker with X11 forwarding
 
 - Install Docker
@@ -126,8 +131,13 @@ These two links should be useful for troubleshooting:
 
 - Start XLaunch. Tick the checkbox "Disable access control".
 
+- Alternatively, run `C:\Program Files\VcXsrv\vcxsrv.exe" :0 -multiwindow -clipboard -wgl -ac`. This command can also be added to
+Windows start-up.
+
 - Run `ipconfig`, replace the IP address in DISPLAY variable in `.env` file with the host IP address reported by `ipconfig`, under the
 section `Ethernet adapter vEthernet (WSL)`, and add `:0.0` to the end of the IP address, e.g., `DISPLAY=172.31.32.1:0.0`.
+
+- Alternatively, run `python update_ip_for_wsl.py` in `scripts` directory, which updates DISPLAY variable in `.env` file automatically.
 
 ##### Setting up the pedal
 
@@ -158,6 +168,8 @@ BUSID  DEVICE                                                        STATE
 ```
 
 - Run `usbipd wsl attach --busid 1-10` (or similar if you have different bus id for the serial device).
+
+- Alternatively, run `python initialize_usb_over_ip.py` in `scripts` directory, which automatically does the above for USB pedal and Polaris tracker.
 
 - Run `docker-compose up -d` in `invesalius_ros` directory.
 
