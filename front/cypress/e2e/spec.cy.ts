@@ -9,7 +9,7 @@ const defaultWaitDuration = 500
 const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3000'}`
 describe('Target table', () => {
   before(() => {
-    cy.visit(testUrl)
+    cy.visit(testUrl + '/targets')
   })
   beforeEach(() => {
     clearRosState()
@@ -25,19 +25,19 @@ describe('Target table', () => {
     cy.get('#add-target-button').click()
     cy.wait(defaultWaitDuration)
     cy.get('#targets-table')
-        .find('tr')
-        .then((rows) => {
-          const originalLength = rows.toArray().length
+      .find('tr')
+      .then((rows) => {
+        const originalLength = rows.toArray().length
 
-          cy.get('#add-target-button').click()
-          cy.wait(defaultWaitDuration)
+        cy.get('#add-target-button').click()
+        cy.wait(defaultWaitDuration)
 
-          cy.get('#targets-table')
-              .find('tr')
-              .then((newRows) => {
-                expect(newRows.toArray().length).to.equal(originalLength + 1)
-              })
-        })
+        cy.get('#targets-table')
+          .find('tr')
+          .then((newRows) => {
+            expect(newRows.toArray().length).to.equal(originalLength + 1)
+          })
+      })
   })
 
   it('allows editing targets', () => {
@@ -87,11 +87,9 @@ describe('Target table', () => {
     cy.get('#sequences-view-button').click()
     cy.get('#cell-container-0-seqName').find('.cell-value-container').first().find('button').click()
     cy.get('#targets-table').find('tr').its('length').should('equal', 6)
-
   })
 
   after(() => {
     clearRosState()
   })
-
 })
