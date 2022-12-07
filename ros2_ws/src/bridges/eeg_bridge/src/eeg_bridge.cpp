@@ -137,11 +137,13 @@ public:
   void spin() {
     RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet.");
 
+    auto base_interface = this->get_node_base_interface();
+
     while (rclcpp::ok()) {
       if (this->read_eeg_data_from_socket()) {
         this->handle_eeg_data_packet();
       }
-      rclcpp::spin_some(this->get_node_base_interface());
+      rclcpp::spin_some(base_interface);
     }
   }
 
@@ -390,10 +392,6 @@ public:
     message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
     this->publisher_data_->publish(message);
-
-    auto stream_msg = std_msgs::msg::Bool();
-    stream_msg.data = true;
-    this->publisher_streaming_->publish(stream_msg);
   }
 
 
