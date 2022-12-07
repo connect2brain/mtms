@@ -34,7 +34,6 @@ public:
   }
 
   void timer_callback() {
-
     if (messages_received_since > 4500) {
       RCLCPP_INFO(this->get_logger(), "Hz: %d, total messages: %d", messages_received_since, messages_received);
     } else if (messages_received_since > 4000) {
