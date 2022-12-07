@@ -32,6 +32,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         saved
 
         sample_duration
+        downsample_ratio
     end
 
     methods
@@ -44,9 +45,11 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.FS = 5000;
             obj.sample_duration = 1 / obj.FS;
 
+            obj.downsample_ratio = 10;
+
             obj.offset_correction = obj.FS * 0.008;
             obj.nr_seconds = 1;
-            obj.nr_samples = obj.nr_seconds * obj.FS;
+            obj.nr_samples = obj.nr_seconds * obj.FS / 2; % only half of data needed to estimate future samples
 
             obj.lpf = firls(80, [0 80 250 5000/2]/(5000/2), [1 1 0 0], [1 1]);
             obj.bpf = firls(80, [0 6 9 13 16 (500/2)]/(500/2), [0 0 1 1 0 0], [1 1 1]);
@@ -60,7 +63,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.samples_collected = 0;
 
             obj.isi_seconds = 6;
-            obj.isi_samples = (obj.FS/2) * obj.isi_seconds;
+            obj.isi_samples = obj.FS * obj.isi_seconds;
 
             obj.target_voltage = 500;
 
@@ -92,21 +95,29 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
 
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
-                data = obj.data(1:2500);
-                data = data - mean(data);
-                data = filter(obj.lpf, obj.A, data);
+                dims = size(obj.data);
+                fprintf("dims: ");
+                
+                for i=1:numel(dims)
+                    fprintf("%f,", dims(i));
+                end
 
-                downsampled = data(1:10:end);
+                fprintf("\n");
+                data = obj.data(1:2500);
+                data = obj.data - mean(obj.data, 2);
+                data = filter(obj.lpf, obj.A, data, [], 2);
+
+                downsampled = data(1:obj.downsample_ratio:end);
 
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
 
                 nof_estimated_samples = numel(estimated_phases);
                 future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
-                
+
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
                 
-                event_time = time + (index_of_peak * 10 * obj.sample_duration - obj.offset_correction * obj.sample_duration);
+                event_time = time + (index_of_peak * obj.downsample_ratio * obj.sample_duration - obj.offset_correction * obj.sample_duration);
 
                 signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
                 %charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
