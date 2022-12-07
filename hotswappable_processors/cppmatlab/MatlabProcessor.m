@@ -104,10 +104,12 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 fprintf("\n");
                 data = obj.data(1:2500);
-                data = obj.data - mean(obj.data, 2);
-                data = filter(obj.lpf, obj.A, data, [], 2);
+                data = data - mean(data);
+                data = filter(obj.lpf, obj.A, data);
+                fprintf("downsmaple ratio: %f\n", obj.downsample_ratio);
 
-                downsampled = data(1:obj.downsample_ratio:end);
+                downsampled = data(1:10:end);
+                %downsampled = downsample(data, ratio);
 
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
 
@@ -117,8 +119,9 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
                 
-                event_time = time + (index_of_peak * obj.downsample_ratio * obj.sample_duration - obj.offset_correction * obj.sample_duration);
-
+                index_of_peak = double(obj.events_sent);
+                event_time = time + (index_of_peak * 10 * obj.sample_duration - obj.offset_correction * obj.sample_duration);
+                
                 signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
                 %charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
                 obj.set_commands([signal_out_event]);
