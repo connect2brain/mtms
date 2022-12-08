@@ -55,7 +55,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.bpf = firls(80, [0 6 9 13 16 (500/2)]/(500/2), [0 0 1 1 0 0], [1 1 1]);
 
             obj.set_channel_count(1);
-            obj.set_window_size(obj.FS);
+            obj.set_window_size(obj.nr_samples);
             obj.set_auto_enqueue(false);
             
             obj.estimated = false;
@@ -90,9 +90,12 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 c3 = channel_data(5) - 0.25 * (channel_data(21) + channel_data(23) + channel_data(25) + channel_data(27));
                 obj.enqueue(c3);
             end
-
+            
             obj.samples_collected = obj.samples_collected + 1;
             
+            if mod(obj.samples_collected, 100) == 0
+                %fprintf("%f\n", obj.samples_collected);
+            end
 
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
                 dims = size(obj.data);
@@ -105,26 +108,42 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 fprintf("\n");
                 data = obj.data(1:2500);
                 data = data - mean(data);
-                data = filter(obj.lpf, obj.A, data);
-                fprintf("downsmaple ratio: %f\n", obj.downsample_ratio);
+                filtered_data = filtfilt(obj.lpf, obj.A, data);
+                
+                filtered_data_fixed_size = filtered_data(1:2500);
 
-                downsampled = data(1:10:end);
-                %downsampled = downsample(data, ratio);
+                downsampled = filtered_data_fixed_size(1:10:end);
 
+                fprintf("Downsampling done\n");
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
+                fprintf("Phastimate done\n");
+                fprintf("Trying to use numel:\n");
 
                 nof_estimated_samples = numel(estimated_phases);
-                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
+                fprintf("numel done, nof_estimated_samples: %f\n", nof_estimated_samples);
+                
+                disp(size(estimated_phases));
+
+                %future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
+                future_samples = estimated_phases(33:64);
+                
+                fprintf("Sliced future samples\n");
 
                 [~, index_of_peak] = min(abs(future_samples - 0));
                 phase_at_peak = future_samples(index_of_peak);
                 
+                fprintf("Found peak %f\n", index_of_peak);
+
                 index_of_peak = double(obj.events_sent);
-                event_time = time + (index_of_peak * 10 * obj.sample_duration - obj.offset_correction * obj.sample_duration);
+                event_time = time + (index_of_peak * 10 * obj.sample_duration);
                 
+                fprintf("Calculated event time\n");
+
                 signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
                 %charge_event = create_charge_command(obj.events_sent + 2, 1, 0, event_time + 1, obj.target_voltage);
                 obj.set_commands([signal_out_event]);
+                
+                fprintf("Set commands\n");
 
                 fprintf("EEG time:  %f\n", time);
                 fprintf("Event time %f at index %f\n", event_time, index_of_peak);
