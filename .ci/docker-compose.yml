@@ -2,9 +2,11 @@ version: '3.5'
 
 services:
   front_test:
-    build: ../front/
     networks:
       - cinetwork
+    build:
+      context: ..
+      dockerfile: front/Dockerfile
     ports:
       - "3000:3000"
     depends_on:
