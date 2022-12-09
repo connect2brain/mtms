@@ -5,6 +5,8 @@
 //
 
 #include "python_processor.h"
+#include "rclcpp/rclcpp.hpp"
+
 
 PythonProcessor::PythonProcessor(std::string script_path) {
   if (std::getenv("DOCKER")) {
@@ -162,6 +164,33 @@ fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event
   return discharge;
 }
 
+fpga_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
+  auto signal_out = fpga_interfaces::msg::SignalOut();
+
+  auto port = PyObject_GetAttrString(event, "port");
+
+  if (port == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event port" << std::endl;
+  }
+
+  auto duration_us = PyObject_GetAttrString(event, "duration_us");
+  if (duration_us == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on duration_us" << std::endl;
+  }
+
+  signal_out.port = PyLong_AsUnsignedLong(port);
+  signal_out.duration_us = PyLong_AsUnsignedLong(duration_us);
+
+  signal_out.event = parse_event(event);
+
+  Py_DECREF(port);
+  Py_DECREF(duration_us);
+
+  return signal_out;
+}
+
 fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   auto pulse = fpga_interfaces::msg::Pulse();
 
@@ -221,8 +250,13 @@ std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(s
       event.discharge = discharge;
       event.event_type = DISCHARGE;
 
+    } else if (event_type == SIGNAL_OUT) {
+      auto signal_out = parse_signal_out(event_as_pyobject);
+      event.signal_out = signal_out;
+      event.event_type = SIGNAL_OUT;
+
     } else {
-      std::wcout << "Unknown event type" << std::endl;
+      RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
     }
 
     fpga_events.push_back(event);
@@ -238,8 +272,14 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
 
-  auto result = PyObject_CallMethodObjArgs(python_instance, python_data_received_name, list, time,
-                                           first_sample_of_experiment, nullptr);
+  auto result = PyObject_CallMethodObjArgs(
+      python_instance,
+      python_data_received_name,
+      list,
+      time,
+      first_sample_of_experiment,
+      nullptr
+  );
 
   if (!PyList_Check(result)) {
     std::cout << "Error in call data_received method. Ensure you are returning a list" << std::endl;
