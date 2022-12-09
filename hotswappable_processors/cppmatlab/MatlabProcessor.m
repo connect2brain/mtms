@@ -90,7 +90,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 c3 = channel_data(5) - 0.25 * (channel_data(21) + channel_data(23) + channel_data(25) + channel_data(27));
                 obj.enqueue(c3);
             end
-            
+
             obj.samples_collected = obj.samples_collected + 1;
             
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
