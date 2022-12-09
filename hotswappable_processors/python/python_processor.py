@@ -1,5 +1,6 @@
 from .base_python_processor import BaseProcessor
 from .events import Charge
+from .execution_condition import ExecutionCondition
 
 
 class Processor(BaseProcessor):
@@ -15,7 +16,7 @@ class Processor(BaseProcessor):
     def data_received(self, data, time, first_sample_of_experiment):
         event = {
             "id": self.event_index,
-            "execution_condition": 3,
+            "execution_condition": ExecutionCondition.INSTANT.value,
             "time": time
         }
         self.event_index += 1
