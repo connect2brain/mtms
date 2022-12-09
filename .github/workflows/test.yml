@@ -1,6 +1,9 @@
 name: CI
 on:
   pull_request:
+    branches:
+      - main
+      - $GITHUB_REF_NAME
 
 jobs:
   test:
@@ -21,7 +24,11 @@ jobs:
           ref: main
           token: ${{ secrets.GITHUB_TOKEN }}
           path: main
-      - run: git merge origin/${{ github.event.pull_request.head.ref }} --no-commit
+      - run: |
+            git fetch
+            git checkout ${{ github.event.pull_request.head.ref }}
+            git checkout main --
+            git merge ${{ github.event.pull_request.head.ref }} --no-commit
 
       - name: Build docker images
         run: docker-compose build
