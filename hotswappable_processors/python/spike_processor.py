@@ -43,5 +43,3 @@ class Processor(BaseProcessor):
         pulse = Pulse(channel=1, waveform=waveform, event=event)
 
         return [pulse]
-
-
