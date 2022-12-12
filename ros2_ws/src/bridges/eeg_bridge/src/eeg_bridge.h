@@ -12,6 +12,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "mtms_interfaces/msg/trigger.hpp"
+#include "fpga_interfaces/msg/system_state.hpp"
+#include "fpga_interfaces/msg/experiment_state.hpp"
 
 #define BUFFER_LENGTH 250
 #define MAX_NUMBER_OF_CHANNELS 80
@@ -19,6 +21,11 @@
 
 using namespace std::chrono_literals;
 
+enum EegBridgeState {
+  WAITING,
+  PUBLISHING,
+  FINISHED
+};
 
 class EegBridge : public rclcpp::Node {
 
@@ -51,12 +58,23 @@ public:
 
   void publish_eeg_datapoint(double_t time_since_trigger);
 
+  void handle_sync_trigger(double_t sync_time);
 
 private:
+
+  fpga_interfaces::msg::ExperimentState experiment_state;
+
+  double_t sync_interval;
+  uint16_t sync_index;
+  double_t sync_diff;
+  bool first_trigger_received;
+
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
   rclcpp::Publisher<mtms_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
+
+  rclcpp::Subscription<fpga_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
   double_t first_trigger_timestamp_;
   double_t latest_trigger_timestamp_;

@@ -49,7 +49,11 @@
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
 
-  static const rmw_qos_profile_t qos_profile = {
+  sync_interval = 10.0;
+  sync_index = 0;
+  sync_diff = 0.0;
+
+  const rmw_qos_profile_t qos_profile = {
       RMW_QOS_POLICY_HISTORY_KEEP_LAST,
       1,
       RMW_QOS_POLICY_RELIABILITY_RELIABLE,
@@ -62,6 +66,10 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   };
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  auto system_state_callback = [this](const std::shared_ptr<fpga_interfaces::msg::SystemState> message) -> void {
+    experiment_state = message->experiment_state;
+  };
 
   publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
@@ -193,6 +201,11 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
   return (double_t) time_us / 1000000.0;
 }
 
+void EegBridge::handle_sync_trigger(double_t sync_time) {
+  sync_diff = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
+  sync_index++;
+}
+
 void EegBridge::handle_trigger_packet() {
   double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
@@ -200,9 +213,22 @@ void EegBridge::handle_trigger_packet() {
   RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
 
   auto trigger_msg = mtms_interfaces::msg::Trigger();
+
   if (trigger_index == 1) {
-    this->first_trigger_timestamp_ = new_trigger_timestamp;
-    trigger_msg.time = 0;
+
+    if (first_trigger_received) {
+      this->handle_sync_trigger(new_trigger_timestamp);
+    } else {
+
+      //reset time
+
+      this->first_trigger_timestamp_ = new_trigger_timestamp;
+      trigger_msg.time = 0;
+      first_trigger_received = true;
+
+    }
+
+
   } else {
     trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_;
   }
@@ -304,7 +330,7 @@ void EegBridge::handle_eeg_data_packet() {
       this->handle_measurement_start_packet();
       break;
     case SAMPLE_PACKET_ID:
-      if (this->measurement_start_packet_received_) {
+      if (this->measurement_start_packet_received_ && this->experiment_state.value == this->experiment_state.STARTED) {
         this->handle_sample_packet();
       }
       break;
