@@ -5,7 +5,7 @@
 #include "memory_utils.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <chrono>
@@ -16,9 +16,7 @@
 
 #define SIGNED_MAX pow(2,23)
 #define UNSIGNED_MAX pow(2,24)
-#define DEFAULT_FREQUENCY_VALUE 500.0 // Hz
 #define DC_MODE_SCALE 100
-#define AC_MODE_SCALE 20
 #define NANO_TO_MICRO_CONVERSION 1000
 
 #define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
@@ -72,6 +70,8 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
+
+  subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", qos, system_state_callback);
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
@@ -147,20 +147,22 @@ void EegBridge::init_socket() {
   // Init socket variable
   this->socket_length = sizeof(this->socket_other);
 
-  // Init socket
+  // Init socket file descriptor
   this->socket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (this->socket_ == -1) {
-    EegBridge::err("socket");
+    EegBridge::err("Failed to create socket file descriptor.");
   }
 
+  //Initialize socket_own with zeros
   memset((char *) &(this->socket_own), 0, sizeof(this->socket_own));
+
   socket_own.sin_family = AF_INET;
   socket_own.sin_port = htons(this->port_);
   socket_own.sin_addr.s_addr = htonl(INADDR_ANY);
 
   if (bind(this->socket_, (struct sockaddr *) &(this->socket_own), sizeof(this->socket_own)) == -1) {
-    EegBridge::err("bind");
+    EegBridge::err("Failed to bind socket file descriptor to socket.");
   }
 
   struct timeval read_timeout;
