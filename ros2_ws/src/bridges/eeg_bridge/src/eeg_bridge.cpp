@@ -48,11 +48,6 @@
 #define VERBOSE 0
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
-
-  sync_interval = 10.0;
-  sync_index = 0;
-  sync_diff = 0.0;
-
   const rmw_qos_profile_t qos_profile = {
       RMW_QOS_POLICY_HISTORY_KEEP_LAST,
       1,
@@ -69,6 +64,9 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto system_state_callback = [this](const std::shared_ptr<fpga_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
+    if (experiment_state.value != fpga_interfaces::msg::ExperimentState::STARTED) {
+      first_trigger_received = false;
+    }
   };
 
   publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
@@ -107,6 +105,9 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->init_socket();
 
   this->first_sample_of_experiment_ = false;
+  this->sync_interval = 10.0;
+  this->sync_index = 0;
+  this->sync_diff = 0.0;
 }
 
 void EegBridge::set_channel_types() {
@@ -204,6 +205,7 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 void EegBridge::handle_sync_trigger(double_t sync_time) {
   sync_diff = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
   sync_index++;
+  RCLCPP_INFO(this->get_logger(), "Updated sync diff to %f", sync_diff);
 }
 
 void EegBridge::handle_trigger_packet() {
@@ -216,21 +218,20 @@ void EegBridge::handle_trigger_packet() {
 
   if (trigger_index == 1) {
 
-    if (first_trigger_received) {
+    if (this->first_trigger_received) {
       this->handle_sync_trigger(new_trigger_timestamp);
     } else {
 
-      //reset time
-
+      //upon receiving the first trigger, reset time
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       trigger_msg.time = 0;
-      first_trigger_received = true;
+      this->first_trigger_received = true;
 
     }
 
 
   } else {
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_;
+    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
   }
 
   this->latest_trigger_timestamp_ = new_trigger_timestamp;
@@ -255,10 +256,9 @@ void EegBridge::handle_sample_packet() {
     RCLCPP_INFO(this->get_logger(), "Number of bundles in this packet: %d", bundles);
   }
 
-  double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
+  double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX) - sync_diff;
 
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
-    //RCLCPP_INFO(this->get_logger(), "Received trigger package: %d", get_trigger_package_from_buffer());
     this->latest_trigger_timestamp_ = time;
     this->publish_trigger_from_buffer(time);
     this->first_sample_of_experiment_ = true;
@@ -330,8 +330,12 @@ void EegBridge::handle_eeg_data_packet() {
       this->handle_measurement_start_packet();
       break;
     case SAMPLE_PACKET_ID:
-      if (this->measurement_start_packet_received_ && this->experiment_state.value == this->experiment_state.STARTED) {
+      if (this->measurement_start_packet_received_ &&
+          this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED &&
+          this->first_trigger_received) {
+
         this->handle_sample_packet();
+
       }
       break;
     case TRIGGER_PACKET_ID:
