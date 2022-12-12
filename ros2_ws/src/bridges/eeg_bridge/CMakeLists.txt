@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
+find_package(fpga_interfaces REQUIRED)
 
 add_executable(eeg_bridge
         src/eeg_bridge.h
@@ -19,8 +20,8 @@ add_executable(eeg_bridge
         src/scheduling_utils.h
         )
 add_executable(mock_eeg_bridge src/mock_eeg_bridge.cpp)
-ament_target_dependencies(eeg_bridge rclcpp std_msgs mtms_interfaces)
-ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs mtms_interfaces)
+ament_target_dependencies(eeg_bridge rclcpp std_msgs mtms_interfaces fpga_interfaces)
+ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs mtms_interfaces fpga_interfaces)
 
 
 install(TARGETS
