@@ -11,6 +11,7 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
 
 add_executable(eeg_bridge
+        src/eeg_bridge.h
         src/eeg_bridge.cpp
         src/memory_utils.cpp
         src/memory_utils.h
