@@ -6,7 +6,7 @@
 #define EEG_BRIDGE_EEG_BRIDGE_H
 
 #include <netinet/in.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -21,11 +21,6 @@
 
 using namespace std::chrono_literals;
 
-enum EegBridgeState {
-  WAITING,
-  PUBLISHING,
-  FINISHED
-};
 
 class EegBridge : public rclcpp::Node {
 
