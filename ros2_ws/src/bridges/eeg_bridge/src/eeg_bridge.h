@@ -55,6 +55,8 @@ public:
 
   void handle_sync_trigger(double_t sync_time);
 
+  void reset_sync();
+
 private:
 
   fpga_interfaces::msg::ExperimentState experiment_state;
