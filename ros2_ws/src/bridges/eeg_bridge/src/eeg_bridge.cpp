@@ -63,7 +63,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto system_state_callback = [this](const std::shared_ptr<fpga_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
     if (experiment_state.value != fpga_interfaces::msg::ExperimentState::STARTED) {
-      first_trigger_received = false;
+      this->reset_sync();
     }
   };
 
@@ -127,6 +127,12 @@ void EegBridge::set_channel_types() {
     }
     this->channel_types[i - 1] = type;
   }
+}
+
+void EegBridge::reset_sync() {
+  first_trigger_received = false;
+  sync_diff = 0;
+  sync_index = 0;
 }
 
 void EegBridge::spin() {
