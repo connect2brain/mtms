@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from circular_buffer import CircularBuffer
+from .circular_buffer import CircularBuffer
 
 
 class BaseProcessor:
