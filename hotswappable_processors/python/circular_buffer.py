@@ -4,33 +4,23 @@ Adapted from https://stackoverflow.com/a/40784706/6215543
 
 
 class CircularBuffer(object):
-    def __init__(self, size, data=None):
-        """Initialization"""
-        if data is None:
-            data = []
+    def __init__(self, size):
         self.index = 0
         self.size = size
-        self._data = list(data)[-size:]
+        self.buffer = []
 
-    def data(self):
-        return self._data[self.index:] + self._data[:self.index]
+    def get_buffer(self):
+        return self.buffer[self.index:] + self.buffer[:self.index]
 
     def append(self, value):
-        """Append an element"""
-        if len(self._data) == self.size:
-            self._data[self.index] = value
+        if len(self.buffer) == self.size:
+            self.buffer[self.index] = value
         else:
-            self._data.append(value)
+            self.buffer.append(value)
         self.index = (self.index + 1) % self.size
 
     def __getitem__(self, key):
-        """Get element by index, relative to the current index"""
-        if len(self._data) == self.size:
-            return self._data[(key + self.index) % self.size]
+        if len(self.buffer) == self.size:
+            return self.buffer[(key + self.index) % self.size]
         else:
-            return self._data[key]
-
-    def __repr__(self):
-        """Return string representation"""
-        return (self._data[self.index:] + self._data[:self.index]).__repr__() + ' (' + str(
-            len(self._data)) + '/{} items)'.format(self.size)
+            return self.buffer[key]
