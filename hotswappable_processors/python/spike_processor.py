@@ -22,7 +22,7 @@ class Processor(BaseProcessor):
     def data_received(self, sample, time, first_sample_of_experiment):
         super().data_received(sample, time, first_sample_of_experiment)
 
-        is_spiking = analyze_eeg(self.samples.data())
+        is_spiking = analyze_eeg(self.samples.get_buffer())
 
         # if not spiking at the moment, do not do anything
         if not is_spiking:
