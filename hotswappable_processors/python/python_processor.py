@@ -5,7 +5,7 @@ from .execution_condition import ExecutionCondition
 
 class Processor(BaseProcessor):
     def __init__(self):
-        super().__init__()
+        super().__init__(auto_enqueue=True, window_size=5000)
         self.event_index = 1
 
     def init_experiment(self):
