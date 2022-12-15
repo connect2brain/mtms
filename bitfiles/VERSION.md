@@ -1,5 +1,9 @@
 ## Version history
 
+### 0.4.6
+- MOD: Send sync out signal at periodic intervals.
+- FIX: Pulse polarity on Tubingen device.
+
 ### 0.4.5
 - FIX: Updating pulse count only worked for first channel.
 - FIX: Default values for settings were in micro- or milliseconds, not ticks.
