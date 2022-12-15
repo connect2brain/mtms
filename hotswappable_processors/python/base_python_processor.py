@@ -1,13 +1,14 @@
 from abc import abstractmethod
-from .buffer import Buffer
+from .circular_buffer import CircularBuffer
 
 
 class BaseProcessor:
 
-    def __init__(self, auto_enqueue=False, window_size=5000):
+    def __init__(self, auto_enqueue=False, window_size=5000, channels=63):
         self.auto_enqueue = auto_enqueue
         self.window_size = window_size
-        self.samples = Buffer(window_size=5000)
+        self.channels = channels
+        self.samples = CircularBuffer(window_size=5000, columns=channels)
 
     @abstractmethod
     def init_experiment(self):
