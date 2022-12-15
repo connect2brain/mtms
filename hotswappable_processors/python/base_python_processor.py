@@ -8,7 +8,7 @@ class BaseProcessor:
         self.auto_enqueue = auto_enqueue
         self.window_size = window_size
         self.channels = channels
-        self.samples = CircularBuffer(window_size=5000, columns=channels)
+        self.samples = CircularBuffer(window_size=window_size, columns=channels)
 
     @abstractmethod
     def init_experiment(self):
