@@ -5,27 +5,24 @@ from .utils import analyze_eeg, get_default_waveform
 
 
 class Processor(BaseProcessor):
-    def __init__(self) -> None:
+    def __init__(self):
+        super().__init__(auto_enqueue=True, window_size=5000)
         self.event_index = 1
-        self.data = []
-        self.max_data_length = 5000
 
     def init_experiment(self):
+        super().init_experiment()
+
         return []
 
     def end_experiment(self):
+        super().end_experiment()
+
         return []
 
-    def enqueue(self, new_data_point):
-        self.data.append(new_data_point)
+    def data_received(self, sample, time, first_sample_of_experiment):
+        super().data_received(sample, time, first_sample_of_experiment)
 
-        if len(self.data) > self.max_data_length:
-            self.data.pop(0)
-
-    def data_received(self, data, time, first_sample_of_experiment):
-        self.enqueue(data)
-
-        is_spiking = analyze_eeg(self.data)
+        is_spiking = analyze_eeg(self.samples.get_buffer())
 
         # if not spiking at the moment, do not do anything
         if not is_spiking:
