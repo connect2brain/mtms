@@ -1,7 +1,3 @@
-"""
-Adapted from https://stackoverflow.com/a/40784706/6215543
-"""
-
 import numpy as np
 
 
