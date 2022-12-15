@@ -9,11 +9,7 @@
 
 
 PythonProcessor::PythonProcessor(std::string script_path) {
-  if (std::getenv("DOCKER")) {
-    setenv("PYTHONPATH", ".", 1);
-  } else {
-    setenv("PYTHONPATH", "../../", 1);
-  }
+  setenv("PYTHONPATH", ".", 1);
   Py_Initialize();
 
   script_name = PyUnicode_FromString(script_path.c_str());
@@ -45,6 +41,10 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 
   if (PyCallable_Check(python_class) == 1) {
     python_instance = PyObject_CallObject(python_class, nullptr);
+    if (python_instance == NULL) {
+      PyErr_Print();
+    }
+
     Py_DECREF(python_class);
   } else {
     std::cout << "Cannot instantiate python class" << std::endl;
