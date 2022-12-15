@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from .circular_buffer import CircularBuffer
+from .buffer import Buffer
 
 
 class BaseProcessor:
@@ -7,7 +7,7 @@ class BaseProcessor:
     def __init__(self, auto_enqueue=False, window_size=5000):
         self.auto_enqueue = auto_enqueue
         self.window_size = window_size
-        self.samples = CircularBuffer(self.window_size)
+        self.samples = Buffer(window_size=5000)
 
     @abstractmethod
     def init_experiment(self):
