@@ -71,7 +71,8 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-  subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", qos, system_state_callback);
+  subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", 10,
+                                                                                           system_state_callback);
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
@@ -104,10 +105,8 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->init_socket();
 
-  this->first_sample_of_experiment_ = false;
   this->sync_interval = 10.0;
-  this->sync_index = 0;
-  this->sync_diff = 0.0;
+  this->reset_sync();
 }
 
 void EegBridge::set_channel_types() {
@@ -132,7 +131,7 @@ void EegBridge::set_channel_types() {
 void EegBridge::reset_sync() {
   first_trigger_received = false;
   sync_diff = 0;
-  sync_index = 0;
+  sync_index = 1;
 }
 
 void EegBridge::spin() {
@@ -229,7 +228,6 @@ void EegBridge::handle_trigger_packet() {
     if (this->first_trigger_received) {
       this->handle_sync_trigger(new_trigger_timestamp);
     } else {
-
       //upon receiving the first trigger, reset time
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       trigger_msg.time = 0;
@@ -242,12 +240,9 @@ void EegBridge::handle_trigger_packet() {
     trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
   }
 
-  this->latest_trigger_timestamp_ = new_trigger_timestamp;
-
   trigger_msg.index = trigger_index;
   this->publisher_trigger_->publish(trigger_msg);
 
-  RCLCPP_INFO(this->get_logger(), "New trigger timestamp: %.2f\n", this->latest_trigger_timestamp_);
   this->first_sample_of_experiment_ = true;
 }
 
@@ -257,42 +252,34 @@ void EegBridge::handle_sample_packet() {
 
   if (bundles != 1) {
     RCLCPP_WARN(this->get_logger(), "Warning: Bundle size %u not supported. Expected 1.", bundles);
-  }
-
-  if (VERBOSE) {
-    RCLCPP_INFO(this->get_logger(), "Sample packet received.");
-    RCLCPP_INFO(this->get_logger(), "Number of bundles in this packet: %d", bundles);
+    return;
   }
 
   double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX) - sync_diff;
 
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
-    this->latest_trigger_timestamp_ = time;
     this->publish_trigger_from_buffer(time);
     this->first_sample_of_experiment_ = true;
   }
 
-  if (this->latest_trigger_timestamp_ > 0 && time >= this->latest_trigger_timestamp_) {
-    double_t time_diff = time - this->latest_trigger_timestamp_;
-
-    if (VERBOSE) {
-      RCLCPP_INFO(this->get_logger(), "Last trigger timestamp:  %.4f", this->latest_trigger_timestamp_);
-      RCLCPP_INFO(this->get_logger(), "Sample timestamp:        %.4f", time);
-      RCLCPP_INFO(this->get_logger(), "Time since last trigger: %.4f", time_diff);
-    }
+  if (this->first_trigger_timestamp_ > 0 && time >= this->first_trigger_timestamp_) {
+    double_t time_diff = time - this->first_trigger_timestamp_;
 
     this->publish_eeg_datapoint(time_diff);
     this->first_sample_of_experiment_ = false;
 
-  } else if (time < this->latest_trigger_timestamp_) {
-    RCLCPP_INFO(this->get_logger(), "Last trigger timestamp: %.4f", this->latest_trigger_timestamp_);
-    RCLCPP_INFO(this->get_logger(), "Sample timestamp:       %.4f", time);
+  } else if (time < this->first_trigger_timestamp_) {
+
     RCLCPP_WARN(this->get_logger(),
-                "Warning: Sample packet arrived %.4f seconds before the trigger. Skipping.",
-                this->latest_trigger_timestamp_ - time);
+                "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
+                this->first_trigger_timestamp_ - time,
+                this->first_trigger_timestamp_,
+                time
+    );
+
   } else {
-    RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Latest trigger timestamp %.4f, time %.4f",
-                this->latest_trigger_timestamp_, time);
+    RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Experiment start trigger timestamp %.4f, time %.4f",
+                this->first_trigger_timestamp_, time);
   }
 }
 
