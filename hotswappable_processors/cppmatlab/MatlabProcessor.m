@@ -77,7 +77,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
         end
         function on_init_experiment(obj)
-            %charge = create_charge_command(obj.events_sent + 1, 1, 2, 0, obj.target_voltage);
             obj.set_commands([]);
         end
         function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
