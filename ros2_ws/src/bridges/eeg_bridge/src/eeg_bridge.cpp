@@ -232,6 +232,7 @@ void EegBridge::handle_trigger_packet() {
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       trigger_msg.time = 0;
       this->first_trigger_received = true;
+      this->first_sample_of_experiment_ = true;
 
     }
 
@@ -243,7 +244,6 @@ void EegBridge::handle_trigger_packet() {
   trigger_msg.index = trigger_index;
   this->publisher_trigger_->publish(trigger_msg);
 
-  this->first_sample_of_experiment_ = true;
 }
 
 void EegBridge::handle_sample_packet() {
@@ -339,7 +339,7 @@ void EegBridge::handle_eeg_data_packet() {
       }
       break;
     default:
-      RCLCPP_WARN(this->get_logger(), "Unknown packet type.");
+      RCLCPP_WARN(this->get_logger(), "Unknown packet type %u.", packet_type);
   }
 }
 
