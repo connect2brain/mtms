@@ -18,18 +18,16 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   this->get_parameter("file", filename);
 
   auto trigger_subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Trigger> message) -> void {
-    if (message->index == 1) {
-      signal_out_client->async_send_request(req);
-    } else if (message->index == 2) {
+    signal_out_client->async_send_request(req);
 
+    if (message->index == 2) {
       if (index < durations.size()) {
         durations[index++] = message->time;
       } else {
         index++;
       }
 
-      //RCLCPP_INFO(this->get_logger(), "index: %d", index);
-      if (index % 1000 == 0) {
+      if (index % (durations.size() / 10) == 0) {
         RCLCPP_INFO(this->get_logger(), "Index: %d", index);
       }
       if (index == durations.size()) {
@@ -41,8 +39,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
         f.flush();
         f.close();
       }
-      //RCLCPP_INFO(this->get_logger(), "Difference between triggers: %lu", message->time);
-    } else {
+    } else if (message->index > 2) {
       RCLCPP_WARN(rclcpp::get_logger("eeg_trigger_processor"), "Unknown message index %d", message->index);
     }
   };
@@ -56,7 +53,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
 
   req = std::make_shared<fpga_interfaces::srv::SendSignalOut::Request>();
   auto event = fpga_interfaces::msg::SignalOut();
-  event.port = 3;
+  event.port = 2;
   event.duration_us = 10000;
   event.event.time = 0.0;
   event.event.execution_condition.value = 2;
