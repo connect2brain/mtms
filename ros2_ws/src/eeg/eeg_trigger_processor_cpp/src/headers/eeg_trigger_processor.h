@@ -19,7 +19,6 @@ public:
   EEGTriggerProcessor();
 
 private:
-  double_t first_trigger_time;
   std::fstream f;
   std::shared_ptr<fpga_interfaces::srv::SendSignalOut_Request_<std::allocator<void>>> req;
 

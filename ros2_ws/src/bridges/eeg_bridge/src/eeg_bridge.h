@@ -74,6 +74,7 @@ private:
   rclcpp::Subscription<fpga_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
   double_t first_trigger_timestamp_;
+  double_t previous_trigger_timestamp;
 
   bool measurement_start_packet_received_;
   uint16_t n_channels_;
