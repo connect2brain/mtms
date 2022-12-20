@@ -107,6 +107,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->sync_interval = 10.0;
   this->reset_sync();
+  this->previous_trigger_timestamp = -1;
 }
 
 void EegBridge::set_channel_types() {
@@ -232,12 +233,15 @@ void EegBridge::handle_trigger_packet() {
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       trigger_msg.time = 0;
       this->first_trigger_received = true;
-
     }
 
-
   } else {
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
+    //trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
+    trigger_msg.time = new_trigger_timestamp -
+                       (this->previous_trigger_timestamp > 0 ? this->previous_trigger_timestamp
+                                                             : this->first_trigger_timestamp_) - this->sync_diff;
+
+    this->previous_trigger_timestamp = new_trigger_timestamp;
   }
 
   trigger_msg.index = trigger_index;
@@ -257,6 +261,8 @@ void EegBridge::handle_sample_packet() {
 
   double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX) - sync_diff;
 
+  //if sending trigger as channel, this will also initialize first_trigger_timestamp and first_trigger_received
+  //so also the next if statement will be executed
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
     this->publish_trigger_from_buffer(time);
     this->first_sample_of_experiment_ = true;
@@ -268,13 +274,16 @@ void EegBridge::handle_sample_packet() {
     this->publish_eeg_datapoint(time_diff);
     this->first_sample_of_experiment_ = false;
 
-  } else if (time < this->first_trigger_timestamp_) {
+  } else if (time < this->first_trigger_timestamp_ || !this->first_trigger_received) {
+    auto &clk = *this->get_clock();
 
-    RCLCPP_WARN(this->get_logger(),
-                "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
-                this->first_trigger_timestamp_ - time,
-                this->first_trigger_timestamp_,
-                time
+    RCLCPP_WARN_THROTTLE(this->get_logger(),
+                         clk,
+                         1000,
+                         "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
+                         this->first_trigger_timestamp_ - time,
+                         this->first_trigger_timestamp_,
+                         time
     );
 
   } else {
@@ -325,19 +334,33 @@ void EegBridge::handle_eeg_data_packet() {
       this->handle_measurement_start_packet();
       break;
     case SAMPLE_PACKET_ID:
-      if (this->measurement_start_packet_received_ &&
-          this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED &&
-          this->first_trigger_received) {
+      if (this->measurement_start_packet_received_) {
 
-        this->handle_sample_packet();
+        //if sending trigger as a packet, wait until we receive the first trigger
+        if (!this->send_trigger_as_channel && this->first_trigger_received &&
+            this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+          this->handle_sample_packet();
+
+          //if sending trigger as channel, we need to handle packets before the first trigger
+          //is received as it will be sent as a part of a sample packet
+        } else if (this->send_trigger_as_channel && !this->first_trigger_received) {
+          this->handle_sample_packet();
+
+          //when the first trigger is received, we also expect the experiment to be started
+        } else if (this->send_trigger_as_channel && this->first_trigger_received &&
+                   this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+          this->handle_sample_packet();
+        }
 
       }
       break;
+
     case TRIGGER_PACKET_ID:
       if (this->measurement_start_packet_received_) {
         this->handle_trigger_packet();
       }
       break;
+
     default:
       RCLCPP_WARN(this->get_logger(), "Unknown packet type.");
   }
@@ -358,11 +381,22 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
   if (trigger_channel_package == TRIGGER_A_IN) {
     trigger_msg.index = 1;
-    first_trigger_timestamp_ = time;
-    trigger_msg.time = 0.0;
+    trigger_msg.time = time - this->first_trigger_timestamp_;
+
+    if (!first_trigger_received) {
+      first_trigger_timestamp_ = time;
+      first_trigger_received = true;
+      trigger_msg.time = 0.0;
+      RCLCPP_INFO(this->get_logger(), "First trigger received, ts: %f", first_trigger_timestamp_);
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Tried to update sync_diff but sending trigger as packet, ignoring sync");
+    }
+
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     trigger_msg.index = 2;
-    trigger_msg.time = time - first_trigger_timestamp_;
+    trigger_msg.time = time - (this->previous_trigger_timestamp > 0 ? this->previous_trigger_timestamp
+                                                                    : this->first_trigger_timestamp_);
+    this->previous_trigger_timestamp = time;
   }
   this->publisher_trigger_->publish(trigger_msg);
 }
