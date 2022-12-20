@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.4.7
+- FIX: Time counter was reset at the wrong time, before experiment started.
+
 ### 0.4.6
 - MOD: Send sync out signal at periodic intervals.
 - FIX: Pulse polarity on Tubingen device.
