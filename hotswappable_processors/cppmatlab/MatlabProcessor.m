@@ -62,7 +62,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.print_c3 = false;
             obj.samples_collected = 0;
 
-            obj.isi_seconds = 6;
+            obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
 
             obj.target_voltage = 500;
@@ -77,8 +77,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
         end
         function on_init_experiment(obj)
-            charge = create_charge_command(obj.events_sent + 1, 1, 2, 0, obj.target_voltage);
-            obj.set_commands(charge);
+            obj.set_commands([]);
         end
         function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
             if obj.estimated && obj.samples_collected == obj.isi_samples
