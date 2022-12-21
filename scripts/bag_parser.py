@@ -1,5 +1,7 @@
 import argparse
 import sqlite3
+import sys
+
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
@@ -9,15 +11,17 @@ from timeit import default_timer as timer
 
 def parse_bag_file():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file")
+    arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file directory")
+
+    arg_parser.add_argument("-t", "--topic", action="append", type=str, help="Topic to get from bag file")
+
     args = arg_parser.parse_args()
     if args.bag_file is None:
         print("ERROR, you must provide a bag file. Run script with --help")
-        print()
-        return ""
+        sys.exit(1)
 
     print(f"Using bag file {args.bag_file}")
-    return args.bag_file
+    return args
 
 
 """
@@ -52,7 +56,6 @@ class BagFileParser:
         print(f"Found {len(messages)} messages for topic {topic}")
         return messages
 
-
     def save_topic_timestamps(self, topic, file_name):
         if topic not in self.topic_id:
             print(f"Topic {topic} not found")
@@ -63,8 +66,6 @@ class BagFileParser:
 
         with open(file_name, 'w') as f:
             f.write("\n".join(timestamps))
-
-        print(f"Saved timestamps for {topic}")
 
     def save_eeg(self, file_name):
         topic = '/eeg/raw_data'
@@ -80,8 +81,6 @@ class BagFileParser:
             write_data.append(s)
         with open(file_name, 'w') as f:
             f.write("\n".join(write_data))
-
-        print(f"Saved messages for {topic}")
 
     @staticmethod
     def parse_sample_time(sample):
@@ -101,6 +100,6 @@ parser = BagFileParser(bag_file)
 parser.save_eeg("file_name")
 
 # Save events.
-parser.save_topic_timestamps("/mtms/events", "events_matilda")
+parser.save_topic_timestamps("topic_name", "file_name")
 
 print("Done")
