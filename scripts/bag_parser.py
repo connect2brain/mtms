@@ -9,7 +9,7 @@ from timeit import default_timer as timer
 
 def parse_bag_file():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file directory")
+    arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file")
     args = arg_parser.parse_args()
     if args.bag_file is None:
         print("ERROR, you must provide a bag file. Run script with --help")
@@ -38,28 +38,37 @@ class BagFileParser:
     def __del__(self):
         self.conn.close()
 
-    def get_messages(self, topic_name):
-        topic_id = self.topic_id[topic_name]
+    def get_messages(self, topic):
+        if topic not in self.topic_id:
+            print(f"Topic {topic} not found")
+            return []
+
+        topic_id = self.topic_id[topic]
 
         rows = self.cursor.execute(
             "SELECT data FROM messages WHERE topic_id = {}".format(topic_id)).fetchall()
 
-        return [deserialize_message(data, self.topic_msg_message[topic_name]) for data, in rows]
+        messages = [deserialize_message(data, self.topic_msg_message[topic]) for data, in rows]
+        print(f"Found {len(messages)} messages for topic {topic}")
+        return messages
+
 
     def save_topic_timestamps(self, topic, file_name):
         if topic not in self.topic_id:
             print(f"Topic {topic} not found")
             return
 
-        messages = self.get_topic_messages(topic)
+        messages = self.get_messages(topic)
         timestamps = list(map(lambda sample: self.parse_sample_time(sample), messages))
 
         with open(file_name, 'w') as f:
             f.write("\n".join(timestamps))
 
+        print(f"Saved timestamps for {topic}")
+
     def save_eeg(self, file_name):
         topic = '/eeg/raw_data'
-        messages = self.get_topic_messages(topic)
+        messages = self.get_messages(topic)
 
         timestamps = list(map(lambda sample: self.parse_sample_time(sample), messages))
 
@@ -72,14 +81,7 @@ class BagFileParser:
         with open(file_name, 'w') as f:
             f.write("\n".join(write_data))
 
-    def get_topic_messages(self, topic):
-        if topic not in self.topic_id:
-            print(f"Topic {topic} not found")
-            return
-
-        messages = self.get_messages(topic)
-        print(f"Found {len(messages)} messages for topic {topic}")
-        return messages
+        print(f"Saved messages for {topic}")
 
     @staticmethod
     def parse_sample_time(sample):
