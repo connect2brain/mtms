@@ -2,18 +2,20 @@ import argparse
 import sqlite3
 import sys
 
+
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
-import numpy as np
-from timeit import default_timer as timer
 
-
-def parse_bag_file():
+def parse_arguments():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file directory")
-
     arg_parser.add_argument("-t", "--topic", action="append", type=str, help="Topic to get from bag file")
+    arg_parser.add_argument("-n", "--name", type=str, required=False, help="String that is prepended to output files")
+
+    arg_parser.add_argument('--full', action='store_true',
+                            help="If set, store full data (eeg channels, event types etc)?")
+    arg_parser.set_defaults(feature=False)
 
     args = arg_parser.parse_args()
     if args.bag_file is None:
@@ -21,7 +23,10 @@ def parse_bag_file():
         sys.exit(1)
 
     print(f"Using bag file {args.bag_file}")
-    return args
+    print(f"Looking for topics {', '.join(args.topic)}")
+    if args.name is None:
+        args.name = ""
+    return args.bag_file, args.topic, args.name
 
 
 """
@@ -57,15 +62,18 @@ class BagFileParser:
         return messages
 
     def save_topic_timestamps(self, topic, file_name):
-        if topic not in self.topic_id:
-            print(f"Topic {topic} not found")
-            return
-
         messages = self.get_messages(topic)
         timestamps = list(map(lambda sample: self.parse_sample_time(sample), messages))
 
         with open(file_name, 'w') as f:
             f.write("\n".join(timestamps))
+
+    def save_topic_full(self, topic, file_name):
+        messages = self.get_messages(topic)
+
+        for message in messages:
+            parsed = self.parse_sample_fields(message)
+            print(parsed)
 
     def save_eeg(self, file_name):
         topic = '/eeg/raw_data'
@@ -82,6 +90,25 @@ class BagFileParser:
         with open(file_name, 'w') as f:
             f.write("\n".join(write_data))
 
+    def parse_sample_fields(self, sample):
+        fields = sample.get_fields_and_field_types()
+
+        field_values = []
+
+        for field_name, field_type in fields.items():
+            if 'sequence' in field_type:
+                seq = self.parse_sequence(sample.field_name)
+                field_value = ",".join(seq)
+            else:
+                field_value = str(sample.field_name)
+            field_values.append(field_value)
+
+        return field_values
+
+    @staticmethod
+    def parse_sequence(sequence):
+        return [str(v) for v in sequence]
+
     @staticmethod
     def parse_sample_time(sample):
         return str(sample.time)
@@ -93,13 +120,14 @@ class BagFileParser:
         return cast_as_str
 
 
-bag_file = parse_bag_file()
+bag_file, topics, fname = parse_arguments()
 parser = BagFileParser(bag_file)
 
-# Save EEG.
-parser.save_eeg("file_name")
 
-# Save events.
-parser.save_topic_timestamps("topic_name", "file_name")
+# Save topics.
+for topic in topics:
+    n = f"{fname}_" if len(fname) > 0 else ""
+    output_file_name = f"{n}{topic[1:].replace('/', '_')}"
+    parser.save_topic_timestamps(topic, output_file_name)
 
 print("Done")
