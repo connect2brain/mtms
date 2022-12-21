@@ -95,8 +95,10 @@ class BagFileParser:
 bag_file = parse_bag_file()
 parser = BagFileParser(bag_file)
 
-start = timer()
-parser.save_eeg("eeg_samples_plain_matilda")
-end = timer()
-print(f"Time elapsed: {end - start}")
+# Save EEG.
+parser.save_eeg("file_name")
+
+# Save events.
 parser.save_topic_timestamps("/mtms/events", "events_matilda")
+
+print("Done")
