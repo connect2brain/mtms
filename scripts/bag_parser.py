@@ -16,7 +16,7 @@ def parse_arguments():
     arg_parser.add_argument("-p", "--prefix", type=str, required=False, help="String that is prefixed to output files")
 
     arg_parser.add_argument('--full', action='store_true',
-                            help="If set, store full data (eeg channels, event types etc)?")
+                            help="If set, store full data (eeg channels, event types etc)")
     arg_parser.set_defaults(feature=False)
 
     args = arg_parser.parse_args()
