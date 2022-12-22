@@ -3,8 +3,6 @@ import sqlite3
 import sys
 import gc
 
-from timeit import default_timer as timer
-
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
@@ -134,7 +132,6 @@ parser = BagFileParser(bag_file)
 
 # Save topics.
 for topic in topics:
-    start = timer()
     prefix_formatted = f"{prefix}_" if len(prefix) > 0 else ""
 
     # Add prefix, drop the leading / and replace remaining / with _.
@@ -145,8 +142,5 @@ for topic in topics:
         parser.save_topic_full(topic, output_file_name)
     else:
         parser.save_topic_timestamps(topic, output_file_name)
-
-    end = timer()
-    print(f"Converting {topic} took {end - start} s")
 
 print("Done")
