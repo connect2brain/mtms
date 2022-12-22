@@ -65,7 +65,7 @@ class BagFileParser:
 
     def save_topic_timestamps(self, topic, file_name):
         messages = self.get_messages(topic)
-        timestamps = list(map(lambda sample: self.parse_sample_time(sample), messages))
+        timestamps = list(map(lambda sample: str(sample.time), messages))
 
         with open(file_name, 'w') as f:
             f.write("\n".join(timestamps))
@@ -73,36 +73,21 @@ class BagFileParser:
     def save_topic_full(self, topic, file_name):
         f = open(file_name, 'w')
         for message in self.get_messages(topic):
-            parsed = self.parse_sample_fields(message)
+            parsed = self.parse_message_fields(message)
             f.write(parsed + "\n")
         f.close()
 
-    def save_eeg(self, file_name):
-        topic = '/eeg/raw_data'
-        messages = self.get_messages(topic)
-
-        timestamps = list(map(lambda sample: self.parse_sample_time(sample), messages))
-
-        eeg_channels = list(map(lambda sample: self.parse_sample_eeg(sample), messages))
-
-        write_data = []
-        for i in range(len(timestamps)):
-            s = ",".join([timestamps[i], *eeg_channels[i]])
-            write_data.append(s)
-        with open(file_name, 'w') as f:
-            f.write("\n".join(write_data))
-
-    def parse_sample_fields(self, sample):
-        fields = sample.get_fields_and_field_types()
+    def parse_message_fields(self, message):
+        fields = message.get_fields_and_field_types()
 
         field_values = []
 
         for field_name, field_type in fields.items():
             if 'sequence' in field_type:
-                seq = self.parse_sequence(getattr(sample, field_name))
-                field_value = ",".join(seq)
+                seq = getattr(message, field_name)
+                field_value = ",".join(str(element) for element in seq)
             else:
-                field_value = str(getattr(sample, field_name))
+                field_value = str(getattr(message, field_name))
 
             # Time should be the first column.
             if field_name == "time":
@@ -111,20 +96,6 @@ class BagFileParser:
                 field_values.append(field_value)
 
         return ",".join(field_values)
-
-    @staticmethod
-    def parse_sequence(sequence):
-        return [str(v) for v in sequence]
-
-    @staticmethod
-    def parse_sample_time(sample):
-        return str(sample.time)
-
-    @staticmethod
-    def parse_sample_eeg(sample):
-        eeg_channels = sample.eeg_channels
-        cast_as_str = [str(channel) for channel in eeg_channels]
-        return cast_as_str
 
 
 bag_file, topics, prefix, full = parse_arguments()
