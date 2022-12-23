@@ -29,11 +29,6 @@ def parse_arguments():
     return args.bag_file, args.topic, args.prefix, args.full
 
 
-"""
-Adapted from https://answers.ros.org/question/358686/how-to-read-a-bag-file-in-ros2/
-"""
-
-
 class BagFileParser:
     def __init__(self, bag_file):
         self.conn = sqlite3.connect(bag_file)
