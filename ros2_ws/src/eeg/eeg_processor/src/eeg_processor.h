@@ -50,7 +50,7 @@ public:
 
 private:
   bool should_publish_events;
-  void publish_events(const std::vector<FpgaEvent> &events);
+  void publish_events(double_t time, const std::vector<FpgaEvent> &events);
   void measure(int repeats);
   void send_fpga_events(const std::vector<FpgaEvent>& events);
 
