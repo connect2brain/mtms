@@ -50,6 +50,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     processor = new CompiledMatlabProcessor(processor_script_path);
   } else if (processor_type == "cpp") {
     processor = new CppProcessor(processor_script_path);
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "No processor specified!");
   }
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
@@ -62,7 +64,7 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
     send_fpga_events(fpga_events);
 
     if (should_publish_events) {
-      publish_events(fpga_events);
+      publish_events(message->time, fpga_events);
     }
 
     auto total = duration_cast<microseconds>(stop - start);
@@ -144,31 +146,32 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
 
 }
 
-void EegProcessor::publish_events(const std::vector<FpgaEvent> &events) {
+void EegProcessor::publish_events(double_t time, const std::vector<FpgaEvent> &events) {
   for (FpgaEvent event: events) {
     mtms_interfaces::msg::Event ros_event;
 
     ros_event.event_type = event.event_type;
+    ros_event.processing_start_time = time;
 
     switch (event.event_type) {
       case PULSE:
-        ros_event.time = event.pulse.event.time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published fpga pulse event timed at %.4f.", ros_event.time);
+        ros_event.when_to_execute = event.pulse.event.time;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published fpga pulse event timed at %.4f.", ros_event.when_to_execute);
         break;
 
       case CHARGE:
-        ros_event.time = event.charge.event.time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published charge event timed at %.4f.", ros_event.time);
+        ros_event.when_to_execute = event.charge.event.time;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published charge event timed at %.4f.", ros_event.when_to_execute);
         break;
 
       case DISCHARGE:
-        ros_event.time = event.discharge.event.time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published discharge event timed at %.4f.", ros_event.time);
+        ros_event.when_to_execute = event.discharge.event.time;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published discharge event timed at %.4f.", ros_event.when_to_execute);
         break;
 
       case SIGNAL_OUT:
-        ros_event.time = event.signal_out.event.time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published signal out event timed at %.4f.", ros_event.time);
+        ros_event.when_to_execute = event.signal_out.event.time;
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published signal out event timed at %.4f.", ros_event.when_to_execute);
         break;
 
       default:

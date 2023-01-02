@@ -53,7 +53,7 @@ const DataVisualize = () => {
 
   const newEvent = (message: MTMSEventMessage) => {
     const camelCased: MTMSEvent = objectKeysToCamelCase(message)
-    const time = camelCased.time
+    const time = camelCased.whenToExecute
 
     setLatestEvent({
       y: 100000,

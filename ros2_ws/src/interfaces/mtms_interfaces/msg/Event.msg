@@ -10,6 +10,7 @@ uint8 PULSE=1
 uint8 DISCHARGE=2
 uint8 SIGNAL_OUT=3
 
-float64 time
+float64 when_to_execute
+float64 processing_start_time
 
 uint8 event_type
