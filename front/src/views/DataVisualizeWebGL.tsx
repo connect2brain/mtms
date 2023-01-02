@@ -83,8 +83,8 @@ const DataVisualizeWebGL = () => {
       let removeThisEvent = false
       for (let i = 0; i < latestTimestamps.length; i++) {
         const ts = latestTimestamps[i]
-        if (event.time < ts) {
-          console.log(`event: ${event.eventType}, ${event.time}, ${ts}`)
+        if (event.whenToExecute < ts) {
+          console.log(`event: ${event.eventType}, ${event.whenToExecute}, ${ts}`)
           allData[event.eventType][i].y = 1
           removeThisEvent = true
           break
