@@ -2,8 +2,8 @@
 // Created by alqio on 3.1.2023.
 //
 
-#ifndef EEG_PROCESSOR_RING_BUFFER_H
-#define EEG_PROCESSOR_RING_BUFFER_H
+#ifndef PROCESSOR_FACTORY_RING_BUFFER_H
+#define PROCESSOR_FACTORY_RING_BUFFER_H
 
 #include <vector>
 
@@ -28,4 +28,4 @@ private:
   unsigned nof_elements;
 };
 
-#endif //EEG_PROCESSOR_RING_BUFFER_H
+#endif //PROCESSOR_FACTORY_RING_BUFFER_H

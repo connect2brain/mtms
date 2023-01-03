@@ -26,6 +26,13 @@ public:
 private:
   unsigned channel_count;
   unsigned window_size;
+  unsigned sampling_frequency;
+
+  unsigned isi_seconds;
+  unsigned isi_samples;
+
+  unsigned samples_collected;
+
 };
 
 #endif //PROCESSOR_FACTORY_PROCESSOR_H
