@@ -12,6 +12,6 @@ sed -i -e 's/MatlabProcessor \*init/virtual MatlabProcessor \*init/' $PROCESSOR_
 sed -i -e 's/  void/virtual void/' $PROCESSOR_H
 sed -i -e 's/class MatlabProcessor/class MatlabProcessor : public MatlabProcessorInterface/' $PROCESSOR_H
 sed -i -e '/Include files/a #include "matlab_processor_interface.h"' $PROCESSOR_H
-cmake .
+cmake . -D CMAKE_BUILD_TYPE=Release
 make all
 
