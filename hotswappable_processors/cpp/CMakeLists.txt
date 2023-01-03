@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(processor_factory VERSION 0.0.1 DESCRIPTION "testing")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")

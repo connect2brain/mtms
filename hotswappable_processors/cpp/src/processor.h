@@ -6,6 +6,7 @@
 #define PROCESSOR_FACTORY_PROCESSOR_H
 
 #include "processor_interface.h"
+#include "ring_buffer.h"
 
 class Processor : public ProcessorInterface {
 public:
@@ -18,6 +19,13 @@ public:
   virtual std::vector<fpga_event>
   data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
 
+  std::vector<double> enqueue(std::vector<double> sample);
+
+  RingBuffer samples;
+
+private:
+  unsigned channel_count;
+  unsigned window_size;
 };
 
 #endif //PROCESSOR_FACTORY_PROCESSOR_H
