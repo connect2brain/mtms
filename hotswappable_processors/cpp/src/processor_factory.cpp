@@ -21,7 +21,7 @@ int main() {
   auto *p = new Processor();
   processor = p;
 
-  auto repeats = 17;
+  auto repeats = 17000;
 
   for (auto i = 0; i < repeats; i++) {
     std::vector<double> data;
@@ -32,7 +32,10 @@ int main() {
     data.push_back(i + 1);
 
     std::vector<fpga_event> events = p->data_received(data, 10.0, false);
-    p->samples.print();
+    //p->samples.print();
+    if (!events.empty()) {
+      std::cout << "received event" << std::endl;
+    }
 
   }
 
