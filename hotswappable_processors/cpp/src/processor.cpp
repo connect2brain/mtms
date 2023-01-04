@@ -16,8 +16,8 @@ Processor::data_received(std::vector<double> channel_data, double time, bool fir
   std::vector<fpga_event> events;
 
   if (this->samples_collected % this->isi_samples == 0) {
+    auto buf = this->samples.get_buffer();
     auto event = create_signal_out_command(1, 1, 1000, 2, 5.0);
-//    create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double time)
     events.push_back(event);
     this->samples_collected = 0;
   }

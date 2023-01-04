@@ -21,7 +21,7 @@ int main() {
   auto *p = new Processor();
   processor = p;
 
-  auto repeats = 17000;
+  auto repeats = 8;
 
   for (auto i = 0; i < repeats; i++) {
     std::vector<double> data;
