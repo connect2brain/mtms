@@ -22,11 +22,11 @@ public:
   void print();
 
   std::vector<std::vector<double>> buffer;
+  bool full;
 
 private:
   unsigned window_size;
   unsigned columns;
-  bool full;
   unsigned index;
   unsigned nof_elements;
 };

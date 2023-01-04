@@ -15,7 +15,7 @@ Processor::data_received(std::vector<double> channel_data, double time, bool fir
 
   std::vector<fpga_event> events;
 
-  if (this->samples_collected % this->isi_samples == 0) {
+  if (this->samples.full && this->samples_collected % this->isi_samples == 0) {
     auto buf = &this->samples.buffer;
     auto event = create_signal_out_command(1, 1, 1000, 2, time);
     events.push_back(event);
@@ -44,7 +44,7 @@ Processor::Processor() : samples(5000, 62) {
   this->channel_count = 62;
 
   this->isi_seconds = 1;
-  this->isi_samples = this->isi_seconds * this->sampling_frequency;
+  this->isi_samples = 100;//this->isi_seconds * this->sampling_frequency;
 
   this->samples_collected = 0;
 
