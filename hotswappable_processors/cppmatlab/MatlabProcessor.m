@@ -37,10 +37,13 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             end
 
             if mod(obj.samples_collected, obj.isi_samples) == 0 && obj.full
+                data = obj.get_data();
                 event = create_signal_out_command(1, 1, 1000, 2, time);
                 obj.samples_collected = 0;
-
+                
                 obj.set_commands([event]);
+
+
             else
                 obj.set_commands([]);
             end
