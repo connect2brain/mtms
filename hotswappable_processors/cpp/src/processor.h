@@ -7,6 +7,7 @@
 
 #include "processor_interface.h"
 #include "ring_buffer.h"
+#include "rotating_buffer.h"
 
 class Processor : public ProcessorInterface {
 public:
