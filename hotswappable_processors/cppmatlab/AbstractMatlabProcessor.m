@@ -26,7 +26,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
             obj.window_size = uint16(50);
             obj.channel_count = uint16(62);
-            obj.data = zeros(obj.channel_count, obj.window_size);
+            obj.data = ring_buffer(obj.window_size, obj.channel_count);
             obj.experiment_in_progress = false;
             obj.last_sample_received_at = double(0);
             obj.auto_enqueue = false;
@@ -58,20 +58,20 @@ classdef (Abstract) AbstractMatlabProcessor < handle
 
         function ret = data_received(obj, channel_data, time, first_sample_of_experiment)
             coder.inline("never");
-
+            
             if first_sample_of_experiment
                 obj.experiment_in_progress = true;
             end
-            
-            if obj.auto_enqueue
-                obj.enqueue(channel_data)
-            end
 
+            if obj.auto_enqueue
+                obj.enqueue(channel_data);
+            end
+            
             obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
             obj.events_sent = obj.events_sent + numel(obj.commands);
             obj.last_sample_received_at = time;
-
+            
             ret = obj.commands;
         end
 
@@ -99,14 +99,14 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             %set_window_size Set window size
             %   Resets data to zeros as its dimensions change
             obj.window_size = uint16(new_window_size);
-            obj.data = zeros(obj.channel_count, obj.window_size);
+            obj.data = ring_buffer(obj.window_size, obj.channel_count);
         end
 
         function obj = set_channel_count(obj, new_channel_count)
             %set_channel_count Set channel count
             %   Resets data to zeros as its dimensions change
             obj.channel_count = uint16(new_channel_count);
-            obj.data = zeros(obj.channel_count, obj.window_size);
+            obj.data = ring_buffer(obj.window_size, obj.channel_count);
         end
 
         function obj = set_auto_enqueue(obj, new_auto_enqueue)
@@ -116,20 +116,12 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.auto_enqueue = new_auto_enqueue;
         end
 
-        function val = getData(obj)
-            val = obj.data;
+        function val = get_data(obj)
+            val = obj.data.get_buffer();
         end
 
-        function obj = setData(obj, val)
-            obj.data = val;
-        end
-
-        function ret = enqueue(obj, element)
-            temp = obj.data(1);
-            obj.data = circshift(obj.data, -1);
-            obj.data(:, end) = element;
-
-            ret = temp;
+        function enqueue(obj, element)
+            obj.data.append(element);
         end
 
     end
