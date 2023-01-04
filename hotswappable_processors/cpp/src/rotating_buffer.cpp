@@ -61,7 +61,7 @@ std::vector<std::vector<double>> RotatingBuffer::get_buffer() {
     auto end = steady_clock::now();
     auto total = duration_cast<nanoseconds>(end - start);
 
-    printf("RotatingBuffer get buffer took %lu ns\n", total.count());
+    printf("RotatingBuffer not full, get buffer took %lu ns\n", total.count());
     return v;
   }
 

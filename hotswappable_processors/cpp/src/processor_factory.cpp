@@ -33,8 +33,8 @@ int main() {
 
     std::vector<fpga_event> events = p->data_received(data, 10.0, false);
     //p->samples.print();
-    p->samples.get_buffer();
-    std::cout << "--" << std::endl;
+    //p->samples.get_buffer();
+    //std::cout << "--" << std::endl;
     if (!events.empty()) {
       std::cout << "received event" << std::endl;
     }
