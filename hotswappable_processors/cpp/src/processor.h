@@ -22,7 +22,7 @@ public:
 
   std::vector<double> enqueue(std::vector<double> sample);
 
-  RingBuffer samples;
+  RotatingBuffer samples;
 
 private:
   unsigned channel_count;
