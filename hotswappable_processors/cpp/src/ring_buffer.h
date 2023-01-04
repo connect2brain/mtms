@@ -15,7 +15,9 @@ public:
 
   void append(std::vector<double> sample);
 
-  std::vector<double> operator[] (unsigned i);
+  std::vector<double> operator[](unsigned i);
+
+  std::vector<double> at(unsigned i);
 
   void print();
 
