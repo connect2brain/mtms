@@ -10,17 +10,17 @@ from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 class DataGatheringState(Enum):
-    CHECK_IF_LATE = 0
+    CHECK_IF_VALID_REQUEST = 0
     WAIT_FOR_MEP = 1
     GATHER_DATA = 2
-    FINAL_STATE__LATE = 3
+    FINAL_STATE__FAILURE = 3
     FINAL_STATE__SUCCESS = 4
 
 
 class DataGatherer:
-    INITIAL_STATE = DataGatheringState.CHECK_IF_LATE
+    INITIAL_STATE = DataGatheringState.CHECK_IF_VALID_REQUEST
     FINAL_STATES = (
-        DataGatheringState.FINAL_STATE__LATE,
+        DataGatheringState.FINAL_STATE__FAILURE,
         DataGatheringState.FINAL_STATE__SUCCESS,
     )
 
@@ -89,14 +89,24 @@ class DataGatherer:
 
         self.previous_time = current_time
 
-    def handle_state__check_if_late(self, current_time):
+    def handle_state__check_if_valid_request(self, current_time, msg):
+        channel_count = len(msg.eeg_channels)
+
         if current_time >= self.start_time:
             self.logger.warn('{}: Failure: Current time ({:.2f} s) is past the starting time ({:.2f} s).'.format(
                 self.goal_id,
                 current_time,
-                self.start_time
+                self.start_time,
             ))
-            self.state = DataGatheringState.FINAL_STATE__LATE
+            self.state = DataGatheringState.FINAL_STATE__FAILURE
+
+        elif self.emg_channel >= channel_count:
+            self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}).'.format(
+                self.goal_id,
+                self.emg_channel,
+                channel_count,
+            ))
+            self.state = DataGatheringState.FINAL_STATE__FAILURE
 
         else:
             self.logger.info('{}: Waiting for the starting time...'.format(self.goal_id))
@@ -123,8 +133,8 @@ class DataGatherer:
 
         self.check_dropped_samples(current_time)
 
-        if self.state == DataGatheringState.CHECK_IF_LATE:
-            self.handle_state__check_if_late(current_time)
+        if self.state == DataGatheringState.CHECK_IF_VALID_REQUEST:
+            self.handle_state__check_if_valid_request(current_time, msg)
 
         elif self.state == DataGatheringState.WAIT_FOR_MEP:
             self.handle_state__wait_for_mep(current_time)
@@ -132,7 +142,7 @@ class DataGatherer:
         elif self.state == DataGatheringState.GATHER_DATA:
             self.handle_state__gather_data(current_time, msg)
 
-        elif self.state == DataGatheringState.FINAL_STATE__LATE:
+        elif self.state == DataGatheringState.FINAL_STATE__FAILURE:
             pass
 
         elif self.state == DataGatheringState.FINAL_STATE__SUCCESS:
