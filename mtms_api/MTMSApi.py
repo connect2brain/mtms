@@ -284,6 +284,15 @@ class MTMSApi:
             wait_for_completion=wait_for_completion,
         )
 
+    # MEP analysis
+
+    def analyze_mep(self, time, emg_channel):
+        amplitude, latency = self.node.analyze_mep(
+            time=time,
+            emg_channel=emg_channel,
+        )
+        return amplitude, latency
+
     # Other
 
     def print_system_state(self):
