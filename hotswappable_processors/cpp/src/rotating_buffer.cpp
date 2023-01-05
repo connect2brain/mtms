@@ -4,10 +4,6 @@
 
 #include "rotating_buffer.h"
 #include <iostream>
-#include <chrono>
-
-using namespace std::chrono_literals;
-using namespace std::chrono;
 
 RotatingBuffer::RotatingBuffer(unsigned int window_size, unsigned int columns) {
   this->window_size = window_size;
@@ -20,13 +16,10 @@ RotatingBuffer::RotatingBuffer(unsigned int window_size, unsigned int columns) {
     std::vector<double> vec(this->columns, 0);
     this->buffer.push_back(vec);
   }
-  printf("Window size: %u, columns: %u\n", this->window_size, this->columns);
 
 }
 
 void RotatingBuffer::append(std::vector<double> sample) {
-  auto start = steady_clock::now();
-
   if (!this->full) {
     this->buffer[this->nof_elements] = sample;
     this->nof_elements++;
@@ -39,10 +32,6 @@ void RotatingBuffer::append(std::vector<double> sample) {
     this->full = true;
   }
 
-
-  auto end = steady_clock::now();
-  auto total = duration_cast<nanoseconds>(end - start);
-  //printf("RotatingBuffer append took %lu ns\n", total.count());
 }
 
 std::vector<double> RotatingBuffer::operator[](unsigned int i) {
@@ -53,22 +42,13 @@ std::vector<double> RotatingBuffer::at(unsigned int i) {
   return this->buffer[(i + this->index) % this->window_size];
 }
 
+/* Use the pointer of RotatingBuffer::buffer instead of this to increase performance. */
 std::vector<std::vector<double>> RotatingBuffer::get_buffer() {
-  auto start = steady_clock::now();
-
   if (!this->full) {
     auto v = std::vector<std::vector<double>>(this->buffer.begin(), this->buffer.begin() + this->nof_elements);
-    auto end = steady_clock::now();
-    auto total = duration_cast<nanoseconds>(end - start);
-
-    printf("RotatingBuffer not full, get buffer took %lu ns\n", total.count());
     return v;
   }
 
-  auto end = steady_clock::now();
-  auto total = duration_cast<nanoseconds>(end - start);
-
-  printf("RotatingBuffer get buffer took %lu ns\n", total.count());
   return this->buffer;
 }
 
@@ -92,6 +72,6 @@ void RotatingBuffer::print() {
     }
     std::cout << "]" << std::endl;
 
-
   }
 }
+
