@@ -8,8 +8,6 @@
 
 std::vector<fpga_event>
 Processor::data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
-  //std::cout << "in data received" << std::endl;
-
   this->samples.append(channel_data);
   this->samples_collected++;
 
@@ -44,7 +42,7 @@ Processor::Processor() : samples(5000, 62) {
   this->channel_count = 62;
 
   this->isi_seconds = 1;
-  this->isi_samples = 100;//this->isi_seconds * this->sampling_frequency;
+  this->isi_samples = 100;
 
   this->samples_collected = 0;
 

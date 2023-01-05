@@ -129,8 +129,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
                 obj.set_commands([signal_out_event]);
 
-                %fprintf("EEG time:  %f\n", time);
-                %fprintf("Event time %f at index %f\n", event_time, index_of_peak);
+                fprintf("EEG time:  %f\n", time);
+                fprintf("Event time %f at index %f\n", event_time, index_of_peak);
 
                 obj.estimated = true;
             else

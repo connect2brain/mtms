@@ -4,10 +4,7 @@
 
 #include "ring_buffer.h"
 #include <iostream>
-#include <chrono>
 
-using namespace std::chrono_literals;
-using namespace std::chrono;
 
 RingBuffer::RingBuffer(unsigned int window_size, unsigned int columns) {
   this->window_size = window_size;
@@ -20,13 +17,10 @@ RingBuffer::RingBuffer(unsigned int window_size, unsigned int columns) {
     std::vector<double> vec(this->columns, 0);
     this->buffer.push_back(vec);
   }
-  printf("Window size: %u, columns: %u\n", this->window_size, this->columns);
 
 }
 
 void RingBuffer::append(std::vector<double> sample) {
-  auto start = steady_clock::now();
-
   this->buffer[this->index] = sample;
   this->index = (this->index + 1) % this->window_size;
 
@@ -36,10 +30,6 @@ void RingBuffer::append(std::vector<double> sample) {
     this->nof_elements++;
   }
 
-  auto end = steady_clock::now();
-  auto total = duration_cast<nanoseconds>(end - start);
-
-  //printf("RingBuffer append took %lu ns\n", total.count());
 }
 
 std::vector<double> RingBuffer::operator[](unsigned int i) {
@@ -51,14 +41,8 @@ std::vector<double> RingBuffer::at(unsigned int i) {
 }
 
 std::vector<std::vector<double>> RingBuffer::get_buffer() {
-  auto start = steady_clock::now();
-
   if (!this->full) {
     auto v = std::vector<std::vector<double>>(this->buffer.begin(), this->buffer.begin() + index);
-    auto end = steady_clock::now();
-    auto total = duration_cast<nanoseconds>(end - start);
-    printf("RingBuffer get_buffer took %lu ns\n", total.count());
-
     return v;
   }
 
@@ -66,10 +50,6 @@ std::vector<std::vector<double>> RingBuffer::get_buffer() {
   auto right = std::vector<std::vector<double>>(this->buffer.begin(), this->buffer.begin() + index);
 
   std::copy(right.begin(), right.end(), std::back_inserter(left));
-
-  auto end = steady_clock::now();
-  auto total = duration_cast<nanoseconds>(end - start);
-  printf("RingBuffer get_buffer took %lu ns\n", total.count());
 
   return left;
 }
@@ -97,3 +77,4 @@ void RingBuffer::print() {
 
   }
 }
+
