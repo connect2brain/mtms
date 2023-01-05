@@ -96,7 +96,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % Data is already 1x2500, but we need to do manually
                 % specify it so code generation knows for sure that it
                 % actually is 1x2500.
-                data = obj.data(1:2500);
+		data = obj.get_data();
+                data = data(1:2500);
                 data = data - mean(data);
 
                 % Use filtfilt instead of filter to avoid dealing with
@@ -114,7 +115,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % obj.downsampling_ratio).
                 downsampled = filtered_data_fixed_size(1:10:end);
 
-                [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
+                [estimated_phases, estimated_amplitudes] = phastimate(downsampled, obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
 
                 nof_estimated_samples = numel(estimated_phases);
 

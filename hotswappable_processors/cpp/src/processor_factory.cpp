@@ -28,8 +28,6 @@ int main() {
     for (auto j = 0; j < 62; j++) {
       data.push_back(fRand(0, 100));
     }
-    //data.push_back(i + 1);
-    //data.push_back(i + 1);
 
     std::vector<fpga_event> events = p->data_received(data, 10.0, false);
     //p->samples.print();
