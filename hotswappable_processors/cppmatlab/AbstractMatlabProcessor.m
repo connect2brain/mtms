@@ -71,12 +71,12 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             if obj.auto_enqueue
                 obj.enqueue(channel_data);
             end
-            
+ 
             obj.on_data_received(channel_data, time, first_sample_of_experiment);
             
             obj.events_sent = obj.events_sent + numel(obj.commands);
             obj.last_sample_received_at = time;
-            
+ 
             ret = obj.commands;
         end
 
