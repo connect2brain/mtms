@@ -24,9 +24,9 @@ class DataGatherer:
         DataGatheringState.FINAL_STATE__SUCCESS,
     )
 
-    # TODO: Replace with a proper duration once the MEP analysis algorithm is in place.
+    # TODO: Make configurable.
     #
-    MEP_DURATION_S = 0.1
+    MEP_DURATION_S = 0.02
 
     # When determining if samples have been dropped by comparing the timestamps of two consecutive
     # samples, allow some tolerance to account for finite precision of floating point numbers.
