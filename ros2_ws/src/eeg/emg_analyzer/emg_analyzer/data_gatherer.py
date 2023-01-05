@@ -59,8 +59,6 @@ class DataGatherer:
 
         self.logger.info('{}: Waiting for EMG samples...'.format(self.goal_id))
 
-        # TODO: Create a publisher for /emg/raw_data - for now, subscribe to /eeg/raw_data instead.
-        #
         self.data_subscriber = self.create_subscription(
             EegDatapoint,
             '/eeg/raw_data',
