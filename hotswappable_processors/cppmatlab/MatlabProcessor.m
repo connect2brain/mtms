@@ -97,7 +97,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % specify it so code generation knows for sure that it
                 % actually is 1x2500.
                 data = obj.get_data();
-                data = data(1:2500);
+                data = data(1:2500, 1);
                 data = data - mean(data);
 
                 % Use filtfilt instead of filter to avoid dealing with
@@ -105,7 +105,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 filtered_data = filtfilt(obj.lpf, obj.A, data);
 
                 % Again, specify the dimensions for code generation.
-                filtered_data_fixed_size = filtered_data(1:2500);
+                filtered_data_fixed_size = filtered_data(1:2500, 1);
 
                 % Downsample by 10 for phastimate. Note that we are using
                 % hard coded 10 here instead of obj.downsample_ratio as the
@@ -113,16 +113,16 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % downsampling if the downsample ratio is not ensured
                 % during compilation (which is the case if we are using
                 % obj.downsampling_ratio).
-                downsampled = filtered_data_fixed_size(1:10:end);
+                downsampled = filtered_data_fixed_size(1:10:end, 1);
 
                 [estimated_phases, estimated_amplitudes] = phastimate(downsampled, obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
 
                 nof_estimated_samples = numel(estimated_phases);
 
-                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
+                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end, 1);
 
-                [~, index_of_peak] = min(abs(future_samples - 0));
-                phase_at_peak = future_samples(index_of_peak);
+                [~, index_of_peak] = min(abs(future_samples(:,1) - 0));
+                phase_at_peak = future_samples(index_of_peak, 1);
 
                 event_time = time + index_of_peak * obj.downsample_ratio * obj.sample_duration;
 
