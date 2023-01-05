@@ -1,9 +1,11 @@
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, SystemState, \
     WaveformPiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
+from mtms_interfaces.action import AnalyzeMep
 from mtms_interfaces.srv import GetChannelVoltages
 from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
@@ -26,6 +28,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
+    ROS_ACTION_ANALYZE_MEP = ('/emg/analyze_mep', AnalyzeMep)
+
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
         ROS_SERVICE_STOP_DEVICE,
@@ -39,6 +43,10 @@ class MTMSApiNode(Node):
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
+    )
+
+    ROS_ACTIONS = (
+        ROS_ACTION_ANALYZE_MEP,
     )
 
     def __init__(self):
@@ -56,6 +64,15 @@ class MTMSApiNode(Node):
                 self.get_logger().info('Service {} not available, waiting...'.format(topic))
 
             self.ros_service_clients[topic] = client
+
+        self.ros_action_clients = {}
+
+        for topic, action_object in self.ROS_ACTIONS:
+            client = ActionClient(self, action_object, topic)
+            while not client.wait_for_server(timeout_sec=1.0):
+                self.get_logger().info('Action {} not available, waiting...'.format(topic))
+
+            self.ros_action_clients[topic] = client
 
         # Have a queue of only one message so that only the latest system state is ever received.
         #
@@ -302,6 +319,39 @@ class MTMSApiNode(Node):
         assert value.success, "Failed request."
 
         return value.waveform
+
+    # MEP analysis
+
+    def analyze_mep(self, time, emg_channel):
+        topic, action_object = self.ROS_ACTION_ANALYZE_MEP
+
+        client = self.ros_action_clients[topic]
+
+        # Define goal.
+        goal = action_object.Goal()
+
+        goal.time = time
+        goal.emg_channel = emg_channel
+
+        # Send goal to ROS action.
+        send_goal_future = client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self, send_goal_future)
+
+        goal_handle = send_goal_future.result()
+        if not goal_handle.accepted:
+            self.get_logger().info('Analyze MEP goal rejected.')
+            return None, None
+
+        # Get result from ROS action.
+        get_result_future = goal_handle.get_result_async()
+        rclpy.spin_until_future_complete(self, get_result_future)
+
+        result = get_result_future.result()
+        if result is None:
+            self.get_logger().info('Analyze MEP result failed.')
+            return None, None
+
+        return result.result.amplitude, result.result.latency
 
     # System state
 
