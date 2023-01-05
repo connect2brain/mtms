@@ -88,7 +88,7 @@ class DataGatherer:
         self.previous_time = current_time
 
     def handle_state__check_if_valid_request(self, current_time, msg):
-        channel_count = len(msg.eeg_channels)
+        channel_count = len(msg.emg_channels)
 
         if current_time >= self.start_time:
             self.logger.warn('{}: Failure: Current time ({:.2f} s) is past the starting time ({:.2f} s).'.format(
@@ -117,7 +117,7 @@ class DataGatherer:
 
     def handle_state__gather_data(self, current_time, msg):
         if current_time < self.start_time + self.MEP_DURATION_S:
-            self.emg_buffer[self.n_samples] = msg.eeg_channels[self.emg_channel]
+            self.emg_buffer[self.n_samples] = msg.emg_channels[self.emg_channel]
             self.time_buffer[self.n_samples] = current_time - self.start_time
 
             self.n_samples += 1
