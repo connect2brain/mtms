@@ -37,15 +37,14 @@ class AnalyzeMepNode(Node):
         )
         self.logger = self.get_logger()
 
-    # TODO: A placeholder for an actual MEP analysis algorithm.
-    #
     def analyze_mep(self, emg_buffer, time_buffer):
         max_i = np.argmax(emg_buffer)
+        min_i = np.argmin(emg_buffer)
 
-        peak_amplitude = emg_buffer[max_i]
+        amplitude = emg_buffer[max_i] - emg_buffer[min_i]
         latency = time_buffer[max_i]
 
-        return peak_amplitude, latency
+        return amplitude, latency
 
     def execute_callback(self, goal_handle):
         request = goal_handle.request
@@ -85,9 +84,9 @@ class AnalyzeMepNode(Node):
 
             self.logger.info('{}: # of samples received: {}'.format(goal_id, len(emg_buffer)))
 
-            peak_amplitude, latency = self.analyze_mep(emg_buffer, time_buffer)
+            amplitude, latency = self.analyze_mep(emg_buffer, time_buffer)
 
-            result.peak_amplitude = peak_amplitude
+            result.amplitude = amplitude
             result.latency = latency
         else:
             goal_handle.abort()
