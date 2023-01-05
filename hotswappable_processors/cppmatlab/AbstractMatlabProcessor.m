@@ -59,6 +59,11 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         function ret = data_received(obj, channel_data, time, first_sample_of_experiment)
             coder.inline("never");
             
+            s = uint16(size(channel_data, 1));
+            if s ~= obj.channel_count && obj.auto_enqueue
+                fprintf("WARN! Sample channels (%u) does not equal initial channel count (%u) \n", s, obj.channel_count);
+            end
+
             if first_sample_of_experiment
                 obj.experiment_in_progress = true;
             end
