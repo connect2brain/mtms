@@ -30,14 +30,24 @@ function out = run_processor(window_size, channel_count, data_sample, time, firs
     obj.set_window_size(actual_window_size);
     obj.set_channel_count(channel_count);
 
-
     ring_buf = ring_buffer(3, 5);
     rot_buf = rotating_buffer(3,5);
 
     ring_buf = ring_buffer(actual_window_size, channel_count);
     rot_buf = rotating_buffer(actual_window_size, channel_count);
 
+
     obj.enqueue(actual_data_sample);
+
+    for i=1:10
+        number = randi([20 150]);
+        sample = zeros(number, 1);
+        for j=1:number
+            sample(j) = i * j;
+        end
+        obj.enqueue(sample);
+    end
+
 
     data = obj.init_experiment();
 
