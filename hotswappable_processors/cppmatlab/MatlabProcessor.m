@@ -22,10 +22,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         isi_samples
         isi_seconds
 
-        target_voltage
-
-        durations_file_id
-
         phases
         phase_count
         max_phase_count
@@ -65,11 +61,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
 
-            obj.target_voltage = 500;
-
-            obj.durations_file_id = fopen("durations.csv", "w");
-
-            fprintf(obj.durations_file_id, "estimated_phase,phase_diff\n");
             obj.max_phase_count = 100;
             obj.phase_count = 0;
             obj.phases = zeros(obj.max_phase_count, 1);
@@ -126,7 +117,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
                 event_time = time + index_of_peak * obj.downsample_ratio * obj.sample_duration;
 
-                signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
+                signal_out_event = create_signal_out_command(obj.events_sent + 1, 2, 1000, 0, event_time);
                 obj.set_commands([signal_out_event]);
 
                 fprintf("EEG time:  %f\n", time);
@@ -139,9 +130,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
         end
         function on_end_experiment(obj)
-            charge = create_discharge_command(obj.events_sent + 1, 1, 2, 0, 0);
-            obj.set_commands(charge);
-            fclose(obj.durations_file_id);
+            obj.set_commands([]);
         end
     end
 end
