@@ -37,14 +37,7 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
     auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
     output.push_back(fpga_event);
   }
-  /*
-  if (!output.empty()) {
-    std::cout << "Received " << output.size() << " events" << std::endl;
-    for (const auto& event: output) {
-      std::cout << "event type: " << event.to_string() << std::endl;
-    }
-  }
-*/
+
   return output;
 }
 
