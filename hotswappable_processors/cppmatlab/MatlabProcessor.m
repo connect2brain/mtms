@@ -22,11 +22,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         isi_samples
         isi_seconds
 
-        phases
-        phase_count
-        max_phase_count
-        saved
-
         sample_duration
         downsample_ratio
     end
@@ -60,11 +55,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
             obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
-
-            obj.max_phase_count = 100;
-            obj.phase_count = 0;
-            obj.phases = zeros(obj.max_phase_count, 1);
-            obj.saved = false;
             
         end
         function on_init_experiment(obj)
