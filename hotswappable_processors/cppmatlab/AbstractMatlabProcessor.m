@@ -59,6 +59,8 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         function ret = data_received(obj, channel_data, time, first_sample_of_experiment)
             coder.inline("never");
             
+            % Access size(channel_data) to tell compiler that
+            % channel_data is variable sized.
             s = uint16(size(channel_data, 1));
             if s ~= obj.channel_count && obj.auto_enqueue
                 fprintf("WARN! Sample channels (%u) does not equal initial channel count (%u) \n", s, obj.channel_count);
