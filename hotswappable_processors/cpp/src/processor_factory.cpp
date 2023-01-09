@@ -21,21 +21,22 @@ int main() {
   auto *p = new Processor();
   processor = p;
 
-  auto start = std::chrono::high_resolution_clock::now();
-  auto stop = std::chrono::high_resolution_clock::now();
-  auto total = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+  auto repeats = 27000;
 
-  auto repeats = 10;
   for (auto i = 0; i < repeats; i++) {
     std::vector<double> data;
     for (auto j = 0; j < 62; j++) {
       data.push_back(fRand(0, 100));
     }
-    std::vector<fpga_event> events = p->data_received(data, 10.0, false);
 
-    for (auto &event: events) {
-      std::cout << "received event: " << +event.event_type << std::endl;
+    std::vector<fpga_event> events = p->data_received(data, 10.0, false);
+    //p->samples.print();
+    //p->samples.get_buffer();
+    //std::cout << "--" << std::endl;
+    if (!events.empty()) {
+      std::cout << "received event" << std::endl;
     }
+
   }
 
 }
