@@ -35,11 +35,11 @@ void RotatingBuffer::append(std::vector<double> sample) {
 }
 
 std::vector<double> RotatingBuffer::operator[](unsigned int i) {
-  return this->buffer[(i + this->index) % this->window_size];
+  return this->buffer[i];
 }
 
 std::vector<double> RotatingBuffer::at(unsigned int i) {
-  return this->buffer[(i + this->index) % this->window_size];
+  return this->buffer[i];
 }
 
 /* Use the pointer of RotatingBuffer::buffer instead of this to increase performance. */
