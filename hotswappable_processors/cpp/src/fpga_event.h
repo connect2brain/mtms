@@ -5,15 +5,15 @@
 #ifndef PROCESSOR_FACTORY_FPGA_EVENT_H
 #define PROCESSOR_FACTORY_FPGA_EVENT_H
 
-struct waveform_piece {
-  unsigned char waveform_phase;
-  unsigned short duration_in_ticks;
-};
-
 struct event {
   unsigned short id;
   unsigned char execution_condition;
   double time;
+};
+
+struct waveform_piece {
+  unsigned char waveform_phase;
+  unsigned short duration_in_ticks;
 };
 
 struct fpga_event {

@@ -10,6 +10,7 @@ cfg = coder.config("lib");
 cfg.TargetLang = "C++";
 cfg.InlineBetweenUserFunctions = "Readability";
 cfg.RuntimeChecks = true;
+
 tic
 codegen -config cfg run_processor -args {window_size,channel_count,data_sample,time,first_sample_of_experiment} -report
 toc

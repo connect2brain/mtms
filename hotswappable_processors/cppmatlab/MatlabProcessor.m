@@ -22,15 +22,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         isi_samples
         isi_seconds
 
-        target_voltage
-
-        durations_file_id
-
-        phases
-        phase_count
-        max_phase_count
-        saved
-
         sample_duration
         downsample_ratio
     end
@@ -64,16 +55,6 @@ classdef MatlabProcessor < AbstractMatlabProcessor
 
             obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
-
-            obj.target_voltage = 500;
-
-            obj.durations_file_id = fopen("durations.csv", "w");
-
-            fprintf(obj.durations_file_id, "estimated_phase,phase_diff\n");
-            obj.max_phase_count = 100;
-            obj.phase_count = 0;
-            obj.phases = zeros(obj.max_phase_count, 1);
-            obj.saved = false;
             
         end
         function on_init_experiment(obj)
@@ -96,7 +77,8 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % Data is already 1x2500, but we need to do manually
                 % specify it so code generation knows for sure that it
                 % actually is 1x2500.
-                data = obj.data(1:2500);
+                data = obj.get_data();
+                data = data(1:2500, 1);
                 data = data - mean(data);
 
                 % Use filtfilt instead of filter to avoid dealing with
@@ -104,7 +86,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 filtered_data = filtfilt(obj.lpf, obj.A, data);
 
                 % Again, specify the dimensions for code generation.
-                filtered_data_fixed_size = filtered_data(1:2500);
+                filtered_data_fixed_size = filtered_data(1:2500, 1);
 
                 % Downsample by 10 for phastimate. Note that we are using
                 % hard coded 10 here instead of obj.downsample_ratio as the
@@ -112,20 +94,20 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 % downsampling if the downsample ratio is not ensured
                 % during compilation (which is the case if we are using
                 % obj.downsampling_ratio).
-                downsampled = filtered_data_fixed_size(1:10:end);
+                downsampled = filtered_data_fixed_size(1:10:end, 1);
 
-                [estimated_phases, estimated_amplitudes] = phastimate(downsampled', obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
+                [estimated_phases, estimated_amplitudes] = phastimate(downsampled, obj.bpf, obj.EDGE, obj.AR_ORDER, obj.HILBERTWIN);
 
                 nof_estimated_samples = numel(estimated_phases);
 
-                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end);
+                future_samples = estimated_phases(nof_estimated_samples / 2 + 1:end, 1);
 
-                [~, index_of_peak] = min(abs(future_samples - 0));
-                phase_at_peak = future_samples(index_of_peak);
+                [~, index_of_peak] = min(abs(future_samples(:,1) - 0));
+                phase_at_peak = future_samples(index_of_peak, 1);
 
                 event_time = time + index_of_peak * obj.downsample_ratio * obj.sample_duration;
 
-                signal_out_event = create_signal_out_command(obj.events_sent + 1, 1, 1000, 0, event_time);
+                signal_out_event = create_signal_out_command(obj.events_sent + 1, 2, 1000, 0, event_time);
                 obj.set_commands([signal_out_event]);
 
                 fprintf("EEG time:  %f\n", time);
@@ -138,9 +120,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             
         end
         function on_end_experiment(obj)
-            charge = create_discharge_command(obj.events_sent + 1, 1, 2, 0, 0);
-            obj.set_commands(charge);
-            fclose(obj.durations_file_id);
+            obj.set_commands([]);
         end
     end
 end
