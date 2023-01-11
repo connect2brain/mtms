@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(data_batcher)
+project(eeg_batcher)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,10 +11,10 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_interfaces REQUIRED)
 
 add_executable(
-        data_batcher
+        eeg_batcher
 
-        src/data_batcher.cpp
-        src/headers/data_batcher.h
+        src/eeg_batcher.cpp
+        src/headers/eeg_batcher.h
 
         src/memory_utils.cpp
         src/headers/memory_utils.h
@@ -23,16 +23,16 @@ add_executable(
         src/headers/scheduling_utils.h
 )
 
-target_include_directories(data_batcher
+target_include_directories(eeg_batcher
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
-ament_target_dependencies(data_batcher rclcpp std_msgs mtms_interfaces)
+ament_target_dependencies(eeg_batcher rclcpp std_msgs mtms_interfaces)
 
 
 install(TARGETS
-        data_batcher
+        eeg_batcher
         DESTINATION lib/${PROJECT_NAME}
         )
 

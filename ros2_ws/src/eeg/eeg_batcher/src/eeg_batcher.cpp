@@ -2,13 +2,13 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "headers/scheduling_utils.h"
-#include "headers/data_batcher.h"
+#include "headers/eeg_batcher.h"
 #include "headers/memory_utils.h"
 
 using namespace std::chrono_literals;
 using namespace std::chrono;
 
-DataBatcher::DataBatcher() : Node("data_batcher") {
+EegBatcher::EegBatcher() : Node("eeg_batcher") {
   this->declare_parameter<int>("batch_size", 100);
   this->get_parameter("batch_size", batch_size);
 
@@ -23,7 +23,7 @@ DataBatcher::DataBatcher() : Node("data_batcher") {
 
     send_counter++;
 
-    RCLCPP_INFO(rclcpp::get_logger("data_batcher"), "Received message index %d / %d", batch_index, batch_size);
+    RCLCPP_INFO(rclcpp::get_logger("eeg_batcher"), "Received message index %d / %d", batch_index, batch_size);
 
     if (batch_index == batch_size) {
       auto batch_message = mtms_interfaces::msg::EegBatch();
@@ -49,14 +49,14 @@ int main(int argc, char *argv[]) {
 
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("data_batcher"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_batcher"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<DataBatcher>();
+  auto node = std::make_shared<EegBatcher>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("data_batcher"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_batcher"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif

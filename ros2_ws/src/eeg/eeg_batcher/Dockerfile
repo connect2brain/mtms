@@ -12,7 +12,7 @@ RUN apt-get install -y \
 # Copy ROS workspace for planner
 
 WORKDIR /app
-COPY ros2_ws/src/eeg/data_batcher ros2_ws/src/eeg/data_batcher/
+COPY ros2_ws/src/eeg/eeg_batcher ros2_ws/src/eeg/eeg_batcher/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
 
 # Build ROS packages
@@ -23,7 +23,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/eeg/data_batcher/ros_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_batcher/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

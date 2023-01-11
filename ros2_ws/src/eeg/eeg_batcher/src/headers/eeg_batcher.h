@@ -14,9 +14,9 @@
 #include <string>
 #include <fstream>
 
-class DataBatcher : public rclcpp::Node {
+class EegBatcher : public rclcpp::Node {
 public:
-  DataBatcher();
+  EegBatcher();
 
 private:
   std::vector<mtms_interfaces::msg::EegDatapoint> batch;
