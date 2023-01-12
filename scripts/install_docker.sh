@@ -1,10 +1,4 @@
-
 #!/bin/bash
-
-cd ~
-
-mkdir app
-mkdir workspace
 
 # Install Docker
 sudo apt update
@@ -25,4 +19,3 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Enable docker usage without sudo
 # sudo groupadd docker
 sudo usermod -aG docker $USER
-
