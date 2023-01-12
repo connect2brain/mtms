@@ -17,3 +17,4 @@ ros2_ws/src/build/
 ros2_ws/src/bridges/rosbridge/build
 ros2_ws/src/bridges/rosbridge/log
 ros2_ws/src/bridges/rosbridge/install
+data/neuronavigation_data
