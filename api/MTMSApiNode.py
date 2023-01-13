@@ -9,7 +9,7 @@ from mtms_interfaces.action import AnalyzeMep
 from mtms_interfaces.srv import GetChannelVoltages
 from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
-from .MTMSApiPrinter import MTMSApiPrinter
+from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
     # To FPGA
