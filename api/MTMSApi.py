@@ -5,7 +5,7 @@ import rclpy
 
 from fpga_interfaces.msg import ExperimentState, DeviceState, ExecutionCondition, WaveformPhase
 
-from .MTMSApiNode import MTMSApiNode
+from MTMSApiNode import MTMSApiNode
 
 class MTMSApi:
     # TODO: Channel count hardcoded for now.

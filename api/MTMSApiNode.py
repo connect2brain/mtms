@@ -7,7 +7,7 @@ from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeed
 from mtms_interfaces.srv import GetChannelVoltages
 from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
-from .MTMSApiPrinter import MTMSApiPrinter
+from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
     # To FPGA

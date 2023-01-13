@@ -1,6 +1,6 @@
 from fpga_interfaces.msg import ExecutionCondition, WaveformPhase
 
-from mtms_api.MTMSApi import MTMSApi
+from MTMSApi import MTMSApi
 
 api = MTMSApi()
 
