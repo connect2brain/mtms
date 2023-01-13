@@ -1,4 +1,4 @@
-from .util.bcolors import bcolors
+from util.bcolors import bcolors
 
 from fpga_interfaces.msg import DeviceState, ExperimentState, ExecutionCondition, StartupError, \
     PulseError, DischargeError, ChargeError, SignalOutError
