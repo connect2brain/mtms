@@ -83,6 +83,7 @@ ros2 run neuronavigation start
 ### Linux
 
 - Install Docker and Docker compose
+  Note: do not install docker with snap, will cause problems with X Display
 
 - Check your $DISPLAY variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
 
