@@ -2,7 +2,7 @@
 #   publish data unless an experiment is ongoing. Extend to cover the
 #   real-data case, as well.
 
-from mtms_api.MTMSApi import MTMSApi
+from MTMSApi import MTMSApi
 
 api = MTMSApi()
 
