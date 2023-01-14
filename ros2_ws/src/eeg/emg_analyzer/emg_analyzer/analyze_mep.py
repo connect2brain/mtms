@@ -74,7 +74,7 @@ class AnalyzeMepNode(Node):
             # Do not check continuously if data gatherer is finished; instead sleep between checks.
             # Otherwise EMG subscriber seems to get buried under the load and starts dropping samples.
             #
-            time.sleep(1.0)
+            time.sleep(0.1)
             pass
 
         emg_buffer, time_buffer = data_gatherer.get_buffers()
