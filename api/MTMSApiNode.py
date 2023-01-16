@@ -6,7 +6,7 @@ from fpga_interfaces.msg import SystemState
 from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
 
 from event_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
-    WaveformPiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
+    WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, SignalOutError
 from event_interfaces.srv import SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 
 from mtms_interfaces.action import AnalyzeMep
@@ -149,12 +149,12 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_object.Request()
 
-        event = Event()
-        event.id = id
-        event.execution_condition.value = execution_condition
-        event.time = float(time)
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
 
-        request.pulse.event = event
+        request.pulse.event_info = event_info
         request.pulse.channel = channel
         request.pulse.waveform = waveform
 
@@ -162,7 +162,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event(
             event_type='Pulse',
-            event=event,
+            event_info=event_info,
             channel=channel,
         )
 
@@ -176,12 +176,12 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_object.Request()
 
-        event = Event()
-        event.id = id
-        event.execution_condition.value = execution_condition
-        event.time = float(time)
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
 
-        request.charge.event = event
+        request.charge.event_info = event_info
         request.charge.channel = channel
         request.charge.target_voltage = target_voltage
 
@@ -189,7 +189,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event(
             event_type='Charge',
-            event=event,
+            event_info=event_info,
             channel=channel,
         )
 
@@ -203,12 +203,12 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_object.Request()
 
-        event = Event()
-        event.id = id
-        event.execution_condition.value = execution_condition
-        event.time = float(time)
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
 
-        request.discharge.event = event
+        request.discharge.event_info = event_info
         request.discharge.channel = channel
         request.discharge.target_voltage = target_voltage
 
@@ -216,7 +216,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event(
             event_type='Discharge',
-            event=event,
+            event_info=event_info,
             channel=channel,
         )
 
@@ -230,12 +230,12 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_object.Request()
 
-        event = Event()
-        event.id = id
-        event.execution_condition.value = execution_condition
-        event.time = float(time)
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
 
-        request.signal_out.event = event
+        request.signal_out.event_info = event_info
         request.signal_out.port = port
         request.signal_out.duration_us = duration_us
 
@@ -243,7 +243,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event(
             event_type='Signal out',
-            event=event,
+            event_info=event_info,
             port=port,
         )
 

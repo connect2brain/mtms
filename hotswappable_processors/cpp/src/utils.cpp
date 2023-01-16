@@ -4,14 +4,14 @@
 
 #include "utils.h"
 
-fpga_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double time) {
+fpga_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time) {
   fpga_event event;
   event.channel = channel;
   event.event_type = 0;
 
-  event.b_event.id = event_id;
-  event.b_event.time = time;
-  event.b_event.execution_condition = execution_condition;
+  event.b_event_info.id = event_id;
+  event.b_event_info.execution_time = execution_time;
+  event.b_event_info.execution_condition = execution_condition;
 
   auto default_waveform = get_default_pulse_waveform(channel);
   for (auto i = 0; i < 3; i++) {
@@ -22,44 +22,44 @@ fpga_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t exec
 }
 
 
-fpga_event create_charge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double time,
+fpga_event create_charge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
                                  uint16_t target_voltage) {
   fpga_event event;
   event.channel = channel;
   event.event_type = 1;
 
-  event.b_event.id = event_id;
-  event.b_event.time = time;
-  event.b_event.execution_condition = execution_condition;
+  event.b_event_info.id = event_id;
+  event.b_event_info.execution_time = execution_time;
+  event.b_event_info.execution_condition = execution_condition;
 
   event.target_voltage = target_voltage;
   return event;
 }
 
-fpga_event create_discharge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double time,
+fpga_event create_discharge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
                                     uint16_t target_voltage) {
   fpga_event event;
   event.channel = channel;
   event.event_type = 2;
 
-  event.b_event.id = event_id;
-  event.b_event.time = time;
-  event.b_event.execution_condition = execution_condition;
+  event.b_event_info.id = event_id;
+  event.b_event_info.execution_time = execution_time;
+  event.b_event_info.execution_condition = execution_condition;
 
   event.target_voltage = target_voltage;
   return event;
 }
 
 
-fpga_event create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double time) {
+fpga_event create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double execution_time) {
   fpga_event event;
   event.channel = index;
   event.event_type = 3;
   event.duration_us = duration_us;
 
-  event.b_event.id = event_id;
-  event.b_event.time = time;
-  event.b_event.execution_condition = execution_condition;
+  event.b_event_info.id = event_id;
+  event.b_event_info.execution_time = execution_time;
+  event.b_event_info.execution_condition = execution_condition;
 
   return event;
 }

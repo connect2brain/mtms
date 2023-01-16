@@ -9,34 +9,34 @@ class EventType(Enum):
 
 
 class Pulse:
-    def __init__(self, channel, waveform, event) -> None:
+    def __init__(self, channel, waveform, event_info) -> None:
         self.channel = channel
         self.waveform = waveform
-        self.event = event
+        self.event_info = event_info
         self.event_type = EventType.PULSE.value
 
 
 class Charge:
-    def __init__(self, channel, target_voltage, event) -> None:
+    def __init__(self, channel, target_voltage, event_info) -> None:
         self.channel = channel
         self.target_voltage = target_voltage
-        self.event = event
+        self.event_info = event_info
         self.event_type = EventType.CHARGE.value
 
 
 class Discharge:
-    def __init__(self, channel, target_voltage, event) -> None:
+    def __init__(self, channel, target_voltage, event_info) -> None:
         self.channel = channel
         self.target_voltage = target_voltage
-        self.event = event
+        self.event_info = event_info
         self.event_type = EventType.DISCHARGE.value
 
 
 class SignalOut:
-    def __init__(self, port, duration_us, event) -> None:
+    def __init__(self, port, duration_us, event_info) -> None:
         self.port = port
         self.duration_us = duration_us
-        self.event = event
+        self.event_info = event_info
         self.event_type = EventType.SIGNAL_OUT.value
 
 
