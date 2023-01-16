@@ -29,47 +29,47 @@ void print_matlab_event(matlab_event event) {
 }
 
 Event convert_matlab_event_to_event(matlab_event event) {
-  Event fpga_event;
+  Event matlab_event;
   if (event.event_type == CHARGE) {
-    fpga_event.event_type = CHARGE;
-    fpga_event.charge = event_interfaces::msg::Charge();
-    fpga_event.charge.event.id = event.b_event.id;
-    fpga_event.charge.event.execution_condition.value = event.b_event.execution_condition;
-    fpga_event.charge.event.time = event.b_event.time;
-    fpga_event.charge.channel = event.channel;
-    fpga_event.charge.target_voltage = event.target_voltage;
+    matlab_event.event_type = CHARGE;
+    matlab_event.charge = event_interfaces::msg::Charge();
+    matlab_event.charge.event.id = event.b_event.id;
+    matlab_event.charge.event.execution_condition.value = event.b_event.execution_condition;
+    matlab_event.charge.event.time = event.b_event.time;
+    matlab_event.charge.channel = event.channel;
+    matlab_event.charge.target_voltage = event.target_voltage;
 
   } else if (event.event_type == PULSE) {
-    fpga_event.event_type = PULSE;
-    fpga_event.pulse = event_interfaces::msg::Pulse();
+    matlab_event.event_type = PULSE;
+    matlab_event.pulse = event_interfaces::msg::Pulse();
 
     for (auto piece: event.waveform) {
       auto fpga_piece = event_interfaces::msg::WaveformPiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
       fpga_piece.waveform_phase.value = piece.waveform_phase;
-      fpga_event.pulse.waveform.push_back(fpga_piece);
+      matlab_event.pulse.waveform.push_back(fpga_piece);
     }
-    fpga_event.pulse.event.id = event.b_event.id;
-    fpga_event.pulse.event.execution_condition.value = event.b_event.execution_condition;
-    fpga_event.pulse.event.time = event.b_event.time;
-    fpga_event.pulse.channel = event.channel;
+    matlab_event.pulse.event.id = event.b_event.id;
+    matlab_event.pulse.event.execution_condition.value = event.b_event.execution_condition;
+    matlab_event.pulse.event.time = event.b_event.time;
+    matlab_event.pulse.channel = event.channel;
 
   } else if (event.event_type == DISCHARGE) {
-    fpga_event.event_type = DISCHARGE;
-    fpga_event.discharge = event_interfaces::msg::Discharge();
-    fpga_event.discharge.event.id = event.b_event.id;
-    fpga_event.discharge.event.execution_condition.value = event.b_event.execution_condition;
-    fpga_event.discharge.event.time = event.b_event.time;
-    fpga_event.discharge.channel = event.channel;
-    fpga_event.discharge.target_voltage = event.target_voltage;
+    matlab_event.event_type = DISCHARGE;
+    matlab_event.discharge = event_interfaces::msg::Discharge();
+    matlab_event.discharge.event.id = event.b_event.id;
+    matlab_event.discharge.event.execution_condition.value = event.b_event.execution_condition;
+    matlab_event.discharge.event.time = event.b_event.time;
+    matlab_event.discharge.channel = event.channel;
+    matlab_event.discharge.target_voltage = event.target_voltage;
   } else {
-    fpga_event.event_type = SIGNAL_OUT;
-    fpga_event.signal_out = event_interfaces::msg::SignalOut();
-    fpga_event.signal_out.event.id = event.b_event.id;
-    fpga_event.signal_out.event.execution_condition.value = event.b_event.execution_condition;
-    fpga_event.signal_out.event.time = event.b_event.time;
-    fpga_event.signal_out.port = event.channel;
-    fpga_event.signal_out.duration_us = event.duration_us;
+    matlab_event.event_type = SIGNAL_OUT;
+    matlab_event.signal_out = event_interfaces::msg::SignalOut();
+    matlab_event.signal_out.event.id = event.b_event.id;
+    matlab_event.signal_out.event.execution_condition.value = event.b_event.execution_condition;
+    matlab_event.signal_out.event.time = event.b_event.time;
+    matlab_event.signal_out.port = event.channel;
+    matlab_event.signal_out.duration_us = event.duration_us;
   }
-  return fpga_event;
+  return matlab_event;
 }
