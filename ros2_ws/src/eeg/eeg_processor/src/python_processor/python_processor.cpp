@@ -81,6 +81,24 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
+std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) {
+  std::vector<double> l;
+
+  Py_ssize_t size = PyList_Size(data);
+
+  PyObject *item;
+  for (size_t i = 0; i < size; i++) {
+    item = PyList_GetItem(data, i);
+    if (!PyFloat_Check(item)) {
+      RCLCPP_WARN(rclcpp::get_logger("eeg_pre_processor"), "Index %d of returned sample was not a float.", i);
+      continue;
+    }
+    l.push_back(PyFloat_AsDouble(item));
+  }
+  return l;
+}
+
+
 fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   auto event_as_pyobject = PyObject_GetAttrString(event, "event");
   if (event_as_pyobject == nullptr) {
@@ -268,7 +286,73 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_fpga_events(std::
 }
 
 std::vector<mtms_interfaces::msg::EegDatapoint>
-PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {}
+PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> samples) {
+  std::vector<mtms_interfaces::msg::EegDatapoint> new_samples;
+
+  for (auto sample_as_pyobject: samples) {
+    mtms_interfaces::msg::EegDatapoint sample;
+
+    auto channel_data_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "sample");
+
+    if (!PyList_Check(channel_data_as_pyobject)) {
+      RCLCPP_ERROR(rclcpp::get_logger("eeg_pre_processor"),
+                   "Error in call raw_eeg_received method. Ensure you are returning a list from python pre processor");
+      PyErr_Print();
+    }
+    sample.eeg_channels = convert_pyobject_to_vector(channel_data_as_pyobject);
+
+    auto time_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "time");
+    sample.time = PyFloat_AsDouble(time_as_pyobject);
+
+    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_experiment");
+    auto v = PyLong_AsLong(first_as_pyobject);
+    sample.first_sample_of_experiment = v == 1;
+
+    new_samples.push_back(sample);
+
+  }
+
+  return new_samples;
+
+}
+
+std::vector<mtms_interfaces::msg::EegDatapoint>
+PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto time = PyFloat_FromDouble(sample.time);
+  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+
+  auto result = PyObject_CallMethodObjArgs(
+      python_instance,
+      python_data_received_name,
+      list,
+      time,
+      first_sample_of_experiment,
+      nullptr
+  );
+
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call raw_eeg_received method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
+
+  Py_DECREF(list);
+  Py_DECREF(time);
+  Py_DECREF(first_sample_of_experiment);
+
+  std::vector<PyObject *> samples;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    samples.push_back(PyList_GetItem(result, i));
+  }
+
+  auto cleaned_samples = convert_pyobject_samples_to_samples(samples);
+
+  Py_DECREF(result);
+
+  return cleaned_samples;
+
+}
 
 std::vector<Event> PythonProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {}
 
