@@ -21,13 +21,13 @@ def generate_launch_description():
         description="Pre processor script path",
     )
 
-    visualizer_type_arg = DeclareLaunchArgument(
-        "visualizer-type",
-        description="Visualizer type",
+    stimulus_presenter_type_arg = DeclareLaunchArgument(
+        "stimulus-presenter-type",
+        description="stimulus_presenter type",
     )
-    visualizer_script_arg = DeclareLaunchArgument(
-        "visualizer-script",
-        description="Visualizer script path",
+    stimulus_presenter_script_arg = DeclareLaunchArgument(
+        "stimulus-presenter-script",
+        description="stimulus_presenter script path",
     )
 
     processor_type_arg = DeclareLaunchArgument(
@@ -70,6 +70,20 @@ def generate_launch_description():
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
+        ),
+        Node(
+            package="eeg_processor",
+            executable="stimulus_presenter",
+            name="stimulus_presenter",
+            output="screen",
+            emulate_tty=True,
+            parameters=[
+                {
+                    "processor_type": LaunchConfiguration("stimulus-presenter-type"),
+                    "processor_script": LaunchConfiguration("stimulus-presenter-script"),
+                }
+            ],
+            arguments=['--ros-args', '--log-level', logger]
         )
     ]
     for node in nodes:
@@ -80,7 +94,7 @@ def generate_launch_description():
     ld.add_action(pre_processor_script_arg)
     ld.add_action(processor_type_arg)
     ld.add_action(processor_script_arg)
-    ld.add_action(visualizer_script_arg)
-    ld.add_action(visualizer_type_arg)
+    ld.add_action(stimulus_presenter_script_arg)
+    ld.add_action(stimulus_presenter_type_arg)
 
     return ld
