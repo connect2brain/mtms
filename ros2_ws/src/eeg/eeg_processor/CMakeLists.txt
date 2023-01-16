@@ -38,27 +38,27 @@ endif ()
 list(APPEND executables eeg_processor eeg_preprocessor stimulus_presenter)
 
 add_executable(
-    eeg_processor
+        eeg_processor
 
-    src/eeg_processor.h
-    src/eeg_processor.cpp
+        src/eeg_processor.h
+        src/eeg_processor.cpp
 )
 add_executable(
-    eeg_pre_processor
+        eeg_preprocessor
 
         src/eeg_preprocessor.h
         src/eeg_preprocessor.cpp
 )
 
 add_executable(
-    stimulus_presenter
+        stimulus_presenter
 
-    src/stimulus_presenter.h
-    src/stimulus_presenter.cpp
+        src/stimulus_presenter.h
+        src/stimulus_presenter.cpp
 )
 
 
-foreach(executable ${executables})
+foreach (executable ${executables})
     target_sources(
             ${executable}
             PRIVATE
@@ -151,7 +151,7 @@ foreach(executable ${executables})
             ${executable}
             DESTINATION lib/${PROJECT_NAME}
             )
-endforeach()
+endforeach ()
 
 install(
         DIRECTORY launch
