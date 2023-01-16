@@ -152,7 +152,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.time = float(time)
+        event_info.execution_time = float(time)
 
         request.pulse.event_info = event_info
         request.pulse.channel = channel
@@ -179,7 +179,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.time = float(time)
+        event_info.execution_time = float(time)
 
         request.charge.event_info = event_info
         request.charge.channel = channel
@@ -206,7 +206,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.time = float(time)
+        event_info.execution_time = float(time)
 
         request.discharge.event_info = event_info
         request.discharge.channel = channel
@@ -233,7 +233,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.time = float(time)
+        event_info.execution_time = float(time)
 
         request.signal_out.event_info = event_info
         request.signal_out.port = port

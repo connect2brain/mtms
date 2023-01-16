@@ -98,15 +98,15 @@ event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *eve
     PyErr_Print();
     std::cout << "Error on execution_condition" << std::endl;
   }
-  auto time = PyDict_GetItemString(event_info_as_pyobject, "time");
-  if (time == nullptr) {
+  auto execution_time = PyDict_GetItemString(event_info_as_pyobject, "execution_time");
+  if (execution_time == nullptr) {
     PyErr_Print();
-    std::cout << "Error on time" << std::endl;
+    std::cout << "Error on execution_time" << std::endl;
   }
 
   event_interfaces::msg::EventInfo event_info;
 
-  event_info.time = PyFloat_AsDouble(time);
+  event_info.execution_time = PyFloat_AsDouble(execution_time);
   event_info.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
   event_info.id = PyLong_AsUnsignedLong(id);
 
