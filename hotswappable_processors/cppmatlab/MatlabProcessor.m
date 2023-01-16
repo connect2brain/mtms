@@ -9,7 +9,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         function on_init_experiment(obj)
         end
         function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
-            sample = create_eeg_sample(channel_data, time, first_sample_of_experiment);
+            sample = create_eeg_sample(channel_data', time, first_sample_of_experiment);
             obj.set_eeg_samples([sample]);
         end
         function on_end_experiment(obj)

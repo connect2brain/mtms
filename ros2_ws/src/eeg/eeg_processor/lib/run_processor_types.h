@@ -13,6 +13,7 @@
 
 // Include files
 #include "rtwtypes.h"
+#include "coder_array.h"
 
 // Type Definitions
 struct event {
@@ -24,6 +25,12 @@ struct event {
 struct waveform_piece {
   unsigned char waveform_phase;
   unsigned short duration_in_ticks;
+};
+
+struct matlab_eeg_sample {
+  coder::array<double, 2U> channel_data;
+  double time;
+  double first_sample_of_experiment;
 };
 
 struct matlab_event {
