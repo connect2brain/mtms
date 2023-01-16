@@ -2,11 +2,11 @@
 // Created by alqio on 16.1.2023.
 //
 
-#include "eeg_pre_processor.h"
+#include "eeg_preprocessor.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-EegPreProcessor::EegPreProcessor() : ProcessorNode("eeg_pre_processor") {
+EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
   this->publisher = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000);
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
@@ -19,7 +19,7 @@ EegPreProcessor::EegPreProcessor() : ProcessorNode("eeg_pre_processor") {
 
 }
 
-void EegPreProcessor::publish_events(double_t time, const std::vector<mtms_interfaces::msg::EegDatapoint> &samples) {
+void EegPreprocessor::publish_events(double_t time, const std::vector<mtms_interfaces::msg::EegDatapoint> &samples) {
   for (mtms_interfaces::msg::EegDatapoint sample: samples) {
     this->publisher->publish(sample);
   }
@@ -30,14 +30,14 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_pre_processor"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_preprocessor"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<EegPreProcessor>();
+  auto node = std::make_shared<EegPreprocessor>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_pre_processor"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_preprocessor"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif

@@ -35,7 +35,7 @@ else ()
     message(STATUS "MATLAB NOT FOUND")
 endif ()
 
-list(APPEND executables eeg_processor eeg_pre_processor stimulus_presenter)
+list(APPEND executables eeg_processor eeg_preprocessor stimulus_presenter)
 
 add_executable(
     eeg_processor
@@ -46,8 +46,8 @@ add_executable(
 add_executable(
     eeg_pre_processor
 
-    src/eeg_pre_processor.h
-    src/eeg_pre_processor.cpp
+        src/eeg_preprocessor.h
+        src/eeg_preprocessor.cpp
 )
 
 add_executable(
