@@ -6,4 +6,4 @@ uint8 port
 #
 uint32 duration_us
 
-Event event
+EventInfo event_info

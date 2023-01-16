@@ -28,14 +28,14 @@ class Processor(BaseProcessor):
         if self.samples.full and self.samples_collected % self.samples_needed == 0:
             samples = self.samples.get_buffer()
 
-            event = {
+            event_info = {
                 "id": self.event_index,
                 "execution_condition": ExecutionCondition.INSTANT.value,
                 "time": time
             }
             self.event_index += 1
 
-            event = SignalOut(1, 1000, event)
+            event = SignalOut(1, 1000, event_info)
 
             self.samples_collected = 0
 
