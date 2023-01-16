@@ -45,6 +45,20 @@ def generate_launch_description():
     nodes = [
         Node(
             package="eeg_processor",
+            executable="eeg_pre_processor",
+            name="eeg_pre_processor",
+            output="screen",
+            emulate_tty=True,
+            parameters=[
+                {
+                    "processor_type": LaunchConfiguration("pre-processor-type"),
+                    "processor_script": LaunchConfiguration("pre-processor-script"),
+                }
+            ],
+            arguments=['--ros-args', '--log-level', logger]
+        ),
+        Node(
+            package="eeg_processor",
             executable="eeg_processor",
             name="eeg_processor",
             output="screen",
@@ -62,6 +76,8 @@ def generate_launch_description():
         ld.add_action(node)
 
     ld.add_action(log_arg)
+    ld.add_action(pre_processor_type_arg)
+    ld.add_action(pre_processor_script_arg)
     ld.add_action(processor_type_arg)
     ld.add_action(processor_script_arg)
     ld.add_action(visualizer_script_arg)
