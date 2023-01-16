@@ -90,7 +90,7 @@ std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) 
   for (size_t i = 0; i < size; i++) {
     item = PyList_GetItem(data, i);
     if (!PyFloat_Check(item)) {
-      RCLCPP_WARN(rclcpp::get_logger("eeg_pre_processor"), "Index %d of returned sample was not a float.", i);
+      RCLCPP_WARN(rclcpp::get_logger("eeg_preprocessor"), "Index %d of returned sample was not a float.", i);
       continue;
     }
     l.push_back(PyFloat_AsDouble(item));
@@ -295,7 +295,7 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
     auto channel_data_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "sample");
 
     if (!PyList_Check(channel_data_as_pyobject)) {
-      RCLCPP_ERROR(rclcpp::get_logger("eeg_pre_processor"),
+      RCLCPP_ERROR(rclcpp::get_logger("eeg_preprocessor"),
                    "Error in call raw_eeg_received method. Ensure you are returning a list from python pre processor");
       PyErr_Print();
     }
