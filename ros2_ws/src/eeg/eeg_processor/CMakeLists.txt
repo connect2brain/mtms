@@ -40,6 +40,7 @@ add_executable(
 
         src/processor.h
         src/fpga_event.h
+        src/eeg_processor.h
         src/eeg_processor.cpp
         src/processor_node.h
 

@@ -12,15 +12,18 @@
 #include <cstring>
 #include "cpp_processor_interface.h"
 
-class CppProcessor : public ProcessorWrapper {
+template<class InputType, class OutputType>
+class CppProcessor : public ProcessorWrapper<InputType, OutputType> {
 public:
   explicit CppProcessor(const std::string &script_path);
 
-  std::vector<Event> init() override;
+  std::vector<OutputType> init() override;
 
-  std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data) override;
+  std::vector<OutputType> eeg_received(mtms_interfaces::msg::EegDatapoint sample) override;
 
-  std::vector<Event> close() override;
+  std::vector<OutputType> event_received(mtms_interfaces::msg::Event event) override;
+
+  void close();
 
 private:
   void *processor_factory;

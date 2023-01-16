@@ -13,15 +13,18 @@
 #include "matlab_processor_interface.h"
 #include "matlab_helpers.h"
 
-class CompiledMatlabProcessor : public ProcessorWrapper {
+template<class InputType, class OutputType>
+class CompiledMatlabProcessor : public ProcessorWrapper<InputType, OutputType> {
 public:
   explicit CompiledMatlabProcessor(const std::string &script_path);
 
-  std::vector<Event> init() override;
+  std::vector<OutputType> init() override;
 
-  std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data) override;
+  std::vector<OutputType> eeg_received(mtms_interfaces::msg::EegDatapoint sample) override;
 
-  std::vector<Event> close() override;
+  std::vector<OutputType> event_received(mtms_interfaces::msg::Event event) override;
+
+  void close();
 
 private:
   void *processor_factory;
