@@ -44,7 +44,7 @@ Event convert_matlab_event_to_event(matlab_event event) {
     matlab_event.charge = event_interfaces::msg::Charge();
     matlab_event.charge.event_info.id = event.b_event_info.id;
     matlab_event.charge.event_info.execution_condition.value = event.b_event_info.execution_condition;
-    matlab_event.charge.event_info.time = event.b_event_info.time;
+    matlab_event.charge.event_info.execution_time = event.b_event_info.execution_time;
     matlab_event.charge.channel = event.channel;
     matlab_event.charge.target_voltage = event.target_voltage;
 
@@ -60,7 +60,7 @@ Event convert_matlab_event_to_event(matlab_event event) {
     }
     matlab_event.pulse.event_info.id = event.b_event_info.id;
     matlab_event.pulse.event_info.execution_condition.value = event.b_event_info.execution_condition;
-    matlab_event.pulse.event_info.time = event.b_event_info.time;
+    matlab_event.pulse.event_info.execution_time = event.b_event_info.execution_time;
     matlab_event.pulse.channel = event.channel;
 
   } else if (event.event_type == DISCHARGE) {
@@ -68,7 +68,7 @@ Event convert_matlab_event_to_event(matlab_event event) {
     matlab_event.discharge = event_interfaces::msg::Discharge();
     matlab_event.discharge.event_info.id = event.b_event_info.id;
     matlab_event.discharge.event_info.execution_condition.value = event.b_event_info.execution_condition;
-    matlab_event.discharge.event_info.time = event.b_event_info.time;
+    matlab_event.discharge.event_info.execution_time = event.b_event_info.execution_time;
     matlab_event.discharge.channel = event.channel;
     matlab_event.discharge.target_voltage = event.target_voltage;
   } else {
@@ -76,7 +76,7 @@ Event convert_matlab_event_to_event(matlab_event event) {
     matlab_event.signal_out = event_interfaces::msg::SignalOut();
     matlab_event.signal_out.event_info.id = event.b_event_info.id;
     matlab_event.signal_out.event_info.execution_condition.value = event.b_event_info.execution_condition;
-    matlab_event.signal_out.event_info.time = event.b_event_info.time;
+    matlab_event.signal_out.event_info.execution_time = event.b_event_info.execution_time;
     matlab_event.signal_out.port = event.channel;
     matlab_event.signal_out.duration_us = event.duration_us;
   }
