@@ -8,7 +8,7 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-EegProcessor::EegProcessor() : ProcessorNode("eeg_processor", "/eeg/cleaned_data") {
+EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   this->charge_publisher = this->create_publisher<fpga_interfaces::msg::Charge>("/mtms/charge", 10);
   this->discharge_publisher = this->create_publisher<fpga_interfaces::msg::Discharge>("/mtms/discharge", 10);
@@ -92,9 +92,7 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::executors::SingleThreadedExecutor executor;
-  executor.add_node(node);
-  executor.spin();
+  rclcpp::spin(node);
   rclcpp::shutdown();
 
   return 0;
