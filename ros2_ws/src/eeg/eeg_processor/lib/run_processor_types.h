@@ -28,12 +28,14 @@ struct waveform_piece {
   unsigned short duration_in_ticks;
 };
 
+/* Used by CompiledMatlabProcessor */
 struct matlab_eeg_sample {
   coder::array<double, 2U> channel_data;
   double time;
   double first_sample_of_experiment;
 };
 
+/* Used by CppProcessor. Separate from matlab_eeg_sample so coder_array.h is not needed in cpp processors. */
 struct eeg_sample {
   std::vector<double> channel_data;
   double time;
