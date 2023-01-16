@@ -26,7 +26,7 @@ struct waveform_piece {
   unsigned short duration_in_ticks;
 };
 
-struct matlab_fpga_event {
+struct matlab_event {
   unsigned char channel;
   event b_event;
   waveform_piece waveform[3];

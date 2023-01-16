@@ -26,37 +26,40 @@ std::vector<Event> CppProcessor::data_received(mtms_interfaces::msg::EegDatapoin
       data.first_sample_of_experiment
   );
 
-  std::vector<Event> output;
+  std::vector<Event> events_out;
 
   for (auto i = 0; i < events.size(); i++) {
-    auto event = events[i];
-    auto fpga_event = convert_matlab_event_to_event(event);
-    output.push_back(fpga_event);
+    auto matlab_event = events[i];
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
 
-  return output;
+  return events_out;
 }
 
 std::vector<Event> CppProcessor::init() {
-  std::vector<Event> events;
+  std::vector<Event> events_out;
+
   auto events = inner_processor->init_experiment();
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto fpga_event = convert_matlab_event_to_event(event);
-    events.push_back(fpga_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
-  return events;
+
+  return events_out;
 }
 
 std::vector<Event> CppProcessor::close() {
-  std::vector<Event> events;
+  std::vector<Event> events_out;
+
   auto events = inner_processor->end_experiment();
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto fpga_event = convert_matlab_event_to_event(event);
-    events.push_back(fpga_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
 
   //Empty the pointer
@@ -65,5 +68,5 @@ std::vector<Event> CppProcessor::close() {
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
-  return events;
+  return events_out;
 }

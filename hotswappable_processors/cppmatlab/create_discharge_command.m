@@ -10,6 +10,6 @@ function command = create_discharge_command(event_id, channel, execution_conditi
     command.target_voltage = uint16(target_voltage);
     command.duration_us = uint32(1000);
 
-    coder.cstructname(command, 'matlab_fpga_event');
+    coder.cstructname(command, 'matlab_event');
     coder.cstructname(command.event, 'event');
 end
