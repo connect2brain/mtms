@@ -38,7 +38,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
                 number_of_pulses = 20;
             end
             obj.commands = repmat(create_pulse_command(0,1, 2, 0), number_of_pulses, 1);
-            obj.samples = repmat(create_eeg_sample(1:number_of_pulses, 1.0, 1), number_of_pulses, 1);
+            obj.samples = repmat(create_eeg_sample([1:number_of_pulses], 1.0, 1), number_of_pulses, 1);
 
             obj.events_sent = uint32(0);
             
@@ -59,9 +59,9 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         end
 
         function set_eeg_samples(obj, samples)
-            number_of_samples = size(samples, 2);
+            number_of_samples = size(samples, 1);
             if number_of_samples > 0
-                obj.eeg_samples = repmat(create_eeg_sample([], 1.0, 0), number_of_samples, 1);
+                obj.samples = repmat(samples(1), number_of_samples, 1);
                 for i=1:number_of_samples
                     obj.samples(i) = samples(i);
                 end
