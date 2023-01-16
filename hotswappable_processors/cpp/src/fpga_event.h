@@ -5,6 +5,8 @@
 #ifndef PROCESSOR_FACTORY_FPGA_EVENT_H
 #define PROCESSOR_FACTORY_FPGA_EVENT_H
 
+#include <vector>
+
 struct event {
   unsigned short id;
   unsigned char execution_condition;
@@ -14,6 +16,12 @@ struct event {
 struct waveform_piece {
   unsigned char waveform_phase;
   unsigned short duration_in_ticks;
+};
+
+struct eeg_sample {
+  std::vector<double> channel_data;
+  double time;
+  double first_sample_of_experiment;
 };
 
 struct fpga_event {
