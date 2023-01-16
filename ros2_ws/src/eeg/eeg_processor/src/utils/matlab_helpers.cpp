@@ -23,9 +23,18 @@ void print_matlab_event(matlab_event event) {
   std::cout << "  Time: " << event.b_event.time << std::endl;
   std::cout << "Waveform: " << std::endl;
   for (auto i = 0; i < 3; i++) {
-    std::cout << "  Phase: " << +event.waveform[i].waveform_phase << ", duration in ticks: " << event.waveform[i].duration_in_ticks
+    std::cout << "  Phase: " << +event.waveform[i].waveform_phase << ", duration in ticks: "
+              << event.waveform[i].duration_in_ticks
               << std::endl;
   }
+}
+
+mtms_interfaces::msg::EegDatapoint convert_matlab_sample_to_sample(matlab_eeg_sample matlab_sample) {
+  mtms_interfaces::msg::EegDatapoint sample;
+  sample.first_sample_of_experiment = matlab_sample.first_sample_of_experiment;
+  sample.eeg_channels = matlab_sample.channel_data;
+  sample.time = matlab_sample.time;
+  return sample;
 }
 
 Event convert_matlab_event_to_event(matlab_event event) {
