@@ -156,10 +156,10 @@ class MTMSApiPrinter():
 
         if execution_condition == ExecutionCondition.TIMED:
             execution_condition_str = 'Timed at (s): {0:g}'.format(time)
-        elif execution_condition == ExecutionCondition.TRIGGER:
+        elif execution_condition == ExecutionCondition.WAIT_FOR_TRIGGER:
             execution_condition_str = 'Waiting for trigger'
-        elif execution_condition == ExecutionCondition.INSTANT:
-            execution_condition_str = 'Instant'
+        elif execution_condition == ExecutionCondition.IMMEDIATE:
+            execution_condition_str = 'Immediate'
         else:
             assert False, "Unknown execution condition"
 
