@@ -35,7 +35,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.signal_out_request.signal_out = generate_signal_out_command(port=1, time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
+        self.signal_out_request.signal_out = generate_signal_out_command(port=1, execution_time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
