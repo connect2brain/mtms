@@ -24,7 +24,7 @@ class Processor(BaseProcessor):
     def data_received(self, sample, time, first_sample_of_experiment):
         super().data_received(sample, time, first_sample_of_experiment)
         self.samples_collected += 1
-
+        print("in data received")
         if self.samples.full and self.samples_collected % self.samples_needed == 0:
             samples = self.samples.get_buffer()
 
