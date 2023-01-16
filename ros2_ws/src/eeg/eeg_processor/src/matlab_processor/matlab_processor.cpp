@@ -4,8 +4,8 @@
 
 #include "matlab_processor.h"
 
-
-MatlabProcessor::MatlabProcessor(const std::string &script_path) {
+template<class InputType, class OutputType>
+MatlabProcessor<InputType, OutputType>::MatlabProcessor(const std::string &script_path) {
   std::cout << "Starting matlab" << std::endl;
 
   matlab = matlab::engine::startMATLAB();
@@ -19,7 +19,8 @@ MatlabProcessor::MatlabProcessor(const std::string &script_path) {
   matlab_data.resize(50 * 62, -1);
 }
 
-std::vector<Event> MatlabProcessor::init() {
+template<class InputType, class OutputType>
+std::vector<OutputType> MatlabProcessor<InputType, OutputType>::init() {
   std::vector<Event> events;
   return events;
 }
@@ -42,7 +43,9 @@ void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
   }
 }
 
-std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+template<class InputType, class OutputType>
+std::vector<OutputType>
+MatlabProcessor<InputType, OutputType>::eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
   std::vector<Event> events_out;
 
   matlab::data::TypedArray<double> matlab_data_array = factory.createArray(
@@ -53,11 +56,11 @@ std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatap
   );
   auto matlab_data_array_dims = matlab_data_array.getDimensions();
 
-  auto dim = matlab::data::ArrayDimensions(data.eeg_channels.size());
+  auto dim = matlab::data::ArrayDimensions(sample.eeg_channels.size());
   auto matlab_new_sample = factory.createArray<double>(
-      {1, data.eeg_channels.size()},
-      data.eeg_channels.data(),
-      data.eeg_channels.data() + data.eeg_channels.size()
+      {1, sample.eeg_channels.size()},
+      sample.eeg_channels.data(),
+      sample.eeg_channels.data() + sample.eeg_channels.size()
   );
 
 
@@ -166,10 +169,9 @@ std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatap
   return events_out;
 }
 
-std::vector<Event> MatlabProcessor::close() {
+template<class InputType, class OutputType>
+void MatlabProcessor<InputType, OutputType>::close() {
   matlab::engine::terminateEngineClient();
   std::cout << "Closed matlab engine client" << std::endl;
 
-  std::vector<Event> events;
-  return events;
 }

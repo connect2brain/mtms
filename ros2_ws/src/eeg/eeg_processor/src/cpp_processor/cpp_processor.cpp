@@ -5,7 +5,8 @@
 #include "cpp_processor.h"
 #include "matlab_helpers.h"
 
-CppProcessor::CppProcessor(const std::string &script_path) {
+template<class InputType, class OutputType>
+CppProcessor<InputType, OutputType>::CppProcessor(const std::string &script_path) {
   processor_factory = dlopen(script_path.c_str(), RTLD_NOW);
   if (processor_factory == nullptr) {
     std::cerr << "Cannot load processor_factory: " << dlerror() << std::endl;
@@ -19,7 +20,8 @@ CppProcessor::CppProcessor(const std::string &script_path) {
   inner_processor = std::unique_ptr<CppProcessorInterface>(create_processor_func());
 }
 
-std::vector<Event> CppProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+template<class InputType, class OutputType>
+std::vector<OutputType> CppProcessor<InputType, OutputType>::eeg_received(mtms_interfaces::msg::EegDatapoint data) {
   auto events = inner_processor->data_received(
       data.eeg_channels,
       data.time,
@@ -37,9 +39,9 @@ std::vector<Event> CppProcessor::data_received(mtms_interfaces::msg::EegDatapoin
   return events_out;
 }
 
-std::vector<Event> CppProcessor::init() {
+template<class InputType, class OutputType>
+std::vector<OutputType> CppProcessor<InputType, OutputType>::init() {
   std::vector<Event> events_out;
-
   auto events = inner_processor->init_experiment();
 
   for (auto i = events.begin(); i != events.end(); i++) {
@@ -51,22 +53,12 @@ std::vector<Event> CppProcessor::init() {
   return events_out;
 }
 
-std::vector<Event> CppProcessor::close() {
-  std::vector<Event> events_out;
-
-  auto events = inner_processor->end_experiment();
-
-  for (auto i = events.begin(); i != events.end(); i++) {
-    auto matlab_event = *i;
-    auto event = convert_matlab_event_to_event(matlab_event);
-    events_out.push_back(event);
-  }
-
+template<class InputType, class OutputType>
+void CppProcessor<InputType, OutputType>::close() {
   //Empty the pointer
   //inner_processor.reset();
 
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
-  return events_out;
 }

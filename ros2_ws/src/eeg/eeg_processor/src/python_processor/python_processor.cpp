@@ -8,7 +8,8 @@
 #include "rclcpp/rclcpp.hpp"
 
 
-PythonProcessor::PythonProcessor(std::string script_path) {
+template<class InputType, class OutputType>
+PythonProcessor<InputType, OutputType>::PythonProcessor(std::string script_path) {
   setenv("PYTHONPATH", ".", 1);
   Py_Initialize();
 
@@ -56,7 +57,8 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   python_close_name = PyUnicode_FromString("end_experiment");
 }
 
-std::vector<Event> PythonProcessor::init() {
+template<class InputType, class OutputType>
+std::vector<OutputType> PythonProcessor<InputType, OutputType>::init() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
   if (!PyList_Check(result)) {
     std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
@@ -73,7 +75,8 @@ std::vector<Event> PythonProcessor::init() {
   return events_;
 }
 
-PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
+template<class InputType, class OutputType>
+PyObject *PythonProcessor<InputType, OutputType>::convert_vector_to_pyobject(std::vector<double> data) {
   PyObject *l = PyList_New(data.size());
   for (size_t i = 0; i < data.size(); i++) {
     PyList_SetItem(l, i, PyFloat_FromDouble(data[i]));
@@ -81,7 +84,9 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
-event_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
+template<class InputType, class OutputType>
+
+event_interfaces::msg::Event PythonProcessor<InputType, OutputType>::parse_event(PyObject *event) {
   auto event_as_pyobject = PyObject_GetAttrString(event, "event");
   if (event_as_pyobject == nullptr) {
     PyErr_Print();
@@ -112,7 +117,9 @@ event_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   return event_msg;
 }
 
-event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
+template<class InputType, class OutputType>
+
+event_interfaces::msg::Charge PythonProcessor<InputType, OutputType>::parse_charge(PyObject *event) {
   auto charge = event_interfaces::msg::Charge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -138,7 +145,9 @@ event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   return charge;
 }
 
-event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
+template<class InputType, class OutputType>
+
+event_interfaces::msg::Discharge PythonProcessor<InputType, OutputType>::parse_discharge(PyObject *event) {
   auto discharge = event_interfaces::msg::Discharge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -164,7 +173,9 @@ event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *even
   return discharge;
 }
 
-event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
+template<class InputType, class OutputType>
+
+event_interfaces::msg::SignalOut PythonProcessor<InputType, OutputType>::parse_signal_out(PyObject *event) {
   auto signal_out = event_interfaces::msg::SignalOut();
 
   auto port = PyObject_GetAttrString(event, "port");
@@ -191,7 +202,9 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
   return signal_out;
 }
 
-event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
+template<class InputType, class OutputType>
+
+event_interfaces::msg::Pulse PythonProcessor<InputType, OutputType>::parse_pulse(PyObject *event) {
   auto pulse = event_interfaces::msg::Pulse();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -226,7 +239,9 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   return pulse;
 }
 
-std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
+template<class InputType, class OutputType>
+
+std::vector<Event> PythonProcessor<InputType, OutputType>::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
   std::vector<Event> events_;
 
   for (auto event_as_pyobject: events) {
@@ -267,10 +282,11 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
   return events_;
 }
 
-std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  auto list = convert_vector_to_pyobject(data.eeg_channels);
-  auto time = PyFloat_FromDouble(data.time);
-  auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
+template<class InputType, class OutputType>
+std::vector<OutputType> PythonProcessor<InputType, OutputType>::eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto time = PyFloat_FromDouble(sample.time);
+  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
 
   auto result = PyObject_CallMethodObjArgs(
       python_instance,
@@ -303,22 +319,7 @@ std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatap
   return events_;
 }
 
-std::vector<Event> PythonProcessor::close() {
-  auto result = PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
-
-  if (!PyList_Check(result)) {
-    std::cout << "Error in call close method. Ensure you are returning a list" << std::endl;
-    PyErr_Print();
-  }
-  std::vector<PyObject *> events;
-
-  for (auto i = 0; i < PyList_Size(result); i++) {
-    events.push_back(PyList_GetItem(result, i));
-  }
-
-  auto events_ = convert_pyobject_events_to_events(events);
-
+template<class InputType, class OutputType>
+void PythonProcessor<InputType, OutputType>::close() {
   Py_FinalizeEx();
-
-  return events_;
 }
