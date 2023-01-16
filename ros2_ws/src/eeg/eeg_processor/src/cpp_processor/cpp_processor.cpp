@@ -29,7 +29,7 @@ std::vector<mtms_interfaces::msg::EegDatapoint> CppProcessor::raw_eeg_received(m
       sample.first_sample_of_experiment
   );
 
-  std::vector<mtms_interfaces::msg::EegDatapoint> output;
+  std::vector<mtms_interfaces::msg::EegDatapoint> cleaned_samples;
 
   for (auto i = 0; i < samples.size(); i++) {
     auto matlab_eeg_sample = samples[i];
@@ -37,9 +37,10 @@ std::vector<mtms_interfaces::msg::EegDatapoint> CppProcessor::raw_eeg_received(m
     new_sample.eeg_channels = matlab_eeg_sample.channel_data;
     new_sample.time = matlab_eeg_sample.time;
     new_sample.first_sample_of_experiment = matlab_eeg_sample.first_sample_of_experiment;
+    cleaned_samples.push_back(new_sample);
   }
 
-  return output;
+  return cleaned_samples;
 }
 
 std::vector<Event> CppProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
@@ -49,15 +50,15 @@ std::vector<Event> CppProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegD
       sample.first_sample_of_experiment
   );
 
-  std::vector<Event> output;
+  std::vector<Event> events_out;
 
   for (auto i = 0; i < events.size(); i++) {
-    auto event = events[i];
-    auto matlab_event = convert_matlab_event_to_event(event);
-    output.push_back(matlab_event);
+    auto matlab_event = events[i];
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
 
-  return output;
+  return events_out;
 }
 
 std::vector<Event> CppProcessor::init() {
@@ -65,9 +66,9 @@ std::vector<Event> CppProcessor::init() {
   auto events = inner_processor->init_experiment();
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto matlab_event = convert_matlab_event_to_event(event);
-    matlab_events.push_back(matlab_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    matlab_events.push_back(event);
   }
   return matlab_events;
 }
