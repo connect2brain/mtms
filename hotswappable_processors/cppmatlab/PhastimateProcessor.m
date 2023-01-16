@@ -105,13 +105,13 @@ classdef MatlabProcessor < AbstractMatlabProcessor
                 [~, index_of_peak] = min(abs(future_samples(:,1) - 0));
                 phase_at_peak = future_samples(index_of_peak, 1);
 
-                event_time = time + index_of_peak * obj.downsample_ratio * obj.sample_duration;
+                execution_time = time + index_of_peak * obj.downsample_ratio * obj.sample_duration;
 
-                signal_out_event = create_signal_out_command(obj.events_sent + 1, 2, 1000, 0, event_time);
+                signal_out_event = create_signal_out_command(obj.events_sent + 1, 2, 1000, 0, execution_time);
                 obj.set_commands([signal_out_event]);
 
                 fprintf("EEG time:  %f\n", time);
-                fprintf("Event time %f at index %f\n", event_time, index_of_peak);
+                fprintf("Execution time %f at index %f\n", execution_time, index_of_peak);
 
                 obj.estimated = true;
             else
