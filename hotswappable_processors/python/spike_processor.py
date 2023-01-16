@@ -33,7 +33,7 @@ class Processor(BaseProcessor):
         event_info = {
             "id": self.event_index,
             "execution_condition": ExecutionCondition.INSTANT.value,
-            "time": time
+            "execution_time": execution_time,
         }
         self.event_index += 1
 
