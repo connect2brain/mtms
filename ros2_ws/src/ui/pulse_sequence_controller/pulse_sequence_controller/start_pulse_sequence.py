@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from mtms_interfaces.srv import StartPulseSequence
-from event_interfaces.msg import Pulse, Event
+from event_interfaces.msg import Pulse, EventInfo
 from .pulses import generate_pulse, pulse_duration_in_us
 from .testResult import TestResult
 
@@ -144,16 +144,16 @@ class StartPulseSequenceNode(Node):
                         # isi for the first pulse is 0 as there are no preceding pulses to "wait" for
                         isi = 0 if pulse_index == 0 else pulse_sequence.isis[pulse_index - 1]
 
-                        event = Event()
-                        event.id = id
+                        event_info = EventInfo()
+                        event_info.id = id
                         # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
-                        event.wait_for_trigger = False
-                        event.time = self.calculate_time(train_interval, burst_interval, isi)
+                        event_info.wait_for_trigger = False
+                        event_info.execution_time = self.calculate_time(train_interval, burst_interval, isi)
 
                         pulse = Pulse()
                         pulse.waveform = pulse
                         pulse.channel = channel_index
-                        pulse.event = event
+                        pulse.event_info = event_info
 
                         self.send_pulse(pulse)
                         sequence.append(pulse)
