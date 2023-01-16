@@ -12,12 +12,12 @@ class MTMSApi:
     # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
 
-    # TIME_EPSILON is used to implement events that are to be executed instantly but
+    # TIME_EPSILON is used to implement events that are to be executed immediately but
     # wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
     # and execute all the events at that time.
     #
     # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
-    # the mTMS device, but not too large so that the events are not executed 'instantly'.
+    # the mTMS device, but not too large so that the events are not executed 'immediately'.
     # Settle for 0.1 s (100 ms) for now, but change if needed.
     #
     TIME_EPSILON = 0.1
@@ -205,7 +205,7 @@ class MTMSApi:
 
     # Compound events
 
-    def send_instant_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_completion=True):
+    def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_completion=True):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -218,7 +218,7 @@ class MTMSApi:
 
             self.send_charge_or_discharge(
                 id=id,
-                execution_condition=ExecutionCondition.INSTANT,
+                execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
                 target_voltage=target_voltage,
                 wait_for_completion=False,
@@ -227,10 +227,10 @@ class MTMSApi:
         if wait_for_completion:
             self.wait_for_completions(ids=ids)
 
-    def send_instant_full_discharge_to_all_channels(self, starting_id=1, wait_for_completion=True):
+    def send_immediate_full_discharge_to_all_channels(self, starting_id=1, wait_for_completion=True):
         target_voltages = self.N_CHANNELS * [0]
 
-        self.send_instant_charge_or_discharge_to_all_channels(
+        self.send_immediate_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
             starting_id=starting_id,
             wait_for_completion=wait_for_completion,
@@ -261,7 +261,7 @@ class MTMSApi:
         if wait_for_completion:
             self.wait_for_completions(ids=ids)
 
-    def send_instant_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1, wait_for_completion=True):
+    def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1, wait_for_completion=True):
         execution_condition = ExecutionCondition.TIMED
         time = self.get_time() + self.TIME_EPSILON
 
