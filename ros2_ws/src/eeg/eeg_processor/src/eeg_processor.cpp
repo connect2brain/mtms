@@ -1,7 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "mtms_interfaces/msg/event.hpp"
 
 #include "eeg_processor.h"
 #include "processor_node.h"
@@ -10,17 +9,17 @@
 
 EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
-  this->charge_publisher = this->create_publisher<fpga_interfaces::msg::Charge>("/mtms/charge", 10);
-  this->discharge_publisher = this->create_publisher<fpga_interfaces::msg::Discharge>("/mtms/discharge", 10);
-  this->signal_out_publisher = this->create_publisher<fpga_interfaces::msg::SignalOut>("/mtms/signal_out", 10);
-  this->pulse_publisher = this->create_publisher<fpga_interfaces::msg::Pulse>("/mtms/pulse", 10);
+  this->charge_publisher = this->create_publisher<fpga_interfaces::msg::Charge>("/event/charge", 10);
+  this->discharge_publisher = this->create_publisher<fpga_interfaces::msg::Discharge>("/event/discharge", 10);
+  this->signal_out_publisher = this->create_publisher<fpga_interfaces::msg::SignalOut>("/event/signal_out", 10);
+  this->pulse_publisher = this->create_publisher<fpga_interfaces::msg::Pulse>("/event/pulse", 10);
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
     auto events = processor->cleaned_eeg_received(*message);
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 5000,
+  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
                                                                             subscription_callback);
 
 }
