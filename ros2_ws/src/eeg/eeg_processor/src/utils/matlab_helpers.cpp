@@ -4,7 +4,7 @@
 
 #include "matlab_helpers.h"
 
-void print_matlab_fpga_event(matlab_fpga_event event) {
+void print_matlab_event(matlab_event event) {
   std::cout << "Event type: ";
   if (event.event_type == PULSE) {
     std::cout << "Pulse" << std::endl;
@@ -28,11 +28,11 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   }
 }
 
-FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
-  FpgaEvent fpga_event;
+Event convert_matlab_event_to_event(matlab_event event) {
+  Event fpga_event;
   if (event.event_type == CHARGE) {
     fpga_event.event_type = CHARGE;
-    fpga_event.charge = fpga_interfaces::msg::Charge();
+    fpga_event.charge = event_interfaces::msg::Charge();
     fpga_event.charge.event.id = event.b_event.id;
     fpga_event.charge.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.charge.event.time = event.b_event.time;
@@ -41,10 +41,10 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
 
   } else if (event.event_type == PULSE) {
     fpga_event.event_type = PULSE;
-    fpga_event.pulse = fpga_interfaces::msg::Pulse();
+    fpga_event.pulse = event_interfaces::msg::Pulse();
 
     for (auto piece: event.waveform) {
-      auto fpga_piece = fpga_interfaces::msg::WaveformPiece();
+      auto fpga_piece = event_interfaces::msg::WaveformPiece();
       fpga_piece.duration_in_ticks = piece.duration_in_ticks;
       fpga_piece.waveform_phase.value = piece.waveform_phase;
       fpga_event.pulse.waveform.push_back(fpga_piece);
@@ -56,7 +56,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
 
   } else if (event.event_type == DISCHARGE) {
     fpga_event.event_type = DISCHARGE;
-    fpga_event.discharge = fpga_interfaces::msg::Discharge();
+    fpga_event.discharge = event_interfaces::msg::Discharge();
     fpga_event.discharge.event.id = event.b_event.id;
     fpga_event.discharge.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.discharge.event.time = event.b_event.time;
@@ -64,7 +64,7 @@ FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event) {
     fpga_event.discharge.target_voltage = event.target_voltage;
   } else {
     fpga_event.event_type = SIGNAL_OUT;
-    fpga_event.signal_out = fpga_interfaces::msg::SignalOut();
+    fpga_event.signal_out = event_interfaces::msg::SignalOut();
     fpga_event.signal_out.event.id = event.b_event.id;
     fpga_event.signal_out.event.execution_condition.value = event.b_event.execution_condition;
     fpga_event.signal_out.event.time = event.b_event.time;

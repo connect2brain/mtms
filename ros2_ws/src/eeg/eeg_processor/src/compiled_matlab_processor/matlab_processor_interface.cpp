@@ -11,14 +11,14 @@ MatlabProcessorInterface *MatlabProcessorInterface::init() {
 
 }
 
-void MatlabProcessorInterface::init_experiment(coder::array<matlab_fpga_event, 1U> &ret) {
+void MatlabProcessorInterface::init_experiment(coder::array<matlab_event, 1U> &ret) {
   std::cout
       << "ERROR: in MatlabProcessorInterface init_experiment, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
 
 }
 
-void MatlabProcessorInterface::end_experiment(coder::array<matlab_fpga_event, 1U> &ret) {
+void MatlabProcessorInterface::end_experiment(coder::array<matlab_event, 1U> &ret) {
   std::cout
       << "ERROR: in MatlabProcessorInterface end_experiment, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
@@ -27,7 +27,7 @@ void MatlabProcessorInterface::end_experiment(coder::array<matlab_fpga_event, 1U
 void MatlabProcessorInterface::data_received(const double channel_data_data[], int channel_data_size,
                                              double time,
                                              boolean_T first_sample_of_experiment,
-                                             coder::array<matlab_fpga_event, 1U> &ret) {
+                                             coder::array<matlab_event, 1U> &ret) {
   std::cout
       << "ERROR, in MatlabProcessorInterface data_received, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       <<
