@@ -12,62 +12,73 @@ def generate_launch_description():
         default_value=["info"],
         description="Logging level",
     )
+    pre_processor_type_arg = DeclareLaunchArgument(
+        "pre-processor-type",
+        description="Pre processor type",
+    )
+    pre_processor_script_arg = DeclareLaunchArgument(
+        "pre-processor-script",
+        description="Pre processor script path",
+    )
+
+    visualizer_type_arg = DeclareLaunchArgument(
+        "visualizer-type",
+        description="Visualizer type",
+    )
+    visualizer_script_arg = DeclareLaunchArgument(
+        "visualizer-script",
+        description="Visualizer script path",
+    )
 
     processor_type_arg = DeclareLaunchArgument(
         "processor-type",
-        default_value=["python"],
         description="Processor type",
     )
 
     processor_script_arg = DeclareLaunchArgument(
         "processor-script",
-        default_value=[""],
         description="Processor script",
     )
 
-    loop_count_arg = DeclareLaunchArgument(
-        "loop-count",
-        default_value=[""],
-        description="Processor script loop count",
-    )
-
-    file_arg = DeclareLaunchArgument(
-        "file",
-        default_value=[""],
-        description="Processor script file name",
-    )
-
-    publish_events_arg = DeclareLaunchArgument(
-        "publish-events",
-        description="Publish fpga events also also to a topic",
-    )
-
-
     logger = LaunchConfiguration("log-level")
 
-    node = Node(
-        package="eeg_processor",
-        executable="eeg_processor",
-        name="eeg_processor",
-        output="screen",
-        emulate_tty=True,
-        parameters=[
-            {
-                "processor_type": LaunchConfiguration("processor-type"),
-                "processor_script": LaunchConfiguration("processor-script"),
-                "loop_count": LaunchConfiguration("loop-count"),
-                "file": LaunchConfiguration("file"),
-                "publish_events": LaunchConfiguration("publish-events")
-            }
-        ],
-        arguments=['--ros-args', '--log-level', logger]
-    )
-    ld.add_action(node)
+    nodes = [
+        Node(
+            package="eeg_processor",
+            executable="eeg_processor",
+            name="eeg_processor",
+            output="screen",
+            emulate_tty=True,
+            parameters=[
+                {
+                    "processor_type": LaunchConfiguration("processor-type"),
+                    "processor_script": LaunchConfiguration("processor-script"),
+                }
+            ],
+            arguments=['--ros-args', '--log-level', logger]
+        ),
+        Node(
+            package="eeg_processor",
+            executable="visualizer",
+            name="visualizer",
+            output="screen",
+            emulate_tty=True,
+            parameters=[
+                {
+                    "processor_type": LaunchConfiguration("visualizer-type"),
+                    "processor_script": LaunchConfiguration("visualizer-script"),
+                }
+            ],
+            arguments=['--ros-args', '--log-level', logger]
+        ),
+    ]
+    for node in nodes:
+        ld.add_action(node)
+
     ld.add_action(log_arg)
     ld.add_action(processor_type_arg)
     ld.add_action(processor_script_arg)
-    ld.add_action(loop_count_arg)
-    ld.add_action(file_arg)
-    ld.add_action(publish_events_arg)
+    ld.add_action(visualizer_script_arg)
+    ld.add_action(visualizer_type_arg)
 
     return ld

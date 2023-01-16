@@ -39,9 +39,9 @@ add_executable(
         eeg_processor
 
         src/processor.h
-        src/eeg_processor.h
         src/fpga_event.h
         src/eeg_processor.cpp
+        src/processor_node.h
 
         src/compiled_matlab_processor/compiled_matlab_processor.h
         src/compiled_matlab_processor/compiled_matlab_processor.cpp
