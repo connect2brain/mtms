@@ -99,7 +99,7 @@ std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) 
 }
 
 
-fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
+event_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   auto event_as_pyobject = PyObject_GetAttrString(event, "event");
   if (event_as_pyobject == nullptr) {
     PyErr_Print();
@@ -120,7 +120,7 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
     PyErr_Print();
     std::cout << "Error on time" << std::endl;
   }
-  fpga_interfaces::msg::Event event_msg;
+  event_interfaces::msg::Event event_msg;
   event_msg.time = PyFloat_AsDouble(time);
   event_msg.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
   event_msg.id = PyLong_AsUnsignedLong(id);
@@ -130,8 +130,8 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   return event_msg;
 }
 
-fpga_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
-  auto charge = fpga_interfaces::msg::Charge();
+event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
+  auto charge = event_interfaces::msg::Charge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -156,8 +156,8 @@ fpga_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   return charge;
 }
 
-fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
-  auto discharge = fpga_interfaces::msg::Discharge();
+event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
+  auto discharge = event_interfaces::msg::Discharge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -182,8 +182,8 @@ fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event
   return discharge;
 }
 
-fpga_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
-  auto signal_out = fpga_interfaces::msg::SignalOut();
+event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
+  auto signal_out = event_interfaces::msg::SignalOut();
 
   auto port = PyObject_GetAttrString(event, "port");
 
@@ -209,8 +209,8 @@ fpga_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *even
   return signal_out;
 }
 
-fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
-  auto pulse = fpga_interfaces::msg::Pulse();
+event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
+  auto pulse = event_interfaces::msg::Pulse();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -229,7 +229,7 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
     auto waveform_phase = PyDict_GetItemString(piece_as_pyobject, "waveform_phase");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
-    auto piece = fpga_interfaces::msg::WaveformPiece();
+    auto piece = event_interfaces::msg::WaveformPiece();
     piece.waveform_phase.value = PyLong_AsUnsignedLong(waveform_phase);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
