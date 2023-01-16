@@ -354,7 +354,35 @@ PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
 
 }
 
-std::vector<Event> PythonProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {}
+std::vector<Event> PythonProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {
+  auto time = PyFloat_FromDouble(event.when_to_execute);
+
+  auto result = PyObject_CallMethodObjArgs(
+      python_instance,
+      python_data_received_name,
+      time,
+      nullptr
+  );
+
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call present_stimulus_received method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
+
+  Py_DECREF(time);
+
+  std::vector<PyObject *> events;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    events.push_back(PyList_GetItem(result, i));
+  }
+
+  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+
+  Py_DECREF(result);
+
+  return fpga_events;
+}
 
 
 std::vector<Event> PythonProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
