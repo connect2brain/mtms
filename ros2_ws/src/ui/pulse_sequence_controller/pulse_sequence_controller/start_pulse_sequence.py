@@ -148,7 +148,7 @@ class StartPulseSequenceNode(Node):
                         event_info.id = id
                         # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
                         event_info.wait_for_trigger = False
-                        event_info.time = self.calculate_time(train_interval, burst_interval, isi)
+                        event_info.execution_time = self.calculate_time(train_interval, burst_interval, isi)
 
                         pulse = Pulse()
                         pulse.waveform = pulse

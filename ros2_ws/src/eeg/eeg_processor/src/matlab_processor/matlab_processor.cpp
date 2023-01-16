@@ -121,9 +121,9 @@ std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatap
             matlab::data::TypedArrayRef<uint8_t> field_value = event_info[0][sub_struct_field];
             event.b_event_info.execution_condition = field_value[0];
 
-          } else if (sub_struct_field_name == "time") {
+          } else if (sub_struct_field_name == "execution_time") {
             matlab::data::TypedArrayRef<double_t> field_value = event_info[0][sub_struct_field];
-            event.b_event_info.time = field_value[0];
+            event.b_event_info.execution_time = field_value[0];
 
           } else {
             std::cout << "unknown event type" << std::endl;
