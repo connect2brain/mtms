@@ -3,5 +3,5 @@ from enum import Enum
 
 class ExecutionCondition(Enum):
     TIMED = 0
-    TRIGGERED = 1
-    INSTANT = 2
+    WAIT_FOR_TRIGGER = 1
+    IMMEDIATE = 2
