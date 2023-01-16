@@ -64,9 +64,9 @@ std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(mtms_interfaces
   std::vector<Event> output;
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto matlab_event = convert_matlab_event_to_event(event);
-    output.push_back(matlab_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    output.push_back(event);
   }
 
   return output;
@@ -78,9 +78,9 @@ std::vector<Event> CompiledMatlabProcessor::init() {
   inner_processor->init_experiment(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto matlab_event = convert_matlab_event_to_event(event);
-    matlab_events.push_back(matlab_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    matlab_events.push_back(event);
   }
   return matlab_events;
 }
