@@ -32,15 +32,13 @@
 template<class SubscriptionType, class InputType, class OutputType>
 class ProcessorNode : public rclcpp::Node {
 public:
-  ProcessorNode(std::string node_name, std::string subscription_topic);
-
-  ~ProcessorNode() {};
+  ProcessorNode(std::string node_name);
 
   typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
 
   ProcessorWrapper<InputType, OutputType> *processor;
 
-  virtual void publish_events(double_t time, const std::vector<OutputType> &events);
+  virtual void publish_events(double_t time, const std::vector<OutputType> &events) = 0;
 
   void load_processor_script(std::string processor_type, std::string processor_script_path);
 
@@ -48,8 +46,7 @@ public:
 
 
 template<class SubscriptionType, class InputType, class OutputType>
-ProcessorNode<SubscriptionType, InputType, OutputType>::ProcessorNode(std::string node_name,
-                                                                      std::string subscription_topic) : Node(
+ProcessorNode<SubscriptionType, InputType, OutputType>::ProcessorNode(std::string node_name) : Node(
     node_name) {
   std::string processor_type;
   this->declare_parameter<std::string>("processor_type", "cpp");
