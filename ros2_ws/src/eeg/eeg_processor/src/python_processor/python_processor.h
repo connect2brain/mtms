@@ -29,10 +29,8 @@ private:
 
   static std::vector<Event> convert_pyobject_events_to_events(std::vector<PyObject *> events);
 
+  static event_interfaces::msg::EventInfo parse_event_info(PyObject *event);
   static std::vector<mtms_interfaces::msg::EegDatapoint> convert_pyobject_samples_to_samples(std::vector<PyObject *> samples);
-
-
-  static event_interfaces::msg::Event parse_event(PyObject *event);
 
   static event_interfaces::msg::Charge parse_charge(PyObject *event);
   static event_interfaces::msg::Discharge parse_discharge(PyObject *event);

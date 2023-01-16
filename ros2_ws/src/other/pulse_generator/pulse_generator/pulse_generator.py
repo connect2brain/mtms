@@ -35,7 +35,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.signal_out_request.signal_out = generate_signal_out_command(port=1, time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
+        self.signal_out_request.signal_out = generate_signal_out_command(port=1, execution_time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
@@ -63,7 +63,7 @@ class PulseGenerator(Node):
         for pulse in self.timed_pulses:
             self.pulse_request.pulse = pulse
             self.pulse_client.call_async(self.pulse_request)
-            self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event.id}")
+            self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event_info.id}")
 
     def timer_callback(self):
         self.signal_out_client.call_async(self.signal_out_request)

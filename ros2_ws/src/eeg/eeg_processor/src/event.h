@@ -44,10 +44,10 @@ struct Event {
     if (event_type == PULSE) {
       std::cout << "Pulse" << std::endl;
       std::cout << "Channel: " << +pulse.channel << std::endl;
-      std::cout << "Event: " << std::endl;
-      std::cout << "  Id: " << pulse.event.id << std::endl;
-      std::cout << "  Execution condition: " << +pulse.event.execution_condition.value << std::endl;
-      std::cout << "  Time: " << pulse.event.time << std::endl;
+      std::cout << "Event info: " << std::endl;
+      std::cout << "  Id: " << pulse.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +pulse.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << pulse.event_info.execution_time << std::endl;
       std::cout << "Waveform: " << std::endl;
       for (auto i = 0; i < 3; i++) {
         std::cout << "  Phase: " << +pulse.waveform[i].waveform_phase.value << ", duration in ticks: "
@@ -58,27 +58,27 @@ struct Event {
       std::cout << "Charge" << std::endl;
       std::cout << "Channel: " << +charge.channel << std::endl;
       std::cout << "Target voltage: " << charge.target_voltage << std::endl;
-      std::cout << "Event: " << std::endl;
-      std::cout << "  Id: " << charge.event.id << std::endl;
-      std::cout << "  Execution condition: " << +charge.event.execution_condition.value << std::endl;
-      std::cout << "  Time: " << charge.event.time << std::endl;
+      std::cout << "Event info: " << std::endl;
+      std::cout << "  Id: " << charge.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +charge.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << charge.event_info.execution_time << std::endl;
     } else if (event_type == DISCHARGE) {
       std::cout << "Discharge" << std::endl;
 
       std::cout << "Channel: " << +discharge.channel << std::endl;
       std::cout << "Target voltage: " << discharge.target_voltage << std::endl;
-      std::cout << "Event: " << std::endl;
-      std::cout << "  Id: " << discharge.event.id << std::endl;
-      std::cout << "  Execution condition: " << +discharge.event.execution_condition.value << std::endl;
-      std::cout << "  Time: " << discharge.event.time << std::endl;
+      std::cout << "Event info: " << std::endl;
+      std::cout << "  Id: " << discharge.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +discharge.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << discharge.event_info.execution_time << std::endl;
     } else if (event_type == SIGNAL_OUT) {
       std::cout << "Signal out" << std::endl;
 
       std::cout << "Port: " << +signal_out.port << std::endl;
-      std::cout << "Event: " << std::endl;
-      std::cout << "  Id: " << signal_out.event.id << std::endl;
-      std::cout << "  Execution condition: " << +signal_out.event.execution_condition.value << std::endl;
-      std::cout << "  Time: " << signal_out.event.time << std::endl;
+      std::cout << "Event info: " << std::endl;
+      std::cout << "  Id: " << signal_out.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +signal_out.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << signal_out.event_info.execution_time << std::endl;
     } else {
       std::cout << "Unknown event type " << +event_type << std::endl;
     }

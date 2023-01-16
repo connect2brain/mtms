@@ -3,7 +3,7 @@ from rclpy.node import Node
 import time
 
 from event_interfaces.srv import SendSignalOut, SendPulse, SendCharge
-from event_interfaces.msg import SignalOut, Event
+from event_interfaces.msg import SignalOut, EventInfo
 
 from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
@@ -61,15 +61,15 @@ class EegProcessor(Node):
             f.write(str(time_difference) + "\n")
 
     def set_trigger_request(self, index, time):
-        event = Event()
-        event.id = EVENT_ID
-        event.execution_condition = 2
-        event.time = time + TIME_CONSTANT
+        event_info = EventInfo()
+        event_info.id = EVENT_ID
+        event_info.execution_condition = 2
+        event_info.execution_time = time + TIME_CONSTANT
 
         signal_out = SignalOut()
         signal_out.port = port
         signal_out.duration_us = SIGNAL_OUT_DURATION_US
-        signal_out.event = event
+        signal_out.event_info = event_info
 
         self.request.signal_out = signal_out
 
