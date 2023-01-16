@@ -52,12 +52,13 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   signal_out_client = this->create_client<event_interfaces::srv::SendSignalOut>("/event/send_signal_out");
 
   req = std::make_shared<event_interfaces::srv::SendSignalOut::Request>();
+
   auto event = event_interfaces::msg::SignalOut();
   event.port = 2;
   event.duration_us = 10000;
-  event.event.time = 0.0;
-  event.event.execution_condition.value = 2;
-  event.event.id = 1;
+  event.event_info.time = 0.0;
+  event.event_info.execution_condition.value = 2;
+  event.event_info.id = 1;
 
   req->signal_out = event;
 
