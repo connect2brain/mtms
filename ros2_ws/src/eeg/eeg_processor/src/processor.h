@@ -7,17 +7,20 @@
 
 #include "string"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "mtms_interfaces/msg/event.hpp"
 
 #include "fpga_event.h"
 
-
+template <class InputType, class OutputType>
 class ProcessorWrapper {
 public:
-  virtual std::vector<Event> init() = 0;
+  virtual std::vector<OutputType> init() = 0;
 
-  virtual std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data) = 0;
+  virtual std::vector<OutputType> eeg_received(mtms_interfaces::msg::EegDatapoint sample) = 0;
 
-  virtual std::vector<Event> close() = 0;
+  virtual std::vector<OutputType> event_received(mtms_interfaces::msg::Event event) = 0;
+
+  virtual void close() = 0;
 
 };
 
