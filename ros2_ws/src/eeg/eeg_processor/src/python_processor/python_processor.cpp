@@ -68,9 +68,9 @@ std::vector<Event> PythonProcessor::init() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto events = convert_pyobject_events_to_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
-  return events;
+  return events_;
 }
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
@@ -227,7 +227,7 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
 }
 
 std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
-  std::vector<Event> events;
+  std::vector<Event> events_;
 
   for (auto event_as_pyobject: events) {
     Event event;
@@ -259,12 +259,12 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
       RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
     }
 
-    events.push_back(event);
+    events_.push_back(event);
 
     Py_DECREF(event_type_as_pyobject);
   }
 
-  return events;
+  return events_;
 }
 
 std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
@@ -296,11 +296,11 @@ std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatap
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto events = convert_pyobject_events_to_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
   Py_DECREF(result);
 
-  return events;
+  return events_;
 }
 
 std::vector<Event> PythonProcessor::close() {
@@ -316,9 +316,9 @@ std::vector<Event> PythonProcessor::close() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto events = convert_pyobject_events_to_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
   Py_FinalizeEx();
 
-  return events;
+  return events_;
 }

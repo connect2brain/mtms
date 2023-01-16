@@ -9,8 +9,8 @@
 #include <iostream>
 #include "fpga_event.h"
 
-void print_matlab_fpga_event(matlab_fpga_event event);
+void print_matlab_event(matlab_event event);
 
-Event convert_matlab_event_to_event(matlab_fpga_event event);
+Event convert_matlab_event_to_event(matlab_event event);
 
 #endif //EEG_PROCESSOR_MATLAB_HELPERS_H
