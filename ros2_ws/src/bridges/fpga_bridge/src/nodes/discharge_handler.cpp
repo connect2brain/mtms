@@ -1,6 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/srv/send_discharge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
 #include "event_interfaces/msg/event_info.hpp"
 
@@ -19,15 +18,12 @@ public:
   DischargeHandler()
       : Node("discharge_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendDischarge::Request> request,
-                                   std::shared_ptr<event_interfaces::srv::SendDischarge::Response> response) -> void {
-      event_interfaces::msg::Discharge discharge = request->discharge;
-
-      uint8_t channel = discharge.channel;
+    auto callback = [this](const std::shared_ptr<event_interfaces::msg::Discharge> discharge) -> void {
+      uint8_t channel = discharge->channel;
 
       /* Serialize event info. */
 
-      event_interfaces::msg::EventInfo event_info = discharge.event_info;
+      event_interfaces::msg::EventInfo event_info = discharge->event_info;
 
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
@@ -41,7 +37,7 @@ public:
 
       /* Serialize discharge. */
 
-      uint16_t target_voltage = discharge.target_voltage;
+      uint16_t target_voltage = discharge->target_voltage;
       serialized_message.add_uint16(target_voltage);
 
       serialized_message.finalize();
@@ -59,17 +55,15 @@ public:
                                             NULL));
 
       RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Sent discharge to channel %d", channel);
-
-      response->success = true;
     };
 
     serialized_message = SerializedMessage();
-    send_discharge_service_ = this->create_service<event_interfaces::srv::SendDischarge>(
-        "/event/send_discharge", service_callback);
+    send_discharge_subscriber_ = this->create_subscription<event_interfaces::msg::Discharge>(
+        "/event/send/discharge", 10, callback);
   }
 
 private:
-  rclcpp::Service<event_interfaces::srv::SendDischarge>::SharedPtr send_discharge_service_;
+  rclcpp::Subscription<event_interfaces::msg::Discharge>::SharedPtr send_discharge_subscriber_;
   SerializedMessage serialized_message;
 };
 
