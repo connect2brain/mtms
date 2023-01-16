@@ -18,7 +18,7 @@
 
 #include "processor_node.h"
 
-class EegProcessor : ProcessorNode<mtms_interfaces::msg::EegDatapoint, mtms_interfaces::msg::EegDatapoint, Event> {
+class EegProcessor : public ProcessorNode<mtms_interfaces::msg::EegDatapoint, mtms_interfaces::msg::EegDatapoint, Event> {
 public:
   EegProcessor();
 private:

@@ -45,12 +45,10 @@ add_executable(
         src/processor_node.h
 
         src/compiled_matlab_processor/compiled_matlab_processor.h
-        src/compiled_matlab_processor/compiled_matlab_processor.cpp
         src/compiled_matlab_processor/matlab_processor_interface.h
         src/compiled_matlab_processor/matlab_processor_interface.cpp
 
         src/cpp_processor/cpp_processor.h
-        src/cpp_processor/cpp_processor.cpp
         src/cpp_processor/cpp_processor_interface.h
         src/cpp_processor/cpp_processor_interface.cpp
 
@@ -93,7 +91,6 @@ if (Matlab_FOUND)
             eeg_processor
             PRIVATE
             src/matlab_processor/matlab_processor.h
-            src/matlab_processor/matlab_processor.cpp
     )
 
     # MATLAB, Linker to libMatlabEngine in link_directories
@@ -113,7 +110,6 @@ if (PYTHONLIBS_FOUND)
             eeg_processor
             PRIVATE
             src/python_processor/python_processor.h
-            src/python_processor/python_processor.cpp
     )
 
     include_directories(${PYTHON_INCLUDE_DIRS})
