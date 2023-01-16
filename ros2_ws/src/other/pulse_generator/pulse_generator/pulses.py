@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import Event, WaveformPiece, Pulse, Charge, SignalOut
+from event_interfaces.msg import Event, WaveformPiece, Pulse, Charge, SignalOut
 
 US_TO_TICKS_CONVERSION_RATIO = 40
 

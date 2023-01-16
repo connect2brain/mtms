@@ -49,10 +49,10 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
                                                                                   10,
                                                                                   trigger_subscription_callback);
 
-  signal_out_client = this->create_client<fpga_interfaces::srv::SendSignalOut>("/fpga/send_signal_out");
+  signal_out_client = this->create_client<event_interfaces::srv::SendSignalOut>("/event/send_signal_out");
 
-  req = std::make_shared<fpga_interfaces::srv::SendSignalOut::Request>();
-  auto event = fpga_interfaces::msg::SignalOut();
+  req = std::make_shared<event_interfaces::srv::SendSignalOut::Request>();
+  auto event = event_interfaces::msg::SignalOut();
   event.port = 2;
   event.duration_us = 10000;
   event.event.time = 0.0;
