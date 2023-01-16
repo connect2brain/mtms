@@ -1,10 +1,10 @@
 function command = create_pulse_command(event_id, channel, execution_condition, time)
-    event.id = uint16(event_id);
-    event.execution_condition = uint8(execution_condition);
-    event.time = double(time);
+    event_info.id = uint16(event_id);
+    event_info.execution_condition = uint8(execution_condition);
+    event_info.time = double(time);
 
     command.channel = uint8(channel);
-    command.event = event;
+    command.event_info = event_info;
     command.waveform = get_default_waveform(channel);
     command.event_type = uint8(0);
     command.target_voltage = uint16(0);
