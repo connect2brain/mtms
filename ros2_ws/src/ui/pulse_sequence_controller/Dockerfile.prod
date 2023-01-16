@@ -17,7 +17,7 @@ RUN chmod +x ros_entrypoint.sh
 WORKDIR /app
 COPY ros2_ws/src/ui/pulse_sequence_controller ros2_ws/pulse_sequence_controller/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/mtms_interfaces/
-COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/fpga_interfaces/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/event_interfaces/
 
 
 # Build ROS packages

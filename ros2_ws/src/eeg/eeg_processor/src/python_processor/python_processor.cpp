@@ -56,7 +56,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   python_close_name = PyUnicode_FromString("end_experiment");
 }
 
-std::vector<FpgaEvent> PythonProcessor::init() {
+std::vector<Event> PythonProcessor::init() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
   if (!PyList_Check(result)) {
     std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
@@ -68,9 +68,9 @@ std::vector<FpgaEvent> PythonProcessor::init() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
-  return fpga_events;
+  return events_;
 }
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
@@ -81,7 +81,7 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
-fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
+event_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   auto event_as_pyobject = PyObject_GetAttrString(event, "event");
   if (event_as_pyobject == nullptr) {
     PyErr_Print();
@@ -102,7 +102,7 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
     PyErr_Print();
     std::cout << "Error on time" << std::endl;
   }
-  fpga_interfaces::msg::Event event_msg;
+  event_interfaces::msg::Event event_msg;
   event_msg.time = PyFloat_AsDouble(time);
   event_msg.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
   event_msg.id = PyLong_AsUnsignedLong(id);
@@ -112,8 +112,8 @@ fpga_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
   return event_msg;
 }
 
-fpga_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
-  auto charge = fpga_interfaces::msg::Charge();
+event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
+  auto charge = event_interfaces::msg::Charge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -138,8 +138,8 @@ fpga_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   return charge;
 }
 
-fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
-  auto discharge = fpga_interfaces::msg::Discharge();
+event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
+  auto discharge = event_interfaces::msg::Discharge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -164,8 +164,8 @@ fpga_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event
   return discharge;
 }
 
-fpga_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
-  auto signal_out = fpga_interfaces::msg::SignalOut();
+event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
+  auto signal_out = event_interfaces::msg::SignalOut();
 
   auto port = PyObject_GetAttrString(event, "port");
 
@@ -191,8 +191,8 @@ fpga_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *even
   return signal_out;
 }
 
-fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
-  auto pulse = fpga_interfaces::msg::Pulse();
+event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
+  auto pulse = event_interfaces::msg::Pulse();
 
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
@@ -211,7 +211,7 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
     auto waveform_phase = PyDict_GetItemString(piece_as_pyobject, "waveform_phase");
     auto duration_in_ticks = PyDict_GetItemString(piece_as_pyobject, "duration_in_ticks");
 
-    auto piece = fpga_interfaces::msg::WaveformPiece();
+    auto piece = event_interfaces::msg::WaveformPiece();
     piece.waveform_phase.value = PyLong_AsUnsignedLong(waveform_phase);
     piece.duration_in_ticks = PyLong_AsUnsignedLong(duration_in_ticks);
 
@@ -226,11 +226,11 @@ fpga_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   return pulse;
 }
 
-std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events) {
-  std::vector<FpgaEvent> fpga_events;
+std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
+  std::vector<Event> events_;
 
   for (auto event_as_pyobject: events) {
-    FpgaEvent event;
+    Event event;
 
     auto event_type_as_pyobject = PyObject_GetAttrString(event_as_pyobject, "event_type");
     auto event_type = PyLong_AsUnsignedLong(event_type_as_pyobject);
@@ -259,15 +259,15 @@ std::vector<FpgaEvent> PythonProcessor::convert_pyobject_events_to_fpga_events(s
       RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
     }
 
-    fpga_events.push_back(event);
+    events_.push_back(event);
 
     Py_DECREF(event_type_as_pyobject);
   }
 
-  return fpga_events;
+  return events_;
 }
 
-std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
   auto list = convert_vector_to_pyobject(data.eeg_channels);
   auto time = PyFloat_FromDouble(data.time);
   auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
@@ -296,14 +296,14 @@ std::vector<FpgaEvent> PythonProcessor::data_received(mtms_interfaces::msg::EegD
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
   Py_DECREF(result);
 
-  return fpga_events;
+  return events_;
 }
 
-std::vector<FpgaEvent> PythonProcessor::close() {
+std::vector<Event> PythonProcessor::close() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
 
   if (!PyList_Check(result)) {
@@ -316,9 +316,9 @@ std::vector<FpgaEvent> PythonProcessor::close() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_ = convert_pyobject_events_to_events(events);
 
   Py_FinalizeEx();
 
-  return fpga_events;
+  return events_;
 }
