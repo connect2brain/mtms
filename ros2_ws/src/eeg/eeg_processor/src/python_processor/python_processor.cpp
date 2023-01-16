@@ -81,35 +81,38 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
-event_interfaces::msg::Event PythonProcessor::parse_event(PyObject *event) {
-  auto event_as_pyobject = PyObject_GetAttrString(event, "event");
-  if (event_as_pyobject == nullptr) {
+event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
+  auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
+
+  if (event_info_as_pyobject == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event_as_pyobject" << std::endl;
+    std::cout << "Error on event_info_as_pyobject" << std::endl;
   }
-  auto id = PyDict_GetItemString(event_as_pyobject, "id");
+  auto id = PyDict_GetItemString(event_info_as_pyobject, "id");
   if (id == nullptr) {
     PyErr_Print();
     std::cout << "Error on id" << std::endl;
   }
-  auto execution_condition = PyDict_GetItemString(event_as_pyobject, "execution_condition");
+  auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
   if (execution_condition == nullptr) {
     PyErr_Print();
     std::cout << "Error on execution_condition" << std::endl;
   }
-  auto time = PyDict_GetItemString(event_as_pyobject, "time");
+  auto time = PyDict_GetItemString(event_info_as_pyobject, "time");
   if (time == nullptr) {
     PyErr_Print();
     std::cout << "Error on time" << std::endl;
   }
-  event_interfaces::msg::Event event_msg;
-  event_msg.time = PyFloat_AsDouble(time);
-  event_msg.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
-  event_msg.id = PyLong_AsUnsignedLong(id);
 
-  Py_DECREF(event_as_pyobject);
+  event_interfaces::msg::EventInfo event_info;
 
-  return event_msg;
+  event_info.time = PyFloat_AsDouble(time);
+  event_info.execution_condition.value = PyLong_AsUnsignedLong(execution_condition);
+  event_info.id = PyLong_AsUnsignedLong(id);
+
+  Py_DECREF(event_info_as_pyobject);
+
+  return event_info;
 }
 
 event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
@@ -130,7 +133,7 @@ event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   charge.channel = PyLong_AsUnsignedLong(channel);
   charge.target_voltage = PyLong_AsUnsignedLong(target_voltage);
 
-  charge.event = parse_event(event);
+  charge.event_info = parse_event_info(event);
 
   Py_DECREF(channel);
   Py_DECREF(target_voltage);
@@ -156,7 +159,7 @@ event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *even
   discharge.channel = PyLong_AsUnsignedLong(channel);
   discharge.target_voltage = PyLong_AsUnsignedLong(target_voltage);
 
-  discharge.event = parse_event(event);
+  discharge.event_info = parse_event_info(event);
 
   Py_DECREF(channel);
   Py_DECREF(target_voltage);
@@ -183,7 +186,7 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
   signal_out.port = PyLong_AsUnsignedLong(port);
   signal_out.duration_us = PyLong_AsUnsignedLong(duration_us);
 
-  signal_out.event = parse_event(event);
+  signal_out.event_info = parse_event_info(event);
 
   Py_DECREF(port);
   Py_DECREF(duration_us);
@@ -219,7 +222,8 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   }
 
   pulse.channel = PyLong_AsUnsignedLong(channel);
-  pulse.event = parse_event(event);
+  pulse.event_info = parse_event_info(event);
+
   Py_DECREF(channel);
   Py_DECREF(waveform);
 

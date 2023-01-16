@@ -3,7 +3,7 @@
 #include "event_interfaces/srv/send_pulse.hpp"
 #include "event_interfaces/msg/waveform_piece.hpp"
 #include "event_interfaces/msg/pulse.hpp"
-#include "event_interfaces/msg/event.hpp"
+#include "event_interfaces/msg/event_info.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -29,11 +29,11 @@ public:
 
       /* Serialize event info. */
 
-      event_interfaces::msg::Event event = pulse.event;
+      event_interfaces::msg::EventInfo event_info = pulse.event_info;
 
-      uint16_t id = event.id;
-      uint8_t execution_condition = event.execution_condition.value;
-      double_t time = event.time;
+      uint16_t id = event_info.id;
+      uint8_t execution_condition = event_info.execution_condition.value;
+      double_t time = event_info.time;
       uint64_t time_ticks = (uint64_t)(time * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(channel);
