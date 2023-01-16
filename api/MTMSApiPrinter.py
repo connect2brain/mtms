@@ -152,7 +152,7 @@ class MTMSApiPrinter():
 
         execution_condition = event_info.execution_condition.value
         id = event_info.id
-        time = event_info.time
+        time = event_info.execution_time
 
         if execution_condition == ExecutionCondition.TIMED:
             execution_condition_str = 'Timed at (s): {0:g}'.format(time)
