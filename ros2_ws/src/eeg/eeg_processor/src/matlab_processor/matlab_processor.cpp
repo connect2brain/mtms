@@ -165,7 +165,7 @@ std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::E
       }
 
     }
-    //print_matlab_fpga_event(event);
+
     auto matlab_event = convert_matlab_event_to_event(event);
     matlab_events.push_back(matlab_event);
   }

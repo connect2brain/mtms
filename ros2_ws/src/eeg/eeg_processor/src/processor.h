@@ -9,7 +9,7 @@
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "mtms_interfaces/msg/event.hpp"
 
-#include "fpga_event.h"
+#include "event.h"
 
 class ProcessorWrapper {
 public:
