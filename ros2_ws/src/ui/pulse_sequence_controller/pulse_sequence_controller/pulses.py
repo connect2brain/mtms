@@ -8,11 +8,11 @@ fullEvent = {
             {'waveform_phase': 2, 'duration_in_ticks': 50000}
         ],
         'channel': 2,
-        'event': {
+        'event_info': {
             'id': 20,
             # TODO: Bitrotten: 'wait_for_trigger' has been replaced with 'execution_condition'.
             'wait_for_trigger': True,
-            'time': 10.0,
+            'execution_time': 10.0,
         }
     }
 }

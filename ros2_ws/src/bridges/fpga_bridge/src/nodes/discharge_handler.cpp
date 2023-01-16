@@ -2,7 +2,7 @@
 
 #include "event_interfaces/srv/send_discharge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
-#include "event_interfaces/msg/event.hpp"
+#include "event_interfaces/msg/event_info.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -27,17 +27,17 @@ public:
 
       /* Serialize event info. */
 
-      event_interfaces::msg::Event event = discharge.event;
+      event_interfaces::msg::EventInfo event_info = discharge.event_info;
 
-      uint16_t id = event.id;
-      uint8_t execution_condition = event.execution_condition.value;
-      double_t time = event.time;
-      uint64_t time_ticks = (uint64_t)(time * CLOCK_FREQUENCY_HZ);
+      uint16_t id = event_info.id;
+      uint8_t execution_condition = event_info.execution_condition.value;
+      double_t execution_time = event_info.execution_time;
+      uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(channel);
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
-      serialized_message.add_uint64(time_ticks);
+      serialized_message.add_uint64(execution_time_ticks);
 
       /* Serialize discharge. */
 
