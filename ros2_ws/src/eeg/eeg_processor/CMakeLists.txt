@@ -64,7 +64,7 @@ foreach(executable ${executables})
             PRIVATE
             src/processor.h
             src/processor_node.h
-            src/fpga_event.h
+            src/event.h
 
             src/compiled_matlab_processor/compiled_matlab_processor.h
             src/compiled_matlab_processor/compiled_matlab_processor.cpp

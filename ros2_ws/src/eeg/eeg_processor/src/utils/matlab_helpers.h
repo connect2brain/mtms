@@ -7,7 +7,7 @@
 
 #include "run_processor_types.h"
 #include <iostream>
-#include "fpga_event.h"
+#include "event.h"
 
 void print_matlab_event(matlab_event event);
 
