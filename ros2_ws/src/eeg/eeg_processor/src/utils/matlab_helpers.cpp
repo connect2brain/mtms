@@ -4,7 +4,7 @@
 
 #include "matlab_helpers.h"
 
-void print_matlab_fpga_event(matlab_fpga_event event) {
+void print_matlab_event(matlab_event event) {
   std::cout << "Event type: ";
   if (event.event_type == PULSE) {
     std::cout << "Pulse" << std::endl;
@@ -28,7 +28,7 @@ void print_matlab_fpga_event(matlab_fpga_event event) {
   }
 }
 
-Event convert_matlab_event_to_event(matlab_fpga_event event) {
+Event convert_matlab_event_to_event(matlab_event event) {
   Event fpga_event;
   if (event.event_type == CHARGE) {
     fpga_event.event_type = CHARGE;
