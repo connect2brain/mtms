@@ -35,7 +35,8 @@ int main() {
       data.push_back(fRand(0, 100));
     }
     coder::array<matlab_event, 1U> events;
-    p->data_received(data.data(), data.size(), 100, false, events);
+    coder::array<matlab_eeg_sample, 1U> samples;
+    p->data_received(data.data(), data.size(), 100, false, events, samples);
 
     for (auto e = events.begin(); e != events.end(); e++) {
       std::cout << "received event: " << +e->event_type << std::endl;
