@@ -57,18 +57,18 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
     auto start = steady_clock::now();
 
-    auto fpga_events = processor->data_received(*message);
+    auto events = processor->data_received(*message);
 
     auto stop = steady_clock::now();
 
-    send_fpga_events(fpga_events);
+    send_events(events);
 
     if (should_publish_events) {
-      publish_events(message->time, fpga_events);
+      publish_events(message->time, events);
     }
 
     auto total = duration_cast<microseconds>(stop - start);
-    if (!fpga_events.empty()) {
+    if (!events.empty()) {
       RCLCPP_INFO(this->get_logger(), "Processing took: %lu us", total.count());
       f << std::to_string(total.count()) << "\n";
       f.flush();
@@ -81,8 +81,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
       std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response) -> void {
 
     start_experiment_client->async_send_request(start_experiment_request);
-    auto fpga_events = processor->init();
-    send_fpga_events(fpga_events);
+    auto events = processor->init();
+    send_events(events);
 
     response->success = true;
   };
@@ -120,17 +120,17 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
   stop_experiment_request = std::make_shared<fpga_interfaces::srv::StopExperiment::Request>();
 
 
-  pulse_client = this->create_client<fpga_interfaces::srv::SendPulse>("/fpga/send_pulse");
-  pulse_request = std::make_shared<fpga_interfaces::srv::SendPulse::Request>();
+  pulse_client = this->create_client<event_interfaces::srv::SendPulse>("/event/send_pulse");
+  pulse_request = std::make_shared<event_interfaces::srv::SendPulse::Request>();
 
-  charge_client = this->create_client<fpga_interfaces::srv::SendCharge>("/fpga/send_charge");
-  charge_request = std::make_shared<fpga_interfaces::srv::SendCharge::Request>();
+  charge_client = this->create_client<event_interfaces::srv::SendCharge>("/event/send_charge");
+  charge_request = std::make_shared<event_interfaces::srv::SendCharge::Request>();
 
-  discharge_client = this->create_client<fpga_interfaces::srv::SendDischarge>("/fpga/send_discharge");
-  discharge_request = std::make_shared<fpga_interfaces::srv::SendDischarge::Request>();
+  discharge_client = this->create_client<event_interfaces::srv::SendDischarge>("/event/send_discharge");
+  discharge_request = std::make_shared<event_interfaces::srv::SendDischarge::Request>();
 
-  signal_out_client = this->create_client<fpga_interfaces::srv::SendSignalOut>("/fpga/send_signal_out");
-  signal_out_request = std::make_shared<fpga_interfaces::srv::SendSignalOut::Request>();
+  signal_out_client = this->create_client<event_interfaces::srv::SendSignalOut>("/event/send_signal_out");
+  signal_out_request = std::make_shared<event_interfaces::srv::SendSignalOut::Request>();
 
   if (should_publish_events) {
     event_publisher = this->create_publisher<mtms_interfaces::msg::Event>("/mtms/events", 10);
@@ -146,8 +146,8 @@ EegProcessor::EegProcessor() : Node("eeg_processor") {
 
 }
 
-void EegProcessor::publish_events(double_t time, const std::vector<FpgaEvent> &events) {
-  for (FpgaEvent event: events) {
+void EegProcessor::publish_events(double_t time, const std::vector<Event> &events) {
+  for (Event event: events) {
     mtms_interfaces::msg::Event ros_event;
 
     ros_event.event_type = event.event_type;
@@ -183,7 +183,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<FpgaEvent> &e
   }
 }
 
-void EegProcessor::send_fpga_events(const std::vector<FpgaEvent> &events) {
+void EegProcessor::send_events(const std::vector<Event> &events) {
   for (const auto &event: events) {
     switch (event.event_type) {
       case PULSE:
@@ -231,7 +231,7 @@ void EegProcessor::measure(int repeats) {
   for (auto i = 0; i < repeats; i++) {
     auto start = steady_clock::now();
 
-    auto fpga_events = processor->data_received(events[i]);
+    auto events = processor->data_received(events[i]);
 
     auto stop = steady_clock::now();
 
@@ -239,7 +239,7 @@ void EegProcessor::measure(int repeats) {
     times.push_back(duration);
     total = duration_cast<microseconds>(duration + total);
 
-    for (auto event: fpga_events) {
+    for (auto event: events) {
       event.print();
       std::cout << "---" << std::endl;
     }

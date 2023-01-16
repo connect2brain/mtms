@@ -2,10 +2,12 @@ import rclpy
 from rclpy.node import Node
 import time
 
+from event_interfaces.srv import SendSignalOut, SendPulse, SendCharge
+from event_interfaces.msg import SignalOut, Event
+
+from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+
 from mtms_interfaces.msg import EegDatapoint, Trigger
-from fpga_interfaces.srv import SendSignalOut, StartDevice, StartExperiment, StopExperiment, \
-    SendPulse, SendCharge
-from fpga_interfaces.msg import SignalOut, Event
 
 SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -18,10 +20,10 @@ class EegProcessor(Node):
     def __init__(self):
         super().__init__('eeg_trigger_processor')
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
-        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received',
-                                                           self.trigger_reader_callback, 10)
+        self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
 
-        self.signal_out_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
+        self.signal_out_client = self.create_client(SendSignalOut, '/event/send_signal_out')
+
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 

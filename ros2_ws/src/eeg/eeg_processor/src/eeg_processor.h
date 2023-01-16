@@ -10,15 +10,16 @@
 #include "compiled_matlab_processor/compiled_matlab_processor.h"
 #include "processor.h"
 
-#include "mtms_interfaces/msg/event.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "event_interfaces/srv/send_pulse.hpp"
+#include "event_interfaces/srv/send_charge.hpp"
+#include "event_interfaces/srv/send_discharge.hpp"
+#include "event_interfaces/srv/send_signal_out.hpp"
 
-#include "fpga_interfaces/srv/send_pulse.hpp"
-#include "fpga_interfaces/srv/send_charge.hpp"
-#include "fpga_interfaces/srv/send_discharge.hpp"
-#include "fpga_interfaces/srv/send_signal_out.hpp"
 #include "fpga_interfaces/srv/start_experiment.hpp"
 #include "fpga_interfaces/srv/stop_experiment.hpp"
+
+#include "mtms_interfaces/msg/event.hpp"
+#include "mtms_interfaces/msg/eeg_datapoint.hpp"
 
 #include "cpp_processor/cpp_processor.h"
 
@@ -50,9 +51,9 @@ public:
 
 private:
   bool should_publish_events;
-  void publish_events(double_t time, const std::vector<FpgaEvent> &events);
+  void publish_events(double_t time, const std::vector<Event> &events);
   void measure(int repeats);
-  void send_fpga_events(const std::vector<FpgaEvent>& events);
+  void send_events(const std::vector<Event>& events);
 
   rclcpp::TimerBase::SharedPtr timer_;
   ProcessorWrapper *processor;
@@ -70,14 +71,14 @@ private:
   rclcpp::Client<fpga_interfaces::srv::StopExperiment>::SharedPtr stop_experiment_client;
   std::shared_ptr<fpga_interfaces::srv::StopExperiment::Request> stop_experiment_request;
 
-  rclcpp::Client<fpga_interfaces::srv::SendPulse>::SharedPtr pulse_client;
-  std::shared_ptr<fpga_interfaces::srv::SendPulse::Request> pulse_request;
-  rclcpp::Client<fpga_interfaces::srv::SendCharge>::SharedPtr charge_client;
-  std::shared_ptr<fpga_interfaces::srv::SendCharge::Request> charge_request;
-  rclcpp::Client<fpga_interfaces::srv::SendDischarge>::SharedPtr discharge_client;
-  std::shared_ptr<fpga_interfaces::srv::SendDischarge::Request> discharge_request;
-  rclcpp::Client<fpga_interfaces::srv::SendSignalOut>::SharedPtr signal_out_client;
-  std::shared_ptr<fpga_interfaces::srv::SendSignalOut::Request> signal_out_request;
+  rclcpp::Client<event_interfaces::srv::SendPulse>::SharedPtr pulse_client;
+  std::shared_ptr<event_interfaces::srv::SendPulse::Request> pulse_request;
+  rclcpp::Client<event_interfaces::srv::SendCharge>::SharedPtr charge_client;
+  std::shared_ptr<event_interfaces::srv::SendCharge::Request> charge_request;
+  rclcpp::Client<event_interfaces::srv::SendDischarge>::SharedPtr discharge_client;
+  std::shared_ptr<event_interfaces::srv::SendDischarge::Request> discharge_request;
+  rclcpp::Client<event_interfaces::srv::SendSignalOut>::SharedPtr signal_out_client;
+  std::shared_ptr<event_interfaces::srv::SendSignalOut::Request> signal_out_request;
 };
 
 #endif //EEG_PROCESSOR_EEG_PROCESSOR_H
