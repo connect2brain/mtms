@@ -95,7 +95,7 @@ std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::E
   std::vector<matlab::data::MATLABFieldIdentifier> field_names(fields.begin(), fields.end());
 
   for (unsigned event_index = 0; event_index < events_struct_array.getNumberOfElements(); event_index++) {
-    matlab_fpga_event event;
+    matlab_event event;
 
     for (auto field: field_names) {
       auto field_name = field.operator std::string();
@@ -166,7 +166,7 @@ std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::E
 
     }
     //print_matlab_fpga_event(event);
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
+    auto fpga_event = convert_matlab_event_to_event(event);
     fpga_events.push_back(fpga_event);
   }
   //print_vector(matlab_data, 50, 62);

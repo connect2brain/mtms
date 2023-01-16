@@ -24,7 +24,7 @@ std::vector<Event> CompiledMatlabProcessor::present_stimulus_received(mtms_inter
 
 std::vector<mtms_interfaces::msg::EegDatapoint>
 CompiledMatlabProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
-  coder::array<matlab_fpga_event, 1U> events;
+  coder::array<matlab_event, 1U> events;
 
   inner_processor->data_received(
       sample.eeg_channels.data(),
@@ -37,7 +37,7 @@ CompiledMatlabProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sam
 }
 
 std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
-  coder::array<matlab_fpga_event, 1U> events;
+  coder::array<matlab_event, 1U> events;
 
   inner_processor->data_received(
       sample.eeg_channels.data(),
@@ -51,24 +51,24 @@ std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(mtms_interfaces
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    output.push_back(fpga_event);
+    auto matlab_event = convert_matlab_event_to_event(event);
+    output.push_back(matlab_event);
   }
 
   return output;
 }
 
 std::vector<Event> CompiledMatlabProcessor::init() {
-  std::vector<Event> fpga_events;
-  coder::array<matlab_fpga_event, 1U> events;
+  std::vector<Event> matlab_events;
+  coder::array<matlab_event, 1U> events;
   inner_processor->init_experiment(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    fpga_events.push_back(fpga_event);
+    auto matlab_event = convert_matlab_event_to_event(event);
+    matlab_events.push_back(matlab_event);
   }
-  return fpga_events;
+  return matlab_events;
 }
 
 CompiledMatlabProcessor::~CompiledMatlabProcessor() {

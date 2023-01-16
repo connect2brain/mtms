@@ -7,10 +7,10 @@
 #include "scheduling_utils.h"
 
 StimulusPresenter::StimulusPresenter() : ProcessorNode("eeg_pre_processor") {
-  this->charge_publisher = this->create_publisher<fpga_interfaces::msg::Charge>("/event/charge", 10);
-  this->discharge_publisher = this->create_publisher<fpga_interfaces::msg::Discharge>("/event/discharge", 10);
-  this->signal_out_publisher = this->create_publisher<fpga_interfaces::msg::SignalOut>("/event/signal_out", 10);
-  this->pulse_publisher = this->create_publisher<fpga_interfaces::msg::Pulse>("/event/pulse", 10);
+  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
+  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
+  this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/signal_out", 10);
+  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
 
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Event> message) -> void {
