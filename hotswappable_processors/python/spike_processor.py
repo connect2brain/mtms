@@ -30,13 +30,13 @@ class Processor(BaseProcessor):
 
         waveform = get_default_waveform(channel=1)
 
-        event = {
+        event_info = {
             "id": self.event_index,
             "execution_condition": ExecutionCondition.INSTANT.value,
             "time": time
         }
         self.event_index += 1
 
-        pulse = Pulse(channel=1, waveform=waveform, event=event)
+        pulse = Pulse(channel=1, waveform=waveform, event_info=event_info)
 
         return [pulse]

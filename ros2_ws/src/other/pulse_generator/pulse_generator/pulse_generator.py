@@ -63,7 +63,7 @@ class PulseGenerator(Node):
         for pulse in self.timed_pulses:
             self.pulse_request.pulse = pulse
             self.pulse_client.call_async(self.pulse_request)
-            self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event.id}")
+            self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event_info.id}")
 
     def timer_callback(self):
         self.signal_out_client.call_async(self.signal_out_request)

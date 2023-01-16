@@ -15,7 +15,7 @@
 #include "rtwtypes.h"
 
 // Type Definitions
-struct event {
+struct event_info {
   unsigned short id;
   unsigned char execution_condition;
   double time;
@@ -28,7 +28,7 @@ struct waveform_piece {
 
 struct matlab_event {
   unsigned char channel;
-  event b_event;
+  event_info b_event_info;
   waveform_piece waveform[3];
   unsigned char event_type;
   unsigned short target_voltage;
