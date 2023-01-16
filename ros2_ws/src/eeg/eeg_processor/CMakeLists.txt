@@ -147,10 +147,11 @@ foreach(executable ${executables})
         message(STATUS "Python not found")
     endif ()
 
-install(TARGETS
-        eeg_processor
-        DESTINATION lib/${PROJECT_NAME}
-        )
+    install(TARGETS
+            ${executable}
+            DESTINATION lib/${PROJECT_NAME}
+            )
+endforeach()
 
 install(
         DIRECTORY launch
