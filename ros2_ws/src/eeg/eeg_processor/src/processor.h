@@ -20,8 +20,6 @@ public:
 
   virtual std::vector<OutputType> event_received(mtms_interfaces::msg::Event event) = 0;
 
-  virtual void close() = 0;
-
 };
 
 #endif //EEG_PROCESSOR_PROCESSOR_H
