@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(fpga_interfaces)
+project(event_interfaces)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -22,24 +22,32 @@ endif ()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-        "msg/state/ChannelState.msg"
-        "msg/state/ChannelError.msg"
-        "msg/state/DeviceState.msg"
-        "msg/state/ExperimentState.msg"
-        "msg/state/StartupError.msg"
-        "msg/state/SystemState.msg"
-        "msg/state/SystemError.msg"
+        "msg/Charge.msg"
+        "msg/feedback/ChargeFeedback.msg"
+        "msg/feedback/ChargeError.msg"
 
-        "msg/Settings.msg"
-        "msg/Version.msg"
+        "msg/Discharge.msg"
+        "msg/feedback/DischargeFeedback.msg"
+        "msg/feedback/DischargeError.msg"
 
-        "srv/StartDevice.srv"
-        "srv/StopDevice.srv"
-        "srv/StartExperiment.srv"
-        "srv/StopExperiment.srv"
+        "msg/Pulse.msg"
+        "msg/WaveformPiece.msg"
+        "msg/WaveformPhase.msg"
+        "msg/feedback/PulseFeedback.msg"
+        "msg/feedback/PulseError.msg"
 
-        "srv/DisableChecks.srv"
-        "srv/SendSettings.srv"
+        "msg/SignalOut.msg"
+        "msg/feedback/SignalOutFeedback.msg"
+        "msg/feedback/SignalOutError.msg"
+
+        "msg/Event.msg"
+        "msg/ExecutionCondition.msg"
+
+        "srv/SendCharge.srv"
+        "srv/SendDischarge.srv"
+        "srv/SendEventTrigger.srv"
+        "srv/SendPulse.srv"
+        "srv/SendSignalOut.srv"
         )
 
 ament_package()

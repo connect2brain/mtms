@@ -8,7 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(fpga_interfaces REQUIRED)
+find_package(event_interfaces REQUIRED)
 find_package(targeting_interfaces REQUIRED)
 
 # Install get_default_waveform executable.
@@ -25,7 +25,7 @@ target_include_directories(get_default_waveform
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(get_default_waveform rclcpp std_msgs fpga_interfaces targeting_interfaces)
+ament_target_dependencies(get_default_waveform rclcpp std_msgs event_interfaces targeting_interfaces)
 
 # Install reverse_polarity executable.
 
@@ -41,7 +41,7 @@ PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(reverse_polarity rclcpp std_msgs fpga_interfaces targeting_interfaces)
+ament_target_dependencies(reverse_polarity rclcpp std_msgs event_interfaces targeting_interfaces)
 
 
 install(TARGETS

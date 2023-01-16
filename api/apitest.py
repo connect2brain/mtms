@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import ExecutionCondition, WaveformPhase
+from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from MTMSApi import MTMSApi
 

@@ -5,8 +5,8 @@ import {
   DischargeFeedbackMessage,
   PulseFeedbackMessage,
   SignalOutFeedbackMessage,
-  SystemStateMessage
-} from 'types/fpga'
+} from '../types/event'
+import { SystemStateMessage } from '../types/fpga'
 import { MTMSEventMessage } from '../types/eeg'
 
 const startExperimentService = new ROSLIB.Service({
@@ -45,23 +45,23 @@ export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
 
 export const pulseFeedbackSubscriber = new ROSLIB.Topic<PulseFeedbackMessage>({
   ros: ros,
-  name: '/fpga/pulse_feedback',
-  messageType: 'fpga_interfaces/PulseFeedback',
+  name: '/event/pulse_feedback',
+  messageType: 'event_interfaces/PulseFeedback',
 })
 export const chargeFeedbackSubscriber = new ROSLIB.Topic<ChargeFeedbackMessage>({
   ros: ros,
-  name: '/fpga/charge_feedback',
-  messageType: 'fpga_interfaces/ChargeFeedback',
+  name: '/event/charge_feedback',
+  messageType: 'event_interfaces/ChargeFeedback',
 })
 export const dischargeFeedbackSubscriber = new ROSLIB.Topic<DischargeFeedbackMessage>({
   ros: ros,
-  name: '/fpga/discharge_feedback',
-  messageType: 'fpga_interfaces/DischargeFeedback',
+  name: '/event/discharge_feedback',
+  messageType: 'event_interfaces/DischargeFeedback',
 })
 export const signalOutFeedbackSubscriber = new ROSLIB.Topic<SignalOutFeedbackMessage>({
   ros: ros,
-  name: '/fpga/signal_out_feedback',
-  messageType: 'fpga_interfaces/SignalOutFeedback',
+  name: '/event/signal_out_feedback',
+  messageType: 'event_interfaces/SignalOutFeedback',
 })
 
 export const startExperiment = () => {

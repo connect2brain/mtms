@@ -34,14 +34,14 @@ int main() {
     for (auto j = 0; j < 62; j++) {
       data.push_back(fRand(0, 100));
     }
-    coder::array<matlab_fpga_event, 1U> events;
+    coder::array<matlab_event, 1U> events;
     p->data_received(data.data(), data.size(), 100, false, events);
 
     for (auto e = events.begin(); e != events.end(); e++) {
       std::cout << "received event: " << +e->event_type << std::endl;
     }
   }
-  coder::array<matlab_fpga_event, 1U> events;
+  coder::array<matlab_event, 1U> events;
   p->end_experiment(events);
 
 }

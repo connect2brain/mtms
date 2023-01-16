@@ -6,14 +6,14 @@ import {
   signalOutFeedbackSubscriber,
   systemStateSubscriber,
 } from 'services/experiment'
+import { SystemStateMessage } from 'types/fpga'
 import {
-  SystemStateMessage,
   PulseFeedbackMessage,
   Feedback,
   ChargeFeedbackMessage,
   DischargeFeedbackMessage,
   SignalOutFeedbackMessage,
-} from 'types/fpga'
+} from 'types/event'
 import { SystemState } from 'components/SystemState'
 import { ExperimentControl } from 'components/ExperimentControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
