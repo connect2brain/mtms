@@ -14,6 +14,7 @@
 // Include files
 #include "rtwtypes.h"
 #include "coder_array.h"
+#include <vector>
 
 // Type Definitions
 struct event {
@@ -29,6 +30,12 @@ struct waveform_piece {
 
 struct matlab_eeg_sample {
   coder::array<double, 2U> channel_data;
+  double time;
+  double first_sample_of_experiment;
+};
+
+struct eeg_sample {
+  std::vector<double> channel_data;
   double time;
   double first_sample_of_experiment;
 };
