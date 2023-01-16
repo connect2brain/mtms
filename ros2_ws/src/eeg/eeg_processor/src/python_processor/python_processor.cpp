@@ -68,9 +68,9 @@ std::vector<Event> PythonProcessor::init() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_out = convert_pyobject_events_to_events(events);
 
-  return fpga_events;
+  return events_out;
 }
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
@@ -244,8 +244,8 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   return pulse;
 }
 
-std::vector<Event> PythonProcessor::convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events) {
-  std::vector<Event> fpga_events;
+std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
+  std::vector<Event> events_out;
 
   for (auto event_as_pyobject: events) {
     Event event;
@@ -277,12 +277,12 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_fpga_events(std::
       RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
     }
 
-    fpga_events.push_back(event);
+    events_out.push_back(event);
 
     Py_DECREF(event_type_as_pyobject);
   }
 
-  return fpga_events;
+  return events_out;
 }
 
 std::vector<mtms_interfaces::msg::EegDatapoint>
@@ -377,11 +377,11 @@ std::vector<Event> PythonProcessor::present_stimulus_received(mtms_interfaces::m
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_out = convert_pyobject_events_to_events(events);
 
   Py_DECREF(result);
 
-  return fpga_events;
+  return events_out;
 }
 
 
@@ -414,11 +414,11 @@ std::vector<Event> PythonProcessor::cleaned_eeg_received(mtms_interfaces::msg::E
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto fpga_events = convert_pyobject_events_to_fpga_events(events);
+  auto events_out = convert_pyobject_events_to_events(events);
 
   Py_DECREF(result);
 
-  return fpga_events;
+  return events_out;
 }
 
 PythonProcessor::~PythonProcessor() {
