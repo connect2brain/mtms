@@ -11,14 +11,16 @@
 
 #include "fpga_event.h"
 
-template <class InputType, class OutputType>
 class ProcessorWrapper {
 public:
-  virtual std::vector<OutputType> init() = 0;
+  virtual std::vector<Event> init() = 0;
 
-  virtual std::vector<OutputType> eeg_received(mtms_interfaces::msg::EegDatapoint sample) = 0;
+  virtual std::vector<mtms_interfaces::msg::EegDatapoint>
+  raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) = 0;
 
-  virtual std::vector<OutputType> event_received(mtms_interfaces::msg::Event event) = 0;
+  virtual std::vector<Event> cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) = 0;
+
+  virtual std::vector<Event> present_stimulus_received(mtms_interfaces::msg::Event event) = 0;
 
 };
 

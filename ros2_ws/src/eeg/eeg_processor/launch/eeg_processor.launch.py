@@ -56,21 +56,7 @@ def generate_launch_description():
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
-        ),
-        Node(
-            package="eeg_processor",
-            executable="visualizer",
-            name="visualizer",
-            output="screen",
-            emulate_tty=True,
-            parameters=[
-                {
-                    "processor_type": LaunchConfiguration("visualizer-type"),
-                    "processor_script": LaunchConfiguration("visualizer-script"),
-                }
-            ],
-            arguments=['--ros-args', '--log-level', logger]
-        ),
+        )
     ]
     for node in nodes:
         ld.add_action(node)

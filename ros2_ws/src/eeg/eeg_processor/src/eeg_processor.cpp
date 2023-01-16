@@ -16,11 +16,11 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->pulse_publisher = this->create_publisher<fpga_interfaces::msg::Pulse>("/mtms/pulse", 10);
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-    auto events = processor->eeg_received(*message);
+    auto events = processor->cleaned_eeg_received(*message);
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 5000,
                                                                             subscription_callback);
 
 }
