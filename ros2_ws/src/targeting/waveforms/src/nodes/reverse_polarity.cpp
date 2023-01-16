@@ -3,17 +3,17 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "targeting_interfaces/srv/reverse_polarity.hpp"
-#include "fpga_interfaces/msg/waveform_phase.hpp"
-#include "fpga_interfaces/msg/waveform_piece.hpp"
+#include "event_interfaces/msg/waveform_phase.hpp"
+#include "event_interfaces/msg/waveform_piece.hpp"
 
 using namespace std;
 
 const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
-  {fpga_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, fpga_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
-  {fpga_interfaces::msg::WaveformPhase::RISING, fpga_interfaces::msg::WaveformPhase::FALLING},
-  {fpga_interfaces::msg::WaveformPhase::FALLING, fpga_interfaces::msg::WaveformPhase::RISING},
-  {fpga_interfaces::msg::WaveformPhase::HOLD, fpga_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
-  {fpga_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, fpga_interfaces::msg::WaveformPhase::HOLD}
+  {event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
+  {event_interfaces::msg::WaveformPhase::RISING, event_interfaces::msg::WaveformPhase::FALLING},
+  {event_interfaces::msg::WaveformPhase::FALLING, event_interfaces::msg::WaveformPhase::RISING},
+  {event_interfaces::msg::WaveformPhase::HOLD, event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
+  {event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, event_interfaces::msg::WaveformPhase::HOLD}
 };
 
 class ReversePolarity : public rclcpp::Node {
@@ -27,7 +27,7 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
-      fpga_interfaces::msg::WaveformPiece piece;
+      event_interfaces::msg::WaveformPiece piece;
 
       uint8_t n_pieces = std::size(request->waveform);
       for (uint8_t i = 0; i < n_pieces; i++) {

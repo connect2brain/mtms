@@ -16,11 +16,11 @@ class CppProcessor : public ProcessorWrapper {
 public:
   explicit CppProcessor(const std::string &script_path);
 
-  std::vector<FpgaEvent> init() override;
+  std::vector<Event> init() override;
 
-  std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data) override;
+  std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data) override;
 
-  std::vector<FpgaEvent> close() override;
+  std::vector<Event> close() override;
 
 private:
   void *processor_factory;

@@ -9,7 +9,7 @@
 
   <depend>rclpy</depend>
   <depend>mtms_interfaces</depend>
-  <depend>fpga_interfaces</depend>
+  <depend>event_interfaces</depend>
 
   <export>
     <build_type>ament_python</build_type>

@@ -13,11 +13,11 @@
 
 class ProcessorWrapper {
 public:
-  virtual std::vector<FpgaEvent> init() = 0;
+  virtual std::vector<Event> init() = 0;
 
-  virtual std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data) = 0;
+  virtual std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data) = 0;
 
-  virtual std::vector<FpgaEvent> close() = 0;
+  virtual std::vector<Event> close() = 0;
 
 };
 
