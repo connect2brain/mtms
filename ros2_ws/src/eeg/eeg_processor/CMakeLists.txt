@@ -51,10 +51,10 @@ add_executable(
 )
 
 add_executable(
-        stimulus_presenter
+    stimulus_presenter
 
-        src/stimulus_presenter.h
-        src/stimulus_presenter.cpp
+    src/stimulus_presenter.h
+    src/stimulus_presenter.cpp
 )
 
 
