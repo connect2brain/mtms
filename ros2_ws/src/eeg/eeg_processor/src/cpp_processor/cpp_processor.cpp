@@ -49,10 +49,10 @@ std::vector<Event> CppProcessor::init() {
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
-    auto fpga_event = convert_matlab_event_to_event(event);
-    inner_processor.push_back(fpga_event);
+    auto matlab_event = convert_matlab_event_to_event(event);
+    matlab_events.push_back(matlab_event);
   }
-  return inner_processor;
+  return matlab_events;
 }
 
 CppProcessor::~CppProcessor() {
