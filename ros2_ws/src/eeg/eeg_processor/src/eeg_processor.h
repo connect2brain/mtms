@@ -14,7 +14,7 @@
 
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 
-#include "fpga_event.h"
+#include "event.h"
 
 #include "processor_node.h"
 
