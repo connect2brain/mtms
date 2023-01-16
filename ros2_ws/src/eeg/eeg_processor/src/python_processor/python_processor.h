@@ -9,15 +9,18 @@
 #include "processor.h"
 #include "iostream"
 
-class PythonProcessor : public ProcessorWrapper {
+template<class InputType, class OutputType>
+class PythonProcessor : public ProcessorWrapper<InputType, OutputType> {
 public:
   PythonProcessor(std::string script_path);
 
-  std::vector<Event> init();
+  std::vector<OutputType> init();
 
-  std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data);
+  std::vector<OutputType> eeg_received(mtms_interfaces::msg::EegDatapoint sample);
 
-  std::vector<Event> close();
+  std::vector<OutputType> event_received(mtms_interfaces::msg::Event event);
+
+  void close();
 
 private:
   static PyObject *convert_vector_to_pyobject(std::vector<double> data);
