@@ -1,8 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/send_signal_out.hpp"
-#include "fpga_interfaces/msg/signal_out.hpp"
-#include "fpga_interfaces/msg/event.hpp"
+#include "event_interfaces/srv/send_signal_out.hpp"
+#include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/event.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -19,13 +19,13 @@ public:
   SignalOutHandler()
       : Node("signal_out_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<fpga_interfaces::srv::SendSignalOut::Request> request,
-                                   std::shared_ptr<fpga_interfaces::srv::SendSignalOut::Response> response) -> void {
-      fpga_interfaces::msg::SignalOut signal_out = request->signal_out;
+    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendSignalOut::Request> request,
+                                   std::shared_ptr<event_interfaces::srv::SendSignalOut::Response> response) -> void {
+      event_interfaces::msg::SignalOut signal_out = request->signal_out;
 
       uint8_t port = signal_out.port;
 
-      fpga_interfaces::msg::Event event = signal_out.event;
+      event_interfaces::msg::Event event = signal_out.event;
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
@@ -66,12 +66,12 @@ public:
 
 
     serialized_message = SerializedMessage();
-    send_signal_out_service_ = this->create_service<fpga_interfaces::srv::SendSignalOut>(
-        "/fpga/send_signal_out", service_callback);
+    send_signal_out_service_ = this->create_service<event_interfaces::srv::SendSignalOut>(
+        "/event/send_signal_out", service_callback);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::SendSignalOut>::SharedPtr send_signal_out_service_;
+  rclcpp::Service<event_interfaces::srv::SendSignalOut>::SharedPtr send_signal_out_service_;
   SerializedMessage serialized_message;
 };
 

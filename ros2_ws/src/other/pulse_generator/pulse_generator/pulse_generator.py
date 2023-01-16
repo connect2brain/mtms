@@ -2,7 +2,8 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from fpga_interfaces.srv import SendSignalOut, StartDevice, StartExperiment, StopExperiment, SendPulse, SendCharge
+from event_interfaces.srv import SendSignalOut, SendPulse, SendCharge
+from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
 
@@ -14,9 +15,10 @@ TIME_CONSTANT = 1.0
 class PulseGenerator(Node):
     def __init__(self):
         super().__init__('pulse_generator')
-        self.signal_out_client = self.create_client(SendSignalOut, '/fpga/send_signal_out')
-        self.pulse_client = self.create_client(SendPulse, '/fpga/send_pulse')
-        self.charge_client = self.create_client(SendCharge, '/fpga/send_charge')
+        self.signal_out_client = self.create_client(SendSignalOut, '/event/send_signal_out')
+        self.pulse_client = self.create_client(SendPulse, '/event/send_pulse')
+        self.charge_client = self.create_client(SendCharge, '/event/send_charge')
+
         self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')

@@ -8,8 +8,9 @@ endif ()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(mtms_interfaces REQUIRED)
+find_package(event_interfaces REQUIRED)
 find_package(fpga_interfaces REQUIRED)
+find_package(mtms_interfaces REQUIRED)
 
 find_package(OpenMP)
 
@@ -78,7 +79,7 @@ target_include_directories(eeg_processor
         $<INSTALL_INTERFACE:>
         )
 
-ament_target_dependencies(eeg_processor rclcpp std_msgs mtms_interfaces fpga_interfaces)
+ament_target_dependencies(eeg_processor rclcpp std_msgs event_interfaces fpga_interfaces mtms_interfaces)
 
 if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found!")

@@ -1,8 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/send_discharge.hpp"
-#include "fpga_interfaces/msg/discharge.hpp"
-#include "fpga_interfaces/msg/event.hpp"
+#include "event_interfaces/srv/send_discharge.hpp"
+#include "event_interfaces/msg/discharge.hpp"
+#include "event_interfaces/msg/event.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -19,15 +19,15 @@ public:
   DischargeHandler()
       : Node("discharge_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<fpga_interfaces::srv::SendDischarge::Request> request,
-                                   std::shared_ptr<fpga_interfaces::srv::SendDischarge::Response> response) -> void {
-      fpga_interfaces::msg::Discharge discharge = request->discharge;
+    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendDischarge::Request> request,
+                                   std::shared_ptr<event_interfaces::srv::SendDischarge::Response> response) -> void {
+      event_interfaces::msg::Discharge discharge = request->discharge;
 
       uint8_t channel = discharge.channel;
 
       /* Serialize event info. */
 
-      fpga_interfaces::msg::Event event = discharge.event;
+      event_interfaces::msg::Event event = discharge.event;
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
@@ -64,12 +64,12 @@ public:
     };
 
     serialized_message = SerializedMessage();
-    send_discharge_service_ = this->create_service<fpga_interfaces::srv::SendDischarge>(
-        "/fpga/send_discharge", service_callback);
+    send_discharge_service_ = this->create_service<event_interfaces::srv::SendDischarge>(
+        "/event/send_discharge", service_callback);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::SendDischarge>::SharedPtr send_discharge_service_;
+  rclcpp::Service<event_interfaces::srv::SendDischarge>::SharedPtr send_discharge_service_;
   SerializedMessage serialized_message;
 };
 

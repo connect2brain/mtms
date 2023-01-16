@@ -13,8 +13,9 @@ RUN apt-get install -y \
 
 WORKDIR /app
 COPY ros2_ws/src/eeg/eeg_processor ros2_ws/src/eeg/eeg_processor/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/src/interfaces/fpga_interfaces/
 COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
-COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/src/interfaces/fpga_interfaces
 
 # Build ROS packages
 

@@ -11,6 +11,6 @@
 
 void print_matlab_fpga_event(matlab_fpga_event event);
 
-FpgaEvent convert_matlab_fpga_event_to_fpga_event(matlab_fpga_event event);
+Event convert_matlab_event_to_event(matlab_fpga_event event);
 
 #endif //EEG_PROCESSOR_MATLAB_HELPERS_H
