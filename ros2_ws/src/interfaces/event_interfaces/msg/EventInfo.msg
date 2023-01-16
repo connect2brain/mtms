@@ -2,10 +2,14 @@
 
 uint16 id
 
-# When the event will be executed; see ExecutionCondition.msg.
-#
+# The condition on which the event will be executed; see ExecutionCondition.msg.
+
 ExecutionCondition execution_condition
 
-# Time in seconds when the event is triggered.
-#
-float64 time
+# Time in seconds when the event will be executed.
+
+float64 execution_time
+
+# Time in seconds when the decision on the event was made.
+
+float64 decision_time
