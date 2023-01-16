@@ -218,20 +218,20 @@ void EegProcessor::send_events(const std::vector<Event> &events) {
 }
 
 void EegProcessor::measure(int repeats) {
-  std::vector<mtms_interfaces::msg::EegDatapoint> events;
+  std::vector<mtms_interfaces::msg::EegDatapoint> eeg_events;
   for (auto j = 0; j < repeats; j++) {
     mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
     for (auto i = 0; i < 62; i++) {
       message.eeg_channels.push_back(fRand(0, 100));
     }
-    events.push_back(message);
+    eeg_events.push_back(message);
   }
   std::vector<std::chrono::microseconds> times;
   std::chrono::microseconds total = std::chrono::microseconds(0s);
   for (auto i = 0; i < repeats; i++) {
     auto start = steady_clock::now();
 
-    auto events = processor->data_received(events[i]);
+    auto events = processor->data_received(eeg_events[i]);
 
     auto stop = steady_clock::now();
 
@@ -243,7 +243,6 @@ void EegProcessor::measure(int repeats) {
       event.print();
       std::cout << "---" << std::endl;
     }
-
   }
   RCLCPP_INFO(this->get_logger(), "Duration total: %lu us", total.count());
   RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
