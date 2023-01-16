@@ -64,7 +64,7 @@ class EegProcessor(Node):
         event_info = EventInfo()
         event_info.id = EVENT_ID
         event_info.execution_condition = 2
-        event_info.time = time + TIME_CONSTANT
+        event_info.execution_time = time + TIME_CONSTANT
 
         signal_out = SignalOut()
         signal_out.port = port

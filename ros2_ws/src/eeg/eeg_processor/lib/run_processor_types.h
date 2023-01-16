@@ -18,7 +18,7 @@
 struct event_info {
   unsigned short id;
   unsigned char execution_condition;
-  double time;
+  double execution_time;
 };
 
 struct waveform_piece {

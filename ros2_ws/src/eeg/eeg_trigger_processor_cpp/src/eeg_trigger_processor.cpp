@@ -56,7 +56,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   auto event = event_interfaces::msg::SignalOut();
   event.port = 2;
   event.duration_us = 10000;
-  event.event_info.time = 0.0;
+  event.event_info.execution_time = 0.0;
   event.event_info.execution_condition.value = 2;
   event.event_info.id = 1;
 
