@@ -17,11 +17,11 @@ class MatlabProcessor : public ProcessorWrapper {
 public:
   MatlabProcessor(const std::string &script_path);
 
-  std::vector<FpgaEvent> init();
+  std::vector<Event> init();
 
-  std::vector<FpgaEvent> data_received(mtms_interfaces::msg::EegDatapoint data);
+  std::vector<Event> data_received(mtms_interfaces::msg::EegDatapoint data);
 
-  std::vector<FpgaEvent> close();
+  std::vector<Event> close();
 
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;

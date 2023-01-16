@@ -1,9 +1,9 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/send_pulse.hpp"
-#include "fpga_interfaces/msg/waveform_piece.hpp"
-#include "fpga_interfaces/msg/pulse.hpp"
-#include "fpga_interfaces/msg/event.hpp"
+#include "event_interfaces/srv/send_pulse.hpp"
+#include "event_interfaces/msg/waveform_piece.hpp"
+#include "event_interfaces/msg/pulse.hpp"
+#include "event_interfaces/msg/event.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -21,15 +21,15 @@ public:
       : Node("pulse_handler") {
 
     auto service_callback = [this](
-        const std::shared_ptr<fpga_interfaces::srv::SendPulse::Request> request,
-        std::shared_ptr<fpga_interfaces::srv::SendPulse::Response> response) -> void {
-      fpga_interfaces::msg::Pulse pulse = request->pulse;
+        const std::shared_ptr<event_interfaces::srv::SendPulse::Request> request,
+        std::shared_ptr<event_interfaces::srv::SendPulse::Response> response) -> void {
+      event_interfaces::msg::Pulse pulse = request->pulse;
 
       uint8_t channel = pulse.channel;
 
       /* Serialize event info. */
 
-      fpga_interfaces::msg::Event event = pulse.event;
+      event_interfaces::msg::Event event = pulse.event;
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
@@ -47,7 +47,7 @@ public:
       serialized_message.add_byte(n_waveform);
 
       for (uint8_t i = 0; i < n_waveform; i++) {
-        fpga_interfaces::msg::WaveformPiece piece = pulse.waveform[i];
+        event_interfaces::msg::WaveformPiece piece = pulse.waveform[i];
 
         serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
@@ -73,12 +73,12 @@ public:
     };
 
     serialized_message = SerializedMessage();
-    send_pulse_service_ = this->create_service<fpga_interfaces::srv::SendPulse>(
-        "/fpga/send_pulse", service_callback);
+    send_pulse_service_ = this->create_service<event_interfaces::srv::SendPulse>(
+        "/event/send_pulse", service_callback);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::SendPulse>::SharedPtr send_pulse_service_;
+  rclcpp::Service<event_interfaces::srv::SendPulse>::SharedPtr send_pulse_service_;
   SerializedMessage serialized_message;
 };
 

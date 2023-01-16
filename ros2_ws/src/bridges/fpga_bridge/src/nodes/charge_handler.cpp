@@ -1,8 +1,8 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/send_charge.hpp"
-#include "fpga_interfaces/msg/charge.hpp"
-#include "fpga_interfaces/msg/event.hpp"
+#include "event_interfaces/srv/send_charge.hpp"
+#include "event_interfaces/msg/charge.hpp"
+#include "event_interfaces/msg/event.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -19,14 +19,14 @@ public:
   ChargeHandler()
       : Node("charge_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<fpga_interfaces::srv::SendCharge::Request> request,
-                                   std::shared_ptr<fpga_interfaces::srv::SendCharge::Response> response) -> void {
-      fpga_interfaces::msg::Charge charge = request->charge;
+    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendCharge::Request> request,
+                                   std::shared_ptr<event_interfaces::srv::SendCharge::Response> response) -> void {
+      event_interfaces::msg::Charge charge = request->charge;
 
       uint8_t channel = charge.channel;
 
       /* Serialize event. */
-      fpga_interfaces::msg::Event event = charge.event;
+      event_interfaces::msg::Event event = charge.event;
 
       uint16_t id = event.id;
       uint8_t execution_condition = event.execution_condition.value;
@@ -67,11 +67,11 @@ public:
     };
 
     serialized_message = SerializedMessage();
-    send_charge_service_ = this->create_service<fpga_interfaces::srv::SendCharge>("/fpga/send_charge", service_callback);
+    send_charge_service_ = this->create_service<event_interfaces::srv::SendCharge>("/event/send_charge", service_callback);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::SendCharge>::SharedPtr send_charge_service_;
+  rclcpp::Service<event_interfaces::srv::SendCharge>::SharedPtr send_charge_service_;
   SerializedMessage serialized_message;
 
 };

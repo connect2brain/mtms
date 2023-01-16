@@ -5,7 +5,7 @@ SHELL ["/bin/bash", "-c"]
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/waveforms ros2_ws/waveforms/
-COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/fpga_interfaces/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/event_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
 
 # Build ROS packages

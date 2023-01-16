@@ -2,11 +2,16 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 
-from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment, SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
-from fpga_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, SystemState, \
+from fpga_interfaces.msg import SystemState
+from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
+
+from event_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
     WaveformPiece, PulseFeedback, Event, ChargeError, PulseError, DischargeError, SignalOutError
+from event_interfaces.srv import SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
+
 from mtms_interfaces.action import AnalyzeMep
 from mtms_interfaces.srv import GetChannelVoltages
+
 from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
 
 from MTMSApiPrinter import MTMSApiPrinter
@@ -17,11 +22,11 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/fpga/stop_device', StopDevice)
     ROS_SERVICE_START_EXPERIMENT = ('/fpga/start_experiment', StartExperiment)
     ROS_SERVICE_STOP_EXPERIMENT = ('/fpga/stop_experiment', StopExperiment)
-    ROS_SERVICE_SEND_EVENT_TRIGGER = ('/fpga/send_event_trigger', SendEventTrigger)
-    ROS_SERVICE_SEND_PULSE = ('/fpga/send_pulse', SendPulse)
-    ROS_SERVICE_SEND_CHARGE = ('/fpga/send_charge', SendCharge)
-    ROS_SERVICE_SEND_DISCHARGE = ('/fpga/send_discharge', SendDischarge)
-    ROS_SERVICE_SEND_SIGNAL_OUT = ('/fpga/send_signal_out', SendSignalOut)
+    ROS_SERVICE_SEND_EVENT_TRIGGER = ('/event/send_event_trigger', SendEventTrigger)
+    ROS_SERVICE_SEND_PULSE = ('/event/send_pulse', SendPulse)
+    ROS_SERVICE_SEND_CHARGE = ('/event/send_charge', SendCharge)
+    ROS_SERVICE_SEND_DISCHARGE = ('/event/send_discharge', SendDischarge)
+    ROS_SERVICE_SEND_SIGNAL_OUT = ('/event/send_signal_out', SendSignalOut)
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
@@ -78,10 +83,10 @@ class MTMSApiNode(Node):
         #
         self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state', self.handle_system_state, 1)
 
-        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/fpga/pulse_feedback', self.handle_pulse_feedback, 10)
-        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/fpga/charge_feedback', self.handle_charge_feedback, 10)
-        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/fpga/discharge_feedback', self.handle_discharge_feedback, 10)
-        self.signal_out_feedback_subscriber = self.create_subscription(SignalOutFeedback, '/fpga/signal_out_feedback', self.handle_signal_out_feedback, 10)
+        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
+        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
+        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/event/discharge_feedback', self.handle_discharge_feedback, 10)
+        self.signal_out_feedback_subscriber = self.create_subscription(SignalOutFeedback, '/event/signal_out_feedback', self.handle_signal_out_feedback, 10)
 
         self.event_feedback = {}
 
