@@ -36,23 +36,23 @@ std::vector<Event> CppProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegD
 
   for (auto i = 0; i < events.size(); i++) {
     auto event = events[i];
-    auto fpga_event = convert_matlab_event_to_event(event);
-    output.push_back(fpga_event);
+    auto matlab_event = convert_matlab_event_to_event(event);
+    output.push_back(matlab_event);
   }
 
   return output;
 }
 
 std::vector<Event> CppProcessor::init() {
-  std::vector<Event> fpga_events;
+  std::vector<Event> matlab_events;
   auto events = inner_processor->init_experiment();
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto event = *i;
     auto fpga_event = convert_matlab_event_to_event(event);
-    fpga_events.push_back(fpga_event);
+    inner_processor.push_back(fpga_event);
   }
-  return fpga_events;
+  return inner_processor;
 }
 
 CppProcessor::~CppProcessor() {
