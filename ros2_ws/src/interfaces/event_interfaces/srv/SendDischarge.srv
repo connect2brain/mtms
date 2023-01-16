@@ -1,9 +1,0 @@
-# Send a discharge event.
-#
-# Request: A discharge event.
-#
-# Response: Boolean indicating if discharge event was sent successfully.
-
-Discharge discharge
----
-bool success

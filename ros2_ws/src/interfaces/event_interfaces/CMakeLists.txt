@@ -40,14 +40,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/feedback/SignalOutFeedback.msg"
         "msg/feedback/SignalOutError.msg"
 
+        "msg/EventTrigger.msg"
+
         "msg/EventInfo.msg"
         "msg/ExecutionCondition.msg"
-
-        "srv/SendCharge.srv"
-        "srv/SendDischarge.srv"
-        "srv/SendEventTrigger.srv"
-        "srv/SendPulse.srv"
-        "srv/SendSignalOut.srv"
         )
 
 ament_package()
