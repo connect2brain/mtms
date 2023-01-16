@@ -14,7 +14,7 @@ RUN apt-get install -y \
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/waveforms ros2_ws/src/targeting/waveforms/
-COPY ros2_ws/src/interfaces/fpga_interfaces ros2_ws/src/interfaces/fpga_interfaces/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
 
 # Build ROS packages

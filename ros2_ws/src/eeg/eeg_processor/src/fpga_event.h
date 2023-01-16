@@ -5,27 +5,27 @@
 #ifndef EEG_PROCESSOR_FPGA_EVENT_H
 #define EEG_PROCESSOR_FPGA_EVENT_H
 
-#include "fpga_interfaces/msg/pulse.hpp"
-#include "fpga_interfaces/msg/charge.hpp"
-#include "fpga_interfaces/msg/discharge.hpp"
-#include "fpga_interfaces/msg/waveform_piece.hpp"
-#include "fpga_interfaces/msg/waveform_phase.hpp"
-#include "fpga_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/pulse.hpp"
+#include "event_interfaces/msg/charge.hpp"
+#include "event_interfaces/msg/discharge.hpp"
+#include "event_interfaces/msg/waveform_piece.hpp"
+#include "event_interfaces/msg/waveform_phase.hpp"
+#include "event_interfaces/msg/signal_out.hpp"
 #include <iostream>
 
-enum FpgaEventType {
+enum EventType {
   PULSE = 0,
   CHARGE = 1,
   DISCHARGE = 2,
   SIGNAL_OUT = 3
 };
 
-struct FpgaEvent {
-  fpga_interfaces::msg::Pulse pulse;
-  fpga_interfaces::msg::Charge charge;
-  fpga_interfaces::msg::Discharge discharge;
-  fpga_interfaces::msg::SignalOut signal_out;
-  FpgaEventType event_type = PULSE;
+struct Event {
+  event_interfaces::msg::Pulse pulse;
+  event_interfaces::msg::Charge charge;
+  event_interfaces::msg::Discharge discharge;
+  event_interfaces::msg::SignalOut signal_out;
+  EventType event_type = PULSE;
 
   [[nodiscard]] std::string to_string() const {
     if (event_type == PULSE) {

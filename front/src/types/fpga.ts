@@ -1,10 +1,6 @@
 import ROSLIB from 'roslib'
 import {
   ChannelErrorMessage,
-  ChargeError,
-  DischargeError,
-  PulseError,
-  SignalOutError,
   StartupError,
   SystemErrorMessage,
 } from './fpgaErrors'
@@ -15,6 +11,7 @@ export const DeviceState = {
   OPERATIONAL: 2,
   SHUTDOWN: 3,
 }
+
 export const ExperimentState = {
   STOPPED: 0,
   STARTING: 1,
@@ -24,36 +21,6 @@ export const ExperimentState = {
 
 interface Error {
   value: number
-}
-
-export type Feedback =
-  | PulseFeedbackMessage
-  | ChargeFeedbackMessage
-  | DischargeFeedbackMessage
-  | SignalOutFeedbackMessage
-
-export interface PulseFeedbackMessage extends ROSLIB.Message {
-  id: number
-  error: Error
-  type: 'pulse'
-}
-
-export interface ChargeFeedbackMessage extends ROSLIB.Message {
-  id: number
-  error: Error
-  type: 'charge'
-}
-
-export interface DischargeFeedbackMessage extends ROSLIB.Message {
-  id: number
-  error: Error
-  type: 'discharge'
-}
-
-export interface SignalOutFeedbackMessage extends ROSLIB.Message {
-  id: number
-  error: Error
-  type: 'signalOut'
 }
 
 export interface SystemStateMessage extends ROSLIB.Message {

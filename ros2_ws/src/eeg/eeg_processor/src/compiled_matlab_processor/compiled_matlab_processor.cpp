@@ -19,8 +19,8 @@ CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path)
 
 }
 
-std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  coder::array<matlab_fpga_event, 1U> events;
+std::vector<Event> CompiledMatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+  coder::array<matlab_event, 1U> events;
 
   inner_processor->data_received(
       data.eeg_channels.data(),
@@ -30,40 +30,41 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::data_received(mtms_interfaces::m
       events
   );
 
-  std::vector<FpgaEvent> output;
+  std::vector<Event> events_out;
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    output.push_back(fpga_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
 
-  return output;
+  return events_out;
 }
 
-std::vector<FpgaEvent> CompiledMatlabProcessor::init() {
-  std::vector<FpgaEvent> fpga_events;
-  coder::array<matlab_fpga_event, 1U> events;
+std::vector<Event> CompiledMatlabProcessor::init() {
+  coder::array<matlab_event, 1U> events;
+  std::vector<Event> events_out;
+
   inner_processor->init_experiment(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    fpga_events.push_back(fpga_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
-  return fpga_events;
+  return events_out;
 }
 
-std::vector<FpgaEvent> CompiledMatlabProcessor::close() {
-  coder::array<matlab_fpga_event, 1U> events;
+std::vector<Event> CompiledMatlabProcessor::close() {
+  coder::array<matlab_event, 1U> events;
+  std::vector<Event> events_out;
+
   inner_processor->end_experiment(events);
 
-  std::vector<FpgaEvent> fpga_events;
-
   for (auto i = events.begin(); i != events.end(); i++) {
-    auto event = *i;
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    fpga_events.push_back(fpga_event);
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    events_out.push_back(event);
   }
 
   //Empty the pointer
@@ -72,5 +73,5 @@ std::vector<FpgaEvent> CompiledMatlabProcessor::close() {
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
-  return fpga_events;
+  return events_out;
 }
