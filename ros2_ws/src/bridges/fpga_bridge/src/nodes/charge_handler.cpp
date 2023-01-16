@@ -1,6 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/srv/send_charge.hpp"
 #include "event_interfaces/msg/charge.hpp"
 #include "event_interfaces/msg/event_info.hpp"
 
@@ -19,14 +18,11 @@ public:
   ChargeHandler()
       : Node("charge_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendCharge::Request> request,
-                                   std::shared_ptr<event_interfaces::srv::SendCharge::Response> response) -> void {
-      event_interfaces::msg::Charge charge = request->charge;
-
-      uint8_t channel = charge.channel;
+    auto callback = [this](const std::shared_ptr<event_interfaces::msg::Charge> charge) -> void {
+      uint8_t channel = charge->channel;
 
       /* Serialize event. */
-      event_interfaces::msg::EventInfo event_info = charge.event_info;
+      event_interfaces::msg::EventInfo event_info = charge->event_info;
 
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
@@ -43,7 +39,7 @@ public:
       // Charge requires the channel here instead of the beginning of the message
       serialized_message.add_byte(channel);
 
-      uint16_t target_voltage = charge.target_voltage;
+      uint16_t target_voltage = charge->target_voltage;
       serialized_message.add_uint16(target_voltage);
 
       serialized_message.finalize();
@@ -62,16 +58,15 @@ public:
 
 
       RCLCPP_INFO(rclcpp::get_logger("charge"), "Sent charge to channel %d", channel);
-
-      response->success = true;
     };
 
     serialized_message = SerializedMessage();
-    send_charge_service_ = this->create_service<event_interfaces::srv::SendCharge>("/event/send_charge", service_callback);
+
+    send_charge_subscriber_ = this->create_subscription<event_interfaces::msg::Charge>("/event/send/charge", 10, callback);
   }
 
 private:
-  rclcpp::Service<event_interfaces::srv::SendCharge>::SharedPtr send_charge_service_;
+  rclcpp::Subscription<event_interfaces::msg::Charge>::SharedPtr send_charge_subscriber_;
   SerializedMessage serialized_message;
 
 };
