@@ -23,6 +23,23 @@ std::vector<Event> CppProcessor::present_stimulus_received(mtms_interfaces::msg:
 
 
 std::vector<mtms_interfaces::msg::EegDatapoint> CppProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  auto samples = inner_processor->raw_eeg_received(
+      sample.eeg_channels,
+      sample.time,
+      sample.first_sample_of_experiment
+  );
+
+  std::vector<mtms_interfaces::msg::EegDatapoint> output;
+
+  for (auto i = 0; i < samples.size(); i++) {
+    auto matlab_eeg_sample = samples[i];
+    mtms_interfaces::msg::EegDatapoint new_sample;
+    new_sample.eeg_channels = matlab_eeg_sample.channel_data;
+    new_sample.time = matlab_eeg_sample.time;
+    new_sample.first_sample_of_experiment = matlab_eeg_sample.first_sample_of_experiment;
+  }
+
+  return output;
 }
 
 std::vector<Event> CppProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
