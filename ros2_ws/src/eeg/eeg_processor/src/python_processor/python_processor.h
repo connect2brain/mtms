@@ -27,7 +27,7 @@ private:
   static PyObject *convert_vector_to_pyobject(std::vector<double> data);
   static std::vector<double> convert_pyobject_to_vector(PyObject * data);
 
-  static std::vector<Event> convert_pyobject_events_to_fpga_events(std::vector<PyObject *> events);
+  static std::vector<Event> convert_pyobject_events_to_events(std::vector<PyObject *> events);
 
   static std::vector<mtms_interfaces::msg::EegDatapoint> convert_pyobject_samples_to_samples(std::vector<PyObject *> samples);
 

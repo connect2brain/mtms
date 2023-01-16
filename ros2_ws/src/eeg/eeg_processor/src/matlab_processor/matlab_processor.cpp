@@ -50,7 +50,7 @@ std::vector<mtms_interfaces::msg::EegDatapoint> MatlabProcessor::raw_eeg_receive
 
 
 std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
-  std::vector<Event> fpga_events;
+  std::vector<Event> matlab_events;
 
   matlab::data::TypedArray<double> matlab_data_array = factory.createArray(
       {50, 62},
@@ -166,11 +166,11 @@ std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::E
 
     }
     //print_matlab_fpga_event(event);
-    auto fpga_event = convert_matlab_event_to_event(event);
-    fpga_events.push_back(fpga_event);
+    auto matlab_event = convert_matlab_event_to_event(event);
+    matlab_events.push_back(matlab_event);
   }
   //print_vector(matlab_data, 50, 62);
-  return fpga_events;
+  return matlab_events;
 }
 
 MatlabProcessor::~MatlabProcessor() {
