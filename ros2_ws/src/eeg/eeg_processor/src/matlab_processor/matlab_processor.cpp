@@ -19,8 +19,8 @@ MatlabProcessor::MatlabProcessor(const std::string &script_path) {
   matlab_data.resize(50 * 62, -1);
 }
 
-std::vector<FpgaEvent> MatlabProcessor::init() {
-  std::vector<FpgaEvent> events;
+std::vector<Event> MatlabProcessor::init() {
+  std::vector<Event> events;
   return events;
 }
 
@@ -42,8 +42,8 @@ void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
   }
 }
 
-std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  std::vector<FpgaEvent> fpga_events;
+std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+  std::vector<Event> events_out;
 
   matlab::data::TypedArray<double> matlab_data_array = factory.createArray(
       {50, 62},
@@ -88,7 +88,7 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
   std::vector<matlab::data::MATLABFieldIdentifier> field_names(fields.begin(), fields.end());
 
   for (unsigned event_index = 0; event_index < events_struct_array.getNumberOfElements(); event_index++) {
-    matlab_fpga_event event;
+    matlab_event event;
 
     for (auto field: field_names) {
       auto field_name = field.operator std::string();
@@ -158,19 +158,18 @@ std::vector<FpgaEvent> MatlabProcessor::data_received(mtms_interfaces::msg::EegD
       }
 
     }
-    //print_matlab_fpga_event(event);
-    auto fpga_event = convert_matlab_fpga_event_to_fpga_event(event);
-    fpga_events.push_back(fpga_event);
+    //print_matlab_event(event);
+    auto event_ = convert_matlab_event_to_event(event);
+    events_out.push_back(event_);
   }
   //print_vector(matlab_data, 50, 62);
-  return fpga_events;
+  return events_out;
 }
 
-std::vector<FpgaEvent> MatlabProcessor::close() {
+std::vector<Event> MatlabProcessor::close() {
   matlab::engine::terminateEngineClient();
   std::cout << "Closed matlab engine client" << std::endl;
 
-  std::vector<FpgaEvent> events;
-
+  std::vector<Event> events;
   return events;
 }

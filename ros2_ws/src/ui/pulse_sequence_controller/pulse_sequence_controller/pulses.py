@@ -1,4 +1,4 @@
-from fpga_interfaces.msg import WaveformPiece
+from event_interfaces.msg import WaveformPiece
 
 fullEvent = {
     'pulse': {

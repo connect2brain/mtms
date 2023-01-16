@@ -1,6 +1,6 @@
 # ROS service for reversing waveform polarity.
 
-fpga_interfaces/WaveformPiece[] waveform
+event_interfaces/WaveformPiece[] waveform
 ---
 bool success
-fpga_interfaces/WaveformPiece[] waveform
+event_interfaces/WaveformPiece[] waveform

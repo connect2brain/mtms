@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(fpga_interfaces REQUIRED)
+find_package(event_interfaces REQUIRED)
 
 # Install run_fpga executable.
 
@@ -134,7 +135,7 @@ target_include_directories(pulse_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(pulse_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(pulse_handler rclcpp std_msgs event_interfaces)
 
 # Install signal out handler.
 
@@ -150,7 +151,7 @@ target_include_directories(signal_out_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(signal_out_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(signal_out_handler rclcpp std_msgs event_interfaces)
 
 # Install charge handler.
 
@@ -166,7 +167,7 @@ target_include_directories(charge_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(charge_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(charge_handler rclcpp std_msgs event_interfaces)
 
 # Install discharge handler.
 
@@ -182,7 +183,7 @@ target_include_directories(discharge_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(discharge_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(discharge_handler rclcpp std_msgs event_interfaces)
 
 # Install send event trigger handler.
 
@@ -197,7 +198,9 @@ target_include_directories(event_trigger_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_trigger_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(event_trigger_handler rclcpp std_msgs event_interfaces)
+
+# Install feedback monitor bridge.
 
 add_executable(feedback_monitor_bridge
   src/nodes/feedback_monitor_bridge.cpp
@@ -205,20 +208,20 @@ add_executable(feedback_monitor_bridge
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-
 target_include_directories(feedback_monitor_bridge
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_interfaces)
+
+# Install settings handler.
 
 add_executable(settings_handler
         src/nodes/settings_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
         src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
 
 target_include_directories(settings_handler
         PUBLIC
