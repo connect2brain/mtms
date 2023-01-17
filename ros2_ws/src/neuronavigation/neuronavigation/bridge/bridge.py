@@ -13,8 +13,8 @@ from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
-from mtms_interfaces.msg import PlannerState
-from mtms_interfaces.srv import SetTargetOrientation
+from ui_interfaces.msg import PlannerState
+from ui_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
 
