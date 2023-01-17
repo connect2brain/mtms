@@ -1,14 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/start_experiment.hpp"
+#include "mtms_device_interfaces/srv/start_experiment.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void start_experiment(const std::shared_ptr<fpga_interfaces::srv::StartExperiment::Request> request,
-                      std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response) {
+void start_experiment(const std::shared_ptr<mtms_device_interfaces::srv::StartExperiment::Request> request,
+                      std::shared_ptr<mtms_device_interfaces::srv::StartExperiment::Response> response) {
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Startexperiment, true));
 
@@ -20,12 +20,12 @@ class StartExperiment : public rclcpp::Node {
 public:
   StartExperiment()
       : Node("start_experiment") {
-    start_experiment_service_ = this->create_service<fpga_interfaces::srv::StartExperiment>("/fpga/start_experiment",
+    start_experiment_service_ = this->create_service<mtms_device_interfaces::srv::StartExperiment>("/fpga/start_experiment",
                                                                                             start_experiment);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::StartExperiment>::SharedPtr start_experiment_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::StartExperiment>::SharedPtr start_experiment_service_;
 };
 
 int main(int argc, char **argv) {

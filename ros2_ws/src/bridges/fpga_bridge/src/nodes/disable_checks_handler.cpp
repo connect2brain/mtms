@@ -1,14 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/disable_checks.hpp"
+#include "mtms_device_interfaces/srv/disable_checks.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void disable_checks(const std::shared_ptr<fpga_interfaces::srv::DisableChecks::Request> request,
-                    std::shared_ptr<fpga_interfaces::srv::DisableChecks::Response> response) {
+void disable_checks(const std::shared_ptr<mtms_device_interfaces::srv::DisableChecks::Request> request,
+                    std::shared_ptr<mtms_device_interfaces::srv::DisableChecks::Response> response) {
   auto disabled = request->disabled;
 
   NiFpga_MergeStatus(&status,
@@ -25,12 +25,12 @@ class DisableChecksHandler : public rclcpp::Node {
 public:
   DisableChecksHandler()
       : Node("disable_checks_handler") {
-    disable_checks_service_ = this->create_service<fpga_interfaces::srv::DisableChecks>("/fpga/disable_checks",
+    disable_checks_service_ = this->create_service<mtms_device_interfaces::srv::DisableChecks>("/fpga/disable_checks",
                                                                                         disable_checks);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::DisableChecks>::SharedPtr disable_checks_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::DisableChecks>::SharedPtr disable_checks_service_;
 };
 
 int main(int argc, char **argv) {

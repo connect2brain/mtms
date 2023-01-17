@@ -3,7 +3,7 @@ from rclpy.node import Node
 import time
 
 from event_interfaces.msg import SignalOut, Pulse, Charge
-from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
 

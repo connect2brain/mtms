@@ -1,14 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/stop_device.hpp"
+#include "mtms_device_interfaces/srv/stop_device.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void stop_device(const std::shared_ptr<fpga_interfaces::srv::StopDevice::Request> request,
-                 std::shared_ptr<fpga_interfaces::srv::StopDevice::Response> response) {
+void stop_device(const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
+                 std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Response> response) {
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopdevice, true));
 
@@ -20,11 +20,11 @@ class StopDevice : public rclcpp::Node {
 public:
   StopDevice()
       : Node("stop_device") {
-    stop_device_service_ = this->create_service<fpga_interfaces::srv::StopDevice>("/fpga/stop_device", stop_device);
+    stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>("/fpga/stop_device", stop_device);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::StopDevice>::SharedPtr stop_device_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::StopDevice>::SharedPtr stop_device_service_;
 };
 
 int main(int argc, char **argv) {
