@@ -4,4 +4,4 @@ set -e
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 
-ros2 launch fpga_bridge fpga_bridge.launch.py log-level:="$ROS_LOG_LEVEL"
+ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:="$ROS_LOG_LEVEL"
