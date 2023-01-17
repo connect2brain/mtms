@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
 
 #include "eeg_processor.h"
 #include "processor_node.h"
@@ -15,12 +15,12 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
   this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/stimulus", 10);
 
-  auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
+  auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     auto events = processor->cleaned_eeg_received(*message);
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
                                                                             subscription_callback);
 
 }
