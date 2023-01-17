@@ -13,14 +13,14 @@ void stop_experiment(const std::shared_ptr<mtms_device_interfaces::srv::StopExpe
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopexperiment, true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Stoped experiment");
+  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Stoped experiment");
 }
 
 class StopExperiment : public rclcpp::Node {
 public:
   StopExperiment()
       : Node("stop_experiment") {
-    stop_experiment_service_ = this->create_service<mtms_device_interfaces::srv::StopExperiment>("/fpga/stop_experiment",
+    stop_experiment_service_ = this->create_service<mtms_device_interfaces::srv::StopExperiment>("/mtms_device/stop_experiment",
                                                                                           stop_experiment);
   }
 
