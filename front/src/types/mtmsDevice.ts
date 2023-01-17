@@ -3,7 +3,7 @@ import {
   ChannelErrorMessage,
   StartupError,
   SystemErrorMessage,
-} from './fpgaErrors'
+} from './mtmsDeviceErrors'
 
 export const DeviceState = {
   NOT_OPERATIONAL: 0,

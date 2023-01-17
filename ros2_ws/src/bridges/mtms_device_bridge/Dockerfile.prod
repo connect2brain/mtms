@@ -45,7 +45,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for fpga bridge
+# Copy ROS workspace for mtms_device bridge
 
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/

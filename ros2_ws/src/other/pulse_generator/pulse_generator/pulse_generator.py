@@ -19,9 +19,9 @@ class PulseGenerator(Node):
         self.pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse')
         self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
-        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
-        self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
+        self.start_device_client = self.create_client(StartDevice, '/mtms_device/start_device')
+        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
+        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
 
         self.client_futures = []
 

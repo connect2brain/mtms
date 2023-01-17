@@ -2,8 +2,8 @@
 // Created by alqio on 11.11.2022.
 //
 
-#ifndef PROCESSOR_FACTORY_FPGA_EVENT_H
-#define PROCESSOR_FACTORY_FPGA_EVENT_H
+#ifndef PROCESSOR_FACTORY_MTMS_DEVICE_EVENT_H
+#define PROCESSOR_FACTORY_MTMS_DEVICE_EVENT_H
 
 #include <vector>
 
@@ -24,7 +24,7 @@ struct eeg_sample {
   double first_sample_of_experiment;
 };
 
-struct fpga_event {
+struct mtms_device_event {
   unsigned char channel;
   event_info b_event_info;
   waveform_piece waveform[3];
@@ -35,4 +35,4 @@ struct fpga_event {
 };
 
 
-#endif //PROCESSOR_FACTORY_FPGA_EVENT_H
+#endif //PROCESSOR_FACTORY_MTMS_DEVICE_EVENT_H

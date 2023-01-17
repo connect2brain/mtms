@@ -72,7 +72,7 @@ public:
   SystemStateBridge()
       : Node("system_state_bridge") {
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
-        "/fpga/system_state", 10);
+        "/mtms_device/system_state", 10);
     timer_ = this->create_wall_timer(20ms, std::bind(&SystemStateBridge::publish_system_state, this));
   }
 

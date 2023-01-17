@@ -52,7 +52,7 @@ class SettingsHandler : public rclcpp::Node {
 public:
   SettingsHandler()
       : Node("settings_handler") {
-    send_settings_service_ = this->create_service<mtms_device_interfaces::srv::SendSettings>("/fpga/send_settings",
+    send_settings_service_ = this->create_service<mtms_device_interfaces::srv::SendSettings>("/mtms_device/send_settings",
                                                                                       send_settings);
   }
 
