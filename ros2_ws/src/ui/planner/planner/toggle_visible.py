@@ -1,8 +1,8 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import PlannerState, Target
-from mtms_interfaces.srv import ToggleVisible
+from ui_interfaces.msg import PlannerState, Target
+from ui_interfaces.srv import ToggleVisible
 
 from .state_node import StateNode
 
