@@ -102,6 +102,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - './data/neuronavigation_data:/app/data/neuronavigation_data/'
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
 
