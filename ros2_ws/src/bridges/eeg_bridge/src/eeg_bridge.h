@@ -10,8 +10,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "mtms_interfaces/msg/trigger.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/trigger.hpp"
 #include "fpga_interfaces/msg/system_state.hpp"
 #include "fpga_interfaces/msg/experiment_state.hpp"
 
@@ -67,9 +67,9 @@ private:
   bool first_trigger_received;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
-  rclcpp::Publisher<mtms_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
+  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
 
   rclcpp::Subscription<fpga_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 

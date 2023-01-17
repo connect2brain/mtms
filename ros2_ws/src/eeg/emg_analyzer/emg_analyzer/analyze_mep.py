@@ -2,8 +2,8 @@ import time
 
 import numpy as np
 
-from mtms_interfaces.action import AnalyzeMep
-from mtms_interfaces.srv import AnalyzeMepService
+from eeg_interfaces.action import AnalyzeMep
+from eeg_interfaces.srv import AnalyzeMepService
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 import rclpy

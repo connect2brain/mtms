@@ -67,9 +67,9 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
     }
   };
 
-  publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
+  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
-  publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
+  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
   subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", 10,
                                                                                            system_state_callback);
@@ -221,7 +221,7 @@ void EegBridge::handle_trigger_packet() {
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
   RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
 
-  auto trigger_msg = mtms_interfaces::msg::Trigger();
+  auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_index == 1) {
 
@@ -382,7 +382,7 @@ int EegBridge::get_trigger_package_from_buffer() {
 void EegBridge::publish_trigger_from_buffer(double_t time) {
   int trigger_channel_package = get_trigger_package_from_buffer();
 
-  auto trigger_msg = mtms_interfaces::msg::Trigger();
+  auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_channel_package == TRIGGER_A_IN) {
     trigger_msg.index = 1;
@@ -406,7 +406,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
 void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
 
-  auto message = mtms_interfaces::msg::EegDatapoint();
+  auto message = eeg_interfaces::msg::EegDatapoint();
   message.time = time_since_trigger;
 
   int i = FIRST_CHANNEL_INDEX;

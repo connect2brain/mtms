@@ -4,7 +4,7 @@ import numpy as np
 
 # TODO: Rename to be more generic, e.g., EegEmgDatapoint.
 #
-from mtms_interfaces.msg import EegDatapoint
+from eeg_interfaces.msg import EegDatapoint
 
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 

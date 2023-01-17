@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import EegDatapoint, Trigger
+from eeg_interfaces.msg import EegDatapoint, Trigger
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 
