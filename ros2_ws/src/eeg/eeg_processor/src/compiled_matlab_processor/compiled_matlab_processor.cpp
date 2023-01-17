@@ -19,59 +19,77 @@ CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path)
 
 }
 
-std::vector<Event> CompiledMatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+std::vector<Event> CompiledMatlabProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
+
+
+std::vector<mtms_interfaces::msg::EegDatapoint>
+CompiledMatlabProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
   coder::array<matlab_event, 1U> events;
+  coder::array<matlab_eeg_sample, 1U> samples;
 
   inner_processor->data_received(
-      data.eeg_channels.data(),
-      data.eeg_channels.size(),
-      data.time,
-      data.first_sample_of_experiment,
-      events
+      sample.eeg_channels.data(),
+      sample.eeg_channels.size(),
+      sample.time,
+      sample.first_sample_of_experiment,
+      events,
+      samples
   );
 
-  std::vector<Event> events_out;
+  std::vector<mtms_interfaces::msg::EegDatapoint> output;
+
+  for (auto i = samples.begin(); i != samples.end(); i++) {
+    auto matlab_sample = *i;
+    auto new_sample = convert_matlab_sample_to_sample(matlab_sample);
+    output.push_back(new_sample);
+  }
+
+  return output;
+
+}
+
+std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  coder::array<matlab_event, 1U> events;
+  coder::array<matlab_eeg_sample, 1U> samples;
+
+  inner_processor->data_received(
+      sample.eeg_channels.data(),
+      sample.eeg_channels.size(),
+      sample.time,
+      sample.first_sample_of_experiment,
+      events,
+      samples
+  );
+
+  std::vector<Event> output;
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto matlab_event = *i;
     auto event = convert_matlab_event_to_event(matlab_event);
-    events_out.push_back(event);
+    output.push_back(event);
   }
 
-  return events_out;
+  return output;
 }
 
 std::vector<Event> CompiledMatlabProcessor::init() {
+  std::vector<Event> matlab_events;
   coder::array<matlab_event, 1U> events;
-  std::vector<Event> events_out;
-
   inner_processor->init_experiment(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto matlab_event = *i;
     auto event = convert_matlab_event_to_event(matlab_event);
-    events_out.push_back(event);
+    matlab_events.push_back(event);
   }
-  return events_out;
+  return matlab_events;
 }
 
-std::vector<Event> CompiledMatlabProcessor::close() {
-  coder::array<matlab_event, 1U> events;
-  std::vector<Event> events_out;
-
-  inner_processor->end_experiment(events);
-
-  for (auto i = events.begin(); i != events.end(); i++) {
-    auto matlab_event = *i;
-    auto event = convert_matlab_event_to_event(matlab_event);
-    events_out.push_back(event);
-  }
-
+CompiledMatlabProcessor::~CompiledMatlabProcessor() {
   //Empty the pointer
   //inner_processor.reset();
 
   if (processor_factory != nullptr) {
     dlclose(processor_factory);
   }
-  return events_out;
 }
