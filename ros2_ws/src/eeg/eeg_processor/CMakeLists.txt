@@ -10,7 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(event_interfaces REQUIRED)
 find_package(fpga_interfaces REQUIRED)
-find_package(mtms_interfaces REQUIRED)
+find_package(eeg_interfaces REQUIRED)
 
 find_package(OpenMP)
 
@@ -102,7 +102,7 @@ foreach (executable ${executables})
             $<INSTALL_INTERFACE:>
             )
 
-    ament_target_dependencies(${executable} rclcpp std_msgs mtms_interfaces fpga_interfaces event_interfaces)
+    ament_target_dependencies(${executable} rclcpp std_msgs eeg_interfaces fpga_interfaces event_interfaces)
 
     if (OpenMP_CXX_FOUND)
         message(STATUS "OpenMP found!")
