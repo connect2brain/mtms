@@ -13,10 +13,10 @@ uint8 TIMED=0
 
 # Executed when the mTMS device receives an external trigger or an event trigger message.
 #
-uint8 TRIGGER=1
+uint8 WAIT_FOR_TRIGGER=1
 
-# Executed as soon as possible.
+# Executed immediately when the mTMS device receives the event.
 #
-uint8 INSTANT=2
+uint8 IMMEDIATE=2
 
 uint8 value
