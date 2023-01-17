@@ -64,6 +64,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ClearState.srv"
 
   "action/AnalyzeMep.action"
+  "srv/AnalyzeMepService.srv"
   DEPENDENCIES geometry_msgs
  )
 
