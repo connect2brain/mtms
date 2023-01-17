@@ -21,7 +21,7 @@ COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite
 COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces
 COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces
-COPY ros2_ws/src/interfaces/fpga_interfaces src/interfaces/fpga_interfaces
+COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .

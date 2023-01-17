@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>fpga_interfaces</name>
+  <name>mtms_device_interfaces</name>
   <version>0.0.1</version>
   <description>Interfaces for FPGA communication</description>
   <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
