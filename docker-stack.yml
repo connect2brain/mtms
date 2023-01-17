@@ -102,6 +102,9 @@ services:
     image: okahilak/mtms:neuronavigation
     environment:
       - DISPLAY=172.19.96.1:0.0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - './data/neuronavigation_data:/app/data/neuronavigation_data/'
     deploy:
       placement:
         constraints:
