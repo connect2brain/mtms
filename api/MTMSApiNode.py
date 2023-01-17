@@ -9,10 +9,9 @@ from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, SignalO
     ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
     WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, SignalOutError
 
-from mtms_interfaces.action import AnalyzeMep
-from mtms_interfaces.srv import GetChannelVoltages
+from eeg_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
 
 from MTMSApiPrinter import MTMSApiPrinter
 
