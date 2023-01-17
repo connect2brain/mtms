@@ -40,7 +40,7 @@ export const systemStateSubscriber = new ROSLIB.Topic<SystemStateMessage>({
 export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
   ros: ros,
   name: '/mtms/events',
-  messageType: 'mtms_interfaces/Event',
+  messageType: 'ui_interfaces/Event',
 })
 
 export const pulseFeedbackSubscriber = new ROSLIB.Topic<PulseFeedbackMessage>({

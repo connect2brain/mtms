@@ -8,7 +8,7 @@
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
-  <depend>mtms_interfaces</depend>
+  <depend>ui_interfaces</depend>
   <depend>event_interfaces</depend>
 
   <export>

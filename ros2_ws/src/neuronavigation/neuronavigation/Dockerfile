@@ -56,11 +56,11 @@ RUN rm setup.py
 
 WORKDIR /app
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
-COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
+COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
 
 RUN cd ros2_ws && \
     source /opt/ros/galactic/setup.bash && \
-    colcon build --packages-select neuronavigation_interfaces mtms_interfaces
+    colcon build --packages-select neuronavigation_interfaces ui_interfaces
 
 # Copy rest of InVesalius
 
