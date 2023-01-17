@@ -16,6 +16,7 @@ RUN pip install PySerial
 
 WORKDIR /app
 COPY ros2_ws/src/other/trigger_controller ros2_ws/src/other/trigger_controller/
+COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
 
 # Build ROS packages
