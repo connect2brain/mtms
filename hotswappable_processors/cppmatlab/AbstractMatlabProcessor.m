@@ -4,6 +4,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         window_size
         channel_count
         commands
+        samples
         events_sent
         experiment_in_progress
         last_sample_received_at
@@ -37,6 +38,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
                 number_of_pulses = 20;
             end
             obj.commands = repmat(create_pulse_command(0,1, 2, 0), number_of_pulses, 1);
+            obj.samples = repmat(create_eeg_sample([1:number_of_pulses], 1.0, 1), number_of_pulses, 1);
 
             obj.events_sent = uint32(0);
             
@@ -56,9 +58,23 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             end
         end
 
-        function ret = data_received(obj, channel_data, time, first_sample_of_experiment)
+        function set_eeg_samples(obj, samples)
+            number_of_samples = size(samples, 1);
+            if number_of_samples > 0
+                obj.samples = repmat(samples(1), number_of_samples, 1);
+                for i=1:number_of_samples
+                    obj.samples(i) = samples(i);
+                end
+            else
+                obj.samples = [];
+            end
+        end
+
+
+        function [commands, samples] = data_received(obj, channel_data, time, first_sample_of_experiment)
             coder.inline("never");
-            
+            obj.set_commands([]);
+            obj.set_eeg_samples([]);
             % Access size(channel_data) to tell compiler that
             % channel_data is variable sized.
             s = uint16(size(channel_data, 1));
@@ -79,19 +95,21 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.events_sent = obj.events_sent + numel(obj.commands);
             obj.last_sample_received_at = time;
  
-            ret = obj.commands;
+            commands = obj.commands;
+            samples = obj.samples;
         end
 
-        function ret = init_experiment(obj)
+        function [commands, samples] = init_experiment(obj)
             coder.inline("never");
 
             obj.on_init_experiment();
             obj.events_sent = obj.events_sent + numel(obj.commands);
 
-            ret = obj.commands;
+            commands = obj.commands;
+            samples = obj.samples;
         end
 
-        function ret = end_experiment(obj)
+        function [commands, samples] = end_experiment(obj)
             coder.inline("never");
             
             obj.experiment_in_progress = false;
@@ -99,7 +117,8 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.on_end_experiment();
             obj.events_sent = obj.events_sent + numel(obj.commands);
 
-            ret = obj.commands;
+            commands = obj.commands;
+            samples = obj.samples;
         end
 
         function obj = set_window_size(obj, new_window_size)

@@ -1,5 +1,5 @@
 classdef MatlabProcessor < AbstractMatlabProcessor
-    
+
     properties(Access=private)
         A
         HILBERTWIN
@@ -32,7 +32,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.HILBERTWIN = 64;
             obj.EDGE = 35;
             obj.AR_ORDER = 15;
-            
+
             obj.FS = 5000;
             obj.sample_duration = 1 / obj.FS;
 
@@ -48,14 +48,14 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.set_channel_count(1);
             obj.set_window_size(obj.nr_samples);
             obj.set_auto_enqueue(false);
-            
+
             obj.estimated = false;
             obj.print_c3 = false;
             obj.samples_collected = 0;
 
             obj.isi_seconds = 2;
             obj.isi_samples = obj.FS * obj.isi_seconds;
-            
+
         end
         function on_init_experiment(obj)
             obj.set_commands([]);
@@ -72,7 +72,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             end
 
             obj.samples_collected = obj.samples_collected + 1;
-            
+
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
                 % Data is already 1x2500, but we need to do manually
                 % specify it so code generation knows for sure that it
@@ -124,4 +124,3 @@ classdef MatlabProcessor < AbstractMatlabProcessor
         end
     end
 end
-
