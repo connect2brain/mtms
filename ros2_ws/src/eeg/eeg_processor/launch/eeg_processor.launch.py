@@ -13,11 +13,11 @@ def generate_launch_description():
         description="Logging level",
     )
     pre_processor_type_arg = DeclareLaunchArgument(
-        "pre-processor-type",
+        "preprocessor-type",
         description="Pre processor type",
     )
     pre_processor_script_arg = DeclareLaunchArgument(
-        "pre-processor-script",
+        "preprocessor-script",
         description="Pre processor script path",
     )
 
@@ -51,8 +51,8 @@ def generate_launch_description():
             emulate_tty=True,
             parameters=[
                 {
-                    "processor_type": LaunchConfiguration("pre-processor-type"),
-                    "processor_script": LaunchConfiguration("pre-processor-script"),
+                    "processor_type": LaunchConfiguration("preprocessor-type"),
+                    "processor_script": LaunchConfiguration("preprocessor-script"),
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
