@@ -6,6 +6,14 @@ class EventType(Enum):
     CHARGE = 1
     DISCHARGE = 2
     SIGNAL_OUT = 3
+    STIMULUS = 4
+
+
+class Stimulus:
+    def __init__(self, state, event_info) -> None:
+        self.state = state
+        self.event_info = event_info
+        self.event_type = EventType.STIMULUS.value
 
 
 class Pulse:
@@ -38,3 +46,10 @@ class SignalOut:
         self.duration_us = duration_us
         self.event_info = event_info
         self.event_type = EventType.SIGNAL_OUT.value
+
+
+class Sample:
+    def __init__(self, sample, time, first_sample_of_experiment):
+        self.sample = sample
+        self.time = time
+        self.first_sample_of_experiment = first_sample_of_experiment

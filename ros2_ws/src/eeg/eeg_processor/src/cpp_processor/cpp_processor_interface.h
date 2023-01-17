@@ -19,6 +19,9 @@ public:
   virtual std::vector<matlab_event>
   data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
 
+  virtual std::vector<eeg_sample>
+  raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
+
 };
 
 using create_cpp_processor = CppProcessorInterface *(*)();
