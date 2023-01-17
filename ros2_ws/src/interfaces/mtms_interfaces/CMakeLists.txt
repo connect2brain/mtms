@@ -27,8 +27,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Event.msg"
   "msg/Target.msg"
   "msg/PlannerState.msg"
-  "msg/EegDatapoint.msg"
-  "msg/EegBatch.msg"
   "msg/ChannelInfo.msg"
   "msg/Experiment.msg"
   "msg/PulseSequence.msg"
@@ -56,14 +54,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PulseSequence/ToggleVisiblePulse.srv"
   "srv/PulseSequence/ChangePulseIndex.srv"
   "srv/PulseSequence/AddPulseToPulseSequence.srv"
-  "msg/Trigger.msg"
-  "srv/TriggerPulse.srv"
   "srv/ToggleNavigation.srv"
   "srv/StartPulseSequence.srv"
   "srv/ClearState.srv"
 
-  "action/AnalyzeMep.action"
-  "srv/AnalyzeMepService.srv"
   DEPENDENCIES geometry_msgs neuronavigation_interfaces
  )
 
