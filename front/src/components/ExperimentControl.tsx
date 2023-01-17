@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
 import { startDevice, startExperiment, stopDevice, stopExperiment } from 'services/experiment'
-import { DeviceState, DeviceStateMessage, ExperimentState, ExperimentStateMessage } from 'types/fpga'
+import { DeviceState, DeviceStateMessage, ExperimentState, ExperimentStateMessage } from 'types/mtmsDevice'
 
 type Props = {
   deviceState: DeviceStateMessage

@@ -25,7 +25,7 @@ class DisableChecksHandler : public rclcpp::Node {
 public:
   DisableChecksHandler()
       : Node("disable_checks_handler") {
-    disable_checks_service_ = this->create_service<mtms_device_interfaces::srv::DisableChecks>("/fpga/disable_checks",
+    disable_checks_service_ = this->create_service<mtms_device_interfaces::srv::DisableChecks>("/mtms_device/disable_checks",
                                                                                         disable_checks);
   }
 

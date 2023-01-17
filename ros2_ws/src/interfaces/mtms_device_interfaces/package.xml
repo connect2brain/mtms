@@ -3,7 +3,7 @@
 <package format="3">
   <name>mtms_device_interfaces</name>
   <version>0.0.1</version>
-  <description>Interfaces for FPGA communication</description>
+  <description>Interfaces for communication with mTMS device</description>
   <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
   <license>TODO</license>
 

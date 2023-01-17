@@ -71,7 +71,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/fpga/system_state", 10,
+  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", 10,
                                                                                            system_state_callback);
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};

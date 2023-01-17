@@ -57,7 +57,7 @@ public:
                                             NULL));
 
 
-      RCLCPP_INFO(rclcpp::get_logger("charge"), "Sent charge to channel %d", channel);
+      RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Sent charge to channel %d", channel);
     };
 
     serialized_message = SerializedMessage();

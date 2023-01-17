@@ -2,8 +2,8 @@
 // Created by alqio on 9/12/22.
 //
 
-#ifndef EEG_PROCESSOR_FPGA_EVENT_H
-#define EEG_PROCESSOR_FPGA_EVENT_H
+#ifndef EEG_PROCESSOR_MTMS_DEVICE_EVENT_H
+#define EEG_PROCESSOR_MTMS_DEVICE_EVENT_H
 
 #include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/charge.hpp"
@@ -102,4 +102,4 @@ struct Event {
 
 };
 
-#endif //EEG_PROCESSOR_FPGA_EVENT_H
+#endif //EEG_PROCESSOR_MTMS_DEVICE_EVENT_H

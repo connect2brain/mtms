@@ -13,14 +13,14 @@ void stop_device(const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopdevice, true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("fpga"), "Stopped device");
+  RCLCPP_INFO(rclcpp::get_logger("stop_device_handler"), "Stopped device");
 }
 
 class StopDevice : public rclcpp::Node {
 public:
   StopDevice()
       : Node("stop_device") {
-    stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>("/fpga/stop_device", stop_device);
+    stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>("/mtms_device/stop_device", stop_device);
   }
 
 private:
