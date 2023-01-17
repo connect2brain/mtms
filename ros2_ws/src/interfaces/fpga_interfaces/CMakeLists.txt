@@ -22,13 +22,13 @@ endif ()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-        "msg/state/ChannelState.msg"
-        "msg/state/ChannelError.msg"
-        "msg/state/DeviceState.msg"
-        "msg/state/ExperimentState.msg"
-        "msg/state/StartupError.msg"
-        "msg/state/SystemState.msg"
-        "msg/state/SystemError.msg"
+        "msg/ChannelState.msg"
+        "msg/ChannelError.msg"
+        "msg/DeviceState.msg"
+        "msg/ExperimentState.msg"
+        "msg/StartupError.msg"
+        "msg/SystemState.msg"
+        "msg/SystemError.msg"
 
         "msg/Settings.msg"
         "msg/Version.msg"
