@@ -59,10 +59,10 @@ services:
     privileged: true
     network_mode: "host"
 
-  fpga_bridge:
+  mtms_device_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/mtms_device_bridge/Dockerfile
     # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
