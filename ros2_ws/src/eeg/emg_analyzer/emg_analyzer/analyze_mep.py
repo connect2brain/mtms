@@ -3,6 +3,7 @@ import time
 import numpy as np
 
 from mtms_interfaces.action import AnalyzeMep
+from mtms_interfaces.srv import AnalyzeMepService
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 import rclpy
@@ -32,31 +33,31 @@ class AnalyzeMepNode(Node):
             self,
             AnalyzeMep,
             '/emg/analyze_mep',
-            execute_callback=self.execute_callback,
+            self.analyze_mep_action_handler,
             callback_group=self.callback_group,
         )
         self.logger = self.get_logger()
 
-    # TODO: A placeholder for an actual MEP analysis algorithm.
-    #
-    def analyze_mep(self, emg_buffer, time_buffer):
-        max_i = np.argmax(emg_buffer)
+        # HACK: MATLAB does not currently (version R2022b) support ROS2 actions. Work around
+        #   it by creating a service, which produces the same output as the action.
+        #
+        self.analyze_mep_service = self.create_service(
+            AnalyzeMepService,
+            '/emg/analyze_mep_service',
+            self.analyze_mep_service_handler,
+            callback_group=self.callback_group,
+        )
 
-        peak_amplitude = emg_buffer[max_i]
+    def compute_mep_amplitude_and_latency(self, emg_buffer, time_buffer):
+        max_i = np.argmax(emg_buffer)
+        min_i = np.argmin(emg_buffer)
+
+        amplitude = emg_buffer[max_i] - emg_buffer[min_i]
         latency = time_buffer[max_i]
 
-        return peak_amplitude, latency
+        return amplitude, latency
 
-    def execute_callback(self, goal_handle):
-        request = goal_handle.request
-        emg_channel = request.emg_channel
-        start_time = request.time
-
-        # Use short version of goal ID (2 first bytes as hex) for logging.
-        #
-        uuid = goal_handle.goal_id.uuid
-        goal_id = "{:02x}{:02x}".format(uuid[0], uuid[1])
-
+    def analyze_mep(self, goal_id, emg_channel, start_time):
         self.logger.info('{}: Analyzing MEP starting at time: {:.2f} (s)'.format(goal_id, start_time))
 
         data_gatherer = DataGatherer(
@@ -73,28 +74,69 @@ class AnalyzeMepNode(Node):
             # Do not check continuously if data gatherer is finished; instead sleep between checks.
             # Otherwise EMG subscriber seems to get buried under the load and starts dropping samples.
             #
-            time.sleep(1.0)
+            time.sleep(0.1)
             pass
 
         emg_buffer, time_buffer = data_gatherer.get_buffers()
 
-        result = AnalyzeMep.Result()
+        success = data_gatherer.success()
 
-        if data_gatherer.success():
-            goal_handle.succeed()
-
+        if success:
             self.logger.info('{}: # of samples received: {}'.format(goal_id, len(emg_buffer)))
 
-            peak_amplitude, latency = self.analyze_mep(emg_buffer, time_buffer)
+            amplitude, latency = self.compute_mep_amplitude_and_latency(emg_buffer, time_buffer)
+        else:
+            self.logger.info('{}: Failed to gather data.'.format(goal_id))
 
-            result.peak_amplitude = peak_amplitude
+            amplitude = None
+            latency = None
+
+        data_gatherer.destroy()
+
+        return success, amplitude, latency
+
+    def analyze_mep_action_handler(self, goal_handle):
+        request = goal_handle.request
+        emg_channel = request.emg_channel
+        start_time = request.time
+
+        # Use short version of goal ID (2 first bytes as hex) for logging.
+        #
+        uuid = goal_handle.goal_id.uuid
+        goal_id = "{:02x}{:02x}".format(uuid[0], uuid[1])
+
+        success, amplitude, latency = self.analyze_mep(goal_id, emg_channel, start_time)
+
+        # Create and return a Result object.
+
+        result = AnalyzeMep.Result()
+
+        if success:
+            goal_handle.succeed()
+
+            result.amplitude = amplitude
             result.latency = latency
         else:
             goal_handle.abort()
 
-        data_gatherer.destroy()
-
         return result
+
+    def analyze_mep_service_handler(self, request, response):
+        emg_channel = request.emg_channel
+        start_time = request.time
+
+        # HACK: Service calls are not assigned an ID by ROS, therefore assign a constant ID here.
+        #   It is used only as the prefix for the log messages.
+        #
+        goal_id = 'abcd'
+
+        success, amplitude, latency = self.analyze_mep(goal_id, emg_channel, start_time)
+
+        if success:
+            response.amplitude = amplitude
+            response.latency = latency
+
+        return response
 
 
 def main(args=None):
@@ -102,7 +144,7 @@ def main(args=None):
 
     analyze_mep_node = AnalyzeMepNode()
 
-    # Allow several goals to be executed concurrently.
+    # Allow several actions to be executed concurrently.
     #
     executor = MultiThreadedExecutor()
     try:
