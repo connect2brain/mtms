@@ -12,8 +12,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
-#include "fpga_interfaces/msg/system_state.hpp"
-#include "fpga_interfaces/msg/experiment_state.hpp"
+#include "mtms_device_interfaces/msg/system_state.hpp"
+#include "mtms_device_interfaces/msg/experiment_state.hpp"
 
 #define BUFFER_LENGTH 250
 #define MAX_NUMBER_OF_CHANNELS 80
@@ -59,7 +59,7 @@ public:
 
 private:
 
-  fpga_interfaces::msg::ExperimentState experiment_state;
+  mtms_device_interfaces::msg::ExperimentState experiment_state;
 
   double_t sync_interval;
   uint16_t sync_index;
@@ -71,7 +71,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
 
-  rclcpp::Subscription<fpga_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
   double_t first_trigger_timestamp_;
 

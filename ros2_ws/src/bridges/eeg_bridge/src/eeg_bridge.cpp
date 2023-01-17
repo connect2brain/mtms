@@ -60,9 +60,9 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-  auto system_state_callback = [this](const std::shared_ptr<fpga_interfaces::msg::SystemState> message) -> void {
+  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
-    if (experiment_state.value != fpga_interfaces::msg::ExperimentState::STARTED) {
+    if (experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
       this->reset_sync();
     }
   };
@@ -71,7 +71,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-  subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", 10,
+  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/fpga/system_state", 10,
                                                                                            system_state_callback);
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
@@ -337,7 +337,7 @@ void EegBridge::handle_eeg_data_packet() {
 
         /* If sending trigger as a packet, wait until we receive the first trigger and that the experiment is started. */
         if (this->first_trigger_received &&
-            this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
 
@@ -349,7 +349,7 @@ void EegBridge::handle_eeg_data_packet() {
            sent as a part of a sample packet. When the first trigger is received, we also expect the experiment to be
            started. */
         if (!this->first_trigger_received ||
-            this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
 

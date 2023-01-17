@@ -13,7 +13,7 @@
   <depend>std_msgs</depend>
 
   <depend>event_interfaces</depend>
-  <depend>fpga_interfaces</depend>
+  <depend>mtms_device_interfaces</depend>
   <depend>eeg_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
