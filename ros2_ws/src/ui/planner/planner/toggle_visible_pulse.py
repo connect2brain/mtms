@@ -1,6 +1,6 @@
 import rclpy
 
-from mtms_interfaces.srv import ToggleVisiblePulse
+from ui_interfaces.srv import ToggleVisiblePulse
 
 from .state_node import StateNode
 

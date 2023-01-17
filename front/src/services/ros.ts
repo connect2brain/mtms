@@ -29,13 +29,13 @@ export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_navigation',
-  serviceType: 'mtms_interfaces/ToggleNavigation',
+  serviceType: 'ui_interfaces/ToggleNavigation',
 })
 
 const clearStateService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/clear_state',
-  serviceType: 'mtms_interfaces/ClearState',
+  serviceType: 'ui_interfaces/ClearState',
 })
 
 /* Set up listener for coil at target. */
@@ -50,28 +50,28 @@ const coilAtTargetListener = new ROSLIB.Topic({
 export const plannerStateSubscriber = new ROSLIB.Topic<StateMessage>({
   ros: ros,
   name: '/planner/state',
-  messageType: 'mtms_interfaces/PlannerState',
+  messageType: 'ui_interfaces/PlannerState',
 })
 
 /* Set up listener for eeg data. */
 export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
   ros: ros,
   name: '/eeg/batch_data',
-  messageType: 'mtms_interfaces/EegBatch',
+  messageType: 'ui_interfaces/EegBatch',
 })
 
 /* Set up listener for planner state. */
 export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   ros: ros,
   name: '/eeg/trigger_received',
-  messageType: 'mtms_interfaces/Trigger',
+  messageType: 'ui_interfaces/Trigger',
 })
 
 /* Set up start_experiment service */
 export const startExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/stimulation/start_experiment',
-  serviceType: 'mtms_interfaces/ToggleNavigation',
+  serviceType: 'ui_interfaces/ToggleNavigation',
 })
 
 export const clearRosState = () => {
