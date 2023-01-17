@@ -19,7 +19,7 @@ CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path)
 
 }
 
-std::vector<Event> CompiledMatlabProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {}
+std::vector<Event> CompiledMatlabProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
 
 
 std::vector<mtms_interfaces::msg::EegDatapoint>

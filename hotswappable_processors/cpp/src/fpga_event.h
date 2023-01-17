@@ -31,6 +31,7 @@ struct fpga_event {
   unsigned char event_type;
   unsigned short target_voltage;
   unsigned int duration_us;
+  unsigned short state;
 };
 
 

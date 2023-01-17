@@ -19,7 +19,7 @@ CppProcessor::CppProcessor(const std::string &script_path) {
   inner_processor = std::unique_ptr<CppProcessorInterface>(create_processor_func());
 }
 
-std::vector<Event> CppProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {}
+std::vector<Event> CppProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
 
 
 std::vector<mtms_interfaces::msg::EegDatapoint> CppProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
@@ -31,7 +31,7 @@ std::vector<mtms_interfaces::msg::EegDatapoint> CppProcessor::raw_eeg_received(m
 
   std::vector<mtms_interfaces::msg::EegDatapoint> cleaned_samples;
 
-  for (auto i = 0; i < samples.size(); i++) {
+  for (unsigned long i = 0; i < samples.size(); i++) {
     auto matlab_eeg_sample = samples[i];
     mtms_interfaces::msg::EegDatapoint new_sample;
     new_sample.eeg_channels = matlab_eeg_sample.channel_data;

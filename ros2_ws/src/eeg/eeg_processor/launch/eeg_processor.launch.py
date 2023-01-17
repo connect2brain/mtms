@@ -45,8 +45,8 @@ def generate_launch_description():
     nodes = [
         Node(
             package="eeg_processor",
-            executable="eeg_pre_processor",
-            name="eeg_pre_processor",
+            executable="eeg_preprocessor",
+            name="eeg_preprocessor",
             output="screen",
             emulate_tty=True,
             parameters=[
