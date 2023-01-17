@@ -7,7 +7,7 @@
 
 #include "string"
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "mtms_interfaces/msg/event.hpp"
+#include "event_interfaces/msg/stimulus.hpp"
 
 #include "event.h"
 
@@ -20,7 +20,7 @@ public:
 
   virtual std::vector<Event> cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) = 0;
 
-  virtual std::vector<Event> present_stimulus_received(mtms_interfaces::msg::Event event) = 0;
+  virtual std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event) = 0;
 
 };
 
