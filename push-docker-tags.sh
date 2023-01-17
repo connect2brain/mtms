@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Pushing okahilak/mtms:fpga_bridge"
-docker push okahilak/mtms:fpga_bridge
+echo "Pushing okahilak/mtms:mtms_device_bridge"
+docker push okahilak/mtms:mtms_device_bridge
 
 echo "Pushing okahilak/mtms:eeg_bridge"
 docker push okahilak/mtms:eeg_bridge
