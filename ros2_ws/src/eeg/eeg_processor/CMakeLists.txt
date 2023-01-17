@@ -35,99 +35,123 @@ else ()
     message(STATUS "MATLAB NOT FOUND")
 endif ()
 
+list(APPEND executables eeg_processor eeg_preprocessor stimulus_presenter)
+
 add_executable(
         eeg_processor
 
-        src/processor.h
         src/eeg_processor.h
-        src/fpga_event.h
         src/eeg_processor.cpp
+)
+add_executable(
+        eeg_preprocessor
 
-        src/compiled_matlab_processor/compiled_matlab_processor.h
-        src/compiled_matlab_processor/compiled_matlab_processor.cpp
-        src/compiled_matlab_processor/matlab_processor_interface.h
-        src/compiled_matlab_processor/matlab_processor_interface.cpp
-
-        src/cpp_processor/cpp_processor.h
-        src/cpp_processor/cpp_processor.cpp
-        src/cpp_processor/cpp_processor_interface.h
-        src/cpp_processor/cpp_processor_interface.cpp
-
-        src/utils/scheduling_utils.h
-        src/utils/scheduling_utils.cpp
-        src/utils/memory_utils.h
-        src/utils/memory_utils.cpp
-        src/utils/matlab_helpers.h
-        src/utils/matlab_helpers.cpp
-
+        src/eeg_preprocessor.h
+        src/eeg_preprocessor.cpp
 )
 
-target_include_directories(eeg_processor
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
-        $<INSTALL_INTERFACE:lib>)
+add_executable(
+        stimulus_presenter
 
-target_include_directories(eeg_processor
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/utils>
-        $<INSTALL_INTERFACE:utils>
-        )
+        src/stimulus_presenter.h
+        src/stimulus_presenter.cpp
+)
 
-target_include_directories(eeg_processor
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
-        $<INSTALL_INTERFACE:>
-        )
 
-ament_target_dependencies(eeg_processor rclcpp std_msgs event_interfaces fpga_interfaces mtms_interfaces)
-
-if (OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP found!")
-    target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
-endif ()
-
-if (Matlab_FOUND)
-
+foreach (executable ${executables})
     target_sources(
-            eeg_processor
+            ${executable}
             PRIVATE
-            src/matlab_processor/matlab_processor.h
-            src/matlab_processor/matlab_processor.cpp
+            src/processor.h
+            src/processor_node.h
+            src/event.h
+
+            src/compiled_matlab_processor/compiled_matlab_processor.h
+            src/compiled_matlab_processor/compiled_matlab_processor.cpp
+            src/compiled_matlab_processor/matlab_processor_interface.h
+            src/compiled_matlab_processor/matlab_processor_interface.cpp
+
+            src/cpp_processor/cpp_processor.h
+            src/cpp_processor/cpp_processor.cpp
+            src/cpp_processor/cpp_processor_interface.h
+            src/cpp_processor/cpp_processor_interface.cpp
+
+            src/utils/scheduling_utils.h
+            src/utils/scheduling_utils.cpp
+            src/utils/memory_utils.h
+            src/utils/memory_utils.cpp
+            src/utils/matlab_helpers.h
+            src/utils/matlab_helpers.cpp
+
     )
 
-    # MATLAB, Linker to libMatlabEngine in link_directories
-    target_link_libraries(eeg_processor MatlabDataArray)
-    target_link_libraries(eeg_processor MatlabEngine)
+    target_include_directories(${executable}
+            PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
+            $<INSTALL_INTERFACE:lib>)
 
-    target_compile_definitions(eeg_processor PUBLIC MATLAB_FOUND)
+    target_include_directories(${executable}
+            PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/utils>
+            $<INSTALL_INTERFACE:utils>
+            )
 
-endif ()
+    target_include_directories(${executable}
+            PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/>
+            $<INSTALL_INTERFACE:>
+            )
 
-# Python
-find_package(PythonLibs)
-if (PYTHONLIBS_FOUND)
-    message(STATUS "Python found")
+    ament_target_dependencies(${executable} rclcpp std_msgs mtms_interfaces fpga_interfaces event_interfaces)
 
-    target_sources(
-            eeg_processor
-            PRIVATE
-            src/python_processor/python_processor.h
-            src/python_processor/python_processor.cpp
-    )
+    if (OpenMP_CXX_FOUND)
+        message(STATUS "OpenMP found!")
+        target_link_libraries(${PROJECT_NAME} OpenMP::OpenMP_CXX)
+    endif ()
 
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(eeg_processor ${PYTHON_LIBRARIES})
+    if (Matlab_FOUND)
 
-    target_compile_definitions(eeg_processor PUBLIC PYTHON_FOUND)
-
-else ()
-    message(STATUS "Python not found")
-endif ()
-
-install(TARGETS
-        eeg_processor
-        DESTINATION lib/${PROJECT_NAME}
+        target_sources(
+                ${executable}
+                PRIVATE
+                src/matlab_processor/matlab_processor.h
+                src/matlab_processor/matlab_processor.cpp
         )
+
+        # MATLAB, Linker to libMatlabEngine in link_directories
+        target_link_libraries(${executable} MatlabDataArray)
+        target_link_libraries(${executable} MatlabEngine)
+
+        target_compile_definitions(${executable} PUBLIC MATLAB_FOUND)
+
+    endif ()
+
+    # Python
+    find_package(PythonLibs)
+    if (PYTHONLIBS_FOUND)
+        message(STATUS "Python found")
+
+        target_sources(
+                ${executable}
+                PRIVATE
+                src/python_processor/python_processor.h
+                src/python_processor/python_processor.cpp
+        )
+
+        include_directories(${PYTHON_INCLUDE_DIRS})
+        target_link_libraries(${executable} ${PYTHON_LIBRARIES})
+
+        target_compile_definitions(${executable} PUBLIC PYTHON_FOUND)
+
+    else ()
+        message(STATUS "Python not found")
+    endif ()
+
+    install(TARGETS
+            ${executable}
+            DESTINATION lib/${PROJECT_NAME}
+            )
+endforeach ()
 
 install(
         DIRECTORY launch

@@ -6,6 +6,21 @@
 #include "processor.h"
 #include "utils.h"
 
+std::vector<eeg_sample>
+Processor::raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
+  std::vector<eeg_sample> cleaned_samples;
+
+  eeg_sample sample;
+  sample.channel_data = channel_data;
+  sample.time = time;
+  sample.first_sample_of_experiment = first_sample_of_experiment;
+
+  cleaned_samples.push_back(sample);
+
+  return cleaned_samples;
+
+}
+
 std::vector<fpga_event>
 Processor::data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
   this->samples.append(channel_data);

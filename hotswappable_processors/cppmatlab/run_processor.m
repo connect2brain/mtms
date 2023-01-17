@@ -49,11 +49,11 @@ function out = run_processor(window_size, channel_count, data_sample, time, firs
     end
 
 
-    data = obj.init_experiment();
+    [commands, eeg_samples]= obj.init_experiment();
 
-    data = obj.data_received(actual_data_sample, time, first_sample_of_experiment);
+    [commands, eeg_samples] = obj.data_received(actual_data_sample, time, first_sample_of_experiment);
     actual_data_sample2 = ones(actual_window_size, 1);
-    data = obj.data_received(actual_data_sample2, time + 1, false);
+    [commands, eeg_samples]= obj.data_received(actual_data_sample2, time + 1, false);
     
     data = obj.get_data();
     s = sum(data);
