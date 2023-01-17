@@ -8,7 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(fpga_interfaces REQUIRED)
+find_package(mtms_device_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
 
 # Install run_fpga executable.
@@ -24,7 +24,7 @@ target_include_directories(run_fpga
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(run_fpga rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces)
 
 # Install system state bridge.
 
@@ -39,7 +39,7 @@ target_include_directories(system_state_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_bridge rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces)
 
 # Install start device handler.
 
@@ -55,7 +55,7 @@ target_include_directories(start_device_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_device_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install start experiment handler.
 
@@ -71,7 +71,7 @@ target_include_directories(start_experiment_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_experiment_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(start_experiment_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install stop experiment handler.
 
@@ -87,7 +87,7 @@ target_include_directories(stop_experiment_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_experiment_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(stop_experiment_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install stop device handler.
 
@@ -103,7 +103,7 @@ target_include_directories(stop_device_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_device_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install disable checks handler.
 
@@ -119,7 +119,7 @@ target_include_directories(disable_checks_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(disable_checks_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(disable_checks_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install pulse handler.
 
@@ -228,7 +228,7 @@ target_include_directories(settings_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(settings_handler rclcpp std_msgs fpga_interfaces)
+ament_target_dependencies(settings_handler rclcpp std_msgs mtms_device_interfaces)
 
 
 install(TARGETS

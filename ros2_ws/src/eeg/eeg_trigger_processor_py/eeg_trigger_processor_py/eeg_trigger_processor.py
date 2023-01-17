@@ -4,7 +4,7 @@ import time
 
 from event_interfaces.msg import Pulse, Charge, SignalOut, EventInfo
 
-from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from eeg_interfaces.msg import EegDatapoint, Trigger
 

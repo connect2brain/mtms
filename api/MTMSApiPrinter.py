@@ -1,6 +1,6 @@
 from util.bcolors import bcolors
 
-from fpga_interfaces.msg import DeviceState, ExperimentState, StartupError
+from mtms_device_interfaces.msg import DeviceState, ExperimentState, StartupError
 from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, SignalOutError
 
 class MTMSApiEnums():
