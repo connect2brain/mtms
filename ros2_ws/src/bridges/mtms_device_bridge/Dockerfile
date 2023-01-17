@@ -31,7 +31,7 @@ RUN apt-get install -y \
 # Copy ROS workspace for fpga bridge
 
 WORKDIR /app
-COPY ros2_ws/src/bridges/fpga_bridge ros2_ws/src/bridges/fpga_bridge/
+COPY ros2_ws/src/bridges/mtms_device_bridge ros2_ws/src/bridges/mtms_device_bridge/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 
@@ -43,7 +43,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/bridges/fpga_bridge/ros_entrypoint.sh .
+COPY ros2_ws/src/bridges/mtms_device_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

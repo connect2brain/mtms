@@ -2,8 +2,8 @@
 // Created by alqio on 23.8.2022.
 //
 
-#ifndef FPGA_BRIDGE_SCHEDULING_UTILS_H
-#define FPGA_BRIDGE_SCHEDULING_UTILS_H
+#ifndef MTMS_DEVICE_BRIDGE_SCHEDULING_UTILS_H
+#define MTMS_DEVICE_BRIDGE_SCHEDULING_UTILS_H
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -21,4 +21,4 @@
 
 void set_thread_scheduling(std::thread::native_handle_type thread, int policy, int sched_priority);
 
-#endif //FPGA_BRIDGE_SCHEDULING_UTILS_H
+#endif //MTMS_DEVICE_BRIDGE_SCHEDULING_UTILS_H
