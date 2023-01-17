@@ -17,7 +17,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   this->declare_parameter<std::string>("file", "data.txt");
   this->get_parameter("file", filename);
 
-  auto trigger_subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Trigger> message) -> void {
+  auto trigger_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::Trigger> message) -> void {
 
     auto signal_out = event_interfaces::msg::SignalOut();
 
@@ -53,7 +53,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
     }
   };
 
-  trigger_subscription = this->create_subscription<mtms_interfaces::msg::Trigger>("/eeg/trigger_received",
+  trigger_subscription = this->create_subscription<eeg_interfaces::msg::Trigger>("/eeg/trigger_received",
                                                                                   10,
                                                                                   trigger_subscription_callback);
 

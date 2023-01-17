@@ -308,12 +308,12 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
   return events_out;
 }
 
-std::vector<mtms_interfaces::msg::EegDatapoint>
+std::vector<eeg_interfaces::msg::EegDatapoint>
 PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> samples) {
-  std::vector<mtms_interfaces::msg::EegDatapoint> new_samples;
+  std::vector<eeg_interfaces::msg::EegDatapoint> new_samples;
 
   for (auto sample_as_pyobject: samples) {
-    mtms_interfaces::msg::EegDatapoint sample;
+    eeg_interfaces::msg::EegDatapoint sample;
 
     auto channel_data_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "sample");
 
@@ -339,8 +339,8 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
 
 }
 
-std::vector<mtms_interfaces::msg::EegDatapoint>
-PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+std::vector<eeg_interfaces::msg::EegDatapoint>
+PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
@@ -410,7 +410,7 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
 }
 
 
-std::vector<Event> PythonProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
