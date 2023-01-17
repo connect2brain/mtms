@@ -4,8 +4,8 @@
 
 #include "utils.h"
 
-fpga_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time) {
-  fpga_event event;
+mtms_device_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time) {
+  mtms_device_event event;
   event.channel = channel;
   event.event_type = 0;
 
@@ -22,9 +22,9 @@ fpga_event create_pulse_command(uint16_t event_id, uint8_t channel, uint8_t exec
 }
 
 
-fpga_event create_charge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
+mtms_device_event create_charge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
                                  uint16_t target_voltage) {
-  fpga_event event;
+  mtms_device_event event;
   event.channel = channel;
   event.event_type = 1;
 
@@ -36,8 +36,8 @@ fpga_event create_charge_command(uint16_t event_id, uint8_t channel, uint8_t exe
   return event;
 }
 
-fpga_event create_stimulus_command(uint16_t event_id, uint16_t state, uint8_t execution_condition, double execution_time) {
-  fpga_event event;
+mtms_device_event create_stimulus_command(uint16_t event_id, uint16_t state, uint8_t execution_condition, double execution_time) {
+  mtms_device_event event;
   event.event_type = 4;
   event.state = state;
   event.b_event_info.id = event_id;
@@ -47,9 +47,9 @@ fpga_event create_stimulus_command(uint16_t event_id, uint16_t state, uint8_t ex
   return event;
 }
 
-fpga_event create_discharge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
+mtms_device_event create_discharge_command(uint16_t event_id, uint8_t channel, uint8_t execution_condition, double execution_time,
                                     uint16_t target_voltage) {
-  fpga_event event;
+  mtms_device_event event;
   event.channel = channel;
   event.event_type = 2;
 
@@ -62,8 +62,8 @@ fpga_event create_discharge_command(uint16_t event_id, uint8_t channel, uint8_t 
 }
 
 
-fpga_event create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double execution_time) {
-  fpga_event event;
+mtms_device_event create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double execution_time) {
+  mtms_device_event event;
   event.channel = index;
   event.event_type = 3;
   event.duration_us = duration_us;

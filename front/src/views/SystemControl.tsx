@@ -6,7 +6,7 @@ import {
   signalOutFeedbackSubscriber,
   systemStateSubscriber,
 } from 'services/experiment'
-import { SystemStateMessage } from 'types/fpga'
+import { SystemStateMessage } from 'types/mtmsDevice'
 import {
   PulseFeedbackMessage,
   Feedback,
