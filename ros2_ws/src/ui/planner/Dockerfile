@@ -14,6 +14,7 @@ RUN apt-get install -y \
 WORKDIR /app
 COPY ros2_ws/src/ui/planner ros2_ws/src/ui/planner/
 COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
+COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 
 # Build ROS packages
 
