@@ -195,7 +195,7 @@ class MTMSApiPrinter():
         ))
 
     def print_event_trigger(self):
-        # HACK: This should probably be a feedback message that is received from the FPGA, informing that the
+        # HACK: This should probably be a feedback message that is received from the mTMS device, informing that the
         #   event trigger was successfully generated, similar to the feedback messages from the actual events.
         #
         print('{}Event trigger{}'.format(bcolors.OKGREEN, bcolors.ENDC))

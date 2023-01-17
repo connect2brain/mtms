@@ -6,34 +6,34 @@ import {
   PulseFeedbackMessage,
   SignalOutFeedbackMessage,
 } from '../types/event'
-import { SystemStateMessage } from '../types/fpga'
+import { SystemStateMessage } from '../types/mtmsDevice'
 import { MTMSEventMessage } from '../types/eeg'
 
 const startExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/fpga/start_experiment',
+  name: '/mtms_device/start_experiment',
   serviceType: 'mtms_device_interfaces/StartExperiment',
 })
 const stopExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/fpga/stop_experiment',
+  name: '/mtms_device/stop_experiment',
   serviceType: 'mtms_device_interfaces/StopExperiment',
 })
 
 const startDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/fpga/start_device',
+  name: '/mtms_device/start_device',
   serviceType: 'mtms_device_interfaces/StartDevice',
 })
 const stopDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/fpga/stop_device',
+  name: '/mtms_device/stop_device',
   serviceType: 'mtms_device_interfaces/StopDevice',
 })
 
 export const systemStateSubscriber = new ROSLIB.Topic<SystemStateMessage>({
   ros: ros,
-  name: '/fpga/system_state',
+  name: '/mtms_device/system_state',
   messageType: 'mtms_device_interfaces/SystemState',
 })
 
