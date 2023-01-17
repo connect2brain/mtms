@@ -1,263 +1,87 @@
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/bool.hpp"
 
-
-#include "scheduling_utils.h"
+#include "mtms_interfaces/msg/eeg_datapoint.hpp"
 
 #include "eeg_processor.h"
+#include "processor_node.h"
 #include "memory_utils.h"
+#include "scheduling_utils.h"
 
-using namespace std::chrono_literals;
-using namespace std::chrono;
+EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
-EegProcessor::EegProcessor() : Node("eeg_processor") {
-  std::string processor_type;
-  this->declare_parameter<std::string>("processor_type", "cpp");
-  this->get_parameter("processor_type", processor_type);
-
-  std::string processor_script_path;
-  this->declare_parameter<std::string>("processor_script", "");
-  this->get_parameter("processor_script", processor_script_path);
-
-  int loop_count;
-  this->declare_parameter<int>("loop_count", 5);
-  this->get_parameter("loop_count", loop_count);
-
-  std::string output_file_name;
-  this->declare_parameter<std::string>("file", "output.data");
-  this->get_parameter("file", output_file_name);
-
-  this->declare_parameter<bool>("publish_events", false);
-  this->get_parameter("publish_events", should_publish_events);
-
-  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Processor type: %s", processor_type.c_str());
-
-  if (processor_type == "python") {
-#ifdef PYTHON_FOUND
-    processor = new PythonProcessor(processor_script_path);
-#else
-    std::cerr << "ERROR: Trying to use python processor but compiled without python" << std::endl;
-#endif
-
-  } else if (processor_type == "matlab") {
-#ifdef MATLAB_FOUND
-    processor = new MatlabProcessor(processor_script_path);
-#else
-    std::cerr << "ERROR: Trying to use MATLAB processor but compiled without MATLAB" << std::endl;
-#endif
-
-  } else if (processor_type == "compiledmatlab") {
-    processor = new CompiledMatlabProcessor(processor_script_path);
-  } else if (processor_type == "cpp") {
-    processor = new CppProcessor(processor_script_path);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "No processor specified!");
-  }
+  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
+  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
+  this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/signal_out", 10);
+  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
+  this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/stimulus", 10);
 
   auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
-    auto start = steady_clock::now();
-
-    auto events = processor->data_received(*message);
-
-    auto stop = steady_clock::now();
-
-    send_events(events);
-
-    if (should_publish_events) {
-      publish_events(message->time, events);
-    }
-
-    auto total = duration_cast<microseconds>(stop - start);
-    if (!events.empty()) {
-      RCLCPP_INFO(this->get_logger(), "Processing took: %lu us", total.count());
-      f << std::to_string(total.count()) << "\n";
-      f.flush();
-    }
-
+    auto events = processor->cleaned_eeg_received(*message);
+    publish_events(message->time, events);
   };
 
-  auto start_experiment_callback = [this](
-      const std::shared_ptr<fpga_interfaces::srv::StartExperiment::Request> request,
-      std::shared_ptr<fpga_interfaces::srv::StartExperiment::Response> response) -> void {
-
-    start_experiment_client->async_send_request(start_experiment_request);
-    auto events = processor->init();
-    send_events(events);
-
-    response->success = true;
-  };
-
-  auto stop_experiment_callback = [this](
-      const std::shared_ptr<fpga_interfaces::srv::StopExperiment::Request> request,
-      std::shared_ptr<fpga_interfaces::srv::StopExperiment::Response> response) -> void {
-
-    processor->close();
-    stop_experiment_client->async_send_request(stop_experiment_request);
-
-    response->success = true;
-  };
-
-  eeg_data_subscription = this->create_subscription<mtms_interfaces::msg::EegDatapoint>(
-      "/eeg/raw_data",
-      10,
-      subscription_callback
-  );
-
-  start_experiment_service = this->create_service<fpga_interfaces::srv::StartExperiment>(
-      "/experiment/start_experiment",
-      start_experiment_callback
-  );
-
-  stop_experiment_service = this->create_service<fpga_interfaces::srv::StopExperiment>(
-      "/experiment/stop_experiment",
-      stop_experiment_callback
-  );
-
-  start_experiment_client = this->create_client<fpga_interfaces::srv::StartExperiment>("/fpga/start_experiment");
-  start_experiment_request = std::make_shared<fpga_interfaces::srv::StartExperiment::Request>();
-
-  stop_experiment_client = this->create_client<fpga_interfaces::srv::StopExperiment>("/fpga/stop_experiment");
-  stop_experiment_request = std::make_shared<fpga_interfaces::srv::StopExperiment::Request>();
-
-
-  pulse_client = this->create_client<event_interfaces::srv::SendPulse>("/event/send_pulse");
-  pulse_request = std::make_shared<event_interfaces::srv::SendPulse::Request>();
-
-  charge_client = this->create_client<event_interfaces::srv::SendCharge>("/event/send_charge");
-  charge_request = std::make_shared<event_interfaces::srv::SendCharge::Request>();
-
-  discharge_client = this->create_client<event_interfaces::srv::SendDischarge>("/event/send_discharge");
-  discharge_request = std::make_shared<event_interfaces::srv::SendDischarge::Request>();
-
-  signal_out_client = this->create_client<event_interfaces::srv::SendSignalOut>("/event/send_signal_out");
-  signal_out_request = std::make_shared<event_interfaces::srv::SendSignalOut::Request>();
-
-  if (should_publish_events) {
-    event_publisher = this->create_publisher<mtms_interfaces::msg::Event>("/mtms/events", 10);
-  }
-
-  f.open(output_file_name, std::ios::out | std::ios::trunc);
-
-  processor->init();
-
-  if (loop_count > 0) {
-    measure(loop_count);
-  }
+  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+                                                                            subscription_callback);
 
 }
 
 void EegProcessor::publish_events(double_t time, const std::vector<Event> &events) {
   for (Event event: events) {
-    mtms_interfaces::msg::Event ros_event;
-
-    ros_event.event_type = event.event_type;
-    ros_event.processing_start_time = time;
+    RCLCPP_INFO(this->get_logger(), "Publishing events.");
 
     switch (event.event_type) {
       case PULSE:
-        ros_event.when_to_execute = event.pulse.event_info.execution_time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published fpga pulse event timed at %.4f.", ros_event.when_to_execute);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
+                    "Published fpga pulse event timed at %.4f.",
+                    event.pulse.event_info.execution_time);
+
+        event.pulse.event_info.decision_time = time;
+        this->pulse_publisher->publish(event.pulse);
         break;
 
       case CHARGE:
-        ros_event.when_to_execute = event.charge.event_info.execution_time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published charge event timed at %.4f.", ros_event.when_to_execute);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
+                    "Published fpga charge event timed at %.4f.",
+                    event.charge.event_info.execution_time);
+
+        event.charge.event_info.decision_time = time;
+        this->charge_publisher->publish(event.charge);
         break;
 
       case DISCHARGE:
-        ros_event.when_to_execute = event.discharge.event_info.execution_time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published discharge event timed at %.4f.", ros_event.when_to_execute);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
+                    "Published fpga discharge event timed at %.4f.",
+                    event.discharge.event_info.execution_time);
+
+        event.discharge.event_info.decision_time = time;
+        this->discharge_publisher->publish(event.discharge);
         break;
 
       case SIGNAL_OUT:
-        ros_event.when_to_execute = event.signal_out.event_info.execution_time;
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Published signal out event timed at %.4f.", ros_event.when_to_execute);
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
+                    "Published signal out pulse event timed at %.4f.",
+                    event.signal_out.event_info.execution_time);
+
+        event.signal_out.event_info.decision_time = time;
+        this->signal_out_publisher->publish(event.signal_out);
+        break;
+
+      case STIMULUS:
+        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
+                    "Published stimulus event timed at %.4f.",
+                    event.stimulus.event_info.execution_time);
+
+        event.stimulus.event_info.decision_time = time;
+        this->stimulus_publisher->publish(event.stimulus);
         break;
 
       default:
         RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown fpga event type: %d", event.event_type);
     }
 
-    event_publisher->publish(ros_event);
   }
 }
 
-void EegProcessor::send_events(const std::vector<Event> &events) {
-  for (const auto &event: events) {
-    switch (event.event_type) {
-      case PULSE:
-        pulse_request->pulse = event.pulse;
-        pulse_client->async_send_request(pulse_request);
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga pulse event.");
-        break;
-
-      case CHARGE:
-        charge_request->charge = event.charge;
-        charge_client->async_send_request(charge_request);
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga charge event.");
-        break;
-
-      case DISCHARGE:
-        discharge_request->discharge = event.discharge;
-        discharge_client->async_send_request(discharge_request);
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga discharge event.");
-        break;
-
-      case SIGNAL_OUT:
-        signal_out_request->signal_out = event.signal_out;
-        signal_out_client->async_send_request(signal_out_request);
-        RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Sent fpga signal out event.");
-        break;
-
-      default:
-        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, trying to send unknown fpga event type: %d",
-                    event.event_type);
-    }
-  }
-}
-
-void EegProcessor::measure(int repeats) {
-  std::vector<mtms_interfaces::msg::EegDatapoint> eeg_events;
-  for (auto j = 0; j < repeats; j++) {
-    mtms_interfaces::msg::EegDatapoint message = mtms_interfaces::msg::EegDatapoint();
-    for (auto i = 0; i < 62; i++) {
-      message.eeg_channels.push_back(fRand(0, 100));
-    }
-    eeg_events.push_back(message);
-  }
-  std::vector<std::chrono::microseconds> times;
-  std::chrono::microseconds total = std::chrono::microseconds(0s);
-  for (auto i = 0; i < repeats; i++) {
-    auto start = steady_clock::now();
-
-    auto events = processor->data_received(eeg_events[i]);
-
-    auto stop = steady_clock::now();
-
-    auto duration = duration_cast<microseconds>(stop - start);
-    times.push_back(duration);
-    total = duration_cast<microseconds>(duration + total);
-
-    for (auto event: events) {
-      event.print();
-      std::cout << "---" << std::endl;
-    }
-  }
-  RCLCPP_INFO(this->get_logger(), "Duration total: %lu us", total.count());
-  RCLCPP_INFO(this->get_logger(), "Average execution time: %f us", ((double) total.count()) / repeats);
-}
-
-int EegProcessor::shutdown() {
-  RCLCPP_INFO(rclcpp::get_logger("eeg_processor"), "Shutting down eeg processor");
-  if (processor) {
-    processor->close();
-    return 0;
-  }
-  if (f) {
-    f.close();
-  }
-  return 0;
-}
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
@@ -276,7 +100,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   rclcpp::spin(node);
-  node->shutdown();
   rclcpp::shutdown();
+
   return 0;
 }

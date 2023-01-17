@@ -12,12 +12,12 @@ class MTMSApi:
     # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
 
-    # TIME_EPSILON is used to implement events that are to be executed instantly but
+    # TIME_EPSILON is used to implement events that are to be executed immediately but
     # wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
     # and execute all the events at that time.
     #
     # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
-    # the mTMS device, but not too large so that the events are not executed 'instantly'.
+    # the mTMS device, but not too large so that the events are not executed 'immediately'.
     # Settle for 0.1 s (100 ms) for now, but change if needed.
     #
     TIME_EPSILON = 0.1
@@ -25,6 +25,13 @@ class MTMSApi:
     def __init__(self):
         rclpy.init(args=None)
         self.node = MTMSApiNode()
+        self.event_id = 0
+
+    # General
+
+    def next_event_id(self):
+        self.event_id += 1
+        return self.event_id
 
     # Start and stop
 
@@ -93,7 +100,6 @@ class MTMSApi:
         self.node.wait_for_new_state()
         return self.node.system_state.channel_states[channel - 1].temperature
 
-
     def get_pulse_count(self, channel):
         self.node.wait_for_new_state()
         return self.node.system_state.channel_states[channel - 1].pulse_count
@@ -106,7 +112,9 @@ class MTMSApi:
         return self.node.get_event_feedback(id)
 
     # Events
-    def send_pulse(self, id, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
+        id = self.next_event_id()
+
         waveform_ = copy.deepcopy(waveform)
         if reverse_polarity:
             waveform_ = self.reverse_polarity(waveform_)
@@ -122,7 +130,11 @@ class MTMSApi:
         if wait_for_completion:
             self.wait_for_completion(id=id)
 
-    def send_charge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        return id
+
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        id = self.next_event_id()
+
         target_voltage = int(target_voltage)
         self.node.send_charge(
             id=id,
@@ -135,7 +147,11 @@ class MTMSApi:
         if wait_for_completion:
             self.wait_for_completion(id=id)
 
-    def send_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        return id
+
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        id = self.next_event_id()
+
         target_voltage = int(target_voltage)
         self.node.send_discharge(
             id=id,
@@ -148,7 +164,11 @@ class MTMSApi:
         if wait_for_completion:
             self.wait_for_completion(id=id)
 
-    def send_signal_out(self, id, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        return id
+
+    def send_signal_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+        id = self.next_event_id()
+
         self.node.send_signal_out(
             id=id,
             execution_condition=execution_condition,
@@ -159,6 +179,8 @@ class MTMSApi:
 
         if wait_for_completion:
             self.wait_for_completion(id=id)
+
+        return id
 
     def send_event_trigger(self):
         self.node.send_event_trigger()
@@ -205,51 +227,50 @@ class MTMSApi:
 
     # Compound events
 
-    def send_instant_charge_or_discharge_to_all_channels(self, target_voltages, starting_id=1, wait_for_completion=True):
+    def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages, wait_for_completion=True):
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
-        ids = range(starting_id, starting_id + self.N_CHANNELS)
-
+        ids = []
         for i in range(self.N_CHANNELS):
-            id = ids[i]
             target_voltage = target_voltages[i]
             channel = i + 1
 
-            self.send_charge_or_discharge(
+            id = self.send_charge_or_discharge(
                 id=id,
-                execution_condition=ExecutionCondition.INSTANT,
+                execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
                 target_voltage=target_voltage,
                 wait_for_completion=False,
             )
+            ids.append(id)
 
         if wait_for_completion:
             self.wait_for_completions(ids=ids)
 
-    def send_instant_full_discharge_to_all_channels(self, starting_id=1, wait_for_completion=True):
+        return ids
+
+    def send_immediate_full_discharge_to_all_channels(self, wait_for_completion=True):
         target_voltages = self.N_CHANNELS * [0]
 
-        self.send_instant_charge_or_discharge_to_all_channels(
+        ids = self.send_immediate_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
-            starting_id=starting_id,
             wait_for_completion=wait_for_completion,
         )
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0.0, starting_id=1, wait_for_completion=True):
+        return ids
+
+    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
-        ids = range(starting_id, starting_id + self.N_CHANNELS)
-
+        ids = []
         for i in range(self.N_CHANNELS):
-            id = ids[i]
             reverse_polarity = reverse_polarities[i]
             channel = i + 1
             waveform = self.get_default_waveform(channel=channel)
 
-            self.send_pulse(
-                id=id,
+            id = self.send_pulse(
                 execution_condition=execution_condition,
                 time=time,
                 channel=channel,
@@ -257,33 +278,38 @@ class MTMSApi:
                 reverse_polarity=reverse_polarity,
                 wait_for_completion=False,
             )
+            ids.append(id)
 
         if wait_for_completion:
             self.wait_for_completions(ids=ids)
 
-    def send_instant_default_pulse_to_all_channels(self, reverse_polarities, starting_id=1, wait_for_completion=True):
+        return ids
+
+    def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, wait_for_completion=True):
         execution_condition = ExecutionCondition.TIMED
         time = self.get_time() + self.TIME_EPSILON
 
-        self.send_default_pulse_to_all_channels(
+        ids = self.send_default_pulse_to_all_channels(
             reverse_polarities=reverse_polarities,
             execution_condition=execution_condition,
             time=time,
-            starting_id=starting_id,
             wait_for_completion=wait_for_completion,
         )
+        return ids
 
-    def send_charge_or_discharge(self, id, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
+    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
-        charge_or_discharge(
-            id=id,
+
+        id = charge_or_discharge(
             channel=channel,
             target_voltage=target_voltage,
             execution_condition=execution_condition,
             time=time,
             wait_for_completion=wait_for_completion,
         )
+
+        return id
 
     # MEP analysis
 

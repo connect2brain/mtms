@@ -29,7 +29,7 @@ int main() {
       data.push_back(fRand(0, 100));
     }
 
-    std::vector<fpga_event> events = p->data_received(data, 10.0, false);
+    std::vector<eeg_sample> events = p->raw_eeg_received(data, 10.0, false);
     //p->samples.print();
     //p->samples.get_buffer();
     //std::cout << "--" << std::endl;
