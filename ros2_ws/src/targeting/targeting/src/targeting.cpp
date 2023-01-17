@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_interfaces/srv/get_channel_voltages.hpp"
+#include "targeting_interfaces/srv/get_channel_voltages.hpp"
 
 #include <fstream>
 #include <string>
@@ -75,8 +75,8 @@ public:
   Targeting() : Node("targeting") {
 
     auto service_callback = [this](
-        const std::shared_ptr<mtms_interfaces::srv::GetChannelVoltages::Request> request,
-        std::shared_ptr<mtms_interfaces::srv::GetChannelVoltages::Response> response) -> void {
+        const std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Request> request,
+        std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Response> response) -> void {
       int8_t displacement_x = request->displacement_x;
       int8_t displacement_y = request->displacement_y;
       uint16_t rotation_angle = request->rotation_angle;
@@ -101,7 +101,7 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to request.");
     };
 
-    get_channel_voltages = this->create_service<mtms_interfaces::srv::GetChannelVoltages>(
+    get_channel_voltages = this->create_service<targeting_interfaces::srv::GetChannelVoltages>(
         "/targeting/get_channel_voltages", service_callback);
 
     initialize_lookup_table();
@@ -189,7 +189,7 @@ private:
   }
 
   Target targets[N_DISPLACEMENTS][N_DISPLACEMENTS][N_ROTATION_ANGLES];
-  rclcpp::Service<mtms_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
+  rclcpp::Service<targeting_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
 };
 
 
