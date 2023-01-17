@@ -3,7 +3,7 @@
 <package format="3">
   <name>mtms_device_bridge</name>
   <version>0.1.0</version>
-  <description>FPGA bridge</description>
+  <description>mTMS device bridge</description>
   <maintainer email="connect2brain@aalto.fi">connect2brain</maintainer>
   <license>TODO</license>
 
