@@ -25,7 +25,7 @@ public:
 
   std::vector<Event> cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample);
 
-  std::vector<Event> present_stimulus_received(mtms_interfaces::msg::Event event);
+  std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;

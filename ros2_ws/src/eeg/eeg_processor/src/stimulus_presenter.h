@@ -9,7 +9,7 @@
 #include "mtms_interfaces/msg/eeg_datapoint.hpp"
 #include "processor_node.h"
 
-class StimulusPresenter : public ProcessorNode<mtms_interfaces::msg::Event, Event> {
+class StimulusPresenter : public ProcessorNode<event_interfaces::msg::Stimulus, Event> {
 public:
   StimulusPresenter();
 private:

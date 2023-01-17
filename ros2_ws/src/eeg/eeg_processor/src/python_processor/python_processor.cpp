@@ -211,6 +211,21 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
   return signal_out;
 }
 
+event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event) {
+  auto stimulus = event_interfaces::msg::Stimulus();
+  auto state = PyObject_GetAttrString(event, "state");
+  if (state == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event state" << std::endl;
+  }
+  stimulus.state = PyLong_AsUnsignedLong(state);
+  stimulus.event_info = parse_event_info(event);
+
+  Py_DECREF(state);
+
+  return stimulus;
+}
+
 event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   auto pulse = event_interfaces::msg::Pulse();
 
@@ -275,6 +290,11 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
       auto signal_out = parse_signal_out(event_as_pyobject);
       event.signal_out = signal_out;
       event.event_type = SIGNAL_OUT;
+
+    } else if (event_type == STIMULUS) {
+      auto stimulus = parse_stimulus(event_as_pyobject);
+      event.stimulus = stimulus;
+      event.event_type = STIMULUS;
 
     } else {
       RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
@@ -357,13 +377,15 @@ PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
 
 }
 
-std::vector<Event> PythonProcessor::present_stimulus_received(mtms_interfaces::msg::Event event) {
-  auto time = PyFloat_FromDouble(event.when_to_execute);
+std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {
+  auto time = PyFloat_FromDouble(event.event_info.execution_time);
+  auto state = PyLong_FromSize_t(event.state);
 
   auto result = PyObject_CallMethodObjArgs(
       python_instance,
       python_data_received_name,
       time,
+      state,
       nullptr
   );
 

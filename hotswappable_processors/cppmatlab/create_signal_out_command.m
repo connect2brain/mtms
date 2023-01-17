@@ -9,7 +9,8 @@ function command = create_signal_out_command(event_id, port, duration_us, execut
     command.event_type = uint8(3);
     command.target_voltage = uint16(0);
     command.duration_us = uint32(duration_us);
+    command.state = uint16(0);
     
     coder.cstructname(command, 'matlab_event');
-    coder.cstructname(command.event, 'event');
+    coder.cstructname(command.event_info, 'event_info');
 end
