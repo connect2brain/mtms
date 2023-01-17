@@ -4,7 +4,7 @@ string comment
 bool visible
 bool selected
 bool target
-PoseUsingEulerAngles pose
+neuronavigation_interfaces/PoseUsingEulerAngles pose
 
 float64 intensity
 float64 iti
