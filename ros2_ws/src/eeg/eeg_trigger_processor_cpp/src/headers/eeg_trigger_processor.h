@@ -9,7 +9,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
-#include "event_interfaces/srv/send_signal_out.hpp"
+#include "event_interfaces/msg/signal_out.hpp"
 
 #include <string>
 #include <fstream>
