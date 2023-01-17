@@ -6,7 +6,7 @@ from event_interfaces.msg import Pulse, Charge, SignalOut, EventInfo
 
 from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
-from mtms_interfaces.msg import EegDatapoint, Trigger
+from eeg_interfaces.msg import EegDatapoint, Trigger
 
 SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
