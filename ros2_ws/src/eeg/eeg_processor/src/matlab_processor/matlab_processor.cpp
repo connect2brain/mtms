@@ -42,7 +42,14 @@ void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
   }
 }
 
-std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
+std::vector<Event> MatlabProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
+
+
+std::vector<mtms_interfaces::msg::EegDatapoint> MatlabProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+}
+
+
+std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
   std::vector<Event> events_out;
 
   matlab::data::TypedArray<double> matlab_data_array = factory.createArray(
@@ -53,11 +60,11 @@ std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatap
   );
   auto matlab_data_array_dims = matlab_data_array.getDimensions();
 
-  auto dim = matlab::data::ArrayDimensions(data.eeg_channels.size());
+  auto dim = matlab::data::ArrayDimensions(sample.eeg_channels.size());
   auto matlab_new_sample = factory.createArray<double>(
-      {1, data.eeg_channels.size()},
-      data.eeg_channels.data(),
-      data.eeg_channels.data() + data.eeg_channels.size()
+      {1, sample.eeg_channels.size()},
+      sample.eeg_channels.data(),
+      sample.eeg_channels.data() + sample.eeg_channels.size()
   );
 
 
@@ -158,18 +165,15 @@ std::vector<Event> MatlabProcessor::data_received(mtms_interfaces::msg::EegDatap
       }
 
     }
-    //print_matlab_event(event);
-    auto event_ = convert_matlab_event_to_event(event);
-    events_out.push_back(event_);
+
+    auto matlab_event = convert_matlab_event_to_event(event);
+    events_out.push_back(matlab_event);
   }
   //print_vector(matlab_data, 50, 62);
   return events_out;
 }
 
-std::vector<Event> MatlabProcessor::close() {
+MatlabProcessor::~MatlabProcessor() {
   matlab::engine::terminateEngineClient();
   std::cout << "Closed matlab engine client" << std::endl;
-
-  std::vector<Event> events;
-  return events;
 }
