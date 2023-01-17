@@ -71,9 +71,9 @@ services:
         constraints:
           - node.role == manager
 
-  fpga_bridge_wrapper:
+  mtms_device_bridge_wrapper:
     image: docker
-    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:fpga_bridge'
+    command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:mtms_device_bridge'
     environment:
       - ROS_LOG_LEVEL=info
       - BITFILE=NiFpga_mTMS_Tubingen_0.4.2.lvbitx

@@ -66,12 +66,12 @@ services:
       context: ..
       dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
 
-  fpga_bridge:
+  mtms_device_bridge:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/bridges/fpga_bridge/Dockerfile
+      dockerfile: ros2_ws/src/bridges/mtms_device_bridge/Dockerfile
 
   data_batcher:
     networks:

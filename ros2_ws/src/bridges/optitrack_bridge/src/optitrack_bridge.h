@@ -2,8 +2,8 @@
 // Created by alqio on 18.10.2022.
 //
 
-#ifndef FPGA_BRIDGE_OPTITRACK_BRIDGE_H
-#define FPGA_BRIDGE_OPTITRACK_BRIDGE_H
+#ifndef MTMS_DEVICE_BRIDGE_OPTITRACK_BRIDGE_H
+#define MTMS_DEVICE_BRIDGE_OPTITRACK_BRIDGE_H
 
 #include "optitrack_client.h"
 #include "rclcpp/rclcpp.hpp"
@@ -30,4 +30,4 @@ private:
 };
 
 
-#endif //FPGA_BRIDGE_OPTITRACK_BRIDGE_H
+#endif //MTMS_DEVICE_BRIDGE_OPTITRACK_BRIDGE_H
