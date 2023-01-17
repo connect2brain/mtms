@@ -2,10 +2,10 @@ import rclpy
 from rclpy.node import Node
 
 from geometry_msgs.msg import Point
-from mtms_interfaces.msg import PlannerState, Target
+from ui_interfaces.msg import PlannerState, Target
 from std_msgs.msg import Bool, Float64, String
 
-from mtms_interfaces.srv import SetTarget
+from ui_interfaces.srv import SetTarget
 
 from .state_node import StateNode
 
