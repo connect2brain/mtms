@@ -12,7 +12,7 @@ class Processor():
     def end_experiment(self):
         return []
 
-    def data_received(self, time):
-        print("Stimulus received")
+    def data_received(self, execution_time, state):
+        print(f"Stimulus received: {state} at {execution_time}")
 
         return []

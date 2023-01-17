@@ -2,6 +2,8 @@
 // Created by alqio on 16.1.2023.
 //
 
+#include "event_interfaces/msg/stimulus.hpp"
+
 #include "stimulus_presenter.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
@@ -13,12 +15,12 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("eeg_preprocessor") {
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
 
 
-  auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Event> message) -> void {
+  auto subscription_callback = [this](const std::shared_ptr<event_interfaces::msg::Stimulus> message) -> void {
     auto events = processor->present_stimulus_received(*message);
-    publish_events(message->when_to_execute, events);
+    publish_events(message->event_info.decision_time, events);
   };
 
-  this->subscription = this->template create_subscription<mtms_interfaces::msg::Event>("/eeg/cleaned_data", 5000,
+  this->subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/stimulus", 5000,
                                                                                               subscription_callback);
 
 }
