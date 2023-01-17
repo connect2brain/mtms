@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(neuronavigation_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -23,9 +24,7 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EulerAngles.msg"
   "msg/Event.msg"
-  "msg/PoseUsingEulerAngles.msg"
   "msg/Target.msg"
   "msg/PlannerState.msg"
   "msg/EegDatapoint.msg"
@@ -65,7 +64,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "action/AnalyzeMep.action"
   "srv/AnalyzeMepService.srv"
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs neuronavigation_interfaces
  )
 
 ament_package()

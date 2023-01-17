@@ -11,9 +11,9 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from neuronavigation_interfaces.msg import PoseUsingEulerAngles
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
-from mtms_interfaces.msg import PlannerState, EulerAngles
+from mtms_interfaces.msg import PlannerState
 from mtms_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
