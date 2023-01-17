@@ -27,3 +27,7 @@ ProcessorInterface::data_received(std::vector<double> channel_data, double time,
       std::endl;
 }
 
+std::vector<eeg_sample>
+ProcessorInterface::raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
+  std::cout << "ERROR, in cpp_processor_interface raw_eeg_received" << std::endl;
+}

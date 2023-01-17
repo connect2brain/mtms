@@ -11,13 +11,15 @@
 #include "event_interfaces/msg/waveform_piece.hpp"
 #include "event_interfaces/msg/waveform_phase.hpp"
 #include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/stimulus.hpp"
 #include <iostream>
 
 enum EventType {
   PULSE = 0,
   CHARGE = 1,
   DISCHARGE = 2,
-  SIGNAL_OUT = 3
+  SIGNAL_OUT = 3,
+  STIMULUS = 4
 };
 
 struct Event {
@@ -25,6 +27,8 @@ struct Event {
   event_interfaces::msg::Charge charge;
   event_interfaces::msg::Discharge discharge;
   event_interfaces::msg::SignalOut signal_out;
+  event_interfaces::msg::Stimulus stimulus;
+
   EventType event_type = PULSE;
 
   [[nodiscard]] std::string to_string() const {
@@ -34,8 +38,12 @@ struct Event {
       return "Charge";
     } else if (event_type == SIGNAL_OUT) {
       return "Signal out";
-    } else {
+    } else if (event_type == STIMULUS) {
+      return "Stimulus";
+    } else if (event_type == DISCHARGE) {
       return "Discharge";
+    } else {
+      return "Unknown event";
     }
   }
 
@@ -79,6 +87,14 @@ struct Event {
       std::cout << "  Id: " << signal_out.event_info.id << std::endl;
       std::cout << "  Execution condition: " << +signal_out.event_info.execution_condition.value << std::endl;
       std::cout << "  Execution time: " << signal_out.event_info.execution_time << std::endl;
+    } else if (event_type == STIMULUS) {
+      std::cout << "Stimulus" << std::endl;
+
+      std::cout << "State: " << +stimulus.state << std::endl;
+      std::cout << "Event info: " << std::endl;
+      std::cout << "  Id: " << stimulus.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +stimulus.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << stimulus.event_info.execution_time << std::endl;
     } else {
       std::cout << "Unknown event type " << +event_type << std::endl;
     }

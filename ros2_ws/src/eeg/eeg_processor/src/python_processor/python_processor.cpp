@@ -68,9 +68,9 @@ std::vector<Event> PythonProcessor::init() {
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto events_ = convert_pyobject_events_to_events(events);
+  auto events_out = convert_pyobject_events_to_events(events);
 
-  return events_;
+  return events_out;
 }
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
@@ -81,9 +81,26 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
+std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) {
+  std::vector<double> l;
+
+  Py_ssize_t size = PyList_Size(data);
+
+  PyObject *item;
+  for (size_t i = 0; i < size; i++) {
+    item = PyList_GetItem(data, i);
+    if (!PyFloat_Check(item)) {
+      RCLCPP_WARN(rclcpp::get_logger("eeg_preprocessor"), "Index %d of returned sample was not a float.", i);
+      continue;
+    }
+    l.push_back(PyFloat_AsDouble(item));
+  }
+  return l;
+}
+
+
 event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
   auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
-
   if (event_info_as_pyobject == nullptr) {
     PyErr_Print();
     std::cout << "Error on event_info_as_pyobject" << std::endl;
@@ -194,6 +211,21 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
   return signal_out;
 }
 
+event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event) {
+  auto stimulus = event_interfaces::msg::Stimulus();
+  auto state = PyObject_GetAttrString(event, "state");
+  if (state == nullptr) {
+    PyErr_Print();
+    std::cout << "Error on event state" << std::endl;
+  }
+  stimulus.state = PyLong_AsUnsignedLong(state);
+  stimulus.event_info = parse_event_info(event);
+
+  Py_DECREF(state);
+
+  return stimulus;
+}
+
 event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   auto pulse = event_interfaces::msg::Pulse();
 
@@ -231,7 +263,7 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
 }
 
 std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
-  std::vector<Event> events_;
+  std::vector<Event> events_out;
 
   for (auto event_as_pyobject: events) {
     Event event;
@@ -259,22 +291,129 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
       event.signal_out = signal_out;
       event.event_type = SIGNAL_OUT;
 
+    } else if (event_type == STIMULUS) {
+      auto stimulus = parse_stimulus(event_as_pyobject);
+      event.stimulus = stimulus;
+      event.event_type = STIMULUS;
+
     } else {
       RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
     }
 
-    events_.push_back(event);
+    events_out.push_back(event);
 
     Py_DECREF(event_type_as_pyobject);
   }
 
-  return events_;
+  return events_out;
 }
 
-std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatapoint data) {
-  auto list = convert_vector_to_pyobject(data.eeg_channels);
-  auto time = PyFloat_FromDouble(data.time);
-  auto first_sample_of_experiment = PyBool_FromLong(data.first_sample_of_experiment ? 1L : 0L);
+std::vector<mtms_interfaces::msg::EegDatapoint>
+PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> samples) {
+  std::vector<mtms_interfaces::msg::EegDatapoint> new_samples;
+
+  for (auto sample_as_pyobject: samples) {
+    mtms_interfaces::msg::EegDatapoint sample;
+
+    auto channel_data_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "sample");
+
+    if (!PyList_Check(channel_data_as_pyobject)) {
+      RCLCPP_ERROR(rclcpp::get_logger("eeg_preprocessor"),
+                   "Error in call raw_eeg_received method. Ensure you are returning a list from python pre processor");
+      PyErr_Print();
+    }
+    sample.eeg_channels = convert_pyobject_to_vector(channel_data_as_pyobject);
+
+    auto time_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "time");
+    sample.time = PyFloat_AsDouble(time_as_pyobject);
+
+    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_experiment");
+    auto v = PyLong_AsLong(first_as_pyobject);
+    sample.first_sample_of_experiment = v == 1;
+
+    new_samples.push_back(sample);
+
+  }
+
+  return new_samples;
+
+}
+
+std::vector<mtms_interfaces::msg::EegDatapoint>
+PythonProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto time = PyFloat_FromDouble(sample.time);
+  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+
+  auto result = PyObject_CallMethodObjArgs(
+      python_instance,
+      python_data_received_name,
+      list,
+      time,
+      first_sample_of_experiment,
+      nullptr
+  );
+
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call raw_eeg_received method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
+
+  Py_DECREF(list);
+  Py_DECREF(time);
+  Py_DECREF(first_sample_of_experiment);
+
+  std::vector<PyObject *> samples;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    samples.push_back(PyList_GetItem(result, i));
+  }
+
+  auto cleaned_samples = convert_pyobject_samples_to_samples(samples);
+
+  Py_DECREF(result);
+
+  return cleaned_samples;
+
+}
+
+std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {
+  auto time = PyFloat_FromDouble(event.event_info.execution_time);
+  auto state = PyLong_FromSize_t(event.state);
+
+  auto result = PyObject_CallMethodObjArgs(
+      python_instance,
+      python_data_received_name,
+      time,
+      state,
+      nullptr
+  );
+
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call present_stimulus_received method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
+
+  Py_DECREF(time);
+
+  std::vector<PyObject *> events;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    events.push_back(PyList_GetItem(result, i));
+  }
+
+  auto events_out = convert_pyobject_events_to_events(events);
+
+  Py_DECREF(result);
+
+  return events_out;
+}
+
+
+std::vector<Event> PythonProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto time = PyFloat_FromDouble(sample.time);
+  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
 
   auto result = PyObject_CallMethodObjArgs(
       python_instance,
@@ -300,29 +439,13 @@ std::vector<Event> PythonProcessor::data_received(mtms_interfaces::msg::EegDatap
     events.push_back(PyList_GetItem(result, i));
   }
 
-  auto events_ = convert_pyobject_events_to_events(events);
+  auto events_out = convert_pyobject_events_to_events(events);
 
   Py_DECREF(result);
 
-  return events_;
+  return events_out;
 }
 
-std::vector<Event> PythonProcessor::close() {
-  auto result = PyObject_CallMethodObjArgs(python_instance, python_close_name, nullptr);
-
-  if (!PyList_Check(result)) {
-    std::cout << "Error in call close method. Ensure you are returning a list" << std::endl;
-    PyErr_Print();
-  }
-  std::vector<PyObject *> events;
-
-  for (auto i = 0; i < PyList_Size(result); i++) {
-    events.push_back(PyList_GetItem(result, i));
-  }
-
-  auto events_ = convert_pyobject_events_to_events(events);
-
+PythonProcessor::~PythonProcessor() {
   Py_FinalizeEx();
-
-  return events_;
 }
