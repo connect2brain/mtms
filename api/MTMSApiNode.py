@@ -2,8 +2,8 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 
-from fpga_interfaces.msg import SystemState
-from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.msg import SystemState
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, SignalOut, \
     ChargeFeedback, DischargeFeedback, SignalOutFeedback, \

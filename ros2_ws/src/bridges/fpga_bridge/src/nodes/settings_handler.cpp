@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/srv/send_settings.hpp"
+#include "mtms_device_interfaces/srv/send_settings.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -9,8 +9,8 @@
 
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
-void send_settings(const std::shared_ptr<fpga_interfaces::srv::SendSettings::Request> request,
-                   std::shared_ptr<fpga_interfaces::srv::SendSettings::Response> response) {
+void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Request> request,
+                   std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Response> response) {
 
   auto settings = request->settings;
 
@@ -52,12 +52,12 @@ class SettingsHandler : public rclcpp::Node {
 public:
   SettingsHandler()
       : Node("settings_handler") {
-    send_settings_service_ = this->create_service<fpga_interfaces::srv::SendSettings>("/fpga/send_settings",
+    send_settings_service_ = this->create_service<mtms_device_interfaces::srv::SendSettings>("/fpga/send_settings",
                                                                                       send_settings);
   }
 
 private:
-  rclcpp::Service<fpga_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
 };
 
 int main(int argc, char **argv) {

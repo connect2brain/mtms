@@ -12,29 +12,29 @@ import { MTMSEventMessage } from '../types/eeg'
 const startExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/fpga/start_experiment',
-  serviceType: 'fpga_interfaces/StartExperiment',
+  serviceType: 'mtms_device_interfaces/StartExperiment',
 })
 const stopExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/fpga/stop_experiment',
-  serviceType: 'fpga_interfaces/StopExperiment',
+  serviceType: 'mtms_device_interfaces/StopExperiment',
 })
 
 const startDeviceService = new ROSLIB.Service({
   ros: ros,
   name: '/fpga/start_device',
-  serviceType: 'fpga_interfaces/StartDevice',
+  serviceType: 'mtms_device_interfaces/StartDevice',
 })
 const stopDeviceService = new ROSLIB.Service({
   ros: ros,
   name: '/fpga/stop_device',
-  serviceType: 'fpga_interfaces/StopDevice',
+  serviceType: 'mtms_device_interfaces/StopDevice',
 })
 
 export const systemStateSubscriber = new ROSLIB.Topic<SystemStateMessage>({
   ros: ros,
   name: '/fpga/system_state',
-  messageType: 'fpga_interfaces/SystemState',
+  messageType: 'mtms_device_interfaces/SystemState',
 })
 
 export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({

@@ -2,15 +2,15 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "fpga_interfaces/msg/version.hpp"
+#include "mtms_device_interfaces/msg/version.hpp"
 
-#include "fpga_interfaces/msg/channel_state.hpp"
-#include "fpga_interfaces/msg/channel_error.hpp"
-#include "fpga_interfaces/msg/device_state.hpp"
-#include "fpga_interfaces/msg/experiment_state.hpp"
-#include "fpga_interfaces/msg/startup_error.hpp"
-#include "fpga_interfaces/msg/system_state.hpp"
-#include "fpga_interfaces/msg/system_error.hpp"
+#include "mtms_device_interfaces/msg/channel_state.hpp"
+#include "mtms_device_interfaces/msg/channel_error.hpp"
+#include "mtms_device_interfaces/msg/device_state.hpp"
+#include "mtms_device_interfaces/msg/experiment_state.hpp"
+#include "mtms_device_interfaces/msg/startup_error.hpp"
+#include "mtms_device_interfaces/msg/system_state.hpp"
+#include "mtms_device_interfaces/msg/system_error.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -71,14 +71,14 @@ class SystemStateBridge : public rclcpp::Node {
 public:
   SystemStateBridge()
       : Node("system_state_bridge") {
-    system_state_publisher_ = this->create_publisher<fpga_interfaces::msg::SystemState>(
+    system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
         "/fpga/system_state", 10);
     timer_ = this->create_wall_timer(20ms, std::bind(&SystemStateBridge::publish_system_state, this));
   }
 
 private:
-  fpga_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
-    auto msg = fpga_interfaces::msg::SystemError();
+  mtms_device_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
+    auto msg = mtms_device_interfaces::msg::SystemError();
 
     msg.heartbeat_error = CHECK_BIT(error, 0);
     msg.latched_fault_error = CHECK_BIT(error, 1);
@@ -99,8 +99,8 @@ private:
     return msg;
   }
 
-  fpga_interfaces::msg::ChannelError channel_error_to_msg(uint16_t error) {
-    auto msg = fpga_interfaces::msg::ChannelError();
+  mtms_device_interfaces::msg::ChannelError channel_error_to_msg(uint16_t error) {
+    auto msg = mtms_device_interfaces::msg::ChannelError();
 
     msg.overvoltage_error = CHECK_BIT(error, 0);
     msg.emergency_discharge_backup_power_error = CHECK_BIT(error, 1);
@@ -114,12 +114,12 @@ private:
   }
 
   void publish_system_state() {
-    fpga_interfaces::msg::SystemState state = fpga_interfaces::msg::SystemState();
+    mtms_device_interfaces::msg::SystemState state = mtms_device_interfaces::msg::SystemState();
 
     uint16_t error;
 
     for (auto i = 0; i < CHANNEL_COUNT; i++) {
-      fpga_interfaces::msg::ChannelState channel_state = fpga_interfaces::msg::ChannelState();
+      mtms_device_interfaces::msg::ChannelState channel_state = mtms_device_interfaces::msg::ChannelState();
       channel_state.channel_index = i;
 
       NiFpga_MergeStatus(&status,
@@ -217,7 +217,7 @@ private:
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<fpga_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
+  rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
 };
 
 int main(int argc, char **argv) {
