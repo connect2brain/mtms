@@ -37,7 +37,7 @@ def generate_launch_description():
 
     for node_executable in node_executables:
         node = Node(
-            package="fpga_bridge",
+            package="mtms_device_bridge",
             executable=node_executable,
             arguments=['--ros-args', '--log-level', logger]
         )

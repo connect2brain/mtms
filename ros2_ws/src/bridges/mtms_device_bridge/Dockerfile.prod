@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 
 
 WORKDIR /app
-COPY ros2_ws/src/bridges/fpga_bridge ros2_ws/fpga_bridge/
+COPY ros2_ws/src/bridges/mtms_device_bridge ros2_ws/mtms_device_bridge/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/event_interfaces/
 
@@ -53,7 +53,7 @@ COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/
 
 # Copy entrypoint
 
-COPY ros2_ws/src/bridges/fpga_bridge/ros_entrypoint.sh .
+COPY ros2_ws/src/bridges/mtms_device_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
