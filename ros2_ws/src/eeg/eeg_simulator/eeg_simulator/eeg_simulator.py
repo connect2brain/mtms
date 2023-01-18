@@ -1,11 +1,15 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import EegDatapoint, Trigger
+from eeg_interfaces.msg import EegDatapoint, Trigger
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 
 class DataProvider(Node):
+
+    # TODO: Make configurable.
+    #
+    NUMBER_OF_EEG_CHANNELS = 62
 
     def __init__(self):
         super().__init__('eeg_simulator')
@@ -48,7 +52,8 @@ class DataProvider(Node):
         data = [float(number) for number in line.split(",")]
 
         msg = EegDatapoint()
-        msg.eeg_channels = data[:62]
+        msg.eeg_channels = data[:self.NUMBER_OF_EEG_CHANNELS]
+        msg.emg_channels = data[self.NUMBER_OF_EEG_CHANNELS:]
         msg.first_sample_of_experiment = False if self.current_time > 0 else True
         msg.time = self.current_time
 

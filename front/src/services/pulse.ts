@@ -6,34 +6,34 @@ import { isOfPulseChangeableKey } from '../utils'
 const removePulseService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/remove_pulse',
-  serviceType: 'mtms_interfaces/RemovePulse',
+  serviceType: 'ui_interfaces/RemovePulse',
 })
 const setPulseIntensityService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/set_pulse_intensity',
-  serviceType: 'mtms_interfaces/SetPulseIntensity',
+  serviceType: 'ui_interfaces/SetPulseIntensity',
 })
 const setPulseIsiService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/set_pulse_isi',
-  serviceType: 'mtms_interfaces/SetPulseIsi',
+  serviceType: 'ui_interfaces/SetPulseIsi',
 })
 const togglePulseSelectedService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_select_pulse',
-  serviceType: 'mtms_interfaces/ToggleSelectPulse',
+  serviceType: 'ui_interfaces/ToggleSelectPulse',
 })
 
 const togglePulseVisibleService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_visible_pulse',
-  serviceType: 'mtms_interfaces/ToggleVisiblePulse',
+  serviceType: 'ui_interfaces/ToggleVisiblePulse',
 })
 
 const changePulseIndexService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/change_pulse_index',
-  serviceType: 'mtms_interfaces/ChangePulseIndex',
+  serviceType: 'ui_interfaces/ChangePulseIndex',
 })
 
 export const pulseServicesByKey = {

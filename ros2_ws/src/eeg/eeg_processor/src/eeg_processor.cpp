@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
 
 #include "eeg_processor.h"
 #include "processor_node.h"
@@ -15,12 +15,12 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
   this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/stimulus", 10);
 
-  auto subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::EegDatapoint> message) -> void {
+  auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     auto events = processor->cleaned_eeg_received(*message);
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<mtms_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
                                                                             subscription_callback);
 
 }
@@ -32,7 +32,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
     switch (event.event_type) {
       case PULSE:
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
-                    "Published fpga pulse event timed at %.4f.",
+                    "Published pulse event timed at %.4f.",
                     event.pulse.event_info.execution_time);
 
         event.pulse.event_info.decision_time = time;
@@ -41,7 +41,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
 
       case CHARGE:
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
-                    "Published fpga charge event timed at %.4f.",
+                    "Published charge event timed at %.4f.",
                     event.charge.event_info.execution_time);
 
         event.charge.event_info.decision_time = time;
@@ -50,7 +50,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
 
       case DISCHARGE:
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
-                    "Published fpga discharge event timed at %.4f.",
+                    "Published discharge event timed at %.4f.",
                     event.discharge.event_info.execution_time);
 
         event.discharge.event_info.decision_time = time;
@@ -59,7 +59,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
 
       case SIGNAL_OUT:
         RCLCPP_INFO(rclcpp::get_logger("eeg_processor"),
-                    "Published signal out pulse event timed at %.4f.",
+                    "Published signal out event timed at %.4f.",
                     event.signal_out.event_info.execution_time);
 
         event.signal_out.event_info.decision_time = time;
@@ -76,7 +76,7 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
         break;
 
       default:
-        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown fpga event type: %d", event.event_type);
+        RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Warning, unknown event type: %d", event.event_type);
     }
 
   }

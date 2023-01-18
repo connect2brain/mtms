@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage } from 'types/fpga'
+import { ChannelState as ChannelStateType, DeviceState, ExperimentState, SystemStateMessage } from 'types/mtmsDevice'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
 
