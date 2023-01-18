@@ -28,9 +28,9 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="data_batcher",
-        executable="data_batcher",
-        name="data_batcher",
+        package="eeg_batcher",
+        executable="eeg_batcher",
+        name="eeg_batcher",
         parameters=[
             {
                 "batch_size": LaunchConfiguration("batch-size"),
