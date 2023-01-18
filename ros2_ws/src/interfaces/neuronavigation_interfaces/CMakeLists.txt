@@ -26,6 +26,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/OptitrackPoses.msg"
   "msg/PoseUsingEulerAngles.msg"
+
   "srv/Efield.srv"
   "srv/OpenOrientationDialog.srv"
   DEPENDENCIES geometry_msgs

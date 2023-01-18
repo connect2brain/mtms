@@ -45,11 +45,11 @@ void print_vector(std::vector<double> vec, unsigned rows, unsigned cols) {
 std::vector<Event> MatlabProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
 
 
-std::vector<mtms_interfaces::msg::EegDatapoint> MatlabProcessor::raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+std::vector<eeg_interfaces::msg::EegDatapoint> MatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
 }
 
 
-std::vector<Event> MatlabProcessor::cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample) {
+std::vector<Event> MatlabProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   std::vector<Event> events_out;
 
   matlab::data::TypedArray<double> matlab_data_array = factory.createArray(

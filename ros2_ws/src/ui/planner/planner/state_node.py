@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
 
-from mtms_interfaces.msg import PlannerState
+from ui_interfaces.msg import PlannerState
 
 
 class StateNode(Node):

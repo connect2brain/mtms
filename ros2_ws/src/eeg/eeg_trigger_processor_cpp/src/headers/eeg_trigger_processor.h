@@ -7,9 +7,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
-#include "mtms_interfaces/msg/trigger.hpp"
-#include "event_interfaces/srv/send_signal_out.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/trigger.hpp"
+#include "event_interfaces/msg/signal_out.hpp"
 
 #include <string>
 #include <fstream>
@@ -24,7 +24,7 @@ private:
   std::vector<double> durations;
   uint32_t index;
 
-  rclcpp::Subscription<mtms_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
+  rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
 
   rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
 };

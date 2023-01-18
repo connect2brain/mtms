@@ -32,7 +32,7 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
     switch (event.event_type) {
       case PULSE:
         RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"),
-                    "Published fpga pulse event timed at %.4f.",
+                    "Published pulse event timed at %.4f.",
                     event.pulse.event_info.execution_time);
 
         event.pulse.event_info.decision_time = time;
@@ -41,7 +41,7 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
 
       case CHARGE:
         RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"),
-                    "Published fpga charge event timed at %.4f.",
+                    "Published charge event timed at %.4f.",
                     event.charge.event_info.execution_time);
 
         event.charge.event_info.decision_time = time;
@@ -50,7 +50,7 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
 
       case DISCHARGE:
         RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"),
-                    "Published fpga discharge event timed at %.4f.",
+                    "Published discharge event timed at %.4f.",
                     event.discharge.event_info.execution_time);
 
         event.discharge.event_info.decision_time = time;
@@ -59,7 +59,7 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
 
       case SIGNAL_OUT:
         RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"),
-                    "Published signal out pulse event timed at %.4f.",
+                    "Published signal out event timed at %.4f.",
                     event.signal_out.event_info.execution_time);
 
         event.signal_out.event_info.decision_time = time;
@@ -71,7 +71,7 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
                     "Warning, sending stimulus from stimulus presenter is not supported");
 
       default:
-        RCLCPP_WARN(rclcpp::get_logger("stimulus_presenter"), "Warning, unknown fpga event type: %d", event.event_type);
+        RCLCPP_WARN(rclcpp::get_logger("stimulus_presenter"), "Warning, unknown event type: %d", event.event_type);
     }
 
   }

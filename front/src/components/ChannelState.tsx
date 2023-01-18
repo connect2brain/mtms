@@ -1,4 +1,4 @@
-import { ChannelState as ChannelStateType } from 'types/fpga'
+import { ChannelState as ChannelStateType } from 'types/mtmsDevice'
 import React from 'react'
 import { getTrueKeys } from '../utils'
 

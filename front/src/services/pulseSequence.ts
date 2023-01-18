@@ -7,45 +7,45 @@ import { ros } from './ros'
 const setPulseSequenceIntensityService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/set_pulse_sequence_intensity',
-  serviceType: 'mtms_interfaces/SetPulseSequenceIntensity',
+  serviceType: 'ui_interfaces/SetPulseSequenceIntensity',
 })
 /* Set up set_pulse_sequence_isi service. */
 const setPulseSequenceIsiService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/set_pulse_sequence_isi',
-  serviceType: 'mtms_interfaces/SetPulseSequenceIsi',
+  serviceType: 'ui_interfaces/SetPulseSequenceIsi',
 })
 /* Set up toggle_select service. */
 const togglePulseSequenceSelectService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_select_pulse_sequence',
-  serviceType: 'mtms_interfaces/ToggleSelectPulseSequence',
+  serviceType: 'ui_interfaces/ToggleSelectPulseSequence',
 })
 
 /* Set up add_target service. */
 const addPulseSequenceService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/add_pulse_sequence',
-  serviceType: 'mtms_interfaces/AddPulseSequence',
+  serviceType: 'ui_interfaces/AddPulseSequence',
 })
 
 /* Set up remove_pulse_sequence service. */
 const removePulseSequenceService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/remove_pulse_sequence',
-  serviceType: 'mtms_interfaces/RemovePulseSequence',
+  serviceType: 'ui_interfaces/RemovePulseSequence',
 })
 /* Set up rename_pulse_sequence service. */
 const renamePulseSequenceService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/rename_pulse_sequence',
-  serviceType: 'mtms_interfaces/RenamePulseSequence',
+  serviceType: 'ui_interfaces/RenamePulseSequence',
 })
 
 const addPulseToPulseSequenceService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/add_pulse_to_pulse_sequence',
-  serviceType: 'mtms_interfaces/AddPulseToPulseSequence',
+  serviceType: 'ui_interfaces/AddPulseToPulseSequence',
 })
 
 
