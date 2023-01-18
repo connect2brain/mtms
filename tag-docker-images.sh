@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker tag mtms_fpga_bridge okahilak/mtms:fpga_bridge
+docker tag mtms_mtms_device_bridge okahilak/mtms:mtms_device_bridge
 docker tag mtms_eeg_bridge okahilak/mtms:eeg_bridge
 docker tag mtms_eeg_processor okahilak/mtms:eeg_processor
 docker tag mtms_rosbridge okahilak/mtms:rosbridge

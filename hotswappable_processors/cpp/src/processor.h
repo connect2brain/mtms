@@ -13,11 +13,11 @@ class Processor : public ProcessorInterface {
 public:
   Processor();
 
-  virtual std::vector<fpga_event> init_experiment();
+  virtual std::vector<mtms_device_event> init_experiment();
 
-  virtual std::vector<fpga_event> end_experiment();
+  virtual std::vector<mtms_device_event> end_experiment();
 
-  virtual std::vector<fpga_event>
+  virtual std::vector<mtms_device_event>
   data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
 
   virtual std::vector<eeg_sample>

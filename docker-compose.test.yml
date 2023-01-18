@@ -47,7 +47,7 @@ services:
     networks:
       - testnetwork
     volumes:
-      - './ros2_ws/src/interfaces/mtms_interfaces:/app/ros2_ws/src/interfaces/mtms_interfaces/'
+      - './ros2_ws/src/interfaces/ui_interfaces:/app/ros2_ws/src/interfaces/ui_interfaces/'
       - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
     build:
       context: .
@@ -59,7 +59,7 @@ services:
       context: .
       dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
     volumes:
-      - './ros2_ws/src/interfaces/mtms_interfaces:/app/ros2_ws/src/interfaces/mtms_interfaces/'
+      - './ros2_ws/src/interfaces/ui_interfaces:/app/ros2_ws/src/interfaces/ui_interfaces/'
       - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
 
 networks:
