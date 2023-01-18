@@ -1,20 +1,18 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/srv/send_event_trigger.hpp"
+#include "event_interfaces/msg/event_trigger.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void send_event_trigger(const std::shared_ptr<event_interfaces::srv::SendEventTrigger::Request> request,
-                        std::shared_ptr<event_interfaces::srv::SendEventTrigger::Response> response) {
+void callback(const std::shared_ptr<event_interfaces::msg::EventTrigger> event_trigger) {
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteBool(session,
                                       NiFpga_mTMS_ControlBool_Eventtrigger,
                                       true));
 
-  response->success = true;
   RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Sent event trigger");
 }
 
@@ -22,12 +20,13 @@ class SendEventTriggerHandler : public rclcpp::Node {
 public:
   SendEventTriggerHandler()
       : Node("event_trigger_handler") {
-    send_event_trigger_service_ = this->create_service<event_interfaces::srv::SendEventTrigger>(
-        "/event/send_event_trigger", send_event_trigger);
+
+    send_event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::EventTrigger>(
+        "/event/send/event_trigger", 10, callback);
   }
 
 private:
-  rclcpp::Service<event_interfaces::srv::SendEventTrigger>::SharedPtr send_event_trigger_service_;
+  rclcpp::Subscription<event_interfaces::msg::EventTrigger>::SharedPtr send_event_trigger_subscriber_;
 };
 
 int main(int argc, char **argv) {
