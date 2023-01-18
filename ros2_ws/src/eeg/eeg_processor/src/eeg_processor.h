@@ -12,12 +12,12 @@
 #include "event_interfaces/msg/charge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
 
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
 
 #include "event.h"
 #include "processor_node.h"
 
-class EegProcessor : public ProcessorNode<mtms_interfaces::msg::EegDatapoint, Event> {
+class EegProcessor : public ProcessorNode<eeg_interfaces::msg::EegDatapoint, Event> {
 public:
   EegProcessor();
 private:

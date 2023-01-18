@@ -7,7 +7,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from std_msgs.msg import Bool
-from mtms_interfaces.srv import TriggerPulse
+from ui_interfaces.srv import TriggerPulse
 
 class TriggerControllerNode(Node):
 
