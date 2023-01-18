@@ -1,6 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/srv/send_pulse.hpp"
 #include "event_interfaces/msg/waveform_piece.hpp"
 #include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/event_info.hpp"
@@ -20,16 +19,12 @@ public:
   PulseHandler()
       : Node("pulse_handler") {
 
-    auto service_callback = [this](
-        const std::shared_ptr<event_interfaces::srv::SendPulse::Request> request,
-        std::shared_ptr<event_interfaces::srv::SendPulse::Response> response) -> void {
-      event_interfaces::msg::Pulse pulse = request->pulse;
-
-      uint8_t channel = pulse.channel;
+    auto callback = [this](const std::shared_ptr<event_interfaces::msg::Pulse> pulse) -> void {
+      uint8_t channel = pulse->channel;
 
       /* Serialize event info. */
 
-      event_interfaces::msg::EventInfo event_info = pulse.event_info;
+      event_interfaces::msg::EventInfo event_info = pulse->event_info;
 
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
@@ -43,11 +38,11 @@ public:
 
       /* Serialize stimulation pulse. */
 
-      uint8_t n_waveform = (uint8_t) pulse.waveform.size();
+      uint8_t n_waveform = (uint8_t) pulse->waveform.size();
       serialized_message.add_byte(n_waveform);
 
       for (uint8_t i = 0; i < n_waveform; i++) {
-        event_interfaces::msg::WaveformPiece piece = pulse.waveform[i];
+        event_interfaces::msg::WaveformPiece piece = pulse->waveform[i];
 
         serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
@@ -68,17 +63,15 @@ public:
                                             NULL));
 
       RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Sent pulse to channel %d", channel);
-
-      response->success = true;
     };
 
     serialized_message = SerializedMessage();
-    send_pulse_service_ = this->create_service<event_interfaces::srv::SendPulse>(
-        "/event/send_pulse", service_callback);
+    send_pulse_subscriber_ = this->create_subscription<event_interfaces::msg::Pulse>(
+        "/event/send/pulse", 10, callback);
   }
 
 private:
-  rclcpp::Service<event_interfaces::srv::SendPulse>::SharedPtr send_pulse_service_;
+  rclcpp::Subscription<event_interfaces::msg::Pulse>::SharedPtr send_pulse_subscriber_;
   SerializedMessage serialized_message;
 };
 

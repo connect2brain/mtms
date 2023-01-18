@@ -1,6 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/srv/send_signal_out.hpp"
 #include "event_interfaces/msg/signal_out.hpp"
 #include "event_interfaces/msg/event_info.hpp"
 
@@ -19,13 +18,10 @@ public:
   SignalOutHandler()
       : Node("signal_out_handler") {
 
-    auto service_callback = [this](const std::shared_ptr<event_interfaces::srv::SendSignalOut::Request> request,
-                                   std::shared_ptr<event_interfaces::srv::SendSignalOut::Response> response) -> void {
-      event_interfaces::msg::SignalOut signal_out = request->signal_out;
+    auto callback = [this](const std::shared_ptr<event_interfaces::msg::SignalOut> signal_out) -> void {
+      uint8_t port = signal_out->port;
 
-      uint8_t port = signal_out.port;
-
-      event_interfaces::msg::EventInfo event_info = signal_out.event_info;
+      event_interfaces::msg::EventInfo event_info = signal_out->event_info;
 
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
@@ -39,7 +35,7 @@ public:
 
       /* Serialize signal out. */
 
-      uint32_t duration_us = signal_out.duration_us;
+      uint32_t duration_us = signal_out->duration_us;
       uint32_t duration_ticks = duration_us * CLOCK_FREQUENCY_HZ / 1e6;
 
       serialized_message.add_uint32(duration_ticks);
@@ -60,18 +56,15 @@ public:
                                             NULL));
 
       RCLCPP_INFO(rclcpp::get_logger("signal_out_handler"), "Sent signal out to port %d", port);
-
-      response->success = true;
     };
 
-
     serialized_message = SerializedMessage();
-    send_signal_out_service_ = this->create_service<event_interfaces::srv::SendSignalOut>(
-        "/event/send_signal_out", service_callback);
+    send_signal_out_subscriber_ = this->create_subscription<event_interfaces::msg::SignalOut>(
+        "/event/send/signal_out", 10, callback);
   }
 
 private:
-  rclcpp::Service<event_interfaces::srv::SendSignalOut>::SharedPtr send_signal_out_service_;
+  rclcpp::Subscription<event_interfaces::msg::SignalOut>::SharedPtr send_signal_out_subscriber_;
   SerializedMessage serialized_message;
 };
 

@@ -20,13 +20,13 @@ public:
 
 private:
   std::fstream f;
-  std::shared_ptr<event_interfaces::srv::SendSignalOut_Request_<std::allocator<void>>> req;
 
   std::vector<double> durations;
   uint32_t index;
 
   rclcpp::Subscription<mtms_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
-  rclcpp::Client<event_interfaces::srv::SendSignalOut>::SharedPtr signal_out_client;
+
+  rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
 };
 
 #endif //DATA_PROCESSOR_DATA_PROCESSOR_H
