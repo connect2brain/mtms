@@ -2,8 +2,7 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from event_interfaces.srv import SendSignalOut, SendPulse, SendCharge
-from event_interfaces.msg import SignalOut, EventInfo
+from event_interfaces.msg import Pulse, Charge, SignalOut, EventInfo
 
 from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
@@ -22,14 +21,10 @@ class EegProcessor(Node):
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
 
-        self.signal_out_client = self.create_client(SendSignalOut, '/event/send_signal_out')
-
         self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
 
-        self.request = SendSignalOut.Request()
-        self.stimulation_request = SendPulse.Request()
-        self.charge_request = SendCharge.Request()
+        self.send_signal_out_publisher = self.create_publisher(SignalOut, '/event/send/signal_out', 10)
 
         self.first_trigger_time = 0.0
         self.last_trigger_time = 0.0
@@ -71,7 +66,7 @@ class EegProcessor(Node):
         signal_out.duration_us = SIGNAL_OUT_DURATION_US
         signal_out.event_info = event_info
 
-        self.request.signal_out = signal_out
+        self.send_signal_out_publisher.publish(signal_out)
 
     def restart_experiment(self):
         self.stop_experiment_client.call_async(StopExperiment.Request())
