@@ -21,8 +21,8 @@ docker push okahilak/mtms:pulse_sequence_controller
 echo "Pushing okahilak/mtms:eeg_simulator"
 docker push okahilak/mtms:eeg_simulator
 
-echo "Pushing okahilak/mtms:data_batcher"
-docker push okahilak/mtms:data_batcher
+echo "Pushing okahilak/mtms:eeg_batcher"
+docker push okahilak/mtms:eeg_batcher
 
 echo "Pushing okahilak/mtms:front"
 docker push okahilak/mtms:front
