@@ -38,7 +38,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
                 number_of_pulses = 20;
             end
             obj.commands = repmat(create_pulse_command(0,1, 2, 0), number_of_pulses, 1);
-            obj.samples = repmat(create_eeg_sample([1:number_of_pulses], 1.0, 1), number_of_pulses, 1);
+            obj.samples = repmat(create_eeg_sample([1:number_of_pulses]', 1.0, 1), number_of_pulses, 1);
 
             obj.events_sent = uint32(0);
             
