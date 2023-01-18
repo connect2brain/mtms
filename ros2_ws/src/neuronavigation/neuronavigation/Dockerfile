@@ -56,16 +56,17 @@ RUN rm setup.py
 
 WORKDIR /app
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
-COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/src/interfaces/mtms_interfaces/
+COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
 
 RUN cd ros2_ws && \
     source /opt/ros/galactic/setup.bash && \
-    colcon build --packages-select neuronavigation_interfaces mtms_interfaces
+    colcon build --packages-select neuronavigation_interfaces ui_interfaces
 
 # Copy rest of InVesalius
 
 COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
-
+COPY ros2_ws/src/neuronavigation/neuronavigation/pypolaris-0.0.3-py3-none-any.whl ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
+RUN pip install /app/ros2_ws/src/neuronavigation/neuronavigation/invesalius3/pypolaris-0.0.3-py3-none-any.whl
 # Copy and build Neuronavigation ROS package
 
 COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/

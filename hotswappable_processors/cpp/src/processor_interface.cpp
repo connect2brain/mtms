@@ -7,19 +7,19 @@
 #include <vector>
 #include <iostream>
 
-std::vector<fpga_event> ProcessorInterface::init_experiment() {
+std::vector<mtms_device_event> ProcessorInterface::init_experiment() {
   std::cout
       << "ERROR: in cpp_processor_interface init_experiment, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
 }
 
-std::vector<fpga_event> ProcessorInterface::end_experiment() {
+std::vector<mtms_device_event> ProcessorInterface::end_experiment() {
   std::cout
       << "ERROR: in cpp_processor_interface end_experiment, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"
       << std::endl;
 }
 
-std::vector<fpga_event>
+std::vector<mtms_device_event>
 ProcessorInterface::data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
   std::cout
       << "ERROR, in cpp_processor_interface data_received, we should not be here. Are the methods in MatlabProcessorInterface.h virtual?"

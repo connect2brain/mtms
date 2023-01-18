@@ -4,29 +4,29 @@ import numpy as np
 
 # TODO: Rename to be more generic, e.g., EegEmgDatapoint.
 #
-from mtms_interfaces.msg import EegDatapoint
+from eeg_interfaces.msg import EegDatapoint
 
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 
 
 class DataGatheringState(Enum):
-    CHECK_IF_LATE = 0
+    CHECK_IF_VALID_REQUEST = 0
     WAIT_FOR_MEP = 1
     GATHER_DATA = 2
-    FINAL_STATE__LATE = 3
+    FINAL_STATE__FAILURE = 3
     FINAL_STATE__SUCCESS = 4
 
 
 class DataGatherer:
-    INITIAL_STATE = DataGatheringState.CHECK_IF_LATE
+    INITIAL_STATE = DataGatheringState.CHECK_IF_VALID_REQUEST
     FINAL_STATES = (
-        DataGatheringState.FINAL_STATE__LATE,
+        DataGatheringState.FINAL_STATE__FAILURE,
         DataGatheringState.FINAL_STATE__SUCCESS,
     )
 
-    # TODO: Replace with a proper duration once the MEP analysis algorithm is in place.
+    # TODO: Make configurable.
     #
-    MEP_DURATION_S = 0.1
+    MEP_DURATION_S = 0.02
 
     # When determining if samples have been dropped by comparing the timestamps of two consecutive
     # samples, allow some tolerance to account for finite precision of floating point numbers.
@@ -59,8 +59,6 @@ class DataGatherer:
 
         self.logger.info('{}: Waiting for EMG samples...'.format(self.goal_id))
 
-        # TODO: Create a publisher for /emg/raw_data - for now, subscribe to /eeg/raw_data instead.
-        #
         self.data_subscriber = self.create_subscription(
             EegDatapoint,
             '/eeg/raw_data',
@@ -89,14 +87,24 @@ class DataGatherer:
 
         self.previous_time = current_time
 
-    def handle_state__check_if_late(self, current_time):
+    def handle_state__check_if_valid_request(self, current_time, msg):
+        channel_count = len(msg.emg_channels)
+
         if current_time >= self.start_time:
             self.logger.warn('{}: Failure: Current time ({:.2f} s) is past the starting time ({:.2f} s).'.format(
                 self.goal_id,
                 current_time,
-                self.start_time
+                self.start_time,
             ))
-            self.state = DataGatheringState.FINAL_STATE__LATE
+            self.state = DataGatheringState.FINAL_STATE__FAILURE
+
+        elif self.emg_channel >= channel_count:
+            self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}).'.format(
+                self.goal_id,
+                self.emg_channel,
+                channel_count,
+            ))
+            self.state = DataGatheringState.FINAL_STATE__FAILURE
 
         else:
             self.logger.info('{}: Waiting for the starting time...'.format(self.goal_id))
@@ -109,7 +117,7 @@ class DataGatherer:
 
     def handle_state__gather_data(self, current_time, msg):
         if current_time < self.start_time + self.MEP_DURATION_S:
-            self.emg_buffer[self.n_samples] = msg.eeg_channels[self.emg_channel]
+            self.emg_buffer[self.n_samples] = msg.emg_channels[self.emg_channel]
             self.time_buffer[self.n_samples] = current_time - self.start_time
 
             self.n_samples += 1
@@ -123,8 +131,8 @@ class DataGatherer:
 
         self.check_dropped_samples(current_time)
 
-        if self.state == DataGatheringState.CHECK_IF_LATE:
-            self.handle_state__check_if_late(current_time)
+        if self.state == DataGatheringState.CHECK_IF_VALID_REQUEST:
+            self.handle_state__check_if_valid_request(current_time, msg)
 
         elif self.state == DataGatheringState.WAIT_FOR_MEP:
             self.handle_state__wait_for_mep(current_time)
@@ -132,7 +140,7 @@ class DataGatherer:
         elif self.state == DataGatheringState.GATHER_DATA:
             self.handle_state__gather_data(current_time, msg)
 
-        elif self.state == DataGatheringState.FINAL_STATE__LATE:
+        elif self.state == DataGatheringState.FINAL_STATE__FAILURE:
             pass
 
         elif self.state == DataGatheringState.FINAL_STATE__SUCCESS:

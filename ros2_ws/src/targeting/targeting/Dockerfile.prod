@@ -17,7 +17,7 @@ RUN chmod +x ros_entrypoint.sh
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/targeting ros2_ws/targeting/
-COPY ros2_ws/src/interfaces/mtms_interfaces ros2_ws/mtms_interfaces/
+COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/targeting_interfaces/
 
 # Build ROS packages
 

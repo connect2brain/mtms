@@ -2,8 +2,8 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from event_interfaces.srv import SendSignalOut, SendPulse, SendCharge
-from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from event_interfaces.msg import SignalOut, Pulse, Charge
+from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
 
@@ -15,17 +15,13 @@ TIME_CONSTANT = 1.0
 class PulseGenerator(Node):
     def __init__(self):
         super().__init__('pulse_generator')
-        self.signal_out_client = self.create_client(SendSignalOut, '/event/send_signal_out')
-        self.pulse_client = self.create_client(SendPulse, '/event/send_pulse')
-        self.charge_client = self.create_client(SendCharge, '/event/send_charge')
+        self.signal_out_publisher = self.create_publisher(SignalOut, '/event/send/signal_out')
+        self.pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse')
+        self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
-        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
-        self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
-
-        self.signal_out_request = SendSignalOut.Request()
-        self.pulse_request = SendPulse.Request()
-        self.charge_request = SendCharge.Request()
+        self.start_device_client = self.create_client(StartDevice, '/mtms_device/start_device')
+        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
+        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
 
         self.client_futures = []
 
@@ -35,7 +31,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.signal_out_request.signal_out = generate_signal_out_command(port=1, execution_time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
+        self.signal_out = generate_signal_out_command(port=1, execution_time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
@@ -49,29 +45,25 @@ class PulseGenerator(Node):
 
     def send_charges(self):
         for charge in self.charges:
-            self.charge_request.charge = charge
-            self.charge_client.call_async(self.charge_request)
-            self.get_logger().info(f"Sent charge request for channel {charge.channel} {charge.target_voltage}V")
+            self.charge_publisher(charge)
+            self.get_logger().info(f"Sent charge message for channel {charge.channel} {charge.target_voltage}V")
 
     def send_timed_charges(self):
         for charge in self.timed_charges:
-            self.charge_request.charge = charge
-            self.charge_client.call_async(self.charge_request)
+            self.charge_publisher(charge)
             self.get_logger().info(f"Sent timed charge request for channel {charge.channel} {charge.target_voltage}V")
    
     def send_timed_pulse_commands(self):
         for pulse in self.timed_pulses:
-            self.pulse_request.pulse = pulse
-            self.pulse_client.call_async(self.pulse_request)
+            self.pulse_publisher(pulse)
             self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event_info.id}")
 
     def timer_callback(self):
-        self.signal_out_client.call_async(self.signal_out_request)
-        self.get_logger().info(f"Sent signal out for port {self.signal_out_request.signal_out.port}")
+        self.signal_out_publisher(self.signal_out)
+        self.get_logger().info(f"Sent signal out for port {self.signal_out.port}")
 
         for pulse in self.pulses:
-            self.pulse_request.pulse = pulse
-            self.pulse_client.call_async(self.pulse_request)
+            self.pulse_publisher(pulse)
             self.get_logger().info(f"Sent pulse request for channel {pulse.channel}")
             self.get_logger().info(f"Pulse count {self.pulses_sent}")
             self.pulses_sent += 1
@@ -79,8 +71,7 @@ class PulseGenerator(Node):
         time.sleep(0.1)
 
         for charge in self.charges:
-            self.charge_request.charge = charge
-            self.charge_client.call_async(self.charge_request)
+            self.charge_publisher(charge)
             self.get_logger().info(f"Sent charge request for channel {charge.channel} {charge.target_voltage}V")
 
     def restart_experiment(self):

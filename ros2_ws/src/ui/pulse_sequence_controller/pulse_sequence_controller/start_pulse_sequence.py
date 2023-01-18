@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.srv import StartPulseSequence
+from ui_interfaces.srv import StartPulseSequence
 from event_interfaces.msg import Pulse, EventInfo
 from .pulses import generate_pulse, pulse_duration_in_us
 from .testResult import TestResult
@@ -119,7 +119,7 @@ class StartPulseSequenceNode(Node):
             response.sequence = []
             return response
 
-        # TODO: wait for charging to finish. Loop until FPGA publishes to a topic that all channels are ready or
+        # TODO: wait for charging to finish. Loop until mTMS device publishes to a topic that all channels are ready or
         #  until async (or sync?) service calls finish?
         for channel_info in pulse_sequence.channel_info:
             self.send_charge(channel_info)

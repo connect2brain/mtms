@@ -1,10 +1,10 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import PlannerState, Target
+from ui_interfaces.msg import PlannerState, Target
 from std_msgs.msg import Bool, Float64, String
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
-from mtms_interfaces.srv import ToggleNavigation
+from ui_interfaces.srv import ToggleNavigation
 
 from .state_node import StateNode
 
