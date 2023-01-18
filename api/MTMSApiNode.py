@@ -2,31 +2,31 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 
-from fpga_interfaces.msg import SystemState
-from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.msg import SystemState
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
 
-from event_interfaces.msg import ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
+from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, SignalOut, \
+    ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
     WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, SignalOutError
-from event_interfaces.srv import SendEventTrigger, SendPulse, SendCharge, SendDischarge, SendSignalOut
 
-from mtms_interfaces.action import AnalyzeMep
-from mtms_interfaces.srv import GetChannelVoltages
+from eeg_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
 
 from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
-    # To FPGA
-    ROS_SERVICE_START_DEVICE = ('/fpga/start_device', StartDevice)
-    ROS_SERVICE_STOP_DEVICE = ('/fpga/stop_device', StopDevice)
-    ROS_SERVICE_START_EXPERIMENT = ('/fpga/start_experiment', StartExperiment)
-    ROS_SERVICE_STOP_EXPERIMENT = ('/fpga/stop_experiment', StopExperiment)
-    ROS_SERVICE_SEND_EVENT_TRIGGER = ('/event/send_event_trigger', SendEventTrigger)
-    ROS_SERVICE_SEND_PULSE = ('/event/send_pulse', SendPulse)
-    ROS_SERVICE_SEND_CHARGE = ('/event/send_charge', SendCharge)
-    ROS_SERVICE_SEND_DISCHARGE = ('/event/send_discharge', SendDischarge)
-    ROS_SERVICE_SEND_SIGNAL_OUT = ('/event/send_signal_out', SendSignalOut)
+    # To mTMS device
+    ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
+    ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
+    ROS_SERVICE_START_EXPERIMENT = ('/mtms_device/start_experiment', StartExperiment)
+    ROS_SERVICE_STOP_EXPERIMENT = ('/mtms_device/stop_experiment', StopExperiment)
+
+    ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
+    ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
+    ROS_MESSAGE_SEND_CHARGE = ('/event/send/charge', Charge)
+    ROS_MESSAGE_SEND_DISCHARGE = ('/event/send/discharge', Discharge)
+    ROS_MESSAGE_SEND_SIGNAL_OUT = ('/event/send/signal_out', SignalOut)
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
@@ -35,16 +35,19 @@ class MTMSApiNode(Node):
 
     ROS_ACTION_ANALYZE_MEP = ('/emg/analyze_mep', AnalyzeMep)
 
+    ROS_MESSAGES = (
+        ROS_MESSAGE_SEND_EVENT_TRIGGER,
+        ROS_MESSAGE_SEND_PULSE,
+        ROS_MESSAGE_SEND_CHARGE,
+        ROS_MESSAGE_SEND_DISCHARGE,
+        ROS_MESSAGE_SEND_SIGNAL_OUT,
+    )
+
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
         ROS_SERVICE_STOP_DEVICE,
         ROS_SERVICE_START_EXPERIMENT,
         ROS_SERVICE_STOP_EXPERIMENT,
-        ROS_SERVICE_SEND_EVENT_TRIGGER,
-        ROS_SERVICE_SEND_PULSE,
-        ROS_SERVICE_SEND_CHARGE,
-        ROS_SERVICE_SEND_DISCHARGE,
-        ROS_SERVICE_SEND_SIGNAL_OUT,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
@@ -61,19 +64,31 @@ class MTMSApiNode(Node):
 
         self.system_state = None
 
+        # Message publishers
+
+        self.ros_message_publishers = {}
+
+        for topic, message_type in self.ROS_MESSAGES:
+            publisher = self.create_publisher(message_type, topic, 10)
+            self.ros_message_publishers[topic] = publisher
+
+        # Service clients
+
         self.ros_service_clients = {}
 
-        for topic, service_object in self.ROS_SERVICES:
-            client = self.create_client(service_object, topic)
+        for topic, service_type in self.ROS_SERVICES:
+            client = self.create_client(service_type, topic)
             while not client.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('Service {} not available, waiting...'.format(topic))
 
             self.ros_service_clients[topic] = client
 
+        # Action clients
+
         self.ros_action_clients = {}
 
-        for topic, action_object in self.ROS_ACTIONS:
-            client = ActionClient(self, action_object, topic)
+        for topic, action_type in self.ROS_ACTIONS:
+            client = ActionClient(self, action_type, topic)
             while not client.wait_for_server(timeout_sec=1.0):
                 self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
@@ -81,7 +96,7 @@ class MTMSApiNode(Node):
 
         # Have a queue of only one message so that only the latest system state is ever received.
         #
-        self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state', self.handle_system_state, 1)
+        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
 
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
@@ -98,67 +113,65 @@ class MTMSApiNode(Node):
     # Starting and stopping
 
     def start_device(self):
-        topic, service_object = self.ROS_SERVICE_START_DEVICE
+        topic, service_type = self.ROS_SERVICE_START_DEVICE
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         return self.call_service(client, request)
 
     def stop_device(self):
-        topic, service_object = self.ROS_SERVICE_STOP_DEVICE
+        topic, service_type = self.ROS_SERVICE_STOP_DEVICE
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         return self.call_service(client, request)
 
     def start_experiment(self):
-        topic, service_object = self.ROS_SERVICE_START_EXPERIMENT
+        topic, service_type = self.ROS_SERVICE_START_EXPERIMENT
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         return self.call_service(client, request)
 
     def stop_experiment(self):
-        topic, service_object = self.ROS_SERVICE_STOP_EXPERIMENT
+        topic, service_type = self.ROS_SERVICE_STOP_EXPERIMENT
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         return self.call_service(client, request)
 
     # Events
 
     def send_event_trigger(self):
-        topic, service_object = self.ROS_SERVICE_SEND_EVENT_TRIGGER
+        topic, message_type = self.ROS_MESSAGE_SEND_EVENT_TRIGGER
 
-        client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        publisher = self.ros_message_publishers[topic]
+        message = message_type()
 
-        value = self.call_service(client, request)
+        publisher.publish(message)
 
         self.printer.print_event_trigger()
 
-        return value
-
     def send_pulse(self, id, execution_condition, time, channel, waveform):
-        topic, service_object = self.ROS_SERVICE_SEND_PULSE
+        topic, message_type = self.ROS_MESSAGE_SEND_PULSE
 
-        client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        publisher = self.ros_message_publishers[topic]
+        message = message_type()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
 
-        request.pulse.event_info = event_info
-        request.pulse.channel = channel
-        request.pulse.waveform = waveform
+        message.event_info = event_info
+        message.channel = channel
+        message.waveform = waveform
 
-        value = self.call_service(client, request)
+        publisher.publish(message)
 
         self.printer.print_event(
             event_type='Pulse',
@@ -168,24 +181,22 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-        return value
-
     def send_charge(self, id, execution_condition, time, channel, target_voltage):
-        topic, service_object = self.ROS_SERVICE_SEND_CHARGE
+        topic, message_type = self.ROS_MESSAGE_SEND_CHARGE
 
-        client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        publisher = self.ros_message_publishers[topic]
+        message = message_type()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
 
-        request.charge.event_info = event_info
-        request.charge.channel = channel
-        request.charge.target_voltage = target_voltage
+        message.event_info = event_info
+        message.channel = channel
+        message.target_voltage = target_voltage
 
-        value = self.call_service(client, request)
+        publisher.publish(message)
 
         self.printer.print_event(
             event_type='Charge',
@@ -195,24 +206,22 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-        return value
-
     def send_discharge(self, id, execution_condition, time, channel, target_voltage):
-        topic, service_object = self.ROS_SERVICE_SEND_DISCHARGE
+        topic, message_type = self.ROS_MESSAGE_SEND_DISCHARGE
 
-        client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        publisher = self.ros_message_publishers[topic]
+        message = message_type()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
 
-        request.discharge.event_info = event_info
-        request.discharge.channel = channel
-        request.discharge.target_voltage = target_voltage
+        message.event_info = event_info
+        message.channel = channel
+        message.target_voltage = target_voltage
 
-        value = self.call_service(client, request)
+        publisher.publish(message)
 
         self.printer.print_event(
             event_type='Discharge',
@@ -222,24 +231,22 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-        return value
-
     def send_signal_out(self, id, execution_condition, time, port, duration_us):
-        topic, service_object = self.ROS_SERVICE_SEND_SIGNAL_OUT
+        topic, message_type = self.ROS_MESSAGE_SEND_SIGNAL_OUT
 
-        client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        publisher = self.ros_message_publishers[topic]
+        message = message_type()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
 
-        request.signal_out.event_info = event_info
-        request.signal_out.port = port
-        request.signal_out.duration_us = duration_us
+        message.event_info = event_info
+        message.port = port
+        message.duration_us = duration_us
 
-        value = self.call_service(client, request)
+        publisher.publish(message)
 
         self.printer.print_event(
             event_type='Signal out',
@@ -248,8 +255,6 @@ class MTMSApiNode(Node):
         )
 
         self.event_feedback[id] = None
-
-        return value
 
     # Feedback
 
@@ -284,10 +289,10 @@ class MTMSApiNode(Node):
     # Targeting
 
     def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
-        topic, service_object = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
+        topic, service_type = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         request.displacement_x = displacement_x
         request.displacement_y = displacement_y
@@ -300,10 +305,10 @@ class MTMSApiNode(Node):
         return value.voltages, value.reversed_polarities
 
     def get_default_waveform(self, channel):
-        topic, service_object = self.ROS_SERVICE_GET_DEFAULT_WAVEFORM
+        topic, service_type = self.ROS_SERVICE_GET_DEFAULT_WAVEFORM
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         request.channel = channel
 
@@ -313,10 +318,10 @@ class MTMSApiNode(Node):
         return value.waveform
 
     def reverse_polarity(self, waveform):
-        topic, service_object = self.ROS_SERVICE_REVERSE_POLARITY
+        topic, service_type = self.ROS_SERVICE_REVERSE_POLARITY
 
         client = self.ros_service_clients[topic]
-        request = service_object.Request()
+        request = service_type.Request()
 
         request.waveform = waveform
 
@@ -328,12 +333,12 @@ class MTMSApiNode(Node):
     # MEP analysis
 
     def analyze_mep(self, time, emg_channel):
-        topic, action_object = self.ROS_ACTION_ANALYZE_MEP
+        topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
         client = self.ros_action_clients[topic]
 
         # Define goal.
-        goal = action_object.Goal()
+        goal = action_type.Goal()
 
         goal.time = time
         goal.emg_channel = emg_channel

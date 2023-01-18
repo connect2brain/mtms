@@ -1,5 +1,5 @@
 import rclpy
-from mtms_interfaces.srv import SetTargetOrientation
+from ui_interfaces.srv import SetTargetOrientation
 
 from .state_node import StateNode
 

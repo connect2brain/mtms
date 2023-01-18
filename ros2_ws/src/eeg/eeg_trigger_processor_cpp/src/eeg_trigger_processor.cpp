@@ -17,8 +17,17 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
   this->declare_parameter<std::string>("file", "data.txt");
   this->get_parameter("file", filename);
 
-  auto trigger_subscription_callback = [this](const std::shared_ptr<mtms_interfaces::msg::Trigger> message) -> void {
-    signal_out_client->async_send_request(req);
+  auto trigger_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::Trigger> message) -> void {
+
+    auto signal_out = event_interfaces::msg::SignalOut();
+
+    signal_out.port = 2;
+    signal_out.duration_us = 10000;
+    signal_out.event_info.execution_time = 0.0;
+    signal_out.event_info.execution_condition.value = 2;
+    signal_out.event_info.id = 1;
+
+    this->signal_out_publisher->publish(signal_out);
 
     if (message->index == 2) {
       if (index < durations.size()) {
@@ -44,35 +53,20 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
     }
   };
 
-
-  trigger_subscription = this->create_subscription<mtms_interfaces::msg::Trigger>("/eeg/trigger_received",
+  trigger_subscription = this->create_subscription<eeg_interfaces::msg::Trigger>("/eeg/trigger_received",
                                                                                   10,
                                                                                   trigger_subscription_callback);
 
-  signal_out_client = this->create_client<event_interfaces::srv::SendSignalOut>("/event/send_signal_out");
-
-  req = std::make_shared<event_interfaces::srv::SendSignalOut::Request>();
-
-  auto event = event_interfaces::msg::SignalOut();
-  event.port = 2;
-  event.duration_us = 10000;
-  event.event_info.execution_time = 0.0;
-  event.event_info.execution_condition.value = 2;
-  event.event_info.id = 1;
-
-  req->signal_out = event;
+  this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/send/signal_out", 10);
 
   f.open(filename, std::ios::out | std::ios::trunc);
 
   durations = std::vector<double>(data_size, 0);
   RCLCPP_INFO(this->get_logger(), "durations size: %lu", durations.size());
-
 }
-
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("eeg_trigger_processor"), "Setting thread scheduling");

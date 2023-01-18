@@ -29,8 +29,8 @@ void print_matlab_event(matlab_event event) {
   }
 }
 
-mtms_interfaces::msg::EegDatapoint convert_matlab_sample_to_sample(matlab_eeg_sample matlab_sample) {
-  mtms_interfaces::msg::EegDatapoint sample;
+eeg_interfaces::msg::EegDatapoint convert_matlab_sample_to_sample(matlab_eeg_sample matlab_sample) {
+  eeg_interfaces::msg::EegDatapoint sample;
   sample.first_sample_of_experiment = matlab_sample.first_sample_of_experiment;
   sample.eeg_channels = matlab_sample.channel_data;
   sample.time = matlab_sample.time;
@@ -53,10 +53,10 @@ Event convert_matlab_event_to_event(matlab_event event) {
     matlab_event.pulse = event_interfaces::msg::Pulse();
 
     for (auto piece: event.waveform) {
-      auto fpga_piece = event_interfaces::msg::WaveformPiece();
-      fpga_piece.duration_in_ticks = piece.duration_in_ticks;
-      fpga_piece.waveform_phase.value = piece.waveform_phase;
-      matlab_event.pulse.waveform.push_back(fpga_piece);
+      auto new_piece = event_interfaces::msg::WaveformPiece();
+      new_piece.duration_in_ticks = piece.duration_in_ticks;
+      new_piece.waveform_phase.value = piece.waveform_phase;
+      matlab_event.pulse.waveform.push_back(new_piece);
     }
     matlab_event.pulse.event_info.id = event.b_event_info.id;
     matlab_event.pulse.event_info.execution_condition.value = event.b_event_info.execution_condition;
