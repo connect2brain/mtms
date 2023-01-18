@@ -60,18 +60,18 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-  auto system_state_callback = [this](const std::shared_ptr<fpga_interfaces::msg::SystemState> message) -> void {
+  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
-    if (experiment_state.value != fpga_interfaces::msg::ExperimentState::STARTED) {
+    if (experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
       this->reset_sync();
     }
   };
 
-  publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
+  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
-  publisher_trigger_ = this->create_publisher<mtms_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
+  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-  subscription_system_state = this->create_subscription<fpga_interfaces::msg::SystemState>("/fpga/system_state", 10,
+  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", 10,
                                                                                            system_state_callback);
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
@@ -221,7 +221,7 @@ void EegBridge::handle_trigger_packet() {
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
   RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
 
-  auto trigger_msg = mtms_interfaces::msg::Trigger();
+  auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_index == 1) {
 
@@ -337,7 +337,7 @@ void EegBridge::handle_eeg_data_packet() {
 
         /* If sending trigger as a packet, wait until we receive the first trigger and that the experiment is started. */
         if (this->first_trigger_received &&
-            this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
 
@@ -349,7 +349,7 @@ void EegBridge::handle_eeg_data_packet() {
            sent as a part of a sample packet. When the first trigger is received, we also expect the experiment to be
            started. */
         if (!this->first_trigger_received ||
-            this->experiment_state.value == fpga_interfaces::msg::ExperimentState::STARTED) {
+            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
 
@@ -382,7 +382,7 @@ int EegBridge::get_trigger_package_from_buffer() {
 void EegBridge::publish_trigger_from_buffer(double_t time) {
   int trigger_channel_package = get_trigger_package_from_buffer();
 
-  auto trigger_msg = mtms_interfaces::msg::Trigger();
+  auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_channel_package == TRIGGER_A_IN) {
     trigger_msg.index = 1;
@@ -406,7 +406,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
 void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
 
-  auto message = mtms_interfaces::msg::EegDatapoint();
+  auto message = eeg_interfaces::msg::EegDatapoint();
   message.time = time_since_trigger;
 
   int i = FIRST_CHANNEL_INDEX;

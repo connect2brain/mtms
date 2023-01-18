@@ -3,7 +3,7 @@ from rclpy.node import Node
 import time
 
 from event_interfaces.msg import SignalOut, Pulse, Charge
-from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
 
@@ -19,9 +19,9 @@ class PulseGenerator(Node):
         self.pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse')
         self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
-        self.start_device_client = self.create_client(StartDevice, '/fpga/start_device')
-        self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
+        self.start_device_client = self.create_client(StartDevice, '/mtms_device/start_device')
+        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
+        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
 
         self.client_futures = []
 

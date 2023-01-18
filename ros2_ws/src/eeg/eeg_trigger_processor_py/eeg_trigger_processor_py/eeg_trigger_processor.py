@@ -4,9 +4,9 @@ import time
 
 from event_interfaces.msg import Pulse, Charge, SignalOut, EventInfo
 
-from fpga_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
-from mtms_interfaces.msg import EegDatapoint, Trigger
+from eeg_interfaces.msg import EegDatapoint, Trigger
 
 SIGNAL_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -21,8 +21,8 @@ class EegProcessor(Node):
         self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
 
-        self.start_experiment_client = self.create_client(StartExperiment, '/fpga/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/fpga/stop_experiment')
+        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
+        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
 
         self.send_signal_out_publisher = self.create_publisher(SignalOut, '/event/send/signal_out', 10)
 

@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import PlannerState, Pulse
+from ui_interfaces.msg import PlannerState, Pulse
 from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
 
 
