@@ -1,9 +1,0 @@
-# Send a signal out event.
-#
-# Request: A signal out event.
-#
-# Response: Boolean indicating if signal out event was sent successfully.
-
-SignalOut signal_out
----
-bool success
