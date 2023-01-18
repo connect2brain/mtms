@@ -20,9 +20,9 @@ public:
 
   std::vector<Event> init();
 
-  std::vector<mtms_interfaces::msg::EegDatapoint> raw_eeg_received(mtms_interfaces::msg::EegDatapoint sample);
+  std::vector<eeg_interfaces::msg::EegDatapoint> raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
 
-  std::vector<Event> cleaned_eeg_received(mtms_interfaces::msg::EegDatapoint sample);
+  std::vector<Event> cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
 
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 

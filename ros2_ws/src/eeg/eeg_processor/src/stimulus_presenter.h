@@ -6,7 +6,7 @@
 #define EEG_PROCESSOR_STIMULUS_PRESENTER_H
 
 #include "event_interfaces/msg/signal_out.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
 #include "processor_node.h"
 
 class StimulusPresenter : public ProcessorNode<event_interfaces::msg::Stimulus, Event> {
