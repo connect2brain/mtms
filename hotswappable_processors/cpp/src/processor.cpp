@@ -21,12 +21,12 @@ Processor::raw_eeg_received(std::vector<double> channel_data, double time, bool 
 
 }
 
-std::vector<fpga_event>
+std::vector<mtms_device_event>
 Processor::data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
   this->samples.append(channel_data);
   this->samples_collected++;
 
-  std::vector<fpga_event> events;
+  std::vector<mtms_device_event> events;
 
   if (this->samples.full && this->samples_collected % this->isi_samples == 0) {
     auto buf = &this->samples.buffer;
@@ -38,16 +38,16 @@ Processor::data_received(std::vector<double> channel_data, double time, bool fir
   return events;
 }
 
-std::vector<fpga_event> Processor::end_experiment() {
+std::vector<mtms_device_event> Processor::end_experiment() {
   std::cout << "in end experiment" << std::endl;
-  std::vector<fpga_event> events;
+  std::vector<mtms_device_event> events;
   return events;
 }
 
-std::vector<fpga_event> Processor::init_experiment() {
+std::vector<mtms_device_event> Processor::init_experiment() {
   std::cout << "in init experiment" << std::endl;
 
-  std::vector<fpga_event> events;
+  std::vector<mtms_device_event> events;
   return events;
 }
 
