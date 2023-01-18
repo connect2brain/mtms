@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  data_batcher_wrapper:
+  eeg_batcher_wrapper:
     image: docker
-    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env DATA_BATCHER_BATCH_SIZE --env DATA_BATCHER_DOWNSAMPLE_RATIO okahilak/mtms:data_batcher
+    command: docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env EEG_BATCHER_BATCH_SIZE --env EEG_BATCHER_DOWNSAMPLE_RATIO okahilak/mtms:eeg_batcher
     environment:
       - ROS_LOG_LEVEL=info
-      - DATA_BATCHER_BATCH_SIZE=100
-      - DATA_BATCHER_DOWNSAMPLE_RATIO=10
+      - EEG_BATCHER_BATCH_SIZE=100
+      - EEG_BATCHER_DOWNSAMPLE_RATIO=10
     volumes:
       # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
