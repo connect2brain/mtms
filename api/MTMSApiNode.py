@@ -2,26 +2,25 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 
-from fpga_interfaces.msg import SystemState
-from fpga_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.msg import SystemState
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, SignalOut, \
     ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
     WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, SignalOutError
 
-from mtms_interfaces.action import AnalyzeMep
-from mtms_interfaces.srv import GetChannelVoltages
+from eeg_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
 
 from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
-    # To FPGA
-    ROS_SERVICE_START_DEVICE = ('/fpga/start_device', StartDevice)
-    ROS_SERVICE_STOP_DEVICE = ('/fpga/stop_device', StopDevice)
-    ROS_SERVICE_START_EXPERIMENT = ('/fpga/start_experiment', StartExperiment)
-    ROS_SERVICE_STOP_EXPERIMENT = ('/fpga/stop_experiment', StopExperiment)
+    # To mTMS device
+    ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
+    ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
+    ROS_SERVICE_START_EXPERIMENT = ('/mtms_device/start_experiment', StartExperiment)
+    ROS_SERVICE_STOP_EXPERIMENT = ('/mtms_device/stop_experiment', StopExperiment)
 
     ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
@@ -97,7 +96,7 @@ class MTMSApiNode(Node):
 
         # Have a queue of only one message so that only the latest system state is ever received.
         #
-        self.system_state_subscriber = self.create_subscription(SystemState, '/fpga/system_state', self.handle_system_state, 1)
+        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
 
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
