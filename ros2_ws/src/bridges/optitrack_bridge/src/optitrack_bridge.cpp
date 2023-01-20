@@ -6,8 +6,7 @@
 
 rclcpp::Publisher<neuronavigation_interfaces::msg::OptitrackPoses>::SharedPtr OptitrackBridge::publisher;
 
-void
-log_rigid_body_message(geometry_msgs::msg::Transform rigid_body, const std::string &entity) {
+void log_rigid_body_message(geometry_msgs::msg::Transform rigid_body, const std::string &entity) {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"),
               "%s: Translation (x, y, z): (%3.2f, %3.2f, %3.2f), Rotation: (x, y, z, w): (%3.2f, %3.2f, %3.2f, %3.2f)",
               entity.c_str(),
