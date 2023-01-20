@@ -11,7 +11,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
@@ -48,6 +48,7 @@ class NeuronavigationNode(Node):
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
                                                                     self.planner_state_callback, qos_persist_latest)
+        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses,"/neuronavigation/optitrack_poses",self.optitrack_listener_callback, 10)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
@@ -109,6 +110,8 @@ class NeuronavigationNode(Node):
         self._set_markers(markers)
         self.get_logger().info('I heard planner state')
 
+    def optitrack_listener_callback(self, msg):
+        self.get_logger().info('I heard optitrack: "%s"' % msg.data)
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
         # Publisher.sendMessage('invesalius messages', arg=msg.data)
@@ -160,6 +163,8 @@ class NeuronavigationNode(Node):
 
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
+
+    #def update_rigidbodies(self):
 
     def update_efield(self, position, orientation, T_rot):
         self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
