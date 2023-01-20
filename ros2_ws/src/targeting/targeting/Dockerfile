@@ -13,6 +13,7 @@ RUN apt-get install -y \
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/targeting ros2_ws/src/targeting/targeting/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
 
 # Build ROS packages
