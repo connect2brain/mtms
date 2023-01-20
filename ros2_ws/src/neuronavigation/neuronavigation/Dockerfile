@@ -65,8 +65,7 @@ RUN cd ros2_ws && \
 # Copy rest of InVesalius
 
 COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
-COPY ros2_ws/src/neuronavigation/neuronavigation/pypolaris-0.0.3-py3-none-any.whl ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
-RUN pip install /app/ros2_ws/src/neuronavigation/neuronavigation/invesalius3/pypolaris-0.0.3-py3-none-any.whl
+
 # Copy and build Neuronavigation ROS package
 
 COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
