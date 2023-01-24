@@ -60,6 +60,7 @@ public:
 private:
 
   mtms_device_interfaces::msg::ExperimentState experiment_state;
+  bool experiment_been_stopped;
 
   double_t sync_interval;
   uint16_t sync_index;
