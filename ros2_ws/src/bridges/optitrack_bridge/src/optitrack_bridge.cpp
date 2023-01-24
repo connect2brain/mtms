@@ -73,7 +73,7 @@ OptitrackBridge::OptitrackBridge() : Node("optitrack_bridge") {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Connected to Motive.");
 
   publisher = this->create_publisher<neuronavigation_interfaces::msg::OptitrackPoses>(
-      "/neuronavigation/optitrack_poses", 10);
+      "/neuronavigation/optitrack_poses", 1);
 }
 
 void OptitrackBridge::shutdown() {
