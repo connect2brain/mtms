@@ -98,11 +98,17 @@ class DataGatherer:
             ))
             self.state = DataGatheringState.FINAL_STATE__FAILURE
 
-        elif self.emg_channel >= channel_count:
+        elif self.emg_channel > channel_count:
             self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}).'.format(
                 self.goal_id,
                 self.emg_channel,
                 channel_count,
+            ))
+            self.state = DataGatheringState.FINAL_STATE__FAILURE
+
+        elif self.emg_channel == 0:
+            self.logger.warn('{}: Failure: Requested channel is zero, the channel numbering starts from 1.'.format(
+                self.goal_id,
             ))
             self.state = DataGatheringState.FINAL_STATE__FAILURE
 
@@ -117,7 +123,10 @@ class DataGatherer:
 
     def handle_state__gather_data(self, current_time, msg):
         if current_time < self.start_time + self.MEP_DURATION_S:
-            self.emg_buffer[self.n_samples] = msg.emg_channels[self.emg_channel]
+            # EMG channel numbering starts from 1, therefore decrement when
+            # indexing the array.
+            #
+            self.emg_buffer[self.n_samples] = msg.emg_channels[self.emg_channel - 1]
             self.time_buffer[self.n_samples] = current_time - self.start_time
 
             self.n_samples += 1
