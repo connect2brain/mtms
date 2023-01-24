@@ -39,6 +39,7 @@
 #define MEASUREMENT_START_PACKET_ID 1
 #define SAMPLE_PACKET_ID 2
 #define TRIGGER_PACKET_ID 3
+#define MEASUREMENT_END_PACKET_ID 4
 
 #define TRIGGER_A_IN 2
 #define TRIGGER_B_IN 8
@@ -373,6 +374,11 @@ void EegBridge::handle_eeg_data_packet() {
       if (this->measurement_start_packet_received_) {
         this->handle_trigger_packet();
       }
+      break;
+
+    case MEASUREMENT_END_PACKET_ID:
+      RCLCPP_INFO(this->get_logger(), "Measurement end packet received.");
+
       break;
 
     default:
