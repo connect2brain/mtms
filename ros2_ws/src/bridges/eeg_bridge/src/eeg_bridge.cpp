@@ -331,6 +331,8 @@ void EegBridge::handle_eeg_data_packet() {
 
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
+
         break;
       }
 
@@ -359,9 +361,7 @@ void EegBridge::handle_eeg_data_packet() {
             this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
-
         }
-
       }
       break;
 
