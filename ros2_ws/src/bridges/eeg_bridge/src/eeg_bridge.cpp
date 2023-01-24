@@ -130,7 +130,7 @@ void EegBridge::set_channel_types() {
 
 void EegBridge::reset_sync() {
   first_trigger_received = false;
-  sync_diff = 0;
+  time_correction = 0;
   sync_index = 1;
 }
 
@@ -210,9 +210,9 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  sync_diff = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
+  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
   sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Updated sync diff to %f", sync_diff);
+  RCLCPP_INFO(this->get_logger(), "Updated time correction to %f", time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
@@ -236,7 +236,7 @@ void EegBridge::handle_trigger_packet() {
     }
 
   } else {
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
+    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   }
 
   trigger_msg.index = trigger_index;
@@ -263,7 +263,7 @@ void EegBridge::handle_sample_packet() {
   }
 
   if (this->first_trigger_timestamp_ > 0 && time >= this->first_trigger_timestamp_) {
-    double_t time_diff = time - this->first_trigger_timestamp_ - sync_diff;
+    double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
     this->publish_eeg_datapoint(time_diff);
     this->first_sample_of_experiment_ = false;
@@ -399,7 +399,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     trigger_msg.index = 2;
-    trigger_msg.time = time - this->first_trigger_timestamp_ - this->sync_diff;
+    trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
   }
   this->publisher_trigger_->publish(trigger_msg);
 }
