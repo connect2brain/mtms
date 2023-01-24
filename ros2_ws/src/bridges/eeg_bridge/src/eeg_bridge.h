@@ -63,7 +63,7 @@ private:
 
   double_t sync_interval;
   uint16_t sync_index;
-  double_t sync_diff;
+  double_t time_correction;
   bool first_trigger_received;
 
   rclcpp::TimerBase::SharedPtr timer_;
