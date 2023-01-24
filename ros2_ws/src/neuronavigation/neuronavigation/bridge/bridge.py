@@ -17,6 +17,7 @@ from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
+import time
 
 from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
 
@@ -48,7 +49,7 @@ class NeuronavigationNode(Node):
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
                                                                     self.planner_state_callback, qos_persist_latest)
-        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses,"/neuronavigation/optitrack_poses",self.optitrack_listener_callback, 10)
+        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses,"/neuronavigation/optitrack_poses",self.optitrack_listener_callback, 1)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
@@ -111,7 +112,9 @@ class NeuronavigationNode(Node):
         self.get_logger().info('I heard planner state')
 
     def optitrack_listener_callback(self, msg):
-        self.get_logger().info('I heard optitrack: "%s"' % msg.data)
+        self.get_logger().info('I heard optitrack: "%s"' % msg.probe)
+        # Simulate a very slow consumer
+        time.sleep(0.1)
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
         # Publisher.sendMessage('invesalius messages', arg=msg.data)
@@ -163,8 +166,6 @@ class NeuronavigationNode(Node):
 
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
-
-    #def update_rigidbodies(self):
 
     def update_efield(self, position, orientation, T_rot):
         self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
