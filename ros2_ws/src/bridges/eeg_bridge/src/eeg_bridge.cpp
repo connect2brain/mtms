@@ -60,10 +60,13 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
+  this->experiment_been_stopped = false;
+
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
-    if (experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
       this->reset_sync();
+      this->experiment_been_stopped = true;
     }
   };
 
@@ -219,7 +222,7 @@ void EegBridge::handle_trigger_packet() {
   double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
-  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
+  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
 
   auto trigger_msg = eeg_interfaces::msg::Trigger();
 
@@ -269,12 +272,10 @@ void EegBridge::handle_sample_packet() {
     this->first_sample_of_experiment_ = false;
 
   } else if (time < this->first_trigger_timestamp_ || !this->first_trigger_received) {
-    auto &clk = *this->get_clock();
-
     RCLCPP_WARN_THROTTLE(this->get_logger(),
-                         clk,
+                         *this->get_clock(),
                          1000,
-                         "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
+                         "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
                          this->first_trigger_timestamp_ - time,
                          this->first_trigger_timestamp_,
                          time
@@ -333,6 +334,12 @@ void EegBridge::handle_eeg_data_packet() {
         break;
       }
 
+      if (!this->experiment_been_stopped) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
+
+        break;
+      }
+
       if (!this->send_trigger_as_channel) {
 
         /* If sending trigger as a packet, wait until we receive the first trigger and that the experiment is started. */
@@ -356,11 +363,13 @@ void EegBridge::handle_eeg_data_packet() {
         }
 
       }
-
-
       break;
 
     case TRIGGER_PACKET_ID:
+      if (!this->experiment_been_stopped) {
+        break;
+      }
+
       if (this->measurement_start_packet_received_) {
         this->handle_trigger_packet();
       }
