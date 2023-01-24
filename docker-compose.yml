@@ -105,6 +105,7 @@ services:
       - './data/neuronavigation_data:/app/data/neuronavigation_data/'
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
+    network_mode: host
 
   efield:
     build:
@@ -112,6 +113,7 @@ services:
       dockerfile: ros2_ws/src/targeting/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   optitrack_bridge:
     build:
