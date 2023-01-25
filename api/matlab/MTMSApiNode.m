@@ -1,7 +1,5 @@
 classdef MTMSApiNode < handle
     %MTMSApiNode A class for communicating with other ROS nodes.
-    %
-    %   TBD.
     
     properties
         node
