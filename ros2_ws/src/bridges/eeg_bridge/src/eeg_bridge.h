@@ -55,7 +55,7 @@ public:
 
   void handle_sync_trigger(double_t sync_time);
 
-  void reset_sync();
+  void reset_experiment();
 
 private:
 
