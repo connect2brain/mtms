@@ -1,5 +1,11 @@
 ## Version history
 
+### 0.4.8
+- MOD: Change sync interval from 10 s to 1 s.
+- FIX: Several charging-related bugs in Aalto device.
+- ADD: Voltage setpoint correction for charging in Aalto device.
+- ADD: Affine correction for discharge controllers in Aalto device.
+
 ### 0.4.7
 - FIX: Time counter was reset at the wrong time, before experiment started.
 
