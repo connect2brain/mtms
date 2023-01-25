@@ -8,7 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(mtms_interfaces REQUIRED)
+find_package(eeg_interfaces REQUIRED)
 
 add_executable(topic_frequency
         src/topic_frequency.cpp
@@ -17,7 +17,7 @@ add_executable(topic_frequency
         src/scheduling_utils.cpp
         src/scheduling_utils.h
         )
-ament_target_dependencies(topic_frequency rclcpp std_msgs mtms_interfaces)
+ament_target_dependencies(topic_frequency rclcpp std_msgs eeg_interfaces)
 
 
 install(TARGETS
