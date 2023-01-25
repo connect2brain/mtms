@@ -66,7 +66,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
     if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
-      this->reset_sync();
+      this->reset_experiment();
       this->experiment_been_stopped = true;
     }
   };
@@ -110,7 +110,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->init_socket();
 
   this->sync_interval = 10.0;
-  this->reset_sync();
+  this->reset_experiment();
 }
 
 void EegBridge::set_channel_types() {
@@ -132,7 +132,7 @@ void EegBridge::set_channel_types() {
   }
 }
 
-void EegBridge::reset_sync() {
+void EegBridge::reset_experiment() {
   first_trigger_received = false;
   time_correction = 0;
   sync_index = 1;
