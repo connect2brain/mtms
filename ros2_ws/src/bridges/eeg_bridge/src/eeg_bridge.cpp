@@ -65,7 +65,13 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
-    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
+       one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+       to ensure that we notice if the experiment is stopped. */
+    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
+        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
       this->reset_experiment();
       this->experiment_been_stopped = true;
     }
