@@ -33,12 +33,12 @@ It is recommended to do this in Ubuntu; in Windows, you may run into problems, s
 Here are the steps:
 
 1. Install colcon: `sudo apt install python3-colcon-common-extensions -y`. Alternatively, just install CMake.
-2. Install Python 3.9 (NB: Needs to be Python 3.9. ROS Toolbox requires that particular version.) If your system has another Python version installed, you install Python 3.9 using
-Anaconda. Another option is to install Python 3.9 so that it coexists with another Python version.
+2. Install Python 3.9 (NB: Needs to be Python 3.9. ROS Toolbox requires that particular version.) If your system has another Python version installed, you can
+install Python 3.9 using Anaconda. Another option is to install Python 3.9 so that it coexists with another Python version.
 
 NB: To be supported by ROS Toolbox, the installed version of Python 3.9 needs to be old enough.
-For instance, 3.9.15 does not work. The easiest way to install an old version of Python 3.9.x
-is to install it by building the source code.
+For instance, 3.9.15 does not work. Some ways to install an old version of Python 3.9.x
+is to use Anaconda or to build it from the source code.
 
 3. Open MATLAB and run `!which python3.9`.
 4. Run `pyenv('Version', '<the result from previous command>')`.
