@@ -55,15 +55,16 @@ public:
 
   void handle_sync_trigger(double_t sync_time);
 
-  void reset_sync();
+  void reset_experiment();
 
 private:
 
   mtms_device_interfaces::msg::ExperimentState experiment_state;
+  bool experiment_been_stopped;
 
   double_t sync_interval;
   uint16_t sync_index;
-  double_t sync_diff;
+  double_t time_correction;
   bool first_trigger_received;
 
   rclcpp::TimerBase::SharedPtr timer_;
