@@ -39,6 +39,7 @@
 #define MEASUREMENT_START_PACKET_ID 1
 #define SAMPLE_PACKET_ID 2
 #define TRIGGER_PACKET_ID 3
+#define MEASUREMENT_END_PACKET_ID 4
 
 #define TRIGGER_A_IN 2
 #define TRIGGER_B_IN 8
@@ -60,10 +61,19 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
+  this->experiment_been_stopped = false;
+
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     experiment_state = message->experiment_state;
-    if (experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-      this->reset_sync();
+
+    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
+       one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+       to ensure that we notice if the experiment is stopped. */
+    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
+        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+      this->reset_experiment();
+      this->experiment_been_stopped = true;
     }
   };
 
@@ -106,7 +116,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->init_socket();
 
   this->sync_interval = 10.0;
-  this->reset_sync();
+  this->reset_experiment();
 }
 
 void EegBridge::set_channel_types() {
@@ -128,9 +138,9 @@ void EegBridge::set_channel_types() {
   }
 }
 
-void EegBridge::reset_sync() {
+void EegBridge::reset_experiment() {
   first_trigger_received = false;
-  sync_diff = 0;
+  time_correction = 0;
   sync_index = 1;
 }
 
@@ -210,16 +220,16 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  sync_diff = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
+  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
   sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Updated sync diff to %f", sync_diff);
+  RCLCPP_INFO(this->get_logger(), "Updated time correction to %f", time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
   double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
-  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
+  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
 
   auto trigger_msg = eeg_interfaces::msg::Trigger();
 
@@ -236,7 +246,7 @@ void EegBridge::handle_trigger_packet() {
     }
 
   } else {
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
+    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   }
 
   trigger_msg.index = trigger_index;
@@ -263,18 +273,16 @@ void EegBridge::handle_sample_packet() {
   }
 
   if (this->first_trigger_timestamp_ > 0 && time >= this->first_trigger_timestamp_) {
-    double_t time_diff = time - this->first_trigger_timestamp_ - sync_diff;
+    double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
     this->publish_eeg_datapoint(time_diff);
     this->first_sample_of_experiment_ = false;
 
   } else if (time < this->first_trigger_timestamp_ || !this->first_trigger_received) {
-    auto &clk = *this->get_clock();
-
     RCLCPP_WARN_THROTTLE(this->get_logger(),
-                         clk,
+                         *this->get_clock(),
                          1000,
-                         "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
+                         "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
                          this->first_trigger_timestamp_ - time,
                          this->first_trigger_timestamp_,
                          time
@@ -330,6 +338,14 @@ void EegBridge::handle_eeg_data_packet() {
 
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
+
+        break;
+      }
+
+      if (!this->experiment_been_stopped) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
+
         break;
       }
 
@@ -352,18 +368,23 @@ void EegBridge::handle_eeg_data_packet() {
             this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
-
         }
-
       }
-
-
       break;
 
     case TRIGGER_PACKET_ID:
+      if (!this->experiment_been_stopped) {
+        break;
+      }
+
       if (this->measurement_start_packet_received_) {
         this->handle_trigger_packet();
       }
+      break;
+
+    case MEASUREMENT_END_PACKET_ID:
+      RCLCPP_INFO(this->get_logger(), "Measurement end packet received.");
+
       break;
 
     default:
@@ -399,7 +420,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     trigger_msg.index = 2;
-    trigger_msg.time = time - this->first_trigger_timestamp_ - this->sync_diff;
+    trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
   }
   this->publisher_trigger_->publish(trigger_msg);
 }
