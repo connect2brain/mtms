@@ -16,12 +16,12 @@ class TopicFrequency : public rclcpp::Node {
 public:
   TopicFrequency() : Node("topic_frequency") {
 
-    messages_received_since = 0;
+    messages_received_since_last_full_second = 0;
     messages_received = 0;
 
     auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
       messages_received++;
-      messages_received_since++;
+      messages_received_since_last_full_second++;
     };
 
     subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data",
@@ -34,15 +34,8 @@ public:
   }
 
   void timer_callback() {
-    if (messages_received_since > 4500) {
-      RCLCPP_INFO(this->get_logger(), "Hz: %d, total messages: %d", messages_received_since, messages_received);
-    } else if (messages_received_since > 4000) {
-      RCLCPP_WARN(this->get_logger(), "Hz: %d, total messages: %d", messages_received_since, messages_received);
-    } else {
-      RCLCPP_ERROR(this->get_logger(), "Hz: %d, total messages: %d", messages_received_since, messages_received);
-    }
-
-    messages_received_since = 0;
+    RCLCPP_INFO(this->get_logger(), "Messages received during the last second: %d, total messages: %d", messages_received_since_last_full_second, messages_received);
+    messages_received_since_last_full_second = 0;
   }
 
 
@@ -50,7 +43,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer;
   rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr subscription;
   unsigned int messages_received;
-  unsigned int messages_received_since;
+  unsigned int messages_received_since_last_full_second;
 };
 
 
