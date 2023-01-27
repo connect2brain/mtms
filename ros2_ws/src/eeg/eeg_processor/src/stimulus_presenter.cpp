@@ -8,7 +8,7 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-StimulusPresenter::StimulusPresenter() : ProcessorNode("eeg_preprocessor") {
+StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
   this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
   this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
   this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/signal_out", 10);
@@ -16,12 +16,45 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("eeg_preprocessor") {
 
 
   auto subscription_callback = [this](const std::shared_ptr<event_interfaces::msg::Stimulus> message) -> void {
-    auto events = processor->present_stimulus_received(*message);
-    publish_events(message->event_info.decision_time, events);
+
+    /* If immediate event, publish it immediately. Otherwise, add it to a buffer and wait until its time arrives. */
+    if (message->event_info.execution_condition.value == event_interfaces::msg::ExecutionCondition::IMMEDIATE) {
+      auto events = this->processor->present_stimulus_received(*message);
+      publish_events(message->event_info.decision_time, events);
+    } else {
+      this->event_buffer.push_back(*message);
+    }
+
   };
 
   this->subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/stimulus", 5000,
                                                                                            subscription_callback);
+
+  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
+    std::vector<unsigned> ids_to_remove;
+
+    for (unsigned i = 0; i < this->event_buffer.size(); i++) {
+      
+      auto event = this->event_buffer[i];
+      
+      /* If current time >= the time the event was supposed to be executed at, execute it and remove it from buffer. 
+         Otherwise, keep it in the buffer. */
+      if (message->time >= event.event_info.execution_time) {
+        auto events = this->processor->present_stimulus_received(event);
+        publish_events(event.event_info.decision_time, events);
+        ids_to_remove.push_back(i);
+      }
+    }
+    
+    /* Erase executed events from the buffer. Not performed simultaneously with the previous loop to not affect the 
+       loop indices. */
+    for (auto id_to_remove : ids_to_remove) {
+      this->event_buffer.erase(this->event_buffer.begin() + id_to_remove);
+    }
+  };
+
+  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000, eeg_subscription_callback);
+
 
 }
 
@@ -82,14 +115,14 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_preprocessor"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 
   auto node = std::make_shared<StimulusPresenter>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_preprocessor"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
