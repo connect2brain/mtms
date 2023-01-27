@@ -238,8 +238,8 @@ After the previous steps are done, run the following commands to start the swarm
 
 Useful commands:
 - See simple information of all services: `docker service ls`
-- See more information of all services: `docker service ps mtms_eeg_bridge_wrapper mtms_data_batcher_wrapper mtms_eeg_simulator mtms_neuronavigation mtms_efield mtms_rosbridge mtms_pulse_sequence_controller mtms_planner mtms_front mtms_mtms_device_bridge_wrapper mtms_eeg_processor_wrapper mtms_eeg_processor_wrapper --no-trunc`
-- Remove all services `docker service rm mtms_data_batcher_wrapper mtms_eeg_processor_wrapper mtms_eeg_simulator mtms_efield mtms_mtms_device_bridge_wrapper mtms_front mtms_neuronavigation mtms_planner mtms_pulse_sequence_controller mtms_rosbridge`
+- See more information of all services: `docker service ps mtms_eeg_bridge_wrapper mtms_eeg_batcher_wrapper mtms_eeg_simulator mtms_neuronavigation mtms_efield mtms_rosbridge mtms_pulse_sequence_controller mtms_planner mtms_front mtms_mtms_device_bridge_wrapper mtms_eeg_processor_wrapper mtms_eeg_processor_wrapper --no-trunc`
+- Remove all services `docker service rm mtms_eeg_batcher_wrapper mtms_eeg_processor_wrapper mtms_eeg_simulator mtms_efield mtms_mtms_device_bridge_wrapper mtms_front mtms_neuronavigation mtms_planner mtms_pulse_sequence_controller mtms_rosbridge`
 - Delete all dangling docker containers `docker kill $(docker ps -q)`
 
 ### Notes
