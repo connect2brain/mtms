@@ -68,10 +68,10 @@ services:
     env_file:
       - ${ENV_FILE}
 
-  data_batcher:
+  eeg_batcher:
     build:
       context: .
-      dockerfile: ros2_ws/src/eeg/data_batcher/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_batcher/Dockerfile
     env_file:
       - ${ENV_FILE}
     privileged: true
