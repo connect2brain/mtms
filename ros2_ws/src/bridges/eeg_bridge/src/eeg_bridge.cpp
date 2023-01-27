@@ -243,15 +243,15 @@ void EegBridge::handle_trigger_packet() {
       trigger_msg.time = 0;
       this->first_trigger_received = true;
       this->first_sample_of_experiment_ = true;
+
+      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     }
 
   } else {
     trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   }
-
   trigger_msg.index = trigger_index;
   this->publisher_trigger_->publish(trigger_msg);
-
 }
 
 void EegBridge::handle_sample_packet() {
@@ -272,25 +272,25 @@ void EegBridge::handle_sample_packet() {
     this->first_sample_of_experiment_ = true;
   }
 
-  if (this->first_trigger_timestamp_ > 0 && time >= this->first_trigger_timestamp_) {
-    double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
+  /* If first trigger has not been received yet, ignore the sample packet. */
+  if (this->first_trigger_received) {
 
-    this->publish_eeg_datapoint(time_diff);
-    this->first_sample_of_experiment_ = false;
+    if (time >= this->first_trigger_timestamp_) {
+      double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
-  } else if (time < this->first_trigger_timestamp_ || !this->first_trigger_received) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
-                         this->first_trigger_timestamp_ - time,
-                         this->first_trigger_timestamp_,
-                         time
-    );
+      this->publish_eeg_datapoint(time_diff);
+      this->first_sample_of_experiment_ = false;
 
-  } else {
-    RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Experiment start trigger timestamp %.4f, time %.4f",
-                this->first_trigger_timestamp_, time);
+    } else {
+      RCLCPP_WARN_THROTTLE(this->get_logger(),
+                          *this->get_clock(),
+                          1000,
+                          "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
+                          this->first_trigger_timestamp_ - time,
+                          this->first_trigger_timestamp_,
+                          time
+      );
+    }
   }
 }
 
@@ -410,10 +410,11 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
     trigger_msg.time = time - this->first_trigger_timestamp_;
 
     if (!first_trigger_received) {
-      first_trigger_timestamp_ = time;
-      first_trigger_received = true;
+      this->first_trigger_timestamp_ = time;
+      this->first_trigger_received = true;
       trigger_msg.time = 0.0;
-      RCLCPP_INFO(this->get_logger(), "First trigger received, ts: %f", first_trigger_timestamp_);
+
+      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(time);
     }
