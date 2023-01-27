@@ -35,7 +35,7 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-RUN pip install vtk==9.1.0 pyacvd==0.2.7
+RUN pip install vtk==9.1.0 pyacvd==0.2.7 pypolaris==0.0.6
 
 ## InVesalius
 
