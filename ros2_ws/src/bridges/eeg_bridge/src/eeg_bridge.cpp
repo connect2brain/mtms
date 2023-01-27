@@ -222,22 +222,18 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 void EegBridge::handle_sync_trigger(double_t sync_time) {
   time_correction = (sync_time - first_trigger_timestamp_) - sync_index * SYNC_INTERVAL;
   sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Updated time correction to %f", time_correction);
+  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f.", time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
   double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
-  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
 
   auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_index == 1) {
-
-    if (this->first_trigger_received) {
-      this->handle_sync_trigger(new_trigger_timestamp);
-    } else {
+    if (!this->first_trigger_received) {
       /* Upon receiving the first trigger, reset time. */
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       trigger_msg.time = 0;
@@ -245,9 +241,13 @@ void EegBridge::handle_trigger_packet() {
       this->first_sample_of_experiment_ = true;
 
       RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+    } else {
+      this->handle_sync_trigger(new_trigger_timestamp);
     }
 
   } else {
+    RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
+
     trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   }
   trigger_msg.index = trigger_index;
