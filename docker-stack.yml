@@ -76,8 +76,10 @@ services:
     command: sh -c 'docker run --privileged --net=weavenet --env ROS_LOG_LEVEL --env BITFILE okahilak/mtms:mtms_device_bridge'
     environment:
       - ROS_LOG_LEVEL=info
+      # HACK: BITFILE, BITFILE_SIGNATURE, and RESOURCE probably shouldn't be hardcoded here.
       - BITFILE=NiFpga_mTMS_Tubingen_0.4.2.lvbitx
       - BITFILE_SIGNATURE=325DE9B3E0A386F7E898A899A8287C0E
+      - RESOURCE=PXI1Slot3
     volumes:
       # required to run docker in docker
       - '/var/run/docker.sock:/var/run/docker.sock'
