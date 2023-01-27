@@ -4,6 +4,7 @@ import ctypes
 from threading import Thread
 
 import rclpy
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
@@ -11,12 +12,13 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
+import time
 
 from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
 
@@ -41,6 +43,8 @@ class NeuronavigationNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
+        callback_group = ReentrantCallbackGroup()
+
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
         self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10)
 
@@ -48,6 +52,8 @@ class NeuronavigationNode(Node):
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
                                                                     self.planner_state_callback, qos_persist_latest)
+        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses, "/neuronavigation/optitrack_poses",
+                                                                      self.optitrack_listener_callback, 1, callback_group=callback_group)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
@@ -56,7 +62,7 @@ class NeuronavigationNode(Node):
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation')
 
-        self.cli = self.create_client(Efield, 'efield')
+        self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('efield service not available, waiting...')
         self.req = Efield.Request()
@@ -109,6 +115,10 @@ class NeuronavigationNode(Node):
         self._set_markers(markers)
         self.get_logger().info('I heard planner state')
 
+    def optitrack_listener_callback(self, msg):
+        self.get_logger().info('I heard optitrack: "%s"' % msg.probe)
+        # Simulate a very slow consumer
+        time.sleep(0.1)
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
         # Publisher.sendMessage('invesalius messages', arg=msg.data)
