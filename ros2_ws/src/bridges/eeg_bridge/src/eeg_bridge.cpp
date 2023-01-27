@@ -1,4 +1,3 @@
-
 #include "eeg_bridge.h"
 
 #include "scheduling_utils.h"
@@ -22,6 +21,8 @@
 #define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
 #define MEASUREMENT_START_PACKET_N_CHANNELS_INDEX 16
 #define MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX 18
+
+#define SYNC_INTERVAL 1.0
 
 /* HACK: If source channel matches the value below, it indicates the existence
  *  of trigger in the sample packet. This is documented in NeurOne's manual.
@@ -115,7 +116,6 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->init_socket();
 
-  this->sync_interval = 10.0;
   this->reset_experiment();
 }
 
@@ -220,7 +220,7 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
+  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * SYNC_INTERVAL;
   sync_index++;
   RCLCPP_INFO(this->get_logger(), "Updated time correction to %f", time_correction);
 }
