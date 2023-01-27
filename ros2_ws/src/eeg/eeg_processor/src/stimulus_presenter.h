@@ -19,6 +19,10 @@ private:
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;
   rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
 
+  rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_subscription;
+
+  std::vector<event_interfaces::msg::Stimulus> event_buffer;
+
 };
 
 #endif //EEG_PROCESSOR_STIMULUS_PRESENTER_H
