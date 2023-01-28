@@ -61,6 +61,7 @@ private:
 
   mtms_device_interfaces::msg::ExperimentState experiment_state;
   bool experiment_been_stopped;
+  bool system_state_received;
 
   uint16_t sync_index;
   double_t time_correction;
