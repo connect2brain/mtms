@@ -45,6 +45,8 @@
 #define TRIGGER_A_IN 2
 #define TRIGGER_B_IN 8
 
+#define EEG_RAW_TOPIC "/eeg/raw_data"
+
 #define VERBOSE 0
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
@@ -78,7 +80,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
     }
   };
 
-  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
+  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
   publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
@@ -236,9 +238,10 @@ void EegBridge::handle_trigger_packet() {
     if (!this->first_trigger_received) {
       /* Upon receiving the first trigger, reset time. */
       this->first_trigger_timestamp_ = new_trigger_timestamp;
-      trigger_msg.time = 0;
       this->first_trigger_received = true;
       this->first_sample_of_experiment_ = true;
+
+      trigger_msg.time = 0;
 
       RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
@@ -454,10 +457,10 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
 
     i += 3;
   }
-
   message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
   this->publisher_data_->publish(message);
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Publishing EEG data to topic %s", EEG_RAW_TOPIC);
 }
 
 
