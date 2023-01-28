@@ -65,8 +65,10 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
   this->experiment_been_stopped = false;
+  this->system_state_received = false;
 
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
+    this->system_state_received = true;
     experiment_state = message->experiment_state;
 
     /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
@@ -334,6 +336,11 @@ void EegBridge::handle_eeg_data_packet() {
       break;
 
     case SAMPLE_PACKET_ID:
+      if (!this->system_state_received) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state has not been received. Is bridge to mTMS device running?");
+
+        break;
+      }
       if (!this->measurement_start_packet_received_) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
 
