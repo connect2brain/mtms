@@ -81,7 +81,6 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   };
 
   publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
-  publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
   publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
   subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", 10,
@@ -199,11 +198,6 @@ bool EegBridge::read_eeg_data_from_socket() {
 
   if (success == -1) {
     RCLCPP_WARN(this->get_logger(), "No data received, reason: %s", strerror(errno));
-
-    auto stream_msg = std_msgs::msg::Bool();
-    stream_msg.data = false;
-    this->publisher_streaming_->publish(stream_msg);
-
     return false;
   }
   return true;
