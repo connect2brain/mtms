@@ -2,54 +2,56 @@
 
 #include "scheduling_utils.h"
 #include "memory_utils.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <cstdio>
-#include <unistd.h>
+
 #include <arpa/inet.h>
 #include <chrono>
+#include <cmath>
+#include <cstdio>
 #include <functional>
 #include <memory>
-#include <cmath>
+#include <string>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-#define SIGNED_MAX pow(2,23)
-#define UNSIGNED_MAX pow(2,24)
-#define DC_MODE_SCALE 100
-#define NANO_TO_MICRO_CONVERSION 1000
+const int32_t SIGNED_MAX = pow(2,23);
+const int32_t UNSIGNED_MAX = pow(2,24);
+const uint8_t DC_MODE_SCALE = 100;
+const uint16_t NANO_TO_MICRO_CONVERSION = 1000;
 
-#define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
-#define MEASUREMENT_START_PACKET_N_CHANNELS_INDEX 16
-#define MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX 18
+const uint8_t MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX = 4;
+const uint8_t MEASUREMENT_START_PACKET_N_CHANNELS_INDEX = 16;
+const uint8_t MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX = 18;
 
-#define SYNC_INTERVAL 1.0
+const double_t SYNC_INTERVAL = 1.0;
 
 /* HACK: If source channel matches the value below, it indicates the existence
  *  of trigger in the sample packet. This is documented in NeurOne's manual.
  *  However, it would be cleaner to have a separate field in measurement start
  *  packet to indicate the existence of trigger. */
-#define SOURCE_CHANNEL_FOR_TRIGGER 65535
+const uint16_t SOURCE_CHANNEL_FOR_TRIGGER = 65535;
 
-#define SAMPLE_PACKET_N_BUNDLES_INDEX 10
+const uint8_t SAMPLE_PACKET_N_BUNDLES_INDEX = 10;
 
-#define FIRST_CHANNEL_INDEX 28
-#define SAMPLE_PACKET_FIRST_TIME_INDEX 20
-#define TRIGGER_PACKET_FIRST_TIME_INDEX 8
-#define TRIGGER_PORT_INDEX 24
+const uint8_t FIRST_CHANNEL_INDEX = 28;
+const uint8_t SAMPLE_PACKET_FIRST_TIME_INDEX = 20;
+const uint8_t TRIGGER_PACKET_FIRST_TIME_INDEX = 8;
+const uint8_t TRIGGER_PORT_INDEX = 24;
 
-#define MEASUREMENT_START_PACKET_ID 1
-#define SAMPLE_PACKET_ID 2
-#define TRIGGER_PACKET_ID 3
-#define MEASUREMENT_END_PACKET_ID 4
+const uint8_t MEASUREMENT_START_PACKET_ID = 1;
+const uint8_t SAMPLE_PACKET_ID = 2;
+const uint8_t TRIGGER_PACKET_ID = 3;
+const uint8_t MEASUREMENT_END_PACKET_ID = 4;
 
-#define TRIGGER_A_IN 2
-#define TRIGGER_B_IN 8
+const uint8_t TRIGGER_A_IN = 2;
+const uint8_t TRIGGER_B_IN = 8;
 
-#define EEG_RAW_TOPIC "/eeg/raw_data"
+const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
 
-#define VERBOSE 0
+const uint8_t VERBOSE = 0;
 
 /* HACK: Needs to match the values in system_state_bridge.cpp. */
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
@@ -505,7 +507,7 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
   message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
   this->publisher_data_->publish(message);
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Publishing EEG data to topic %s", EEG_RAW_TOPIC);
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Publishing EEG data to topic %s", EEG_RAW_TOPIC.c_str());
 }
 
 
