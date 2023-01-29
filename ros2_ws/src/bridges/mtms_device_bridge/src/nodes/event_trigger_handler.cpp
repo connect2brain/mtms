@@ -7,7 +7,7 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void callback(const std::shared_ptr<event_interfaces::msg::EventTrigger> event_trigger) {
+void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::EventTrigger> event_trigger) {
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteBool(session,
                                       NiFpga_mTMS_ControlBool_Eventtrigger,
