@@ -11,6 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/experiment_state.hpp"
@@ -28,6 +29,8 @@ public:
   EegBridge();
 
   void set_channel_types();
+
+  void create_publishers();
 
   void subscribe_to_system_state();
 
@@ -73,8 +76,8 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr publisher_eeg_info_;
 
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
