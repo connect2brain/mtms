@@ -1,0 +1,3 @@
+uint32 sampling_frequency
+uint16 n_channels
+bool send_trigger_as_channel
