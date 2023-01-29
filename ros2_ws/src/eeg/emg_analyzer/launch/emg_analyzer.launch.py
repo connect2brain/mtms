@@ -12,11 +12,6 @@ def generate_launch_description():
         description="Logging level",
     )
 
-    sampling_frequency_arg = DeclareLaunchArgument(
-        "sampling-frequency",
-        description="Sampling frequency",
-    )
-
     logger = LaunchConfiguration("log-level")
 
     node_executables = [
@@ -27,11 +22,6 @@ def generate_launch_description():
         node = Node(
             package="emg_analyzer",
             executable=node_executable,
-            parameters=[
-                {
-                    "sampling_frequency": LaunchConfiguration("sampling-frequency"),
-                }
-            ],
             arguments=['--ros-args', '--log-level', logger]
         )
         ld.add_action(node)
