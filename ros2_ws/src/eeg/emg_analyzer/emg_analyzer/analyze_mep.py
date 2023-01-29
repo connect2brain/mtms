@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 
+from eeg_interfaces.msg import EegInfo
 from eeg_interfaces.action import AnalyzeMep
 from eeg_interfaces.srv import AnalyzeMepService
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
@@ -13,6 +14,8 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
+from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
+
 from .data_gatherer import DataGatherer
 
 
@@ -21,14 +24,21 @@ class AnalyzeMepNode(Node):
     def __init__(self):
         super().__init__('analyze_mep_node')
 
-        descriptor = ParameterDescriptor(
-            name='Sampling frequency',
-            type=ParameterType.PARAMETER_INTEGER,
-        )
-        self.declare_parameter('sampling_frequency', descriptor=descriptor)
-        self.sampling_frequency = self.get_parameter('sampling_frequency').value
-
         self.callback_group = ReentrantCallbackGroup()
+
+        qos_persist_latest = QoSProfile(
+            depth=1,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            reliability=ReliabilityPolicy.RELIABLE,
+        )
+        self.eeg_info_subscriber = self.create_subscription(
+            EegInfo,
+            '/eeg/info',
+            self.eeg_info_callback,
+            qos_persist_latest,
+        )
+
         self.action_server = ActionServer(
             self,
             AnalyzeMep,
@@ -47,6 +57,12 @@ class AnalyzeMepNode(Node):
             self.analyze_mep_service_handler,
             callback_group=self.callback_group,
         )
+
+    def eeg_info_callback(self, eeg_info):
+        # Update sampling frequency
+
+        self.sampling_frequency = eeg_info.sampling_frequency
+        self.logger.info('Updated sampling frequency to {} Hz.'.format(self.sampling_frequency))
 
     def compute_mep_amplitude_and_latency(self, emg_buffer, time_buffer):
         max_i = np.argmax(emg_buffer)
