@@ -12,6 +12,8 @@
 #include <memory>
 #include <cmath>
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
 
 #define SIGNED_MAX pow(2,23)
 #define UNSIGNED_MAX pow(2,24)
@@ -49,6 +51,10 @@
 
 #define VERBOSE 0
 
+/* HACK: Needs to match the values in system_state_bridge.cpp. */
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+
 EegBridge::EegBridge() : Node("eeg_bridge") {
   const rmw_qos_profile_t qos_profile = {
       RMW_QOS_POLICY_HISTORY_KEEP_LAST,
@@ -64,29 +70,12 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-  this->experiment_been_stopped = false;
-  this->system_state_received = false;
-
-  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    this->system_state_received = true;
-    experiment_state = message->experiment_state;
-
-    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
-       one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
-       to ensure that we notice if the experiment is stopped. */
-    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
-        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
-
-      this->reset_experiment();
-      this->experiment_been_stopped = true;
-    }
-  };
-
   publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
   publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
 
-  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", 10,
-                                                                                           system_state_callback);
+  this->subscribe_to_system_state();
+
+  /* Read ROS parameters. */
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
@@ -122,6 +111,53 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->reset_experiment();
 }
 
+void EegBridge::subscribe_to_system_state() {
+  this->experiment_been_stopped = false;
+  this->system_state_received = false;
+
+  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
+    this->system_state_received = true;
+    experiment_state = message->experiment_state;
+
+    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
+       one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+       to ensure that we notice if the experiment is stopped. */
+    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
+        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+      this->reset_experiment();
+      this->experiment_been_stopped = true;
+    }
+  };
+
+  /* HACK: Duplicates code from system_state_bridge.cpp. */
+  auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
+  const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
+  const rmw_time_t rmw_deadline = {0, deadline_ns};
+  const rmw_time_t rmw_lifespan = rmw_deadline;
+
+  const rmw_qos_profile_t qos_profile = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      rmw_deadline,
+      rmw_lifespan,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
+  };
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) -> void {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+  };
+
+  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
+                                                                                                        system_state_callback, subscription_options);
+}
+
 void EegBridge::set_channel_types() {
   uint8_t channels_primary = this->eeg_channels_primary_amplifier_ + this->emg_channels_primary_amplifier_;
   uint8_t channels_secondary = this->eeg_channels_secondary_amplifier_ + this->emg_channels_secondary_amplifier_;
@@ -147,8 +183,21 @@ void EegBridge::reset_experiment() {
   sync_index = 1;
 }
 
+void EegBridge::wait_for_system_state() {
+  RCLCPP_INFO(this->get_logger(), "Waiting for system state...");
+
+  auto base_interface = this->get_node_base_interface();
+  while (!this->system_state_received) {
+    rclcpp::spin_some(base_interface);
+  }
+}
+
 void EegBridge::spin() {
-  RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet.");
+  /* System state has a deadline of 25 ms, but it will only start affecting once the first system state
+     is received. Hence, wait here until the system state is received. */
+  wait_for_system_state();
+
+  RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet...");
 
   auto base_interface = this->get_node_base_interface();
 
@@ -336,11 +385,6 @@ void EegBridge::handle_eeg_data_packet() {
       break;
 
     case SAMPLE_PACKET_ID:
-      if (!this->system_state_received) {
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state has not been received. Is bridge to mTMS device running?");
-
-        break;
-      }
       if (!this->measurement_start_packet_received_) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
 
