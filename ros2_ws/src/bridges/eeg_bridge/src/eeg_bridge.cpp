@@ -50,6 +50,7 @@ const uint8_t TRIGGER_A_IN = 2;
 const uint8_t TRIGGER_B_IN = 8;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
 
 const uint8_t VERBOSE = 0;
@@ -59,22 +60,7 @@ const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
-  const rmw_qos_profile_t qos_profile = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      RMW_QOS_DEADLINE_DEFAULT,
-      RMW_QOS_LIFESPAN_DEFAULT,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
-
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
-
-  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
-  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
+  this->create_publishers();
 
   this->subscribe_to_system_state();
 
@@ -112,6 +98,26 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->init_socket();
 
   this->reset_experiment();
+}
+
+void EegBridge::create_publishers() {
+  const rmw_qos_profile_t qos_profile = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      RMW_QOS_DEADLINE_DEFAULT,
+      RMW_QOS_LIFESPAN_DEFAULT,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
+  };
+
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
+  this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
+  this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
 }
 
 void EegBridge::subscribe_to_system_state() {
@@ -346,6 +352,8 @@ void EegBridge::handle_measurement_start_packet() {
   RCLCPP_INFO(this->get_logger(), "Measurement start packet received.");
   this->measurement_start_packet_received_ = true;
 
+  /* Parse measurement start packet. */
+
   this->sampling_frequency_ = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
@@ -374,6 +382,16 @@ void EegBridge::handle_measurement_start_packet() {
 
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
+
+  /* Publish EEG info. */
+
+  auto eeg_info_msg = eeg_interfaces::msg::EegInfo();
+
+  eeg_info_msg.sampling_frequency = this->sampling_frequency_;
+  eeg_info_msg.n_channels = this->n_channels_;
+  eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
+
+  this->publisher_eeg_info_->publish(eeg_info_msg);
 }
 
 void EegBridge::handle_eeg_data_packet() {
