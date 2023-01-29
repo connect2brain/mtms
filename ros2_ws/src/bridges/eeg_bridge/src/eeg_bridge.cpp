@@ -50,6 +50,7 @@ const uint8_t TRIGGER_A_IN = 2;
 const uint8_t TRIGGER_B_IN = 8;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
 
 const uint8_t VERBOSE = 0;
 
@@ -73,7 +74,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
   publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
-  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
+  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
 
   this->subscribe_to_system_state();
 
@@ -288,19 +289,16 @@ void EegBridge::handle_trigger_packet() {
       this->first_trigger_received = true;
       this->first_sample_of_experiment_ = true;
 
-      trigger_msg.time = 0;
-
       RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(new_trigger_timestamp);
     }
-
   } else {
     RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
-
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   }
+  trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   trigger_msg.index = trigger_index;
+
   this->publisher_trigger_->publish(trigger_msg);
 }
 
@@ -462,7 +460,6 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
     if (!first_trigger_received) {
       this->first_trigger_timestamp_ = time;
       this->first_trigger_received = true;
-      trigger_msg.time = 0.0;
 
       RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
@@ -471,8 +468,9 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     trigger_msg.index = 2;
-    trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
   }
+  trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+
   this->publisher_trigger_->publish(trigger_msg);
 }
 
