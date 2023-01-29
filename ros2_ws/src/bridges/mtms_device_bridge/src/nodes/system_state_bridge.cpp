@@ -17,12 +17,16 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
+
 const uint8_t CHANNEL_COUNT = 5;
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
-#define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
-using namespace std::chrono_literals;
+#define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
 
 NiFpga_mTMS_IndicatorU16 voltage_indicators[CHANNEL_COUNT] = {
     NiFpga_mTMS_IndicatorU16_Channel1Capacitorvoltage,
@@ -71,9 +75,28 @@ class SystemStateBridge : public rclcpp::Node {
 public:
   SystemStateBridge()
       : Node("system_state_bridge") {
+
+    auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
+    const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
+    const rmw_time_t rmw_deadline = {0, deadline_ns};
+    const rmw_time_t rmw_lifespan = rmw_deadline;
+
+    const rmw_qos_profile_t qos_profile = {
+        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+        1,
+        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+        rmw_deadline,
+        rmw_lifespan,
+        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+        false
+    };
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
-        "/mtms_device/system_state", 10);
-    timer_ = this->create_wall_timer(20ms, std::bind(&SystemStateBridge::publish_system_state, this));
+        "/mtms_device/system_state", qos);
+    timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
   }
 
 private:

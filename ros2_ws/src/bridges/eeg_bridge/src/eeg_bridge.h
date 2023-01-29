@@ -29,6 +29,10 @@ public:
 
   void set_channel_types();
 
+  void subscribe_to_system_state();
+
+  void wait_for_system_state();
+
   void spin();
 
   void init_socket();
