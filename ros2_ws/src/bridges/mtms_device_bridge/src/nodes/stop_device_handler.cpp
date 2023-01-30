@@ -7,7 +7,7 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void stop_device(const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
+void stop_device([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
                  std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Response> response) {
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopdevice, true));
