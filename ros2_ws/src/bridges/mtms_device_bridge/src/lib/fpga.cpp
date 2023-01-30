@@ -22,6 +22,7 @@ bool init_fpga() {
   auto bitfile = std::getenv("BITFILE");
   auto bitfile_directory = std::getenv("BITFILE_DIRECTORY");
   auto bitfile_signature = std::getenv("BITFILE_SIGNATURE");
+  auto resource = std::getenv("RESOURCE");
 
   if (!bitfile || !bitfile_directory) {
     RCLCPP_ERROR(rclcpp::get_logger("run_fpga"),
@@ -33,14 +34,20 @@ bool init_fpga() {
                  "No BITFILE_SIGNATURE environment variable set.");
     return false;
   }
+  if (!resource) {
+    RCLCPP_ERROR(rclcpp::get_logger("run_fpga"),
+                 "No RESOURCE environment variable set.");
+    return false;
+  }
 
   std::string bitfile_path_str = std::string(bitfile_directory) + "/" + std::string(bitfile);
   std::string bitfile_signature_str = std::string(bitfile_signature);
+  std::string resource_str = std::string(resource);
 
   NiFpga_MergeStatus(&status, NiFpga_Open(
       bitfile_path_str.c_str(),
       bitfile_signature_str.c_str(),
-      "PXI1Slot4",
+      resource_str.c_str(),
       NiFpga_OpenAttribute_NoRun,
       &session));
 
