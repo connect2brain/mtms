@@ -1,8 +1,8 @@
-from .base_python_processor import BaseProcessor, Charge, Discharge, Pulse
+from .base_python_pipeline_stage import BasePipelineStage, Charge, Discharge, Pulse
 from .thresholding import RealtimePeakDetection
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     def __init__(self):
         self.eeg_data_index = 0
         self.data = []

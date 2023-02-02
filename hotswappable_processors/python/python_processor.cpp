@@ -56,7 +56,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   python_close_name = PyUnicode_FromString("end_experiment");
 }
 
-std::vector<Event> PythonProcessor::init() {
+std::vector<Event> PythonPipeline_stage::init() {
   auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
   if (!PyList_Check(result)) {
     std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
@@ -73,7 +73,7 @@ std::vector<Event> PythonProcessor::init() {
   return events_out;
 }
 
-PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
+PyObject *PythonPipeline_stage::convert_vector_to_pyobject(std::vector<double> data) {
   PyObject *l = PyList_New(data.size());
   for (size_t i = 0; i < data.size(); i++) {
     PyList_SetItem(l, i, PyFloat_FromDouble(data[i]));
@@ -81,7 +81,7 @@ PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) 
   return l;
 }
 
-std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) {
+std::vector<double> PythonPipeline_stage::convert_pyobject_to_vector(PyObject *data) {
   std::vector<double> l;
 
   Py_ssize_t size = PyList_Size(data);
@@ -90,7 +90,7 @@ std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) 
   for (size_t i = 0; i < size; i++) {
     item = PyList_GetItem(data, i);
     if (!PyFloat_Check(item)) {
-      RCLCPP_WARN(rclcpp::get_logger("eeg_preprocessor"), "Index %d of returned sample was not a float.", i);
+      RCLCPP_WARN(rclcpp::get_logger("eeg_prepipeline_stage"), "Index %d of returned sample was not a float.", i);
       continue;
     }
     l.push_back(PyFloat_AsDouble(item));
@@ -99,7 +99,7 @@ std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) 
 }
 
 
-event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
+event_interfaces::msg::EventInfo PythonPipeline_stage::parse_event_info(PyObject *event) {
   auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
   if (event_info_as_pyobject == nullptr) {
     PyErr_Print();
@@ -132,7 +132,7 @@ event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *eve
   return event_info;
 }
 
-event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
+event_interfaces::msg::Charge PythonPipeline_stage::parse_charge(PyObject *event) {
   auto charge = event_interfaces::msg::Charge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -158,7 +158,7 @@ event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   return charge;
 }
 
-event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *event) {
+event_interfaces::msg::Discharge PythonPipeline_stage::parse_discharge(PyObject *event) {
   auto discharge = event_interfaces::msg::Discharge();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -184,7 +184,7 @@ event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *even
   return discharge;
 }
 
-event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
+event_interfaces::msg::SignalOut PythonPipeline_stage::parse_signal_out(PyObject *event) {
   auto signal_out = event_interfaces::msg::SignalOut();
 
   auto port = PyObject_GetAttrString(event, "port");
@@ -211,7 +211,7 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
   return signal_out;
 }
 
-event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event) {
+event_interfaces::msg::Stimulus PythonPipeline_stage::parse_stimulus(PyObject *event) {
   auto stimulus = event_interfaces::msg::Stimulus();
   auto state = PyObject_GetAttrString(event, "state");
   if (state == nullptr) {
@@ -226,7 +226,7 @@ event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event)
   return stimulus;
 }
 
-event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
+event_interfaces::msg::Pulse PythonPipeline_stage::parse_pulse(PyObject *event) {
   auto pulse = event_interfaces::msg::Pulse();
 
   auto channel = PyObject_GetAttrString(event, "channel");
@@ -262,7 +262,7 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   return pulse;
 }
 
-std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
+std::vector<Event> PythonPipeline_stage::convert_pyobject_events_to_events(std::vector<PyObject *> events) {
   std::vector<Event> events_out;
 
   for (auto event_as_pyobject: events) {
@@ -297,7 +297,7 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
       event.event_type = STIMULUS;
 
     } else {
-      RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Unknown event type: %lu", event_type);
+      RCLCPP_WARN(rclcpp::get_logger("eeg_pipeline_stage"), "Unknown event type: %lu", event_type);
     }
 
     events_out.push_back(event);
@@ -309,7 +309,7 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
 }
 
 std::vector<eeg_interfaces::msg::EegDatapoint>
-PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> samples) {
+PythonPipeline_stage::convert_pyobject_samples_to_samples(std::vector<PyObject *> samples) {
   std::vector<eeg_interfaces::msg::EegDatapoint> new_samples;
 
   for (auto sample_as_pyobject: samples) {
@@ -318,8 +318,8 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
     auto channel_data_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "sample");
 
     if (!PyList_Check(channel_data_as_pyobject)) {
-      RCLCPP_ERROR(rclcpp::get_logger("eeg_preprocessor"),
-                   "Error in call raw_eeg_received method. Ensure you are returning a list from python pre processor");
+      RCLCPP_ERROR(rclcpp::get_logger("eeg_prepipeline_stage"),
+                   "Error in call raw_eeg_received method. Ensure you are returning a list from python pre pipeline_stage");
       PyErr_Print();
     }
     sample.eeg_channels = convert_pyobject_to_vector(channel_data_as_pyobject);
@@ -340,7 +340,7 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
 }
 
 std::vector<eeg_interfaces::msg::EegDatapoint>
-PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
+PythonPipeline_stage::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
@@ -377,7 +377,7 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
 
 }
 
-std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {
+std::vector<Event> PythonPipeline_stage::present_stimulus_received(event_interfaces::msg::Stimulus event) {
   auto time = PyFloat_FromDouble(event.event_info.execution_time);
   auto state = PyLong_FromSize_t(event.state);
 
@@ -410,7 +410,7 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
 }
 
 
-std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
+std::vector<Event> PythonPipeline_stage::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
@@ -446,6 +446,6 @@ std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::Ee
   return events_out;
 }
 
-PythonProcessor::~PythonProcessor() {
+PythonPipeline_stage::~PythonPipeline_stage() {
   Py_FinalizeEx();
 }

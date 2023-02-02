@@ -1,9 +1,9 @@
-from .base_python_processor import BaseProcessor
+from .base_python_pipeline_stage import BasePipelineStage
 from .events import SignalOut, Stimulus
 from .execution_condition import ExecutionCondition
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(auto_enqueue=True, window_size=5000, channels=62)
         self.event_index = 1
@@ -35,7 +35,6 @@ class Processor(BaseProcessor):
             }
             self.event_index += 1
 
-            #event = SignalOut(1, 1000, event_info)
             event = Stimulus(1, event_info)
 
             self.samples_collected = 0

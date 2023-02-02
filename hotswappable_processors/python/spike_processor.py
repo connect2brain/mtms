@@ -1,10 +1,10 @@
-from .base_python_processor import BaseProcessor
+from .base_python_pipeline_stage import BasePipelineStage
 from .events import Pulse
 from .execution_condition import ExecutionCondition
 from .utils import analyze_eeg, get_default_waveform
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(auto_enqueue=True, window_size=5000)
         self.event_index = 1

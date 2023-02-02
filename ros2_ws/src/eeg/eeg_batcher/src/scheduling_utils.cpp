@@ -10,7 +10,7 @@ void set_thread_scheduling(std::thread::native_handle_type thread, int policy, i
   param.sched_priority = sched_priority;
   auto ret = pthread_setschedparam(thread, policy, &param);
   if (ret > 0) {
-    RCLCPP_WARN(rclcpp::get_logger("data_batcher"), "Couldn't set scheduling priority and policy. Error code: %s",
+    RCLCPP_WARN(rclcpp::get_logger("eeg_batcher"), "Couldn't set scheduling priority and policy. Error code: %s",
                 std::string(strerror(errno)).c_str());
   }
 }
