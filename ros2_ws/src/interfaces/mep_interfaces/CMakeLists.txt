@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(eeg_interfaces)
+project(mep_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(eeg_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -22,16 +23,17 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EegBatch.msg"
-  "msg/EegDatapoint.msg"
-  "msg/EegInfo.msg"
-  "msg/GatherEegError.msg"
-  "msg/TimeWindow.msg"
-  "msg/Trigger.msg"
+  "msg/AnalyzeMepErrors.msg"
+  "msg/MepConfiguration.msg"
+  "msg/MepError.msg"
+  "msg/PreactivationCheck.msg"
+  "msg/VoltageRange.msg"
 
-  "srv/TriggerPulse.srv"
+  "srv/AnalyzeMepService.srv"
 
-  "action/GatherEeg.action"
- )
+  "action/AnalyzeMep.action"
+
+  DEPENDENCIES eeg_interfaces
+)
 
 ament_package()
