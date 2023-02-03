@@ -1,4 +1,4 @@
 bool enabled
 
-TimeWindow time_window
+eeg_interfaces/TimeWindow time_window
 VoltageRange voltage_range
