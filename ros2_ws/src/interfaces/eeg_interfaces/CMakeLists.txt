@@ -22,14 +22,23 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/AnalyzeMepErrors.msg"
+  "msg/EegBatch.msg"
   "msg/EegDatapoint.msg"
   "msg/EegInfo.msg"
-  "msg/EegBatch.msg"
+  "msg/GatherEegError.msg"
+  "msg/MepConfiguration.msg"
+  "msg/MepError.msg"
+  "msg/PreactivationCheck.msg"
+  "msg/TimeWindow.msg"
   "msg/Trigger.msg"
+  "msg/VoltageRange.msg"
+
+  "srv/AnalyzeMepService.srv"
   "srv/TriggerPulse.srv"
 
   "action/AnalyzeMep.action"
-  "srv/AnalyzeMepService.srv"
+  "action/GatherEeg.action"
  )
 
 ament_package()
