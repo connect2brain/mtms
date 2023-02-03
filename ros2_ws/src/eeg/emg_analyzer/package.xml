@@ -9,6 +9,7 @@
 
   <depend>rclpy</depend>
   <depend>eeg_interfaces</depend>
+  <depend>mep_interfaces</depend>
 
   <export>
     <build_type>ament_python</build_type>

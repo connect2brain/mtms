@@ -14,6 +14,7 @@ RUN apt-get install -y \
 WORKDIR /app
 COPY ros2_ws/src/eeg/emg_analyzer ros2_ws/src/eeg/emg_analyzer/
 COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
 
 # Build ROS packages
 
