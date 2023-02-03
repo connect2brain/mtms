@@ -64,6 +64,18 @@ services:
         constraints:
           - node.role == manager
 
+  eeg_gatherer:
+    image: okahilak/mtms:eeg_gatherer
+    environment:
+      - ROS_LOG_LEVEL=info
+    volumes:
+      - './ros2_ws/src/eeg/eeg_gatherer:/app/ros2_ws/src/eeg/eeg_gatherer/'
+      - './ros2_ws/src/interfaces/eeg_interfaces:/app/ros2_ws/src/interfaces/eeg_interfaces/'
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
   efield:
     image: okahilak/mtms:efield
     deploy:
