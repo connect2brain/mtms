@@ -3,9 +3,13 @@ from threading import Event
 
 import numpy as np
 
-from eeg_interfaces.msg import AnalyzeMepErrors, EegInfo, GatherEegError, MepError
-from eeg_interfaces.action import AnalyzeMep, GatherEeg
-from eeg_interfaces.srv import AnalyzeMepService
+from eeg_interfaces.msg import EegInfo, GatherEegError
+from eeg_interfaces.action import GatherEeg
+
+from mep_interfaces.msg import AnalyzeMepErrors, MepError
+from mep_interfaces.action import AnalyzeMep
+from mep_interfaces.srv import AnalyzeMepService
+
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 import rclpy

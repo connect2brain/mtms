@@ -1,2 +1,2 @@
-TimeWindow time_window
+eeg_interfaces/TimeWindow time_window
 PreactivationCheck preactivation_check
