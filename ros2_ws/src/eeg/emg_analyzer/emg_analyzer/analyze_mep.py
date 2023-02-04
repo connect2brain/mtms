@@ -99,7 +99,7 @@ class AnalyzeMepNode(Node):
         self.sampling_frequency = eeg_info.sampling_frequency
         self.logger.info('Sampling frequency updated to {} Hz.'.format(self.sampling_frequency))
 
-    def call_action__gather_eeg__async(self, goal_id, start_time, end_time, gathered_eeg_buffer):
+    def async_gather_eeg(self, goal_id, start_time, end_time, gathered_eeg_buffer):
         topic, action_type = self.ROS_ACTION_GATHER_EEG
 
         client = self.gather_eeg_client
@@ -151,11 +151,11 @@ class AnalyzeMepNode(Node):
 
         get_result_future.add_done_callback(get_result_done_callback)
 
-    def gather_eeg_async(self, goal_id, baseline_time, time_window, gathered_eeg_buffer):
+    def async_gather_eeg_in_time_window(self, goal_id, baseline_time, time_window, gathered_eeg_buffer):
         start_time = baseline_time + time_window.start
         end_time = baseline_time + time_window.end
 
-        self.call_action__gather_eeg__async(
+        self.async_gather_eeg(
             goal_id=goal_id,
             start_time=start_time,
             end_time=end_time,
@@ -261,7 +261,7 @@ class AnalyzeMepNode(Node):
         if preactivation_check_enabled:
             self.logger.info('{}: Gathering preactivation data...'.format(goal_id))
 
-            self.gather_eeg_async(
+            self.async_gather_eeg_in_time_window(
                 goal_id=goal_id,
                 baseline_time=time,
                 time_window=mep_configuration.preactivation_check.time_window,
@@ -272,7 +272,7 @@ class AnalyzeMepNode(Node):
 
         self.logger.info('{}: Gathering MEP data...'.format(goal_id))
 
-        self.gather_eeg_async(
+        self.async_gather_eeg_in_time_window(
             goal_id=goal_id,
             baseline_time=time,
             time_window=mep_configuration.time_window,
