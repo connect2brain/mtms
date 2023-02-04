@@ -27,7 +27,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MepConfiguration.msg"
   "msg/MepError.msg"
   "msg/PreactivationCheck.msg"
-  "msg/VoltageRange.msg"
 
   "srv/AnalyzeMepService.srv"
 
