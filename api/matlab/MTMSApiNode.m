@@ -81,7 +81,7 @@ classdef MTMSApiNode < handle
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
-            obj.analyze_mep_client = ros2svcclient(obj.node, "/emg/analyze_mep_service", "mep_interfaces/AnalyzeMepService");
+            obj.analyze_mep_client = ros2svcclient(obj.node, "/mep/analyze__service", "mep_interfaces/AnalyzeMepService");
         end
         
         % Starting and stopping

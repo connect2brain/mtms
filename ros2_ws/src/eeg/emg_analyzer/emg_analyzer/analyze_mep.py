@@ -76,7 +76,7 @@ class AnalyzeMepNode(Node):
         self.action_server = ActionServer(
             self,
             AnalyzeMep,
-            '/emg/analyze_mep',
+            '/mep/analyze',
             self.analyze_mep_action_handler,
             callback_group=self.callback_group,
         )
@@ -86,7 +86,7 @@ class AnalyzeMepNode(Node):
         #
         self.analyze_mep_service = self.create_service(
             AnalyzeMepService,
-            '/emg/analyze_mep_service',
+            '/mep/analyze__service',
             self.analyze_mep_service_handler,
             callback_group=self.callback_group,
         )
