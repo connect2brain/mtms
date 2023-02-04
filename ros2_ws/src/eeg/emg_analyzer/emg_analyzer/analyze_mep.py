@@ -217,20 +217,11 @@ class AnalyzeMepNode(Node):
             eeg_buffer=preactivation_buffer,
         )
 
-        min_value = np.min(channel_data)
-        max_value = np.max(channel_data)
+        voltage_range = np.max(channel_data) - np.min(channel_data)
+        voltage_range_limit = mep_configuration.preactivation_check.voltage_range_limit
 
-        voltage_range = mep_configuration.preactivation_check.voltage_range
-
-        min_allowed = voltage_range.low
-        max_allowed = voltage_range.high
-
-        if min_value < min_allowed:
-           self.logger.warn('{}: Failure: Preactivation check failed, found value {:.1f}, minimum allowed: {:.1f}.'.format(goal_id, min_value, min_allowed))
-           return MepError(value=MepError.PREACTIVATION_FAILED)
-
-        if max_value > max_allowed:
-           self.logger.warn('{}: Failure: Preactivation check failed, found value {:.1f}, maximum allowed: {:.1f}.'.format(goal_id, max_value, max_allowed))
+        if voltage_range > voltage_range_limit:
+           self.logger.warn('{}: Failure: Preactivation check failed, the voltage range ({:.1f} uV) is above the limit ({:.1f}).'.format(goal_id, voltage_range, voltage_range_limit))
            return MepError(value=MepError.PREACTIVATION_FAILED)
 
         self.logger.info('{}: Preactivation check passed.'.format(goal_id))
