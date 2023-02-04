@@ -33,7 +33,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
-    ROS_ACTION_ANALYZE_MEP = ('/emg/analyze_mep', AnalyzeMep)
+    ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
     ROS_MESSAGES = (
         ROS_MESSAGE_SEND_EVENT_TRIGGER,
