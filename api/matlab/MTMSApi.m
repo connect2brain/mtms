@@ -222,7 +222,7 @@ classdef MTMSApi < handle
             [amplitude, latency, errors] = obj.node.analyze_mep(emg_channel, time, mep_configuration);
         end
 
-        function mep_configuration = create_mep_configuration(obj, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_check_start_time, preactivation_check_end_time, preactivation_check_voltage_low, preactivation_check_voltage_high)
+        function mep_configuration = create_mep_configuration(obj, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
             mep_configuration = ros2message('mep_interfaces/MepConfiguration');
             
             mep_configuration.time_window.start = mep_start_time;
@@ -231,10 +231,9 @@ classdef MTMSApi < handle
             preactivation_check = ros2message('mep_interfaces/PreactivationCheck');
             
             preactivation_check.enabled = preactivation_check_enabled;
-            preactivation_check.time_window.start = preactivation_check_start_time;
-            preactivation_check.time_window.end = preactivation_check_end_time;
-            preactivation_check.voltage_range.low = preactivation_check_voltage_low;
-            preactivation_check.voltage_range.high = preactivation_check_voltage_high;
+            preactivation_check.time_window.start = preactivation_start_time;
+            preactivation_check.time_window.end = preactivation_end_time;
+            preactivation_check.voltage_range_limit = preactivation_voltage_range_limit;
             
             mep_configuration.preactivation_check = preactivation_check;
         end
