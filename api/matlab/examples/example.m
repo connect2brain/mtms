@@ -60,8 +60,18 @@ api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, w
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
+mep_start_time = 0.02;
+mep_end_time = 0.04;
+preactivation_check_enabled = true;
+preactivation_check_start_time = -0.02;
+preactivation_check_end_time = -0.01;
+preactivation_check_voltage_low = 20;
+preactivation_check_voltage_high = 40;
+
+mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_check_start_time, preactivation_check_end_time, preactivation_check_voltage_low, preactivation_check_voltage_high);
+
 emg_channel = 1;
-[amplitude, latency] = api.analyze_mep(emg_channel, time);
+[amplitude, latency] = api.analyze_mep(emg_channel, time, mep_configuration);
 
 
 %% Targeting
