@@ -4,7 +4,7 @@ export const EventTypes = {
   CHARGE: 0,
   PULSE: 1,
   DISCHARGE: 2,
-  SIGNAL_OUT: 3,
+  TRIGGER_OUT: 3,
 }
 
 export interface EegDatapoint {
