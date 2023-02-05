@@ -205,6 +205,7 @@ void EegBridge::wait_for_system_state() {
 
      For more info about the race condition, see:
 
+     https://github.com/ros2/rclcpp/issues/1066
      https://github.com/ros2/system_tests/pull/459
   */
   try {
