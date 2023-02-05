@@ -29,7 +29,12 @@ class GatheredEegBuffer():
         self.event = Event()
 
     def wait(self):
-        self.event.wait()
+        # Ensure that we terminate properly in case of ctrl-c (SIGINT) or another signal;
+        # therefore, do not use self.event.wait(), which may block indefinitely. Also sleep
+        # for a short time to avoid busy-looping.
+        #
+        while rclpy.ok() and not self.event.is_set():
+            time.sleep(0.01)
     
     def set(self):
         self.event.set()
@@ -285,6 +290,14 @@ class AnalyzeMepNode(Node):
             gathered_preactivation_buffer.wait()
 
         gathered_mep_buffer.wait()
+
+        if not rclpy.ok():
+            # TODO: Send an error if ROS node shuts down.
+
+            amplitude = None
+            latency = None
+
+            return errors, amplitude, latency
 
         # Collect errors from gatherers.
 
