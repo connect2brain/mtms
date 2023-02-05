@@ -2,12 +2,12 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from event_interfaces.msg import SignalOut, Pulse, Charge
+from event_interfaces.msg import TriggerOut, Pulse, Charge
 from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
-from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_signal_out_command
+from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_trigger_out_command
 
-SIGNAL_OUT_DURATION_US = 10000
+TRIGGER_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 TIME_CONSTANT = 1.0
 
@@ -15,7 +15,7 @@ TIME_CONSTANT = 1.0
 class PulseGenerator(Node):
     def __init__(self):
         super().__init__('pulse_generator')
-        self.signal_out_publisher = self.create_publisher(SignalOut, '/event/send/signal_out')
+        self.trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out')
         self.pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse')
         self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
@@ -31,7 +31,7 @@ class PulseGenerator(Node):
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
-        self.signal_out = generate_signal_out_command(port=1, execution_time=0.0, execution_condition=2, duration=SIGNAL_OUT_DURATION_US)
+        self.trigger_out = generate_trigger_out_command(port=1, execution_time=0.0, execution_condition=2, duration=TRIGGER_OUT_DURATION_US)
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
@@ -59,8 +59,8 @@ class PulseGenerator(Node):
             self.get_logger().info(f"Sent timed pulse request for channel {pulse.channel}: {pulse.event_info.id}")
 
     def timer_callback(self):
-        self.signal_out_publisher(self.signal_out)
-        self.get_logger().info(f"Sent signal out for port {self.signal_out.port}")
+        self.trigger_out_publisher(self.trigger_out)
+        self.get_logger().info(f"Sent trigger out for port {self.trigger_out.port}")
 
         for pulse in self.pulses:
             self.pulse_publisher(pulse)

@@ -10,7 +10,7 @@
 #include "event_interfaces/msg/discharge.hpp"
 #include "event_interfaces/msg/waveform_piece.hpp"
 #include "event_interfaces/msg/waveform_phase.hpp"
-#include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/trigger_out.hpp"
 #include "event_interfaces/msg/stimulus.hpp"
 #include <iostream>
 
@@ -18,7 +18,7 @@ enum EventType {
   PULSE = 0,
   CHARGE = 1,
   DISCHARGE = 2,
-  SIGNAL_OUT = 3,
+  TRIGGER_OUT = 3,
   STIMULUS = 4
 };
 
@@ -26,7 +26,7 @@ struct Event {
   event_interfaces::msg::Pulse pulse;
   event_interfaces::msg::Charge charge;
   event_interfaces::msg::Discharge discharge;
-  event_interfaces::msg::SignalOut signal_out;
+  event_interfaces::msg::TriggerOut trigger_out;
   event_interfaces::msg::Stimulus stimulus;
 
   EventType event_type = PULSE;
@@ -36,8 +36,8 @@ struct Event {
       return "Pulse";
     } else if (event_type == CHARGE) {
       return "Charge";
-    } else if (event_type == SIGNAL_OUT) {
-      return "Signal out";
+    } else if (event_type == TRIGGER_OUT) {
+      return "Trigger out";
     } else if (event_type == STIMULUS) {
       return "Stimulus";
     } else if (event_type == DISCHARGE) {
@@ -79,14 +79,14 @@ struct Event {
       std::cout << "  Id: " << discharge.event_info.id << std::endl;
       std::cout << "  Execution condition: " << +discharge.event_info.execution_condition.value << std::endl;
       std::cout << "  Execution time: " << discharge.event_info.execution_time << std::endl;
-    } else if (event_type == SIGNAL_OUT) {
-      std::cout << "Signal out" << std::endl;
+    } else if (event_type == TRIGGER_OUT) {
+      std::cout << "Trigger out" << std::endl;
 
-      std::cout << "Port: " << +signal_out.port << std::endl;
+      std::cout << "Port: " << +trigger_out.port << std::endl;
       std::cout << "Event info: " << std::endl;
-      std::cout << "  Id: " << signal_out.event_info.id << std::endl;
-      std::cout << "  Execution condition: " << +signal_out.event_info.execution_condition.value << std::endl;
-      std::cout << "  Execution time: " << signal_out.event_info.execution_time << std::endl;
+      std::cout << "  Id: " << trigger_out.event_info.id << std::endl;
+      std::cout << "  Execution condition: " << +trigger_out.event_info.execution_condition.value << std::endl;
+      std::cout << "  Execution time: " << trigger_out.event_info.execution_time << std::endl;
     } else if (event_type == STIMULUS) {
       std::cout << "Stimulus" << std::endl;
 
