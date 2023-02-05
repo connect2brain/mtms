@@ -62,16 +62,15 @@ api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, w
 
 mep_start_time = 0.02;
 mep_end_time = 0.04;
-preactivation_check_enabled = true;
-preactivation_check_start_time = -0.02;
-preactivation_check_end_time = -0.01;
-preactivation_check_voltage_low = 20;
-preactivation_check_voltage_high = 40;
+preactivation_check_enabled = false;
+preactivation_start_time = -0.02;
+preactivation_end_time = -0.01;
+preactivation_voltage_range_limit = 20;
 
-mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_check_start_time, preactivation_check_end_time, preactivation_check_voltage_low, preactivation_check_voltage_high);
+mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
 emg_channel = 1;
-[amplitude, latency] = api.analyze_mep(emg_channel, time, mep_configuration);
+[amplitude, latency, errors] = api.analyze_mep(emg_channel, api.get_time() + 5.0, mep_configuration);
 
 
 %% Targeting
