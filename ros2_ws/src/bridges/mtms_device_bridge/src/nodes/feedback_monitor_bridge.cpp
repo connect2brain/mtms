@@ -6,7 +6,7 @@
 #include "event_interfaces/msg/pulse_feedback.hpp"
 #include "event_interfaces/msg/charge_feedback.hpp"
 #include "event_interfaces/msg/discharge_feedback.hpp"
-#include "event_interfaces/msg/signal_out_feedback.hpp"
+#include "event_interfaces/msg/trigger_out_feedback.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -20,7 +20,9 @@ using namespace std::chrono_literals;
 NiFpga_mTMS_TargetToHostFifoU8 pulse_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostPulsefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 charge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostChargefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 discharge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostDischargefeedbackFIFO;
-NiFpga_mTMS_TargetToHostFifoU8 signal_out_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO;
+
+/* TODO: Rename to TriggerOutfeedbackFIFO in the next bitfile version.*/
+NiFpga_mTMS_TargetToHostFifoU8 trigger_out_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO;
 
 class FeedbackMonitorBridge : public rclcpp::Node {
 public:
@@ -32,15 +34,15 @@ public:
         "/event/charge_feedback", 10);
     discharge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::DischargeFeedback>(
         "/event/discharge_feedback", 10);
-    signal_out_feedback_publisher_ = this->create_publisher<event_interfaces::msg::SignalOutFeedback>(
-        "/event/signal_out_feedback", 10);
+    trigger_out_feedback_publisher_ = this->create_publisher<event_interfaces::msg::TriggerOutFeedback>(
+        "/event/trigger_out_feedback", 10);
 
     timer_ = this->create_wall_timer(20ms, std::bind(&FeedbackMonitorBridge::update_feedback_topics, this));
   }
 
 private:
   /* HACK: There are essentially two ways to pass event feedback from FPGA, one is handled by read_fifo_and_publish
-           function below (used by pulse, discharge, and signal out events), and the other is handled by
+           function below (used by pulse, discharge, and trigger out events), and the other is handled by
            read_non_multiplexed_fifo_and_publish.
 
            They should be unified on the FPGA. The ideal way to do that might be drop the channel information and
@@ -148,11 +150,11 @@ private:
       feedback.error.value = error;
       discharge_feedback_publisher_->publish(feedback);
 
-    } else if (event_type == "Signal out") {
-      event_interfaces::msg::SignalOutFeedback feedback;
+    } else if (event_type == "Trigger out") {
+      event_interfaces::msg::TriggerOutFeedback feedback;
       feedback.id = id;
       feedback.error.value = error;
-      signal_out_feedback_publisher_->publish(feedback);
+      trigger_out_feedback_publisher_->publish(feedback);
     }
 
     RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
@@ -165,20 +167,20 @@ private:
   void update_feedback_topics() {
     read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data);
     read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data);
-    read_fifo_and_publish("Signal out", signal_out_feedback_fifo, signal_out_data);
+    read_fifo_and_publish("Trigger out", trigger_out_feedback_fifo, trigger_out_data);
     read_non_multiplexed_fifo_and_publish("Charge", charge_feedback_fifo);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::SignalOutFeedback>::SharedPtr signal_out_feedback_publisher_;
+  rclcpp::Publisher<event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
   rclcpp::Publisher<event_interfaces::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
   rclcpp::Publisher<event_interfaces::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
 
   //channel index, data
   std::map<uint8_t, std::vector<uint8_t>> pulse_data = {};
   std::map<uint8_t, std::vector<uint8_t>> discharge_data = {};
-  std::map<uint8_t, std::vector<uint8_t>> signal_out_data = {};
+  std::map<uint8_t, std::vector<uint8_t>> trigger_out_data = {};
 };
 
 int main(int argc, char **argv) {
