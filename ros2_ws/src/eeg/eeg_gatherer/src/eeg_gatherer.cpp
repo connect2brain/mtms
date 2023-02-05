@@ -34,12 +34,16 @@ void EegGatherer::check_dropped_samples(double_t current_time) {
 
     if (time_diff > threshold) {
       RCLCPP_ERROR(rclcpp::get_logger("eeg_gatherer"),
-        "%s: Sample(s) dropped. Time difference between consecutive samples: %.4f, should be: %.4f",
+        "%s: Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f",
         this->goal_id.c_str(),
         time_diff,
+        this->sampling_period,
         threshold);
 
       this->state = DataGatheringState::FINAL_STATE__SAMPLES_DROPPED;
+    } else {
+      RCLCPP_DEBUG(rclcpp::get_logger("eeg_gatherer"),
+        "%s: Time difference between consecutive samples: %.5f", this->goal_id.c_str(), time_diff);
     }
   }
   this->previous_time = current_time;
