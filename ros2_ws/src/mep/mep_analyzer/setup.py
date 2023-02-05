@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'emg_analyzer'
+package_name = 'mep_analyzer'
 
 setup(
     name=package_name,
@@ -24,7 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'analyze_mep = emg_analyzer.analyze_mep:main',
+            'analyze_mep = mep_analyzer.analyze_mep:main',
         ],
     },
 )

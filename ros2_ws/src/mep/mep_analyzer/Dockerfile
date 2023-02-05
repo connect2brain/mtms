@@ -12,7 +12,7 @@ RUN apt-get install -y \
 # Copy ROS workspace for EMG analyzer
 
 WORKDIR /app
-COPY ros2_ws/src/eeg/emg_analyzer ros2_ws/src/eeg/emg_analyzer/
+COPY ros2_ws/src/eeg/mep_analyzer ros2_ws/src/eeg/mep_analyzer/
 COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
 COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
 
@@ -24,7 +24,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/eeg/emg_analyzer/ros_entrypoint.sh .
+COPY ros2_ws/src/eeg/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

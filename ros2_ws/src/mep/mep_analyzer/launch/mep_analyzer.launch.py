@@ -20,7 +20,7 @@ def generate_launch_description():
 
     for node_executable in node_executables:
         node = Node(
-            package="emg_analyzer",
+            package="mep_analyzer",
             executable=node_executable,
             arguments=['--ros-args', '--log-level', logger]
         )
