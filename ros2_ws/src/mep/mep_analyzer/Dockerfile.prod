@@ -9,14 +9,14 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-COPY ros2_ws/src/eeg/emg_analyzer/ros_entrypoint.sh .
+COPY ros2_ws/src/eeg/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
 # Copy ROS workspace for EMG analyzer
 
 WORKDIR /app
-COPY ros2_ws/src/emg/emg_analyzer ros2_ws/emg_analyzer/
+COPY ros2_ws/src/emg/mep_analyzer ros2_ws/mep_analyzer/
 COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/eeg_interfaces/
 COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/mep_interfaces/
 
