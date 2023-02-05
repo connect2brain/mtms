@@ -25,11 +25,11 @@ export const PulseError = {
   UNKNOWN_ERROR: 11,
 }
 
-export const SignalOutError = {
+export const TriggerOutError = {
   NO_ERROR: 0,
   INVALID_EXECUTION_CONDITION: 1,
   LATE: 2,
-  SIGNALOUT_FAILURE: 3,
+  TRIGGEROUT_FAILURE: 3,
   UNKNOWN_ERROR: 4,
 }
 
@@ -47,7 +47,7 @@ export const DischargeError = {
 
 export const errorsByType = {
   pulse: PulseError,
-  signalOut: SignalOutError,
+  triggerOut: TriggerOutError,
   charge: ChargeError,
   discharge: DischargeError,
 }
