@@ -50,7 +50,6 @@ private:
   DataGatheringState state;
   double_t previous_time;
 
-//  static constexpr uint8_t N_FINAL_STATES = 2;
   static constexpr DataGatheringState FINAL_STATES[3] = {
     DataGatheringState::FINAL_STATE__SUCCESS,
     DataGatheringState::FINAL_STATE__LATE,
@@ -59,7 +58,7 @@ private:
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */
-  static constexpr double_t TOLERANCE_S = pow(10, -6);
+  static constexpr double_t TOLERANCE_S = pow(10, -5);
 };
 
 #endif //EEG_GATHERER_EEG_GATHERER_H
