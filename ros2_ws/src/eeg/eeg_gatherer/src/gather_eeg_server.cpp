@@ -68,6 +68,7 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
   auto start_time = goal->time_window.start;
   auto end_time = goal->time_window.end;
 
+  /* TODO: Replace with proper UUID-based id. */
   std::string goal_id = "abcd";
 
   auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time, sampling_frequency);
