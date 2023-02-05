@@ -33,15 +33,19 @@ void EegGatherer::check_dropped_samples(double_t current_time) {
     auto threshold = this->sampling_period + this->TOLERANCE_S;
 
     if (time_diff > threshold) {
-      RCLCPP_ERROR(rclcpp::get_logger("eeg_gatherer"),
-        "%s: Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f",
-        this->goal_id.c_str(),
-        time_diff,
-        this->sampling_period,
-        threshold);
 
-      this->state = DataGatheringState::FINAL_STATE__SAMPLES_DROPPED;
+      /* Go to error state if we are gathering data when samples are dropped, otherwise just warn. */
+      if (this->state == DataGatheringState::GATHER_DATA) {
+        this->state = DataGatheringState::FINAL_STATE__SAMPLES_DROPPED;
+
+        RCLCPP_ERROR(rclcpp::get_logger("eeg_gatherer"),
+          "%s: Sample(s) dropped while gathering data. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, this->sampling_period, threshold);
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("eeg_gatherer"),
+          "%s: Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, this->sampling_period, threshold);
+      }
     } else {
+      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
       RCLCPP_DEBUG(rclcpp::get_logger("eeg_gatherer"),
         "%s: Time difference between consecutive samples: %.5f", this->goal_id.c_str(), time_diff);
     }
