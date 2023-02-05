@@ -184,8 +184,8 @@ event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *even
   return discharge;
 }
 
-event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *event) {
-  auto signal_out = event_interfaces::msg::SignalOut();
+event_interfaces::msg::TriggerOut PythonProcessor::parse_trigger_out(PyObject *event) {
+  auto trigger_out = event_interfaces::msg::TriggerOut();
 
   auto port = PyObject_GetAttrString(event, "port");
 
@@ -200,15 +200,15 @@ event_interfaces::msg::SignalOut PythonProcessor::parse_signal_out(PyObject *eve
     std::cout << "Error on duration_us" << std::endl;
   }
 
-  signal_out.port = PyLong_AsUnsignedLong(port);
-  signal_out.duration_us = PyLong_AsUnsignedLong(duration_us);
+  trigger_out.port = PyLong_AsUnsignedLong(port);
+  trigger_out.duration_us = PyLong_AsUnsignedLong(duration_us);
 
-  signal_out.event_info = parse_event_info(event);
+  trigger_out.event_info = parse_event_info(event);
 
   Py_DECREF(port);
   Py_DECREF(duration_us);
 
-  return signal_out;
+  return trigger_out;
 }
 
 event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event) {
@@ -286,10 +286,10 @@ std::vector<Event> PythonProcessor::convert_pyobject_events_to_events(std::vecto
       event.discharge = discharge;
       event.event_type = DISCHARGE;
 
-    } else if (event_type == SIGNAL_OUT) {
-      auto signal_out = parse_signal_out(event_as_pyobject);
-      event.signal_out = signal_out;
-      event.event_type = SIGNAL_OUT;
+    } else if (event_type == TRIGGER_OUT) {
+      auto trigger_out = parse_trigger_out(event_as_pyobject);
+      event.trigger_out = trigger_out;
+      event.event_type = TRIGGER_OUT;
 
     } else if (event_type == STIMULUS) {
       auto stimulus = parse_stimulus(event_as_pyobject);

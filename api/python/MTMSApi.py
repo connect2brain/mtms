@@ -166,10 +166,10 @@ class MTMSApi:
 
         return id
 
-    def send_signal_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         id = self.next_event_id()
 
-        self.node.send_signal_out(
+        self.node.send_trigger_out(
             id=id,
             execution_condition=execution_condition,
             time=time,

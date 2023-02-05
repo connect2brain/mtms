@@ -34,7 +34,7 @@ private:
 
   static event_interfaces::msg::Charge parse_charge(PyObject *event);
   static event_interfaces::msg::Discharge parse_discharge(PyObject *event);
-  static event_interfaces::msg::SignalOut parse_signal_out(PyObject *event);
+  static event_interfaces::msg::TriggerOut parse_trigger_out(PyObject *event);
   static event_interfaces::msg::Pulse parse_pulse(PyObject *event);
   static event_interfaces::msg::Stimulus parse_stimulus(PyObject *event);
 
