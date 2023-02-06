@@ -81,7 +81,7 @@ classdef MTMSApiNode < handle
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
-            obj.analyze_mep_client = ros2svcclient(obj.node, "/emg/analyze_mep_service", "eeg_interfaces/AnalyzeMepService");
+            obj.analyze_mep_client = ros2svcclient(obj.node, "/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
         end
         
         % Starting and stopping
@@ -329,18 +329,20 @@ classdef MTMSApiNode < handle
 
         % Other
 
-        function [amplitude, latency] = analyze_mep(obj, emg_channel, time)
+        function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
             client = obj.analyze_mep_client;
 
             request = ros2message(client);
     
             request.emg_channel = uint8(emg_channel);
             request.time = time;
+            request.mep_configuration = mep_configuration;
 
             response = call(client, request);
 
             amplitude = response.amplitude;
             latency = response.latency;
+            errors = response.errors;
         end
 
         % System state

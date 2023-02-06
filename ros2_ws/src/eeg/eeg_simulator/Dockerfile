@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for planner
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/eeg/eeg_simulator ros2_ws/src/eeg/eeg_simulator/

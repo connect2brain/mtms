@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for topic frequency
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/other/topic_frequency ros2_ws/src/other/topic_frequency/

@@ -12,7 +12,7 @@ COPY ros2_ws/src/ui/planner/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-# Copy ROS workspace for planner
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/ui/planner ros2_ws/planner/
