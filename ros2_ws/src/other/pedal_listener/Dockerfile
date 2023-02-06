@@ -12,7 +12,7 @@ RUN apt-get install -y \
 
 RUN pip install PySerial
 
-# Copy ROS workspace for pedal listener
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/other/pedal_listener ros2_ws/src/other/pedal_listener/

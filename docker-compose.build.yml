@@ -11,6 +11,11 @@ services:
       context: .
       dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile.prod
 
+  eeg_gatherer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_gatherer/Dockerfile.prod
+
   eeg_processor:
     build:
       context: .
