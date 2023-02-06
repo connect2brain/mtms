@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for planner
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/ui/planner ros2_ws/src/ui/planner/
