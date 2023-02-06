@@ -12,7 +12,7 @@ COPY ros2_ws/src/ui/pulse_sequence_controller/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-# Copy ROS workspace for pulse sequence controller
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/ui/pulse_sequence_controller ros2_ws/pulse_sequence_controller/
