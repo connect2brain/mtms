@@ -1,5 +1,8 @@
 uint8 emg_channel
 float64 time
+MepConfiguration mep_configuration
 ---
 float64 amplitude
 float64 latency
+AnalyzeMepErrors errors
+---
