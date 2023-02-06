@@ -9,11 +9,12 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for EMG analyzer
+# Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/eeg/emg_analyzer ros2_ws/src/eeg/emg_analyzer/
+COPY ros2_ws/src/mep/mep_analyzer ros2_ws/src/mep/mep_analyzer/
 COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
 
 # Build ROS packages
 
@@ -23,7 +24,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/eeg/emg_analyzer/ros_entrypoint.sh .
+COPY ros2_ws/src/mep/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
