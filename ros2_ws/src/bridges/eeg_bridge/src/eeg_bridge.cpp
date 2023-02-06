@@ -196,8 +196,24 @@ void EegBridge::wait_for_system_state() {
   RCLCPP_INFO(this->get_logger(), "Waiting for system state...");
 
   auto base_interface = this->get_node_base_interface();
-  while (!this->system_state_received) {
-    rclcpp::spin_some(base_interface);
+
+  /* HACK: Ensure that node stops itself gracefully by catching the exception:
+     this is due to a known race condition in ROS2, in which if Ctrl-C (SIGINT) signal
+     arrives between ok() and spin_some function calls, an exception is thrown. This
+     seems to cause eProsima Fast DDS to occasionally go into a bad state, in which
+     subscribers stop working properly after node is restarted.
+
+     For more info about the race condition, see:
+
+     https://github.com/ros2/rclcpp/issues/1066
+     https://github.com/ros2/system_tests/pull/459
+  */
+  try {
+    while (rclcpp::ok() && !this->system_state_received) {
+      rclcpp::spin_some(base_interface);
+    }
+  } catch (const rclcpp::exceptions::RCLError & exception) {
+    RCLCPP_ERROR(rclcpp::get_logger("eeg_bridge"), "Failed with %s", exception.what());
   }
 }
 
@@ -210,11 +226,16 @@ void EegBridge::spin() {
 
   auto base_interface = this->get_node_base_interface();
 
-  while (rclcpp::ok()) {
-    if (this->read_eeg_data_from_socket()) {
-      this->handle_eeg_data_packet();
+  /* HACK: See comment in wait_for_system_state function. */
+  try {
+    while (rclcpp::ok()) {
+      rclcpp::spin_some(base_interface);
+      if (this->read_eeg_data_from_socket()) {
+        this->handle_eeg_data_packet();
+      }
     }
-    rclcpp::spin_some(base_interface);
+  } catch (const rclcpp::exceptions::RCLError & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("eeg_bridge"), "failed with %s", ex.what());
   }
 }
 
