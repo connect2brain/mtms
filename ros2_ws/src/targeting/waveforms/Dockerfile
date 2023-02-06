@@ -10,7 +10,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for waveforms
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/waveforms ros2_ws/src/targeting/waveforms/
