@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for eeg processor
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/eeg/eeg_processor ros2_ws/src/eeg/eeg_processor/

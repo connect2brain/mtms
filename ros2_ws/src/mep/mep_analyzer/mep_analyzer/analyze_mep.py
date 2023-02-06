@@ -91,7 +91,7 @@ class AnalyzeMepNode(Node):
         #
         self.analyze_mep_service = self.create_service(
             AnalyzeMepService,
-            '/mep/analyze__service',
+            '/mep/analyze_service',
             self.analyze_mep_service_handler,
             callback_group=self.callback_group,
         )

@@ -9,7 +9,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for eeg bridge
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/bridges/eeg_bridge ros2_ws/src/bridges/eeg_bridge/

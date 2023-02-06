@@ -70,7 +70,7 @@ preactivation_voltage_range_limit = 20;
 mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
 emg_channel = 1;
-[amplitude, latency, errors] = api.analyze_mep(emg_channel, api.get_time() + 5.0, mep_configuration);
+[amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
 
 
 %% Targeting
