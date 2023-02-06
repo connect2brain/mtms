@@ -25,7 +25,7 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for waveforms
+# Copy ROS workspace
 
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
