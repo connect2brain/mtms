@@ -123,8 +123,10 @@ services:
       dockerfile: ros2_ws/src/targeting/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+    volumes:
+      - './data/neuronavigation_data:/app/data/neuronavigation_data/'
     network_mode: host
-
+   
   optitrack_bridge:
     build:
       context: .
