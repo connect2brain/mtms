@@ -28,6 +28,7 @@ classdef MTMSApiNode < handle
         discharge_feedback_subscriber
 
         get_channel_voltages_client
+        maximum_intensity_client
         get_default_waveform_client
         reverse_polarity_client
 
