@@ -30,7 +30,7 @@ struct waveform_piece {
 
 /* Used by CompiledMatlabProcessor */
 struct matlab_eeg_sample {
-  coder::array<double, 2U> channel_data;
+  coder::array<double, 2U> sample;
   double time;
   double first_sample_of_experiment;
 };
