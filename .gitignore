@@ -17,7 +17,9 @@ ros2_ws/src/build/
 ros2_ws/src/bridges/rosbridge/build
 ros2_ws/src/bridges/rosbridge/log
 ros2_ws/src/bridges/rosbridge/install
-data/
+
+# Data directories
+**/efield_libraries/data
 
 # Generated when building ROS messages for MATLAB API by running ros2genmsg (see documentation
 # in api/matlab/README.md); can be left outside version control.
