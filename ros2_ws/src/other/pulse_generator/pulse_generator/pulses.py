@@ -1,4 +1,4 @@
-from event_interfaces.msg import EventInfo, WaveformPiece, Pulse, Charge, SignalOut
+from event_interfaces.msg import EventInfo, WaveformPiece, Pulse, Charge, TriggerOut
 
 US_TO_TICKS_CONVERSION_RATIO = 40
 
@@ -21,18 +21,18 @@ time_list = [
 
 # Generate standard pulse command, values in us
 
-def generate_signal_out_command(port, execution_time, execution_condition, duration):
+def generate_trigger_out_command(port, execution_time, execution_condition, duration):
     event_info = EventInfo()
     event_info.id = 1
     event_info.execution_condition.value = execution_condition
     event_info.execution_time = execution_time
 
-    signal_out = SignalOut()
-    signal_out.port = port
-    signal_out.duration_us = duration
-    signal_out.event_info = event_info
+    trigger_out = TriggerOut()
+    trigger_out.port = port
+    trigger_out.duration_us = duration
+    trigger_out.event_info = event_info
 
-    return signal_out
+    return trigger_out
 
 
 

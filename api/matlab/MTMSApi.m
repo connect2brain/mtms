@@ -188,10 +188,10 @@ classdef MTMSApi < handle
             end
         end
     
-        function id = send_signal_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
+        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
             id = obj.next_event_id();
 
-            obj.node.send_signal_out(id, execution_condition, time, port, duration_us);
+            obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
     
             if wait_for_completion
                 obj.wait_for_completion(id);

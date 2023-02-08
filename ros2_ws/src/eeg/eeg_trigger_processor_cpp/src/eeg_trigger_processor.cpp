@@ -19,15 +19,15 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
 
   auto trigger_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::Trigger> message) -> void {
 
-    auto signal_out = event_interfaces::msg::SignalOut();
+    auto trigger_out = event_interfaces::msg::TriggerOut();
 
-    signal_out.port = 2;
-    signal_out.duration_us = 10000;
-    signal_out.event_info.execution_time = 0.0;
-    signal_out.event_info.execution_condition.value = 2;
-    signal_out.event_info.id = 1;
+    trigger_out.port = 2;
+    trigger_out.duration_us = 10000;
+    trigger_out.event_info.execution_time = 0.0;
+    trigger_out.event_info.execution_condition.value = 2;
+    trigger_out.event_info.id = 1;
 
-    this->signal_out_publisher->publish(signal_out);
+    this->trigger_out_publisher->publish(trigger_out);
 
     if (message->index == 2) {
       if (index < durations.size()) {
@@ -57,7 +57,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
                                                                                   10,
                                                                                   trigger_subscription_callback);
 
-  this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/send/signal_out", 10);
+  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/send/trigger_out", 10);
 
   f.open(filename, std::ios::out | std::ios::trunc);
 
