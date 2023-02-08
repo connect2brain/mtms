@@ -8,6 +8,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "targeting_interfaces/srv/get_channel_voltages.hpp"
+#include "targeting_interfaces/srv/get_maximum_intensity.hpp"
 
 #include <fstream>
 #include <string>
@@ -28,6 +29,9 @@ const uint8_t N_CHANNELS = 5;
 const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 15;
 const uint16_t MAX_ROTATION_ANGLE = 359;
 const uint16_t MAX_INTENSITY = 120;
+
+/* HACK: Instead of hard-coding this, it should probably be received from the mTMS device via a ROS message. */
+const uint16_t MAX_VOLTAGE = 1490;
 
 const uint8_t N_DISPLACEMENTS = 2 * MAX_ABSOLUTE_DISPLACEMENT + 1;
 const uint16_t N_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
@@ -68,7 +72,7 @@ class Targeting : public rclcpp::Node {
 public:
   Targeting() : Node("targeting") {
 
-    auto service_callback = [this](
+    auto get_channel_voltages_callback = [this](
         const std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Request> request,
         std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Response> response) -> void {
       int8_t displacement_x = request->displacement_x;
@@ -76,10 +80,10 @@ public:
       uint16_t rotation_angle = request->rotation_angle;
       uint8_t intensity = request->intensity;
 
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received: (x, y, angle, intensity) = (%d, %d, %d, %d)",
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for channel voltages: (x, y, angle, intensity) = (%d, %d, %d, %d)",
         displacement_x, displacement_y, rotation_angle, intensity);
 
-      response->success = validate_request(displacement_x, displacement_y, rotation_angle, intensity);
+      response->success = validate_channel_voltages_request(displacement_x, displacement_y, rotation_angle, intensity);
 
       if (response->success) {
         Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
@@ -92,18 +96,48 @@ public:
           response->reversed_polarities.push_back(reversed_polarities[i]);
         }
       }
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to request.");
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to channel voltage request.");
+    };
+
+    auto get_maximum_intensity_callback = [this](
+        const std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Request> request,
+        std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Response> response) -> void {
+      int8_t displacement_x = request->displacement_x;
+      int8_t displacement_y = request->displacement_y;
+      uint16_t rotation_angle = request->rotation_angle;
+
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d)",
+        displacement_x, displacement_y, rotation_angle);
+
+      response->success = validate_maximum_intensity_request(displacement_x, displacement_y, rotation_angle);
+
+      if (response->success) {
+        Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
+
+        double max_intensity = std::numeric_limits<double>::infinity();
+        double* voltages = target.get_voltages();
+
+        for (int i = 0; i < N_CHANNELS; i++) {
+          double max_intensity_for_channel = MAX_VOLTAGE / voltages[i];
+          max_intensity = min(max_intensity, max_intensity_for_channel);
+        }
+        response->maximum_intensity = max_intensity;
+      }
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to maximum intensity request.");
     };
 
     get_channel_voltages = this->create_service<targeting_interfaces::srv::GetChannelVoltages>(
-        "/targeting/get_channel_voltages", service_callback);
+        "/targeting/get_channel_voltages", get_channel_voltages_callback);
+
+    get_maximum_intensity = this->create_service<targeting_interfaces::srv::GetMaximumIntensity>(
+        "/targeting/get_maximum_intensity", get_maximum_intensity_callback);
 
     initialize_lookup_table();
     validate_lookup_table();
   }
 
 private:
-  bool validate_request(int8_t displacement_x, int8_t displacement_y, uint16_t rotation_angle, uint8_t intensity) {
+  bool validate_displacement(int8_t displacement_x, int8_t displacement_y) {
     if (abs(displacement_x) > MAX_ABSOLUTE_DISPLACEMENT) {
       RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in x-direction.");
       return false;
@@ -112,15 +146,32 @@ private:
       RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in y-direction.");
       return false;
     }
+    return true;
+  }
+  bool validate_rotation_angle(int16_t rotation_angle) {
     if (rotation_angle > MAX_ROTATION_ANGLE) {
       RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large rotation angle.");
       return false;
     }
+    return true;
+  }
+  bool validate_intensity(int8_t intensity) {
     if (intensity > MAX_INTENSITY) {
       RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large intensity.");
       return false;
     }
     return true;
+  }
+
+  bool validate_channel_voltages_request(int8_t displacement_x, int8_t displacement_y, uint16_t rotation_angle, uint8_t intensity) {
+    return validate_displacement(displacement_x, displacement_y) &&
+           validate_rotation_angle(rotation_angle) &&
+           validate_intensity(intensity);
+  }
+
+  bool validate_maximum_intensity_request(int8_t displacement_x, int8_t displacement_y, uint16_t rotation_angle) {
+    return validate_displacement(displacement_x, displacement_y) &&
+           validate_rotation_angle(rotation_angle);
   }
 
   void initialize_lookup_table() {
@@ -175,6 +226,7 @@ private:
 
   Target targets[N_DISPLACEMENTS][N_DISPLACEMENTS][N_ROTATION_ANGLES];
   rclcpp::Service<targeting_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
+  rclcpp::Service<targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
 };
 
 
