@@ -37,12 +37,11 @@ class Target {
 public:
   Target() : initialized(false) {}
 
-  void initialize(double voltages[], double delta) {
+  void initialize(double voltages[]) {
     for (int i = 0; i < N_CHANNELS; i++) {
       this->voltages[i] = abs(voltages[i]);
       this->reversed_polarities[i] = voltages[i] < 0;
     }
-    this->delta = delta;
     this->initialized = true;
   }
 
@@ -54,10 +53,6 @@ public:
     return reversed_polarities;
   }
 
-  double get_delta() {
-    return delta;
-  }
-
   bool is_initialized() {
     return initialized;
   }
@@ -65,7 +60,6 @@ public:
 private:
   double voltages[N_CHANNELS];
   bool reversed_polarities[N_CHANNELS];
-  double delta;
   bool initialized;
 };
 
@@ -153,16 +147,13 @@ private:
       getline(str, value_str, ',');
       uint16_t rotation_angle = stoi(value_str);
 
-      getline(str, value_str, ',');
-      double delta = stof(value_str);
-
       double voltages[N_CHANNELS];
       for (uint8_t i = 0; i < N_CHANNELS; i++) {
         getline(str, value_str, ',');
         voltages[i] = stof(value_str);
       }
 
-      targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle].initialize(voltages, delta);
+      targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle].initialize(voltages);
     }
 
     RCLCPP_INFO(rclcpp::get_logger("targeting"), "Done.");
