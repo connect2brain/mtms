@@ -31,7 +31,6 @@ def generate_launch_description():
         "event_trigger_handler",
         "feedback_monitor_bridge",
         "system_state_bridge",
-        "disable_checks_handler",
         "settings_handler"
     ]
 
