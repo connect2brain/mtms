@@ -8,6 +8,11 @@ jobs:
     runs-on: ubuntu-20.04
     env:
       COMPOSE_FILE: .ci/docker-compose.build.yml
+      # TODO: When .env files on different sites diverge
+      #   more, have a separate .env.test file in .ci
+      #   directory. For now, having a single .env file
+      #   avoids unnecessary duplication.
+      ENV_FILE: ../.env
 
     steps:
       - name: Checkout code
