@@ -78,6 +78,7 @@ classdef MTMSApiNode < handle
             % To other parts of the system.
 
             obj.get_channel_voltages_client = ros2svcclient(obj.node, "/targeting/get_channel_voltages", "targeting_interfaces/GetChannelVoltages");
+            obj.maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
@@ -296,7 +297,25 @@ classdef MTMSApiNode < handle
             voltages = response.voltages;
             reverse_polarities = response.reversed_polarities;
         end
-    
+
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+
+            client = obj.get_maximum_intensity_client;
+
+            request = ros2message(client);
+
+            request.displacement_x = int8(displacement_x);
+            request.displacement_y = int8(displacement_y);
+            request.rotation_angle = uint16(rotation_angle);
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Invalid displacement or rotation angle.");
+
+            maximum_intensity = response.maximum_intensity;
+        end
+
         function waveform = get_default_waveform(obj, channel)
             client = obj.get_default_waveform_client;
 
