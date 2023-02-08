@@ -36,7 +36,7 @@ api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
 port = 1;
 duration_us = 1000;
 
-api.send_signal_out(port, duration_us, execution_condition, time, wait_for_completion);
+api.send_trigger_out(port, duration_us, execution_condition, time, wait_for_completion);
 
 
 %% Send pulse on channel 1 and analyze MEP.
