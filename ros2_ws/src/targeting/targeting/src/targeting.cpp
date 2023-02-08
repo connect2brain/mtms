@@ -91,9 +91,23 @@ public:
         double* voltages = target.get_voltages();
         bool* reversed_polarities = target.get_reversed_polarities();
 
+        double scaled_voltages[N_CHANNELS];
         for (int i = 0; i < N_CHANNELS; i++) {
-          response->voltages.push_back(voltages[i] * intensity);
-          response->reversed_polarities.push_back(reversed_polarities[i]);
+          double scaled_voltage = voltages[i] * intensity;
+          if (scaled_voltage > MAX_VOLTAGE) {
+            response->success = false;
+            RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Maximum voltage (%d) exceeded: %.1f on channel %d.",
+              MAX_VOLTAGE, scaled_voltage, i + 1);
+            break;
+          }
+          scaled_voltages[i] = scaled_voltage;
+        }
+
+        if (response->success) {
+          for (int i = 0; i < N_CHANNELS; i++) {
+            response->voltages.push_back(scaled_voltages[i]);
+            response->reversed_polarities.push_back(reversed_polarities[i]);
+          }
         }
       }
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to channel voltage request.");
