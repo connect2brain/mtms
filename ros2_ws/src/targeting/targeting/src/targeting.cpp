@@ -20,7 +20,7 @@ const uint8_t N_CHANNELS = 5;
 /* Allow targeting inside the area x \in [-15, ..., 15], y \in [-15, ..., 15] (in millimeters) and
  * rotating the e-field within the angles [0, ..., 359].
  *
- * The maximum stimulation intensity is 120 V/m - an arbitrary value which can be changed if desired,
+ * The upper limit for stimulation intensity is 120 V/m - an arbitrary value which can be changed if desired,
  * but gives some added safety, compared to not having the targeting restrict the stimulation intensity.
  * (The maximum capacitor voltages constrain the stimulation intensity regardless of this additional
  * constraint implemented by the targeting.)
@@ -28,10 +28,11 @@ const uint8_t N_CHANNELS = 5;
 
 const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 15;
 const uint16_t MAX_ROTATION_ANGLE = 359;
-const uint16_t MAX_INTENSITY = 120;
+
+const uint8_t INTENSITY_LIMIT = 120;
 
 /* HACK: Instead of hard-coding this, it should probably be received from the mTMS device via a ROS message. */
-const uint16_t MAX_VOLTAGE = 1490;
+const uint16_t VOLTAGE_LIMIT = 1490;
 
 const uint8_t N_DISPLACEMENTS = 2 * MAX_ABSOLUTE_DISPLACEMENT + 1;
 const uint16_t N_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
@@ -97,10 +98,10 @@ public:
       double scaled_voltages[N_CHANNELS];
       for (int i = 0; i < N_CHANNELS; i++) {
         double scaled_voltage = voltages[i] * intensity;
-        if (scaled_voltage > MAX_VOLTAGE) {
+        if (scaled_voltage > VOLTAGE_LIMIT) {
           response->success = false;
-          RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Maximum voltage (%d) exceeded: %.1f on channel %d.",
-            MAX_VOLTAGE, scaled_voltage, i + 1);
+          RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Voltage limit (%d) exceeded: %.1f on channel %d.",
+            VOLTAGE_LIMIT, scaled_voltage, i + 1);
           break;
         }
         scaled_voltages[i] = scaled_voltage;
@@ -136,13 +137,19 @@ public:
       Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
 
       double max_intensity = std::numeric_limits<double>::infinity();
+
+      /* Compute the highest intensity that does not exceed the voltage limit for channel capacitors (defined in volts). */
+
       double* voltages = target.get_voltages();
 
       for (int i = 0; i < N_CHANNELS; i++) {
-        double max_intensity_for_channel = MAX_VOLTAGE / voltages[i];
+        double max_intensity_for_channel = VOLTAGE_LIMIT / voltages[i];
         max_intensity = min(max_intensity, max_intensity_for_channel);
       }
-      response->maximum_intensity = (uint8_t)max_intensity;
+
+      /* Cap the maximum intensity to the intensity limit (defined in V/m). */
+
+      response->maximum_intensity = min(INTENSITY_LIMIT, (uint8_t) max_intensity);
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request.");
     };
@@ -160,25 +167,25 @@ public:
 private:
   bool validate_displacement(int8_t displacement_x, int8_t displacement_y) {
     if (abs(displacement_x) > MAX_ABSOLUTE_DISPLACEMENT) {
-      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in x-direction.");
+      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in x-direction, the limit is: %d.", MAX_ABSOLUTE_DISPLACEMENT);
       return false;
     }
     if (abs(displacement_y) > MAX_ABSOLUTE_DISPLACEMENT) {
-      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in y-direction.");
+      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large absolute displacement in y-direction, the limit is: %d.", MAX_ABSOLUTE_DISPLACEMENT);
       return false;
     }
     return true;
   }
   bool validate_rotation_angle(int16_t rotation_angle) {
     if (rotation_angle > MAX_ROTATION_ANGLE) {
-      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large rotation angle.");
+      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large rotation angle, the limit is: %d.", MAX_ROTATION_ANGLE);
       return false;
     }
     return true;
   }
   bool validate_intensity(int8_t intensity) {
-    if (intensity > MAX_INTENSITY) {
-      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large intensity.");
+    if (intensity > INTENSITY_LIMIT) {
+      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Intensity limit (%d V/m) exceeded.", INTENSITY_LIMIT);
       return false;
     }
     return true;
