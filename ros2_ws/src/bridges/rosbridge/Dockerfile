@@ -14,7 +14,7 @@ RUN pip install \
     pymongo \
     tornado
 
-# Copy ROS workspace for rosbridge
+# Copy ROS workspace
 
 WORKDIR /app/ros2_ws
 COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite

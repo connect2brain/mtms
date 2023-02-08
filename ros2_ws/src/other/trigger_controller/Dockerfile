@@ -12,7 +12,7 @@ RUN apt-get install -y \
 
 RUN pip install PySerial
 
-# Copy ROS workspace for trigger controller
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/other/trigger_controller ros2_ws/src/other/trigger_controller/

@@ -4,7 +4,7 @@ on:
 
 jobs:
   test:
-    name: Build ros packages
+    name: Build ROS packages
     runs-on: ubuntu-20.04
     env:
       COMPOSE_FILE: .ci/docker-compose.build.yml
@@ -15,14 +15,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build docker images
+      - name: Build Docker images
         run: docker-compose build
 
-      - name: Create docker compose logs
+      - name: Create docker-compose logs
         run: docker-compose logs > docker-compose.log
         if: failure()
 
-      - name: Upload docker compose logs
+      - name: Upload docker-compose logs
         uses: actions/upload-artifact@v1
         if: failure()
         with:

@@ -1,78 +1,70 @@
-
 #include "eeg_bridge.h"
 
 #include "scheduling_utils.h"
 #include "memory_utils.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <cstdio>
-#include <unistd.h>
+
 #include <arpa/inet.h>
 #include <chrono>
+#include <cmath>
+#include <cstdio>
 #include <functional>
 #include <memory>
-#include <cmath>
+#include <string>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
 
-#define SIGNED_MAX pow(2,23)
-#define UNSIGNED_MAX pow(2,24)
-#define DC_MODE_SCALE 100
-#define NANO_TO_MICRO_CONVERSION 1000
+const int32_t SIGNED_MAX = pow(2,23);
+const int32_t UNSIGNED_MAX = pow(2,24);
+const uint8_t DC_MODE_SCALE = 100;
+const uint16_t NANO_TO_MICRO_CONVERSION = 1000;
 
-#define MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX 4
-#define MEASUREMENT_START_PACKET_N_CHANNELS_INDEX 16
-#define MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX 18
+const uint8_t MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX = 4;
+const uint8_t MEASUREMENT_START_PACKET_N_CHANNELS_INDEX = 16;
+const uint8_t MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX = 18;
+
+const double_t SYNC_INTERVAL = 1.0;
 
 /* HACK: If source channel matches the value below, it indicates the existence
  *  of trigger in the sample packet. This is documented in NeurOne's manual.
  *  However, it would be cleaner to have a separate field in measurement start
  *  packet to indicate the existence of trigger. */
-#define SOURCE_CHANNEL_FOR_TRIGGER 65535
+const uint16_t SOURCE_CHANNEL_FOR_TRIGGER = 65535;
 
-#define SAMPLE_PACKET_N_BUNDLES_INDEX 10
+const uint8_t SAMPLE_PACKET_N_BUNDLES_INDEX = 10;
 
-#define FIRST_CHANNEL_INDEX 28
-#define SAMPLE_PACKET_FIRST_TIME_INDEX 20
-#define TRIGGER_PACKET_FIRST_TIME_INDEX 8
-#define TRIGGER_PORT_INDEX 24
+const uint8_t FIRST_CHANNEL_INDEX = 28;
+const uint8_t SAMPLE_PACKET_FIRST_TIME_INDEX = 20;
+const uint8_t TRIGGER_PACKET_FIRST_TIME_INDEX = 8;
+const uint8_t TRIGGER_PORT_INDEX = 24;
 
-#define MEASUREMENT_START_PACKET_ID 1
-#define SAMPLE_PACKET_ID 2
-#define TRIGGER_PACKET_ID 3
+const uint8_t MEASUREMENT_START_PACKET_ID = 1;
+const uint8_t SAMPLE_PACKET_ID = 2;
+const uint8_t TRIGGER_PACKET_ID = 3;
+const uint8_t MEASUREMENT_END_PACKET_ID = 4;
 
-#define TRIGGER_A_IN 2
-#define TRIGGER_B_IN 8
+const uint8_t TRIGGER_A_IN = 2;
+const uint8_t TRIGGER_B_IN = 8;
 
-#define VERBOSE 0
+const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_INFO_TOPIC = "/eeg/info";
+const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
+
+const uint8_t VERBOSE = 0;
+
+/* HACK: Needs to match the values in system_state_bridge.cpp. */
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
-  const rmw_qos_profile_t qos_profile = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      RMW_QOS_DEADLINE_DEFAULT,
-      RMW_QOS_LIFESPAN_DEFAULT,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
+  this->create_publishers();
 
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+  this->subscribe_to_system_state();
 
-  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    experiment_state = message->experiment_state;
-    if (experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-      this->reset_sync();
-    }
-  };
-
-  publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
-  publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
-  publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>("/eeg/trigger_received", qos);
-
-  subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", 10,
-                                                                                           system_state_callback);
+  /* Read ROS parameters. */
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
@@ -105,8 +97,74 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->init_socket();
 
-  this->sync_interval = 10.0;
-  this->reset_sync();
+  this->reset_experiment();
+}
+
+void EegBridge::create_publishers() {
+  const rmw_qos_profile_t qos_profile = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      RMW_QOS_DEADLINE_DEFAULT,
+      RMW_QOS_LIFESPAN_DEFAULT,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
+  };
+
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
+  this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
+  this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
+}
+
+void EegBridge::subscribe_to_system_state() {
+  this->experiment_been_stopped = false;
+  this->system_state_received = false;
+
+  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
+    this->system_state_received = true;
+    experiment_state = message->experiment_state;
+
+    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
+       one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+       to ensure that we notice if the experiment is stopped. */
+    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
+        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+      this->reset_experiment();
+      this->experiment_been_stopped = true;
+    }
+  };
+
+  /* HACK: Duplicates code from system_state_bridge.cpp. */
+  auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
+  const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
+  const rmw_time_t rmw_deadline = {0, deadline_ns};
+  const rmw_time_t rmw_lifespan = rmw_deadline;
+
+  const rmw_qos_profile_t qos_profile = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      rmw_deadline,
+      rmw_lifespan,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
+  };
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) -> void {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+  };
+
+  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
+                                                                                                        system_state_callback, subscription_options);
 }
 
 void EegBridge::set_channel_types() {
@@ -128,22 +186,56 @@ void EegBridge::set_channel_types() {
   }
 }
 
-void EegBridge::reset_sync() {
+void EegBridge::reset_experiment() {
   first_trigger_received = false;
-  sync_diff = 0;
+  time_correction = 0;
   sync_index = 1;
 }
 
-void EegBridge::spin() {
-  RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet.");
+void EegBridge::wait_for_system_state() {
+  RCLCPP_INFO(this->get_logger(), "Waiting for system state...");
 
   auto base_interface = this->get_node_base_interface();
 
-  while (rclcpp::ok()) {
-    if (this->read_eeg_data_from_socket()) {
-      this->handle_eeg_data_packet();
+  /* HACK: Ensure that node stops itself gracefully by catching the exception:
+     this is due to a known race condition in ROS2, in which if Ctrl-C (SIGINT) signal
+     arrives between ok() and spin_some function calls, an exception is thrown. This
+     seems to cause eProsima Fast DDS to occasionally go into a bad state, in which
+     subscribers stop working properly after node is restarted.
+
+     For more info about the race condition, see:
+
+     https://github.com/ros2/rclcpp/issues/1066
+     https://github.com/ros2/system_tests/pull/459
+  */
+  try {
+    while (rclcpp::ok() && !this->system_state_received) {
+      rclcpp::spin_some(base_interface);
     }
-    rclcpp::spin_some(base_interface);
+  } catch (const rclcpp::exceptions::RCLError & exception) {
+    RCLCPP_ERROR(rclcpp::get_logger("eeg_bridge"), "Failed with %s", exception.what());
+  }
+}
+
+void EegBridge::spin() {
+  /* System state has a deadline of 25 ms, but it will only start affecting once the first system state
+     is received. Hence, wait here until the system state is received. */
+  wait_for_system_state();
+
+  RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet...");
+
+  auto base_interface = this->get_node_base_interface();
+
+  /* HACK: See comment in wait_for_system_state function. */
+  try {
+    while (rclcpp::ok()) {
+      rclcpp::spin_some(base_interface);
+      if (this->read_eeg_data_from_socket()) {
+        this->handle_eeg_data_packet();
+      }
+    }
+  } catch (const rclcpp::exceptions::RCLError & ex) {
+    RCLCPP_ERROR(rclcpp::get_logger("eeg_bridge"), "failed with %s", ex.what());
   }
 }
 
@@ -187,11 +279,6 @@ bool EegBridge::read_eeg_data_from_socket() {
 
   if (success == -1) {
     RCLCPP_WARN(this->get_logger(), "No data received, reason: %s", strerror(errno));
-
-    auto stream_msg = std_msgs::msg::Bool();
-    stream_msg.data = false;
-    this->publisher_streaming_->publish(stream_msg);
-
     return false;
   }
   return true;
@@ -210,38 +297,36 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  sync_diff = (sync_time - first_trigger_timestamp_) - sync_index * sync_interval;
+  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * SYNC_INTERVAL;
   sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Updated sync diff to %f", sync_diff);
+  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f.", time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
   double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_index = buffer[TRIGGER_PORT_INDEX] >> 4;
-  RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u\n", trigger_index);
 
   auto trigger_msg = eeg_interfaces::msg::Trigger();
 
   if (trigger_index == 1) {
-
-    if (this->first_trigger_received) {
-      this->handle_sync_trigger(new_trigger_timestamp);
-    } else {
+    if (!this->first_trigger_received) {
       /* Upon receiving the first trigger, reset time. */
       this->first_trigger_timestamp_ = new_trigger_timestamp;
-      trigger_msg.time = 0;
       this->first_trigger_received = true;
       this->first_sample_of_experiment_ = true;
+
+      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+    } else {
+      this->handle_sync_trigger(new_trigger_timestamp);
     }
-
   } else {
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->sync_diff;
+    RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
   }
-
+  trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   trigger_msg.index = trigger_index;
-  this->publisher_trigger_->publish(trigger_msg);
 
+  this->publisher_trigger_->publish(trigger_msg);
 }
 
 void EegBridge::handle_sample_packet() {
@@ -262,33 +347,33 @@ void EegBridge::handle_sample_packet() {
     this->first_sample_of_experiment_ = true;
   }
 
-  if (this->first_trigger_timestamp_ > 0 && time >= this->first_trigger_timestamp_) {
-    double_t time_diff = time - this->first_trigger_timestamp_ - sync_diff;
+  /* If first trigger has not been received yet, ignore the sample packet. */
+  if (this->first_trigger_received) {
 
-    this->publish_eeg_datapoint(time_diff);
-    this->first_sample_of_experiment_ = false;
+    if (time >= this->first_trigger_timestamp_) {
+      double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
-  } else if (time < this->first_trigger_timestamp_ || !this->first_trigger_received) {
-    auto &clk = *this->get_clock();
+      this->publish_eeg_datapoint(time_diff);
+      this->first_sample_of_experiment_ = false;
 
-    RCLCPP_WARN_THROTTLE(this->get_logger(),
-                         clk,
-                         1000,
-                         "Sample packet arrived %.4f s before experiment start trigger. First trigger ts %.4f, sample ts %.4f",
-                         this->first_trigger_timestamp_ - time,
-                         this->first_trigger_timestamp_,
-                         time
-    );
-
-  } else {
-    RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Experiment start trigger timestamp %.4f, time %.4f",
-                this->first_trigger_timestamp_, time);
+    } else {
+      RCLCPP_WARN_THROTTLE(this->get_logger(),
+                          *this->get_clock(),
+                          1000,
+                          "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
+                          this->first_trigger_timestamp_ - time,
+                          this->first_trigger_timestamp_,
+                          time
+      );
+    }
   }
 }
 
 void EegBridge::handle_measurement_start_packet() {
   RCLCPP_INFO(this->get_logger(), "Measurement start packet received.");
   this->measurement_start_packet_received_ = true;
+
+  /* Parse measurement start packet. */
 
   this->sampling_frequency_ = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
@@ -318,6 +403,16 @@ void EegBridge::handle_measurement_start_packet() {
 
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
+
+  /* Publish EEG info. */
+
+  auto eeg_info_msg = eeg_interfaces::msg::EegInfo();
+
+  eeg_info_msg.sampling_frequency = this->sampling_frequency_;
+  eeg_info_msg.n_channels = this->n_channels_;
+  eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
+
+  this->publisher_eeg_info_->publish(eeg_info_msg);
 }
 
 void EegBridge::handle_eeg_data_packet() {
@@ -330,6 +425,14 @@ void EegBridge::handle_eeg_data_packet() {
 
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
+
+        break;
+      }
+
+      if (!this->experiment_been_stopped) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
+
         break;
       }
 
@@ -352,18 +455,23 @@ void EegBridge::handle_eeg_data_packet() {
             this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
-
         }
-
       }
-
-
       break;
 
     case TRIGGER_PACKET_ID:
+      if (!this->experiment_been_stopped) {
+        break;
+      }
+
       if (this->measurement_start_packet_received_) {
         this->handle_trigger_packet();
       }
+      break;
+
+    case MEASUREMENT_END_PACKET_ID:
+      RCLCPP_INFO(this->get_logger(), "Measurement end packet received.");
+
       break;
 
     default:
@@ -389,18 +497,19 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
     trigger_msg.time = time - this->first_trigger_timestamp_;
 
     if (!first_trigger_received) {
-      first_trigger_timestamp_ = time;
-      first_trigger_received = true;
-      trigger_msg.time = 0.0;
-      RCLCPP_INFO(this->get_logger(), "First trigger received, ts: %f", first_trigger_timestamp_);
+      this->first_trigger_timestamp_ = time;
+      this->first_trigger_received = true;
+
+      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(time);
     }
 
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     trigger_msg.index = 2;
-    trigger_msg.time = time - this->first_trigger_timestamp_ - this->sync_diff;
   }
+  trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+
   this->publisher_trigger_->publish(trigger_msg);
 }
 
@@ -432,10 +541,10 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
 
     i += 3;
   }
-
   message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
   this->publisher_data_->publish(message);
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Publishing EEG data to topic %s", EEG_RAW_TOPIC.c_str());
 }
 
 

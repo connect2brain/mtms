@@ -13,7 +13,7 @@ COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-# Copy ROS workspace for e-field
+# Copy ROS workspace
 
 WORKDIR /app/ros2_ws
 

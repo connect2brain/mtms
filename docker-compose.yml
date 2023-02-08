@@ -21,6 +21,16 @@ services:
       - "9090:9090"
     network_mode: host
 
+  eeg_gatherer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_gatherer/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: "host"
+
   eeg_simulator:
     build:
       context: .
@@ -105,6 +115,7 @@ services:
       - './data/neuronavigation_data:/app/data/neuronavigation_data/'
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
+    network_mode: host
 
   efield:
     build:
@@ -112,6 +123,7 @@ services:
       dockerfile: ros2_ws/src/targeting/efield/Dockerfile
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   optitrack_bridge:
     build:
@@ -139,6 +151,14 @@ services:
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: "host"
+
+  topic_frequency:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/topic_frequency/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    privileged: true
 
   trigger_controller:
     build:

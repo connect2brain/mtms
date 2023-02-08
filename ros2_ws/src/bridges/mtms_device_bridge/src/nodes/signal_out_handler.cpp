@@ -36,7 +36,7 @@ public:
       /* Serialize signal out. */
 
       uint32_t duration_us = signal_out->duration_us;
-      uint32_t duration_ticks = duration_us * CLOCK_FREQUENCY_HZ / 1e6;
+      uint32_t duration_ticks = duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
 
       serialized_message.add_uint32(duration_ticks);
 
