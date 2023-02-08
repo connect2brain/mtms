@@ -5,4 +5,4 @@ int8 displacement_y
 uint16 rotation_angle
 ---
 bool success
-float64 maximum_intensity
+uint8 maximum_intensity
