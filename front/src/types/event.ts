@@ -3,7 +3,7 @@ import {
   ChargeError,
   DischargeError,
   PulseError,
-  SignalOutError,
+  TriggerOutError,
 } from './eventErrors'
 
 interface Error {
@@ -14,7 +14,7 @@ export type Feedback =
   | PulseFeedbackMessage
   | ChargeFeedbackMessage
   | DischargeFeedbackMessage
-  | SignalOutFeedbackMessage
+  | TriggerOutFeedbackMessage
 
 export interface PulseFeedbackMessage extends ROSLIB.Message {
   id: number
@@ -34,8 +34,8 @@ export interface DischargeFeedbackMessage extends ROSLIB.Message {
   type: 'discharge'
 }
 
-export interface SignalOutFeedbackMessage extends ROSLIB.Message {
+export interface TriggerOutFeedbackMessage extends ROSLIB.Message {
   id: number
   error: Error
-  type: 'signalOut'
+  type: 'triggerOut'
 }
