@@ -13,10 +13,11 @@ COPY ros2_ws/src/targeting/targeting/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-# Copy ROS workspace for targeting
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/targeting ros2_ws/targeting/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/targeting_interfaces/
 
 # Build ROS packages

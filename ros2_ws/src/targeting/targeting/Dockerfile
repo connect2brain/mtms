@@ -9,10 +9,11 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Copy ROS workspace for targeting
+# Copy ROS workspace
 
 WORKDIR /app
 COPY ros2_ws/src/targeting/targeting ros2_ws/src/targeting/targeting/
+COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
 
 # Build ROS packages
