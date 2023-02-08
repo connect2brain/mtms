@@ -15,7 +15,7 @@ classdef MTMSApiNode < handle
 
         send_charge_publisher
         send_discharge_publisher
-        send_signal_out_publisher
+        send_trigger_out_publisher
         send_pulse_publisher
 
         send_event_trigger_publisher
@@ -23,7 +23,7 @@ classdef MTMSApiNode < handle
         system_state_subscriber 
 
         pulse_feedback_subscriber
-        signal_out_feedback_subscriber
+        trigger_out_feedback_subscriber
         charge_feedback_subscriber
         discharge_feedback_subscriber
 
@@ -65,7 +65,7 @@ classdef MTMSApiNode < handle
 
             obj.send_charge_publisher = ros2publisher(obj.node, "/event/send/charge", "event_interfaces/Charge");
             obj.send_discharge_publisher = ros2publisher(obj.node, "/event/send/discharge", "event_interfaces/Discharge");
-            obj.send_signal_out_publisher = ros2publisher(obj.node, "/event/send/signal_out", "event_interfaces/SignalOut");
+            obj.send_trigger_out_publisher = ros2publisher(obj.node, "/event/send/trigger_out", "event_interfaces/TriggerOut");
             obj.send_pulse_publisher = ros2publisher(obj.node, "/event/send/pulse", "event_interfaces/Pulse");
 
             obj.send_event_trigger_publisher = ros2publisher(obj.node, "/event/send/event_trigger", "event_interfaces/EventTrigger");
@@ -73,7 +73,7 @@ classdef MTMSApiNode < handle
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
             obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_interfaces/DischargeFeedback", @obj.handle_discharge_feedback);
-            obj.signal_out_feedback_subscriber = ros2subscriber(obj.node, "/event/signal_out_feedback", "event_interfaces/SignalOutFeedback", @obj.handle_signal_out_feedback);
+            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/event/trigger_out_feedback", "event_interfaces/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
 
             % To other parts of the system.
 
@@ -215,25 +215,25 @@ classdef MTMSApiNode < handle
             send(publisher, discharge);
         end
 
-        function send_signal_out(obj, id, execution_condition, time, port, duration_us)
-            %send_signal_out Send signal out event
+        function send_trigger_out(obj, id, execution_condition, time, port, duration_us)
+            %send_trigger_out Send trigger out event
             %
-            %   Send signal out event to the mTMS device.
+            %   Send trigger out event to the mTMS device.
 
-            publisher = obj.send_signal_out_publisher;
+            publisher = obj.send_trigger_out_publisher;
 
-            signal_out = ros2message(publisher);
+            trigger_out = ros2message(publisher);
 
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
             
-            signal_out.event_info = event_info;
-            signal_out.port = uint8(port);
-            signal_out.duration_us = uint32(duration_us);
+            trigger_out.event_info = event_info;
+            trigger_out.port = uint8(port);
+            trigger_out.duration_us = uint32(duration_us);
 
-            send(publisher, signal_out);
+            send(publisher, trigger_out);
         end
 
         % Feedback
@@ -260,8 +260,8 @@ classdef MTMSApiNode < handle
             obj.update_event_feedback(feedback)
         end
 
-        function handle_signal_out_feedback(obj, feedback)
-            obj.printer.print_feedback('Signal out', feedback)
+        function handle_trigger_out_feedback(obj, feedback)
+            obj.printer.print_feedback('Trigger out', feedback)
             obj.update_event_feedback(feedback)
         end
 

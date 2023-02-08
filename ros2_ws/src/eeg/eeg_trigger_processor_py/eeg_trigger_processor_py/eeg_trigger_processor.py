@@ -2,13 +2,13 @@ import rclpy
 from rclpy.node import Node
 import time
 
-from event_interfaces.msg import Pulse, Charge, SignalOut, EventInfo
+from event_interfaces.msg import Pulse, Charge, TriggerOut, EventInfo
 
 from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
 
 from eeg_interfaces.msg import EegDatapoint, Trigger
 
-SIGNAL_OUT_DURATION_US = 10000
+TRIGGER_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
 EVENT_ID = 1
 TIME_CONSTANT = 1.0
@@ -24,7 +24,7 @@ class EegProcessor(Node):
         self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
         self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
 
-        self.send_signal_out_publisher = self.create_publisher(SignalOut, '/event/send/signal_out', 10)
+        self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10)
 
         self.first_trigger_time = 0.0
         self.last_trigger_time = 0.0
@@ -44,7 +44,7 @@ class EegProcessor(Node):
         if msg.index == 1:
             self.first_trigger_time = msg.time
             self.set_trigger_request(1, msg.time)
-            self.client_futures.append(self.signal_out_client.call_async(self.request))
+            self.client_futures.append(self.trigger_out_client.call_async(self.request))
 
         elif msg.index == 2:
             self.last_trigger_time = msg.time
@@ -61,12 +61,12 @@ class EegProcessor(Node):
         event_info.execution_condition = 2
         event_info.execution_time = time + TIME_CONSTANT
 
-        signal_out = SignalOut()
-        signal_out.port = port
-        signal_out.duration_us = SIGNAL_OUT_DURATION_US
-        signal_out.event_info = event_info
+        trigger_out = TriggerOut()
+        trigger_out.port = port
+        trigger_out.duration_us = TRIGGER_OUT_DURATION_US
+        trigger_out.event_info = event_info
 
-        self.send_signal_out_publisher.publish(signal_out)
+        self.send_trigger_out_publisher.publish(trigger_out)
 
     def restart_experiment(self):
         self.stop_experiment_client.call_async(StopExperiment.Request())

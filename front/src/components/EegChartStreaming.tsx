@@ -108,7 +108,7 @@ const datasetDefaults = [
   },
   {
     type: 'bar' as const,
-    label: 'Signal out',
+    label: 'Trigger out',
     borderColor: theme.colors.green,
     backgroundColor: theme.colors.green,
     barThickness: 1,
