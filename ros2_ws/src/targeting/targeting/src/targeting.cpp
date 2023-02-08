@@ -156,12 +156,6 @@ private:
       getline(str, value_str, ',');
       double delta = stof(value_str);
 
-      /* Non-inductance-corrected voltages, unused. */
-      for (uint8_t i = 0; i < N_CHANNELS; i++) {
-        getline(str, value_str, ',');
-      }
-
-      /* Inductance-corrected voltages. */
       double voltages[N_CHANNELS];
       for (uint8_t i = 0; i < N_CHANNELS; i++) {
         getline(str, value_str, ',');
