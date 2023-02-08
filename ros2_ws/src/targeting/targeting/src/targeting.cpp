@@ -135,7 +135,7 @@ public:
           double max_intensity_for_channel = MAX_VOLTAGE / voltages[i];
           max_intensity = min(max_intensity, max_intensity_for_channel);
         }
-        response->maximum_intensity = max_intensity;
+        response->maximum_intensity = (uint8_t)max_intensity;
       }
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to maximum intensity request.");
     };
