@@ -84,33 +84,37 @@ public:
         displacement_x, displacement_y, rotation_angle, intensity);
 
       response->success = validate_channel_voltages_request(displacement_x, displacement_y, rotation_angle, intensity);
-
-      if (response->success) {
-        Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
-
-        double* voltages = target.get_voltages();
-        bool* reversed_polarities = target.get_reversed_polarities();
-
-        double scaled_voltages[N_CHANNELS];
-        for (int i = 0; i < N_CHANNELS; i++) {
-          double scaled_voltage = voltages[i] * intensity;
-          if (scaled_voltage > MAX_VOLTAGE) {
-            response->success = false;
-            RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Maximum voltage (%d) exceeded: %.1f on channel %d.",
-              MAX_VOLTAGE, scaled_voltage, i + 1);
-            break;
-          }
-          scaled_voltages[i] = scaled_voltage;
-        }
-
-        if (response->success) {
-          for (int i = 0; i < N_CHANNELS; i++) {
-            response->voltages.push_back(scaled_voltages[i]);
-            response->reversed_polarities.push_back(reversed_polarities[i]);
-          }
-        }
+      if (!response->success) {
+        RCLCPP_WARN(rclcpp::get_logger("targeting"), "Failed to respond to channel voltage request.");
+        return;
       }
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to channel voltage request.");
+
+      Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
+
+      double* voltages = target.get_voltages();
+      bool* reversed_polarities = target.get_reversed_polarities();
+
+      double scaled_voltages[N_CHANNELS];
+      for (int i = 0; i < N_CHANNELS; i++) {
+        double scaled_voltage = voltages[i] * intensity;
+        if (scaled_voltage > MAX_VOLTAGE) {
+          response->success = false;
+          RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Maximum voltage (%d) exceeded: %.1f on channel %d.",
+            MAX_VOLTAGE, scaled_voltage, i + 1);
+          break;
+        }
+        scaled_voltages[i] = scaled_voltage;
+      }
+      if (!response->success) {
+        RCLCPP_WARN(rclcpp::get_logger("targeting"), "Failed to respond to channel voltage request.");
+        return;
+      }
+
+      for (int i = 0; i < N_CHANNELS; i++) {
+        response->voltages.push_back(scaled_voltages[i]);
+        response->reversed_polarities.push_back(reversed_polarities[i]);
+      }
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to channel voltage request.");
     };
 
     auto get_maximum_intensity_callback = [this](
@@ -124,20 +128,23 @@ public:
         displacement_x, displacement_y, rotation_angle);
 
       response->success = validate_maximum_intensity_request(displacement_x, displacement_y, rotation_angle);
-
-      if (response->success) {
-        Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
-
-        double max_intensity = std::numeric_limits<double>::infinity();
-        double* voltages = target.get_voltages();
-
-        for (int i = 0; i < N_CHANNELS; i++) {
-          double max_intensity_for_channel = MAX_VOLTAGE / voltages[i];
-          max_intensity = min(max_intensity, max_intensity_for_channel);
-        }
-        response->maximum_intensity = (uint8_t)max_intensity;
+      if (!response->success) {
+        RCLCPP_WARN(rclcpp::get_logger("targeting"), "Failed to respond to maximum intensity request.");
+        return;
       }
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Responded to maximum intensity request.");
+
+      Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
+
+      double max_intensity = std::numeric_limits<double>::infinity();
+      double* voltages = target.get_voltages();
+
+      for (int i = 0; i < N_CHANNELS; i++) {
+        double max_intensity_for_channel = MAX_VOLTAGE / voltages[i];
+        max_intensity = min(max_intensity, max_intensity_for_channel);
+      }
+      response->maximum_intensity = (uint8_t)max_intensity;
+
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request.");
     };
 
     get_channel_voltages = this->create_service<targeting_interfaces::srv::GetChannelVoltages>(
