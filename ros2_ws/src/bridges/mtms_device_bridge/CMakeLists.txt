@@ -142,21 +142,21 @@ target_include_directories(pulse_handler
 
 ament_target_dependencies(pulse_handler rclcpp std_msgs event_interfaces)
 
-# Install signal out handler.
+# Install trigger out handler.
 
-add_executable(signal_out_handler
-  src/nodes/signal_out_handler.cpp
+add_executable(trigger_out_handler
+  src/nodes/trigger_out_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(signal_out_handler
+target_include_directories(trigger_out_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(signal_out_handler rclcpp std_msgs event_interfaces)
+ament_target_dependencies(trigger_out_handler rclcpp std_msgs event_interfaces)
 
 # Install charge handler.
 
@@ -248,7 +248,7 @@ install(TARGETS
   charge_handler
   discharge_handler
   pulse_handler
-  signal_out_handler
+  trigger_out_handler
 
   event_trigger_handler
   feedback_monitor_bridge

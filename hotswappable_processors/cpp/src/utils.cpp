@@ -62,7 +62,7 @@ mtms_device_event create_discharge_command(uint16_t event_id, uint8_t channel, u
 }
 
 
-mtms_device_event create_signal_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double execution_time) {
+mtms_device_event create_trigger_out_command(uint16_t event_id, uint8_t index, uint16_t duration_us, uint8_t execution_condition, double execution_time) {
   mtms_device_event event;
   event.channel = index;
   event.event_type = 3;

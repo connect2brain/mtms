@@ -2,7 +2,7 @@ classdef MTMSApiPrinter < handle
     properties (Constant)
         TIME_COLOR = "blue"
         EVENT_COLORS = dictionary( ...
-            ['Pulse', 'Charge', 'Discharge', 'Signal out'], ...
+            ['Pulse', 'Charge', 'Discharge', 'Trigger out'], ...
             ['header', 'cyan', 'warning', 'green'])
     end
 
@@ -140,8 +140,8 @@ classdef MTMSApiPrinter < handle
                 error_str = obj.enum_to_str(value, obj.mtmsapi_enums.CHARGE_ERRORS);
             elseif event_type == "Discharge"
                 error_str = obj.enum_to_str(value, obj.mtmsapi_enums.DISCHARGE_ERRORS);
-            elseif event_type == "Signal out"
-                error_str = obj.enum_to_str(value, obj.mtmsapi_enums.SIGNAL_OUT_ERRORS);
+            elseif event_type == "Trigger out"
+                error_str = obj.enum_to_str(value, obj.mtmsapi_enums.TRIGGER_OUT_ERRORS);
             end
 
             % TODO: "[Done]" part of the string should be colored by EVENT_COLORS[event_type].

@@ -5,7 +5,7 @@ class EventType(Enum):
     PULSE = 0
     CHARGE = 1
     DISCHARGE = 2
-    SIGNAL_OUT = 3
+    TRIGGER_OUT = 3
     STIMULUS = 4
 
 
@@ -40,12 +40,12 @@ class Discharge:
         self.event_type = EventType.DISCHARGE.value
 
 
-class SignalOut:
+class TriggerOut:
     def __init__(self, port, duration_us, event_info) -> None:
         self.port = port
         self.duration_us = duration_us
         self.event_info = event_info
-        self.event_type = EventType.SIGNAL_OUT.value
+        self.event_type = EventType.TRIGGER_OUT.value
 
 
 class Sample:
