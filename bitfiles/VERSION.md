@@ -1,5 +1,10 @@
 ## Version history
 
+### 0.4.9
+- FIX: Implementation of pulse got stuck because FIFO got full.
+- MOD: Change SignalOut to TriggerOut.
+- DEL: 'Disable checks' functionality, used for debugging.
+
 ### 0.4.8
 - MOD: Change sync interval from 10 s to 1 s.
 - FIX: Several charging-related bugs in Aalto device.

@@ -20,9 +20,7 @@ using namespace std::chrono_literals;
 NiFpga_mTMS_TargetToHostFifoU8 pulse_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostPulsefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 charge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostChargefeedbackFIFO;
 NiFpga_mTMS_TargetToHostFifoU8 discharge_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostDischargefeedbackFIFO;
-
-/* TODO: Rename to TriggerOutfeedbackFIFO in the next bitfile version.*/
-NiFpga_mTMS_TargetToHostFifoU8 trigger_out_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostSignalOutfeedbackFIFO;
+NiFpga_mTMS_TargetToHostFifoU8 trigger_out_feedback_fifo = NiFpga_mTMS_TargetToHostFifoU8_TargettoHostTriggerOutfeedbackFIFO;
 
 class FeedbackMonitorBridge : public rclcpp::Node {
 public:
