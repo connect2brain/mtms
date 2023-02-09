@@ -9,8 +9,7 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-/* TODO: Change "SignalOutFIFO" to "TriggerOutFIFO" in the next bitfile version. */
-const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetSignalOutFIFO;
+const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetTriggerOutFIFO;
 
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
