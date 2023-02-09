@@ -9,7 +9,7 @@ from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, Trigger
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
     WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, TriggerOutError
 
-from eeg_interfaces.action import AnalyzeMep
+from mep_interfaces.action import AnalyzeMep
 
 from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
 
@@ -332,7 +332,7 @@ class MTMSApiNode(Node):
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel):
+    def analyze_mep(self, time, emg_channel, mep_configuration):
         topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
         client = self.ros_action_clients[topic]
@@ -342,6 +342,7 @@ class MTMSApiNode(Node):
 
         goal.time = time
         goal.emg_channel = emg_channel
+        goal.mep_configuration = mep_configuration
 
         # Send goal to ROS action.
         send_goal_future = client.send_goal_async(goal)
@@ -361,7 +362,7 @@ class MTMSApiNode(Node):
             self.get_logger().info('Analyze MEP result failed.')
             return None, None
 
-        return result.result.amplitude, result.result.latency
+        return result.result.amplitude, result.result.latency, result.result.errors
 
     # System state
 
