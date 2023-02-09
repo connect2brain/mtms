@@ -110,22 +110,6 @@ target_include_directories(stop_device_handler
 
 ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install disable checks handler.
-
-add_executable(disable_checks_handler
-        src/nodes/disable_checks_handler.cpp
-        src/lib/fpga.cpp
-        src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-
-target_include_directories(disable_checks_handler
-        PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(disable_checks_handler rclcpp std_msgs mtms_device_interfaces)
-
 # Install pulse handler.
 
 add_executable(pulse_handler
@@ -252,7 +236,6 @@ install(TARGETS
 
   event_trigger_handler
   feedback_monitor_bridge
-  disable_checks_handler
   settings_handler
   DESTINATION lib/${PROJECT_NAME})
 
