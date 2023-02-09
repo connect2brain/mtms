@@ -38,7 +38,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/StartExperiment.srv"
         "srv/StopExperiment.srv"
 
-        "srv/DisableChecks.srv"
         "srv/SendSettings.srv"
         )
 
