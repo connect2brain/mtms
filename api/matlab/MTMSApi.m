@@ -220,6 +220,14 @@ classdef MTMSApi < handle
 
         function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
             [amplitude, latency, errors] = obj.node.analyze_mep(emg_channel, time, mep_configuration);
+
+            % HACK: ROS2 doesn't support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
+            if amplitude == 0.0
+                amplitude = NaN;
+            end
+            if latency == 0.0
+                amplitude = NaN;
+            end
         end
 
         function mep_configuration = create_mep_configuration(obj, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
