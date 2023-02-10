@@ -12,7 +12,7 @@ jobs:
       #   more, have a separate .env.test file in .ci
       #   directory. For now, having a single .env file
       #   avoids unnecessary duplication.
-      ENV_FILE: ../.env
+      TEST_ENV_FILE: ../.env
 
     steps:
       - name: Checkout code
