@@ -72,6 +72,16 @@ class Targeting : public rclcpp::Node {
 
 public:
   Targeting() : Node("targeting") {
+    /* Read ROS parameters. */
+    auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+
+    descriptor.description = "Site";
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
+    this->declare_parameter("site", "", descriptor);
+
+    this->site = this->get_parameter("site").get_parameter_value().get<std::string>();
+
+    /* Define callbacks for service calls. */
 
     auto get_channel_voltages_callback = [this](
         const std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Request> request,
@@ -207,10 +217,11 @@ private:
 
     RCLCPP_INFO(rclcpp::get_logger("targeting"), "Initializing lookup table...");
 
-    ifstream file("targeting.csv", ios::in);
+    std::string filePath = "data/" + site + "/targeting.csv";
+    std::ifstream file(filePath.c_str(), std::ios::in);
 
     if (!file.is_open()) {
-      RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Could not open file.");
+      RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Could not open file: %s", filePath.c_str());
       assert(false);
     }
 
@@ -255,6 +266,8 @@ private:
   Target targets[N_DISPLACEMENTS][N_DISPLACEMENTS][N_ROTATION_ANGLES];
   rclcpp::Service<targeting_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
   rclcpp::Service<targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
+
+  std::string site;
 };
 
 
