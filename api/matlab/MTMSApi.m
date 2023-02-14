@@ -215,7 +215,11 @@ classdef MTMSApi < handle
         function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
             [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
         end
-    
+
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+            maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle);
+        end
+
         % Other
 
         function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
