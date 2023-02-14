@@ -82,6 +82,10 @@ intensity = 20;  % V/m
 
 [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
 
+% Get maximum intensity
+
+maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, rotation_angle);
+
 % Charge all channels to target voltages.
 
 wait_for_completion = true;
