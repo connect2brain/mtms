@@ -124,7 +124,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './data/neuronavigation_data:/app/data/neuronavigation_data/'
+      - './data/neuronavigation_data/efield_data:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius1'
     network_mode: host
    
   optitrack_bridge:
