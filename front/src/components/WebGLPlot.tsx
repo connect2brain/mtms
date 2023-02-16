@@ -8,16 +8,16 @@ type WebGLPlotProps = {
   pulseData: Datapoint[]
   chargeData: Datapoint[]
   dischargeData: Datapoint[]
-  signalOutData: Datapoint[]
+  triggerOutData: Datapoint[]
 }
 
-export const WebGLPlot = ({ eegData, pulseData, chargeData, dischargeData, signalOutData }: WebGLPlotProps) => {
+export const WebGLPlot = ({ eegData, pulseData, chargeData, dischargeData, triggerOutData }: WebGLPlotProps) => {
   const canvasMain = useRef<HTMLCanvasElement>(null)
 
   const [webGLPlot, setWebGLPlot] = useState<WebglPlot>()
   const [eegLine, setEegLine] = useState<WebglLine>()
   const [pulseLine, setPulseLine] = useState<WebglLine>()
-  const [signalOutLine, setSignalOutLine] = useState<WebglLine>()
+  const [triggerOutLine, setTriggerOutLine] = useState<WebglLine>()
   const [chargeLine, setChargeLine] = useState<WebglLine>()
   const [dischargeLine, setDischargeLine] = useState<WebglLine>()
 
@@ -53,7 +53,7 @@ export const WebGLPlot = ({ eegData, pulseData, chargeData, dischargeData, signa
       setEegLine(line1)
       setPulseLine(line2)
       setChargeLine(line3)
-      setSignalOutLine(line4)
+      setTriggerOutLine(line4)
       setDischargeLine(line5)
     }
   }, [])
@@ -129,8 +129,8 @@ export const WebGLPlot = ({ eegData, pulseData, chargeData, dischargeData, signa
   useEffect(() => {
     let id = 0
     let renderPlot = () => {
-      const y = new Float32Array(signalOutData.map((datapoint) => datapoint.y))
-      signalOutLine?.shiftAdd(y)
+      const y = new Float32Array(triggerOutData.map((datapoint) => datapoint.y))
+      triggerOutLine?.shiftAdd(y)
       webGLPlot?.update()
     }
 
@@ -141,7 +141,7 @@ export const WebGLPlot = ({ eegData, pulseData, chargeData, dischargeData, signa
       renderPlot = () => {}
       cancelAnimationFrame(id)
     }
-  }, [signalOutData])
+  }, [triggerOutData])
 
   return (
     <div>

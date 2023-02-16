@@ -188,10 +188,10 @@ classdef MTMSApi < handle
             end
         end
     
-        function id = send_signal_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
+        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
             id = obj.next_event_id();
 
-            obj.node.send_signal_out(id, execution_condition, time, port, duration_us);
+            obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
     
             if wait_for_completion
                 obj.wait_for_completion(id);
@@ -215,11 +215,23 @@ classdef MTMSApi < handle
         function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
             [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
         end
-    
+
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+            maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle);
+        end
+
         % Other
 
         function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
             [amplitude, latency, errors] = obj.node.analyze_mep(emg_channel, time, mep_configuration);
+
+            % HACK: ROS2 doesn't support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
+            if amplitude == 0.0
+                amplitude = NaN;
+            end
+            if latency == 0.0
+                amplitude = NaN;
+            end
         end
 
         function mep_configuration = create_mep_configuration(obj, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)

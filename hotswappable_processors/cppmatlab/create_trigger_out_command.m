@@ -1,4 +1,4 @@
-function command = create_signal_out_command(event_id, port, duration_us, execution_condition, execution_time)
+function command = create_trigger_out_command(event_id, port, duration_us, execution_condition, execution_time)
     event_info.id = uint16(event_id);
     event_info.execution_condition = uint8(execution_condition);
     event_info.execution_time = double(execution_time);

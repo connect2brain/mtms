@@ -72,13 +72,13 @@ Event convert_matlab_event_to_event(matlab_event event) {
     matlab_event.discharge.channel = event.channel;
     matlab_event.discharge.target_voltage = event.target_voltage;
   } else {
-    matlab_event.event_type = SIGNAL_OUT;
-    matlab_event.signal_out = event_interfaces::msg::SignalOut();
-    matlab_event.signal_out.event_info.id = event.b_event_info.id;
-    matlab_event.signal_out.event_info.execution_condition.value = event.b_event_info.execution_condition;
-    matlab_event.signal_out.event_info.execution_time = event.b_event_info.execution_time;
-    matlab_event.signal_out.port = event.channel;
-    matlab_event.signal_out.duration_us = event.duration_us;
+    matlab_event.event_type = TRIGGER_OUT;
+    matlab_event.trigger_out = event_interfaces::msg::TriggerOut();
+    matlab_event.trigger_out.event_info.id = event.b_event_info.id;
+    matlab_event.trigger_out.event_info.execution_condition.value = event.b_event_info.execution_condition;
+    matlab_event.trigger_out.event_info.execution_time = event.b_event_info.execution_time;
+    matlab_event.trigger_out.port = event.channel;
+    matlab_event.trigger_out.duration_us = event.duration_us;
   }
   return matlab_event;
 }

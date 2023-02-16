@@ -6,7 +6,7 @@ classdef MTMSApiEnums < handle
         PULSE_ERRORS
         CHARGE_ERRORS
         DISCHARGE_ERRORS
-        SIGNAL_OUT_ERRORS
+        TRIGGER_OUT_ERRORS
     end
     
     methods
@@ -18,7 +18,7 @@ classdef MTMSApiEnums < handle
             pulse_error = ros2message("event_interfaces/PulseError");
             charge_error = ros2message("event_interfaces/ChargeError");
             discharge_error = ros2message("event_interfaces/DischargeError");
-            signal_out_error = ros2message("event_interfaces/SignalOutError");
+            trigger_out_error = ros2message("event_interfaces/TriggerOutError");
 
             obj.DEVICE_STATES = {
                 {device_state.NOT_OPERATIONAL,  "Not operational", ""},
@@ -83,12 +83,12 @@ classdef MTMSApiEnums < handle
                 {discharge_error.DISCHARGING_FAILURE, "Discharging failure", "fail"},
                 {discharge_error.UNKNOWN_ERROR, "Unknown error", "fail"},
             };
-            obj.SIGNAL_OUT_ERRORS = {
-                {signal_out_error.NO_ERROR, "No error", "green"},
-                {signal_out_error.INVALID_EXECUTION_CONDITION, "Invalid execution condition", "fail"},
-                {signal_out_error.LATE, "Late", "fail"},
-                {signal_out_error.SIGNALOUT_FAILURE, "Signal out failure", "fail"},
-                {signal_out_error.UNKNOWN_ERROR, "Unknown error", "fail"},
+            obj.TRIGGER_OUT_ERRORS = {
+                {trigger_out_error.NO_ERROR, "No error", "green"},
+                {trigger_out_error.INVALID_EXECUTION_CONDITION, "Invalid execution condition", "fail"},
+                {trigger_out_error.LATE, "Late", "fail"},
+                {trigger_out_error.TRIGGEROUT_FAILURE, "Trigger out failure", "fail"},
+                {trigger_out_error.UNKNOWN_ERROR, "Unknown error", "fail"},
             };
         end
     end
