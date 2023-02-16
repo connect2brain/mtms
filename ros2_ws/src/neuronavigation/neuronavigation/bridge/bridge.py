@@ -45,22 +45,22 @@ class NeuronavigationNode(Node):
         )
         callback_group = ReentrantCallbackGroup()
 
-        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10)
-        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10)
+        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
+        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10, callback_group=callback_group)
 
-        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest)
-        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest)
+        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest, callback_group=callback_group)
+        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest, callback_group=callback_group)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
-                                                                    self.planner_state_callback, qos_persist_latest)
+                                                                    self.planner_state_callback, qos_persist_latest, callback_group=callback_group)
         self._optitrack_state_subscription = self.create_subscription(OptitrackPoses, "/neuronavigation/optitrack_poses",
                                                                       self.optitrack_listener_callback, 1, callback_group=callback_group)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
-                                                                    self.open_orientation_dialog_callback)
+                                                                    self.open_orientation_dialog_callback, callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
-                                                                    '/planner/set_target_orientation')
+                                                                    '/planner/set_target_orientation', callback_group=callback_group)
 
         self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
         while not self.cli.wait_for_service(timeout_sec=1.0):
