@@ -3,7 +3,7 @@ import {
   chargeFeedbackSubscriber,
   dischargeFeedbackSubscriber,
   pulseFeedbackSubscriber,
-  signalOutFeedbackSubscriber,
+  triggerOutFeedbackSubscriber,
   systemStateSubscriber,
 } from 'services/experiment'
 import { SystemStateMessage } from 'types/mtmsDevice'
@@ -12,7 +12,7 @@ import {
   Feedback,
   ChargeFeedbackMessage,
   DischargeFeedbackMessage,
-  SignalOutFeedbackMessage,
+  TriggerOutFeedbackMessage,
 } from 'types/event'
 import { SystemState } from 'components/SystemState'
 import { ExperimentControl } from 'components/ExperimentControl'
@@ -93,7 +93,7 @@ export const SystemControl = () => {
     pulseFeedbackSubscriber.subscribe(pulseFeedbackCallback)
     chargeFeedbackSubscriber.subscribe(chargeFeedbackCallback)
     dischargeFeedbackSubscriber.subscribe(dischargeFeedbackCallback)
-    signalOutFeedbackSubscriber.subscribe(signalOutFeedbackCallback)
+    triggerOutFeedbackSubscriber.subscribe(triggerOutFeedbackCallback)
   }, [])
 
   const pulseFeedbackCallback = (message: PulseFeedbackMessage) => {
@@ -117,10 +117,10 @@ export const SystemControl = () => {
     })
   }
 
-  const signalOutFeedbackCallback = (message: SignalOutFeedbackMessage) => {
+  const triggerOutFeedbackCallback = (message: TriggerOutFeedbackMessage) => {
     setFeedback({
       ...message,
-      type: 'signalOut',
+      type: 'triggerOut',
     })
   }
 

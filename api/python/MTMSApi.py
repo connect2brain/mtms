@@ -166,10 +166,10 @@ class MTMSApi:
 
         return id
 
-    def send_signal_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         id = self.next_event_id()
 
-        self.node.send_signal_out(
+        self.node.send_trigger_out(
             id=id,
             execution_condition=execution_condition,
             time=time,
@@ -313,12 +313,22 @@ class MTMSApi:
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel):
-        amplitude, latency = self.node.analyze_mep(
+    def analyze_mep(self, time, emg_channel, mep_configuration):
+        amplitude, latency, errors = self.node.analyze_mep(
             time=time,
             emg_channel=emg_channel,
+            mep_configuration=mep_configuration,
         )
-        return amplitude, latency
+
+        # HACK: ROS2 doesn't support NaN values, therefore they are encoded as 0.0 values. Do the decoding
+        #   here. Maybe it would better to use non-zero errors instead as criterion for returning Nones?
+        #
+        if amplitude == 0.0:
+            amplitude = None
+        if latency == 0.0:
+            latency = None
+
+        return amplitude, latency, errors
 
     # Other
 

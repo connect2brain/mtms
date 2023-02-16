@@ -4,7 +4,7 @@ import {
   ChargeFeedbackMessage,
   DischargeFeedbackMessage,
   PulseFeedbackMessage,
-  SignalOutFeedbackMessage,
+  TriggerOutFeedbackMessage,
 } from '../types/event'
 import { SystemStateMessage } from '../types/mtmsDevice'
 import { MTMSEventMessage } from '../types/eeg'
@@ -58,10 +58,10 @@ export const dischargeFeedbackSubscriber = new ROSLIB.Topic<DischargeFeedbackMes
   name: '/event/discharge_feedback',
   messageType: 'event_interfaces/DischargeFeedback',
 })
-export const signalOutFeedbackSubscriber = new ROSLIB.Topic<SignalOutFeedbackMessage>({
+export const triggerOutFeedbackSubscriber = new ROSLIB.Topic<TriggerOutFeedbackMessage>({
   ros: ros,
-  name: '/event/signal_out_feedback',
-  messageType: 'event_interfaces/SignalOutFeedback',
+  name: '/event/trigger_out_feedback',
+  messageType: 'event_interfaces/TriggerOutFeedback',
 })
 
 export const startExperiment = () => {
