@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/trigger_out.hpp"
 #include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/charge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
@@ -25,7 +25,7 @@ private:
   rclcpp::Publisher<event_interfaces::msg::Charge>::SharedPtr charge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Discharge>::SharedPtr discharge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;
-  rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
+  rclcpp::Publisher<event_interfaces::msg::TriggerOut>::SharedPtr trigger_out_publisher;
   rclcpp::Publisher<event_interfaces::msg::Stimulus>::SharedPtr stimulus_publisher;
 
 };

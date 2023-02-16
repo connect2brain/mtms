@@ -11,7 +11,7 @@
 StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
   this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
   this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
-  this->signal_out_publisher = this->create_publisher<event_interfaces::msg::SignalOut>("/event/signal_out", 10);
+  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/trigger_out", 10);
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
 
 
@@ -90,13 +90,13 @@ void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &
         this->discharge_publisher->publish(event.discharge);
         break;
 
-      case SIGNAL_OUT:
+      case TRIGGER_OUT:
         RCLCPP_INFO(rclcpp::get_logger("stimulus_presenter"),
-                    "Published signal out event timed at %.4f.",
-                    event.signal_out.event_info.execution_time);
+                    "Published trigger out event timed at %.4f.",
+                    event.trigger_out.event_info.execution_time);
 
-        event.signal_out.event_info.decision_time = time;
-        this->signal_out_publisher->publish(event.signal_out);
+        event.trigger_out.event_info.decision_time = time;
+        this->trigger_out_publisher->publish(event.trigger_out);
         break;
 
       case STIMULUS:
