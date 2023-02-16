@@ -45,6 +45,13 @@ class DataProvider(Node):
 
         self.sampling_period = 1 / self.sampling_frequency
 
+        descriptor = ParameterDescriptor(
+            name='Loop',
+            type=ParameterType.PARAMETER_BOOL
+        )
+        self.declare_parameter('loop', descriptor=descriptor)
+        self.loop = self.get_parameter('loop').value
+
         self.get_logger().info(f"Reading data from file: {self.data_file_name}")
 
         self.file = open(self.data_file_name, 'r')
@@ -65,9 +72,12 @@ class DataProvider(Node):
         line = self.file.readline()
 
         # if EOF, start from the beginning
-        if line == "":
+        if line == "" and self.loop:
             self.file = open(self.data_file_name, 'r')
             line = self.file.readline()
+
+        elif line == "" and not self.loop:
+            self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
 
