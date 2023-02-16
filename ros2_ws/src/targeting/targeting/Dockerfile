@@ -23,7 +23,7 @@ RUN source /opt/ros/galactic/setup.bash && \
     colcon build
 
 # Copy data files
-COPY ros2_ws/src/targeting/targeting/data/targeting.csv .
+COPY ros2_ws/src/targeting/targeting/data data
 
 # Copy entrypoint
 
