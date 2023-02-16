@@ -1,7 +1,7 @@
 //The functions in this file are partially based on hbftms_cpp library example codes written by M. Stenroos
 //This library is not free to use without written permission from the owner Matti Stenroos
 
-#define DATAROOT "/app/data/neuronavigation_data/"
+#define DATAROOT "/app/ros2_ws/src/targeting/efield/efield_libraries/data/"
 #define FLAG_MAGSTIM70 1 // set to 1 to use 42-dipole Magstim 70 model
 
 #include <phi_lc>
