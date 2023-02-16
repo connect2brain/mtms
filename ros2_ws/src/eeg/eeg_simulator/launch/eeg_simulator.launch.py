@@ -22,6 +22,11 @@ def generate_launch_description():
         description="Sampling frequency",
     )
 
+    loop_arg = DeclareLaunchArgument(
+        "loop",
+        description="Loop through the data file",
+    )
+
     logger = LaunchConfiguration("log-level")
 
     node = Node(
@@ -30,7 +35,8 @@ def generate_launch_description():
         parameters=[
             {
                 "data_file": LaunchConfiguration("data-file"),
-                "sampling_frequency": LaunchConfiguration("sampling-frequency")
+                "sampling_frequency": LaunchConfiguration("sampling-frequency"),
+                "loop": LaunchConfiguration("loop")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -38,6 +44,7 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(data_file_arg)
+    ld.add_action(loop_arg)
     ld.add_action(sampling_frequency_arg)
 
     return ld
