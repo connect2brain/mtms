@@ -5,11 +5,11 @@ from rclpy.node import Node
 from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
 
-from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, SignalOut, \
-    ChargeFeedback, DischargeFeedback, SignalOutFeedback, \
-    WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, SignalOutError
+from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
+    ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
+    WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, TriggerOutError
 
-from eeg_interfaces.action import AnalyzeMep
+from mep_interfaces.action import AnalyzeMep
 
 from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
 
@@ -26,7 +26,7 @@ class MTMSApiNode(Node):
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
     ROS_MESSAGE_SEND_CHARGE = ('/event/send/charge', Charge)
     ROS_MESSAGE_SEND_DISCHARGE = ('/event/send/discharge', Discharge)
-    ROS_MESSAGE_SEND_SIGNAL_OUT = ('/event/send/signal_out', SignalOut)
+    ROS_MESSAGE_SEND_TRIGGER_OUT = ('/event/send/trigger_out', TriggerOut)
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
@@ -40,7 +40,7 @@ class MTMSApiNode(Node):
         ROS_MESSAGE_SEND_PULSE,
         ROS_MESSAGE_SEND_CHARGE,
         ROS_MESSAGE_SEND_DISCHARGE,
-        ROS_MESSAGE_SEND_SIGNAL_OUT,
+        ROS_MESSAGE_SEND_TRIGGER_OUT,
     )
 
     ROS_SERVICES = (
@@ -101,7 +101,7 @@ class MTMSApiNode(Node):
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
         self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/event/discharge_feedback', self.handle_discharge_feedback, 10)
-        self.signal_out_feedback_subscriber = self.create_subscription(SignalOutFeedback, '/event/signal_out_feedback', self.handle_signal_out_feedback, 10)
+        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.handle_trigger_out_feedback, 10)
 
         self.event_feedback = {}
 
@@ -231,8 +231,8 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_signal_out(self, id, execution_condition, time, port, duration_us):
-        topic, message_type = self.ROS_MESSAGE_SEND_SIGNAL_OUT
+    def send_trigger_out(self, id, execution_condition, time, port, duration_us):
+        topic, message_type = self.ROS_MESSAGE_SEND_TRIGGER_OUT
 
         publisher = self.ros_message_publishers[topic]
         message = message_type()
@@ -249,7 +249,7 @@ class MTMSApiNode(Node):
         publisher.publish(message)
 
         self.printer.print_event(
-            event_type='Signal out',
+            event_type='Trigger out',
             event_info=event_info,
             port=port,
         )
@@ -282,8 +282,8 @@ class MTMSApiNode(Node):
         self.printer.print_feedback('Discharge', feedback)
         self.update_event_feedback(feedback)
 
-    def handle_signal_out_feedback(self, feedback):
-        self.printer.print_feedback('Signal out', feedback)
+    def handle_trigger_out_feedback(self, feedback):
+        self.printer.print_feedback('Trigger out', feedback)
         self.update_event_feedback(feedback)
 
     # Targeting
@@ -332,7 +332,7 @@ class MTMSApiNode(Node):
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel):
+    def analyze_mep(self, time, emg_channel, mep_configuration):
         topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
         client = self.ros_action_clients[topic]
@@ -342,6 +342,7 @@ class MTMSApiNode(Node):
 
         goal.time = time
         goal.emg_channel = emg_channel
+        goal.mep_configuration = mep_configuration
 
         # Send goal to ROS action.
         send_goal_future = client.send_goal_async(goal)
@@ -361,7 +362,7 @@ class MTMSApiNode(Node):
             self.get_logger().info('Analyze MEP result failed.')
             return None, None
 
-        return result.result.amplitude, result.result.latency
+        return result.result.amplitude, result.result.latency, result.result.errors
 
     # System state
 
