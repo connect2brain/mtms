@@ -5,7 +5,7 @@
 #ifndef EEG_PROCESSOR_STIMULUS_PRESENTER_H
 #define EEG_PROCESSOR_STIMULUS_PRESENTER_H
 
-#include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/trigger_out.hpp"
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
 #include "processor_node.h"
 
@@ -17,7 +17,7 @@ private:
   rclcpp::Publisher<event_interfaces::msg::Charge>::SharedPtr charge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Discharge>::SharedPtr discharge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;
-  rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
+  rclcpp::Publisher<event_interfaces::msg::TriggerOut>::SharedPtr trigger_out_publisher;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_subscription;
 

@@ -9,7 +9,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
-#include "event_interfaces/msg/signal_out.hpp"
+#include "event_interfaces/msg/trigger_out.hpp"
 
 #include <string>
 #include <fstream>
@@ -26,7 +26,7 @@ private:
 
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr trigger_subscription;
 
-  rclcpp::Publisher<event_interfaces::msg::SignalOut>::SharedPtr signal_out_publisher;
+  rclcpp::Publisher<event_interfaces::msg::TriggerOut>::SharedPtr trigger_out_publisher;
 };
 
 #endif //DATA_PROCESSOR_DATA_PROCESSOR_H
