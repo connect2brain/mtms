@@ -11,8 +11,8 @@
 
 
 std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
-std::string meshfile = meshroot + "example_scalp.bin";
-std::string cortexfile = meshroot + "example_cortex.bin";
+std::string meshfile = meshroot + "example-scalp.bin";
+std::string cortexfile = meshroot + "example-cortex.bin";
 std::string coilfile = std::string(DATAROOT) + "coilmodels/magstim70/magstim70_42.bin";
 
 std::vector<double> efield_vector;
