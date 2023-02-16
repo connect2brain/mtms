@@ -22,7 +22,7 @@ const DataVisualizeWebGL = () => {
   const [pulsePoints, setPulsePoints] = useState<Datapoint[]>([])
   const [chargePoints, setChargePoints] = useState<Datapoint[]>([])
   const [dischargePoints, setDischargePoints] = useState<Datapoint[]>([])
-  const [signalOutPoints, setSignalOutPoints] = useState<Datapoint[]>([])
+  const [triggerOutPoints, setTriggerOutPoints] = useState<Datapoint[]>([])
 
   const [latestTimestamps, setLatestTimestamps] = useState<number[]>([])
 
@@ -72,9 +72,9 @@ const DataVisualizeWebGL = () => {
     const newPulseData = initData()
     const newChargeData = initData()
     const newDischargeData = initData()
-    const newSignalOutData = initData()
+    const newTriggerOutData = initData()
 
-    const allData = [newPulseData, newChargeData, newDischargeData, newSignalOutData]
+    const allData = [newPulseData, newChargeData, newDischargeData, newTriggerOutData]
 
     const newEvents: MTMSEvent[] = []
 
@@ -101,7 +101,7 @@ const DataVisualizeWebGL = () => {
     setChargePoints(newChargeData)
     setPulsePoints(newPulseData)
     setDischargePoints(newDischargeData)
-    setSignalOutPoints(newSignalOutData)
+    setTriggerOutPoints(newTriggerOutData)
   }, [latestTimestamps])
 
   useEffect(() => {
@@ -139,7 +139,7 @@ const DataVisualizeWebGL = () => {
         pulseData={pulsePoints}
         chargeData={chargePoints}
         dischargeData={dischargePoints}
-        signalOutData={signalOutPoints}
+        triggerOutData={triggerOutPoints}
       />
     </ChartContainer>
   )

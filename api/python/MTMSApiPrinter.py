@@ -1,7 +1,7 @@
 from util.bcolors import bcolors
 
 from mtms_device_interfaces.msg import DeviceState, ExperimentState, StartupError
-from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, SignalOutError
+from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
 
 class MTMSApiEnums():
     DEVICE_STATES = (
@@ -67,12 +67,12 @@ class MTMSApiEnums():
         (DischargeError.DISCHARGING_FAILURE, "Discharging failure", bcolors.FAIL),
         (DischargeError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
     )
-    SIGNAL_OUT_ERRORS = (
-        (SignalOutError.NO_ERROR, "No error", bcolors.OKGREEN),
-        (SignalOutError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
-        (SignalOutError.LATE, "Late", bcolors.FAIL),
-        (SignalOutError.SIGNALOUT_FAILURE, "Signal out failure", bcolors.FAIL),
-        (SignalOutError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
+    TRIGGER_OUT_ERRORS = (
+        (TriggerOutError.NO_ERROR, "No error", bcolors.OKGREEN),
+        (TriggerOutError.INVALID_EXECUTION_CONDITION, "Invalid execution condition", bcolors.FAIL),
+        (TriggerOutError.LATE, "Late", bcolors.FAIL),
+        (TriggerOutError.TRIGGEROUT_FAILURE, "Trigger out failure", bcolors.FAIL),
+        (TriggerOutError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
     )
 
 
@@ -82,7 +82,7 @@ class MTMSApiPrinter():
         'Pulse': bcolors.HEADER,
         'Charge': bcolors.OKCYAN,
         'Discharge': bcolors.WARNING,
-        'Signal out': bcolors.OKGREEN,
+        'Trigger out': bcolors.OKGREEN,
     }
     def __init__(self):
 
@@ -182,8 +182,8 @@ class MTMSApiPrinter():
             error_str = self.enum_to_str(value, MTMSApiEnums.CHARGE_ERRORS)
         elif event_type == "Discharge":
             error_str = self.enum_to_str(value, MTMSApiEnums.DISCHARGE_ERRORS)
-        elif event_type == "Signal out":
-            error_str = self.enum_to_str(value, MTMSApiEnums.SIGNAL_OUT_ERRORS)
+        elif event_type == "Trigger out":
+            error_str = self.enum_to_str(value, MTMSApiEnums.TRIGGER_OUT_ERRORS)
 
         print('{}[Done] {:10.10s} {}  {:7.7s}     Event ID: {}, Status: {}'.format(
             self.EVENT_COLORS[event_type],
