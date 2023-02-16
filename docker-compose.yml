@@ -112,7 +112,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - './data/neuronavigation_data:/app/data/neuronavigation_data/'
+      - './data/neuronavigation:/app/data/neuronavigation/'
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
     network_mode: host
@@ -124,7 +124,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './data/neuronavigation_data/efield_data:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius1'
+      - './data/neuronavigation/efield:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius'
     network_mode: host
    
   optitrack_bridge:
