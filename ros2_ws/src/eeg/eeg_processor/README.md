@@ -69,7 +69,7 @@ for EEG preprocessor, simply replace `processor-type` with `preprocessor-type`.
 ### CPP
 
 - `processor-type:=cpp`
-- `processor-script:=/home/mtms/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so`
+- `processor-script:=/home/mtms/workspace/mtms/hotswappable_processors/cpp/libprocessor_factory.so`
 
 ### MATLAB (slow, not recommended, only for legacy reasons)
 
