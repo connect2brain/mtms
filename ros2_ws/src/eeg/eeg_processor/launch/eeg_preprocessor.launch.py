@@ -12,20 +12,13 @@ def generate_launch_description():
         default_value=["info"],
         description="Logging level",
     )
-
-    processor_type_arg = DeclareLaunchArgument(
-        "processor-type",
-        description="Processor type",
+    pre_processor_type_arg = DeclareLaunchArgument(
+        "preprocessor-type",
+        description="Preprocessor type",
     )
-
-    processor_script_arg = DeclareLaunchArgument(
-        "processor-script",
-        description="Processor script",
-    )
-
-    preprocess_arg = DeclareLaunchArgument(
-        "preprocess",
-        description="Boolean indicating if using preprocessing"
+    pre_processor_script_arg = DeclareLaunchArgument(
+        "preprocessor-script",
+        description="Preprocessor script path",
     )
 
     logger = LaunchConfiguration("log-level")
@@ -33,15 +26,14 @@ def generate_launch_description():
     nodes = [
         Node(
             package="eeg_processor",
-            executable="eeg_processor",
-            name="eeg_processor",
+            executable="eeg_preprocessor",
+            name="eeg_preprocessor",
             output="screen",
             emulate_tty=True,
             parameters=[
                 {
-                    "processor_type": LaunchConfiguration("processor-type"),
-                    "processor_script": LaunchConfiguration("processor-script"),
-                    "preprocess": LaunchConfiguration("preprocess")
+                    "processor_type": LaunchConfiguration("preprocessor-type"),
+                    "processor_script": LaunchConfiguration("preprocessor-script"),
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
@@ -51,8 +43,7 @@ def generate_launch_description():
         ld.add_action(node)
 
     ld.add_action(log_arg)
-    ld.add_action(processor_type_arg)
-    ld.add_action(processor_script_arg)
-    ld.add_action(preprocess_arg)
+    ld.add_action(pre_processor_type_arg)
+    ld.add_action(pre_processor_script_arg)
 
     return ld
