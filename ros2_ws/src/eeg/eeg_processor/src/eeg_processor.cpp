@@ -10,7 +10,7 @@
 EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   bool preprocess;
-  this->declare_parameter<bool>("preprocess", false);
+  this->declare_parameter<bool>("preprocess", true);
   this->get_parameter("preprocess", preprocess);
 
   auto eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
