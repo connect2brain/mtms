@@ -9,6 +9,12 @@
 
 EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
+  bool preprocess;
+  this->declare_parameter<bool>("preprocess", false);
+  this->get_parameter("preprocess", preprocess);
+
+  auto eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
+
   this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
   this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
   this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/trigger_out", 10);
@@ -20,8 +26,8 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
-                                                                            subscription_callback);
+  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(eeg_topic, 5000,
+                                                                                             subscription_callback);
 
 }
 
