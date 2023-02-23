@@ -12,20 +12,13 @@ def generate_launch_description():
         default_value=["info"],
         description="Logging level",
     )
-
-    processor_type_arg = DeclareLaunchArgument(
-        "processor-type",
-        description="Processor type",
+    stimulus_presenter_type_arg = DeclareLaunchArgument(
+        "stimulus-presenter-type",
+        description="stimulus_presenter type",
     )
-
-    processor_script_arg = DeclareLaunchArgument(
-        "processor-script",
-        description="Processor script",
-    )
-
-    preprocess_arg = DeclareLaunchArgument(
-        "preprocess",
-        description="Boolean indicating if using preprocessing"
+    stimulus_presenter_script_arg = DeclareLaunchArgument(
+        "stimulus-presenter-script",
+        description="stimulus_presenter script path",
     )
 
     logger = LaunchConfiguration("log-level")
@@ -33,15 +26,14 @@ def generate_launch_description():
     nodes = [
         Node(
             package="eeg_processor",
-            executable="eeg_processor",
-            name="eeg_processor",
+            executable="stimulus_presenter",
+            name="stimulus_presenter",
             output="screen",
             emulate_tty=True,
             parameters=[
                 {
-                    "processor_type": LaunchConfiguration("processor-type"),
-                    "processor_script": LaunchConfiguration("processor-script"),
-                    "preprocess": LaunchConfiguration("preprocess")
+                    "processor_type": LaunchConfiguration("stimulus-presenter-type"),
+                    "processor_script": LaunchConfiguration("stimulus-presenter-script"),
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
@@ -51,8 +43,7 @@ def generate_launch_description():
         ld.add_action(node)
 
     ld.add_action(log_arg)
-    ld.add_action(processor_type_arg)
-    ld.add_action(processor_script_arg)
-    ld.add_action(preprocess_arg)
+    ld.add_action(stimulus_presenter_script_arg)
+    ld.add_action(stimulus_presenter_type_arg)
 
     return ld
