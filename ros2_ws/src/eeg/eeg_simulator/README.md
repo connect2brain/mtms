@@ -4,7 +4,7 @@
 
 1. In directory `ros2_ws`, run `colcon build --packages-select eeg_simulator`.
 
-2. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=src/eeg/eeg_simulator/data/random_data.csv sampling-frequency:=500`. If in a different directory, modify the path of data-file accordingly.
+2. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=src/eeg/eeg_simulator/data/random_data.csv sampling-frequency:=500 loop:=true`. If in a different directory, modify the path of data-file accordingly.
 
 3. Check that the data is published by running `ros2 topic echo /eeg/raw_data` in another terminal.
 
