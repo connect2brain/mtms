@@ -57,6 +57,8 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
   this->get_parameter("processor_script", processor_script_path);
 
   this->load_processor_script(processor_type, processor_script_path);
+
+  this->processor->init();
 }
 
 template<class SubscriptionType, class OutputType>
@@ -85,6 +87,7 @@ void ProcessorNode<SubscriptionType, OutputType>::load_processor_script(std::str
   } else {
     RCLCPP_ERROR(this->get_logger(), "No processor specified!");
   }
+
 }
 
 

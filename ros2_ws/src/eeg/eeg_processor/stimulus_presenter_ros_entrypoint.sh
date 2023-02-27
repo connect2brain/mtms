@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e
 
-/root/miniconda3/bin/conda init bash
-/root/miniconda3/bin/conda activate default
-
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 
