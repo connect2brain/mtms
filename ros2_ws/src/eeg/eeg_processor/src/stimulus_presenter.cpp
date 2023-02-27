@@ -9,10 +9,10 @@
 #include "scheduling_utils.h"
 
 StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
-  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
-  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
-  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/trigger_out", 10);
-  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
+  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/send/charge", 10);
+  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/send/discharge", 10);
+  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/send/trigger_out", 10);
+  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/send/pulse", 10);
 
 
   auto subscription_callback = [this](const std::shared_ptr<event_interfaces::msg::Stimulus> message) -> void {
@@ -27,7 +27,7 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
 
   };
 
-  this->subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/stimulus", 5000,
+  this->subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/send/stimulus", 5000,
                                                                                            subscription_callback);
 
   auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {

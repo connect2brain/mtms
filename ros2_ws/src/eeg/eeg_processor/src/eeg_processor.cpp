@@ -15,11 +15,11 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   auto eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
 
-  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/charge", 10);
-  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/discharge", 10);
-  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/trigger_out", 10);
-  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/pulse", 10);
-  this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/stimulus", 10);
+  this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/send/charge", 10);
+  this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/send/discharge", 10);
+  this->trigger_out_publisher = this->create_publisher<event_interfaces::msg::TriggerOut>("/event/send/trigger_out", 10);
+  this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/send/pulse", 10);
+  this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/send/stimulus", 10);
 
   auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     auto events = processor->cleaned_eeg_received(*message);
