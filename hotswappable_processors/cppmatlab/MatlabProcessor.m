@@ -61,6 +61,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.set_commands([]);
         end
         function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
+            
             if obj.estimated && obj.samples_collected == obj.isi_samples
                 obj.estimated = false;
                 obj.samples_collected = 0;
@@ -74,6 +75,9 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.samples_collected = obj.samples_collected + 1;
 
             if obj.samples_collected == obj.nr_samples && ~obj.estimated
+                for i = 1:10
+                    f(i) = parfeval(backgroundPool,@rand, 1, 1);
+                end
                 % Data is already 1x2500, but we need to do manually
                 % specify it so code generation knows for sure that it
                 % actually is 1x2500.
