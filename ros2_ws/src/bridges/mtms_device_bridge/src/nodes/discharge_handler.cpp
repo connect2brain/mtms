@@ -18,6 +18,9 @@ public:
   DischargeHandler()
       : Node("discharge_handler") {
 
+    this->declare_parameter<bool>("safe-mode", false);
+    this->get_parameter("safe-mode", safe_mode);
+
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Discharge> discharge) -> void {
       uint8_t channel = discharge->channel;
 
@@ -42,19 +45,25 @@ public:
 
       serialized_message.finalize();
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_StartFifo(session,
-                                          discharge_fifo));
+      if (!this->safe_mode) {
+          NiFpga_MergeStatus(&status,
+                           NiFpga_StartFifo(session,
+                                            discharge_fifo));
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_WriteFifoU8(session,
-                                            discharge_fifo,
-                                            serialized_message.serialized_message.data(),
-                                            serialized_message.get_length(),
-                                            NiFpga_InfiniteTimeout,
-                                            NULL));
+        NiFpga_MergeStatus(&status,
+                           NiFpga_WriteFifoU8(session,
+                                              discharge_fifo,
+                                              serialized_message.serialized_message.data(),
+                                              serialized_message.get_length(),
+                                              NiFpga_InfiniteTimeout,
+                                              NULL));
 
-      RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Sent discharge to channel %d", channel);
+        RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Sent discharge to channel %d", channel);
+
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"),
+                    "Tried to send discharge to channel %d but safe mode is enabled.", channel);
+      }
     };
 
     serialized_message = SerializedMessage();
@@ -65,6 +74,7 @@ public:
 private:
   rclcpp::Subscription<event_interfaces::msg::Discharge>::SharedPtr send_discharge_subscriber_;
   SerializedMessage serialized_message;
+  bool safe_mode;
 };
 
 int main(int argc, char **argv) {
