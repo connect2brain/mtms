@@ -26,7 +26,6 @@ COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interf
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
 
-
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
@@ -46,6 +45,5 @@ RUN dos2unix ros_entrypoint.sh stimulus_presenter_ros_entrypoint.sh preprocessor
 RUN chmod +x ros_entrypoint.sh stimulus_presenter_ros_entrypoint.sh preprocessor_ros_entrypoint.sh
 
 ENV DOCKER=true
-
 
 ENTRYPOINT ["./ros_entrypoint.sh"]
