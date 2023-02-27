@@ -45,6 +45,19 @@ services:
       - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
       - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
 
+  eeg_preprocessor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    entrypoint: 'bash /app/ros2_ws/preprocessor_ros_entrypoint.sh'
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './measurements:/app/ros2_ws/measurements'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+
   eeg_processor:
     build:
       context: .
@@ -143,6 +156,19 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+
+  stimulus_presenter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    entrypoint: 'bash /app/ros2_ws/stimulus_presenter_ros_entrypoint.sh'
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './measurements:/app/ros2_ws/measurements'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
 
   targeting:
     build:
