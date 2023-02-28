@@ -45,6 +45,10 @@ public:
 
   void load_processor_script(std::string processor_type, std::string processor_script_path);
 
+  void subscribe_to_experiment_state();
+
+  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) = 0;
+
   typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
 
   ProcessorWrapper *processor;
@@ -69,23 +73,13 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
 
   this->load_processor_script(processor_type, processor_script_path);
 
+  this->subscribe_to_experiment_state();
+}
+
+template<class SubscriptionType, class OutputType>
+void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_experiment_state() {
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
-        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
-
-      //This function was removed earlier, but should be added back.
-      //this->processor->end_experiment();
-    }
-
-    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
-        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-
-      auto events = this->processor->init();
-      publish_events(message->time, events);
-    }
-
-    experiment_state = message->experiment_state;
-
+    this->experiment_state_callback(message);
   };
 
   /* HACK: Duplicates code from system_state_bridge.cpp. */

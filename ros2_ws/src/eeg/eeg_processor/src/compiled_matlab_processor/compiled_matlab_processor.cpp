@@ -85,6 +85,19 @@ std::vector<Event> CompiledMatlabProcessor::init() {
   return matlab_events;
 }
 
+std::vector<Event> CompiledMatlabProcessor::end_experiment() {
+  std::vector<Event> matlab_events;
+  coder::array<matlab_event, 1U> events;
+  inner_processor->end_experiment(events);
+
+  for (auto i = events.begin(); i != events.end(); i++) {
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    matlab_events.push_back(event);
+  }
+  return matlab_events;
+}
+
 CompiledMatlabProcessor::~CompiledMatlabProcessor() {
   //Empty the pointer
   //inner_processor.reset();
