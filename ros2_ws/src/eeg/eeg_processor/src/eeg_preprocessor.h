@@ -13,6 +13,8 @@ public:
   EegPreprocessor();
 private:
   virtual void publish_events(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &events);
+  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message);
+
   rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher;
 
 };

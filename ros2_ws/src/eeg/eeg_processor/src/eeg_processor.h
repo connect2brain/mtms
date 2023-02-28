@@ -22,6 +22,8 @@ public:
   EegProcessor();
 private:
   virtual void publish_events(double_t time, const std::vector<Event> &events);
+  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message);
+
   rclcpp::Publisher<event_interfaces::msg::Charge>::SharedPtr charge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Discharge>::SharedPtr discharge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;

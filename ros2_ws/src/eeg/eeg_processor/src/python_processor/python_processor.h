@@ -23,6 +23,8 @@ public:
 
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 
+  std::vector<Event> end_experiment();
+
 private:
   static PyObject *convert_vector_to_pyobject(std::vector<double> data);
   static std::vector<double> convert_pyobject_to_vector(PyObject * data);
@@ -38,7 +40,7 @@ private:
   static event_interfaces::msg::Pulse parse_pulse(PyObject *event);
   static event_interfaces::msg::Stimulus parse_stimulus(PyObject *event);
 
-  PyObject *python_init_name, *python_data_received_name, *python_close_name;
+  PyObject *python_init_name, *python_data_received_name, *python_end_name;
   PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance;
 };
 

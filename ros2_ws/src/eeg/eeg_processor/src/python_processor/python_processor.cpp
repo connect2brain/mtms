@@ -53,7 +53,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   }
   python_data_received_name = PyUnicode_FromString("data_received");
   python_init_name = PyUnicode_FromString("init_experiment");
-  python_close_name = PyUnicode_FromString("end_experiment");
+  python_end_name = PyUnicode_FromString("end_experiment");
 }
 
 std::vector<Event> PythonProcessor::init() {
@@ -72,6 +72,24 @@ std::vector<Event> PythonProcessor::init() {
 
   return events_out;
 }
+
+std::vector<Event> PythonProcessor::end_experiment() {
+  auto result = PyObject_CallMethodObjArgs(python_instance, python_end_name, nullptr);
+  if (!PyList_Check(result)) {
+    std::cout << "Error in call end_experiment method. Ensure you are returning a list" << std::endl;
+    PyErr_Print();
+  }
+  std::vector<PyObject *> events;
+
+  for (auto i = 0; i < PyList_Size(result); i++) {
+    events.push_back(PyList_GetItem(result, i));
+  }
+
+  auto events_out = convert_pyobject_events_to_events(events);
+
+  return events_out;
+}
+
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
   PyObject *l = PyList_New(data.size());
