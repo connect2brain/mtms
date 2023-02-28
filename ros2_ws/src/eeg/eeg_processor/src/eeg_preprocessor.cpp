@@ -15,8 +15,30 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
   };
 
   this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 5000,
-                                                                                              subscription_callback);
+                                                                                             subscription_callback);
 
+}
+
+void
+EegPreprocessor::experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) {
+  /* EEG preprocessor outputs EEG samples, not Events. Its publish_events cannot take Events as an argument. Hence,
+       the returned Events from end_experiment and init_experiment are ignored. */
+
+  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
+      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+    std::vector<Event> events = this->processor->end_experiment();
+
+  }
+
+  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
+      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+
+    std::vector<Event> events = this->processor->init();
+
+  }
+
+  experiment_state = message->experiment_state;
 }
 
 void EegPreprocessor::publish_events(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &samples) {

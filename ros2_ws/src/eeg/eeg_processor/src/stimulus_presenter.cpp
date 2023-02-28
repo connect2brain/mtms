@@ -34,9 +34,9 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
     std::vector<unsigned> ids_to_remove;
 
     for (unsigned i = 0; i < this->event_buffer.size(); i++) {
-      
+
       auto event = this->event_buffer[i];
-      
+
       /* If current time >= the time the event was supposed to be executed at, execute it and remove it from buffer. 
          Otherwise, keep it in the buffer. */
       if (message->time >= event.event_info.execution_time) {
@@ -45,18 +45,40 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
         ids_to_remove.push_back(i);
       }
     }
-    
+
     /* Erase executed events from the buffer. Not performed simultaneously with the previous loop to not affect the 
        loop indices. */
-    for (auto id_to_remove : ids_to_remove) {
+    for (auto id_to_remove: ids_to_remove) {
       this->event_buffer.erase(this->event_buffer.begin() + id_to_remove);
     }
   };
 
-  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000, eeg_subscription_callback);
-
+  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+                                                                                        eeg_subscription_callback);
 
 }
+
+void
+StimulusPresenter::experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) {
+  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
+      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+    std::vector<Event> events = this->processor->end_experiment();
+    publish_events(message->time, events);
+
+  }
+
+  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
+      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+
+    std::vector<Event> events = this->processor->init();
+    publish_events(message->time, events);
+
+  }
+
+  experiment_state = message->experiment_state;
+}
+
 
 void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &events) {
   for (Event event: events) {
