@@ -80,8 +80,8 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
     if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
         experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
-      this->processor->init();
-
+      auto events = this->processor->init();
+      publish_events(message->time, events);
     }
 
     experiment_state = message->experiment_state;
