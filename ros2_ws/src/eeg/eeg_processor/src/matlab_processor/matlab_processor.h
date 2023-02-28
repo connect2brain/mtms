@@ -27,6 +27,8 @@ public:
 
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 
+  std::vector<Event> end_experiment();
+
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;
   matlab::data::Array processor_instance;
