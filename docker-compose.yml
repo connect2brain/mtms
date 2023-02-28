@@ -49,7 +49,7 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
-    entrypoint: 'bash /app/ros2_ws/preprocessor_ros_entrypoint.sh'
+    entrypoint: 'bash /app/ros2_ws/eeg_preprocessor_entrypoint.sh'
     env_file:
       - ${ENV_FILE}
     volumes:
@@ -162,7 +162,7 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
-    entrypoint: 'bash /app/ros2_ws/stimulus_presenter_ros_entrypoint.sh'
+    entrypoint: 'bash /app/ros2_ws/stimulus_presenter_entrypoint.sh'
     env_file:
       - ${ENV_FILE}
     volumes:
