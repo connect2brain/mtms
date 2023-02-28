@@ -24,6 +24,11 @@ std::vector<Event> MatlabProcessor::init() {
   return events;
 }
 
+std::vector<Event> MatlabProcessor::end_experiment() {
+  std::vector<Event> events;
+  return events;
+}
+
 void print_vector2d(std::vector<std::vector<double>> vec) {
   for (unsigned i = 0; i < vec.size(); i++) {
     for (unsigned j = 0; j < vec[i].size(); j++) {
