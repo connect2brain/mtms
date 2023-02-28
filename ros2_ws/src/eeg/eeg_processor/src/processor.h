@@ -22,6 +22,8 @@ public:
 
   virtual std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event) = 0;
 
+  virtual std::vector<Event> end_experiment() = 0;
+
 };
 
 #endif //EEG_PROCESSOR_PROCESSOR_H
