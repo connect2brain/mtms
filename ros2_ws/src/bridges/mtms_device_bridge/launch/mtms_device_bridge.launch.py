@@ -13,7 +13,13 @@ def generate_launch_description():
         description="Logging level",
     )
 
+    safe_mode_arg = DeclareLaunchArgument(
+        "safe-mode",
+        description="Run in safe mode (boolean)",
+    )
+
     logger = LaunchConfiguration("log-level")
+    safe_mode = LaunchConfiguration("safe-mode")
 
     node_executables = [
         "run_fpga",
@@ -38,6 +44,11 @@ def generate_launch_description():
         node = Node(
             package="mtms_device_bridge",
             executable=node_executable,
+            parameters=[
+                {
+                    "safe-mode": safe_mode
+                }
+            ],
             arguments=['--ros-args', '--log-level', logger]
         )
         ld.add_action(node)

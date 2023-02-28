@@ -19,6 +19,10 @@ public:
   PulseHandler()
       : Node("pulse_handler") {
 
+    this->declare_parameter<bool>("safe-mode", false);
+    this->get_parameter("safe-mode", safe_mode);
+
+
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Pulse> pulse) -> void {
       uint8_t channel = pulse->channel;
 
@@ -50,19 +54,25 @@ public:
 
       serialized_message.finalize();
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_StartFifo(session,
-                                          channel_pulse_fifo));
+      if (!this->safe_mode) {
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_WriteFifoU8(session,
-                                            channel_pulse_fifo,
-                                            serialized_message.serialized_message.data(),
-                                            serialized_message.get_length(),
-                                            NiFpga_InfiniteTimeout,
-                                            NULL));
+        NiFpga_MergeStatus(&status,
+                           NiFpga_StartFifo(session,
+                                            channel_pulse_fifo));
 
-      RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Sent pulse to channel %d", channel);
+        NiFpga_MergeStatus(&status,
+                           NiFpga_WriteFifoU8(session,
+                                              channel_pulse_fifo,
+                                              serialized_message.serialized_message.data(),
+                                              serialized_message.get_length(),
+                                              NiFpga_InfiniteTimeout,
+                                              NULL));
+
+        RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Sent pulse to channel %d", channel);
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Tried to send pulse to channel %d but safe mode is enabled.",
+                    channel);
+      }
     };
 
     serialized_message = SerializedMessage();
@@ -73,6 +83,7 @@ public:
 private:
   rclcpp::Subscription<event_interfaces::msg::Pulse>::SharedPtr send_pulse_subscriber_;
   SerializedMessage serialized_message;
+  bool safe_mode;
 };
 
 int main(int argc, char **argv) {
