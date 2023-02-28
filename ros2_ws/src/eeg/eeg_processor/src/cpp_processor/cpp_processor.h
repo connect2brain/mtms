@@ -26,6 +26,8 @@ public:
 
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 
+  std::vector<Event> end_experiment();
+
 private:
   void *processor_factory;
   std::unique_ptr<CppProcessorInterface> inner_processor;

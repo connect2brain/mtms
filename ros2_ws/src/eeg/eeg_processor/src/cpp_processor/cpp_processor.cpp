@@ -73,6 +73,18 @@ std::vector<Event> CppProcessor::init() {
   return matlab_events;
 }
 
+std::vector<Event> CppProcessor::end_experiment() {
+  std::vector<Event> matlab_events;
+  auto events = inner_processor->end_experiment();
+
+  for (auto i = events.begin(); i != events.end(); i++) {
+    auto matlab_event = *i;
+    auto event = convert_matlab_event_to_event(matlab_event);
+    matlab_events.push_back(event);
+  }
+  return matlab_events;
+}
+
 CppProcessor::~CppProcessor() {
   //Empty the pointer
   //inner_processor.reset();
