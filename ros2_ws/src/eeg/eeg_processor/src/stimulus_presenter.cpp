@@ -58,27 +58,6 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
 
 }
 
-void
-StimulusPresenter::experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) {
-  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
-      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
-
-    std::vector<Event> events = this->processor->end_experiment();
-    publish_events(message->time, events);
-
-  }
-
-  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
-      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-
-    std::vector<Event> events = this->processor->init();
-    publish_events(message->time, events);
-
-  }
-
-  experiment_state = message->experiment_state;
-}
-
 
 void StimulusPresenter::publish_events(double_t time, const std::vector<Event> &events) {
   for (Event event: events) {
