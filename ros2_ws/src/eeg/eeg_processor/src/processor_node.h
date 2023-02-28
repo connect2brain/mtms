@@ -16,6 +16,8 @@
 #include "compiled_matlab_processor/compiled_matlab_processor.h"
 #include "cpp_processor/cpp_processor.h"
 
+#include "mtms_device_interfaces/msg/system_state.hpp"
+
 #if defined(MATLAB_FOUND)
 
 #include "matlab_processor/matlab_processor.h"
@@ -28,6 +30,11 @@
 
 #endif
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
+/* HACK: Needs to match the values in system_state_bridge.cpp. */
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 template<class SubscriptionType, class OutputType>
 class ProcessorNode : public rclcpp::Node {
@@ -38,9 +45,17 @@ public:
 
   void load_processor_script(std::string processor_type, std::string processor_script_path);
 
+  void subscribe_to_experiment_state();
+
+  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) = 0;
+
   typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
 
   ProcessorWrapper *processor;
+
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscription;
+  mtms_device_interfaces::msg::ExperimentState experiment_state;
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
 };
 
@@ -58,12 +73,48 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
 
   this->load_processor_script(processor_type, processor_script_path);
 
-  this->processor->init();
+  this->subscribe_to_experiment_state();
+}
+
+template<class SubscriptionType, class OutputType>
+void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_experiment_state() {
+  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
+    this->experiment_state_callback(message);
+  };
+
+  /* HACK: Duplicates code from system_state_bridge.cpp. */
+  auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
+  const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
+  const rmw_time_t rmw_deadline = {0, deadline_ns};
+  const rmw_time_t rmw_lifespan = rmw_deadline;
+
+  const rmw_qos_profile_t qos_profile = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      rmw_deadline,
+      rmw_lifespan,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
+  };
+  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.event_callbacks.deadline_callback = [this](
+      [[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo &event) -> void {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+  };
+
+  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
+      "/mtms_device/system_state", qos,
+      system_state_callback, subscription_options);
 }
 
 template<class SubscriptionType, class OutputType>
 void ProcessorNode<SubscriptionType, OutputType>::load_processor_script(std::string processor_type,
-                                                                                   std::string processor_script_path) {
+                                                                        std::string processor_script_path) {
   if (processor_type == "python") {
 #ifdef PYTHON_FOUND
     processor = new PythonProcessor(processor_script_path);
