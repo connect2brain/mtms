@@ -1,0 +1,14 @@
+## The name of the environment matching the repository name
+name: lst-2023
+## I prefer conda-forge packages for my projects
+channels:
+- conda-forge
+- defaults
+## Start with Python and include everything you need
+dependencies:
+- python=3.9
+- pip
+- numpy
+- psychopy
+- pylint
+
