@@ -18,6 +18,9 @@ public:
   ChargeHandler()
       : Node("charge_handler") {
 
+    this->declare_parameter<bool>("safe-mode", false);
+    this->get_parameter("safe-mode", safe_mode);
+
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Charge> charge) -> void {
       uint8_t channel = charge->channel;
 
@@ -44,20 +47,25 @@ public:
 
       serialized_message.finalize();
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_StartFifo(session,
-                                          charge_fifo));
+      if (!this->safe_mode) {
+        NiFpga_MergeStatus(&status,
+                           NiFpga_StartFifo(session,
+                                            charge_fifo));
 
-      NiFpga_MergeStatus(&status,
-                         NiFpga_WriteFifoU8(session,
-                                            charge_fifo,
-                                            serialized_message.serialized_message.data(),
-                                            serialized_message.get_length(),
-                                            NiFpga_InfiniteTimeout,
-                                            NULL));
+        NiFpga_MergeStatus(&status,
+                           NiFpga_WriteFifoU8(session,
+                                              charge_fifo,
+                                              serialized_message.serialized_message.data(),
+                                              serialized_message.get_length(),
+                                              NiFpga_InfiniteTimeout,
+                                              NULL));
 
 
-      RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Sent charge to channel %d", channel);
+        RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Sent charge to channel %d", channel);
+      } else {
+        RCLCPP_WARN(rclcpp::get_logger("charge_handler"),
+                    "Tried to send charge to channel %d but safe mode is enabled.", channel);
+      }
     };
 
     serialized_message = SerializedMessage();
@@ -68,6 +76,7 @@ public:
 private:
   rclcpp::Subscription<event_interfaces::msg::Charge>::SharedPtr send_charge_subscriber_;
   SerializedMessage serialized_message;
+  bool safe_mode;
 
 };
 
