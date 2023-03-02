@@ -20,12 +20,20 @@ packages.append('bridge')
 #   https://stackoverflow.com/questions/27829754/include-entire-directory-in-python-setup-py-data-files
 #
 def generate_data_files():
+    # HACK: It is not very clean to copy the same files into both python3.8 and -3.10 directories,
+    #   but for now, it is the easiest way to support both Python versions.
     dirs = (
         ('lib/python3.8/site-packages/locale', 'invesalius3/locale'),
         ('lib/python3.8/site-packages/icons', 'invesalius3/icons'),
         ('lib/python3.8/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
         ('lib/python3.8/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.8/site-packages/navigation', 'invesalius3/navigation'),
+
+        ('lib/python3.10/site-packages/locale', 'invesalius3/locale'),
+        ('lib/python3.10/site-packages/icons', 'invesalius3/icons'),
+        ('lib/python3.10/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
+        ('lib/python3.10/site-packages/samples', 'invesalius3/samples'),
+        ('lib/python3.10/site-packages/navigation', 'invesalius3/navigation'),
     )
 
     data_files = []
