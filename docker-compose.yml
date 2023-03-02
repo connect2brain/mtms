@@ -127,6 +127,9 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - './data/neuronavigation:/app/data/neuronavigation/'
+      # Mount the configuration to local filesystem so that it is retained when the container is restarted.
+      - './.config/invesalius:/root/.config/invesalius'
+
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
     network_mode: host
