@@ -21,3 +21,6 @@ ros2_ws/src/bridges/rosbridge/install
 # Generated when building ROS messages for MATLAB API by running ros2genmsg (see documentation
 # in api/matlab/README.md); can be left outside version control.
 matlab_msg_gen/
+
+# The config for neuronavigation is stored in .config directory.
+.config/
