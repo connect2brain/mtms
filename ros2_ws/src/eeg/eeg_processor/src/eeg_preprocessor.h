@@ -12,8 +12,8 @@ class EegPreprocessor : public ProcessorNode<eeg_interfaces::msg::EegDatapoint, 
 public:
   EegPreprocessor();
 private:
-  virtual void publish_events(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &events);
-  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message);
+  virtual void publish_events(double_t time, const std::vector<Event> &events);
+  void publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &events);
 
   rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher;
 
