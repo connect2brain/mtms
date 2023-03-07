@@ -57,36 +57,54 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 }
 
 std::vector<Event> PythonProcessor::init() {
-  auto result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
+
+  /* Check Python script for crashing. */
+  if (result == nullptr) {
+    PyErr_Print();
+
+    /* Shut down ROS node and return an empty vector to fail gracefully. */
+    rclcpp::shutdown();
+    return std::vector<Event>();
+  }
+
   if (!PyList_Check(result)) {
     std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
     PyErr_Print();
   }
-  std::vector<PyObject *> events;
 
+  std::vector<PyObject *> events;
   for (auto i = 0; i < PyList_Size(result); i++) {
     events.push_back(PyList_GetItem(result, i));
   }
 
   auto events_out = convert_pyobject_events_to_events(events);
-
   return events_out;
 }
 
 std::vector<Event> PythonProcessor::end_experiment() {
-  auto result = PyObject_CallMethodObjArgs(python_instance, python_end_name, nullptr);
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, python_end_name, nullptr);
+
+  /* Check Python script for crashing. */
+  if (result == nullptr) {
+    PyErr_Print();
+
+    /* Shut down ROS node and return an empty vector to fail gracefully. */
+    rclcpp::shutdown();
+    return std::vector<Event>();
+  }
+
   if (!PyList_Check(result)) {
     std::cout << "Error in call end_experiment method. Ensure you are returning a list" << std::endl;
     PyErr_Print();
   }
-  std::vector<PyObject *> events;
 
+  std::vector<PyObject *> events;
   for (auto i = 0; i < PyList_Size(result); i++) {
     events.push_back(PyList_GetItem(result, i));
   }
 
   auto events_out = convert_pyobject_events_to_events(events);
-
   return events_out;
 }
 
@@ -363,7 +381,7 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
 
-  auto result = PyObject_CallMethodObjArgs(
+  PyObject* result = PyObject_CallMethodObjArgs(
       python_instance,
       python_data_received_name,
       list,
@@ -371,6 +389,15 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
       first_sample_of_experiment,
       nullptr
   );
+
+  /* Check Python script for crashing. */
+  if (result == nullptr) {
+    PyErr_Print();
+
+    /* Shut down ROS node and return an empty vector to fail gracefully. */
+    rclcpp::shutdown();
+    return std::vector<eeg_interfaces::msg::EegDatapoint>();
+  }
 
   if (!PyList_Check(result)) {
     std::cout << "Error in call raw_eeg_received method. Ensure you are returning a list" << std::endl;
@@ -399,13 +426,22 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
   auto time = PyFloat_FromDouble(event.event_info.execution_time);
   auto state = PyLong_FromSize_t(event.state);
 
-  auto result = PyObject_CallMethodObjArgs(
+  PyObject* result = PyObject_CallMethodObjArgs(
       python_instance,
       python_data_received_name,
       time,
       state,
       nullptr
   );
+
+  /* Check Python script for crashing. */
+  if (result == nullptr) {
+    PyErr_Print();
+
+    /* Shut down ROS node and return an empty vector to fail gracefully. */
+    rclcpp::shutdown();
+    return std::vector<Event>();
+  }
 
   if (!PyList_Check(result)) {
     std::cout << "Error in call present_stimulus_received method. Ensure you are returning a list" << std::endl;
@@ -433,14 +469,23 @@ std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::Ee
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
 
-  auto result = PyObject_CallMethodObjArgs(
-      python_instance,
-      python_data_received_name,
-      list,
-      time,
-      first_sample_of_experiment,
-      nullptr
+  PyObject* result = PyObject_CallMethodObjArgs(
+    python_instance,
+    python_data_received_name,
+    list,
+    time,
+    first_sample_of_experiment,
+    nullptr
   );
+
+  /* Check Python script for crashing. */
+  if (result == nullptr) {
+    PyErr_Print();
+
+    /* Shut down ROS node and return an empty vector to fail gracefully. */
+    rclcpp::shutdown();
+    return std::vector<Event>();
+  }
 
   if (!PyList_Check(result)) {
     std::cout << "Error in call data_received method. Ensure you are returning a list" << std::endl;
