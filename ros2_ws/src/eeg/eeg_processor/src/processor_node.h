@@ -41,13 +41,12 @@ class ProcessorNode : public rclcpp::Node {
 public:
   ProcessorNode(std::string node_name);
 
-  virtual void publish_events(double_t time, const std::vector<OutputType> &events) = 0;
+  virtual void publish_events(double_t time, const std::vector<Event> &events) = 0;
 
   void load_processor_script(std::string processor_type, std::string processor_script_path);
 
   void subscribe_to_experiment_state();
 
-  virtual void experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) = 0;
 
   typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
 
@@ -55,7 +54,6 @@ public:
 
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscription;
   mtms_device_interfaces::msg::ExperimentState experiment_state;
-  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
 };
 
@@ -79,7 +77,25 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
 template<class SubscriptionType, class OutputType>
 void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_experiment_state() {
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    this->experiment_state_callback(message);
+
+    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
+        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+
+      std::vector<Event> events = this->processor->end_experiment();
+      publish_events(message->time, events);
+
+    }
+
+    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
+        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+
+      std::vector<Event> events = this->processor->init();
+      publish_events(message->time, events);
+
+    }
+
+    experiment_state = message->experiment_state;
+
   };
 
   /* HACK: Duplicates code from system_state_bridge.cpp. */
@@ -107,7 +123,7 @@ void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_experiment_state(
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
   };
 
-  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
+  this->system_state_subscription = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
       "/mtms_device/system_state", qos,
       system_state_callback, subscription_options);
 }
