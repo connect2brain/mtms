@@ -11,7 +11,7 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
 
   auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     auto samples = processor->raw_eeg_received(*message);
-    publish_events(message->time, samples);
+    publish_cleaned_eeg(message->time, samples);
   };
 
   this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 5000,
@@ -20,31 +20,14 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
 }
 
 void
-EegPreprocessor::experiment_state_callback(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) {
-  /* EEG preprocessor outputs EEG samples, not Events. Its publish_events cannot take Events as an argument. Hence,
-       the returned Events from end_experiment and init_experiment are ignored. */
-
-  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
-      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
-
-    std::vector<Event> events = this->processor->end_experiment();
-
-  }
-
-  if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
-      experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-
-    std::vector<Event> events = this->processor->init();
-
-  }
-
-  experiment_state = message->experiment_state;
-}
-
-void EegPreprocessor::publish_events(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &samples) {
+EegPreprocessor::publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &samples) {
   for (eeg_interfaces::msg::EegDatapoint sample: samples) {
     this->publisher->publish(sample);
   }
+}
+
+void EegPreprocessor::publish_events(double_t time, const std::vector<Event> &events) {
+  RCLCPP_INFO(rclcpp::get_logger("eeg_preprocessor"), "Ignoring publish_events on EEG preprocessor.");
 }
 
 
