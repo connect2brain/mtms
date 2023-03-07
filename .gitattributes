@@ -9,3 +9,4 @@
 *.lvbitx filter=lfs diff=lfs merge=lfs -text
 *.bin filter=lfs diff=lfs merge=lfs -text
 *.inv3 filter=lfs diff=lfs merge=lfs -text
+targeting.csv filter=lfs diff=lfs merge=lfs -text
