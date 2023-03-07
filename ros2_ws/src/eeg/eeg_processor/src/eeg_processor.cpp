@@ -9,11 +9,14 @@
 
 EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
-  bool preprocess;
+  bool preprocess = true;
+
   this->declare_parameter<bool>("preprocess", true);
   this->get_parameter("preprocess", preprocess);
 
-  auto eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
+  this->eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
+
+  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", this->eeg_topic.c_str());
 
   this->charge_publisher = this->create_publisher<event_interfaces::msg::Charge>("/event/send/charge", 10);
   this->discharge_publisher = this->create_publisher<event_interfaces::msg::Discharge>("/event/send/discharge", 10);
@@ -22,11 +25,13 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/send/stimulus", 10);
 
   auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Received EEG data on topic %s", this->eeg_topic.c_str());
+
     auto events = processor->cleaned_eeg_received(*message);
     publish_events(message->time, events);
   };
 
-  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(eeg_topic, 5000,
+  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
                                                                                              subscription_callback);
 
 }
