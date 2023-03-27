@@ -85,6 +85,8 @@ ros2 run neuronavigation start
 - Install Docker and Docker compose
   Note: do not install docker with snap, will cause problems with X Display
 
+- Git Large File Storage needs to be installed for the project to work properly.
+
 - Check your $DISPLAY variable for example with `echo $DISPLAY`. Update .env file DISPLAY to that. Most likely it's enough to set it just as `:0`.
 
 - Run the following commands on the root directory of the repository
