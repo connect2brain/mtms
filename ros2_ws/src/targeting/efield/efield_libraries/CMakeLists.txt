@@ -8,20 +8,23 @@ set(CMAKE_CXX_STANDARD 14)
 set(linalg_LIBRARY ${PROJECT_SOURCE_DIR}/lib/liblinalg.so)
 set(phi_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libphi.so)
 set(tms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms.so)
+set(tms_cuda_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms_cuda.so)
 
 add_library(linalg SHARED IMPORTED GLOBAL)
 add_library(phi SHARED IMPORTED GLOBAL)
 add_library(tms SHARED IMPORTED GLOBAL)
+add_library(tms_cuda SHARED IMPORTED GLOBAL)
 
 set_target_properties(linalg PROPERTIES IMPORTED_LOCATION ${linalg_LIBRARY})
 set_target_properties(phi PROPERTIES IMPORTED_LOCATION ${phi_LIBRARY})
 set_target_properties(tms PROPERTIES IMPORTED_LOCATION ${tms_LIBRARY})
+set_target_properties(tms_cuda PROPERTIES IMPORTED_LOCATION ${tms_cuda_LIBRARY})
 
 add_library(efield_estimation SHARED
-  src/efield_estimation.cpp
-  include/efield_estimation.h)
+        src/efield_estimation.cpp
+        include/efield_estimation.h)
 
-target_link_libraries(efield_estimation PUBLIC linalg phi tms)
+target_link_libraries(efield_estimation PUBLIC linalg phi tms tms_cuda)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
@@ -31,22 +34,22 @@ install(EXPORT ${PROJECT_NAME}-targets DESTINATION lib/cmake/${PROJECT_NAME})
 
 # Mark cpp header files for installation
 install(DIRECTORY include
-  DESTINATION include)
+        DESTINATION include)
 
 # Create cmake config files
 # See doc: https://cmake.org/cmake/help/latest/module/CMakePackageConfigHelpers.html#example-generating-package-files
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_CURRENT_LIST_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
-  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
-  INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
-  NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+        INSTALL_DESTINATION lib/cmake/${PROJECT_NAME}
+        NO_CHECK_REQUIRED_COMPONENTS_MACRO)
 
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
-  VERSION ${PROJECT_VERSION} COMPATIBILITY ExactVersion)
+        VERSION ${PROJECT_VERSION} COMPATIBILITY ExactVersion)
 
 install(FILES
-  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
-  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
-  DESTINATION lib/cmake/${PROJECT_NAME})
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake"
+        DESTINATION lib/cmake/${PROJECT_NAME})
 
 export(EXPORT ${PROJECT_NAME}-targets FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake)
