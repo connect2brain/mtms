@@ -143,6 +143,13 @@ services:
     volumes:
       - './data/neuronavigation/efield:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius'
     network_mode: host
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
    
   optitrack_bridge:
     build:
