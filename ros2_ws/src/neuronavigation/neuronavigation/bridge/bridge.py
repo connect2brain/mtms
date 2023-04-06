@@ -7,6 +7,7 @@ import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
@@ -19,6 +20,7 @@ from ui_interfaces.srv import SetTargetOrientation
 
 from invesalius3 import app
 import time
+from launch.substitutions import LaunchConfiguration
 
 from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
 
@@ -61,11 +63,18 @@ class NeuronavigationNode(Node):
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
-
-        self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
-        while not self.cli.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('efield service not available, waiting...')
-        self.req = Efield.Request()
+        # descriptor = ParameterDescriptor(
+        #     name='EField',
+        #     type=ParameterType.PARAMETER_BOOL,
+        # )
+        # self.declare_parameter('Activate_EField', descriptor=descriptor)
+        # self.Activate_EField = self.get_parameter('Activate_EField').value
+        self.Activate_EField = False
+        if self.Activate_EField:
+            self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
+            while not self.cli.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service not available, waiting...')
+            self.req = Efield.Request()
 
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
