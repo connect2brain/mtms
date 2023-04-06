@@ -12,9 +12,10 @@ class EField : public rclcpp::Node {
 public:
   EField() : Node("efield") {
 
-    auto service_callback = [this](
+    auto service_callback1 = [this](
         const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response) -> void {
+//check if the initialization has been done correctly first
 
       RCLCPP_INFO(rclcpp::get_logger("efield"), "Request received");
 
@@ -33,10 +34,16 @@ public:
 
     };
 
-
-    efield_service = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield", service_callback);
-
+//    auto service_callback2= [this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Request> request,
+//        std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Response> response)-> void {
+//
+//        RCLCPP_INFO(rclcpp::get_logger("efield_init"), "Request received");
+//        init_efield();
+//
+//    };
     init_efield();
+    efield_service = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield", service_callback1);//change name to /efield/get
+    //efield_service_init = this->create_service<neuronavigation_interfaces::srv::EfieldInit>("/efield/init", service_callback2);
   }
 
 private:
