@@ -23,6 +23,8 @@ public:
 private:
   virtual void publish_events(double_t time, const std::vector<Event> &events);
 
+  std::string eeg_topic;
+
   rclcpp::Publisher<event_interfaces::msg::Charge>::SharedPtr charge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Discharge>::SharedPtr discharge_publisher;
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;
