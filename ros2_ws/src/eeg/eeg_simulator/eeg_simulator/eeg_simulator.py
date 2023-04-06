@@ -11,6 +11,7 @@ class DataProvider(Node):
     # TODO: Make configurable.
     #
     NUMBER_OF_EEG_CHANNELS = 62
+    NUMBER_OF_EMG_CHANNELS = 10
 
     EEG_RAW_TOPIC = '/eeg/raw_data'
     EEG_INFO_TOPIC = '/eeg/info'
@@ -52,6 +53,13 @@ class DataProvider(Node):
         self.declare_parameter('loop', descriptor=descriptor)
         self.loop = self.get_parameter('loop').value
 
+        descriptor = ParameterDescriptor(
+            name='Number of EEG channels',
+            type=ParameterType.PARAMETER_INTEGER
+        )
+        self.declare_parameter('eeg_channels', descriptor=descriptor)
+        self.eeg_channels = self.get_parameter('eeg_channels').value    # default set to 62 in launch file
+
         self.get_logger().info(f"Reading data from file: {self.data_file_name}")
 
         self.file = open(self.data_file_name, 'r')
@@ -63,7 +71,7 @@ class DataProvider(Node):
 
         eeg_info = EegInfo()
         eeg_info.sampling_frequency = self.sampling_frequency
-        eeg_info.n_channels = self.NUMBER_OF_EEG_CHANNELS
+        eeg_info.n_channels = self.eeg_channels # was self.NUMBER_OF_EEG_CHANNELS
         eeg_info.send_trigger_as_channel = False
 
         self.eeg_info_publisher.publish(eeg_info)
@@ -80,10 +88,11 @@ class DataProvider(Node):
             self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
+        assert (self.NUMBER_OF_EEG_CHANNELS + self.NUMBER_OF_EMG_CHANNELS) < len(data), "Number of channels exceedes {}".format(len(data))
 
         msg = EegDatapoint()
-        msg.eeg_channels = data[:self.NUMBER_OF_EEG_CHANNELS]
-        msg.emg_channels = data[self.NUMBER_OF_EEG_CHANNELS:]
+        msg.eeg_channels = data[:self.eeg_channels]
+        msg.emg_channels = data[self.eeg_channels:]
         msg.first_sample_of_experiment = False if self.current_time > 0 else True
         msg.time = self.current_time
 
