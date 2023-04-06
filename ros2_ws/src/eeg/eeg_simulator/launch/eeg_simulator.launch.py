@@ -32,6 +32,11 @@ def generate_launch_description():
         description="Number of EEG channels",
     )
 
+    emg_channels_arg = DeclareLaunchArgument(
+        "emg-channels",
+        description="Number of EMG channels",
+    )
+
     logger = LaunchConfiguration("log-level")
 
     node = Node(
@@ -42,7 +47,8 @@ def generate_launch_description():
                 "data_file": LaunchConfiguration("data-file"),
                 "sampling_frequency": LaunchConfiguration("sampling-frequency"),
                 "loop": LaunchConfiguration("loop"),
-                "eeg_channels": LaunchConfiguration("eeg-channels")
+                "eeg_channels": LaunchConfiguration("eeg-channels"),
+                "emg_channels": LaunchConfiguration("emg-channels")
             }
         ],
         arguments=['--ros-args', '--log-level', logger]
@@ -53,5 +59,6 @@ def generate_launch_description():
     ld.add_action(loop_arg)
     ld.add_action(sampling_frequency_arg)
     ld.add_action(eeg_channels_arg)
+    ld.add_action(emg_channels_arg)
 
     return ld

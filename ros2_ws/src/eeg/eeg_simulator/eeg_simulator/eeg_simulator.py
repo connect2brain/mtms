@@ -8,11 +8,6 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPo
 
 class DataProvider(Node):
 
-    # TODO: Make configurable.
-    #
-    NUMBER_OF_EEG_CHANNELS = 62
-    NUMBER_OF_EMG_CHANNELS = 10
-
     EEG_RAW_TOPIC = '/eeg/raw_data'
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
@@ -58,7 +53,15 @@ class DataProvider(Node):
             type=ParameterType.PARAMETER_INTEGER
         )
         self.declare_parameter('eeg_channels', descriptor=descriptor)
-        self.eeg_channels = self.get_parameter('eeg_channels').value    # default set to 62 in launch file
+        self.eeg_channels = self.get_parameter('eeg_channels').value    # default set to 64 in launch file
+
+        descriptor = ParameterDescriptor(
+            name='Number of EMG channels',
+            type=ParameterType.PARAMETER_INTEGER
+        )
+        self.declare_parameter('emg_channels', descriptor=descriptor)
+        self.emg_channels = self.get_parameter('emg_channels').value    # default set to 10 in launch file
+        self.total_channels = self.eeg_channels + self.emg_channels
 
         self.get_logger().info(f"Reading data from file: {self.data_file_name}")
 
@@ -71,7 +74,7 @@ class DataProvider(Node):
 
         eeg_info = EegInfo()
         eeg_info.sampling_frequency = self.sampling_frequency
-        eeg_info.n_channels = self.eeg_channels # was self.NUMBER_OF_EEG_CHANNELS
+        eeg_info.n_channels = self.eeg_channels
         eeg_info.send_trigger_as_channel = False
 
         self.eeg_info_publisher.publish(eeg_info)
@@ -88,11 +91,11 @@ class DataProvider(Node):
             self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
-        assert (self.NUMBER_OF_EEG_CHANNELS + self.NUMBER_OF_EMG_CHANNELS) < len(data), "Number of channels exceedes {}".format(len(data))
+        assert (self.total_channels) < len(data), "Number of channels exceedes {}".format(len(data))
 
         msg = EegDatapoint()
         msg.eeg_channels = data[:self.eeg_channels]
-        msg.emg_channels = data[self.eeg_channels:]
+        msg.emg_channels = data[self.eeg_channels:self.total_channels]
         msg.first_sample_of_experiment = False if self.current_time > 0 else True
         msg.time = self.current_time
 
