@@ -14,7 +14,7 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, EfieldInit
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
@@ -69,12 +69,18 @@ class NeuronavigationNode(Node):
         # )
         # self.declare_parameter('Activate_EField', descriptor=descriptor)
         # self.Activate_EField = self.get_parameter('Activate_EField').value
-        self.Activate_EField = False
+        self.Activate_EField = True
         if self.Activate_EField:
             self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
             while not self.cli.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service not available, waiting...')
             self.req = Efield.Request()
+
+            self.cli1 = self.create_client(EfieldInit, 'efield/init', callback_group=callback_group)
+            while not self.cli1.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service2 not available, waiting...')
+            self.req1 = EfieldInit.Request()
+            self.get_logger().info('efield service2')
 
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
@@ -180,6 +186,19 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
+    def init_efield(self,name):
+        self.req1.name = name
+        self.future1 = self.cli1.call_async(self.req1)
+        while self.future1.done() is False:
+            pass
+        try:
+            response= self.future1.result()
+            self.get_logger().info("Responding to the service request /neuronavigation/efield/init")
+            return response.success
+        except Exception as e:
+            self.get_logger().info('Service call failed %r' % (e,))
+            return None
+
     def update_efield(self, position, orientation, T_rot):
         self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
         self.req.coordinate.orientation.alpha, self.req.coordinate.orientation.beta, self.req.coordinate.orientation.gamma = orientation
@@ -263,6 +282,11 @@ class Connection(Thread):
             position=position,
             orientation=orientation,
             T_rot=T_rot,
+        )
+
+    def init_efield(self, name):
+        return self.node.init_efield(
+            name = name,
         )
 
     def set_callback__set_markers(self, callback):
