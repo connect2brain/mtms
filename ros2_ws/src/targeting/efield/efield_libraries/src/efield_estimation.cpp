@@ -20,8 +20,8 @@ std::vector<double> efield_vector;
 Mesh<float> m(meshfile);
 std::vector< Mesh<float> > meshes{m};
 
-Mesh<float> cortex(cortexfile);
-Matrix<float, RowMajor> spos(cortex.Points());
+//Mesh<float> cortex();
+//Matrix<float, RowMajor> spos(cortex.Points());
 
 Timer t;
 
@@ -31,16 +31,22 @@ std::vector<float> co = {0};
 
 std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
 Matrix<float> TM = TM_Phi_LC(D, ci, co);
-Matrix<float> Phi = LFM_Phi_LC(meshes, TM, spos);
-
+Matrix<float> Phi;
+Mesh<float> *cortex;
 Coil<float> coilmodel(coilfile);
-TMS<float,float> TMS_obj(Phi, meshes, spos);
+TMS<float,float> *TMS_obj;
 
 //function to input data from efield_service
-void init_efield()
+void init_efield(std::string name, bool sucess)
 {
+    cortex =new Mesh<float>(name);
+    Matrix<float, RowMajor> spos(cortex->Points());
+    Phi=LFM_Phi_LC(meshes, TM, spos);
+    TMS_obj=new TMS<float,float>(Phi, meshes, spos);
+
     WeightedPhi(meshes, Phi, ci, co);
     //TMS<float,float> TMS_obj(Phi, meshes, spos);
+    sucess = 1;
 }
  void E_norm(Matrix<float, RowMajor> &Etms, std::vector<double> &efield_vector)
 {
@@ -62,10 +68,10 @@ void efield_estimation(std::vector<float>& position, std::vector<double>& orient
     int32_t pind = 1;
     //RowVector<float> cp = m.Points().GetRow(pind);
     RowVector<float> cp(3,position);
-    std::cout << "Elements: " <<std::endl;
-    cortex.Elements().ShowBlock(0, 0, 5, 3);
+/*    std::cout << "Elements: " <<std::endl;
+    cortex->Elements().ShowBlock(0, 0, 5, 3);
     std::cout << "Points:" <<std::endl;
-    cortex.Points().ShowBlock(0, 0, 5, 3);
+    cortex->Points().ShowBlock(0, 0, 5, 3);*/
     // This is also possible
     // RowVector<float> cpold = TMS_obj.ScalpPoint(pind);
 
@@ -81,7 +87,7 @@ void efield_estimation(std::vector<float>& position, std::vector<double>& orient
     coilmodel.Transform(T_rot,cp);
 
     // Calculate E-field
-    Etms = TMS_obj.Efield(coilmodel, minusdIPerdt);
+    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt);
     t.Elapsed();
 
 
