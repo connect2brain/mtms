@@ -53,14 +53,14 @@ class DataProvider(Node):
             type=ParameterType.PARAMETER_INTEGER
         )
         self.declare_parameter('eeg_channels', descriptor=descriptor)
-        self.eeg_channels = self.get_parameter('eeg_channels').value    # default set to 64 in launch file
+        self.eeg_channels = self.get_parameter('eeg_channels').value
 
         descriptor = ParameterDescriptor(
             name='Number of EMG channels',
             type=ParameterType.PARAMETER_INTEGER
         )
         self.declare_parameter('emg_channels', descriptor=descriptor)
-        self.emg_channels = self.get_parameter('emg_channels').value    # default set to 10 in launch file
+        self.emg_channels = self.get_parameter('emg_channels').value
         self.total_channels = self.eeg_channels + self.emg_channels
 
         self.get_logger().info(f"Reading data from file: {self.data_file_name}")
@@ -91,7 +91,7 @@ class DataProvider(Node):
             self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
-        assert (self.total_channels) < len(data), "Number of channels exceedes {}".format(len(data))
+        assert self.total_channels < len(data), "Number of channels exceeds {}".format(len(data))
 
         msg = EegDatapoint()
         msg.eeg_channels = data[:self.eeg_channels]
