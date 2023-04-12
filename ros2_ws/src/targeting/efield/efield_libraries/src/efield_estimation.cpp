@@ -39,7 +39,10 @@ TMS<float,float> *TMS_obj;
 //function to input data from efield_service
 void init_efield(std::string name, bool sucess)
 {
-    cortex =new Mesh<float>(name);
+    std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
+    std::string meshfile = meshroot + "example-scalp.bin";
+    std::string cortexfile = meshroot + "example-cortex.bin";
+    cortex =new Mesh<float>(cortexfile);
     Matrix<float, RowMajor> spos(cortex->Points());
     Phi=LFM_Phi_LC(meshes, TM, spos);
     TMS_obj=new TMS<float,float>(Phi, meshes, spos);
@@ -64,6 +67,10 @@ void init_efield(std::string name, bool sucess)
 
 void efield_estimation(std::vector<float>& position, std::vector<double>& orientation, std::vector<float>& rot_matrix, std::vector<double> &efield_vector)
 {
+    ColVector<int32_t> indlist(3);
+    indlist(0)=1;
+    indlist(1)=4;
+    indlist(2)=10;
     // set example coil location to vertex 599 (in 0-basis) of the scalp mesh
     int32_t pind = 1;
     //RowVector<float> cp = m.Points().GetRow(pind);
@@ -87,7 +94,7 @@ void efield_estimation(std::vector<float>& position, std::vector<double>& orient
     coilmodel.Transform(T_rot,cp);
 
     // Calculate E-field
-    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt);
+    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt, indlist);
     t.Elapsed();
 
 
