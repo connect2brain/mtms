@@ -71,16 +71,18 @@ class NeuronavigationNode(Node):
         # self.Activate_EField = self.get_parameter('Activate_EField').value
         self.Activate_EField = True
         if self.Activate_EField:
-            self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
-            while not self.cli.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service not available, waiting...')
-            self.req = Efield.Request()
-
             self.cli1 = self.create_client(EfieldInit, 'efield/init', callback_group=callback_group)
             while not self.cli1.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service2 not available, waiting...')
             self.req1 = EfieldInit.Request()
             self.get_logger().info('efield service2')
+            
+            self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
+            while not self.cli.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service not available, waiting...')
+            self.req = Efield.Request()
+
+
 
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
