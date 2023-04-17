@@ -188,8 +188,9 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def init_efield(self,name):
-        self.req1.name = name
+    def init_efield(self,cortexfile, meshfile):
+        self.req1.cortexfile = cortexfile
+        self.req1.meshfile = meshfile
         self.future1 = self.cli1.call_async(self.req1)
         while self.future1.done() is False:
             pass
@@ -286,9 +287,10 @@ class Connection(Thread):
             T_rot=T_rot,
         )
 
-    def init_efield(self, name):
+    def init_efield(self, cortexfile, meshfile):
         return self.node.init_efield(
-            name = name,
+            cortexfile = cortexfile,
+            meshfile = meshfile,
         )
 
     def set_callback__set_markers(self, callback):
