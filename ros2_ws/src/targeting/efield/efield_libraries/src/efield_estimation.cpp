@@ -7,18 +7,15 @@
 #include <phi_lc>
 #include <tms>
 
-#include "efield_estimation.h"
-
+//#include "efield_estimation.h"
+#include <iostream>
 
 std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
-std::string meshfile = meshroot + "example-scalp.bin";
-std::string cortexfile = meshroot + "example-cortex.bin";
 std::string coilfile = std::string(DATAROOT) + "coilmodels/magstim70/magstim70_42.bin";
-
+//std::string meshfile = meshroot + "is_scaled_up_inv_exp.bin";
 std::vector<double> efield_vector;
 // Initialize first the mesh, then build the meshes vector:
-Mesh<float> m(meshfile);
-std::vector< Mesh<float> > meshes{m};
+
 
 //Mesh<float> cortex();
 //Matrix<float, RowMajor> spos(cortex.Points());
@@ -26,30 +23,39 @@ std::vector< Mesh<float> > meshes{m};
 Timer t;
 
 // set BEM model conductivities --- in single-shell model, the value of 'ci' doesn't matter
-std::vector<float> ci = {0.3300};
-std::vector<float> co = {0};
+//std::vector<float> ci = {0.3300};
+//std::vector<float> co = {0};
 
-std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
-Matrix<float> TM = TM_Phi_LC(D, ci, co);
-Matrix<float> Phi;
+//std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
+//Matrix<float> TM = TM_Phi_LC(D, ci, co);
+//Matrix<float> Phi;
 Mesh<float> *cortex;
 Coil<float> coilmodel(coilfile);
 TMS<float,float> *TMS_obj;
+std::vector<float> ci = {0.3300};
+std::vector<float> co = {0};
+Mesh<float> m;
+std::vector< Mesh<float>>meshes;
+Matrix<float>Phi;
+Matrix<float, RowMajor> spos;
 
 //function to input data from efield_service
-void init_efield(std::string name, bool sucess)
+void init_efield(std::string cortexfile, std::string meshfile, bool &success)
 {
-    std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
-    std::string meshfile = meshroot + "example-scalp.bin";
-    std::string cortexfile = meshroot + "example-cortex.bin";
+    std::cout<<"cortexfile: "<<cortexfile<<std::endl;
+    std::cout<<"meshfile: "<<meshfile<<std::endl;
+
+    m =Mesh<float>(meshfile);
+    meshes = std::vector<Mesh<float>>({m});
     cortex =new Mesh<float>(cortexfile);
-    Matrix<float, RowMajor> spos(cortex->Points());
+    spos= Matrix<float, RowMajor>(cortex->Points());
+    std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
+    Matrix<float> TM = TM_Phi_LC(D, ci, co);
     Phi=LFM_Phi_LC(meshes, TM, spos);
     TMS_obj=new TMS<float,float>(Phi, meshes, spos);
-
     WeightedPhi(meshes, Phi, ci, co);
-    //TMS<float,float> TMS_obj(Phi, meshes, spos);
-    sucess = 1;
+    success = true;
+    std::cout<<"Done init! "<<std::endl;
 }
  void E_norm(Matrix<float, RowMajor> &Etms, std::vector<double> &efield_vector)
 {
@@ -67,20 +73,8 @@ void init_efield(std::string name, bool sucess)
 
 void efield_estimation(std::vector<float>& position, std::vector<double>& orientation, std::vector<float>& rot_matrix, std::vector<double> &efield_vector)
 {
-    ColVector<int32_t> indlist(3);
-    indlist(0)=1;
-    indlist(1)=4;
-    indlist(2)=10;
-    // set example coil location to vertex 599 (in 0-basis) of the scalp mesh
-    int32_t pind = 1;
-    //RowVector<float> cp = m.Points().GetRow(pind);
+
     RowVector<float> cp(3,position);
-/*    std::cout << "Elements: " <<std::endl;
-    cortex->Elements().ShowBlock(0, 0, 5, 3);
-    std::cout << "Points:" <<std::endl;
-    cortex->Points().ShowBlock(0, 0, 5, 3);*/
-    // This is also possible
-    // RowVector<float> cpold = TMS_obj.ScalpPoint(pind);
 
     // Define rotation matrix for the coil (Applied from right  x' = x*T_rot)
     Matrix<float, RowMajor> T_rot(3,3,{rot_matrix});
@@ -94,10 +88,8 @@ void efield_estimation(std::vector<float>& position, std::vector<double>& orient
     coilmodel.Transform(T_rot,cp);
 
     // Calculate E-field
-    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt, indlist);
+    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt);
     t.Elapsed();
-
-
     E_norm(Etms, efield_vector);
 
 }

@@ -2,6 +2,7 @@
 #
 # Response: InitEfield
 
-string name
+string cortexfile
+string meshfile
 ---
 bool success

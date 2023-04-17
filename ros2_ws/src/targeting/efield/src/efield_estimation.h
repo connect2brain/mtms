@@ -3,10 +3,8 @@
 
 #include "vector"
 
-void init_efield();
-
 void efield_estimation(std::vector<float> &position, std::vector<double> &orientation, std::vector<float> &rot_matrix,
                        std::vector<double> &efield_vector);
-void init_efield(std::string name, bool sucess);
+void init_efield(std::string cortexfile, std::string meshfile, bool &success);
 
 #endif
