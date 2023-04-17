@@ -143,6 +143,7 @@ services:
     volumes:
       - './data/neuronavigation/efield:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius'
     network_mode: host
+    tty: true 
    
   optitrack_bridge:
     build:
