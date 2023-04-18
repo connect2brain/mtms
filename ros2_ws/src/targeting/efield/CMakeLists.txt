@@ -18,6 +18,7 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 add_executable(efield
         src/efield.cpp
         src/efield_estimation.h
+        src/EfieldInterface.h
         )
 
 target_include_directories(efield

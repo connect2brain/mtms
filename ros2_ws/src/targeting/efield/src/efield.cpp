@@ -8,7 +8,6 @@
 #include "neuronavigation_interfaces/srv/efield_init.hpp"
 #include "efield_estimation.h"
 
-
 class EField : public rclcpp::Node {
 public:
   EField() : Node("efield") {
