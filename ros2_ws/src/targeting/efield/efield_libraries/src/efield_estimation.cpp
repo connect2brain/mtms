@@ -10,6 +10,7 @@
 //#include "efield_estimation.h"
 #include <iostream>
 
+
 std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
 std::string coilfile = std::string(DATAROOT) + "coilmodels/magstim70/magstim70_42.bin";
 //std::string meshfile = meshroot + "is_scaled_up_inv_exp.bin";

@@ -21,7 +21,13 @@ add_library(efield_estimation SHARED
   src/efield_estimation.cpp
   include/efield_estimation.h)
 
-target_link_libraries(efield_estimation PUBLIC linalg phi tms)
+add_library(EfieldInterface SHARED
+        src/EfieldInterface.cpp)
+set(EXPORT_TARGETS EfieldInterface)
+set(EXPORT_NAME efieldintertarget)
+export(TARGETS ${EXPORT_TARGETS} NAMESPACE efieldlibrary:: FILE)
+
+target_link_libraries(efield_estimation PUBLIC linalg phi tms EfieldInterface)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
