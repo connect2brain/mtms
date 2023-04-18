@@ -5,7 +5,8 @@
 All rights to the code in this repository (excluding the submodules) belongs to Aalto University.
 
 Currently, its permitted use is limited to people in Connect2Brain project in Aalto University, the Eberhard Karl University of Tübingen,
-and D'Annunzio University of Chieti–Pescara, and Aalto University students and employees performing research assignments in Aalto C2B laboratory.
+and D'Annunzio University of Chieti–Pescara, and Aalto University students and employees performing research assignments in Aalto C2B laboratory
+or developing the software under a non-disclosure agreement.
 
 The software also uses external software and libraries, which reside in their own repositories, are connected to this
 repository using Git submodules, and have their own copyright owners. Here is the list of the external repositories
