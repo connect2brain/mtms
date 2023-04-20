@@ -29,11 +29,11 @@ git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 
 ### Install ROS
 
-- Install ROS by following the installation [instructions](https://docs.ros.org/en/galactic/Installation.html) from their website.
+- Install ROS by following the installation [instructions](https://docs.ros.org/en/humble/Installation.html) from their website.
 
   Any installation option should work, but at least these instructions have been tested:
 
-  https://docs.ros.org/en/galactic/Installation/Ubuntu-Install-Binary.html
+  https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Binary.html
 
 ### Install InVesalius
 
@@ -52,7 +52,7 @@ git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 
 ```
 cd ros2_ws
-call c:\dev\ros2_galactic\local_setup.bat
+call c:\dev\ros2_humble\local_setup.bat
 colcon build
 call install\local_setup.bat
 ros2 run neuronavigation start
@@ -62,7 +62,7 @@ ros2 run neuronavigation start
 
 ```
 cd ros2_ws
-. ~/ros2_galactic/ros2-linux/setup.bash
+. ~/ros2_humble/ros2-linux/setup.bash
 colcon build
 . install/local_setup.bash
 ros2 run neuronavigation start

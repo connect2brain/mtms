@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:humble-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -20,7 +20,7 @@ COPY ros2_ws/src/other/pedal_listener ros2_ws/src/other/pedal_listener/
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/humble/setup.bash && \
     colcon build
 
 # Copy entrypoint

@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop as builder
+FROM osrf/ros:humble-desktop as builder
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
@@ -22,11 +22,11 @@ COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/ne
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/humble/setup.bash && \
     colcon build
 
 # Production environment
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:humble-desktop
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
 COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/

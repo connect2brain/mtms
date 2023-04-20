@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source /opt/ros/galactic/setup.bash
+source /opt/ros/humble/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 ros2 launch pulse_sequence_controller pulse_sequence_controller.launch.py

@@ -1,5 +1,5 @@
 # Build environment
-FROM osrf/ros:galactic-desktop as builder
+FROM osrf/ros:humble-desktop as builder
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
@@ -23,14 +23,14 @@ COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/targeting_interfaces/
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/humble/setup.bash && \
     colcon build
 
 # Copy data files
 COPY ros2_ws/src/targeting/targeting/data data
 
 # Production environment
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:humble-desktop
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
 COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/

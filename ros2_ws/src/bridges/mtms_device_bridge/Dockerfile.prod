@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop as builder
+FROM osrf/ros:humble-desktop as builder
 
 SHELL ["/bin/bash", "-c"]
 
@@ -12,12 +12,12 @@ COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/event_interfaces/
 
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/humble/setup.bash && \
     colcon build
 
 
 # Production environment
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:humble-desktop
 
 # Install dependencies
 WORKDIR /build

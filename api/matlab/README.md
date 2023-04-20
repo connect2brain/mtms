@@ -50,7 +50,7 @@ is to use Anaconda or to build it from the source code.
 
 ### Problem: service calls do not finish
 
-- MATLAB ROS Toolbox uses a different ROS Middleware Implementation (RMW) underneath than, for example, Galactic. Read the following discussion for more information:
+- MATLAB ROS Toolbox uses a different ROS Middleware Implementation (RMW) underneath than, for example, Humble. Read the following discussion for more information:
 https://se.mathworks.com/matlabcentral/answers/1777145-ros-toolbox-stuck-on-service-call.
 To fix this issue, run the following command:
 `setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp")`.
