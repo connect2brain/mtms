@@ -2,6 +2,7 @@
 //This library is not free to use without written permission from the owner Matti Stenroos
 
 #define DATAROOT "/app/ros2_ws/src/targeting/efield/efield_libraries/data/"
+#define DATAROOT1 "/app/data/neuronavigation/efield/"
 #define FLAG_MAGSTIM70 1 // set to 1 to use 42-dipole Magstim 70 model
 
 #include <phi_lc>
@@ -9,9 +10,10 @@
 
 //#include "efield_estimation.h"
 #include <iostream>
+#include "EfieldInterface.h"
 
 
-std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
+std::string meshroot = std::string(DATAROOT1) ;//+ "headmodels/invesalius/";
 std::string coilfile = std::string(DATAROOT) + "coilmodels/magstim70/magstim70_42.bin";
 //std::string meshfile = meshroot + "is_scaled_up_inv_exp.bin";
 std::vector<double> efield_vector;
@@ -58,7 +60,9 @@ void init_efield(std::string cortexfile, std::string meshfile, bool &success)
     success = true;
     std::cout<<"Done init! "<<std::endl;
 }
- void E_norm(Matrix<float, RowMajor> &Etms, std::vector<double> &efield_vector)
+
+
+void E_norm(Matrix<float, RowMajor> &Etms, std::vector<double> &efield_vector)
 {
     for (int i = 0; i < Etms.Rows(); i++)
     {
@@ -97,5 +101,38 @@ void efield_estimation(std::vector<float>& position, std::vector<double>& orient
 
 int main(void)
 {
+    std::string meshroot = std::string(DATAROOT) + "/data/headmodels/invesalius1/";
+    std::string coilroot = std::string(DATAROOT) + "/data/coilmodels/";
+    std::vector<double> efield_vector;
+
+    std::string coilfile;
+    if (FLAG_MAGSTIM70)  // Magstim 70, 42 magnetic dipoles
+        coilfile = coilroot + "magstim70/magstim70_42.bin";
+    else // "Navigation coil" of the 5-coil mTMS transducer
+        coilfile = coilroot + "coilset-5/coilset-5-4.bin";
+    std::cout<<"coilfile"<<coilfile<<std::endl;
+
+    std::string cortexfile1 = meshroot + "S2-brainc.bin";
+    std::string bmeshfile1 = meshroot + "S2-scalp.bin";
+    bool success= false;
+    EfieldInterface EfieldInterface(cortexfile1, bmeshfile1, success);
+    std::cout << "Success: " << success<<std::endl;
+    std::cout << "Elements: "<<success <<std::endl;
+    std::cout<<"TMS_obj size Main: "<<EfieldInterface.TMS_obj->CortexSize()<<std::endl;
+
+
+    // set example coil location to vertex 599 (in 0-basis) of the scalp mesh
+    int32_t pind = 599;
+    RowVector<float> cp = EfieldInterface.m.Points().GetRow(pind);
+    std::cout <<"cp:"<< cp(0) <<std::endl;
+
+//    // Define rotation matrix for the coil (Applied from right  x' = x*T_rot)
+    Matrix<float, RowMajor> T_rot(3,3,{0.698830F, 0.0F, 0.715288F,
+                                       0.118700F, 0.986135F, -0.115969F,
+                                       -0.705370F, 0.165947F, 0.689140F});
+
+
+    EfieldInterface.efield_estimation(cp, T_rot, efield_vector);
+
     return 0;
 }
