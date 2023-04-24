@@ -137,7 +137,9 @@ services:
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/efield/Dockerfile
+      dockerfile: ${DOCKERFILE_NAME:-Dockerfile}
+      args:
+        - DOCKERFILE_NAME=${DOCKERFILE_NAME}
     env_file:
       - ${ENV_FILE}
     volumes:
