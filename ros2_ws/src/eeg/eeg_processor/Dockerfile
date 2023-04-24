@@ -40,7 +40,7 @@ RUN mkdir -p measurements
 # Copy entrypoints
 
 COPY ros2_ws/src/eeg/eeg_processor/eeg_processor_entrypoint.sh .
-COPY ros2_ws/src/eeg/eeg_processor/preprocessor_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_processor/eeg_preprocessor_entrypoint.sh .
 COPY ros2_ws/src/eeg/eeg_processor/stimulus_presenter_entrypoint.sh .
 
 RUN dos2unix *.sh
