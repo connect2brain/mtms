@@ -12,6 +12,7 @@ services:
     volumes:
       - './front:/app'
       - '/app/node_modules'
+    network_mode: host
 
   rosbridge:
     build:
@@ -39,7 +40,7 @@ services:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
     privileged: true
-    network_mode: "host"
+    network_mode: host
 
   eeg_simulator:
     build:
@@ -54,6 +55,7 @@ services:
     volumes:
       - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
       - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
+    network_mode: host
 
   eeg_preprocessor:
     build:
@@ -67,6 +69,7 @@ services:
       - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
+    network_mode: host
 
   eeg_processor:
     build:
@@ -91,7 +94,7 @@ services:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
     privileged: true
-    network_mode: "host"
+    network_mode: host
 
   mtms_device_bridge:
     build:
@@ -101,6 +104,7 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   eeg_batcher:
     build:
@@ -109,6 +113,7 @@ services:
     env_file:
       - ${ENV_FILE}
     privileged: true
+    network_mode: host
 
   planner:
     build:
@@ -118,6 +123,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
+    network_mode: host
 
   pulse_sequence_controller:
     build:
@@ -127,6 +133,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
+    network_mode: host
 
   neuronavigation:
     build:
@@ -158,9 +165,9 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
-    network_mode: host
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   pedal_listener:
     build:
@@ -170,6 +177,7 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   stimulus_presenter:
     build:
@@ -194,7 +202,7 @@ services:
       - ${ENV_FILE}
     # The container needs to be privileged to set real-time priority.
     privileged: true
-    network_mode: "host"
+    network_mode: host
 
   topic_frequency:
     build:
@@ -203,6 +211,7 @@ services:
     env_file:
       - ${ENV_FILE}
     privileged: true
+    network_mode: host
 
   trigger_controller:
     build:
@@ -212,6 +221,7 @@ services:
     privileged: true
     env_file:
       - ${ENV_FILE}
+    network_mode: host
 
   waveforms:
     build:
@@ -219,4 +229,4 @@ services:
       dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
     env_file:
       - ${ENV_FILE}
-    network_mode: "host"
+    network_mode: host
