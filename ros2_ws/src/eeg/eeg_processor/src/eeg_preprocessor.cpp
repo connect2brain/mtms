@@ -7,20 +7,23 @@
 #include "scheduling_utils.h"
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_CLEANED_TOPIC = "/eeg/cleaned_data";
 
 EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
-  this->publisher = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000);
+  this->publisher = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_CLEANED_TOPIC, 5000);
 
   auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Received EEG data on topic %s", EEG_RAW_TOPIC.c_str());
 
     auto samples = processor->raw_eeg_received(*message);
     publish_cleaned_eeg(message->time, samples);
+
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Published EEG data on topic %s", EEG_CLEANED_TOPIC.c_str());
   };
 
   this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 5000,
                                                                                              subscription_callback);
-
+  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 }
 
 void
