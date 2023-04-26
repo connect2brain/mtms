@@ -78,15 +78,15 @@ Fill in the launch arguments as needed. In particular, pay attention to the numb
 
 
 #### EEG preprocessor
-`ros2 launch eeg_processor eeg_preprocessor.launch.py log-level:=info preprocessor-type:=python preprocessor-script:=hotswappable_processors.python.preprocessor`
+`ros2 launch eeg_processor eeg_preprocessor.launch.py log-level:=info preprocessor-type:=python preprocessor-script:=pipeline.python.preprocessor`
 
 
 #### EEG processor
-`ros2 launch eeg_processor eeg_processor.launch.py log-level:=info processor-type:=python processor-script:=hotswappable_processors.python.python_processor preprocess:=false`
+`ros2 launch eeg_processor eeg_processor.launch.py log-level:=info processor-type:=python processor-script:=pipeline.python.python_processor preprocess:=false`
 
 
 #### Stimulus presenter
-`ros2 launch eeg_processor stimulus_presenter.launch.py log-level:=info stimulus-presenter-type:=python stimulus-presenter-script:=hotswappable_processors.python.stimulus_presenter`
+`ros2 launch eeg_processor stimulus_presenter.launch.py log-level:=info stimulus-presenter-type:=python stimulus-presenter-script:=pipeline.python.stimulus_presenter`
 
 
 #### mTMS device bridge
