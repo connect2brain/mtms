@@ -10,7 +10,7 @@
 #include <iostream>
 
 
-//The same class can be found from hotswappable_processors/. The method order and signature must be
+//The same class can be found from pipeline/. The method order and signature must be
 //exactly the same as here. If in wrong order, calling a method will call the wrong method
 
 class MatlabProcessorInterface {
