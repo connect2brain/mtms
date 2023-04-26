@@ -75,7 +75,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './pipeline:/app/ros2_ws/pipeline/'
       - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
@@ -88,7 +88,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './pipeline:/app/ros2_ws/pipeline/'
       - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
@@ -207,7 +207,7 @@ services:
       - ${ENV_FILE}
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - './hotswappable_processors:/app/ros2_ws/hotswappable_processors/'
+      - './pipeline:/app/ros2_ws/pipeline/'
       - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true

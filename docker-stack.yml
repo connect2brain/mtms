@@ -31,14 +31,14 @@ services:
 
   eeg_processor_wrapper:
     image: docker
-    # requires sh -c '<command>' to access the HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST environment variable
-    command: sh -c 'docker run --privileged --net=weavenet -v $${HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST}:/app/ros2_ws/hotswappable_processors --env ROS_LOG_LEVEL --env EEG_PROCESSOR_TYPE --env EEG_PROCESSOR_TEST_MEASURE_COUNT --env EEG_PROCESSOR_DURATION_FILE okahilak/mtms:eeg_processor'
+    # requires sh -c '<command>' to access the PIPELINE_PATH_IN_HOST environment variable
+    command: sh -c 'docker run --privileged --net=weavenet -v $${PIPELINE_PATH_IN_HOST}:/app/ros2_ws/pipeline --env ROS_LOG_LEVEL --env EEG_PROCESSOR_TYPE --env EEG_PROCESSOR_TEST_MEASURE_COUNT --env EEG_PROCESSOR_DURATION_FILE okahilak/mtms:eeg_processor'
     environment:
       - ROS_LOG_LEVEL=info
       - EEG_PROCESSOR_TYPE=python
       - EEG_PROCESSOR_TEST_MEASURE_COUNT=1
       - EEG_PROCESSOR_DURATION_FILE=durations.txt
-      - HOTSWAPPABLE_PROCESSOR_PATH_IN_HOST=/home/alqio/workspace/mtms/hotswappable_processors
+      - PIPELINE_PATH_IN_HOST=/home/alqio/workspace/mtms/pipeline
     deploy:
       placement:
         constraints:
