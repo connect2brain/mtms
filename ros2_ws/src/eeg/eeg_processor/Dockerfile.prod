@@ -33,7 +33,7 @@ WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
 COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/
 
-RUN mkdir -p hotswappable_processors
+RUN mkdir -p pipeline
 ENV DOCKER=true
 
 # Copy entrypoint
