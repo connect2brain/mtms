@@ -2,11 +2,18 @@
 
 ### Running
 
-1. In directory `ros2_ws`, run `colcon build --packages-select eeg_simulator`.
+1. In directory `ros2_ws`, run `colcon build --packages-select eeg_interfaces eeg_simulator`.
 
-2. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=src/eeg/eeg_simulator/data/random_data.csv sampling-frequency:=500 loop:=true eeg-channels:=64 emg-channels:=10`. If in a different directory, modify the path of data-file accordingly.
+2. Run `source install/setup.bash` (on Linux).
 
-3. Check that the data is published by running `ros2 topic echo /eeg/raw_data` in another terminal.
+3. Go to the repository root.
+
+4. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=random_data.csv sampling-frequency:=500 loop:=true eeg-channels:=64 emg-channels:=10`. If in a different directory, modify the path of data-file accordingly.
+
+The data file is located in eeg/data/ directory in the repository root. To use custom CSV data, copy the CSV file to the directory and modify data-file
+parameter accordingly. The CSV file should consist of one column per channel and one row per sample, with values separated by commas.
+
+5. Check that the data is published by running `ros2 topic echo /eeg/raw_data` in another terminal.
 
 The file `random_data.csv` contains 100 lines of random values between 0 and 1, 128 values per line (i.e., 0.2 seconds of data with the sampling frequency 500 Hz, configurable EEG and EMG channels).
 

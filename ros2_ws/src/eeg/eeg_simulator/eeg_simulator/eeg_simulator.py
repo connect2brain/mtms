@@ -1,3 +1,5 @@
+import os
+
 import rclpy
 from rclpy.node import Node
 
@@ -11,6 +13,7 @@ class DataProvider(Node):
     EEG_RAW_TOPIC = '/eeg/raw_data'
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
+    DATA_DIRECTORY = 'data/eeg/'
 
     def __init__(self):
         super().__init__('eeg_simulator')
@@ -63,9 +66,10 @@ class DataProvider(Node):
         self.emg_channels = self.get_parameter('emg_channels').value
         self.total_channels = self.eeg_channels + self.emg_channels
 
-        self.get_logger().info(f"Reading data from file: {self.data_file_name}")
+        self.get_logger().info(f"Reading data from file {self.data_file_name} in directory {self.DATA_DIRECTORY}")
 
-        self.file = open(self.data_file_name, 'r')
+        self.data_path = os.path.join(self.DATA_DIRECTORY, self.data_file_name)
+        self.file = open(self.data_path, 'r')
 
         self.create_timer(self.sampling_period, self.publish_data)
         self.create_timer(5, self.publish_trigger)
@@ -84,7 +88,7 @@ class DataProvider(Node):
 
         # if EOF, start from the beginning
         if line == "" and self.loop:
-            self.file = open(self.data_file_name, 'r')
+            self.file = open(self.data_path, 'r')
             line = self.file.readline()
 
         elif line == "" and not self.loop:
