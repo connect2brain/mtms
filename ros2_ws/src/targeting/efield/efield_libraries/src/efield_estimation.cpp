@@ -7,7 +7,6 @@
 
 #include <phi_lc>
 #include <tms>
-
 //#include "efield_estimation.h"
 #include <iostream>
 #include "EfieldInterface.h"
@@ -33,17 +32,18 @@ Timer t;
 //Matrix<float> TM = TM_Phi_LC(D, ci, co);
 //Matrix<float> Phi;
 Mesh<float> *cortex;
-Coil<float> coilmodel(coilfile);
+//Coil<float> coilmodel(coilfile);
+Coil<float> coilmodel;
 TMS<float,float> *TMS_obj;
-std::vector<float> ci = {0.3300};
-std::vector<float> co = {0};
+std::vector<float> ci= {0.3300};
+std::vector<float> co= {0};
 Mesh<float> m;
 std::vector< Mesh<float>>meshes;
 Matrix<float>Phi;
 Matrix<float, RowMajor> spos;
 
 //function to input data from efield_service
-void init_efield(std::string cortexfile, std::string meshfile, bool &success)
+/*void init_efield(std::string cortexfile, std::string meshfile, bool &success)
 {
     std::cout<<"cortexfile: "<<cortexfile<<std::endl;
     std::cout<<"meshfile: "<<meshfile<<std::endl;
@@ -59,8 +59,30 @@ void init_efield(std::string cortexfile, std::string meshfile, bool &success)
     WeightedPhi(meshes, Phi, ci, co);
     success = true;
     std::cout<<"Done init! "<<std::endl;
+}*/
+void init_efield(std::string cortexfile, std::vector<std::string> meshfile, bool &success)
+{
+    std::cout<<"cortexfile: "<<cortexfile<<std::endl;
+    std::cout<<"meshfile: "<<meshfile.at(0)<<std::endl;
+
+    m =Mesh<float>(meshfile.at(0));
+    meshes = std::vector<Mesh<float>>({m});
+    cortex =new Mesh<float>(cortexfile);
+    spos= Matrix<float, RowMajor>(cortex->Points());
+    std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
+    Matrix<float> TM = TM_Phi_LC(D, ci, co);
+    Phi=LFM_Phi_LC(meshes, TM, spos);
+    TMS_obj=new TMS<float,float>(Phi, meshes, spos);
+    WeightedPhi(meshes, Phi, ci, co);
+    success = true;
+    std::cout<<"Done init! "<<std::endl;
 }
 
+void add_coil(std::string coilfile, bool &success)
+{   std::cout<<"coilfile: "<<coilfile<<std::endl;
+    coilmodel = Coil<float>(coilfile);
+    success = true;
+}
 
 void E_norm(Matrix<float, RowMajor> &Etms, std::vector<double> &efield_vector)
 {
@@ -115,6 +137,9 @@ int main(void)
     std::string cortexfile1 = meshroot + "S2-brainc.bin";
     std::string bmeshfile1 = meshroot + "S2-scalp.bin";
     bool success= false;
+    std::string conf_file = "sub-c2b006_1shell.json";
+
+
     EfieldInterface EfieldInterface(cortexfile1, bmeshfile1, success);
     std::cout << "Success: " << success<<std::endl;
     std::cout << "Elements: "<<success <<std::endl;
