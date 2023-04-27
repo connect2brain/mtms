@@ -18,13 +18,129 @@ e-field library, `ros2_ws/src/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
 
-## Cloning the repository
+## Installation for Ubuntu 22.04
 
-- Run:
+- Install Git by running:
+
+```
+sudo apt install git
+```
+
+- Install Git Large File Storage (Git LFS):
+
+```
+sudo apt install git-lfs
+```
+
+- Log into github.com. Then, run:
+
+```
+ssh-keygen -t ed25519 -C "your_email@aalto.fi"
+```
+
+- Copy contents of ~/.ssh/id_ed25519.pub to Github -> Settings -> SSH and GPG keys.
+
+- Clone the repository:
 
 ```
 git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 ```
+
+- Install Docker:
+
+```
+sudo apt install docker.io
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo apt install docker-compose
+```
+
+- Install C++ tools (for real-time pipeline):
+
+```
+sudo apt install cmake
+sudo apt install g++
+```
+
+- Install ROS by running the following in the repository root:
+
+```
+cd scripts
+sudo bash install_ros.sh
+```
+
+# Real-time pipeline
+
+## Getting started
+
+### Pipeline with EEG preprocessor
+
+- To start the pipeline using only EEG preprocessor, run:
+
+```
+docker-compose up eeg_preprocessor
+```
+
+- Modify `.env` file in repository root to change the configuration of the EEG preprocessor:
+
+* `EEG_PREPROCESSOR_TYPE`: One of "python", "compiledmatlab", or "cpp".
+* `EEG_PREPROCESSOR_SCRIPT`: Can be used to select custom EEG preprocessors, stored in `pipeline/python/eeg_preprocessors/`
+directory in repository root.
+
+- The changes in `.env` file take place after restarting Docker container by running:
+
+```
+docker-compose restart eeg_preprocessor
+```
+
+### Simulated EEG data
+
+- To stream simulated EEG data, run:
+
+```
+docker-compose up eeg_simulator
+```
+
+- Modify `.env` file in repository root to stream custom data in CSV format:
+
+* `EEG_SIMULATOR_DATA_FILE_NAME`: The file from which the simulated EEG data is read from, stored in `data/eeg/` directory in repository root.
+* `EEG_SIMULATOR_SAMPLING_FREQUENCY`: The sampling frequency used for streaming.
+* `EEG_SIMULATOR_NUMBER_OF_EEG_CHANNELS`: The number of streamed EEG channels, read as the first N columns of the CSV file.
+* `EEG_SIMULATOR_NUMBER_OF_EMG_CHANNELS`: The number of streamed EMG channels, read as the next M columns of the CSV file.
+
+- The changes in `.env` file take place after restarting Docker container.
+
+### Recording bags
+
+- To record ROS bags while the pipeline is running, run:
+
+```
+docker-compose up bag_recorder
+```
+
+- Modify `.env` file in repository root to change the configuration:
+
+* `BAG_NAME`: The bag name for recording the data, e.g., "experiment1".
+
+- The changes in `.env` file take place after restarting Docker container.
+
+### Exporting bags
+
+- To export ROS bags to CSV, run:
+
+```
+docker-compose up bag_exporter
+```
+
+- Modify `.env` file in repository root to change the configuration:
+
+* `BAG_NAME`: The bag name for exporting the CSV.
+* `BAG_TIMESTAMP`: Optional. If not given, use the latest bag with the given name for exporting. An example value: `2023-04-26_11-26-52`.
+* `BAG_TOPIC`: The topic to export, e.g., `/eeg/cleaned_data`.
+
+- The changes in `.env` file take place after restarting Docker container.
+
+# Legacy documentation
 
 ## Running without Docker
 
