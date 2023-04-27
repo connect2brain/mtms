@@ -1,8 +1,8 @@
-from .base.base_python_processor import BaseProcessor
+from .base.base_pipeline_stage import BasePipelineStage
 from .base.events import Sample
 
 
-class Processor():
+class PipelineStage():
     def __init__(self):
         pass
 
