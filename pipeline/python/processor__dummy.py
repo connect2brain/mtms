@@ -1,6 +1,6 @@
-from .base_python_processor import BaseProcessor
-from .events import TriggerOut, Stimulus
-from .execution_condition import ExecutionCondition
+from .base.base_python_processor import BaseProcessor
+from .base.events import TriggerOut, Stimulus
+from .base.execution_condition import ExecutionCondition
 
 
 class Processor(BaseProcessor):
