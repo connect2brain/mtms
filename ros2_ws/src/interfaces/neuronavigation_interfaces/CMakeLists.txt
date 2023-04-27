@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/Efield.srv"
   "srv/EfieldInit.srv"
+  "srv/EfieldCoil.srv"
   "srv/OpenOrientationDialog.srv"
   DEPENDENCIES geometry_msgs
  )

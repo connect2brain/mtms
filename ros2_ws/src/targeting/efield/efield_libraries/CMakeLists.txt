@@ -8,11 +8,10 @@ set(CMAKE_CXX_STANDARD 14)
 set(linalg_LIBRARY ${PROJECT_SOURCE_DIR}/lib/liblinalg.so)
 set(phi_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libphi.so)
 set(tms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms.so)
-set(EfieldInterface_CLASS src/EfieldInterface.cpp)
+
 add_library(linalg SHARED IMPORTED GLOBAL)
 add_library(phi SHARED IMPORTED GLOBAL)
 add_library(tms SHARED IMPORTED GLOBAL)
-add_library(EfieldInterface SHARED ${EfieldInterface_CLASS})
 
 set_target_properties(linalg PROPERTIES IMPORTED_LOCATION ${linalg_LIBRARY})
 set_target_properties(phi PROPERTIES IMPORTED_LOCATION ${phi_LIBRARY})
@@ -20,7 +19,12 @@ set_target_properties(tms PROPERTIES IMPORTED_LOCATION ${tms_LIBRARY})
 
 add_library(efield_estimation SHARED
         src/efield_estimation.cpp
-        include/efield_estimation.h)
+        include/efield_estimation.h
+        )
+add_library(EfieldInterface SHARED
+        src/EfieldInterface.cpp
+        include/EfieldInterface.h
+)
 
 target_link_libraries(EfieldInterface linalg phi tms)
 target_link_libraries(efield_estimation PUBLIC linalg phi tms EfieldInterface)
