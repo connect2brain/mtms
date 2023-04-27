@@ -15,15 +15,20 @@ find_package(neuronavigation_interfaces REQUIRED)
 set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
+
 add_executable(efield
         src/efield.cpp
         src/efield_estimation.h
+        src/EfieldInterface.h
         )
 
 target_include_directories(efield
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
+        $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries/include>
+        $<INSTALL_INTERFACE:include>
+       )
 
 add_library(libefield_estimation SHARED IMPORTED)
 set_target_properties(libefield_estimation PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries/libefield_estimation.so)
