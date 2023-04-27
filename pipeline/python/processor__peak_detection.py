@@ -1,5 +1,5 @@
-from .base_python_processor import BaseProcessor, Charge, Discharge, Pulse
-from .thresholding import RealtimePeakDetection
+from .base.base_python_processor import BaseProcessor, Charge, Discharge, Pulse
+from .base.thresholding import RealtimePeakDetection
 
 
 class Processor(BaseProcessor):

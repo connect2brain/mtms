@@ -1,5 +1,5 @@
-from .base_python_processor import BaseProcessor
-from .events import Sample
+from .base.base_python_processor import BaseProcessor
+from .base.events import Sample
 
 
 class Processor():

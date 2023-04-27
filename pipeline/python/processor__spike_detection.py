@@ -1,7 +1,7 @@
-from .base_python_processor import BaseProcessor
-from .events import Pulse
-from .execution_condition import ExecutionCondition
-from .utils import analyze_eeg, get_default_waveform
+from .base.base_python_processor import BaseProcessor
+from .base.events import Pulse
+from .base.execution_condition import ExecutionCondition
+from .base.utils import analyze_eeg, get_default_waveform
 
 
 class Processor(BaseProcessor):
