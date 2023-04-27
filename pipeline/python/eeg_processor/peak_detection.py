@@ -1,5 +1,5 @@
-from .base.base_pipeline_stage import BasePipelineStage, Charge, Discharge, Pulse
-from .base.thresholding import RealtimePeakDetection
+from ..base.base_pipeline_stage import BasePipelineStage, Charge, Discharge, Pulse
+from ..base.thresholding import RealtimePeakDetection
 
 
 class PipelineStage(BasePipelineStage):
