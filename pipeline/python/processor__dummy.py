@@ -1,9 +1,9 @@
-from .base.base_python_processor import BaseProcessor
+from .base.base_pipeline_stage import BasePipelineStage
 from .base.events import TriggerOut, Stimulus
 from .base.execution_condition import ExecutionCondition
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(auto_enqueue=True, window_size=5000, channels=62)
         self.event_index = 1
