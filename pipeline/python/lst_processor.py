@@ -1,6 +1,6 @@
-from .base_python_processor import BaseProcessor
-from .events import Stimulus
-from .execution_condition import ExecutionCondition
+from .base.base_pipeline_stage import BasePipelineStage
+from .base.events import Stimulus
+from .base.execution_condition import ExecutionCondition
 from .analysis_utils import (
     get_alpha_estimate,
     compute_baseline_stats,
@@ -8,7 +8,7 @@ from .analysis_utils import (
 )
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     # TODO: discuss these parameters
     def __init__(self, eeg_channel_inds_=[8, 9, 61], window_size_=1000, channels_=62):
         # were in template

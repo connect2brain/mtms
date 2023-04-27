@@ -1,8 +1,9 @@
-//
-// Created by alqio on 1.9.2022.
-// Recommended reading about reference counting: https://docs.python.org/3/c-api/intro.html#reference-count-details
-// Note the difference between "New reference" and "Borrowed reference" and what kind of reference each function returns
-//
+/*
+   Created by alqio on 1.9.2022.
+
+   Recommended reading about reference counting: https://docs.python.org/3/c-api/intro.html#reference-count-details
+   Note the difference between "New reference" and "Borrowed reference" and what kind of reference each function returns
+*/
 
 #include "python_processor.h"
 #include "rclcpp/rclcpp.hpp"
@@ -30,7 +31,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   }
   Py_DECREF(python_module);
 
-  python_class = PyDict_GetItemString(python_module_dict, "Processor");
+  python_class = PyDict_GetItemString(python_module_dict, "PipelineStage");
 
   if (python_class == nullptr) {
     PyErr_Print();
