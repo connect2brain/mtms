@@ -1,7 +1,7 @@
-from .base.base_pipeline_stage import BasePipelineStage
-from .base.events import Pulse
-from .base.execution_condition import ExecutionCondition
-from .base.utils import analyze_eeg, get_default_waveform
+from ..base.base_pipeline_stage import BasePipelineStage
+from ..base.events import Pulse
+from ..base.execution_condition import ExecutionCondition
+from ..base.utils import analyze_eeg, get_default_waveform
 
 
 class PipelineStage(BasePipelineStage):

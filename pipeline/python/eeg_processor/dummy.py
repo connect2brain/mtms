@@ -1,6 +1,6 @@
-from .base.base_pipeline_stage import BasePipelineStage
-from .base.events import TriggerOut, Stimulus
-from .base.execution_condition import ExecutionCondition
+from ..base.base_pipeline_stage import BasePipelineStage
+from ..base.events import TriggerOut, Stimulus
+from ..base.execution_condition import ExecutionCondition
 
 
 class PipelineStage(BasePipelineStage):
