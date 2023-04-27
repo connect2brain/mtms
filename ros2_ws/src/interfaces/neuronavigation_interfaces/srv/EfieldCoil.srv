@@ -1,9 +1,7 @@
 # Request: Paths from InVesalius
 #
-# Response: InitEfield
+# Response: CoilModel
 
-string cortexfile
-string[] meshfile
 string coilfile
 ---
 bool success
