@@ -4,6 +4,8 @@
 
 string cortexfile
 string[] meshfile
+float32[] ci
+float32[] co
 string coilfile
 ---
 bool success

@@ -205,10 +205,12 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def init_efield(self,cortexfile, meshfile, coilfile):
+    def init_efield(self,cortexfile, meshfile, coilfile, ci, co):
         self.req1.cortexfile = cortexfile
         self.req1.meshfile = meshfile
         self.req1.coilfile = coilfile
+        self.req1.ci = ci
+        self.req1.co = co
         self.future1 = self.cli1.call_async(self.req1)
         while self.future1.done() is False:
             pass
@@ -318,11 +320,13 @@ class Connection(Thread):
             T_rot=T_rot,
         )
 
-    def init_efield(self, cortexfile, meshfile, coilfile):
+    def init_efield(self, cortexfile, meshfile, coilfile, ci, co):
         return self.node.init_efield(
             cortexfile = cortexfile,
             meshfile = meshfile,
             coilfile = coilfile,
+            ci = ci,
+            co = co,
         )
 
     def init_efield_json(self, config_file):
