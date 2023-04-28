@@ -11,7 +11,7 @@
 #include "JsonIO.hpp"
 #include "WeightedPhi.hpp"
 #include "TMS_CPU.hpp"
-
+//#define USE_CUDA
 #ifdef USE_CUDA
     #include <tms_cuda>
 #endif
