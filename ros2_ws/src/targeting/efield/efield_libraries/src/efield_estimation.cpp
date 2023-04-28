@@ -35,8 +35,8 @@ Mesh<float> *cortex;
 //Coil<float> coilmodel(coilfile);
 Coil<float> coilmodel;
 TMS<float,float> *TMS_obj;
-std::vector<float> ci= {0.3300};
-std::vector<float> co= {0};
+std::vector<float> ci;//= {0.3300};
+std::vector<float> co;//= {0};
 Mesh<float> m;
 std::vector< Mesh<float>>meshes;
 Matrix<float>Phi;
@@ -60,7 +60,7 @@ Matrix<float, RowMajor> spos;
     success = true;
     std::cout<<"Done init! "<<std::endl;
 }*/
-void init_efield(std::string cortexfile, std::vector<std::string> meshfile, bool &success)
+void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std::vector<float> ci, std::vector<float> co, bool &success)
 {
     std::cout<<"cortexfile: "<<cortexfile<<std::endl;
     std::cout<<"meshfile: "<<meshfile.at(0)<<std::endl;

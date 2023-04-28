@@ -41,9 +41,11 @@ public:
         std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Response> response)-> void {
         std::string cortexfile;
         std::string meshfile;
+        std::vector<float> ci;
+        std::vector<float> co;
         bool success=false;
         RCLCPP_INFO(rclcpp::get_logger("efield_init"), "Request received from init");
-        init_efield(request->cortexfile, request->meshfile, response->success);
+        init_efield(request->cortexfile, request->meshfile, request->ci, request->co, response->success);
         add_coil(request->coilfile, response->success);
     };
 
