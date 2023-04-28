@@ -8,7 +8,7 @@
 #include <tms>
 
 #include "efield_estimation.h"
-
+//#define USE_CUDA
 
 std::string meshroot = std::string(DATAROOT) + "headmodels/invesalius/";
 std::string meshfile = meshroot + "example-scalp.bin";
@@ -34,7 +34,12 @@ Matrix<float> TM = TM_Phi_LC(D, ci, co);
 Matrix<float> Phi = LFM_Phi_LC(meshes, TM, spos);
 
 Coil<float> coilmodel(coilfile);
+
+#ifdef USE_CUDA
+TMS_GPU<float,float> TMS_obj(Phi, meshes, spos);
+#else
 TMS<float,float> TMS_obj(Phi, meshes, spos);
+#endif
 
 //function to input data from efield_service
 void init_efield()
