@@ -1,4 +1,4 @@
-#https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.0.0/ubuntu2004/base/Dockerfile
+# Cuda image adapted from: https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.0.0/ubuntu2004/base/Dockerfile
 FROM osrf/ros:galactic-desktop as base
 FROM base as base-amd64
 
