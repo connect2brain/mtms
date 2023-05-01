@@ -40,11 +40,36 @@ NB: To be supported by ROS Toolbox, the installed version of Python 3.9 needs to
 For instance, 3.9.15 does not work. Some ways to install an old version of Python 3.9.x
 is to use Anaconda or to build it from the source code.
 
-3. Open MATLAB and run `!which python3.9`.
-4. Run `pyenv('Version', '<the result from previous command>')`.
-5. Run `ros2genmsg('/home/mtms/workspace/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')` (change path according to your setup).
-6. Move `matlab_msg_gen.zip` to `api/matlab` directory in mTMS repository, replace the existing file.
-7. Commit the updated ZIP file and push.
+3. Open MATLAB by running `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 matlab`. This prevents message generation from failing because of conflicting
+libraries.
+4. Run `!which python3.9`.
+5. Run `pyenv('Version', '<the result from previous command>')`.
+6. Run `ros2genmsg('/home/mtms/workspace/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')` (change path according to your setup).
+7. Move `matlab_msg_gen.zip` to `api/matlab` directory in mTMS repository, replace the existing file.
+8. Commit the updated ZIP file and push.
+
+Here are step-by-step instructions, including installing Python 3.9 to a system with an existing Python installation:
+
+```
+sudo apt install -y python3-colcon-common-extensions
+
+cd ~/Downloads
+wget https://www.python.org/ftp/python/3.9.5/Python-3.9.5.tgz
+tar xzf Python-3.9.5.tgz
+cd Python-3.9.5
+./configure --prefix=/opt/python3.9.5
+make
+sudo make install
+
+LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 matlab
+```
+
+In MATLAB, run:
+
+```
+pyenv('Version', '/opt/python3.9.5')
+ros2genmsg('/home/mtms/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')
+```
 
 ## Troubleshooting
 
