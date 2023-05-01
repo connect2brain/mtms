@@ -18,7 +18,9 @@ e-field library, `ros2_ws/src/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
 
-## Installation for Ubuntu 22.04
+## Installation
+
+- Install Ubuntu 22.04
 
 - Install Git by running:
 
@@ -32,19 +34,24 @@ sudo apt install git
 sudo apt install git-lfs
 ```
 
-- Log into github.com. Then, run:
+- Install Git Credential Manager (GCM):
 
 ```
-ssh-keygen -t ed25519 -C "your_email@aalto.fi"
+wget "https://github.com/GitCredentialManager/git-credential-manager/releases/download/v2.0.935/gcm-linux_amd64.2.0.935.deb" -O /tmp/gcmcore.deb
+sudo dpkg -i /tmp/gcmcore.deb
+git-credential-manager configure
+git config --global credential.credentialStore secretservice
 ```
-
-- Copy contents of ~/.ssh/id_ed25519.pub to Github -> Settings -> SSH and GPG keys.
 
 - Clone the repository:
 
 ```
 git clone --recurse-submodules git@github.com:connect2brain/mtms.git
 ```
+
+When asked, select the option: "Sign in with your browser" and enter your GitHub username and password.
+
+### Installation (continued; for personal computer)
 
 - Install Docker:
 
@@ -65,9 +72,47 @@ sudo apt install g++
 - Install ROS by running the following in the repository root:
 
 ```
-cd scripts
-sudo bash install_ros.sh
+cd scripts/installation
+sudo bash install-ros.sh
 ```
+
+### Installation (continued; for lab computer)
+
+- Install real-time kernel patch via Ubuntu Pro live patching.
+
+- Run the following in the repository root:
+
+```
+cd scripts/installation
+sudo bash setup-lab-computer.sh
+```
+
+- Install drivers for the FPGA. See the instructions: https://www.ni.com/fi-fi/support/documentation/supplemental/18/downloading-and-installing-ni-driver-software-on-linux-desktop.html.
+On step 4, install packages `ni-rseries` and `ni-fpga-interface`.
+
+- Configure network to allow receiving data from the EEG device. Go to: Settings -> Network -> Wired options -> IPv4. Set IPv4 Method to "Manual". Set address
+to 192.168.200.221 and netmask to 255.255.255.0, and apply changes.
+
+- Modify `/etc/security/limits.conf` and add the following lines:
+
+```
+<your username>    -   rtprio    98
+<your username>    -   memlock   1000000
+```
+
+- Install MATLAB with the following toolboxes: ROS toolbox, Statistics and machine learning toolbox.
+
+- Open MATLAB by running:
+
+```
+sudo matlab
+```
+
+This ensures that you can change all configuration parameters, such as the path.
+
+- Open HOME -> Set Path -> Add Folder. Add the folder `/home/mtms/mtms/api/matlab`.
+Open Keyboard -> Shortcuts and change the value of "Active settings" to "Windows Default Set".
+Apply changes.
 
 # Real-time pipeline
 
