@@ -1,0 +1,29 @@
+#!/bin/bash
+
+source install-docker.sh
+source install-ros.sh
+
+# Install Cyclone DDS for ROS
+sudo apt install -y ros-humble-rmw-cyclonedds-cpp
+
+# Tools for troubleshooting
+sudo apt install -y net-tools wireshark
+
+# Add ROS sourcing to .bashrc unless it is already there
+if ! grep -q "source /opt/ros/humble/setup.bash" ~/.bashrc; then
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+fi
+
+if ! grep -q "source /home/mtms/mtms/ros2_ws/install/local_setup.bash" ~/.bashrc; then
+    echo "source /home/mtms/mtms/ros2_ws/install/local_setup.bash" >> ~/.bashrc
+fi
+
+# Add environment variable to .bashrc to configure ROS to use Cyclone DDS
+if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
+fi
+
+# Add script directory to path in .bashrc
+if ! grep -q "export PATH=$PATH:/home/mtms/mtms/scripts/linux/usage" ~/.bashrc; then
+    echo 'export PATH=$PATH:/home/mtms/mtms/scripts/linux/usage' >> ~/.bashrc
+fi

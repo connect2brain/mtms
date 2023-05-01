@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ros2
+# Install ROS2 base
 sudo apt install software-properties-common
 sudo add-apt-repository universe
 sudo apt update && sudo apt install curl gnupg lsb-release
@@ -10,5 +10,5 @@ sudo apt update
 sudo apt upgrade
 sudo apt install ros-humble-ros-base -y
 
-# colcon
+# Install colcon (ROS2 build tool)
 sudo apt install python3-colcon-common-extensions -y
