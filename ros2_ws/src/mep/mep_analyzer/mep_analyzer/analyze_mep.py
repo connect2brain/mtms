@@ -173,14 +173,15 @@ class AnalyzeMepNode(Node):
         time_window = mep_configuration.time_window
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Configuration: MEP time window: {:.1f} to {:.1f} (ms) after stimulation.'.format(goal_id, 1000 * time_window.start, 1000 * time_window.end))
+        self.logger.info('{}: Configuration:'.format(goal_id))
+        self.logger.info('{}:   - MEP time window: {:.1f} to {:.1f} (ms) after stimulation.'.format(goal_id, 1000 * time_window.start, 1000 * time_window.end))
 
         preactivation_check = mep_configuration.preactivation_check
-        self.logger.info('{}: Configuration: Preactivation check {}.'.format(goal_id, "enabled" if preactivation_check.enabled else "disabled"))
+        self.logger.info('{}:   - Preactivation check {}.'.format(goal_id, "enabled" if preactivation_check.enabled else "disabled"))
 
         if preactivation_check.enabled:
             time_window = preactivation_check.time_window
-            self.logger.info('{}: Configuration: Preactivation time window: {:.1f} to {:.1f} (ms) before stimulation.'.format(goal_id, 1000 * (-time_window.end), 1000 * (-time_window.start)))
+            self.logger.info('{}:   - Preactivation time window: {:.1f} to {:.1f} (ms) before stimulation.'.format(goal_id, 1000 * (-time_window.end), 1000 * (-time_window.start)))
 
         self.logger.info('{}:'.format(goal_id))
 
@@ -192,7 +193,7 @@ class AnalyzeMepNode(Node):
         emg_channel_count = len(eeg_buffer[0].emg_channels)
 
         if emg_channel > emg_channel_count:
-            self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}).'.format(
+            self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}). Please check the channel counts defined in .env.'.format(
                 goal_id,
                 emg_channel,
                 emg_channel_count,
@@ -226,7 +227,7 @@ class AnalyzeMepNode(Node):
         voltage_range_limit = mep_configuration.preactivation_check.voltage_range_limit
 
         if voltage_range > voltage_range_limit:
-           self.logger.warn('{}: Failure: Preactivation check failed, the voltage range ({:.1f} uV) is above the limit ({:.1f}).'.format(goal_id, voltage_range, voltage_range_limit))
+           self.logger.warn('{}: Failure: Preactivation check failed, the voltage range ({:.1f} \u03BCV) is above the limit ({:.1f}).'.format(goal_id, voltage_range, voltage_range_limit))
            return MepError(value=MepError.PREACTIVATION_FAILED)
 
         self.logger.info('{}: Preactivation check passed.'.format(goal_id))
@@ -245,7 +246,7 @@ class AnalyzeMepNode(Node):
         amplitude = channel_data[max_i] - channel_data[min_i]
         latency = timestamps[max_i] - time
 
-        self.logger.info('{}: Computed MEP with amplitude {:.1f} (uV) and latency {:.1f} (ms).'.format(goal_id, amplitude, 1000 * latency))
+        self.logger.info('{}: Computed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).'.format(goal_id, amplitude, 1000 * latency))
 
         return amplitude, latency
 
