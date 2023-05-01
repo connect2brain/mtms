@@ -72,8 +72,8 @@ sudo apt install g++
 - Install ROS by running the following in the repository root:
 
 ```
-cd scripts/installation
-sudo bash install-ros.sh
+cd scripts/linux/installation
+sudo install-ros
 ```
 
 ### Installation (continued; for lab computer)
@@ -83,8 +83,8 @@ sudo bash install-ros.sh
 - Run the following in the repository root:
 
 ```
-cd scripts/installation
-sudo bash setup-lab-computer.sh
+cd scripts/linux/installation
+sudo setup-lab-computer
 ```
 
 - Install drivers for the FPGA. See the instructions: https://www.ni.com/fi-fi/support/documentation/supplemental/18/downloading-and-installing-ni-driver-software-on-linux-desktop.html.
