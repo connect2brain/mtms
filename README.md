@@ -97,7 +97,7 @@ to 192.168.200.221 and netmask to 255.255.255.0, and apply changes.
 
 ```
 <your username>    -   rtprio    98
-<your username>    -   memlock   1000000
+<your username>    -   memlock   2000000
 ```
 
 - Install MATLAB with the following toolboxes: ROS toolbox, Statistics and machine learning toolbox.
