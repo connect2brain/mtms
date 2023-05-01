@@ -52,6 +52,14 @@ services:
     privileged: true
     network_mode: host
 
+  mep_analyzer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    network_mode: host
+
   eeg_simulator:
     build:
       context: .
