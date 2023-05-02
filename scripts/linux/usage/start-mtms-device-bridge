@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Configure mTMS bridge
+export BITFILE_DIRECTORY=/home/mtms/mtms/bitfiles/
+export BITFILE=NiFpga_mTMS_Aalto_0.4.9.lvbitx
+export BITFILE_SIGNATURE=$(cat /home/mtms/mtms/bitfiles/NiFpga_mTMS_Aalto_0.4.9.signature)
+export RESOURCE=RIO1  # Works for Aalto
+
+# Build mTMS bridge
+cd mtms/ros2_ws
+colcon build --packages-select event_interfaces mtms_device_interfaces mtms_device_bridge
+
+# Start mTMS bridge
+ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false

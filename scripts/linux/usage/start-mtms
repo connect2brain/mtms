@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Check that the project name is set.
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Error: Project name is undefined. Please use set-project script to set the project."
+    echo ""
+    exit 1
+fi
+
 # Set the path to the project directory
 PROJECT_DIR="$MTMS_ROOT/projects"
 
@@ -75,15 +82,31 @@ for service in "${services[@]}"; do
   gnome-terminal -- bash -c "start-service $service"
 done
 
-# Configure mTMS bridge
-export BITFILE_DIRECTORY=/home/mtms/mtms/bitfiles/
-export BITFILE=NiFpga_mTMS_Aalto_0.4.9.lvbitx
-export BITFILE_SIGNATURE=$(cat /home/mtms/mtms/bitfiles/NiFpga_mTMS_Aalto_0.4.9.signature)
-export RESOURCE=RIO1  # Works for Aalto
+# Start mTMS device bridge separately because it is not containerized yet.
+gnome-terminal -- bash -c "start-mtms-device-bridge"
 
-# Build mTMS bridge
-cd mtms/ros2_ws
-colcon build --packages-select event_interfaces mtms_device_interfaces mtms_device_bridge
+# Wait for the process to start and get its PID
+while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
+    PID_MTMS_DEVICE_BRIDGE=$(pgrep -f "start-mtms-device-bridge")
+    sleep 1
+done
 
-# Start mTMS bridge
-ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false
+echo "Running... Press Ctrl-C to stop the system."
+
+# Define a function to handle the SIGINT signal
+function handle_sigint {
+    echo "Ctrl-C pressed. Shutting down processes and exiting..."
+
+    # Shut down Docker processes.
+    cd $MTMS_ROOT && docker-compose down
+
+    # Shut down mTMS device bridge.
+    kill -s SIGINT -- -$PID_MTMS_DEVICE_BRIDGE
+
+    exit 0
+}
+
+# Trap the SIGINT signal and call the handle_sigint function
+trap handle_sigint SIGINT
+
+sleep infinity
