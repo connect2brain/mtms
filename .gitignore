@@ -27,3 +27,5 @@ matlab_msg_gen/
 
 # The config for neuronavigation is stored in .config directory.
 .config/
+
+projects/
