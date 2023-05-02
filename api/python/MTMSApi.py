@@ -225,6 +225,13 @@ class MTMSApi:
             intensity=intensity,
         )
 
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle):
+        return self.node.get_maximum_intensity(
+            displacement_x=displacement_x,
+            displacement_y=displacement_y,
+            rotation_angle=rotation_angle,
+        )
+
     # Compound events
 
     def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages, wait_for_completion=True):
