@@ -11,7 +11,7 @@ from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, Trigger
 
 from mep_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetChannelVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
 
 from MTMSApiPrinter import MTMSApiPrinter
 
@@ -30,6 +30,7 @@ class MTMSApiNode(Node):
 
     # To other parts of the system
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
+    ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
@@ -49,6 +50,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_START_EXPERIMENT,
         ROS_SERVICE_STOP_EXPERIMENT,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
+        ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
     )
@@ -95,7 +97,6 @@ class MTMSApiNode(Node):
             self.ros_action_clients[topic] = client
 
         # Have a queue of only one message so that only the latest system state is ever received.
-        #
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
 
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
@@ -303,6 +304,21 @@ class MTMSApiNode(Node):
         assert value.success, "Invalid displacement, rotation angle, or intensity."
 
         return value.voltages, value.reversed_polarities
+
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle):
+        topic, service_type = self.ROS_SERVICE_GET_MAXIMUM_INTENSITY
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+
+        value = self.call_service(client, request)
+        assert value.success, "Invalid displacement or rotation angle."
+
+        return value.maximum_intensity
 
     def get_default_waveform(self, channel):
         topic, service_type = self.ROS_SERVICE_GET_DEFAULT_WAVEFORM
