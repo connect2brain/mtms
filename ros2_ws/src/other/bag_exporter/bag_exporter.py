@@ -1,32 +1,37 @@
 import argparse
+import gc
+import glob
+import os
 import sqlite3
 import sys
-import gc
 
 from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
 
+BAG_BASE_DIR = 'data/bags/'
+
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-b", "--bag-file", type=str, help="Full path to the bag file directory")
-    arg_parser.add_argument("-t", "--topic", action="append", type=str, help="Topic to get from bag file")
-    arg_parser.add_argument("-p", "--prefix", type=str, required=False, help="String that is prefixed to output files")
+    arg_parser.add_argument("--bag-name", type=str, help="Bag name")
+    arg_parser.add_argument("--timestamp", type=str, required=False, help="Timestamp for the bag file (optional; if not given, use the latest)")
+    arg_parser.add_argument("--topic", action="append", type=str, help="Topic to get from bag file")
+    arg_parser.add_argument("--prefix", type=str, required=False, help="String that is prefixed to output files")
 
     arg_parser.add_argument('--full', action='store_true',
                             help="If set, store full data (eeg channels, event types etc)")
     arg_parser.set_defaults(feature=False)
 
     args = arg_parser.parse_args()
-    if args.bag_file is None:
-        print("ERROR, you must provide a bag file. Run script with --help")
+    if args.bag_name is None:
+        print("ERROR, you must provide a bag name. Run script with --help")
         sys.exit(1)
 
-    print(f"Using bag file {args.bag_file}")
-    print(f"Looking for topics {', '.join(args.topic)}")
+    print("Using bag:", args.bag_name)
+    print(f"Looking for topics: {', '.join(args.topic)}")
     if args.prefix is None:
         args.prefix = ""
-    return args.bag_file, args.topic, args.prefix, args.full
+    return args.bag_name, args.timestamp, args.topic, args.prefix, args.full
 
 
 class BagFileParser:
@@ -58,15 +63,15 @@ class BagFileParser:
         for data, in rows:
             yield deserialize_message(data, self.topic_msg_message[topic])
 
-    def save_topic_timestamps(self, topic, file_name):
+    def save_topic_timestamps(self, topic, path):
         messages = self.get_messages(topic)
         timestamps = list(map(lambda sample: str(sample.time), messages))
 
-        with open(file_name, 'w') as f:
+        with open(path, 'w') as f:
             f.write("\n".join(timestamps))
 
-    def save_topic_full(self, topic, file_name):
-        f = open(file_name, 'w')
+    def save_topic_full(self, topic, path):
+        f = open(path, 'w')
         for message in self.get_messages(topic):
             parsed = self.parse_message_fields(message)
             f.write(parsed + "\n")
@@ -93,8 +98,26 @@ class BagFileParser:
         return ",".join(field_values)
 
 
-bag_file, topics, prefix, full = parse_arguments()
-parser = BagFileParser(bag_file)
+bag_name, timestamp, topics, prefix, full = parse_arguments()
+
+if timestamp is None:
+    # Find all directories ending with bag name
+    dir_pattern = os.path.join(BAG_BASE_DIR, '*_{}'.format(bag_name))
+    dirs = [d for d in glob.glob(dir_pattern) if os.path.isdir(d)]
+
+    # Get the latest directory
+    latest_dir_path = max(dirs) if dirs else None
+
+    # Extract only the directory name
+    bag_dir = os.path.basename(latest_dir_path) if latest_dir_path else None
+else:
+    bag_dir = "{}_{}".format(timestamp, bag_name)
+
+bag_full_path = os.path.join(BAG_BASE_DIR, bag_dir, '{}_0.db3'.format(bag_dir))
+
+print("Exporting from directory:", bag_full_path)
+
+parser = BagFileParser(bag_full_path)
 
 # Save topics.
 for topic in topics:
@@ -104,9 +127,11 @@ for topic in topics:
     # For instance, with prefix "experiment1", and topic "/eeg/raw_data", yields "experiment1_eeg_raw_data"
     output_file_name = f"{prefix_formatted}{topic[1:].replace('/', '_')}"
 
+    output_path = os.path.join(BAG_BASE_DIR, bag_dir, output_file_name)
+
     if full:
-        parser.save_topic_full(topic, output_file_name)
+        parser.save_topic_full(topic, output_path)
     else:
-        parser.save_topic_timestamps(topic, output_file_name)
+        parser.save_topic_timestamps(topic, output_path)
 
 print("Done")

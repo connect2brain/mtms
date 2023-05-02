@@ -22,6 +22,16 @@ services:
       - "9090:9090"
     network_mode: host
 
+  bag_exporter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    volumes:
+      - './data/bags:/app/data/bags'
+    network_mode: host
+
   bag_recorder:
     build:
       context: .
