@@ -1,8 +1,6 @@
 api = MTMSApi();
 
 api.start_device();
-
-api.stop_experiment();
 api.start_experiment();
 
 %%     Single events
@@ -31,7 +29,7 @@ api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, w
 api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
 
 
-%% Send trigger on port 1.
+%% Send trigger out on port 1.
 
 port = 1;
 duration_us = 1000;
@@ -40,9 +38,6 @@ api.send_trigger_out(port, duration_us, execution_condition, time, wait_for_comp
 
 
 %% Send pulse on channel 1 and analyze MEP.
-
-api.stop_experiment();
-api.start_experiment();
 
 % Use default waveform for the pulse.
 
@@ -53,19 +48,19 @@ reverse_polarity = false;
 
 channel = 1;
 execution_condition = api.execution_conditions.TIMED;
-time = 5.0;
-wait_for_completion = false;  % Note that this needs to be false.
+time = api.get_time() + 3.0;
+wait_for_completion = false;  % Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
 api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
-mep_start_time = 0.02;
-mep_end_time = 0.04;
-preactivation_check_enabled = false;
-preactivation_start_time = -0.02;
+mep_start_time = 0.02;  % in ms, after the stimulation pulse
+mep_end_time = 0.04;  % in ms
+preactivation_check_enabled = true;
+preactivation_start_time = -0.02;  % in ms, minus sign indicates that the window starts before the stimulation pulse
 preactivation_end_time = -0.01;
-preactivation_voltage_range_limit = 20;
+preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
 mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
@@ -89,7 +84,6 @@ maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, ro
 % Charge all channels to target voltages.
 
 wait_for_completion = true;
-
 api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
 
 % Send default pulse to all channels.
@@ -98,9 +92,6 @@ api.send_immediate_default_pulse_to_all_channels(reverse_polarities, wait_for_co
 
 
 %% Targeting and MEP analysis
-
-api.stop_experiment();
-api.start_experiment();
 
 displacement_x = 5;  % mm
 displacement_y = 5;  % mm
@@ -112,7 +103,6 @@ intensity = 20;  % V/m
 % Charge all channels to target voltages.
 
 wait_for_completion = true;
-
 api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
 
 % Send default pulse to all channels.
@@ -124,12 +114,12 @@ api.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
-mep_start_time = 0.02;
-mep_end_time = 0.04;
-preactivation_check_enabled = false;
-preactivation_start_time = -0.02;
+mep_start_time = 0.02;  % in ms, after the stimulation pulse
+mep_end_time = 0.04;  % in ms
+preactivation_check_enabled = true;
+preactivation_start_time = -0.02;  % in ms, minus sign indicates that the window starts before the stimulation pulse
 preactivation_end_time = -0.01;
-preactivation_voltage_range_limit = 20;
+preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
 mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
