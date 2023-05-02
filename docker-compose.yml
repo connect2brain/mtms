@@ -38,8 +38,10 @@ services:
       dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
     env_file:
       - ${ENV_FILE}
+    environment:
+      - PROJECT_NAME=$PROJECT_NAME
     volumes:
-      - './data/bags:/app/data/bags'
+      - './projects:/app/projects'
     network_mode: host
 
   eeg_gatherer:
