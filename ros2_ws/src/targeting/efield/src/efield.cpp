@@ -15,12 +15,11 @@ class EField : public rclcpp::Node {
 public:
   EField() : Node("efield") {
 
-    auto service_callback1 = [this](
+    auto service_callback_efield_norm = [this](
         const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response) -> void {
-//check if the initialization has been done correctly first
 
-      RCLCPP_INFO(rclcpp::get_logger("efield"), "Request received from efield norm");
+      RCLCPP_INFO(rclcpp::get_logger("efield_getnorm"), "Request received from efield norm");
 
       std::vector<float> position;
       std::vector<double> orientation;
@@ -32,43 +31,35 @@ public:
       orientation.push_back(request->coordinate.orientation.beta);
       orientation.push_back(request->coordinate.orientation.gamma);
 
-      std::vector<double> efield_vector;
       efield_estimation(position, orientation, request->transducer_rotation, response->efield_data);
 
     };
 
-    auto service_callback2= [this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Request> request,
+    auto service_callback_init_efield= [this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::EfieldInit::Response> response)-> void {
-        std::string cortexfile;
-        std::string meshfile;
-        std::vector<float> ci;
-        std::vector<float> co;
-        bool success=false;
+
         RCLCPP_INFO(rclcpp::get_logger("efield_init"), "Request received from init");
         init_efield(request->cortexfile, request->meshfile, request->ci, request->co, response->success);
         add_coil(request->coilfile, response->success);
     };
 
-    auto service_callback3=[this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldCoil::Request> request,
+    auto service_callback_set_coil=[this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldCoil::Request> request,
                                   std::shared_ptr<neuronavigation_interfaces::srv::EfieldCoil::Response> response)-> void {
-        RCLCPP_INFO(rclcpp::get_logger("efield_coil"), "Request received from coil");
+        RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from coil change");
 
         add_coil(request->coilfile, response->success);
 
     };
 
-    //init_efield();
-      efield_service_init = this->create_service<neuronavigation_interfaces::srv::EfieldInit>("/efield/init", service_callback2);
-
-      efield_service = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield", service_callback1);//change name to /efield/get
-      efield_service_coil = this->create_service<neuronavigation_interfaces::srv::EfieldCoil>("/efield/coil", service_callback3);
+      efield_service_init = this->create_service<neuronavigation_interfaces::srv::EfieldInit>("/efield/init", service_callback_init_efield);
+      efield_service_enorm = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield/getnorm", service_callback_efield_norm);
+      efield_service_coil = this->create_service<neuronavigation_interfaces::srv::EfieldCoil>("/efield/setcoil", service_callback_set_coil);
   }
 
 private:
-  rclcpp::Service<neuronavigation_interfaces::srv::Efield>::SharedPtr efield_service;
+  rclcpp::Service<neuronavigation_interfaces::srv::Efield>::SharedPtr efield_service_enorm;
   rclcpp::Service<neuronavigation_interfaces::srv::EfieldInit>::SharedPtr efield_service_init;
   rclcpp::Service<neuronavigation_interfaces::srv::EfieldCoil>::SharedPtr efield_service_coil;
-
 };
 
 
