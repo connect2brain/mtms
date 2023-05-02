@@ -244,7 +244,6 @@ class MTMSApi:
             channel = i + 1
 
             id = self.send_charge_or_discharge(
-                id=id,
                 execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
                 target_voltage=target_voltage,
