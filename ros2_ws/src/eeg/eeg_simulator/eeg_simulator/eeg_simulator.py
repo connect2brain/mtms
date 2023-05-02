@@ -171,7 +171,7 @@ class DataProvider(Node):
         self.data_path = os.path.join(self.DATA_DIRECTORY, self.data_file_name)
 
         if self.simulate_eeg_device:
-            self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_file_name, self.sampling_frequency,
+            self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_path, self.sampling_frequency,
                                                            self.eeg_channels, self.loop, self.get_logger())
             self.create_timer(self.sampling_period, self.simulated_eeg_device.send_sample_packet)
 
