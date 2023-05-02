@@ -72,7 +72,7 @@ services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "ba
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
-  gnome-terminal -- bash -c "cd \"$MTMS_ROOT\" && echo $ENV_FILE && docker-compose build $service && docker-compose up $service; exec bash"
+  gnome-terminal -- bash -c "start-service $service"
 done
 
 # Configure mTMS bridge
