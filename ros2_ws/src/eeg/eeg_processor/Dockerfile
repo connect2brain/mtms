@@ -8,14 +8,15 @@ WORKDIR /build
 
 RUN apt-get update
 
+# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get install -y dos2unix wget python3-pip python3-wxgtk4.0
-RUN apt-get install -y libgtk-3-dev
-
+# PsychoPy and its dependencies
+RUN apt-get install -y dos2unix wget python3-pip libgtk-3-dev
 RUN pip3 install attrdict3
 RUN pip3 install psychopy
 
+# HACK: Needed because the default version of NumPy is incompatible with PsychoPy.
 RUN pip3 install --force-reinstall "numpy==1.20.3"
 
 # Copy ROS workspace
@@ -36,14 +37,16 @@ RUN source /opt/ros/galactic/setup.bash && colcon build
 RUN mkdir -p hotswappable_processors
 RUN mkdir -p measurements
 
-# Copy entrypoint
+# Copy entrypoints
 
-COPY ros2_ws/src/eeg/eeg_processor/ros_entrypoint.sh .
-COPY ros2_ws/src/eeg/eeg_processor/preprocessor_ros_entrypoint.sh .
-COPY ros2_ws/src/eeg/eeg_processor/stimulus_presenter_ros_entrypoint.sh .
-RUN dos2unix ros_entrypoint.sh stimulus_presenter_ros_entrypoint.sh preprocessor_ros_entrypoint.sh
-RUN chmod +x ros_entrypoint.sh stimulus_presenter_ros_entrypoint.sh preprocessor_ros_entrypoint.sh
+COPY ros2_ws/src/eeg/eeg_processor/eeg_processor_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_processor/preprocessor_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_processor/stimulus_presenter_entrypoint.sh .
+
+RUN dos2unix *.sh
+RUN chmod +x *.sh
 
 ENV DOCKER=true
 
-ENTRYPOINT ["./ros_entrypoint.sh"]
+# Note: This entrypoint is overriden in docker-compose.yml for certain services.
+ENTRYPOINT ["./eeg_processor_entrypoint.sh"]
