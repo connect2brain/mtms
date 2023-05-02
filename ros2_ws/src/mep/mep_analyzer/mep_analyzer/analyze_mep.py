@@ -177,11 +177,12 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}:   - MEP time window: {:.1f} to {:.1f} (ms) after stimulation.'.format(goal_id, 1000 * time_window.start, 1000 * time_window.end))
 
         preactivation_check = mep_configuration.preactivation_check
-        self.logger.info('{}:   - Preactivation check {}.'.format(goal_id, "enabled" if preactivation_check.enabled else "disabled"))
+        self.logger.info('{}:   - Preactivation check {}'.format(goal_id, "enabled:" if preactivation_check.enabled else "disabled."))
 
         if preactivation_check.enabled:
             time_window = preactivation_check.time_window
-            self.logger.info('{}:   - Preactivation time window: {:.1f} to {:.1f} (ms) before stimulation.'.format(goal_id, 1000 * (-time_window.end), 1000 * (-time_window.start)))
+            self.logger.info('{}:     - Time window: {:.1f} to {:.1f} (ms) before stimulation.'.format(goal_id, 1000 * (-time_window.end), 1000 * (-time_window.start)))
+            self.logger.info('{}:     - Voltage range limit: {:.1f} \u03BCV.'.format(goal_id, preactivation_check.voltage_range_limit))
 
         self.logger.info('{}:'.format(goal_id))
 
@@ -227,7 +228,7 @@ class AnalyzeMepNode(Node):
         voltage_range_limit = mep_configuration.preactivation_check.voltage_range_limit
 
         if voltage_range > voltage_range_limit:
-           self.logger.warn('{}: Failure: Preactivation check failed, the voltage range ({:.1f} \u03BCV) is above the limit ({:.1f}).'.format(goal_id, voltage_range, voltage_range_limit))
+           self.logger.warn('{}: Failure: Preactivation check failed, the voltage range ({:.1f} \u03BCV) is above the limit ({:.1f} \u03BCV).'.format(goal_id, voltage_range, voltage_range_limit))
            return MepError(value=MepError.PREACTIVATION_FAILED)
 
         self.logger.info('{}: Preactivation check passed.'.format(goal_id))
