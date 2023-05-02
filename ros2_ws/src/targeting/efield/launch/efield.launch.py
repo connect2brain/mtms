@@ -20,7 +20,7 @@ def generate_launch_description():
         executable="efield",
         name="efield",
         arguments=['--ros-args', '--log-level', logger],
-        output = "screen",
+        output = "screen"
     )
 
     ld.add_action(node)

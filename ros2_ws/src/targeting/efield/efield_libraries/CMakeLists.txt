@@ -8,14 +8,17 @@ set(CMAKE_CXX_STANDARD 14)
 set(linalg_LIBRARY ${PROJECT_SOURCE_DIR}/lib/liblinalg.so)
 set(phi_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libphi.so)
 set(tms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms.so)
+set(tms_cuda_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms_cuda.so)
 
 add_library(linalg SHARED IMPORTED GLOBAL)
 add_library(phi SHARED IMPORTED GLOBAL)
 add_library(tms SHARED IMPORTED GLOBAL)
+add_library(tms_cuda SHARED IMPORTED GLOBAL)
 
 set_target_properties(linalg PROPERTIES IMPORTED_LOCATION ${linalg_LIBRARY})
 set_target_properties(phi PROPERTIES IMPORTED_LOCATION ${phi_LIBRARY})
 set_target_properties(tms PROPERTIES IMPORTED_LOCATION ${tms_LIBRARY})
+set_target_properties(tms_cuda PROPERTIES IMPORTED_LOCATION ${tms_cuda_LIBRARY})
 
 add_library(efield_estimation SHARED
         src/efield_estimation.cpp
@@ -26,8 +29,8 @@ add_library(EfieldInterface SHARED
         include/EfieldInterface.h
 )
 
-target_link_libraries(EfieldInterface linalg phi tms)
-target_link_libraries(efield_estimation PUBLIC linalg phi tms EfieldInterface)
+target_link_libraries(EfieldInterface linalg phi tms tms_cuda)
+target_link_libraries(efield_estimation PUBLIC linalg phi tms  tms_cuda EfieldInterface)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
@@ -37,6 +40,7 @@ install(EXPORT ${PROJECT_NAME}-targets DESTINATION lib/cmake/${PROJECT_NAME})
 # Mark cpp header files for installation
 install(DIRECTORY include
         DESTINATION include)
+
 # Create cmake config files
 # See doc: https://cmake.org/cmake/help/latest/module/CMakePackageConfigHelpers.html#example-generating-package-files
 include(CMakePackageConfigHelpers)

@@ -8,12 +8,15 @@
 #include <iostream>
 #include "EfieldInterface.h"
 
-
 std::vector<double> efield_vector;
 Timer t;
 Mesh<float> *cortex;
 Coil<float> coilmodel;
+#ifdef USE_CUDA
+TMS_GPU<float,float> *TMS_obj;
+#else
 TMS<float,float> *TMS_obj;
+#endif
 Mesh<float> m;
 std::vector< Mesh<float>>meshes;
 Matrix<float>Phi;
@@ -35,7 +38,11 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     std::vector< Matrix<float> > D = BEMOperatorsPhi_LC(meshes);
     Matrix<float> TM = TM_Phi_LC(D, ci, co);
     Phi=LFM_Phi_LC(meshes, TM, spos);
+    #ifdef USE_CUDA
+    TMS_obj=new TMS_GPU<float,float>(Phi, meshes, spos);
+    #else
     TMS_obj=new TMS<float,float>(Phi, meshes, spos);
+    #endif
     WeightedPhi(meshes, Phi, ci, co);
 
     co.clear();
