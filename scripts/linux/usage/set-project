@@ -6,10 +6,9 @@ PROJECT_DIR="$MTMS_ROOT/projects"
 # Get the project name from the first argument
 PROJECT_NAME_ARG="$1"
 
-echo ""
-
 if [ -z "$PROJECT_NAME_ARG" ]; then
     echo "Error: Project name is undefined. Please provide it as an argument to the script."
+    echo ""
     exit 1
 fi
 
@@ -23,5 +22,6 @@ fi
 
 export PROJECT_NAME=$PROJECT_NAME_ARG
 
+echo ""
 echo "Project set to: $PROJECT_NAME"
 echo ""
