@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# Set the path to the project directory
+PROJECT_DIR="$MTMS_ROOT/projects"
+
+# Get the project name from the first argument
+PROJECT_NAME_ARG="$1"
+
+echo ""
+
+if [ -z "$PROJECT_NAME_ARG" ]; then
+    echo "Project name cannot be empty."
+    exit 1
+fi
+
+# Check if the project directory exists
+if [ ! -d "$PROJECT_DIR/$PROJECT_NAME_ARG" ]; then
+    echo "Project does not exist: $PROJECT_NAME_ARG"
+    echo ""
+    echo "Run 'list-projects' to see available projects."
+    exit 1
+fi
+
+export PROJECT_NAME=$PROJECT_NAME_ARG
+
+echo "Project set to: $PROJECT_NAME"
