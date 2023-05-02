@@ -71,22 +71,23 @@ class NeuronavigationNode(Node):
         # self.Activate_EField = self.get_parameter('Activate_EField').value
         self.Activate_EField = True
         if self.Activate_EField:
-            self.cli1 = self.create_client(EfieldInit, 'efield/init', callback_group=callback_group)
-            while not self.cli1.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service2 not available, waiting...')
-            self.req1 = EfieldInit.Request()
-            self.get_logger().info('efield service2')
 
-            self.cli = self.create_client(Efield, 'efield', callback_group=callback_group)
-            while not self.cli.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service not available, waiting...')
-            self.req = Efield.Request()
+            self.client_init_efield = self.create_client(EfieldInit, 'efield/init', callback_group=callback_group)
+            while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service initialization not available, waiting...')
+            self.request_init_efield = EfieldInit.Request()
+            self.get_logger().info('efield service enorm')
 
-            self.cli2 = self.create_client(EfieldCoil, 'efield/coil', callback_group= callback_group)
-            while not self.cli2.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service3 not available, waiting...')
-            self.req2 = EfieldCoil.Request()
-            self.get_logger().info('efield service3')
+            self.client_get_efield_norm = self.create_client(Efield, 'efield/getnorm', callback_group=callback_group)
+            while not self.client_get_efield_norm.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service get norm not available, waiting...')
+            self.request_get_efield_norm = Efield.Request()
+
+            self.client_set_coil = self.create_client(EfieldCoil, 'efield/setcoil', callback_group= callback_group)
+            while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service set coil not available, waiting...')
+            self.request_set_coil = EfieldCoil.Request()
+            self.get_logger().info('efield set coil')
 
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
@@ -206,12 +207,12 @@ class NeuronavigationNode(Node):
             return None
 
     def init_efield(self,cortexfile, meshfile, coilfile, ci, co):
-        self.req1.cortexfile = cortexfile
-        self.req1.meshfile = meshfile
-        self.req1.coilfile = coilfile
-        self.req1.ci = ci
-        self.req1.co = co
-        self.future1 = self.cli1.call_async(self.req1)
+        self.request_init_efield.cortexfile = cortexfile
+        self.request_init_efield.meshfile = meshfile
+        self.request_init_efield.coilfile = coilfile
+        self.request_init_efield.ci = ci
+        self.request_init_efield.co = co
+        self.future1 = self.client_init_efield.call_async(self.request_init_efield)
         while self.future1.done() is False:
             pass
         try:
@@ -223,8 +224,8 @@ class NeuronavigationNode(Node):
             return None
 
     def efield_coil(self, coilfile):
-        self.req2.coilfile=coilfile
-        self.future2 = self.cli2.call_async(self.req2)
+        self.request_set_coil.coilfile=coilfile
+        self.future2 = self.client_set_coil.call_async(self.request_set_coil)
         while self.future2.done() is False:
             pass
         try:
@@ -236,11 +237,11 @@ class NeuronavigationNode(Node):
             return None
 
     def update_efield(self, position, orientation, T_rot):
-        self.req.coordinate.position.x, self.req.coordinate.position.y, self.req.coordinate.position.z = position
-        self.req.coordinate.orientation.alpha, self.req.coordinate.orientation.beta, self.req.coordinate.orientation.gamma = orientation
-        self.req.transducer_rotation = T_rot
+        self.request_get_efield_norm.coordinate.position.x, self.request_get_efield_norm.coordinate.position.y, self.request_get_efield_norm.coordinate.position.z = position
+        self.request_get_efield_norm.coordinate.orientation.alpha, self.request_get_efield_norm.coordinate.orientation.beta, self.request_get_efield_norm.coordinate.orientation.gamma = orientation
+        self.request_get_efield_norm.transducer_rotation = T_rot
 
-        self.future = self.cli.call_async(self.req)
+        self.future = self.client_get_efield_norm.call_async(self.request_get_efield_norm)
 
         while self.future.done() is False:
             pass
