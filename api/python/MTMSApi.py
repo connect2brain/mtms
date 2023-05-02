@@ -266,7 +266,7 @@ class MTMSApi:
 
         return ids
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
+    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time=0.0, wait_for_completion=True):
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -277,7 +277,7 @@ class MTMSApi:
             waveform = self.get_default_waveform(channel=channel)
 
             id = self.send_pulse(
-                execution_condition=execution_condition,
+                execution_condition=ExecutionCondition.TIMED,
                 time=time,
                 channel=channel,
                 waveform=waveform,
@@ -292,12 +292,10 @@ class MTMSApi:
         return ids
 
     def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, wait_for_completion=True):
-        execution_condition = ExecutionCondition.TIMED
         time = self.get_time() + self.TIME_EPSILON
 
-        ids = self.send_default_pulse_to_all_channels(
+        ids = self.send_timed_default_pulse_to_all_channels(
             reverse_polarities=reverse_polarities,
-            execution_condition=execution_condition,
             time=time,
             wait_for_completion=wait_for_completion,
         )
