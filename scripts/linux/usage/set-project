@@ -9,13 +9,13 @@ PROJECT_NAME_ARG="$1"
 echo ""
 
 if [ -z "$PROJECT_NAME_ARG" ]; then
-    echo "Project name cannot be empty."
+    echo "Error: Project name is undefined. Please provide it as an argument to the script."
     exit 1
 fi
 
 # Check if the project directory exists
 if [ ! -d "$PROJECT_DIR/$PROJECT_NAME_ARG" ]; then
-    echo "Project does not exist: $PROJECT_NAME_ARG"
+    echo "Error: Project does not exist: $PROJECT_NAME_ARG"
     echo ""
     echo "Run 'list-projects' to see available projects."
     exit 1
@@ -24,3 +24,4 @@ fi
 export PROJECT_NAME=$PROJECT_NAME_ARG
 
 echo "Project set to: $PROJECT_NAME"
+echo ""
