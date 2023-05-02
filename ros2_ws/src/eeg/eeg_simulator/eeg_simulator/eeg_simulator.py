@@ -1,3 +1,5 @@
+import socket
+import struct
 import rclpy
 from rclpy.node import Node
 
@@ -5,12 +7,103 @@ from eeg_interfaces.msg import EegDatapoint, EegInfo, Trigger
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
 
+UDP_IP = "127.0.0.1"
+UDP_PORT = 50000
+SCALE_FACTOR = 2**23
+
+class EegDeviceSimulator():
+    def __init__(self, udp_ip, port, data_file_name, sampling_rate, num_eeg_channels, loop, logger):
+        self.ip = udp_ip
+        self.port = port
+        self.data_file_name = data_file_name
+        self.loop = loop
+        self.logger = logger  # TODO: remove
+        self.sampling_rate = sampling_rate
+        self.num_of_eeg_channels = num_eeg_channels
+        self.time = 0.0
+        self.sampling_period = 1 / self.sampling_rate
+
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sequence_number = 0
+
+        # Initiate bit representations of constant fields for packets
+        self.frame_type = 2     # uint8, 2 = Samples
+        self.main_unit_num = 0  # uint8, 0 = Stand-alone
+        self.reserved = [0,0]   # uint8[2]
+        self.num_bundles = [(1 >> i) & 0xFF for i in (8, 0)]             # uint16 field
+        self.num_of_channels_bits = [(self.num_of_eeg_channels >> i) & 0xFF for i in (8, 0)] # uint16 field
+        self.first_sample_idx = [(28 >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)] # uint64 field
+
+        self.send_measurement_start_packet()
+        self.file = open(self.data_file_name, 'r')
+
+    def send_measurement_start_packet(self):
+        frame_type = 1                                                             # uint8 field, 1 = MeasurementStart
+        sampling_rate = [(self.sampling_rate >> i) & 0xFF for i in (24, 16, 8, 0)] # uint32 field
+        sample_format = [(0x80000018 >> i) & 0xFF for i in (24, 16, 8, 0)]         # uint32 field, fixed value
+        trigger_defs = [(0 >> i) & 0xFF for i in (24, 16, 8, 0)]                   # uint32 field
+
+        # TODO: Figure out what values these should actually be
+        source_channels = []
+        for i in range(self.num_of_eeg_channels):
+            packed = struct.pack('2B', (0 >> 8) & 0xFF, 0 & 0xFF)
+            source_channels.append(packed)
+        source_channels = b''.join(source_channels)
+
+        channel_types = [0b00101000 for i in range(self.num_of_eeg_channels)]
+        total_bits = 3*self.num_of_eeg_channels + 18
+        measurement_start_packet = struct.pack('{}B'.format(total_bits), frame_type, self.main_unit_num, self.reserved[0],
+                                               self.reserved[1], *sampling_rate, *sample_format, *trigger_defs,
+                                               *self.num_of_channels_bits, *source_channels, *channel_types)
+
+        self.logger.info("Sending measurement start packet")
+        self.sock.sendto(measurement_start_packet, (self.ip, self.port))
+
+    def send_sample_packet(self):
+        line = self.file.readline()
+
+        if line == "" and self.loop:
+            self.file = open(self.data_file_name, 'r')
+            line = self.file.readline()
+
+        elif line == "" and not self.loop:
+            self.get_logger().info("Published all samples from file")
+
+        # define the EEG data samples
+        eeg_samples = [float(number) for number in line.split(",")]
+
+        packet_seq_no = [(self.sequence_number >> i) & 0xFF for i in (24, 16, 8, 0)]  # uint32
+        self.sequence_number += 1
+
+        timestamp = [(0 >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)]         # uint64 TODO: fix correct value
+
+        packed_samples = []
+        for sample in eeg_samples[:self.num_of_eeg_channels]:
+            # convert the floating-point value to fixed-point representation
+            fixed_point = round(sample * SCALE_FACTOR)
+
+            # pack the fixed-point value as 3 bytes in network byte order
+            packed = struct.pack('!3B', (fixed_point >> 16) & 0xFF, (fixed_point >> 8) & 0xFF, fixed_point & 0xFF)
+
+            # append the packed bytes to the list
+            packed_samples.append(packed)
+
+        packed_samples = b''.join(packed_samples)
+        sample_package = struct.pack('{}B'.format(len(packed_samples)+28), self.frame_type, self.main_unit_num, self.reserved[0],
+                                       self.reserved[1], *packet_seq_no, *self.num_of_channels_bits,
+                                      *self.num_bundles, *self.first_sample_idx, *timestamp, *packed_samples)
+
+        self.logger.info("Sending sample packet, timestamp: {:.2f}s, seqnum {}".format(self.time, self.sequence_number))
+        self.time += self.sampling_period
+
+        self.sock.sendto(sample_package, (self.ip, self.port))
 
 class DataProvider(Node):
 
     EEG_RAW_TOPIC = '/eeg/raw_data'
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
+    SIMULATE_EEG_DEVICE = True
 
     def __init__(self):
         super().__init__('eeg_simulator')
@@ -63,12 +156,24 @@ class DataProvider(Node):
         self.emg_channels = self.get_parameter('emg_channels').value
         self.total_channels = self.eeg_channels + self.emg_channels
 
+        descriptor = ParameterDescriptor(
+            name='Simulate EEG device',
+            type=ParameterType.PARAMETER_BOOL
+        )
+        self.declare_parameter('simulate_eeg_device', descriptor=descriptor)
+        self.simulate_eeg_device = self.get_parameter('simulate_eeg_device').value
+
         self.get_logger().info(f"Reading data from file: {self.data_file_name}")
 
-        self.file = open(self.data_file_name, 'r')
+        if self.simulate_eeg_device:
+            self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_file_name, self.sampling_frequency,
+                                                           self.eeg_channels, self.loop, self.get_logger())
+            self.create_timer(self.sampling_period, self.simulated_eeg_device.send_sample_packet)
 
-        self.create_timer(self.sampling_period, self.publish_data)
-        self.create_timer(5, self.publish_trigger)
+        else:
+            self.file = open(self.data_file_name, 'r')
+            self.create_timer(self.sampling_period, self.publish_data)
+            self.create_timer(5, self.publish_trigger)
 
         # Publish EegInfo.
 
