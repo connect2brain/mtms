@@ -75,15 +75,15 @@ if [ ! "$answer" == "y" ]; then
 fi
 
 # Services needed for the API
-services=("eeg_bridge" "eeg_gatherer" "eeg_simulator" "mep_analyzer" "waveforms" "targeting" "bag_recorder")
+services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" "eeg_simulator")
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
-  gnome-terminal -- bash -c "start-service $service"
+  gnome-terminal --geometry=135x10 -- bash -c "start-service $service"
 done
 
 # Start mTMS device bridge separately because it is not containerized yet.
-gnome-terminal -- bash -c "start-mtms-device-bridge"
+gnome-terminal --geometry=135x10 -- bash -c "start-mtms-device-bridge"
 
 # Wait for the process to start and get its PID
 while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do

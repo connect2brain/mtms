@@ -114,6 +114,19 @@ This ensures that you can change all configuration parameters, such as the path.
 Open Keyboard -> Shortcuts and change the value of "Active settings" to "Windows Default Set".
 Apply changes.
 
+- (Optional) Modify keybinding for Ctrl-Alt-T to open the new terminal in top-left corner of the
+screen:
+
+Go to Settings -> Keyboard -> Keyboard Shortcuts -> View and Customize Shortcuts. Select Custom Shortcuts and
+press +. Set name to "Open Terminal Top Left", and set shortcut to Ctrl-Alt-T.
+Set command to:
+
+```
+bash -c 'gnome-terminal & sleep 0.3s && wmctrl -r :ACTIVE: -e 0,0,0,-1,-1'
+```
+
+Press "Replace".
+
 # Real-time pipeline
 
 ## Getting started
