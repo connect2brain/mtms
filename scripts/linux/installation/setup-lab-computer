@@ -9,6 +9,9 @@ sudo apt install -y ros-humble-rmw-cyclonedds-cpp
 # Tools for troubleshooting
 sudo apt install -y net-tools wireshark
 
+# Tools for customizing GNOME (not required)
+sudo apt install wmctrl
+
 # Add environment variable to .bashrc, pointing to repository root
 if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
     echo "export MTMS_ROOT=/home/mtms/mtms" >> ~/.bashrc
