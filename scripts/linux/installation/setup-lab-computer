@@ -28,6 +28,11 @@ if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 fi
 
+# Add path to Python API to PYTHONPATH
+if ! grep -q "export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH" ~/.bashrc; then
+    echo 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH' >> ~/.bashrc
+fi
+
 # Add script directory to path in .bashrc
 if ! grep -q "export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage" ~/.bashrc; then
     echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
