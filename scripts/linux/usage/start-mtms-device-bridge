@@ -1,10 +1,34 @@
 #!/bin/bash
 
+# Check that ENV_FILE is set.
+if [ -z "$ENV_FILE" ]; then
+    echo "Error: ENV_FILE environment variable is unset."
+    echo ""
+    exit 1
+fi
+
+# Check that the .env file exists
+if [ ! -f "$ENV_FILE" ]; then
+    echo "Error: .env file not found at path $ENV_FILE"
+    echo ""
+    exit 1
+fi
+
+# Load and export the environment variable
+export $(grep "^SITE=" $ENV_FILE | xargs)
+export $(grep "^BITFILE_VERSION=" $ENV_FILE | xargs)
+export $(grep "^RESOURCE=" $ENV_FILE | xargs)
+
+echo "Site: $SITE"
+echo "Bitfile version: $BITFILE_VERSION"
+
 # Configure mTMS bridge
-export BITFILE_DIRECTORY=/home/mtms/mtms/bitfiles/
-export BITFILE=NiFpga_mTMS_Aalto_0.4.9.lvbitx
-export BITFILE_SIGNATURE=$(cat /home/mtms/mtms/bitfiles/NiFpga_mTMS_Aalto_0.4.9.signature)
-export RESOURCE=RIO1  # Works for Aalto
+export BITFILE_DIRECTORY=$MTMS_ROOT/bitfiles
+
+export BITFILE_PREFIX="NiFpga_mTMS_${SITE}_${BITFILE_VERSION}"
+
+export BITFILE=$BITFILE_PREFIX.lvbitx
+export BITFILE_SIGNATURE="$(cat $BITFILE_DIRECTORY/$BITFILE_PREFIX.signature)"
 
 # Build mTMS bridge
 cd mtms/ros2_ws
