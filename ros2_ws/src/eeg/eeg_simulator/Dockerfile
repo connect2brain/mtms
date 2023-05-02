@@ -23,6 +23,7 @@ RUN source /opt/ros/galactic/setup.bash && \
 
 # Copy entrypoint
 
+WORKDIR /app
 COPY ros2_ws/src/eeg/eeg_simulator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

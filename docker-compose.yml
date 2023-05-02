@@ -54,7 +54,7 @@ services:
       - seccomp:unconfined
     volumes:
       - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
-      - './oscillation_data.csv:/app/ros2_ws/src/eeg/eeg_simulator/oscillation_data.csv'
+      - './data/eeg:/app/data/eeg/'
     network_mode: host
 
   eeg_preprocessor:
