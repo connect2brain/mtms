@@ -12,19 +12,22 @@ RUN apt-get install -y \
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/eeg/eeg_simulator ros2_ws/src/eeg/eeg_simulator/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces ros2_ws/src/interfaces/
 
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
-    colcon build --symlink-install
+RUN source /opt/ros/galactic/setup.bash && colcon build
+
+# Copy scripts
+
+WORKDIR /app
+COPY ros2_ws/src/other/bag_exporter/bag_exporter.py .
 
 # Copy entrypoint
 
 WORKDIR /app
-COPY ros2_ws/src/eeg/eeg_simulator/ros_entrypoint.sh .
+COPY ros2_ws/src/other/bag_exporter/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

@@ -32,15 +32,15 @@ COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces
 WORKDIR /app/ros2_ws
 RUN source /opt/ros/galactic/setup.bash && colcon build
 
-# Create a directory for hotswappable processors
+# Create a directory for pipeline
 
-RUN mkdir -p hotswappable_processors
+RUN mkdir -p pipeline
 RUN mkdir -p measurements
 
 # Copy entrypoints
 
 COPY ros2_ws/src/eeg/eeg_processor/eeg_processor_entrypoint.sh .
-COPY ros2_ws/src/eeg/eeg_processor/preprocessor_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_processor/eeg_preprocessor_entrypoint.sh .
 COPY ros2_ws/src/eeg/eeg_processor/stimulus_presenter_entrypoint.sh .
 
 RUN dos2unix *.sh
