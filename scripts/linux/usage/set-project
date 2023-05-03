@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Set the path to the project directory
+PROJECT_DIR="$MTMS_ROOT/projects"
+
+# Get the project name from the first argument
+PROJECT_NAME_ARG="$1"
+
+if [ -z "$PROJECT_NAME_ARG" ]; then
+    echo "Error: Project name is undefined. Please provide it as an argument to the script."
+    echo ""
+    exit 1
+fi
+
+# Check if the project directory exists
+if [ ! -d "$PROJECT_DIR/$PROJECT_NAME_ARG" ]; then
+    echo "Error: Project does not exist: $PROJECT_NAME_ARG"
+    echo ""
+    echo "Run 'list-projects' to see available projects."
+    exit 1
+fi
+
+export PROJECT_NAME=$PROJECT_NAME_ARG
+
+echo ""
+echo "Project set to: $PROJECT_NAME"
+echo ""

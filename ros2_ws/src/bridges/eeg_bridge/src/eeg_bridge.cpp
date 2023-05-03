@@ -299,7 +299,7 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 void EegBridge::handle_sync_trigger(double_t sync_time) {
   time_correction = (sync_time - first_trigger_timestamp_) - sync_index * SYNC_INTERVAL;
   sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f.", time_correction);
+  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f s.", time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
@@ -316,12 +316,12 @@ void EegBridge::handle_trigger_packet() {
       this->first_trigger_received = true;
       this->first_sample_of_experiment_ = true;
 
-      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.2f s.", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(new_trigger_timestamp);
     }
   } else {
-    RCLCPP_INFO(this->get_logger(), "Trigger received from port: %u", trigger_index);
+    RCLCPP_INFO(this->get_logger(), "Trigger received in port: %u", trigger_index);
   }
   trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
   trigger_msg.index = trigger_index;
@@ -370,7 +370,7 @@ void EegBridge::handle_sample_packet() {
 }
 
 void EegBridge::handle_measurement_start_packet() {
-  RCLCPP_INFO(this->get_logger(), "Measurement start packet received.");
+  RCLCPP_INFO(this->get_logger(), "Measurement start packet received:");
   this->measurement_start_packet_received_ = true;
 
   /* Parse measurement start packet. */
@@ -379,11 +379,11 @@ void EegBridge::handle_measurement_start_packet() {
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
-  RCLCPP_INFO(this->get_logger(), "Sampling frequency set to %d Hz.", this->sampling_frequency_);
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency_);
 
   this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                       (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
-  RCLCPP_INFO(this->get_logger(), "Number of channels set to %d.", this->n_channels_);
+  RCLCPP_INFO(this->get_logger(), "  - Number of channels set to %d.", this->n_channels_);
 
   this->send_trigger_as_channel = false;
   for (uint8_t i = 0; i < this->n_channels_; i++) {
@@ -395,11 +395,11 @@ void EegBridge::handle_measurement_start_packet() {
   }
 
   if (this->send_trigger_as_channel) {
-    RCLCPP_INFO(this->get_logger(), "Trigger is sent as a channel.");
+    RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a channel.");
 
     this->n_channels_excluding_trigger_ = this->n_channels_ - 1;
   } else {
-    RCLCPP_INFO(this->get_logger(), "Trigger is sent as a packet.");
+    RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a packet.");
 
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
@@ -457,6 +457,11 @@ void EegBridge::handle_eeg_data_packet() {
           this->handle_sample_packet();
         }
       }
+
+      if (this->experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 60000, "Waiting for experiment to start...");
+      }
+
       break;
 
     case TRIGGER_PACKET_ID:
@@ -544,7 +549,7 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
   message.first_sample_of_experiment = this->first_sample_of_experiment_;
 
   this->publisher_data_->publish(message);
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Publishing EEG data to topic %s", EEG_RAW_TOPIC.c_str());
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000, "Streaming EEG data into topic %s.", EEG_RAW_TOPIC.c_str());
 }
 
 

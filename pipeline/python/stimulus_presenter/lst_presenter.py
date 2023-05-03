@@ -1,4 +1,4 @@
-from .events import TriggerOut
+from .base.events import TriggerOut
 from psychopy import visual, core
 import numpy as np
 import serial
@@ -39,7 +39,7 @@ class PresenterModeUpdate(Enum):
     START_BLOCK = 5
 
 
-class Processor:
+class PipelineStage:
     def __init__(self, skip_port = False):
         self.mywin = None
         self.stimbar = None

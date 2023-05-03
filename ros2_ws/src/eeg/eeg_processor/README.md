@@ -59,22 +59,22 @@ for EEG preprocessor, simply replace `processor-type` with `preprocessor-type`.
 ### Python
 
 - `processor-type:=python`
-- `processor-script:=hotswappable_processors.python.python_processor`
+- `processor-script:=pipeline.python.python_processor`
 
 ### Compiled MATLAB
 
 - `processor-type:=compiledmatlab`
-- `processor-script:=/home/mtms/workspace/mtms/hotswappable_processors/cppmatlab/compiler/libprocessor_factory.so`
+- `processor-script:=/home/mtms/workspace/mtms/pipeline/cppmatlab/compiler/libprocessor_factory.so`
 
 ### CPP
 
 - `processor-type:=cpp`
-- `processor-script:=/home/mtms/workspace/mtms/hotswappable_processors/cpp/libprocessor_factory.so`
+- `processor-script:=/home/mtms/workspace/mtms/pipeline/cpp/libprocessor_factory.so`
 
 ### MATLAB (slow, not recommended, only for legacy reasons)
 
 - `processor-type:=matlab`
-- `processor-script:=/home/mtms/workspace/mtms/hotswappable_processors/matlab/`
+- `processor-script:=/home/mtms/workspace/mtms/pipeline/matlab/`
 
 ## Installation
 
