@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Check that the project name is set.
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Error: Project name is undefined. Please use set-project script to set the project."
+    echo ""
+    exit 1
+fi
+
+# Set the path to the project directory
+PROJECT_DIR="$MTMS_ROOT/projects"
+
+# Check if the project directory exists
+if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
+    echo "Project does not exist: $PROJECT_NAME"
+    echo ""
+    echo "Run 'list-projects' to see available projects."
+    exit 1
+fi
+
+# Set ENV_FILE to point to .env of the project
+export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
+
+get_env_var () {
+  VAR_NAME=$1
+  VAR_VALUE=$(grep -w "$VAR_NAME" $ENV_FILE | cut -d= -f2)
+  if [ -z "$VAR_VALUE" ]; then
+    echo "ERROR: $VAR_NAME not found in $ENV_FILE"
+    exit 1
+  else
+    echo "$VAR_VALUE"
+  fi
+}
+
+# Get environment variables
+BAG_NAME=$(get_env_var "BAG_NAME")
+
+EEG_CHANNELS_PRIMARY_AMPLIFIER=$(get_env_var "EEG_CHANNELS_PRIMARY_AMPLIFIER")
+EMG_CHANNELS_PRIMARY_AMPLIFIER=$(get_env_var "EMG_CHANNELS_PRIMARY_AMPLIFIER")
+EEG_CHANNELS_SECONDARY_AMPLIFIER=$(get_env_var "EEG_CHANNELS_SECONDARY_AMPLIFIER")
+EMG_CHANNELS_SECONDARY_AMPLIFIER=$(get_env_var "EMG_CHANNELS_SECONDARY_AMPLIFIER")
+
+EEG_PROCESSOR_TYPE=$(get_env_var "EEG_PROCESSOR_TYPE")
+EEG_PROCESSOR_SCRIPT=$(get_env_var "EEG_PROCESSOR_SCRIPT")
+EEG_PROCESSOR_PREPROCESS=$(get_env_var "EEG_PROCESSOR_PREPROCESS")
+
+EEG_PREPROCESSOR_TYPE=$(get_env_var "EEG_PREPROCESSOR_TYPE")
+EEG_PREPROCESSOR_SCRIPT=$(get_env_var "EEG_PREPROCESSOR_SCRIPT")
+
+STIMULUS_PRESENTER_TYPE=$(get_env_var "STIMULUS_PRESENTER_TYPE")
+STIMULUS_PRESENTER_SCRIPT=$(get_env_var "STIMULUS_PRESENTER_SCRIPT")
+
+# Print environment variables
+echo "Project: $PROJECT_NAME"
+echo ""
+echo "Bag name: $BAG_NAME"
+echo ""
+echo "# of EEG channels, primary amplifier: $EEG_CHANNELS_PRIMARY_AMPLIFIER"
+echo "# of EMG channels, primary amplifier: $EMG_CHANNELS_PRIMARY_AMPLIFIER"
+echo ""
+echo "# of EEG channels, secondary amplifier: $EEG_CHANNELS_SECONDARY_AMPLIFIER"
+echo "# of EMG channels, secondary amplifier: $EMG_CHANNELS_SECONDARY_AMPLIFIER"
+echo ""
+echo "EEG processor: $EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)"
+echo "Stimulus presenter: $STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)"
+echo ""
+
+# Ask the user to double-check
+read -p "Please double-check the values. Are they correct? (y/N) " answer
+
+if [ ! "$answer" == "y" ]; then
+  echo ""
+  echo "Please update the values in $ENV_FILE and try again."
+  exit 1
+fi
+
+# Services needed for the API
+services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" "eeg_simulator")
+
+# Iterate over the services and open a new terminal window for each one
+for service in "${services[@]}"; do
+  gnome-terminal --geometry=135x10 -- bash -c "start-service $service"
+done
+
+# Start mTMS device bridge separately because it is not containerized yet.
+gnome-terminal --geometry=135x10 -- bash -c "start-mtms-device-bridge"
+
+# Wait for the process to start and get its PID
+while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
+    PID_MTMS_DEVICE_BRIDGE=$(pgrep -f "start-mtms-device-bridge")
+    sleep 1
+done
+
+echo "Running... Press Ctrl-C to stop the system."
+
+# Define a function to handle the SIGINT signal
+function handle_sigint {
+    echo "Ctrl-C pressed. Shutting down processes and exiting..."
+
+    # Shut down Docker processes.
+    cd $MTMS_ROOT && docker-compose down
+
+    # Shut down mTMS device bridge.
+    kill -s SIGINT -- -$PID_MTMS_DEVICE_BRIDGE
+
+    exit 0
+}
+
+# Trap the SIGINT signal and call the handle_sigint function
+trap handle_sigint SIGINT
+
+sleep infinity

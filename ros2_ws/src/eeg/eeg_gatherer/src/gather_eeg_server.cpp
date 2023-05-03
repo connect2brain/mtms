@@ -45,7 +45,7 @@ GatherEegServer::GatherEegServer() : Node("eeg_gatherer") {
 
 void GatherEegServer::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg) {
   this->sampling_frequency = msg->sampling_frequency;
-  RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d.", this->sampling_frequency);
+  RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d Hz.", this->sampling_frequency);
 }
 
 rclcpp_action::GoalResponse GatherEegServer::handle_goal([[maybe_unused]] const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const GatherEeg::Goal> goal) {

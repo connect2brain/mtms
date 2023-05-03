@@ -2,7 +2,7 @@ from abc import abstractmethod
 from .circular_buffer import CircularBuffer
 
 
-class BaseProcessor:
+class BasePipelineStage:
 
     def __init__(self, auto_enqueue=False, window_size=5000, channels=63):
         self.auto_enqueue = auto_enqueue

@@ -1,5 +1,7 @@
 import socket
 import struct
+import os
+
 import rclpy
 from rclpy.node import Node
 
@@ -12,10 +14,10 @@ UDP_PORT = 50000
 SCALE_FACTOR = 2**23
 
 class EegDeviceSimulator():
-    def __init__(self, udp_ip, port, data_file_name, sampling_rate, num_eeg_channels, loop, logger):
+    def __init__(self, udp_ip, port, data_path, sampling_rate, num_eeg_channels, loop, logger):
         self.ip = udp_ip
         self.port = port
-        self.data_file_name = data_file_name
+        self.data_path = data_path
         self.loop = loop
         self.logger = logger  # TODO: remove
         self.sampling_rate = sampling_rate
@@ -35,7 +37,7 @@ class EegDeviceSimulator():
         self.first_sample_idx = [(28 >> i) & 0xFF for i in (56, 48, 40, 32, 24, 16, 8, 0)] # uint64 field
 
         self.send_measurement_start_packet()
-        self.file = open(self.data_file_name, 'r')
+        self.file = open(self.data_path, 'r')
 
     def send_measurement_start_packet(self):
         frame_type = 1                                                             # uint8 field, 1 = MeasurementStart
@@ -63,7 +65,7 @@ class EegDeviceSimulator():
         line = self.file.readline()
 
         if line == "" and self.loop:
-            self.file = open(self.data_file_name, 'r')
+            self.file = open(self.data_path, 'r')
             line = self.file.readline()
 
         elif line == "" and not self.loop:
@@ -104,6 +106,7 @@ class DataProvider(Node):
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
     SIMULATE_EEG_DEVICE = True
+    DATA_DIRECTORY = 'data/eeg/'
 
     def __init__(self):
         super().__init__('eeg_simulator')
@@ -163,15 +166,17 @@ class DataProvider(Node):
         self.declare_parameter('simulate_eeg_device', descriptor=descriptor)
         self.simulate_eeg_device = self.get_parameter('simulate_eeg_device').value
 
-        self.get_logger().info(f"Reading data from file: {self.data_file_name}")
+        self.get_logger().info(f"Reading data from file {self.data_file_name} in directory {self.DATA_DIRECTORY}.")
+
+        self.data_path = os.path.join(self.DATA_DIRECTORY, self.data_file_name)
 
         if self.simulate_eeg_device:
-            self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_file_name, self.sampling_frequency,
+            self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_path, self.sampling_frequency,
                                                            self.eeg_channels, self.loop, self.get_logger())
             self.create_timer(self.sampling_period, self.simulated_eeg_device.send_sample_packet)
 
         else:
-            self.file = open(self.data_file_name, 'r')
+            self.file = open(self.data_path, 'r')
             self.create_timer(self.sampling_period, self.publish_data)
             self.create_timer(5, self.publish_trigger)
 
@@ -189,7 +194,7 @@ class DataProvider(Node):
 
         # if EOF, start from the beginning
         if line == "" and self.loop:
-            self.file = open(self.data_file_name, 'r')
+            self.file = open(self.data_path, 'r')
             line = self.file.readline()
 
         elif line == "" and not self.loop:

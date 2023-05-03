@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Error: Project name is undefined. Please use set-project script to set the project."
+    exit 1
+fi
+
+# Get the service name from the first argument
+SERVICE_NAME="$1"
+
+if [ -z "$SERVICE_NAME" ]; then
+    echo "Error: Service name is undefined. Please provide it as an argument to the script."
+    exit 1
+fi
+
+# Set ENV_FILE to point to .env of the project
+export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
+
+cd $MTMS_ROOT
+docker-compose build $SERVICE_NAME
+docker-compose up $SERVICE_NAME

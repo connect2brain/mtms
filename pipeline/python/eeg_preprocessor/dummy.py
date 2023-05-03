@@ -1,8 +1,8 @@
-from .base_python_processor import BaseProcessor
-from .events import Sample
+from ..base.base_pipeline_stage import BasePipelineStage
+from ..base.events import Sample
 
 
-class Processor(BaseProcessor):
+class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(auto_enqueue=False, window_size=1, channels=62)
 
