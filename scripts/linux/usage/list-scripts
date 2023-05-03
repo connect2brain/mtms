@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SCRIPTS_DIR="$(dirname "$(readlink -f "$0")")"
+
+echo ""
+echo "Available scripts:"
+
+for script in "$SCRIPTS_DIR"/*; do
+    script_name=$(basename "$script")
+    echo "  ${script_name}"
+done
+
+echo ""
