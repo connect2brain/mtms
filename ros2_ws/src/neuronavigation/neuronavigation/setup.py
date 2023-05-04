@@ -21,11 +21,20 @@ packages.append('bridge')
 #
 def generate_data_files():
     dirs = (
+        # Needed to run InVesalius in Docker or native Ubuntu.
         ('lib/python3.8/site-packages/locale', 'invesalius3/locale'),
         ('lib/python3.8/site-packages/icons', 'invesalius3/icons'),
         ('lib/python3.8/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
         ('lib/python3.8/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.8/site-packages/navigation', 'invesalius3/navigation'),
+
+        # HACK: Needed to run InVesalius in native Windows (outside Docker); for some reason, these files are
+        # searched for in a different directory when running InVesalius in Windows, compared to Ubuntu.
+        ('lib/site-packages/locale', 'invesalius3/locale'),
+        ('lib/site-packages/icons', 'invesalius3/icons'),
+        ('lib/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
+        ('lib/site-packages/samples', 'invesalius3/samples'),
+        ('lib/site-packages/navigation', 'invesalius3/navigation'),
     )
 
     data_files = []
