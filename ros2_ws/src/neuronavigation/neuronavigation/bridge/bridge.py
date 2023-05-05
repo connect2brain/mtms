@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import ctypes
+import platform
 from threading import Thread
 
 import rclpy
@@ -277,8 +278,10 @@ def main():
     connection = Connection()
     connection.start()
 
-    x11 = ctypes.cdll.LoadLibrary('libX11.so')
-    x11.XInitThreads()
+    if platform.system() != 'Windows':
+        # XInitThreads call is needed for multithreading in InVesalius to not crash when running in Docker.
+        x11 = ctypes.cdll.LoadLibrary('libX11.so')
+        x11.XInitThreads()
 
     app.main(connection=connection)
 
