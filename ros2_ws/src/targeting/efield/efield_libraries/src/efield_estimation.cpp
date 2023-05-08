@@ -27,8 +27,8 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
 {
     std::cout<<"cortexfile: "<<cortexfile<<std::endl;
     std::cout<<"meshfile: "<<meshfile.size()<<std::endl;
-    std::cout <<"co: "<< co.at(0)<<std::endl;
-    std::cout <<"ci: "<< ci.at(0)<<std::endl;
+    std::cout <<"conductivities outside: "<< co.at(0)<<std::endl;
+    std::cout <<"conductivities inside: "<< ci.at(0)<<std::endl;
 
     for (auto element: meshfile){
         meshes.push_back(element);
@@ -53,8 +53,9 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     std::cout<<"Done init! "<<std::endl;
 }
 
-void add_coil(std::string coilfile, bool &success)
-{   std::cout<<"coilfile changed: "<<coilfile<<std::endl;
+void set_coil(std::string coilfile, bool &success)
+{
+    std::cout<<"coilfile set: "<<coilfile<<std::endl;
     coilmodel = Coil<float>(coilfile);
     success = true;
 }
