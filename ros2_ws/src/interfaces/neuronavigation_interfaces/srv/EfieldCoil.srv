@@ -1,7 +1,0 @@
-# Request: Paths from InVesalius
-#
-# Response: CoilModel
-
-string coilfile
----
-bool success
