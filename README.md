@@ -13,7 +13,9 @@ repository using Git submodules, and have their own copyright owners. Here is th
 and where they are located in the directory structure:
 
 [InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/neuronavigation/neuronavigation/invesalius3`
+
 [rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite/), `ros2_ws/src/bridges/rosbridge_suite`
+
 e-field library, `ros2_ws/src/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
