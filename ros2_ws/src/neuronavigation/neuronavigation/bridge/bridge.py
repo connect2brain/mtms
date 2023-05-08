@@ -14,7 +14,7 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, EfieldInit, EfieldCoil
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
@@ -71,22 +71,18 @@ class NeuronavigationNode(Node):
         # self.Activate_EField = self.get_parameter('Activate_EField').value
         self.Activate_EField = True
         if self.Activate_EField:
-
-            self.client_init_efield = self.create_client(EfieldInit, 'efield/init', callback_group=callback_group)
+            self.client_init_efield = self.create_client(InitializeEfield, '/efield/init', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service initialization not available, waiting...')
-            self.request_init_efield = EfieldInit.Request()
+                self.get_logger().info('efield service /efield/init not available, waiting...')
             self.get_logger().info('efield service enorm')
 
-            self.client_get_efield_norm = self.create_client(Efield, 'efield/getnorm', callback_group=callback_group)
+            self.client_get_efield_norm = self.create_client(Efield, '/efield/get_norm', callback_group=callback_group)
             while not self.client_get_efield_norm.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service get norm not available, waiting...')
-            self.request_get_efield_norm = Efield.Request()
+                self.get_logger().info('efield service /efield/getnorm not available, waiting...')
 
-            self.client_set_coil = self.create_client(EfieldCoil, 'efield/setcoil', callback_group= callback_group)
+            self.client_set_coil = self.create_client(SetCoil, '/efield/set_coil', callback_group= callback_group)
             while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service set coil not available, waiting...')
-            self.request_set_coil = EfieldCoil.Request()
+                self.get_logger().info('efield service /efield/set_coil not available, waiting...')
             self.get_logger().info('efield set coil')
 
     def set_callback__set_markers(self, callback):
@@ -193,43 +189,32 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def init_efield_config(self,config_file):
-        self.req3.config_file = config_file
-        self.future3 = self.cli3.call_async(self.req3)
-        while self.future3.done() is False:
+    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, conductivities_inside, conductivities_outside):
+        request = InitializeEfield.Request()
+        request.cortex_model_path= cortex_model_path
+        request.mesh_models_paths = mesh_models_paths
+        request.coil_model_path = coil_model_path
+        request.conductivities_inside = conductivities_inside
+        request.conductivities_outside = conductivities_outside
+        future = self.client_init_efield.call_async(request)
+        while future.done() is False:
             pass
         try:
-            response= self.future3.result()
-            self.get_logger().info("Responding to the service request /neuronavigation/efield/init_json")
-            return response.success
-        except Exception as e:
-            self.get_logger().info('Service call failed %r' % (e,))
-            return None
-
-    def init_efield(self,cortexfile, meshfile, coilfile, ci, co):
-        self.request_init_efield.cortexfile = cortexfile
-        self.request_init_efield.meshfile = meshfile
-        self.request_init_efield.coilfile = coilfile
-        self.request_init_efield.ci = ci
-        self.request_init_efield.co = co
-        self.future1 = self.client_init_efield.call_async(self.request_init_efield)
-        while self.future1.done() is False:
-            pass
-        try:
-            response= self.future1.result()
+            response= future.result()
             self.get_logger().info("Responding to the service request /neuronavigation/efield/init")
             return response.success
         except Exception as e:
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def efield_coil(self, coilfile):
-        self.request_set_coil.coilfile=coilfile
-        self.future2 = self.client_set_coil.call_async(self.request_set_coil)
-        while self.future2.done() is False:
+    def set_coil(self, coil_model_path):
+        request = SetCoil.Request()
+        request.coil_model_path=coil_model_path
+        future = self.client_set_coil.call_async(request)
+        while future.done() is False:
             pass
         try:
-            response= self.future2.result()
+            response= future.result()
             self.get_logger().info("Responding to the service request /neuronavigation/efield/coil")
             return response.success
         except Exception as e:
@@ -237,16 +222,17 @@ class NeuronavigationNode(Node):
             return None
 
     def update_efield(self, position, orientation, T_rot):
-        self.request_get_efield_norm.coordinate.position.x, self.request_get_efield_norm.coordinate.position.y, self.request_get_efield_norm.coordinate.position.z = position
-        self.request_get_efield_norm.coordinate.orientation.alpha, self.request_get_efield_norm.coordinate.orientation.beta, self.request_get_efield_norm.coordinate.orientation.gamma = orientation
-        self.request_get_efield_norm.transducer_rotation = T_rot
+        request= Efield.Request()
+        request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
+        request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
+        request.transducer_rotation = T_rot
 
-        self.future = self.client_get_efield_norm.call_async(self.request_get_efield_norm)
+        future = self.client_get_efield_norm.call_async(request)
 
-        while self.future.done() is False:
+        while future.done() is False:
             pass
         try:
-            response = self.future.result()
+            response = future.result()
             self.get_logger().info("Responding to the service request /neuronavigation/efield")
             return response.efield_data
         except Exception as e:
@@ -321,23 +307,18 @@ class Connection(Thread):
             T_rot=T_rot,
         )
 
-    def init_efield(self, cortexfile, meshfile, coilfile, ci, co):
-        return self.node.init_efield(
-            cortexfile = cortexfile,
-            meshfile = meshfile,
-            coilfile = coilfile,
-            ci = ci,
-            co = co,
+    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, conductivities_inside, conductivities_outside):
+        return self.node.initialize_efield(
+            cortex_model_path= cortex_model_path,
+            mesh_models_paths= mesh_models_paths,
+            coil_model_path= coil_model_path,
+            conductivities_inside= conductivities_inside,
+            conductivities_outside= conductivities_outside,
         )
 
-    def init_efield_json(self, config_file):
-        return self.node.init_efield_config(
-            config_file = config_file
-        )
-
-    def efield_coil(self, coilfile):
-        return self.node.efield_coil(
-            coilfile= coilfile
+    def set_coil(self, coil_model_path):
+        return self.node.set_coil(
+            coilfile= coil_model_path
         )
 
     def set_callback__set_markers(self, callback):
