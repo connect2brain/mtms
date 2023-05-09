@@ -71,10 +71,10 @@ class NeuronavigationNode(Node):
         # self.Activate_EField = self.get_parameter('Activate_EField').value
         self.Activate_EField = True
         if self.Activate_EField:
-            self.client_init_efield = self.create_client(InitializeEfield, '/efield/init', callback_group=callback_group)
+            self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/init not available, waiting...')
-            self.get_logger().info('efield service enorm')
+            self.get_logger().info('efield enorm')
 
             self.client_get_efield_norm = self.create_client(Efield, '/efield/get_norm', callback_group=callback_group)
             while not self.client_get_efield_norm.wait_for_service(timeout_sec=1.0):
