@@ -4,9 +4,8 @@
 
 #include <phi_lc>
 #include <tms>
-//#include "efield_estimation.h"
+#include "efield_estimation.h"
 #include <iostream>
-#include "EfieldInterface.h"
 
 std::vector<double> efield_vector;
 Timer t;
