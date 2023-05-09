@@ -22,7 +22,8 @@ std::vector< Mesh<float>>meshes;
 Matrix<float>Phi;
 Matrix<float, RowMajor> spos;
 
-//function to input data from efield_service
+// Function to input data from efield_service
+// ci conductivities inside, co conductivities outside
 void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std::vector<float> ci, std::vector<float> co, bool &success)
 {
     std::cout<<"cortexfile: "<<cortexfile<<std::endl;
