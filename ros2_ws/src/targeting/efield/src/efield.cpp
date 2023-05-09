@@ -19,7 +19,7 @@ public:
         const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response) -> void {
 
-      RCLCPP_INFO(rclcpp::get_logger("efield_getnorm"), "Request received from efield norm");
+      RCLCPP_INFO(rclcpp::get_logger("efield_getnorm"), "Request received from /efield/get_norm");
 
       std::vector<float> position;
       std::vector<double> orientation;
@@ -38,20 +38,20 @@ public:
     auto service_callback_init_efield= [this](const std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Response> response)-> void {
 
-        RCLCPP_INFO(rclcpp::get_logger("efield_init"), "Request received from initialize efield");
+        RCLCPP_INFO(rclcpp::get_logger("efield_initialize"), "Request received from /efield/initialize");
         init_efield(request->cortex_model_path, request->mesh_models_paths, request->conductivities_inside, request->conductivities_outside, response->success);
         set_coil(request->coil_model_path, response->success);
     };
 
     auto service_callback_set_coil=[this](const std::shared_ptr<neuronavigation_interfaces::srv::SetCoil::Request> request,
                                   std::shared_ptr<neuronavigation_interfaces::srv::SetCoil::Response> response)-> void {
-        RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from set coil");
+        RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from /efield/set_coil");
 
         set_coil(request->coil_model_path, response->success);
 
     };
 
-      efield_service_init = this->create_service<neuronavigation_interfaces::srv::InitializeEfield>("/efield/init", service_callback_init_efield);
+      efield_service_init = this->create_service<neuronavigation_interfaces::srv::InitializeEfield>("/efield/initialize", service_callback_init_efield);
       efield_service_enorm = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield/get_norm", service_callback_efield_norm);
       efield_service_coil = this->create_service<neuronavigation_interfaces::srv::SetCoil>("/efield/set_coil", service_callback_set_coil);
   }
