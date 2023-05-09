@@ -22,21 +22,16 @@ set_target_properties(tms_cuda PROPERTIES IMPORTED_LOCATION ${tms_cuda_LIBRARY})
 
 add_library(efield_estimation SHARED
         src/efield_estimation.cpp
-        include/efield_estimation.h
-        )
-add_library(EfieldInterface SHARED
-        src/EfieldInterface.cpp
-        include/EfieldInterface.h
-)
+        include/efield_estimation.h)
 
-target_link_libraries(EfieldInterface linalg phi tms tms_cuda)
-target_link_libraries(efield_estimation PUBLIC linalg phi tms  tms_cuda EfieldInterface)
+target_link_libraries(efield_estimation PUBLIC linalg phi tms tms_cuda)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
 # Mark executables and/or libraries for installation
-install(TARGETS ${PACKAGE_LIBRARIES} EfieldInterface EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
+install(TARGETS ${PACKAGE_LIBRARIES} EXPORT ${PROJECT_NAME}-targets DESTINATION lib)
 install(EXPORT ${PROJECT_NAME}-targets DESTINATION lib/cmake/${PROJECT_NAME})
+
 # Mark cpp header files for installation
 install(DIRECTORY include
         DESTINATION include)

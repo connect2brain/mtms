@@ -9,7 +9,6 @@
 #include "neuronavigation_interfaces/srv/set_coil.hpp"
 
 #include "efield_estimation.h"
-#include "EfieldInterface.h"
 
 class EField : public rclcpp::Node {
 public:
