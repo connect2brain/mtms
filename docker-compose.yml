@@ -180,8 +180,9 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './data/neuronavigation/efield:/app/ros2_ws/src/targeting/efield/efield_libraries/data/headmodels/invesalius'
+      - './data/neuronavigation:/app/data/neuronavigation/'
     network_mode: host
+    tty: true 
     deploy:
       resources:
         reservations:
@@ -189,6 +190,7 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
    
   optitrack_bridge:
     build:
