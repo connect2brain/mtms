@@ -318,7 +318,7 @@ class Connection(Thread):
 
     def set_coil(self, coil_model_path):
         return self.node.set_coil(
-            coilfile= coil_model_path
+            coil_model_path= coil_model_path
         )
 
     def set_callback__set_markers(self, callback):
