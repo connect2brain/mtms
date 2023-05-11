@@ -309,16 +309,16 @@ class Connection(Thread):
 
     def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, conductivities_inside, conductivities_outside):
         return self.node.initialize_efield(
-            cortex_model_path= cortex_model_path,
-            mesh_models_paths= mesh_models_paths,
-            coil_model_path= coil_model_path,
-            conductivities_inside= conductivities_inside,
-            conductivities_outside= conductivities_outside,
+            cortex_model_path=cortex_model_path,
+            mesh_models_paths=mesh_models_paths,
+            coil_model_path=coil_model_path,
+            conductivities_inside=conductivities_inside,
+            conductivities_outside=conductivities_outside,
         )
 
     def set_coil(self, coil_model_path):
         return self.node.set_coil(
-            coil_model_path= coil_model_path
+            coil_model_path=coil_model_path
         )
 
     def set_callback__set_markers(self, callback):
