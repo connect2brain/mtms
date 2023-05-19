@@ -1,6 +1,6 @@
 //The functions in this file are partially based on hbftms_cpp library example codes written by M. Stenroos
 //This library is not free to use without written permission from the owner Matti Stenroos
-
+//#define USE_CUDA
 #include "tms_cpp.hpp"
 #ifdef USE_CUDA
 #include "TMS_GPU.hpp"
@@ -12,51 +12,56 @@
 
 using namespace Eigen;
 using namespace std;
-
+std::vector<double> efield_vector;
 Timer t;
-Mesh<float> cortex;
+Mesh<float> *cortex;
 Coil<float> coilmodel;
 std::vector< Mesh<float>>meshes;
 MatrixXf Phi;
-MatrixX3T_RM<float> spos;
+//MatrixX3T_RM<float> spos;
 Timer timer;
 
 #ifdef USE_CUDA
-TMS_GPU *TMS_obj;
+TMS_GPU<float,float> *TMS_obj;
 #else
 TMS <float,float>*TMS_obj;
 #endif
 
 //This function Initializes the Efield service on my application, here is modified for this test
-void init_efield(std::vector<float> ci, std::vector<float> co, bool &success)
+void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std::vector<float> ci, std::vector<float> co, bool &success)
 {
-    spos= cortex.Points();
+    for (auto element: meshfile){
+        meshes.push_back(element);
+    }
+    cortex =new Mesh<float>(cortexfile);
+    //spos= cortex->Points();
 
 #ifdef USE_CUDA
     timer.Start();
     vector< MatrixXf > D = BEMOperatorsPhi_LC_GPU(meshes);
     MatrixXf TM = TM_Phi_LC_GPU(D, ci, co);
-    Phi = LFM_Phi_LC_GPU(meshes, TM, spos);
-    WeightedPhi(meshes, Phi, ci, co);
-
-    TMS_obj= new TMS_GPU(Phi, meshes, cortex);
+    Phi = LFM_Phi_LC_GPU(meshes, TM, cortex->Points());
     cout << "Time for the full phi calculations and TMS setup:  " << timer.GetElapsed() << std::endl;
 #else
     vector< MatrixXf > D = BEMOperatorsPhi_LC(meshes);
     MatrixXf TM = TM_Phi_LC(D, ci, co);
-    Phi = LFM_Phi_LC(meshes, TM, spos);
+    Phi = LFM_Phi_LC(meshes, TM, cortex->Points());
     cout<<"Phi dimensions: "<< Phi.rows() << " " <<Phi.cols()<<std::endl;
+#endif
     WeightedPhi(meshes, Phi, ci, co);
-    //TMS TMS_obj(Phi, meshes, cortex);
-    TMS_obj=new TMS<float,float>(Phi, meshes, cortex);
 
+#ifdef USE_CUDA
+    TMS_obj= new TMS_GPU<float,float>(Phi, meshes, cortex->Points());
+#else
+    TMS_obj=new TMS<float,float>(Phi, meshes, cortex->Points());
 #endif
     success = true;
     std::cout<<"Done init! "<<std::endl;
 }
 
 void set_coil(std::string coilfile, bool &success)
-{   std::cout<<"coilfile changed: "<<coilfile<<std::endl;
+{   std::cout<<"I got here "<<std::endl;
+    std::cout<<"coilfile changed: "<<coilfile<<std::endl;
     coilmodel = Coil<float>(coilfile);
     success = true;
 }
