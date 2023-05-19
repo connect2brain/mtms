@@ -18,7 +18,7 @@ Mesh<float> *cortex;
 Coil<float> coilmodel;
 std::vector< Mesh<float>>meshes;
 MatrixXf Phi;
-//MatrixX3T_RM<float> spos;
+MatrixX3T_RM<float> spos;
 Timer timer;
 
 #ifdef USE_CUDA
@@ -34,7 +34,7 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
         meshes.push_back(element);
     }
     cortex =new Mesh<float>(cortexfile);
-    //spos= cortex->Points();
+    spos= cortex->Points();
 
 #ifdef USE_CUDA
     timer.Start();
@@ -51,16 +51,16 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     WeightedPhi(meshes, Phi, ci, co);
 
 #ifdef USE_CUDA
-    TMS_obj= new TMS_GPU<float,float>(Phi, meshes, cortex->Points());
+    TMS_obj= new TMS_GPU<float,float>(Phi, meshes, spos);
 #else
-    TMS_obj=new TMS<float,float>(Phi, meshes, cortex->Points());
+    TMS_obj=new TMS<float,float>(Phi, meshes, spos);
 #endif
     success = true;
     std::cout<<"Done init! "<<std::endl;
 }
 
 void set_coil(std::string coilfile, bool &success)
-{   std::cout<<"I got here "<<std::endl;
+{
     std::cout<<"coilfile changed: "<<coilfile<<std::endl;
     coilmodel = Coil<float>(coilfile);
     success = true;
