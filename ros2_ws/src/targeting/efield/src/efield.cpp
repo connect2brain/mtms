@@ -38,7 +38,7 @@ public:
         std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Response> response)-> void {
 
         RCLCPP_INFO(rclcpp::get_logger("efield_initialize"), "Request received from /efield/initialize");
-        init_efield(request->conductivities_inside, request->conductivities_outside, response->success);
+        init_efield(request->cortex_model_path, request->mesh_models_paths,request->conductivities_inside, request->conductivities_outside, response->success);
         set_coil(request->coil_model_path, response->success);
     };
 
