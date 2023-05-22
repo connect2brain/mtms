@@ -63,7 +63,12 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 
 RUN apt-get install -y \
-    dos2unix
+    dos2unix \
+    wget
+    
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
+
+RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
 WORKDIR /app/ros2_ws
 
@@ -81,6 +86,8 @@ ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/ros2_ws/src/targeting/efield/efield
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/cuda-12.1/lib64:usr/local/cuda-12.1/targets/x86_64-linux/include/"
 ENV CPATH="/usr/local/cuda-12.1/targets/x86_64-linux/include/:${CPATH}"
 ENV PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/cuda-12.1/bin/nvcc/:/usr/local/cuda-12.1/lib64/:/usr/local/cuda-12.1/bin/:${PATH}"
+ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
+
 # Build efield library
 RUN cd src/targeting/efield/efield_libraries && cmake . && make
 
