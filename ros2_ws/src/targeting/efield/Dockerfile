@@ -14,11 +14,6 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
-#RUN cp -r cmake-3.26.3-linux-x86_64/bin/* /usr/local/bin/
-#RUN cp -r cmake-3.26.3-linux-x86_64/share/* /usr/local/share/
-#RUN cp -r cmake-3.26.3-linux-x86_64/doc/* /usr/local/doc/
-
-
 WORKDIR /app/ros2_ws
 
 
