@@ -53,16 +53,8 @@ class TMS_GPU {
         MatrixX3f_RM EfieldSecondary(const Coil<float> &coil, const int32_t ROI_start, const int32_t ROI_n){ return EfieldSecondary(coil, 1.0, ROI_start, ROI_n); }
         MatrixX3f_RM EfieldSecondary(const Coil<float> &coil, const Eigen::VectorXi &indlist){ return EfieldSecondary(coil, 1.0, indlist); }
 
-        void print(const Coil<float> &coil, const float  minusdIPerdt){
-            std::cout << "HELLO \n";
-            std::cout<< "coil type:"<<coil.CoilType()<<std::endl;
-            std::cout<< "minusIPerdt"<< minusdIPerdt<<std::endl;
-            std::cout << "Cortex"<< cols_<<std::endl;
-            std::cout << "Mesh"<< rows_<<std::endl;
-            std::cout << "GPU_Phi_cols "<< GPU_Phi_cols_<<std::endl;
-        }
         //destructor
-        ~TMS_GPU(){std::cout << "GOOD BYE\n";};
+        ~TMS_GPU();
 
     private:
         // Does all required memory allocations needed in constructor. 
