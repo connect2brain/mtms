@@ -249,7 +249,10 @@ classdef MTMSApiNode < handle
 
         function feedback = get_event_feedback(obj, id)
             feedback = NaN;
-            if ~isKey(obj.event_feedback, id)
+
+            % Check first if the dictionary is configured; if it is not,
+            % implying that it is empty, isKey returns an error.
+            if ~isConfigured(obj.event_feedback) || ~isKey(obj.event_feedback, id)
                 return
             end 
 
