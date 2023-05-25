@@ -152,8 +152,14 @@ classdef MTMSApi < handle
         end
     
         % Events
+
+        function started = is_experiment_started(obj)
+            started = obj.get_experiment_state() == obj.experiment_states.STARTED;
+        end
     
         function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             id = obj.next_event_id();
 
             waveform_ = waveform;
@@ -169,6 +175,8 @@ classdef MTMSApi < handle
         end
     
         function id = send_charge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             id = obj.next_event_id();
 
             obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
@@ -179,6 +187,8 @@ classdef MTMSApi < handle
         end
 
         function id = send_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             id = obj.next_event_id();
     
             obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
@@ -189,6 +199,8 @@ classdef MTMSApi < handle
         end
     
         function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             id = obj.next_event_id();
 
             obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
@@ -253,6 +265,8 @@ classdef MTMSApi < handle
         % Compound events
 
         function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
                 id = obj.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
@@ -262,6 +276,8 @@ classdef MTMSApi < handle
         end
 
         function ids = send_immediate_charge_or_discharge_to_all_channels(obj, target_voltages, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage only defined for %d channels, channel count %d.", ...
                 length(target_voltages), obj.N_CHANNELS));
 
@@ -279,12 +295,16 @@ classdef MTMSApi < handle
         end
     
         function ids = send_immediate_full_discharge_to_all_channels(obj, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             target_voltages = zeros(1, obj.N_CHANNELS);
     
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
         end
 
         function ids = send_timed_default_pulse_to_all_channels(obj, reverse_polarities, time, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             assert(length(reverse_polarities) == obj.N_CHANNELS, ...
                 sprintf("Reverse polarities only defined for %d channels, channel count %d.", length(reverse_polarities), obj.N_CHANNELS));
     
@@ -303,6 +323,8 @@ classdef MTMSApi < handle
         end
     
         function ids = send_immediate_default_pulse_to_all_channels(obj, reverse_polarities, wait_for_completion)
+            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+
             time = obj.get_time() + obj.TIME_EPSILON;
     
             ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_completion);
