@@ -79,7 +79,7 @@ services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "ba
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
-  gnome-terminal --geometry=135x10 -- bash -c "start-service $service"
+  gnome-terminal --geometry=135x10 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
 done
 
 # Start mTMS device bridge separately because it is not containerized yet.
@@ -102,6 +102,11 @@ function handle_sigint {
 
     # Shut down mTMS device bridge.
     kill -s SIGINT -- -$PID_MTMS_DEVICE_BRIDGE
+
+    # Kill the process groups of services
+    for service in "${services[@]}"; do
+      pkill -f "setsid start-service $service"
+    done
 
     exit 0
 }
