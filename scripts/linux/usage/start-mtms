@@ -75,7 +75,8 @@ if [ ! "$answer" == "y" ]; then
 fi
 
 # Services needed for the API
-services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" "eeg_simulator")
+services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" \
+  "eeg_simulator" "eeg_preprocessor" "eeg_processor" "stimulus_presenter")
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
