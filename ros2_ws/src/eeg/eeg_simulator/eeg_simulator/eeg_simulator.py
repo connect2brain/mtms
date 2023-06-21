@@ -201,7 +201,7 @@ class DataProvider(Node):
             self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
-        assert self.total_channels < len(data), "Number of channels exceeds {}".format(len(data))
+        assert self.total_channels <= len(data), "Total # of EEG and EMG channels ({}) exceeds # of channels in data ({})".format(self.total_channels, len(data))
 
         msg = EegDatapoint()
         msg.eeg_channels = data[:self.eeg_channels]
