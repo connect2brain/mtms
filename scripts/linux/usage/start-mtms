@@ -80,11 +80,11 @@ services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "ba
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
-  gnome-terminal --geometry=135x10 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
+  gnome-terminal --geometry=135x6 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
 done
 
 # Start mTMS device bridge separately because it is not containerized yet.
-gnome-terminal --geometry=135x10 -- bash -c "start-mtms-device-bridge"
+gnome-terminal --geometry=135x6 -- bash -c "start-mtms-device-bridge"
 
 # Wait for the process to start and get its PID
 while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
