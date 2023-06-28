@@ -19,6 +19,11 @@ RUN pip3 install psychopy
 # HACK: Needed because the default version of NumPy is incompatible with PsychoPy.
 RUN pip3 install --force-reinstall "numpy==1.20.3"
 
+# Note: Tensorflow is needed for mneflow, used for machine learning.
+RUN pip3 install tensorflow
+RUN pip3 install git+https://github.com/zubara/mneflow.git
+RUN apt-get install -y python3-tk
+
 # Copy ROS workspace
 
 WORKDIR /app
