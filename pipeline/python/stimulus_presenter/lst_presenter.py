@@ -1,15 +1,11 @@
-from .base.events import TriggerOut
-from psychopy import visual, core
-import numpy as np
-import serial
-
 from enum import Enum
 
+import numpy as np
+import serial
+from psychopy import visual, core
 
-class ExecutionCondition(Enum):
-    TIMED = 0
-    WAIT_FOR_TRIGGER = 1
-    IMMEDIATE = 2
+from ..base.events import TriggerOut
+from ..base.execution_condition import ExecutionCondition
 
 
 # reminder to set permissions to use parallel port from the shell
