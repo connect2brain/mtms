@@ -1,6 +1,7 @@
-from .base.base_pipeline_stage import BasePipelineStage
-from .base.events import Stimulus
-from .base.execution_condition import ExecutionCondition
+from ..base.base_pipeline_stage import BasePipelineStage
+from ..base.events import Stimulus
+from ..base.execution_condition import ExecutionCondition
+
 from .analysis_utils import (
     get_alpha_estimate,
     compute_baseline_stats,
