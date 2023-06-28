@@ -23,7 +23,7 @@ export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
 
 get_env_var () {
   VAR_NAME=$1
-  VAR_VALUE=$(grep -w "$VAR_NAME" $ENV_FILE | cut -d= -f2)
+  VAR_VALUE=$(grep "^$VAR_NAME=" $ENV_FILE | cut -d= -f2)
   if [ -z "$VAR_VALUE" ]; then
     echo "ERROR: $VAR_NAME not found in $ENV_FILE"
     exit 1
