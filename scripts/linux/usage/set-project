@@ -13,14 +13,22 @@ PROJECT_NAME_ARG="$1"
 if [ -z "$PROJECT_NAME_ARG" ]; then
     echo "Error: Project name is undefined. Please provide it as an argument to the script."
     echo ""
+    return 1
+
+    # HACK: Ensure that the script does not proceed further even if it is accidentally run without
+    #   sourcing it (in which case `return 1` does not work).
     exit 1
 fi
 
 # Check if the project directory exists
 if [ ! -d "$PROJECT_DIR/$PROJECT_NAME_ARG" ]; then
-    echo "Error: Project does not exist: $PROJECT_NAME_ARG"
+    echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME_ARG${RESET}"
     echo ""
     echo "Run 'list-projects' to see available projects."
+    return 1
+
+    # HACK: Ensure that the script does not proceed further even if it is accidentally run without
+    #   sourcing it (in which case `return 1` does not work).
     exit 1
 fi
 
