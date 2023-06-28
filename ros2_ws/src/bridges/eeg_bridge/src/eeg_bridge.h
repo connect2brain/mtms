@@ -14,6 +14,7 @@
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
+#include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/experiment_state.hpp"
 
 #define BUFFER_LENGTH 250
@@ -66,6 +67,7 @@ public:
 
 private:
 
+  mtms_device_interfaces::msg::DeviceState device_state;
   mtms_device_interfaces::msg::ExperimentState experiment_state;
   bool experiment_been_stopped;
   bool system_state_received;
