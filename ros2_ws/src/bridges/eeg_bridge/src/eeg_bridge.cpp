@@ -385,7 +385,6 @@ void EegBridge::handle_measurement_start_packet() {
 
   this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                       (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
-  RCLCPP_INFO(this->get_logger(), "  - Number of channels set to %d.", this->n_channels_);
 
   this->send_trigger_as_channel = false;
   for (uint8_t i = 0; i < this->n_channels_; i++) {
@@ -405,6 +404,8 @@ void EegBridge::handle_measurement_start_packet() {
 
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
+
+  RCLCPP_INFO(this->get_logger(), "  - Total number of EEG, EMG channels set to %d.", this->n_channels_excluding_trigger_);
 
   /* Publish EEG info. */
 
