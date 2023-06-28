@@ -1,15 +1,15 @@
 #!/bin/bash
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 # Check that the project name is set.
 if [ -z "$PROJECT_NAME" ]; then
     echo "Error: Project name is undefined. Please use set-project script to set the project."
     echo ""
     exit 1
 fi
-
-# Define the text formatting codes
-BOLD=$(tput bold)
-RESET=$(tput sgr0)
 
 # Set the path to the project directory
 PROJECT_DIR="$MTMS_ROOT/projects"
@@ -21,6 +21,9 @@ if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
     echo "Run 'list-projects' to see available projects."
     exit 1
 fi
+
+# Allow Docker containers to connect to the host X server.
+xhost +local:docker
 
 # Set ENV_FILE to point to .env of the project
 export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
