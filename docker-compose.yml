@@ -165,6 +165,8 @@ services:
       dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
     env_file:
       - ${ENV_FILE}
+    environment:
+      - DISPLAY
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - './data/neuronavigation:/app/data/neuronavigation/'
@@ -222,6 +224,7 @@ services:
     env_file:
       - ${ENV_FILE}
     environment:
+      - DISPLAY
       - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
       - './projects:/app/projects'
