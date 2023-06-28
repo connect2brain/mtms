@@ -7,6 +7,10 @@ if [ -z "$PROJECT_NAME" ]; then
     exit 1
 fi
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 # Set the path to the project directory
 PROJECT_DIR="$MTMS_ROOT/projects"
 
@@ -70,7 +74,7 @@ read -p "Please double-check the values. Are they correct? (y/N) " answer
 
 if [ ! "$answer" == "y" ]; then
   echo ""
-  echo "Please update the values in $ENV_FILE and try again."
+  echo "Please reconfigure by running: ${BOLD}configure-project${RESET}"
   exit 1
 fi
 

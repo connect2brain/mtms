@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 # Set the path to the project directory
 PROJECT_DIR="$MTMS_ROOT/projects"
 
@@ -24,4 +28,6 @@ export PROJECT_NAME=$PROJECT_NAME_ARG
 
 echo ""
 echo "Project set to: $PROJECT_NAME"
+echo ""
+echo "Configure the project by running: ${BOLD}configure-project${RESET}"
 echo ""
