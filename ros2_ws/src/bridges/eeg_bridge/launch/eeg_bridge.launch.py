@@ -17,24 +17,24 @@ def generate_launch_description():
         description="Port",
     )
 
-    eeg_channels_primary_amplifier_arg = DeclareLaunchArgument(
-        "eeg-channels-primary-amplifier",
-        description="EEG channel count for primary amplifier",
+    number_of_eeg_channels_amplifier_1_arg = DeclareLaunchArgument(
+        "number-of-eeg-channels-amplifier-1",
+        description="EEG channel count for amplifier 1",
     )
 
-    emg_channels_primary_amplifier_arg = DeclareLaunchArgument(
-        "emg-channels-primary-amplifier",
-        description="EMG channel count for primary amplifier",
+    number_of_emg_channels_amplifier_1_arg = DeclareLaunchArgument(
+        "number-of-emg-channels-amplifier-1",
+        description="EMG channel count for amplifier 1",
     )
 
-    eeg_channels_secondary_amplifier_arg = DeclareLaunchArgument(
-        "eeg-channels-secondary-amplifier",
-        description="EEG channel count for secondary amplifier",
+    number_of_eeg_channels_amplifier_2_arg = DeclareLaunchArgument(
+        "number-of-eeg-channels-amplifier-2",
+        description="EEG channel count for amplifier 2",
     )
 
-    emg_channels_secondary_amplifier_arg = DeclareLaunchArgument(
-        "emg-channels-secondary-amplifier",
-        description="EMG channel count for secondary amplifier",
+    number_of_emg_channels_amplifier_2_arg = DeclareLaunchArgument(
+        "number-of-emg-channels-amplifier-2",
+        description="EMG channel count for amplifier 2",
     )
 
     logger = LaunchConfiguration("log-level")
@@ -46,10 +46,10 @@ def generate_launch_description():
             parameters=[
                 {
                     "port": LaunchConfiguration("port"),
-                    "eeg_channels_primary_amplifier": LaunchConfiguration("eeg-channels-primary-amplifier"),
-                    "emg_channels_primary_amplifier": LaunchConfiguration("emg-channels-primary-amplifier"),
-                    "eeg_channels_secondary_amplifier": LaunchConfiguration("eeg-channels-secondary-amplifier"),
-                    "emg_channels_secondary_amplifier": LaunchConfiguration("emg-channels-secondary-amplifier"),
+                    "number_of_eeg_channels_amplifier_1": LaunchConfiguration("number-of-eeg-channels-amplifier-1"),
+                    "number_of_emg_channels_amplifier_1": LaunchConfiguration("number-of-emg-channels-amplifier-1"),
+                    "number_of_eeg_channels_amplifier_2": LaunchConfiguration("number-of-eeg-channels-amplifier-2"),
+                    "number_of_emg_channels_amplifier_2": LaunchConfiguration("number-of-emg-channels-amplifier-2"),
                 }
             ],
             output="screen",
@@ -60,9 +60,9 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(port_arg)
-    ld.add_action(eeg_channels_primary_amplifier_arg)
-    ld.add_action(emg_channels_primary_amplifier_arg)
-    ld.add_action(eeg_channels_secondary_amplifier_arg)
-    ld.add_action(emg_channels_secondary_amplifier_arg)
+    ld.add_action(number_of_eeg_channels_amplifier_1_arg)
+    ld.add_action(number_of_emg_channels_amplifier_1_arg)
+    ld.add_action(number_of_eeg_channels_amplifier_2_arg)
+    ld.add_action(number_of_emg_channels_amplifier_2_arg)
 
     return ld

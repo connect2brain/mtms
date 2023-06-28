@@ -77,21 +77,21 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
      Instead of trying to clean it up, we should ask for the manufacturer to provide more detailed
      information about individual channels in the measurement start packet. */
 
-  descriptor.description = "EEG channel count for primary amplifier";
-  this->declare_parameter("eeg_channels_primary_amplifier", NULL, descriptor);
-  this->get_parameter("eeg_channels_primary_amplifier", this->eeg_channels_primary_amplifier_);
+  descriptor.description = "EEG channel count for amplifier 1";
+  this->declare_parameter("number_of_eeg_channels_amplifier_1", NULL, descriptor);
+  this->get_parameter("number_of_eeg_channels_amplifier_1", this->number_of_eeg_channels_amplifier_1_);
 
-  descriptor.description = "EMG channel count for primary amplifier";
-  this->declare_parameter("emg_channels_primary_amplifier", NULL, descriptor);
-  this->get_parameter("emg_channels_primary_amplifier", this->emg_channels_primary_amplifier_);
+  descriptor.description = "EMG channel count for amplifier 1";
+  this->declare_parameter("number_of_emg_channels_amplifier_1", NULL, descriptor);
+  this->get_parameter("number_of_emg_channels_amplifier_1", this->number_of_emg_channels_amplifier_1_);
 
-  descriptor.description = "EEG channel count for secondary amplifier";
-  this->declare_parameter("eeg_channels_secondary_amplifier", NULL, descriptor);
-  this->get_parameter("eeg_channels_secondary_amplifier", this->eeg_channels_secondary_amplifier_);
+  descriptor.description = "EEG channel count for amplifier 2";
+  this->declare_parameter("number_of_eeg_channels_amplifier_2", NULL, descriptor);
+  this->get_parameter("number_of_eeg_channels_amplifier_2", this->number_of_eeg_channels_amplifier_2_);
 
-  descriptor.description = "EMG channel count for secondary amplifier";
-  this->declare_parameter("emg_channels_secondary_amplifier", NULL, descriptor);
-  this->get_parameter("emg_channels_secondary_amplifier", this->emg_channels_secondary_amplifier_);
+  descriptor.description = "EMG channel count for amplifier 2";
+  this->declare_parameter("number_of_emg_channels_amplifier_2", NULL, descriptor);
+  this->get_parameter("number_of_emg_channels_amplifier_2", this->number_of_emg_channels_amplifier_2_);
 
   this->set_channel_types();
 
@@ -170,16 +170,16 @@ void EegBridge::subscribe_to_system_state() {
 }
 
 void EegBridge::set_channel_types() {
-  uint8_t channels_primary = this->eeg_channels_primary_amplifier_ + this->emg_channels_primary_amplifier_;
-  uint8_t channels_secondary = this->eeg_channels_secondary_amplifier_ + this->emg_channels_secondary_amplifier_;
+  uint8_t channels_amplifier_1 = this->number_of_eeg_channels_amplifier_1_ + this->number_of_emg_channels_amplifier_1_;
+  uint8_t channels_amplifier_2 = this->number_of_eeg_channels_amplifier_2_ + this->number_of_emg_channels_amplifier_2_;
 
-  uint8_t channels_total = channels_primary + channels_secondary;
+  uint8_t channels_total = channels_amplifier_1 + channels_amplifier_2;
 
   ChannelType type;
   for (uint8_t i = 1; i <= channels_total; i++) {
-    if (i > channels_total - this->emg_channels_secondary_amplifier_) {
+    if (i > channels_total - this->number_of_emg_channels_amplifier_2_) {
       type = this->ChannelType::EMG;
-    } else if (i > this->eeg_channels_primary_amplifier_ && i <= channels_primary) {
+    } else if (i > this->number_of_eeg_channels_amplifier_1_ && i <= channels_amplifier_1) {
       type = this->ChannelType::EMG;
     } else {
       type = this->ChannelType::EEG;
