@@ -425,7 +425,7 @@ void EegBridge::handle_eeg_data_packet() {
 
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart EEG streaming.");
 
         break;
       }
@@ -434,6 +434,13 @@ void EegBridge::handle_eeg_data_packet() {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
 
         break;
+      }
+
+      /* If experiment is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
+      if (this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
+         !this->first_trigger_received) {
+
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received, please check the connection between mTMS device and EEG device.");
       }
 
       if (!this->send_trigger_as_channel) {
