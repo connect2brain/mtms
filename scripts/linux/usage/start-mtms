@@ -58,18 +58,19 @@ STIMULUS_PRESENTER_TYPE=$(get_env_var "STIMULUS_PRESENTER_TYPE")
 STIMULUS_PRESENTER_SCRIPT=$(get_env_var "STIMULUS_PRESENTER_SCRIPT")
 
 # Print environment variables
-echo "Project: $PROJECT_NAME"
 echo ""
-echo "Bag name: $BAG_NAME"
+echo "Project: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
-echo "# of EEG channels, amplifier 1: $NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1"
-echo "# of EMG channels, amplifier 1: $NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1"
+echo "Bag name: ${BOLD}$BAG_NAME${RESET}"
 echo ""
-echo "# of EEG channels, amplifier 2: $NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2"
-echo "# of EMG channels, amplifier 2: $NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2"
+echo "# of EEG channels, amplifier 1: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1${RESET}"
+echo "# of EMG channels, amplifier 1: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1${RESET}"
 echo ""
-echo "EEG processor: $EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)"
-echo "Stimulus presenter: $STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)"
+echo "# of EEG channels, amplifier 2: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2${RESET}"
+echo "# of EMG channels, amplifier 2: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2${RESET}"
+echo ""
+echo "EEG processor: ${BOLD}$EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)${RESET}"
+echo "Stimulus presenter: ${BOLD}$STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)${RESET}"
 echo ""
 
 # Ask the user to double-check

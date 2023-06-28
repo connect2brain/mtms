@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 # Set the path to the projects directory
 PROJECT_DIR="$MTMS_ROOT/projects"
 
@@ -11,11 +15,11 @@ echo "Available projects:"
 
 # Loop through each project directory and print its name
 for dir in $PROJECT_DIRS; do
-    echo "  $(basename $dir)"
+    echo "  ${BOLD}$(basename $dir)${RESET}"
 done
 
 echo ""
 echo "Set project by running:"
 echo ""
-echo "source set-project [project-name]"
+echo "${BOLD}source set-project [project-name]${RESET}"
 echo ""

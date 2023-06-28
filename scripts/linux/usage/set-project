@@ -27,7 +27,7 @@ fi
 export PROJECT_NAME=$PROJECT_NAME_ARG
 
 echo ""
-echo "Project set to: $PROJECT_NAME"
+echo "Project set to: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
 echo "Configure the project by running: ${BOLD}configure-project${RESET}"
 echo ""
