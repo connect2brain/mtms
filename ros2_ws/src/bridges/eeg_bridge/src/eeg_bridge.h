@@ -108,10 +108,10 @@ private:
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
   bool send_trigger_as_channel;
 
-  uint8_t eeg_channels_primary_amplifier_;
-  uint8_t emg_channels_primary_amplifier_;
-  uint8_t eeg_channels_secondary_amplifier_;
-  uint8_t emg_channels_secondary_amplifier_;
+  uint8_t number_of_eeg_channels_amplifier_1_;
+  uint8_t number_of_emg_channels_amplifier_1_;
+  uint8_t number_of_eeg_channels_amplifier_2_;
+  uint8_t number_of_emg_channels_amplifier_2_;
 };
 
 

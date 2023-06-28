@@ -74,7 +74,7 @@ Fill in the launch arguments as needed. In particular, pay attention to the numb
 
 
 #### EEG bridge
-`ros2 launch eeg_bridge eeg_bridge.launch.py log-level:=info port:=50000 eeg-channels-primary-amplifier:=32 emg-channels-primary-amplifier:=0 eeg-channels-secondary-amplifier:=32 emg-channels-secondary-amplifier:=0`
+`ros2 launch eeg_bridge eeg_bridge.launch.py log-level:=info port:=50000 number-of-eeg-channels-amplifier-1:=32 number-of-emg-channels-amplifier-1:=0 number-of-eeg-channels-amplifier-2:=32 number-of-emg-channels-amplifier-2:=0`
 
 
 #### EEG preprocessor
