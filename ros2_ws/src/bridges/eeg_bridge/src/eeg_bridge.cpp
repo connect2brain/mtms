@@ -126,7 +126,9 @@ void EegBridge::subscribe_to_system_state() {
 
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     this->system_state_received = true;
+
     experiment_state = message->experiment_state;
+    device_state = message->device_state;
 
     /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
        one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
@@ -426,13 +428,11 @@ void EegBridge::handle_eeg_data_packet() {
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart EEG streaming.");
-
         break;
       }
 
       if (!this->experiment_been_stopped) {
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
-
         break;
       }
 
@@ -440,7 +440,7 @@ void EegBridge::handle_eeg_data_packet() {
       if (this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
          !this->first_trigger_received) {
 
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received, please check the connection between mTMS device and EEG device.");
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received, please check that 'Sync' port in mTMS device is connected to 'Trigger A in' in EEG device.");
       }
 
       if (!this->send_trigger_as_channel) {
@@ -450,7 +450,6 @@ void EegBridge::handle_eeg_data_packet() {
             this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
 
           this->handle_sample_packet();
-
         }
 
       } else {
@@ -465,8 +464,14 @@ void EegBridge::handle_eeg_data_packet() {
         }
       }
 
+      if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for device to start...");
+        break;
+      }
+
       if (this->experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 60000, "Waiting for experiment to start...");
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for experiment to start...");
+        break;
       }
 
       break;
