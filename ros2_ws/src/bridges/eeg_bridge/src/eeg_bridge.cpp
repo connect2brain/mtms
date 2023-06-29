@@ -49,7 +49,7 @@ const uint8_t MEASUREMENT_END_PACKET_ID = 4;
 const uint8_t TRIGGER_A_IN = 2;
 const uint8_t TRIGGER_B_IN = 8;
 
-const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
 

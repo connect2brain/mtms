@@ -102,7 +102,7 @@ class EegDeviceSimulator():
 
 class DataProvider(Node):
 
-    EEG_RAW_TOPIC = '/eeg/raw_data'
+    EEG_RAW_TOPIC = '/eeg/raw'
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
     SIMULATE_EEG_DEVICE = True

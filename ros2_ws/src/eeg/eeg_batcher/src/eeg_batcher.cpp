@@ -37,7 +37,7 @@ EegBatcher::EegBatcher() : Node("eeg_batcher") {
   batch = std::vector<eeg_interfaces::msg::EegDatapoint>(batch_size);
   RCLCPP_INFO(this->get_logger(), "Batch size: %lu", batch.size());
 
-  eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data",
+  eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw",
                                                                                    10,
                                                                                    eeg_data_subscription_callback);
   batch_publisher = this->create_publisher<eeg_interfaces::msg::EegBatch>("/eeg/batch_data", 10);

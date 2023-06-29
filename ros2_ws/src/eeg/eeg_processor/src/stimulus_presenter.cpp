@@ -53,7 +53,7 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
     }
   };
 
-  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned_data", 5000,
+  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned", 5000,
                                                                                         eeg_subscription_callback);
 
 }
