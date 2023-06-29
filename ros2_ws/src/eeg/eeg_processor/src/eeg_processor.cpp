@@ -14,7 +14,7 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->declare_parameter<bool>("preprocess", true);
   this->get_parameter("preprocess", preprocess);
 
-  this->eeg_topic = preprocess ? "/eeg/cleaned_data" : "/eeg/raw_data";
+  this->eeg_topic = preprocess ? "/eeg/cleaned" : "/eeg/raw";
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", this->eeg_topic.c_str());
 
