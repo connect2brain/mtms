@@ -74,7 +74,7 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
   auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time, sampling_frequency);
 
   auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>(
-    "/eeg/raw_data",
+    "/eeg/raw",
     EEG_DATA_SUBSCRIBER_QUEUE_SIZE,
     [this, &eeg_gatherer](const eeg_interfaces::msg::EegDatapoint::SharedPtr msg) {
       RCLCPP_INFO_THROTTLE(rclcpp::get_logger("eeg_gatherer"),

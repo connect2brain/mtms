@@ -12,7 +12,7 @@ classdef ROSProcessor < handle
             setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp");
             obj.node = ros2node("ros_processor");
 
-            obj.eeg_data_subscriber = ros2subscriber(obj.node, "/eeg/raw_data", "eeg_interfaces/EegDatapoint", @obj.eeg_data_callback);
+            obj.eeg_data_subscriber = ros2subscriber(obj.node, "/eeg/raw", "eeg_interfaces/EegDatapoint", @obj.eeg_data_callback);
             obj.processor = MatlabProcessor();
             obj.data_received = 0;
         end

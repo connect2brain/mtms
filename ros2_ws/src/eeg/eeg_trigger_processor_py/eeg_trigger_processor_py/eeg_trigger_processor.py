@@ -18,7 +18,7 @@ class EegProcessor(Node):
 
     def __init__(self):
         super().__init__('eeg_trigger_processor')
-        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
+        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
 
         self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
