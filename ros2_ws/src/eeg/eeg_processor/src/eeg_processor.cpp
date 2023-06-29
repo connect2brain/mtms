@@ -33,7 +33,6 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
                                                                                              subscription_callback);
-
 }
 
 void EegProcessor::publish_events(double_t time, const std::vector<Event> &events) {
@@ -92,7 +91,6 @@ void EegProcessor::publish_events(double_t time, const std::vector<Event> &event
 
   }
 }
-
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
