@@ -6,8 +6,8 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
-const std::string EEG_CLEANED_TOPIC = "/eeg/cleaned_data";
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
+const std::string EEG_CLEANED_TOPIC = "/eeg/cleaned";
 
 EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
   this->publisher = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_CLEANED_TOPIC, 5000);
