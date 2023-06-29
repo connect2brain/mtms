@@ -12,17 +12,12 @@
 class PythonProcessor : public ProcessorWrapper {
 public:
   PythonProcessor(std::string script_path);
-
   ~PythonProcessor();
 
   std::vector<Event> init();
-
   std::vector<eeg_interfaces::msg::EegDatapoint> raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
-
   std::vector<Event> cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
-
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
-
   std::vector<Event> end_experiment();
 
 private:
@@ -40,8 +35,15 @@ private:
   static event_interfaces::msg::Pulse parse_pulse(PyObject *event);
   static event_interfaces::msg::Stimulus parse_stimulus(PyObject *event);
 
-  PyObject *python_init_name, *python_data_received_name, *python_end_name;
-  PyObject *script_name, *python_module, *python_module_dict, *python_class, *python_instance;
+  PyObject *script_name;
+  PyObject *python_module;
+  PyObject *python_module_dict;
+  PyObject *python_class;
+  PyObject *python_instance;
+
+  PyObject *function_name_data_received;
+  PyObject *function_name_init_experiment;
+  PyObject *function_name_end_experiment;
 };
 
 
