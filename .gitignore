@@ -2,6 +2,7 @@ ros2_ws/build
 ros2_ws/install
 ros2_ws/log
 build/*
+build
 log/*
 install/*
 .idea
@@ -29,3 +30,6 @@ matlab_msg_gen/
 .config/
 
 projects/
+
+venv
+.venv
