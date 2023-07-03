@@ -29,7 +29,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './data/bags:/app/data/bags'
+      - './projects/$PROJECT_NAME:/app/project'
     network_mode: host
 
   bag_recorder:
