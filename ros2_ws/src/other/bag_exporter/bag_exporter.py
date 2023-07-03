@@ -9,7 +9,7 @@ from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
 
-BAG_BASE_DIR = 'data/bags/'
+BAG_BASE_DIR = 'project/bags/'
 
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
@@ -65,7 +65,7 @@ class BagFileParser:
 
     def save_topic_timestamps(self, topic, path):
         messages = self.get_messages(topic)
-        timestamps = list(map(lambda sample: str(sample.time), messages))
+        timestamps = list(map(lambda sample: str(sample.event_info.execution_time), messages))
 
         with open(path, 'w') as f:
             f.write("\n".join(timestamps))
