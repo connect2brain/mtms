@@ -1,6 +1,7 @@
 import socket
 import struct
 import os
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -170,6 +171,13 @@ class DataProvider(Node):
 
         self.data_path = os.path.join(self.DATA_DIRECTORY, self.data_file_name)
 
+        # HACK: When EEG simulator is started simultaneously with EEG processor, it may start streaming already
+        #   before EEG processor is up and running. Hence, wait for several seconds here to ensure that EEG
+        #   processor is running. The correct fix would be to make starting and stopping the EEG simulator more
+        #   explicit, e.g., so that it is done using start-experiment ROS service, as it is done with the real
+        #   EEG device.
+        time.sleep(3)
+
         if self.simulate_eeg_device:
             self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_path, self.sampling_frequency,
                                                            self.eeg_channels, self.loop, self.get_logger())
@@ -210,7 +218,7 @@ class DataProvider(Node):
         msg.time = self.current_time
 
         self.eeg_publisher.publish(msg)
-        self.get_logger().info("Published EEG datapoint in topic {} with timestamp {:.2f} s.".format(self.EEG_RAW_TOPIC, self.current_time))
+        self.get_logger().info("Published EEG datapoint in topic {} with timestamp {:.4f} s.".format(self.EEG_RAW_TOPIC, self.current_time))
 
         self.current_time += self.sampling_period
 
