@@ -200,6 +200,30 @@ docker-compose up bag_exporter
 
 - The changes in `.env` file take place after restarting Docker container.
 
+# Documentation
+
+## Build documentation locally
+
+The documentation source files are located in `docs` and are built using [Sphinx](https://www.sphinx-doc.org/en/master/usage/quickstart.html). 
+
+To build the documentation locally, first make sure your environment has completed the installation steps described [above](#installation). Particularly, make sure you have ROS activated: e.g. in Ubuntu 22.04/bash, use `source /opt/ros/humble/setup.bash`.
+
+Subsequently, install the Sphinx dependencies
+```
+python3 -m pip install --r docs/sphinx-requirements.txt
+```
+
+Finally, enter the `docs` folder and build the documentation
+```
+cd docs
+make clean
+make html
+```
+
+The documentation can then be found in `docs/build/html/` folder and can be viewed with your favorite web browser. A natural place to start is `docs/build/html/index.html`.
+
+
+
 # Legacy documentation
 
 ## Running without Docker
