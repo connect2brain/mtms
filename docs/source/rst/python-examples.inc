@@ -254,39 +254,43 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
 .. code-block::
 
-    from mtms.mtms_api import MTMSApi, DeviceState, ExecutionCondition, ExperimentState, PulseError, PulseMode
+    from event_interfaces.msg import ExecutionCondition
 
-    api = MTMSApi("NiFpga_mTMS_Tubingen_1.0.0.lvbitx”)
+    from MTMSApi import MTMSApi
+
+    api = MTMSApi()
 
     api.start_device()
-    api.wait_until_operational()
     api.start_experiment()
 
+    channel = 1
+    target_voltage = 200
+    execution_condition = ExecutionCondition.TIMED
+    time = 1.0
+
     api.send_charge(
-        event_id=1,
-        channel=1,
-        target_voltage=200,
-        execution_condition=ExecutionCondition.TIMED
-        time_s=1.0,
+        channel=channel,
+        target_voltage=target_voltage,
+        execution_condition=execution_condition,
+        time=time,
     )
 
-    waveform = (
-        {‘mode’: PulseMode.RISING, ‘duration_in_ticks’: 2400},
-        {‘mode’: PulseMode.HOLD, ‘duration_in_ticks’: 1200},
-        {‘mode’: PulseMode.FALLING, ‘duration_in_ticks’: 1800},
-    )
+    waveform = api.get_default_waveform(channel)
+
+    time = 2.0
 
     api.send_pulse(
-        event_id=2,
-        channel=1,
+        channel=channel,
         waveform=waveform,
-        execution_condition=ExecutionCondition.TIMED
-        time_s=2.0,
+        execution_condition=execution_condition,
+        time=time,
     )
 
-    api.wait_until(2.5)
+    time = 2.5
+
+    api.wait_until(time)
 
     api.stop_experiment()
     api.stop_device()
-    api.wait_until_not_operational()
 
+    api.end()
