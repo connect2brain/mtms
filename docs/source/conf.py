@@ -1,3 +1,9 @@
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).resolve().parents[2]
+sys.path.append(str(project_root / "api/python"))
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -6,15 +12,10 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'connect2brain'
-copyright = '2023, connect2brain group'
-author = 'connect2brain group'
+project = 'mtms'
+copyright = '2023, connect2brain'
+author = 'connect2brain'
 release = '0.1'
-
-import sys
-from pathlib import Path
-project_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(project_root / "api/python"))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -29,18 +30,20 @@ extensions = [
     'sphinx.ext.napoleon',
     # Enable both .rst and .md files
     'myst_parser'
-    ]
+]
 
 exclude_patterns = ['_build']
 
 ## Include Python objects as they appear in source files
 ## Default: alphabetically ('alphabetical')
 autodoc_member_order = 'bysource'
+
 ## Default flags used by autodoc directives
 autodoc_default_options = {
     'members': True,
     'show-inheritance': True,
 }
+
 ## Generate autodoc stubs with summaries from code
 autosummary_generate = True
 

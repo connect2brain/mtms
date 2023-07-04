@@ -206,7 +206,7 @@ docker-compose up bag_exporter
 
 The documentation source files are located in `docs` and are built using [Sphinx](https://www.sphinx-doc.org/en/master/usage/quickstart.html). 
 
-To build the documentation locally, first make sure your environment has completed the installation steps described [above](#installation). Particularly, make sure you have ROS activated: e.g. in Ubuntu 20.04/bash, use `source /opt/ros/galactic/setup.bash`.
+To build the documentation locally, first make sure your environment has completed the installation steps described [above](#installation). Particularly, make sure you have ROS activated: e.g. in Ubuntu 22.04/bash, use `source /opt/ros/humble/setup.bash`.
 
 Subsequently, install the Sphinx dependencies
 ```

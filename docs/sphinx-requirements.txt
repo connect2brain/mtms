@@ -1,6 +1,4 @@
-# requirements.txt for sphinx
-#docutils<0.19
+docutils<0.19
 sphinx<7,>=5
 sphinx-rtd-theme
 myst-parser
-

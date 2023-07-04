@@ -1,9 +1,9 @@
 """
 This Python module provides an API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
 It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform 
-various analyses and manipulations of the data. 
+various analyses of the EEG/EMG data.
 
-It uses the Robot Operating System (ROS) to interact with the device.
+It uses the Robot Operating System (ROS2) to interact with the device.
 """
 import time
 import copy
@@ -19,21 +19,17 @@ class MTMSApi:
     """
     An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
     """    
+    # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
-    """
-    Channel count. Hardcoded for now.
-    """
 
+    # TIME_EPSILON is used to implement events that are to be executed immediately but
+    # wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
+    # and execute all the events at that time.
+    #
+    # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
+    # the mTMS device, but not too large so that the events are not executed 'immediately'.
+    # Settle for 0.1 s (100 ms) for now, but change if needed.
     TIME_EPSILON = 0.1
-    """
-    Used to implement events that are to be executed immediately but
-    wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
-    and execute all the events at that time.
-    
-    Consequently, TIME_EPSILON must be large enough to allow time to send the events to
-    the mTMS device, but not too large so that the events are not executed 'immediately'.
-    Settle for 0.1 s (100 ms) for now, but change if needed.
-    """
 
     def __init__(self):
         """
@@ -168,14 +164,13 @@ class MTMSApi:
 
         Returns
         -------
-        ???
+        int
             The current state of the device. One of the following:
 
             * DeviceState.NOT_OPERATIONAL : Device is unoperational.
             * DeviceState.STARTUP : Device is starting up.
             * DeviceState.OPERATIONAL : Device is operational.
             * DeviceState.SHUTDOWN : Device is shutting down.
-
         """
         self.node.wait_for_new_state()
         return self.node.system_state.device_state.value
@@ -186,7 +181,7 @@ class MTMSApi:
 
         Returns
         -------
-        ???
+        int
             The current state of the experiment. One of the following:
 
             * ExperimentState.STOPPED : Experiment is stopped.
@@ -251,11 +246,11 @@ class MTMSApi:
 
     def get_time(self):
         """
-        Return the current time. ???
+        Return the current time from the start of the experiment.
 
         Returns
         -------
-        int
+        float
             The current time as seconds.
         """
         self.node.wait_for_new_state()
@@ -280,7 +275,7 @@ class MTMSApi:
     # Events
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
         """
-        Send a pulse event to a specific channel.
+        Send a pulse event to a specified channel.
 
         Parameters
         ----------
@@ -299,11 +294,11 @@ class MTMSApi:
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
-            * ExecutionCondition.INSTANT : Execute the event instantly.
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
 
-            Default is ExecutionCondition.TIMED.
+            Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the pulse should be sent. Default is 0.0.
         reverse_polarity : bool, optional
@@ -341,7 +336,7 @@ class MTMSApi:
 
     def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         """
-        Send a charge to a specific channel.
+        Send a charge to a specified channel.
 
         Parameters
         ----------
@@ -352,11 +347,11 @@ class MTMSApi:
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
-            * ExecutionCondition.INSTANT : Execute the event instantly.
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
 
-            Default is ExecutionCondition.TIMED.
+            Default is ExecutionCondition.TIMED
         time : float, optional
             The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
         wait_for_completion : bool, optional
@@ -389,7 +384,7 @@ class MTMSApi:
 
     def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         """
-        Send a discharge to a specific channel.
+        Send a discharge to a specified channel.
 
         Parameters
         ----------
@@ -400,11 +395,11 @@ class MTMSApi:
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
-            * ExecutionCondition.INSTANT : Execute the event instantly.
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
 
-            Default is ExecutionCondition.TIMED.
+            Default is ExecutionCondition.TIMED
         time : float, optional
             The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
         wait_for_completion : bool, optional
@@ -437,7 +432,7 @@ class MTMSApi:
 
     def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
         """
-        Sends a trigger output to a specific port.
+        Sends a trigger output to a specified port.
 
         Parameters
         ----------
@@ -448,11 +443,11 @@ class MTMSApi:
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
-            * ExecutionCondition.INSTANT : Execute the event instantly.
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
 
-            Default is ExecutionCondition.TIMED.
+            Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the trigger should be sent. Default is 0.0.
         wait_for_completion : bool, optional
@@ -664,7 +659,7 @@ class MTMSApi:
             waveform = self.get_default_waveform(channel=channel)
 
             id = self.send_pulse(
-                execution_condition=ExecutionCondition.TIMED,
+                execution_condition=ExecutionCondition.TIMED
                 time=time,
                 channel=channel,
                 waveform=waveform,
@@ -716,11 +711,11 @@ class MTMSApi:
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
-            * ExecutionCondition.INSTANT : Execute the event instantly.
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
 
-            Default is ExecutionCondition.TIMED.
+            Default is ExecutionCondition.TIMED
         time : float, optional
             Time delay before sending the pulse, by default 0.0.
         wait_for_completion : bool, optional
@@ -748,7 +743,7 @@ class MTMSApi:
 
     def analyze_mep(self, time, emg_channel, mep_configuration):
         """
-        Analyze the MEP (Motor Evoked Potentials) by passing the time, EMG (Electromyogram) channel, and MEP configuration.
+        Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
 
         Parameters
         ----------
@@ -790,7 +785,7 @@ class MTMSApi:
 
     def end(self):
         """
-        Destroy node. ???
+        End API use. Call when the API is not used anymore.
 
         Does not require any parameters, and does not return any value.
         """
