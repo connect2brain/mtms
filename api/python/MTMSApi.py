@@ -272,6 +272,9 @@ class MTMSApi:
         """
         return self.node.get_event_feedback(id)
 
+    def is_experiment_started(self):
+        return self.get_experiment_state() == ExperimentState.STARTED
+
     # Events
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
         """
@@ -315,7 +318,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each pulse sent.
         """
-        id = self._next_event_id()
+        assert self.is_experiment_started(), "Experiment not started."
+
+        id = self.next_event_id()
 
         waveform_ = copy.deepcopy(waveform)
         if reverse_polarity:
@@ -366,7 +371,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each charge sent.
         """
-        id = self._next_event_id()
+        assert self.is_experiment_started(), "Experiment not started."
+
+        id = self.next_event_id()
 
         target_voltage = int(target_voltage)
         self.node.send_charge(
@@ -414,7 +421,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each discharge sent.
         """
-        id = self._next_event_id()
+        assert self.is_experiment_started(), "Experiment not started."
+
+        id = self.next_event_id()
 
         target_voltage = int(target_voltage)
         self.node.send_discharge(
@@ -462,7 +471,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each trigger sent.
         """
-        id = self._next_event_id()
+        assert self.is_experiment_started(), "Experiment not started."
+
+        id = self.next_event_id()
 
         self.node.send_trigger_out(
             id=id,
@@ -587,6 +598,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_experiment_started(), "Experiment not started."
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -622,6 +634,8 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_experiment_started(), "Experiment not started."
+
         target_voltages = self.N_CHANNELS * [0]
 
         ids = self.send_immediate_charge_or_discharge_to_all_channels(
@@ -649,6 +663,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_experiment_started(), "Experiment not started."
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -689,6 +704,8 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_experiment_started(), "Experiment not started."
+
         time = self.get_time() + self.TIME_EPSILON
 
         ids = self.send_timed_default_pulse_to_all_channels(
@@ -726,6 +743,8 @@ class MTMSApi:
         int
             ID of the sent command.
         """
+        assert self.is_experiment_started(), "Experiment not started."
+
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
 
