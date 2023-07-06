@@ -210,7 +210,7 @@ To build the documentation locally, first make sure your environment has complet
 
 Subsequently, install the Sphinx dependencies
 ```
-python3 -m pip install --r docs/sphinx-requirements.txt
+python3 -m pip install -r docs/sphinx-requirements.txt
 ```
 
 Finally, enter the `docs` folder and build the documentation
