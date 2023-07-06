@@ -28,8 +28,9 @@ class MTMSApi:
     #
     # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
     # the mTMS device, but not too large so that the events are not executed 'immediately'.
-    # Settle for 0.1 s (100 ms) for now, but change if needed.
-    TIME_EPSILON = 0.1
+    # Settle for 0.15 s (150 ms) for now, but change if needed.
+    #
+    TIME_EPSILON = 0.15
 
     def __init__(self):
         """
