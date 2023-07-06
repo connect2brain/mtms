@@ -76,10 +76,15 @@ void E_norm(MatrixX3f_RM &Etms, std::vector<double> &efield_vector)
             acc += Etms(i,j)*Etms(i,j);
         }
         efield_vector.push_back(std::sqrt(acc));
+        //efield_vector_column1.push_back(Etms(i,0));
+        //efield_vector_column2.push_back(Etms(i,1));
+        //efield_vector_column3.push_back(Etms(i,2));
+
     }
 }
 
-
+//void efield_estimation(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<double> &efield_vector,std::vector<double> &efield_vector_column1, std::vector<double> &efield_vector_column2, std::vector<double> &efield_vector_column3)
+//void efield_estimation(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<std::vector<double>>& trial_vector)
 void efield_estimation(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<double> &efield_vector)
 {
     //** Convert vectors to Eigen matrices
@@ -87,9 +92,6 @@ void efield_estimation(std::vector<float>& position, std::vector<float>& rot_mat
     T_rot = Map<Matrix<float, 3, 3, RowMajor>>(rot_matrix.data(), 3,3);
     Matrix<float, 3, 1> cp;
     cp = Map<Matrix<float, 3, 1>>(position.data(),3,1);
-    cout<<"T_rot: "<<T_rot<< endl;
-    cout<<"cp: "<<cp<<endl;
-
 
     // Reciprocity: to convert the computed magnetic flux to E, multiply with -dI/dt.
     float minusdIPerdt = -6600.0*10000.0;
@@ -98,18 +100,50 @@ void efield_estimation(std::vector<float>& position, std::vector<float>& rot_mat
     t.Start();
     // Apply the rotation T_rot and translation cp to the coil§
     coilmodel.Transform(T_rot,cp);
-    cout<< "Transform done"<<endl;
-    cout<<"coil type:"<<coilmodel.CoilType()<<endl;
+
     //** Calculate E-field
-    //*** HERE is where it seems to fail
-    //TMS_obj->print(coilmodel, minusdIPerdt);
     Etms = TMS_obj->Efield(coilmodel, minusdIPerdt);
-    cout<< "Efield done"<<endl;
-    //cout<<Etms<<endl;
     t.Elapsed();
     E_norm(Etms, efield_vector);
+    //trial_vector.reserve(Etms.rows());
 
+    //for (int i =0; i<Etms.rows();i++){
+    //    trial_vector.push_back({Etms(i,0),Etms(i,1),Etms(i,2)});
+    //}
 }
+
+
+void efield_estimation_vector(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3)
+{
+    //** Convert vectors to Eigen matrices
+    Matrix<float, 3, 3, RowMajor> T_rot;
+    T_rot = Map<Matrix<float, 3, 3, RowMajor>>(rot_matrix.data(), 3,3);
+    Matrix<float, 3, 1> cp;
+    cp = Map<Matrix<float, 3, 1>>(position.data(),3,1);
+
+    // Reciprocity: to convert the computed magnetic flux to E, multiply with -dI/dt.
+    float minusdIPerdt = -6600.0*10000.0;
+
+    MatrixX3f_RM Etms;
+    t.Start();
+    // Apply the rotation T_rot and translation cp to the coil§
+    coilmodel.Transform(T_rot,cp);
+
+    //** Calculate E-field
+
+    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt);
+
+    t.Elapsed();
+    E_norm(Etms, efield_vector);
+    for (int i = 0; i < Etms.rows(); i++)
+    {
+        efield_vector_col1.push_back(Etms(i,0));
+        efield_vector_col2.push_back(Etms(i,1));
+        efield_vector_col3.push_back(Etms(i,2));
+    }
+}
+
+
 int main(void)
 {
     return 0;
