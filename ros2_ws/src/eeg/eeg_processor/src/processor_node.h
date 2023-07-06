@@ -42,19 +42,15 @@ public:
   ProcessorNode(std::string node_name);
 
   virtual void publish_events(double_t time, const std::vector<Event> &events) = 0;
-
   void load_processor_script(std::string processor_type, std::string processor_script_path);
-
   void subscribe_to_experiment_state();
-
-
-  typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
 
   ProcessorWrapper *processor;
 
+  typename rclcpp::Subscription<SubscriptionType>::SharedPtr input_data_subscription;
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscription;
-  mtms_device_interfaces::msg::ExperimentState experiment_state;
 
+  mtms_device_interfaces::msg::ExperimentState experiment_state;
 };
 
 
