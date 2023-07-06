@@ -7,6 +7,10 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
+using namespace std::placeholders;
+
+const std::string EEG_INFO_TOPIC = "/eeg/info";
+
 EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   bool preprocess = true;
@@ -24,15 +28,89 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/send/pulse", 10);
   this->stimulus_publisher = this->create_publisher<event_interfaces::msg::Stimulus>("/event/send/stimulus", 10);
 
-  auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
-    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Received EEG data on topic %s", this->eeg_topic.c_str());
+  /* Create subscription for EEG info. */
 
-    auto events = processor->cleaned_eeg_received(*message);
-    publish_events(message->time, events);
+  const rmw_qos_profile_t qos_profile_persist_latest = {
+      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
+      1,
+      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
+      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
+      RMW_QOS_DEADLINE_DEFAULT,
+      RMW_QOS_LIFESPAN_DEFAULT,
+      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
+      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
+      false
   };
 
-  this->subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
-                                                                                             subscription_callback);
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile_persist_latest.history, qos_profile_persist_latest.depth), qos_profile_persist_latest);
+
+  this->eeg_info_subscription = this->create_subscription<eeg_interfaces::msg::EegInfo>(
+    EEG_INFO_TOPIC,
+    qos_persist_latest,
+    std::bind(&EegProcessor::update_eeg_info, this, _1));
+
+  /* Create subscription for EEG data. */
+
+  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Received EEG datapoint on topic %s with timestamp %.4f.",
+                         this->eeg_topic.c_str(),
+                         msg->time);
+
+    this->handle_eeg_datapoint(msg);
+  };
+
+  this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
+                                                                                                        eeg_subscription_callback);
+
+  /* Initialize variables. */
+
+  this->previous_time = UNSET_PREVIOUS_TIME;
+  this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
+}
+
+void EegProcessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg) {
+  this->sampling_frequency = msg->sampling_frequency;
+  this->sampling_period = 1.0 / this->sampling_frequency;
+
+  RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d Hz.", this->sampling_frequency);
+}
+
+/* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
+void EegProcessor::check_dropped_samples(double_t current_time) {
+  if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+    RCLCPP_WARN(rclcpp::get_logger("eeg_processor"), "Sampling frequency not received, cannot check for dropped samples.");
+  }
+
+  if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
+      this->previous_time) {
+
+    auto time_diff = current_time - this->previous_time;
+    auto threshold = this->sampling_period + this->TOLERANCE_S;
+
+    if (time_diff > threshold) {
+      /* Err if sample(s) were dropped. */
+      RCLCPP_ERROR(rclcpp::get_logger("eeg_processor"),
+          "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
+
+    } else {
+      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
+      RCLCPP_DEBUG(rclcpp::get_logger("eeg_processor"),
+        "Time difference between consecutive samples: %.5f", time_diff);
+    }
+  }
+  this->previous_time = current_time;
+}
+
+void EegProcessor::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+  auto current_time = msg->time;
+
+  check_dropped_samples(current_time);
+
+  auto events = processor->cleaned_eeg_received(*msg);
+  publish_events(current_time, events);
 }
 
 void EegProcessor::publish_events(double_t time, const std::vector<Event> &events) {
