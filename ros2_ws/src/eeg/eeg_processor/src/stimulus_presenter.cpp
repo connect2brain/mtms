@@ -15,7 +15,7 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
   this->pulse_publisher = this->create_publisher<event_interfaces::msg::Pulse>("/event/send/pulse", 10);
 
 
-  auto subscription_callback = [this](const std::shared_ptr<event_interfaces::msg::Stimulus> message) -> void {
+  auto stimulus_subscription_callback = [this](const std::shared_ptr<event_interfaces::msg::Stimulus> message) -> void {
 
     /* If immediate event, publish it immediately. Otherwise, add it to a buffer and wait until its time arrives. */
     if (message->event_info.execution_condition.value == event_interfaces::msg::ExecutionCondition::IMMEDIATE) {
@@ -27,8 +27,8 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
 
   };
 
-  this->subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/send/stimulus", 5000,
-                                                                                           subscription_callback);
+  this->input_data_subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/send/stimulus", 5000,
+                                                                                                      stimulus_subscription_callback);
 
   auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
     std::vector<unsigned> ids_to_remove;
