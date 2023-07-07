@@ -6,7 +6,6 @@ class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(
             disable_sample_buffer=True,
-            channels=62,
         )
 
     def init_experiment(self):
