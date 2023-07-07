@@ -40,12 +40,12 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     timer.Start();
     vector< MatrixXf > D = BEMOperatorsPhi_LC_GPU(meshes);
     MatrixXf TM = TM_Phi_LC_GPU(D, ci, co);
-    Phi = LFM_Phi_LC_GPU(meshes, TM, cortex->Points());
+    Phi = LFM_Phi_LC_GPU(meshes, TM, spos);
     cout << "Time for the full phi calculations and TMS setup:  " << timer.GetElapsed() << std::endl;
 #else
     vector< MatrixXf > D = BEMOperatorsPhi_LC(meshes);
     MatrixXf TM = TM_Phi_LC(D, ci, co);
-    Phi = LFM_Phi_LC(meshes, TM, cortex->Points());
+    Phi = LFM_Phi_LC(meshes, TM, spos);
     cout<<"Phi dimensions: "<< Phi.rows() << " " <<Phi.cols()<<std::endl;
 #endif
     WeightedPhi(meshes, Phi, ci, co);
