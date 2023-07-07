@@ -10,7 +10,6 @@ class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(
             sample_buffer_size=self.SAMPLE_BUFFER_SIZE,
-            channels=63,
             analysis_interval_in_samples=100,
         )
         self.event_index = 0
