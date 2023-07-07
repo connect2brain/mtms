@@ -2,6 +2,8 @@
 // Created by alqio on 16.1.2023.
 //
 
+#include <chrono>
+
 #include "eeg_preprocessor.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
@@ -39,6 +41,8 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
   /* Create subscription for EEG data. */
 
   auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+    auto start = std::chrono::high_resolution_clock::now();
+
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
@@ -53,6 +57,15 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
                          1000,
                          "Published cleaned EEG data on topic %s",
                          EEG_CLEANED_TOPIC.c_str());
+
+    /* Print the time taken to preprocess the datapoint. */
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+
+    RCLCPP_DEBUG(this->get_logger(),
+                 "Time taken to preprocess EEG datapoint: %.3f ms.",
+                 1000 * elapsed.count());
   };
 
   this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 5000,
