@@ -4,6 +4,8 @@ from ..base.execution_condition import ExecutionCondition
 from ..base.utils import analyze_eeg, get_default_waveform
 
 
+# XXX: Bitrotten as of July 2023, needs to be updated and cleaned up.
+
 class PipelineStage(BasePipelineStage):
     def __init__(self):
         super().__init__(auto_enqueue=True, window_size=5000)
