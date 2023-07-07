@@ -30,6 +30,7 @@ TMS <float,float>*TMS_obj;
 //This function Initializes the Efield service on my application, here is modified for this test
 void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std::vector<float> ci, std::vector<float> co, bool &success)
 {
+    meshes.clear();
     for (auto element: meshfile){
         meshes.push_back(element);
     }
@@ -176,7 +177,6 @@ void efield_estimation_vector(std::vector<float>& position, std::vector<float>& 
         efield_vector_col3.push_back(Etms(i,2));
     }
 }
-
 
 int main(void)
 {
