@@ -2,6 +2,8 @@ from ..base.base_pipeline_stage import BasePipelineStage, Charge, Discharge, Pul
 from ..base.thresholding import RealtimePeakDetection
 
 
+# XXX: Bitrotten as of July 2023, needs to be updated and cleaned up.
+
 class PipelineStage(BasePipelineStage):
     def __init__(self):
         self.eeg_data_index = 0
