@@ -8,6 +8,7 @@
 #include "neuronavigation_interfaces/srv/initialize_efield.hpp"
 #include "neuronavigation_interfaces/srv/set_coil.hpp"
 #include "neuronavigation_interfaces/srv/efield_norm.hpp"
+#include "neuronavigation_interfaces/srv/efield_roi.hpp"
 
 #include "efield_estimation.h"
 
@@ -57,6 +58,20 @@ public:
 
       };
 
+      auto service_callback_efield_vector_ROI=[this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoi::Request> request,
+                                                     std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoi::Response> response)-> void {
+          RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from /efield/get_ROIefieldvector");
+          std::vector<float> position;
+          std::vector<double> orientation;
+
+          position.push_back(static_cast<float>(request->coordinate.position.x));
+          position.push_back(static_cast<float>(request->coordinate.position.y));
+          position.push_back(static_cast<float>(request->coordinate.position.z));
+
+          efield_estimation_ROI(position, request->transducer_rotation, request->id_list,response->efield_data.enorm, response->efield_data.column1, response->efield_data.column2, response->efield_data.column3);
+
+      };
+
     auto service_callback_init_efield= [this](const std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Response> response)-> void {
 
@@ -73,10 +88,13 @@ public:
 
     };
 
+
+
       efield_service_init = this->create_service<neuronavigation_interfaces::srv::InitializeEfield>("/efield/initialize", service_callback_init_efield);
       efield_service_enorm = this->create_service<neuronavigation_interfaces::srv::EfieldNorm>("/efield/get_norm", service_callback_efield_norm);
       efield_service_coil = this->create_service<neuronavigation_interfaces::srv::SetCoil>("/efield/set_coil", service_callback_set_coil);
       efield_service_vectorefield = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield/get_efieldvector", service_callback_efield_vector);
+      efield_service_vectorfield_ROI = this->create_service<neuronavigation_interfaces::srv::EfieldRoi>("/efield/get_ROIefieldvector", service_callback_efield_vector_ROI);
   }
 
 private:
@@ -84,7 +102,7 @@ private:
   rclcpp::Service<neuronavigation_interfaces::srv::InitializeEfield>::SharedPtr efield_service_init;
   rclcpp::Service<neuronavigation_interfaces::srv::SetCoil>::SharedPtr efield_service_coil;
   rclcpp::Service<neuronavigation_interfaces::srv::Efield>::SharedPtr efield_service_vectorefield;
-
+  rclcpp::Service<neuronavigation_interfaces::srv::EfieldRoi>::SharedPtr efield_service_vectorfield_ROI;
 };
 
 

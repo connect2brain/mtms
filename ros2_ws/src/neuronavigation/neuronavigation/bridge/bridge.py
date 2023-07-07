@@ -16,7 +16,7 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
@@ -108,6 +108,11 @@ class NeuronavigationNode(Node):
             self.client_get_efield_vector = self.create_client(Efield, '/efield/get_efieldvector', callback_group=callback_group)
             while not self.client_get_efield_vector.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_efieldvector not available, waiting...')
+
+            self.client_get_efield_vectorROI = self.create_client(EfieldRoi, '/efield/get_ROIefieldvector',
+                                                               callback_group=callback_group)
+            while not self.client_get_efield_vectorROI.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service /efield/get_ROIefieldvector not available, waiting...')
 
             self.client_set_coil = self.create_client(SetCoil, '/efield/set_coil', callback_group= callback_group)
             while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
@@ -298,6 +303,23 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
+    def update_efield_vectorROI(self,position, orientation, id_list, T_rot):
+        request = EfieldRoi.Request()
+        request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
+        request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
+        request.transducer_rotation = T_rot
+        request.id_list=id_list
+        future = self.client_get_efield_vectorROI.call_async(request)
+        while future.done() is False:
+            pass
+        try:
+            response = future.result()
+            self.get_logger().info("Responding to the service request /neuronavigation/efield_vector")
+            return response.efield_data
+        except Exception as e:
+            self.get_logger().info('Service call failed %r' % (e,))
+            return None
+
     def update_target_orientation(self, target_id, orientation):
         self.get_logger().info(f'updating target {target_id} orientation to {str(orientation)}')
         request = SetTargetOrientation.Request()
@@ -381,6 +403,14 @@ class Connection(Thread):
             position=position,
             orientation=orientation,
             T_rot=T_rot,
+        )
+
+    def update_efield_vectorROI(self, position, orientation, T_rot, id_list):
+        return self.node.update_efield_vectorROI(
+            position=position,
+            orientation= orientation,
+            T_rot=T_rot,
+            id_list=id_list
         )
 
     def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, conductivities_inside, conductivities_outside):
