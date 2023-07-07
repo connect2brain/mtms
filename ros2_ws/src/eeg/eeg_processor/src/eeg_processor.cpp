@@ -1,3 +1,5 @@
+#include <chrono>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "eeg_interfaces/msg/eeg_datapoint.hpp"
@@ -52,6 +54,8 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
   /* Create subscription for EEG data. */
 
   auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+    auto start = std::chrono::high_resolution_clock::now();
+
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
@@ -60,6 +64,15 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
                          msg->time);
 
     this->handle_eeg_datapoint(msg);
+
+    /* Print the time taken to process the datapoint. */
+
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+
+    RCLCPP_DEBUG(this->get_logger(),
+                 "Time taken to process EEG datapoint: %.3f ms.",
+                 1000 * elapsed.count());
   };
 
   this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
