@@ -1,6 +1,6 @@
 //The functions in this file are partially based on hbftms_cpp library example codes written by M. Stenroos
 //This library is not free to use without written permission from the owner Matti Stenroos
-//#define USE_CUDA
+#define USE_CUDA
 #include "tms_cpp.hpp"
 #ifdef USE_CUDA
 #include "TMS_GPU.hpp"
@@ -22,7 +22,7 @@ MatrixX3T_RM<float> spos;
 Timer timer;
 
 #ifdef USE_CUDA
-TMS_GPU<float,float> *TMS_obj;
+TMS_GPU *TMS_obj;
 #else
 TMS <float,float>*TMS_obj;
 #endif
@@ -51,7 +51,7 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     WeightedPhi(meshes, Phi, ci, co);
 
 #ifdef USE_CUDA
-    TMS_obj= new TMS_GPU<float,float>(Phi, meshes, spos);
+    TMS_obj= new TMS_GPU(Phi, meshes, spos);
 #else
     TMS_obj=new TMS<float,float>(Phi, meshes, spos);
 #endif
@@ -111,7 +111,6 @@ void efield_estimation(std::vector<float>& position, std::vector<float>& rot_mat
     //    trial_vector.push_back({Etms(i,0),Etms(i,1),Etms(i,2)});
     //}
 }
-
 
 void efield_estimation_vector(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3)
 {
