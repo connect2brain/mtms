@@ -9,6 +9,8 @@ from .analysis_utils import (
 )
 
 
+# XXX: Bitrotten as of July 2023, needs to be updated and cleaned up.
+
 class PipelineStage(BasePipelineStage):
     # TODO: discuss these parameters
     def __init__(self, eeg_channel_inds_=[8, 9, 61], window_size_=1000, channels_=62):
