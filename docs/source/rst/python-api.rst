@@ -5,7 +5,7 @@ Python API
     :no-members:
     :noindex:
 
-Examples 
+Examples
 --------
 
 .. include::
