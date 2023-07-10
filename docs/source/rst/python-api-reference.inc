@@ -43,5 +43,3 @@ Helper functions
 
 
 .. autoclass:: MTMSApi.MTMSApi
-
-
