@@ -321,7 +321,7 @@ class MTMSApi:
         """
         assert self.is_experiment_started(), "Experiment not started."
 
-        id = self.next_event_id()
+        id = self._next_event_id()
 
         waveform_ = copy.deepcopy(waveform)
         if reverse_polarity:
@@ -374,7 +374,7 @@ class MTMSApi:
         """
         assert self.is_experiment_started(), "Experiment not started."
 
-        id = self.next_event_id()
+        id = self._next_event_id()
 
         target_voltage = int(target_voltage)
         self.node.send_charge(
@@ -424,7 +424,7 @@ class MTMSApi:
         """
         assert self.is_experiment_started(), "Experiment not started."
 
-        id = self.next_event_id()
+        id = self._next_event_id()
 
         target_voltage = int(target_voltage)
         self.node.send_discharge(
@@ -474,7 +474,7 @@ class MTMSApi:
         """
         assert self.is_experiment_started(), "Experiment not started."
 
-        id = self.next_event_id()
+        id = self._next_event_id()
 
         self.node.send_trigger_out(
             id=id,
