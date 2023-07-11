@@ -150,7 +150,7 @@ classdef MTMSApi < handle
         % Wait until the completion of events with given IDs.
         %
         % :param ids: The ids of the events to wait for.
-        % :type ids: list of integers
+        % :type ids: list of ints
 
         for i = 1:length(ids)
                 obj.wait_for_completion(ids(i));
