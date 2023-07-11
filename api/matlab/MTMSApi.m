@@ -464,7 +464,7 @@ classdef MTMSApi < handle
         % :type intensity: float
         %
         % :return: Channel voltages.
-        % :rtype: array-like
+        % :rtype: list of floats
 
             [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
         end
