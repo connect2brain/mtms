@@ -618,7 +618,7 @@ classdef MTMSApi < handle
         % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
-        % :rtype: list
+        % :rtype: list of ints
         
             assert(obj.is_experiment_started(), sprintf("Experiment not started."));
 
@@ -638,7 +638,7 @@ classdef MTMSApi < handle
         % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
-        % :rtype: list
+        % :rtype: list of ints
 
             assert(obj.is_experiment_started(), sprintf("Experiment not started."));
 
@@ -668,7 +668,7 @@ classdef MTMSApi < handle
         % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
-        % :rtype: list
+        % :rtype: list of ints
 
             assert(obj.is_experiment_started(), sprintf("Experiment not started."));
 
