@@ -107,7 +107,7 @@ for service in "${services[@]}"; do
 done
 
 # Start mTMS device bridge separately because it is not containerized yet.
-gnome-terminal --geometry=135x6 -- bash -c "start-mtms-device-bridge"
+gnome-terminal --geometry=135x6 -- bash -c "start-mtms-device-bridge; echo 'Press any key to close'; read -n1"
 
 # Wait for the process to start and get its PID
 while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
