@@ -53,6 +53,8 @@ bool init_fpga() {
 
   if (NiFpga_IsError(status)) {
     RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
+    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "RESOURCE environment variable set to: %s", resource_str.c_str());
+
     return false;
   }
 
