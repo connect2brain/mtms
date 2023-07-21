@@ -136,7 +136,7 @@ class MTMSApi:
         Parameters
         ----------
         time : float
-            The time to wait until (in seconds).
+            The time to wait until (as seconds).
         """
         self.node.wait_for_new_state()
         while self.get_time() < time:
@@ -277,7 +277,7 @@ class MTMSApi:
         return self.get_experiment_state() == ExperimentState.STARTED
 
     # Events
-    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
 
@@ -304,7 +304,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The time at which the pulse should be sent. Default is 0.0.
+            The time at which the pulse is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         reverse_polarity : bool, optional
             Whether to reverse the polarity of the waveform. Default is False.
         wait_for_completion : bool, optional
@@ -320,6 +320,7 @@ class MTMSApi:
         The event ID is incremented with each pulse sent.
         """
         assert self.is_experiment_started(), "Experiment not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
 
@@ -340,7 +341,7 @@ class MTMSApi:
 
         return id
 
-    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a charge to a specified channel.
 
@@ -359,7 +360,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
+            The time at which charging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the charge to complete before returning. Default is True.
 
@@ -373,6 +374,7 @@ class MTMSApi:
         The event ID is incremented with each charge sent.
         """
         assert self.is_experiment_started(), "Experiment not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
 
@@ -390,7 +392,7 @@ class MTMSApi:
 
         return id
 
-    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a discharge to a specified channel.
 
@@ -409,7 +411,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
+            The time at which discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the discharge to complete before returning. Default is True.
 
@@ -423,6 +425,7 @@ class MTMSApi:
         The event ID is incremented with each discharge sent.
         """
         assert self.is_experiment_started(), "Experiment not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
 
@@ -440,7 +443,7 @@ class MTMSApi:
 
         return id
 
-    def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Sends a trigger output to a specified port.
 
@@ -459,7 +462,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The time at which the trigger should be sent. Default is 0.0.
+            The time at which the trigger is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the trigger to complete before returning. Default is True.
 
@@ -473,6 +476,7 @@ class MTMSApi:
         The event ID is incremented with each trigger sent.
         """
         assert self.is_experiment_started(), "Experiment not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
 
@@ -646,7 +650,7 @@ class MTMSApi:
 
         return ids
 
-    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time=0.0, wait_for_completion=True):
+    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time, wait_for_completion=True):
         """
         Send timed default pulse commands to all channels.
 
@@ -654,8 +658,8 @@ class MTMSApi:
         ----------
         reverse_polarities : list of bools
             List of boolean values indicating whether to reverse polarities for each channel.
-        time : float, optional
-            Time delay before sending the pulse, by default 0.0.
+        time : float
+            The time at which the pulse is executed.
         wait_for_completion : bool, optional
             Whether to wait for the completion of all commands, by default True.
 
@@ -716,7 +720,7 @@ class MTMSApi:
         )
         return ids
 
-    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
+    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send charge or discharge command to a specified channel based on the current and target voltage.
 
@@ -735,7 +739,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            Time delay before sending the pulse, by default 0.0.
+            The time at which charging or discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the completion of the command, by default True.
 
@@ -745,6 +749,7 @@ class MTMSApi:
             ID of the sent command.
         """
         assert self.is_experiment_started(), "Experiment not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
@@ -768,7 +773,7 @@ class MTMSApi:
         Parameters
         ----------
         time : float
-            Time point to analyze the MEP.
+            The time at which MEP analysis begins.
         emg_channel : int
             Channel number for the EMG.
         mep_configuration : object
