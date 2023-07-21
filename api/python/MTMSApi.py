@@ -659,7 +659,7 @@ class MTMSApi:
             waveform = self.get_default_waveform(channel=channel)
 
             id = self.send_pulse(
-                execution_condition=ExecutionCondition.TIMED
+                execution_condition=ExecutionCondition.TIMED,
                 time=time,
                 channel=channel,
                 waveform=waveform,
