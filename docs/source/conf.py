@@ -2,7 +2,8 @@ import sys
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
-sys.path.append(str(project_root / "api/python"))
+python_src_dir = str(project_root / "api/python")
+sys.path.append(python_src_dir)
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -29,7 +30,9 @@ extensions = [
     # Map NumPy and Google docstring styles to reStructured text
     'sphinx.ext.napoleon',
     # Enable both .rst and .md files
-    'myst_parser'
+    'myst_parser',
+    # Enable Matlab autodoccing
+    'sphinxcontrib.matlab'
 ]
 
 exclude_patterns = ['_build']
@@ -60,5 +63,7 @@ html_theme_options = {
 }
 html_static_path:List = ['_static']
 
-
-
+# -- Options for sphinxcontrib-matlabdomain ----------------------------------
+# https://github.com/sphinx-contrib/matlabdomain#configuration 
+matlab_src_dir = str(project_root / "api")
+matlab_short_links = True
