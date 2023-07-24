@@ -166,7 +166,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
+        event_info.execution_time = float(time) if time is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -191,7 +191,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
+        event_info.execution_time = float(time) if time is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -216,7 +216,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
+        event_info.execution_time = float(time) if time is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -241,7 +241,7 @@ class MTMSApiNode(Node):
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
+        event_info.execution_time = float(time) if time is not None else 0.0
 
         message.event_info = event_info
         message.port = port
