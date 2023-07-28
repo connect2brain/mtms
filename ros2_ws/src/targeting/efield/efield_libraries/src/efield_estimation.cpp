@@ -10,18 +10,18 @@
 //#include "efield_estimation.h"
 #include <iostream>
 #include <algorithm>
-
 using namespace Eigen;
 using namespace std;
 std::vector<double> efield_vector;
 Timer t;
 Mesh<float> *cortex;
 Coil<float> coilmodel;
+Coilset<float> coils;
 std::vector< Mesh<float>>meshes;
 MatrixXf Phi;
 MatrixX3T_RM<float> spos;
 Timer timer;
-
+bool mtms_coil;
 #ifdef USE_CUDA
 TMS_GPU *TMS_obj;
 #else
@@ -61,10 +61,16 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     std::cout<<"Done init! "<<std::endl;
 }
 
-void set_coil(std::string coilfile, bool &success)
+void set_coil(std::string coilfile, bool coilset, bool &success)
 {
-    std::cout<<"coilfile changed: "<<coilfile<<std::endl;
-    coilmodel = Coil<float>(coilfile);
+    if (coilset){
+        coils = Coilset<float> (coilfile);
+    } else {
+        coilmodel = Coil<float>(coilfile);
+    }
+    std::cout << "coilfile changed: " << coilfile << std::endl;
+    mtms_coil = coilset;
+    std::cout << "coil_set: " << mtms_coil << std::endl;
     success = true;
 }
 
@@ -114,7 +120,7 @@ void efield_estimation(std::vector<float>& position, std::vector<float>& rot_mat
     //}
 }
 
-void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3,int &maxIndex)
+void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3,std::vector<double> &efield_vector_array,int &maxIndex)
 {
     //** Convert vectors to Eigen matrices
     Matrix<float, 3, 3, RowMajor> T_rot;
@@ -144,6 +150,9 @@ void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot
     std::cout<<"Max value"<<*max<<std::endl;
     maxIndex = std::distance(efield_vector.begin(), max);
     std::cout<<"Index "<<maxIndex<<std::endl;
+    efield_vector_array.push_back(Etms(maxIndex,0));
+    efield_vector_array.push_back(Etms(maxIndex,1));
+    efield_vector_array.push_back(Etms(maxIndex,2));
 
     for (int i = 0; i < Etms.rows(); i++)
     {
@@ -154,7 +163,7 @@ void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot
 
 }
 
-void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3, int &maxIndex)
+void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_array, int &maxIndex)
 {
     //** Convert vectors to Eigen matrices
     Matrix<float, 3, 3, RowMajor> T_rot;
@@ -168,24 +177,55 @@ void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<flo
     MatrixX3f_RM Etms;
     VectorXi Id_list(id_list.size());
     Id_list = Map<VectorXi>(id_list.data(), id_list.size());
-    t.Start();
-    // Apply the rotation T_rot and translation cp to the coil§
-    coilmodel.Transform(T_rot,cp);
+    std::cout << "coil_set: " << mtms_coil << std::endl;
 
-    //** Calculate E-field
-    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt, Id_list);
-    t.Elapsed();
-    E_norm(Etms, efield_vector);
-    std::cout<<"Enorm: "<<Etms.rows()<<std::endl;
+    if (mtms_coil){
+        t.Start();
+
+        vector< MatrixX3f_RM > Ecoilset(coils.Noc());
+        coils.Transform(T_rot,cp);
+        MatrixX3f_RM sumEfield = MatrixX3f_RM::Zero(id_list.size(),3);
+
+        for (int I = 0; I < coils.Noc(); I++) {
+            Ecoilset[I] = TMS_obj->Efield(coils.GetCoil(I), minusdIPerdt, Id_list);
+            sumEfield += Ecoilset[I];
+        }
+
+        E_norm(sumEfield, efield_vector);
+        t.Elapsed();
+        std::cout<<"efield vector:"<<efield_vector.size()<<std::endl;
+        auto max = std::max_element(efield_vector.begin(), efield_vector.end());
+        std::cout<<"Max value"<<*max<<std::endl;
+        maxIndex = std::distance(efield_vector.begin(), max);
+        std::cout<<"Index"<<maxIndex<<std::endl;
+
+        std::cout << "Enorm: " << sumEfield.rows() << std::endl;
+        efield_vector_array.push_back(sumEfield(maxIndex,0));
+        efield_vector_array.push_back(sumEfield(maxIndex,1));
+        efield_vector_array.push_back(sumEfield(maxIndex,2));
+
+    } else {
+        // Apply the rotation T_rot and translation cp to the coil§
+        t.Start();
+
+        coilmodel.Transform(T_rot, cp);
+        //** Calculate E-field
+        Etms = TMS_obj->Efield(coilmodel, minusdIPerdt, Id_list);
+        t.Elapsed();
+        E_norm(Etms, efield_vector);
+
+        std::cout<<"efield vector:"<<efield_vector.size()<<std::endl;
+        auto max = std::max_element(efield_vector.begin(), efield_vector.end());
+        std::cout<<"Max value"<<*max<<std::endl;
+        maxIndex = std::distance(efield_vector.begin(), max);
+        std::cout<<"Index"<<maxIndex<<std::endl;
+
+        std::cout << "Enorm: " << Etms.rows() << std::endl;
+        efield_vector_array.push_back(Etms(maxIndex,0));
+        efield_vector_array.push_back(Etms(maxIndex,1));
+        efield_vector_array.push_back(Etms(maxIndex,2));
+    }
     std::cout<<"id_list"<<Id_list.size()<<std::endl;
-    std::cout<<"efield vector:"<<efield_vector.size()<<std::endl;
-    auto max = std::max_element(efield_vector.begin(), efield_vector.end());
-    std::cout<<"Max value"<<*max<<std::endl;
-    maxIndex = std::distance(efield_vector.begin(), max);
-    std::cout<<"Index"<<maxIndex<<std::endl;
-    efield_vector_col1.push_back(Etms(maxIndex,0));
-    efield_vector_col1.push_back(Etms(maxIndex,1));
-    efield_vector_col1.push_back(Etms(maxIndex,2));
 
 }
 
