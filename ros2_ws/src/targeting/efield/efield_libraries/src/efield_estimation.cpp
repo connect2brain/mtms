@@ -9,6 +9,7 @@
 #include "tms_json.h"
 //#include "efield_estimation.h"
 #include <iostream>
+#include <algorithm>
 
 using namespace Eigen;
 using namespace std;
@@ -113,7 +114,7 @@ void efield_estimation(std::vector<float>& position, std::vector<float>& rot_mat
     //}
 }
 
-void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3)
+void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3,int &maxIndex)
 {
     //** Convert vectors to Eigen matrices
     Matrix<float, 3, 3, RowMajor> T_rot;
@@ -139,6 +140,11 @@ void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot
     std::cout<<"id_list"<<Id_list.size()<<std::endl;
     std::cout<<"efield vector:"<<efield_vector.size()<<std::endl;
 
+    auto max = std::max_element(efield_vector.begin(), efield_vector.end());
+    std::cout<<"Max value"<<*max<<std::endl;
+    maxIndex = std::distance(efield_vector.begin(), max);
+    std::cout<<"Index "<<maxIndex<<std::endl;
+
     for (int i = 0; i < Etms.rows(); i++)
     {
     efield_vector_col1.push_back(Etms(i,0));
@@ -147,6 +153,42 @@ void efield_estimation_ROI(std::vector<float>& position, std::vector<float>& rot
     }
 
 }
+
+void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<int32_t>& id_list, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3, int &maxIndex)
+{
+    //** Convert vectors to Eigen matrices
+    Matrix<float, 3, 3, RowMajor> T_rot;
+    T_rot = Map<Matrix<float, 3, 3, RowMajor>>(rot_matrix.data(), 3,3);
+    Matrix<float, 3, 1> cp;
+    cp = Map<Matrix<float, 3, 1>>(position.data(),3,1);
+
+    // Reciprocity: to convert the computed magnetic flux to E, multiply with -dI/dt.
+    float minusdIPerdt = -6600.0*10000.0;
+
+    MatrixX3f_RM Etms;
+    VectorXi Id_list(id_list.size());
+    Id_list = Map<VectorXi>(id_list.data(), id_list.size());
+    t.Start();
+    // Apply the rotation T_rot and translation cp to the coil§
+    coilmodel.Transform(T_rot,cp);
+
+    //** Calculate E-field
+    Etms = TMS_obj->Efield(coilmodel, minusdIPerdt, Id_list);
+    t.Elapsed();
+    E_norm(Etms, efield_vector);
+    std::cout<<"Enorm: "<<Etms.rows()<<std::endl;
+    std::cout<<"id_list"<<Id_list.size()<<std::endl;
+    std::cout<<"efield vector:"<<efield_vector.size()<<std::endl;
+    auto max = std::max_element(efield_vector.begin(), efield_vector.end());
+    std::cout<<"Max value"<<*max<<std::endl;
+    maxIndex = std::distance(efield_vector.begin(), max);
+    std::cout<<"Index"<<maxIndex<<std::endl;
+    efield_vector_col1.push_back(Etms(maxIndex,0));
+    efield_vector_col1.push_back(Etms(maxIndex,1));
+    efield_vector_col1.push_back(Etms(maxIndex,2));
+
+}
+
 
 void efield_estimation_vector(std::vector<float>& position, std::vector<float>& rot_matrix, std::vector<double> &efield_vector, std::vector<double> &efield_vector_col1,std::vector<double> &efield_vector_col2,std::vector<double> &efield_vector_col3)
 {
