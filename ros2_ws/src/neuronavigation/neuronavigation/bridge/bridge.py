@@ -15,7 +15,7 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
@@ -90,7 +90,7 @@ class NeuronavigationNode(Node):
             while not self.client_get_efield_vectorROI.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_ROIefieldvector not available, waiting...')
 
-            self.client_get_efield_vectorROIMax = self.create_client(EfieldRoi, '/efield/get_ROIefieldvectorMax',
+            self.client_get_efield_vectorROIMax = self.create_client(EfieldRoiMax, '/efield/get_ROIefieldvectorMax',
                                                                callback_group=callback_group)
             while not self.client_get_efield_vectorROIMax.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_ROIefieldvectorMax not available, waiting...')
@@ -204,11 +204,12 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, conductivities_inside, conductivities_outside):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set,conductivities_inside, conductivities_outside):
         request = InitializeEfield.Request()
         request.cortex_model_path= cortex_model_path
         request.mesh_models_paths = mesh_models_paths
         request.coil_model_path = coil_model_path
+        request.coil_set = coil_set
         request.conductivities_inside = conductivities_inside
         request.conductivities_outside = conductivities_outside
         future = self.client_init_efield.call_async(request)
@@ -222,9 +223,10 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def set_coil(self, coil_model_path):
+    def set_coil(self, coil_model_path, coil_set):
         request = SetCoil.Request()
         request.coil_model_path=coil_model_path
+        request.coil_set = coil_set
         future = self.client_set_coil.call_async(request)
         while future.done() is False:
             pass
@@ -290,12 +292,12 @@ class NeuronavigationNode(Node):
             return None
 
     def update_efield_vectorROIMax(self,position, orientation, id_list, T_rot):
-        request = EfieldRoi.Request()
+        request = EfieldRoiMax.Request()
         request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
         request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
         request.transducer_rotation = T_rot
         request.id_list=id_list
-        future = self.client_get_efield_vectorROI.call_async(request)
+        future = self.client_get_efield_vectorROIMax.call_async(request)
         while future.done() is False:
             pass
         try:
@@ -397,18 +399,20 @@ class Connection(Thread):
             id_list=id_list
         )
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, conductivities_inside, conductivities_outside):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path,coil_set, conductivities_inside, conductivities_outside):
         return self.node.initialize_efield(
             cortex_model_path=cortex_model_path,
             mesh_models_paths=mesh_models_paths,
             coil_model_path=coil_model_path,
+            coil_set = coil_set,
             conductivities_inside=conductivities_inside,
             conductivities_outside=conductivities_outside,
         )
 
-    def set_coil(self, coil_model_path):
+    def set_coil(self, coil_model_path, coil_set):
         return self.node.set_coil(
-            coil_model_path=coil_model_path
+            coil_model_path=coil_model_path,
+            coil_set = coil_set
         )
 
     def set_callback__set_markers(self, callback):
