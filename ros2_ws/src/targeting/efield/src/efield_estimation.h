@@ -12,4 +12,6 @@ void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<flo
 
 void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std::vector<float> ci, std::vector<float> co, bool &success);
 void set_coil(std::string coilfile, bool coilset, bool &success);
+void set_dIperdt(std::vector<float> &dIperdt_vectInv, bool &success);
+
 #endif

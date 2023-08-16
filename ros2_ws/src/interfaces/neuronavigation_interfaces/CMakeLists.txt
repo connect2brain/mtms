@@ -36,6 +36,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/EfieldNorm.srv"
   "srv/EfieldRoi.srv"
   "srv/EfieldRoiMax.srv"
+  "srv/Setdiperdt.srv"
   DEPENDENCIES geometry_msgs
  )
 
