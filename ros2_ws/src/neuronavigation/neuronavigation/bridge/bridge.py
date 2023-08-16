@@ -16,7 +16,7 @@ from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 
@@ -123,6 +123,11 @@ class NeuronavigationNode(Node):
             while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/set_coil not available, waiting...')
             self.get_logger().info('efield set coil')
+
+            self.client_set_dIperdt = self.create_client(Setdiperdt, '/efield/set_dIperdt', callback_group= callback_group)
+            while not self.client_set_dIperdt.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info('efield service /efield/set_dIperdt not available, waiting...')
+            self.get_logger().info('efield set dIperdt')
 
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
@@ -240,7 +245,7 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set,conductivities_inside, conductivities_outside):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set,conductivities_inside, conductivities_outside, dI_per_dt):
         request = InitializeEfield.Request()
         request.cortex_model_path= cortex_model_path
         request.mesh_models_paths = mesh_models_paths
@@ -248,6 +253,7 @@ class NeuronavigationNode(Node):
         request.coil_set = coil_set
         request.conductivities_inside = conductivities_inside
         request.conductivities_outside = conductivities_outside
+        request.set_di_per_dt = dI_per_dt
         future = self.client_init_efield.call_async(request)
         while future.done() is False:
             pass
@@ -273,6 +279,20 @@ class NeuronavigationNode(Node):
         except Exception as e:
             self.get_logger().info('Service call failed %r' % (e,))
             return None
+
+    def set_dIperdt(self, dIperdt):
+        request = Setdiperdt.Request()
+        request.set_di_per_dt = dIperdt
+        future = self.client_set_dIperdt.call_async(request)
+        while future.done() is False:
+            pass
+        try:
+            response = future.result()
+            self.get_logger().info("Responding to the service request /neuronavigation/efield/dIperdt")
+            return response.success
+        except Exception as e:
+            set.get_logger().info('Service call fail %r' % (e,))
+        return None
 
     def update_efield(self, position, orientation, T_rot):
         request= EfieldNorm.Request()
@@ -445,20 +465,26 @@ class Connection(Thread):
             id_list=id_list
         )
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path,coil_set, conductivities_inside, conductivities_outside):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, coil_set, conductivities_inside, conductivities_outside, dI_per_dt):
         return self.node.initialize_efield(
             cortex_model_path=cortex_model_path,
             mesh_models_paths=mesh_models_paths,
             coil_model_path=coil_model_path,
-            coil_set = coil_set,
+            coil_set=coil_set,
             conductivities_inside=conductivities_inside,
             conductivities_outside=conductivities_outside,
+            dI_per_dt=dI_per_dt,
         )
 
     def set_coil(self, coil_model_path, coil_set):
         return self.node.set_coil(
             coil_model_path=coil_model_path,
             coil_set = coil_set
+        )
+
+    def set_dIperdt(self, dIperdt):
+        return self.node.set_dIperdt(
+            dIperdt=dIperdt,
         )
 
     def set_callback__set_markers(self, callback):
