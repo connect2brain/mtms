@@ -53,6 +53,13 @@ wait_for_completion = false;  % Note that this needs to be false so that MEP can
 
 api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
 
+% Create a custom waveform.
+
+phases = {'RISING', 'HOLD', 'FALLING'};
+durations_in_ticks = {2400, 1200, 1480};
+
+custom_waveform = api.create_waveform(phases, durations_in_ticks);
+
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
 mep_start_time = 0.02;  % in ms, after the stimulation pulse
