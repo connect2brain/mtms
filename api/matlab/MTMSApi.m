@@ -442,7 +442,30 @@ classdef MTMSApi < handle
         end
     
         % Waveforms and targeting
-    
+
+        function waveform = create_waveform(obj, phases, durations_in_ticks)
+            assert(iscell(phases), "Phases must be given as a cell array, e.g., {'RISING', 'HOLD', 'FALLING'}.");
+            assert(iscell(durations_in_ticks), "Durations must be given as a cell array, e.g., {1200, 2400, 1200}.");
+
+            assert(length(phases) == length(durations_in_ticks), 'Length of phases must be equal to the length of durations.');
+
+            waveform = [];
+            for i = 1:length(phases)
+                phase = phases{i};
+                duration_in_ticks = durations_in_ticks{i};
+
+                allowed_phases = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
+                assert(ismember(phase, allowed_phases), ['Phase must be one of ' strjoin(allowed_phases, ', ')]);
+
+                piece = ros2message('event_interfaces/WaveformPiece');
+                piece.duration_in_ticks = duration_in_ticks;
+
+                piece.waveform_phase.value = piece.waveform_phase.(phase);
+
+                waveform = [waveform piece];
+            end
+        end
+
         function waveform = get_default_waveform(obj, channel)
             waveform = obj.node.get_default_waveform(channel);
         end
