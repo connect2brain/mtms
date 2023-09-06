@@ -13,6 +13,9 @@ if [ -z "$SERVICE_NAME" ]; then
     exit 1
 fi
 
+# Allow Docker containers to connect to the host X server.
+xhost +local:docker
+
 # Set ENV_FILE to point to .env of the project
 export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
 
