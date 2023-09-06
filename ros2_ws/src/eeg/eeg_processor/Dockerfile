@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:humble-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -7,20 +7,22 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /build
 
 RUN apt-get update
+RUN apt-get install -y dos2unix wget python3-pip
 
 # Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
 ENV DEBIAN_FRONTEND=noninteractive
 
 # PsychoPy and its dependencies
-RUN apt-get install -y dos2unix wget python3-pip libgtk-3-dev
-RUN pip3 install attrdict3
-RUN pip3 install psychopy
+RUN apt-get install -y libgtk-3-dev
+RUN pip3 install attrdict3 psychopy
 
-# HACK: Needed because the default version of NumPy is incompatible with PsychoPy.
-RUN pip3 install --force-reinstall "numpy==1.20.3"
-
-# Note: Tensorflow is needed for mneflow, used for machine learning.
+# Note: Tensorflow is needed for mneflow, which is used for machine learning.
 RUN pip3 install tensorflow
+
+# HACK: Currently needed for mneflow to install successfully. Remove once the corresponding problem
+#   in mneflow has been fixed.
+ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
+
 RUN pip3 install git+https://github.com/zubara/mneflow.git
 RUN apt-get install -y python3-tk
 
@@ -35,7 +37,7 @@ COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && colcon build
+RUN source /opt/ros/humble/setup.bash && colcon build
 
 # Create a directory for pipeline
 
