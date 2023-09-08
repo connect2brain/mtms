@@ -27,7 +27,7 @@ public:
 
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
 
-  std::vector<Event> end_experiment();
+  std::vector<Event> end_session();
 
 private:
   std::unique_ptr<matlab::engine::MATLABEngine> matlab;

@@ -7,7 +7,7 @@
 #include "mtms_device_interfaces/msg/channel_state.hpp"
 #include "mtms_device_interfaces/msg/channel_error.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
-#include "mtms_device_interfaces/msg/experiment_state.hpp"
+#include "mtms_device_interfaces/msg/session_state.hpp"
 #include "mtms_device_interfaces/msg/startup_error.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
@@ -67,7 +67,7 @@ NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_Em
 NiFpga_mTMS_IndicatorU8 startup_error_indicator = NiFpga_mTMS_IndicatorU8_Startuperror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
-NiFpga_mTMS_IndicatorU8 experiment_state_indicator = NiFpga_mTMS_IndicatorU8_Experimentstate;
+NiFpga_mTMS_IndicatorU8 session_state_indicator = NiFpga_mTMS_IndicatorU8_Sessionstate;
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
@@ -222,8 +222,8 @@ private:
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
                             session,
-                            experiment_state_indicator,
-                            &state.experiment_state.value
+                            session_state_indicator,
+                            &state.session_state.value
                         ));
 
     uint64_t time;

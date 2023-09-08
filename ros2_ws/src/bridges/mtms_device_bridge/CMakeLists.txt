@@ -62,37 +62,37 @@ target_include_directories(start_device_handler
 
 ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install start experiment handler.
+# Install start session handler.
 
-add_executable(start_experiment_handler
-        src/nodes/start_experiment_handler.cpp
+add_executable(start_session_handler
+        src/nodes/start_session_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
         src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 
-target_include_directories(start_experiment_handler
+target_include_directories(start_session_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_experiment_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install stop experiment handler.
+# Install stop session handler.
 
-add_executable(stop_experiment_handler
-        src/nodes/stop_experiment_handler.cpp
+add_executable(stop_session_handler
+        src/nodes/stop_session_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
         src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
 
-target_include_directories(stop_experiment_handler
+target_include_directories(stop_session_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_experiment_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces)
 
 # Install stop device handler.
 
@@ -226,8 +226,8 @@ install(TARGETS
 
   start_device_handler
   stop_device_handler
-  start_experiment_handler
-  stop_experiment_handler
+  start_session_handler
+  stop_session_handler
 
   charge_handler
   discharge_handler

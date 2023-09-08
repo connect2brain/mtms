@@ -77,13 +77,13 @@ classdef MTMSApiPrinter < handle
 
             startup_error = state.startup_error;
             device_state = state.device_state;
-            experiment_state = state.experiment_state;
+            session_state = state.session_state;
 
             % TODO: TIME_COLOR could be used here; colors unused at the moment.
             time_str = sprintf("Time (s): %.2f", state.time);
 
             state_str = sprintf("Device state: %s", obj.enum_to_str(device_state.value, obj.mtmsapi_enums.DEVICE_STATES));
-            experiment_str = sprintf("Experiment: %s", obj.enum_to_str(experiment_state.value, obj.mtmsapi_enums.EXPERIMENT_STATES));
+            session_str = sprintf("Session: %s", obj.enum_to_str(session_state.value, obj.mtmsapi_enums.SESSION_STATES));
             startup_error_str = sprintf("Startup error: %s", obj.enum_to_str(startup_error.value, obj.mtmsapi_enums.STARTUP_ERRORS));
 
             if ~obj.support_temperature
@@ -97,7 +97,7 @@ classdef MTMSApiPrinter < handle
                 startup_error_str = NaN;
             end
 
-            strs = [time_str, voltages_str, temperatures_str, pulse_counts_str, state_str, experiment_str, startup_error_str];
+            strs = [time_str, voltages_str, temperatures_str, pulse_counts_str, state_str, session_str, startup_error_str];
             strs = rmmissing(strs);
 
             status_str = strjoin(strs, ", ");

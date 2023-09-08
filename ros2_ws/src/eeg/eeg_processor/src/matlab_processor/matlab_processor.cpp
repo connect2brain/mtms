@@ -24,7 +24,7 @@ std::vector<Event> MatlabProcessor::init() {
   return events;
 }
 
-std::vector<Event> MatlabProcessor::end_experiment() {
+std::vector<Event> MatlabProcessor::end_session() {
   std::vector<Event> events;
   return events;
 }

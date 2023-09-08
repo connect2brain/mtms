@@ -174,7 +174,7 @@ class DataProvider(Node):
         # HACK: When EEG simulator is started simultaneously with EEG processor, it may start streaming already
         #   before EEG processor is up and running. Hence, wait for several seconds here to ensure that EEG
         #   processor is running. The correct fix would be to make starting and stopping the EEG simulator more
-        #   explicit, e.g., so that it is done using start-experiment ROS service, as it is done with the real
+        #   explicit, e.g., so that it is done using start-session ROS service, as it is done with the real
         #   EEG device.
         time.sleep(3)
 
@@ -214,7 +214,7 @@ class DataProvider(Node):
         msg = EegDatapoint()
         msg.eeg_channels = data[:self.eeg_channels]
         msg.emg_channels = data[self.eeg_channels:self.total_channels]
-        msg.first_sample_of_experiment = False if self.current_time > 0 else True
+        msg.first_sample_of_session = False if self.current_time > 0 else True
         msg.time = self.current_time
 
         self.eeg_publisher.publish(msg)

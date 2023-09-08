@@ -124,7 +124,7 @@ for topic in topics:
     prefix_formatted = f"{prefix}_" if len(prefix) > 0 else ""
 
     # Add prefix, drop the leading / and replace remaining / with _.
-    # For instance, with prefix "experiment1", and topic "/eeg/raw", yields "experiment1_eeg_raw"
+    # For instance, with prefix "session1", and topic "/eeg/raw", yields "session1_eeg_raw"
     output_file_name = f"{prefix_formatted}{topic[1:].replace('/', '_')}"
 
     output_path = os.path.join(BAG_BASE_DIR, bag_dir, output_file_name)

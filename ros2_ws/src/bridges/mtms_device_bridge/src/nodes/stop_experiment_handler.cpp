@@ -1,31 +1,31 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "mtms_device_interfaces/srv/stop_experiment.hpp"
+#include "mtms_device_interfaces/srv/stop_session.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void stop_experiment([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopExperiment::Request> request,
-                     std::shared_ptr<mtms_device_interfaces::srv::StopExperiment::Response> response) {
+void stop_session([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopSession::Request> request,
+                     std::shared_ptr<mtms_device_interfaces::srv::StopSession::Response> response) {
 
-  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopexperiment, true));
+  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopsession, true));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Stopped experiment");
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Stopped session");
 }
 
-class StopExperiment : public rclcpp::Node {
+class StopSession : public rclcpp::Node {
 public:
-  StopExperiment()
-      : Node("stop_experiment") {
-    stop_experiment_service_ = this->create_service<mtms_device_interfaces::srv::StopExperiment>("/mtms_device/stop_experiment",
-                                                                                          stop_experiment);
+  StopSession()
+      : Node("stop_session") {
+    stop_session_service_ = this->create_service<mtms_device_interfaces::srv::StopSession>("/mtms_device/stop_session",
+                                                                                          stop_session);
   }
 
 private:
-  rclcpp::Service<mtms_device_interfaces::srv::StopExperiment>::SharedPtr stop_experiment_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::StopSession>::SharedPtr stop_session_service_;
 };
 
 int main(int argc, char **argv) {
@@ -36,19 +36,19 @@ int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<StopExperiment>();
+  auto node = std::make_shared<StopSession>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  RCLCPP_INFO(rclcpp::get_logger("stop_experiment_handler"), "Stop experiment handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Stop session handler ready.");
 
 
   rclcpp::spin(node);

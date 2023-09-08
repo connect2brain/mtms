@@ -3,7 +3,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
@@ -19,8 +19,8 @@ class MTMSApiNode(Node):
     # To mTMS device
     ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
-    ROS_SERVICE_START_EXPERIMENT = ('/mtms_device/start_experiment', StartExperiment)
-    ROS_SERVICE_STOP_EXPERIMENT = ('/mtms_device/stop_experiment', StopExperiment)
+    ROS_SERVICE_START_SESSION = ('/mtms_device/start_session', StartSession)
+    ROS_SERVICE_STOP_SESSION = ('/mtms_device/stop_session', StopSession)
 
     ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
@@ -47,8 +47,8 @@ class MTMSApiNode(Node):
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
         ROS_SERVICE_STOP_DEVICE,
-        ROS_SERVICE_START_EXPERIMENT,
-        ROS_SERVICE_STOP_EXPERIMENT,
+        ROS_SERVICE_START_SESSION,
+        ROS_SERVICE_STOP_SESSION,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
@@ -129,16 +129,16 @@ class MTMSApiNode(Node):
 
         return self.call_service(client, request)
 
-    def start_experiment(self):
-        topic, service_type = self.ROS_SERVICE_START_EXPERIMENT
+    def start_session(self):
+        topic, service_type = self.ROS_SERVICE_START_SESSION
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
         return self.call_service(client, request)
 
-    def stop_experiment(self):
-        topic, service_type = self.ROS_SERVICE_STOP_EXPERIMENT
+    def stop_session(self):
+        topic, service_type = self.ROS_SERVICE_STOP_SESSION
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()

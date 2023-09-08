@@ -9,15 +9,15 @@ import {
 import { SystemStateMessage } from '../types/mtmsDevice'
 import { MTMSEventMessage } from '../types/eeg'
 
-const startExperimentService = new ROSLIB.Service({
+const startSessionService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/start_experiment',
-  serviceType: 'mtms_device_interfaces/StartExperiment',
+  name: '/mtms_device/start_session',
+  serviceType: 'mtms_device_interfaces/StartSession',
 })
-const stopExperimentService = new ROSLIB.Service({
+const stopSessionService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/stop_experiment',
-  serviceType: 'mtms_device_interfaces/StopExperiment',
+  name: '/mtms_device/stop_session',
+  serviceType: 'mtms_device_interfaces/StopSession',
 })
 
 const startDeviceService = new ROSLIB.Service({
@@ -64,33 +64,33 @@ export const triggerOutFeedbackSubscriber = new ROSLIB.Topic<TriggerOutFeedbackM
   messageType: 'event_interfaces/TriggerOutFeedback',
 })
 
-export const startExperiment = () => {
+export const startSession = () => {
   const request = new ROSLIB.ServiceRequest()
-  startExperimentService.callService(
+  startSessionService.callService(
     request,
     (response) => {
       if (!response.success) {
-        console.log('ERROR: Failed to start experiment')
+        console.log('ERROR: Failed to start session')
       }
     },
     (error) => {
-      console.log('ERROR: Failed to start experiment')
+      console.log('ERROR: Failed to start session')
       console.error(error)
     },
   )
 }
 
-export const stopExperiment = () => {
+export const stopSession = () => {
   const request = new ROSLIB.ServiceRequest()
-  stopExperimentService.callService(
+  stopSessionService.callService(
     request,
     (response) => {
       if (!response.success) {
-        console.log('ERROR: Failed to stop experiment')
+        console.log('ERROR: Failed to stop session')
       }
     },
     (error) => {
-      console.log('ERROR: Failed to stop experiment')
+      console.log('ERROR: Failed to stop session')
       console.error(error)
     },
   )
@@ -102,11 +102,11 @@ export const startDevice = () => {
     request,
     (response) => {
       if (!response.success) {
-        console.log('ERROR: Failed to start experiment')
+        console.log('ERROR: Failed to start session')
       }
     },
     (error) => {
-      console.log('ERROR: Failed to start experiment')
+      console.log('ERROR: Failed to start session')
       console.error(error)
     },
   )

@@ -22,11 +22,11 @@ classdef ROSProcessor < handle
 
             channel_data = message.eeg_channels;
             time = message.time;
-            first_sample_of_experiment = message.first_sample_of_experiment;
+            first_sample_of_session = message.first_sample_of_session;
 
             %tic
             if obj.data_received <= 5000
-                obj.processor.data_received(channel_data, time, first_sample_of_experiment);
+                obj.processor.data_received(channel_data, time, first_sample_of_session);
             end
             %toc
         end

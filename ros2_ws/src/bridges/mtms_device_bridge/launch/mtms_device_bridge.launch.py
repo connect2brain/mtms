@@ -26,8 +26,8 @@ def generate_launch_description():
 
         "start_device_handler",
         "stop_device_handler",
-        "start_experiment_handler",
-        "stop_experiment_handler",
+        "start_session_handler",
+        "stop_session_handler",
 
         "pulse_handler",
         "trigger_out_handler",

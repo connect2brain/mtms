@@ -6,10 +6,10 @@ class PipelineStage():
     def __init__(self):
         pass
 
-    def init_experiment(self):
+    def init_session(self):
         return []
 
-    def end_experiment(self):
+    def end_session(self):
         return []
 
     def data_received(self, execution_time, state):

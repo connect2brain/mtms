@@ -180,7 +180,7 @@ docker-compose up bag_recorder
 
 - Modify `.env` file in repository root to change the configuration:
 
-* `BAG_NAME`: The bag name for recording the data, e.g., "experiment1".
+* `BAG_NAME`: The bag name for recording the data, e.g., "session1".
 
 - The changes in `.env` file take place after restarting Docker container.
 
