@@ -32,14 +32,14 @@ struct waveform_piece {
 struct matlab_eeg_sample {
   coder::array<double, 1U> channel_data;
   double time;
-  boolean_T first_sample_of_experiment;
+  boolean_T first_sample_of_session;
 };
 
 /* Used by CppProcessor. Separate from matlab_eeg_sample so coder_array.h is not needed in cpp processors. */
 struct eeg_sample {
   std::vector<double> channel_data;
   double time;
-  bool first_sample_of_experiment;
+  bool first_sample_of_session;
 };
 
 struct matlab_event {

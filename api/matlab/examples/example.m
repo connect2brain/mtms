@@ -1,7 +1,7 @@
 api = MTMSApi();
 
 api.start_device();
-api.start_experiment();
+api.start_session();
 
 %%     Single events
 
@@ -134,10 +134,10 @@ emg_channel = 1;
 [amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
 
 
-%% Restart experiment
+%% Restart session
 
-api.stop_experiment()
-api.start_experiment()
+api.stop_session()
+api.start_session()
 
 
 %% Stop device

@@ -9,7 +9,7 @@ from MTMSApi import MTMSApi
 api = MTMSApi()
 
 api.start_device()
-api.start_experiment()
+api.start_session()
 
 
 ## Single events
@@ -191,9 +191,9 @@ amplitude, latency, errors = api.analyze_mep(
 )
 
 
-## Restart experiment
-api.stop_experiment()
-api.start_experiment()
+## Restart session
+api.stop_session()
+api.start_session()
 
 
 ## Stop device

@@ -17,15 +17,15 @@ class BasePipelineStage:
         self.num_of_channels = None
 
     @abstractmethod
-    def init_experiment(self):
+    def init_session(self):
         pass
 
     @abstractmethod
-    def end_experiment(self):
+    def end_session(self):
         pass
 
     @abstractmethod
-    def data_received(self, sample, time, first_sample_of_experiment):
+    def data_received(self, sample, time, first_sample_of_session):
         # Update number of samples received.
         self.num_of_samples += 1
 

@@ -57,10 +57,10 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             obj.isi_samples = obj.FS * obj.isi_seconds;
 
         end
-        function on_init_experiment(obj)
+        function on_init_session(obj)
             obj.set_commands([]);
         end
-        function on_data_received(obj, channel_data, time, first_sample_of_experiment)         
+        function on_data_received(obj, channel_data, time, first_sample_of_session)         
             if obj.estimated && obj.samples_collected == obj.isi_samples
                 obj.estimated = false;
                 obj.samples_collected = 0;
@@ -119,7 +119,7 @@ classdef MatlabProcessor < AbstractMatlabProcessor
             end
 
         end
-        function on_end_experiment(obj)
+        function on_end_session(obj)
             obj.set_commands([]);
         end
     end

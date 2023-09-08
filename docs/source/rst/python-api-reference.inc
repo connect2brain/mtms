@@ -6,8 +6,8 @@ Functions controlling the system state
 .. autosummary::
     MTMSApi.MTMSApi.start_device
     MTMSApi.MTMSApi.stop_device
-    MTMSApi.MTMSApi.start_experiment
-    MTMSApi.MTMSApi.stop_experiment
+    MTMSApi.MTMSApi.start_session
+    MTMSApi.MTMSApi.stop_session
     MTMSApi.MTMSApi.end
 
 Functions querying the system state
@@ -15,7 +15,7 @@ Functions querying the system state
 
 .. autosummary::
     MTMSApi.MTMSApi.get_device_state
-    MTMSApi.MTMSApi.get_experiment_state
+    MTMSApi.MTMSApi.get_session_state
     MTMSApi.MTMSApi.get_voltage
     MTMSApi.MTMSApi.get_temperature
     MTMSApi.MTMSApi.get_pulse_count

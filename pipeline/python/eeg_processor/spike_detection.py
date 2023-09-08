@@ -11,18 +11,18 @@ class PipelineStage(BasePipelineStage):
         super().__init__(auto_enqueue=True, window_size=5000)
         self.event_index = 1
 
-    def init_experiment(self):
-        super().init_experiment()
+    def init_session(self):
+        super().init_session()
 
         return []
 
-    def end_experiment(self):
-        super().end_experiment()
+    def end_session(self):
+        super().end_session()
 
         return []
 
-    def data_received(self, sample, time, first_sample_of_experiment):
-        super().data_received(sample, time, first_sample_of_experiment)
+    def data_received(self, sample, time, first_sample_of_session):
+        super().data_received(sample, time, first_sample_of_session)
 
         is_spiking = analyze_eeg(self.samples.get_buffer())
 

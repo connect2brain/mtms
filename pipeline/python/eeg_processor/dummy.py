@@ -14,16 +14,16 @@ class PipelineStage(BasePipelineStage):
         )
         self.event_index = 0
 
-    def init_experiment(self):
-        super().init_experiment()
+    def init_session(self):
+        super().init_session()
         return []
 
-    def end_experiment(self):
-        super().end_experiment()
+    def end_session(self):
+        super().end_session()
         return []
 
-    def data_received(self, sample, time, first_sample_of_experiment):
-        super().data_received(sample, time, first_sample_of_experiment)
+    def data_received(self, sample, time, first_sample_of_session):
+        super().data_received(sample, time, first_sample_of_session)
 
         if not self.is_ready_to_analyze():
             return []

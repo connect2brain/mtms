@@ -28,7 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Target.msg"
   "msg/PlannerState.msg"
   "msg/ChannelInfo.msg"
-  "msg/Experiment.msg"
+  "msg/Session.msg"
   "msg/PulseSequence.msg"
   "msg/Pulse.msg"
   "msg/Train.msg"

@@ -13,10 +13,10 @@ classdef PeakMatlabProcessor < AbstractMatlabProcessor
             obj.set_auto_enqueue(true);
             obj.peak_detection = Thresholding(zeros(obj.window_size), obj.window_size - 1, 4.5, 0.5);
         end
-        function on_init_experiment(obj)
+        function on_init_session(obj)
             obj.commands = [];
         end
-        function on_data_received(obj, channel_data, time, first_sample_of_experiment)
+        function on_data_received(obj, channel_data, time, first_sample_of_session)
             c3 = channel_data(5);
 
             signal = obj.peak_detection.thresholding_algo(c3);
@@ -30,7 +30,7 @@ classdef PeakMatlabProcessor < AbstractMatlabProcessor
             charge = create_command(obj.events_sent + 2, "charge", 1200);
             obj.set_commands([pulse, charge]);
         end
-        function on_end_experiment(obj)
+        function on_end_session(obj)
             obj.commands = [];
         end
     end
