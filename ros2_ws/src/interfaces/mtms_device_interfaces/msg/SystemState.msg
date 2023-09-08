@@ -7,6 +7,6 @@ SystemError system_error_emergency
 StartupError startup_error
 
 DeviceState device_state
-ExperimentState experiment_state
+SessionState session_state
 
 float64 time

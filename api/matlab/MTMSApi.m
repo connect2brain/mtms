@@ -30,7 +30,7 @@ classdef MTMSApi < handle
         enums
 
         device_states
-        experiment_states
+        session_states
         execution_conditions
 
         event_id
@@ -46,7 +46,7 @@ classdef MTMSApi < handle
         %   * 'node' - An instance of the MTMSApiNode class.
         %   * 'event_id' - A numerical ID, initialized to 0.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
-        %   * 'experiment_states' - A ROS2 message object, of type "mtms_device_interfaces/ExperimentState".
+        %   * 'session_states' - A ROS2 message object, of type "mtms_device_interfaces/SessionState".
         %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
             obj.node = MTMSApiNode();
@@ -54,7 +54,7 @@ classdef MTMSApi < handle
             obj.event_id = 0;
 
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
-            obj.experiment_states = ros2message("mtms_device_interfaces/ExperimentState");
+            obj.session_states = ros2message("mtms_device_interfaces/SessionState");
 
             obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
         end
@@ -92,21 +92,21 @@ classdef MTMSApi < handle
             end
         end
     
-        function start_experiment(obj)
-        % Start an experiment, waiting until the experiment state is reported as started.
+        function start_session(obj)
+        % Start an session, waiting until the session state is reported as started.
         % Does not require any parameters. Does not return any value.
 
-            obj.node.start_experiment();
-            while obj.get_experiment_state() ~= obj.experiment_states.STARTED
+            obj.node.start_session();
+            while obj.get_session_state() ~= obj.session_states.STARTED
     
             end
         end
     
-        function stop_experiment(obj)
-        % Stop an experiment, waiting until the experiment state is reported as stopped.
+        function stop_session(obj)
+        % Stop an session, waiting until the session state is reported as stopped.
         % Does not require any parameters. Does not return any value.
 
-            while obj.get_experiment_state() ~= obj.experiment_states.STOPPED
+            while obj.get_session_state() ~= obj.session_states.STOPPED
     
             end
         end
@@ -190,20 +190,20 @@ classdef MTMSApi < handle
             state = obj.node.system_state.device_state.value;
         end
     
-        function state = get_experiment_state(obj)
-        % Return the current state of the experiment.
+        function state = get_session_state(obj)
+        % Return the current state of the session.
         % Does not require any parameters.
         %
-        % :return: The current state of the experiment. One of the following
+        % :return: The current state of the session. One of the following
         %
-        %   * ExperimentState.STOPPED : Experiment is stopped.
-        %   * ExperimentState.STARTING : Experiment is starting.
-        %   * ExperimentState.STARTED : Experiment is started.
-        %   * ExperimentState.STOPPING : Experiment is stopping.
+        %   * SessionState.STOPPED : Session is stopped.
+        %   * SessionState.STARTING : Session is starting.
+        %   * SessionState.STARTED : Session is started.
+        %   * SessionState.STOPPING : Session is stopping.
         % :rtype: int
 
             obj.node.wait_for_new_state();
-            state = obj.node.system_state.experiment_state.value;
+            state = obj.node.system_state.session_state.value;
         end
     
         function voltage = get_voltage(obj, channel)
@@ -243,7 +243,7 @@ classdef MTMSApi < handle
         end
     
         function time = get_time(obj)
-        % Return the current time from the start of the experiment.
+        % Return the current time from the start of the session.
         % 
         % :return: The current time as seconds.
         % :rtype: float
@@ -265,13 +265,13 @@ classdef MTMSApi < handle
     
         % Events
 
-        function started = is_experiment_started(obj)
-        % Return whether experiment has started (true or false).
+        function started = is_session_started(obj)
+        % Return whether session has started (true or false).
         % 
-        % :return: Whether experiment has started.
+        % :return: Whether session has started.
         % :rtype: bool 
 
-            started = obj.get_experiment_state() == obj.experiment_states.STARTED;
+            started = obj.get_session_state() == obj.session_states.STARTED;
         end
     
         function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion)
@@ -309,7 +309,7 @@ classdef MTMSApi < handle
         %   
         % .. note:: The event ID is incremented with each pulse sent.
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             id = obj.next_event_id();
 
@@ -350,7 +350,7 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each charge sent.
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             id = obj.next_event_id();
 
@@ -386,7 +386,7 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each discharge sent.
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             id = obj.next_event_id();
     
@@ -422,7 +422,7 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each trigger sent.
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             id = obj.next_event_id();
 
@@ -595,7 +595,7 @@ classdef MTMSApi < handle
         % :return: ID of the sent command.
         % :rtype: int
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
@@ -616,7 +616,7 @@ classdef MTMSApi < handle
         % :return: list of event IDs for each sent command
         % :return type: list of ints
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage only defined for %d channels, channel count %d.", ...
                 length(target_voltages), obj.N_CHANNELS));
@@ -643,7 +643,7 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
         
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             target_voltages = zeros(1, obj.N_CHANNELS);
     
@@ -663,7 +663,7 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             assert(length(reverse_polarities) == obj.N_CHANNELS, ...
                 sprintf("Reverse polarities only defined for %d channels, channel count %d.", length(reverse_polarities), obj.N_CHANNELS));
@@ -693,7 +693,7 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
 
-            assert(obj.is_experiment_started(), sprintf("Experiment not started."));
+            assert(obj.is_session_started(), sprintf("Session not started."));
 
             time = obj.get_time() + obj.TIME_EPSILON;
     

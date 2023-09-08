@@ -12,7 +12,7 @@ export const DeviceState = {
   SHUTDOWN: 3,
 }
 
-export const ExperimentState = {
+export const SessionState = {
   STOPPED: 0,
   STARTING: 1,
   STARTED: 2,
@@ -33,12 +33,12 @@ export interface SystemStateMessage extends ROSLIB.Message {
   startup_error: Error
 
   device_state: DeviceStateMessage
-  experiment_state: ExperimentStateMessage
+  session_state: SessionStateMessage
 
   time: number
 }
 
-export interface ExperimentStateMessage {
+export interface SessionStateMessage {
   value: number
 }
 

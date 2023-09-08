@@ -12,15 +12,15 @@ class ProcessorInterface {
 public:
   virtual ~ProcessorInterface() = default;
 
-  virtual std::vector<mtms_device_event> init_experiment();
+  virtual std::vector<mtms_device_event> init_session();
 
-  virtual std::vector<mtms_device_event> end_experiment();
+  virtual std::vector<mtms_device_event> end_session();
 
   virtual std::vector<mtms_device_event>
-  data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
+  data_received(std::vector<double> channel_data, double time, bool first_sample_of_session);
 
   virtual std::vector<eeg_sample>
-  raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
+  raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_session);
 };
 
 #endif //PROCESSOR_INTERFACE_H

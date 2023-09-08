@@ -1,6 +1,6 @@
 from util.bcolors import bcolors
 
-from mtms_device_interfaces.msg import DeviceState, ExperimentState, StartupError
+from mtms_device_interfaces.msg import DeviceState, SessionState, StartupError
 from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
 
 class MTMSApiEnums():
@@ -10,11 +10,11 @@ class MTMSApiEnums():
         (DeviceState.OPERATIONAL, "Operational", bcolors.OKGREEN),
         (DeviceState.SHUTDOWN, "Shutdown", bcolors.WARNING),
     )
-    EXPERIMENT_STATES = (
-        (ExperimentState.STOPPED, "Stopped", bcolors.OKBLUE),
-        (ExperimentState.STARTING, "Starting", bcolors.OKBLUE),
-        (ExperimentState.STARTED, "Started", bcolors.OKGREEN),
-        (ExperimentState.STOPPING, "Stopping", bcolors.WARNING),
+    SESSION_STATES = (
+        (SessionState.STOPPED, "Stopped", bcolors.OKBLUE),
+        (SessionState.STARTING, "Starting", bcolors.OKBLUE),
+        (SessionState.STARTED, "Started", bcolors.OKGREEN),
+        (SessionState.STOPPING, "Stopping", bcolors.WARNING),
     )
     STARTUP_ERRORS = (
         (StartupError.NO_ERROR, "No error", bcolors.OKGREEN),
@@ -129,11 +129,11 @@ class MTMSApiPrinter():
 
         startup_error = state.startup_error
         device_state = state.device_state
-        experiment_state = state.experiment_state
+        session_state = state.session_state
 
         time_str = '{}Time (s){}: {:.2f}'.format(self.TIME_COLOR, bcolors.ENDC, state.time)
         state_str = 'Device state: {}'.format(self.enum_to_str(device_state.value, MTMSApiEnums.DEVICE_STATES))
-        experiment_str = 'Experiment: {}'.format(self.enum_to_str(experiment_state.value, MTMSApiEnums.EXPERIMENT_STATES))
+        session_str = 'Session: {}'.format(self.enum_to_str(session_state.value, MTMSApiEnums.SESSION_STATES))
         startup_error_str = 'Startup error: {}'.format(self.enum_to_str(startup_error.value, MTMSApiEnums.STARTUP_ERRORS))
 
         status_str = ', '.join(filter(None, [
@@ -142,7 +142,7 @@ class MTMSApiPrinter():
             temperatures_str if self.support_temperature else None,
             pulse_counts_str if self.support_pulse_count else None,
             state_str,
-            experiment_str,
+            session_str,
             startup_error_str if startup_error != StartupError.NO_ERROR else None,
         ]))
         print(status_str)

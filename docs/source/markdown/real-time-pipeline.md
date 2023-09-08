@@ -52,8 +52,8 @@ In the real environment, follow these steps.
 7. Start Web UI and rosbridge by running `docker-compose up front rosbridge` from the root of the mtms repository.
 8. Launch EEG processor and other desired pipeline stage nodes.
 9. Start measurement from the EEG deck laptop.
-10.  On web UI, press 'Start device'. Wait until the device starts and then press 'Start experiment'. This starts the experiment and this is when EEG bridge starts publishing data.
-11. When you are ready to end the experiment, press 'Stop experiment' and 'Stop device'.
+10.  On web UI, press 'Start device'. Wait until the device starts and then press 'Start session'. This starts the session and this is when EEG bridge starts publishing data.
+11. When you are ready to end the session, press 'Stop session' and 'Stop device'.
 
 ## Launching nodes
 ### With Docker

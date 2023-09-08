@@ -1,14 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import { startDevice, startExperiment, stopDevice, stopExperiment } from 'services/experiment'
-import { DeviceState, DeviceStateMessage, ExperimentState, ExperimentStateMessage } from 'types/mtmsDevice'
+import { startDevice, startSession, stopDevice, stopSession } from 'services/session'
+import { DeviceState, DeviceStateMessage, SessionState, SessionStateMessage } from 'types/mtmsDevice'
 
 type Props = {
   deviceState: DeviceStateMessage
-  experimentState: ExperimentStateMessage
+  sessionState: SessionStateMessage
 }
 
-export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
+export const SessionControl = ({ deviceState, sessionState }: Props) => {
   const deviceText = () => {
     if (deviceState.value === DeviceState.NOT_OPERATIONAL) return 'Start'
     if (deviceState.value === DeviceState.STARTUP) return 'Starting'
@@ -17,11 +17,11 @@ export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
     return '???'
   }
 
-  const experimentText = () => {
-    if (experimentState.value === ExperimentState.STOPPED) return 'Start'
-    if (experimentState.value === ExperimentState.STARTING) return 'Starting'
-    if (experimentState.value === ExperimentState.STARTED) return 'Stop'
-    if (experimentState.value === ExperimentState.STOPPING) return 'Stopping'
+  const sessionText = () => {
+    if (sessionState.value === SessionState.STOPPED) return 'Start'
+    if (sessionState.value === SessionState.STARTING) return 'Starting'
+    if (sessionState.value === SessionState.STARTED) return 'Stop'
+    if (sessionState.value === SessionState.STOPPING) return 'Stopping'
     return '???'
   }
 
@@ -33,11 +33,11 @@ export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
     }
   }
 
-  const toggleExperiment = () => {
-    if (experimentState.value === ExperimentState.STOPPED) {
-      startExperiment()
-    } else if (experimentState.value === ExperimentState.STARTED) {
-      stopExperiment()
+  const toggleSession = () => {
+    if (sessionState.value === SessionState.STOPPED) {
+      startSession()
+    } else if (sessionState.value === SessionState.STARTED) {
+      stopSession()
     }
   }
 
@@ -51,12 +51,12 @@ export const ExperimentControl = ({ deviceState, experimentState }: Props) => {
       </StyledButton>
       <br />
       <StyledButton
-        onClick={toggleExperiment}
+        onClick={toggleSession}
         disabled={
-          experimentState.value === ExperimentState.STARTING || experimentState.value === ExperimentState.STOPPING
+          sessionState.value === SessionState.STARTING || sessionState.value === SessionState.STOPPING
         }
       >
-        {experimentText()} experiment
+        {sessionText()} session
       </StyledButton>
     </div>
   )

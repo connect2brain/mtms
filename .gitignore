@@ -17,7 +17,7 @@ ros2_ws/src/bridges/rosbridge/build
 ros2_ws/src/bridges/rosbridge/log
 ros2_ws/src/bridges/rosbridge/install
 
-# ROS bags used to store data from, e.g., experiments.
+# ROS bags used to store data from, e.g., sessions.
 data/bags/
 
 # Generated when building ROS messages for MATLAB API by running ros2genmsg (see documentation

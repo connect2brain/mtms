@@ -31,7 +31,7 @@ void print_matlab_event(matlab_event event) {
 
 eeg_interfaces::msg::EegDatapoint convert_matlab_sample_to_sample(matlab_eeg_sample matlab_sample) {
   eeg_interfaces::msg::EegDatapoint sample;
-  sample.first_sample_of_experiment = matlab_sample.first_sample_of_experiment;
+  sample.first_sample_of_session = matlab_sample.first_sample_of_session;
   sample.eeg_channels = matlab_sample.channel_data;
   sample.time = matlab_sample.time;
   return sample;
