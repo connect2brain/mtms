@@ -4,7 +4,7 @@ import { EegBatchMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
 import { Datapoint } from 'components/EegChartStreaming'
 import { WebGLPlot } from 'components/WebGLPlot'
 import styled from 'styled-components'
-import { eventSubscriber } from 'services/experiment'
+import { eventSubscriber } from 'services/session'
 import { objectKeysToCamelCase } from 'utils'
 
 const DataVisualizeWebGL = () => {

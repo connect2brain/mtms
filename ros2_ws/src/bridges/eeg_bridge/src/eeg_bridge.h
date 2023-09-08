@@ -15,7 +15,7 @@
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
-#include "mtms_device_interfaces/msg/experiment_state.hpp"
+#include "mtms_device_interfaces/msg/session_state.hpp"
 
 #define BUFFER_LENGTH 250
 #define MAX_NUMBER_OF_CHANNELS 80
@@ -63,13 +63,13 @@ public:
 
   void handle_sync_trigger(double_t sync_time);
 
-  void reset_experiment();
+  void reset_session();
 
 private:
 
   mtms_device_interfaces::msg::DeviceState device_state;
-  mtms_device_interfaces::msg::ExperimentState experiment_state;
-  bool experiment_been_stopped;
+  mtms_device_interfaces::msg::SessionState session_state;
+  bool session_been_stopped;
   bool system_state_received;
 
   uint16_t sync_index;
@@ -100,7 +100,7 @@ private:
   sockaddr_in socket_other;
   socklen_t socket_length;
   uint8_t buffer[BUFFER_LENGTH];
-  bool first_sample_of_experiment_;
+  bool first_sample_of_session_;
 
   enum ChannelType {
     EEG, EMG

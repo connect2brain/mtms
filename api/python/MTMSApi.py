@@ -10,7 +10,7 @@ import copy
 
 import rclpy
 
-from mtms_device_interfaces.msg import ExperimentState, DeviceState
+from mtms_device_interfaces.msg import SessionState, DeviceState
 from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from MTMSApiNode import MTMSApiNode
@@ -75,24 +75,24 @@ class MTMSApi:
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
             pass
 
-    def start_experiment(self):
+    def start_session(self):
         """
-        Start an experiment, waiting until the experiment state is reported as started.
+        Start an session, waiting until the session state is reported as started.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.start_experiment()
-        while self.get_experiment_state() != ExperimentState.STARTED:
+        self.node.start_session()
+        while self.get_session_state() != SessionState.STARTED:
             pass
 
-    def stop_experiment(self):
+    def stop_session(self):
         """
-        Stop the current experiment, waiting until the experiment state is reported as stopped.
+        Stop the current session, waiting until the session state is reported as stopped.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.stop_experiment()
-        while self.get_experiment_state() != ExperimentState.STOPPED:
+        self.node.stop_session()
+        while self.get_session_state() != SessionState.STOPPED:
             pass
 
     # Wait
@@ -176,22 +176,22 @@ class MTMSApi:
         self.node.wait_for_new_state()
         return self.node.system_state.device_state.value
 
-    def get_experiment_state(self):
+    def get_session_state(self):
         """
-        Return the current state of the experiment.
+        Return the current state of the session.
 
         Returns
         -------
         int
-            The current state of the experiment. One of the following:
+            The current state of the session. One of the following:
 
-            * ExperimentState.STOPPED : Experiment is stopped.
-            * ExperimentState.STARTING : Experiment is starting.
-            * ExperimentState.STARTED : Experiment is started.
-            * ExperimentState.STOPPING : Experiment is stopping.
+            * SessionState.STOPPED : Session is stopped.
+            * SessionState.STARTING : Session is starting.
+            * SessionState.STARTED : Session is started.
+            * SessionState.STOPPING : Session is stopping.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.experiment_state.value
+        return self.node.system_state.session_state.value
 
     def get_voltage(self, channel):
         """
@@ -247,7 +247,7 @@ class MTMSApi:
 
     def get_time(self):
         """
-        Return the current time from the start of the experiment.
+        Return the current time from the start of the session.
 
         Returns
         -------
@@ -273,8 +273,8 @@ class MTMSApi:
         """
         return self.node.get_event_feedback(id)
 
-    def is_experiment_started(self):
-        return self.get_experiment_state() == ExperimentState.STARTED
+    def is_session_started(self):
+        return self.get_session_state() == SessionState.STARTED
 
     # Events
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
@@ -319,7 +319,7 @@ class MTMSApi:
         -----
         The event ID is incremented with each pulse sent.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
@@ -373,7 +373,7 @@ class MTMSApi:
         -----
         The event ID is incremented with each charge sent.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
@@ -424,7 +424,7 @@ class MTMSApi:
         -----
         The event ID is incremented with each discharge sent.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
@@ -475,7 +475,7 @@ class MTMSApi:
         -----
         The event ID is incremented with each trigger sent.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         id = self._next_event_id()
@@ -509,11 +509,11 @@ class MTMSApi:
     def stop_device_without_waiting(self):
         self.node.stop_device()
 
-    def start_experiment_without_waiting(self):
-        self.node.start_experiment()
+    def start_session_without_waiting(self):
+        self.node.start_session()
 
-    def stop_experiment_without_waiting(self):
-        self.node.stop_experiment()
+    def stop_session_without_waiting(self):
+        self.node.stop_session()
 
     def wait_until_not_operational(self):
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
@@ -603,7 +603,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -639,7 +639,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
 
         target_voltages = self.N_CHANNELS * [0]
 
@@ -668,7 +668,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -709,7 +709,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
 
         time = self.get_time() + self.TIME_EPSILON
 
@@ -748,7 +748,7 @@ class MTMSApi:
         int
             ID of the sent command.
         """
-        assert self.is_experiment_started(), "Experiment not started."
+        assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
 
         voltage = self.get_voltage(channel=channel)

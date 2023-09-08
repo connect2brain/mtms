@@ -10,7 +10,7 @@ from .testResult import TestResult
 class StartPulseSequenceNode(Node):
     def __init__(self):
         super().__init__('start_pulse_sequence')
-        self.create_service(StartPulseSequence, '/stimulation/start_experiment', self.start_pulse_sequence_callback)
+        self.create_service(StartPulseSequence, '/stimulation/start_session', self.start_pulse_sequence_callback)
         self.start_time = self.get_clock().now().microseconds / 1e6
         self.start_delay = 1e-4
 
@@ -94,7 +94,7 @@ class StartPulseSequenceNode(Node):
     def burst_voltage_consumption(self, pulses):
         return 100
 
-    # All times are relative to self.start_time, which is the time when the experiment command was received
+    # All times are relative to self.start_time, which is the time when the session command was received
     def calculate_time(self, train_interval, burst_interval, stimulus_interval):
         return self.start_time + self.start_delay + train_interval + burst_interval + stimulus_interval
 
@@ -111,7 +111,7 @@ class StartPulseSequenceNode(Node):
     def start_pulse_sequence_callback(self, request, response):
         self.get_logger().info('Incoming request')
         self.get_logger().info(str(request))
-        pulse_sequence = request.experiment.pulse_sequence
+        pulse_sequence = request.session.pulse_sequence
         sequence_is_possible = self.pulse_sequence_is_possible(pulse_sequence)
         if not sequence_is_possible.result:
             response.success = False

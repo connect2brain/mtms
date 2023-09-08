@@ -1,7 +1,7 @@
 classdef MTMSApiEnums < handle
     properties
         DEVICE_STATES
-        EXPERIMENT_STATES
+        SESSION_STATES
         STARTUP_ERRORS
         PULSE_ERRORS
         CHARGE_ERRORS
@@ -12,7 +12,7 @@ classdef MTMSApiEnums < handle
     methods
         function obj = MTMSApiEnums()
             device_state = ros2message("mtms_device_interfaces/DeviceState");
-            experiment_state = ros2message("mtms_device_interfaces/ExperimentState");
+            session_state = ros2message("mtms_device_interfaces/SessionState");
             startup_error = ros2message("mtms_device_interfaces/StartupError");
 
             pulse_error = ros2message("event_interfaces/PulseError");
@@ -26,11 +26,11 @@ classdef MTMSApiEnums < handle
                 {device_state.OPERATIONAL, "Operational", "green"},
                 {device_state.SHUTDOWN, "Shutdown", "warning"}
             };
-            obj.EXPERIMENT_STATES = {
-                {experiment_state.STOPPED, "Stopped", "blue"},
-                {experiment_state.STARTING, "Starting", "blue"},
-                {experiment_state.STARTED, "Started", "green"},
-                {experiment_state.STOPPING, "Stopping", "warning"},
+            obj.SESSION_STATES = {
+                {session_state.STOPPED, "Stopped", "blue"},
+                {session_state.STARTING, "Starting", "blue"},
+                {session_state.STARTED, "Started", "green"},
+                {session_state.STOPPING, "Stopping", "warning"},
             };
             obj.STARTUP_ERRORS = {
                 {startup_error.NO_ERROR, "No error", "green"},

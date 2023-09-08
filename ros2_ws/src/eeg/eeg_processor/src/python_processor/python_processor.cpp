@@ -54,12 +54,12 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   }
 
   function_name_data_received = PyUnicode_FromString("data_received");
-  function_name_init_experiment = PyUnicode_FromString("init_experiment");
-  function_name_end_experiment = PyUnicode_FromString("end_experiment");
+  function_name_init_session = PyUnicode_FromString("init_session");
+  function_name_end_session = PyUnicode_FromString("end_session");
 }
 
 std::vector<Event> PythonProcessor::init() {
-  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_init_experiment, nullptr);
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_init_session, nullptr);
 
   /* Check Python script for crashing. */
   if (result == nullptr) {
@@ -71,7 +71,7 @@ std::vector<Event> PythonProcessor::init() {
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in calling method for initializing experiment. Ensure that the return value is a list." << std::endl;
+    std::cout << "Error in calling method for initializing session. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
@@ -84,8 +84,8 @@ std::vector<Event> PythonProcessor::init() {
   return events_out;
 }
 
-std::vector<Event> PythonProcessor::end_experiment() {
-  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_end_experiment, nullptr);
+std::vector<Event> PythonProcessor::end_session() {
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_end_session, nullptr);
 
   /* Check Python script for crashing. */
   if (result == nullptr) {
@@ -97,7 +97,7 @@ std::vector<Event> PythonProcessor::end_experiment() {
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in calling method for ending experiment. Ensure that the return value is a list." << std::endl;
+    std::cout << "Error in calling method for ending session. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
@@ -363,9 +363,9 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
     auto time_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "time");
     sample.time = PyFloat_AsDouble(time_as_pyobject);
 
-    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_experiment");
+    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_session");
     auto v = PyLong_AsLong(first_as_pyobject);
-    sample.first_sample_of_experiment = v == 1;
+    sample.first_sample_of_session = v == 1;
 
     new_samples.push_back(sample);
   }
@@ -377,14 +377,14 @@ std::vector<eeg_interfaces::msg::EegDatapoint>
 PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
-  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+  auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
   PyObject* result = PyObject_CallMethodObjArgs(
       python_instance,
       function_name_data_received,
       list,
       time,
-      first_sample_of_experiment,
+      first_sample_of_session,
       nullptr
   );
 
@@ -404,7 +404,7 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
 
   Py_DECREF(list);
   Py_DECREF(time);
-  Py_DECREF(first_sample_of_experiment);
+  Py_DECREF(first_sample_of_session);
 
   std::vector<PyObject *> samples;
 
@@ -463,14 +463,14 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
 std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
-  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+  auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
   PyObject* result = PyObject_CallMethodObjArgs(
     python_instance,
     function_name_data_received,
     list,
     time,
-    first_sample_of_experiment,
+    first_sample_of_session,
     nullptr
   );
 
@@ -490,7 +490,7 @@ std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::Ee
 
   Py_DECREF(list);
   Py_DECREF(time);
-  Py_DECREF(first_sample_of_experiment);
+  Py_DECREF(first_sample_of_session);
 
   std::vector<PyObject *> events;
 

@@ -18,7 +18,7 @@ public:
   std::vector<eeg_interfaces::msg::EegDatapoint> raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
   std::vector<Event> cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
-  std::vector<Event> end_experiment();
+  std::vector<Event> end_session();
 
 private:
   static PyObject *convert_vector_to_pyobject(std::vector<double> data);
@@ -42,8 +42,8 @@ private:
   PyObject *python_instance;
 
   PyObject *function_name_data_received;
-  PyObject *function_name_init_experiment;
-  PyObject *function_name_end_experiment;
+  PyObject *function_name_init_session;
+  PyObject *function_name_end_session;
 };
 
 

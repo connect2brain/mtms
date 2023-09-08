@@ -1,4 +1,4 @@
-Initialize device and experiment
+Initialize device and session
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block::
@@ -13,7 +13,7 @@ Initialize device and experiment
     api = MTMSApi()
 
     api.start_device()
-    api.start_experiment()
+    api.start_session()
 
 
 Execute single events
@@ -230,13 +230,13 @@ Targeting combined with MEP analysis
     )
 
 
-Restart experiment
+Restart session
 ~~~~~~~~~~~~~~~~~~
 
 .. code-block::
 
-    api.stop_experiment()
-    api.start_experiment()
+    api.stop_session()
+    api.start_session()
 
 
 Stop device
@@ -261,7 +261,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
     api = MTMSApi()
 
     api.start_device()
-    api.start_experiment()
+    api.start_session()
 
     channel = 1
     target_voltage = 200
@@ -290,7 +290,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
     api.wait_until(time)
 
-    api.stop_experiment()
+    api.stop_session()
     api.stop_device()
 
     api.end()

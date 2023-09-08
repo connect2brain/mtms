@@ -7,7 +7,7 @@
 
 # Execution condition determines when the event is executed:
 
-# Executed when the time counter of the mTMS device reaches time_us (measured from the start of experiment).
+# Executed when the time counter of the mTMS device reaches time_us (measured from the start of session).
 #
 uint8 TIMED=0
 
