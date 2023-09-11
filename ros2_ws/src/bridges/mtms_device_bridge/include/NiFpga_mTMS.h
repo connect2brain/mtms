@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "4F17FB29E9B36BE23E37408BDF23D1C8";
+static const char* const NiFpga_mTMS_Signature = "6E46F1D3DB424D61D160E1E4F18C6DC2";
 
 #if NiFpga_Cpp
 extern "C"
@@ -48,7 +48,7 @@ typedef enum
    NiFpga_mTMS_IndicatorU8_Channel5VersionminorDC = 0x18076,
    NiFpga_mTMS_IndicatorU8_Channel5VersionpatchDC = 0x1808A,
    NiFpga_mTMS_IndicatorU8_Devicestate = 0x1801E,
-   NiFpga_mTMS_IndicatorU8_Experimentstate = 0x180EE,
+   NiFpga_mTMS_IndicatorU8_Sessionstate = 0x180EE,
    NiFpga_mTMS_IndicatorU8_Startuperror = 0x18026,
    NiFpga_mTMS_IndicatorU8_Startupstate = 0x18102,
    NiFpga_mTMS_IndicatorU8_VersionmajorCI = 0x180C6,
@@ -107,10 +107,11 @@ typedef enum
 typedef enum
 {
    NiFpga_mTMS_ControlBool_Eventtrigger = 0x18006,
+   NiFpga_mTMS_ControlBool_Readytostimulate = 0x18112,
    NiFpga_mTMS_ControlBool_Startdevice = 0x180E6,
-   NiFpga_mTMS_ControlBool_Startexperiment = 0x18002,
+   NiFpga_mTMS_ControlBool_Startsession = 0x18002,
    NiFpga_mTMS_ControlBool_Stopdevice = 0x180EA,
-   NiFpga_mTMS_ControlBool_Stopexperiment = 0x180E2
+   NiFpga_mTMS_ControlBool_Stopsession = 0x180E2
 } NiFpga_mTMS_ControlBool;
 
 typedef enum
@@ -126,8 +127,8 @@ typedef enum
 
 typedef enum
 {
-   NiFpga_mTMS_ControlU32_Experimentstarttriggerdurationticks = 0x180F0,
-   NiFpga_mTMS_ControlU32_Maximumpulsespertimetimeticks = 0x180DC
+   NiFpga_mTMS_ControlU32_Maximumpulsespertimetimeticks = 0x180DC,
+   NiFpga_mTMS_ControlU32_Sessionstarttriggerdurationticks = 0x180F0
 } NiFpga_mTMS_ControlU32;
 
 typedef enum
