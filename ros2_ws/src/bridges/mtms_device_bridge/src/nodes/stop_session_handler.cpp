@@ -1,0 +1,58 @@
+#include "rclcpp/rclcpp.hpp"
+
+#include "mtms_device_interfaces/srv/stop_session.hpp"
+
+#include "NiFpga_mTMS.h"
+#include "fpga.h"
+#include "memory_utils.h"
+#include "scheduling_utils.h"
+
+void stop_session([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopSession::Request> request,
+                     std::shared_ptr<mtms_device_interfaces::srv::StopSession::Response> response) {
+
+  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopsession, true));
+
+  response->success = true;
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Stopped session");
+}
+
+class StopSession : public rclcpp::Node {
+public:
+  StopSession()
+      : Node("stop_session") {
+    stop_session_service_ = this->create_service<mtms_device_interfaces::srv::StopSession>("/mtms_device/stop_session",
+                                                                                          stop_session);
+  }
+
+private:
+  rclcpp::Service<mtms_device_interfaces::srv::StopSession>::SharedPtr stop_session_service_;
+};
+
+int main(int argc, char **argv) {
+  if (!init_fpga()) {
+    return 1;
+  }
+
+  rclcpp::init(argc, argv);
+
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<StopSession>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Stop session handler ready.");
+
+
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+
+  close_fpga();
+}

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
-import { ExperimentControl } from '../components/ExperimentControl'
+import { SessionControl } from '../components/SessionControl'
 import { SystemState } from '../components/SystemState'
 import Targets from './Targets'
 import DataVisualize from './DataVisualize'
@@ -13,7 +13,7 @@ export const MultipleViews = () => {
   const [displayPlot, setDisplayPlot] = useState(false)
   const [displayWebGLPlot, setDisplayWebGLPlot] = useState(false)
   const [displayTargets, setDisplayTargets] = useState(false)
-  const [displayExperiment, setDisplayExperiment] = useState(false)
+  const [displaySession, setDisplaySession] = useState(false)
 
   const toggleView = (enabled: boolean, toggleFunction: React.Dispatch<React.SetStateAction<boolean>>) => {
     toggleFunction(!enabled)

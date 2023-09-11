@@ -31,7 +31,7 @@ class MockEegBridge : public rclcpp::Node {
 
         auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-        publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
+        publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>("/eeg/raw", 10);
         publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
 
         this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
@@ -66,11 +66,11 @@ class MockEegBridge : public rclcpp::Node {
         }
 
         if (this->time_ == 0) {
-          message.first_sample_of_experiment = true;
+          message.first_sample_of_session = true;
         }
 
         else {
-          message.first_sample_of_experiment = false;
+          message.first_sample_of_session = false;
         }
 
         message.time = this->time_;

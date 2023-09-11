@@ -2,6 +2,8 @@ from ..base.base_pipeline_stage import BasePipelineStage, Charge, Discharge, Pul
 from ..base.thresholding import RealtimePeakDetection
 
 
+# XXX: Bitrotten as of July 2023, needs to be updated and cleaned up.
+
 class PipelineStage(BasePipelineStage):
     def __init__(self):
         self.eeg_data_index = 0
@@ -12,12 +14,12 @@ class PipelineStage(BasePipelineStage):
         self.peak_over = True
         self.peaks_detected = 0
 
-    def init_experiment(self):
-        print("in python init experiment")
+    def init_session(self):
+        print("in python init session")
         self.file = open('./data/eeg_python.csv', 'w')
         self.file.write('c3,filtered,peak\n')
 
-    def end_experiment(self):
+    def end_session(self):
         if self.file:
             self.file.close()
             print("Closed file")
@@ -31,7 +33,7 @@ class PipelineStage(BasePipelineStage):
         combined = [c3] + others
         return sum(combined) / len(combined)
 
-    def data_received(self, data, time, first_sample_of_experiment):
+    def data_received(self, data, time, first_sample_of_session):
         self.eeg_data_index += 1
 
         c3 = data[4]

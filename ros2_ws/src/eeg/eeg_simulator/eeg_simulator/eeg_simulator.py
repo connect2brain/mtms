@@ -1,6 +1,7 @@
 import socket
 import struct
 import os
+import time
 
 import rclpy
 from rclpy.node import Node
@@ -102,7 +103,7 @@ class EegDeviceSimulator():
 
 class DataProvider(Node):
 
-    EEG_RAW_TOPIC = '/eeg/raw_data'
+    EEG_RAW_TOPIC = '/eeg/raw'
     EEG_INFO_TOPIC = '/eeg/info'
     EEG_TRIGGER_RECEIVED_TOPIC = '/eeg/trigger_received'
     SIMULATE_EEG_DEVICE = True
@@ -170,6 +171,13 @@ class DataProvider(Node):
 
         self.data_path = os.path.join(self.DATA_DIRECTORY, self.data_file_name)
 
+        # HACK: When EEG simulator is started simultaneously with EEG processor, it may start streaming already
+        #   before EEG processor is up and running. Hence, wait for several seconds here to ensure that EEG
+        #   processor is running. The correct fix would be to make starting and stopping the EEG simulator more
+        #   explicit, e.g., so that it is done using start-session ROS service, as it is done with the real
+        #   EEG device.
+        time.sleep(3)
+
         if self.simulate_eeg_device:
             self.simulated_eeg_device = EegDeviceSimulator(UDP_IP, UDP_PORT, self.data_path, self.sampling_frequency,
                                                            self.eeg_channels, self.loop, self.get_logger())
@@ -201,16 +209,16 @@ class DataProvider(Node):
             self.get_logger().info("Published all samples from file")
 
         data = [float(number) for number in line.split(",")]
-        assert self.total_channels < len(data), "Number of channels exceeds {}".format(len(data))
+        assert self.total_channels <= len(data), "Total # of EEG and EMG channels ({}) exceeds # of channels in data ({})".format(self.total_channels, len(data))
 
         msg = EegDatapoint()
         msg.eeg_channels = data[:self.eeg_channels]
         msg.emg_channels = data[self.eeg_channels:self.total_channels]
-        msg.first_sample_of_experiment = False if self.current_time > 0 else True
+        msg.first_sample_of_session = False if self.current_time > 0 else True
         msg.time = self.current_time
 
         self.eeg_publisher.publish(msg)
-        self.get_logger().info("Published EEG datapoint in topic {} with timestamp {:.2f} s.".format(self.EEG_RAW_TOPIC, self.current_time))
+        self.get_logger().info("Published EEG datapoint in topic {} with timestamp {:.4f} s.".format(self.EEG_RAW_TOPIC, self.current_time))
 
         self.current_time += self.sampling_period
 

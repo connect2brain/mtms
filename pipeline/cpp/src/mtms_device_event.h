@@ -21,7 +21,7 @@ struct waveform_piece {
 struct eeg_sample {
   std::vector<double> channel_data;
   double time;
-  bool first_sample_of_experiment;
+  bool first_sample_of_session;
 };
 
 struct mtms_device_event {

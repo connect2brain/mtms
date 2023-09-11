@@ -12,15 +12,15 @@ class CppProcessorInterface {
 public:
   virtual ~CppProcessorInterface() = default;
 
-  virtual std::vector<matlab_event> init_experiment();
+  virtual std::vector<matlab_event> init_session();
 
-  virtual std::vector<matlab_event> end_experiment();
+  virtual std::vector<matlab_event> end_session();
 
   virtual std::vector<matlab_event>
-  data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
+  data_received(std::vector<double> channel_data, double time, bool first_sample_of_session);
 
   virtual std::vector<eeg_sample>
-  raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment);
+  raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_session);
 
 };
 

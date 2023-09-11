@@ -5,7 +5,7 @@ import {
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
   systemStateSubscriber,
-} from 'services/experiment'
+} from 'services/session'
 import { SystemStateMessage } from 'types/mtmsDevice'
 import {
   PulseFeedbackMessage,
@@ -15,7 +15,7 @@ import {
   TriggerOutFeedbackMessage,
 } from 'types/event'
 import { SystemState } from 'components/SystemState'
-import { ExperimentControl } from 'components/ExperimentControl'
+import { SessionControl } from 'components/SessionControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
@@ -77,7 +77,7 @@ const initialState = {
   device_state: {
     value: 0,
   },
-  experiment_state: {
+  session_state: {
     value: 0,
   },
   time: 0,
@@ -130,7 +130,7 @@ export const SystemControl = () => {
 
   return (
     <div>
-      <ExperimentControl deviceState={systemState.device_state} experimentState={systemState.experiment_state} />
+      <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
       <SystemState systemState={systemState} />
       <hr />
       <EventFeedbacks feedback={feedback} />

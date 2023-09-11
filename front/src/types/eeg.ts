@@ -11,13 +11,13 @@ export interface EegDatapoint {
   eeg_channels: number[]
   emg_channels: number[]
   time: number
-  first_sample_of_experiment: boolean
+  first_sample_of_session: boolean
 }
 
 export interface EegDatapointMessage extends ROSLIB.Message {
   eeg_channels: number[]
   time: number
-  first_sample_of_experiment: boolean
+  first_sample_of_session: boolean
 }
 
 export interface EegBatch extends ROSLIB.Message {

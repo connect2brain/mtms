@@ -12,7 +12,7 @@
 - ADD: Linear correction for discharge controllers in Aalto device.
 
 ### 0.4.7
-- FIX: Time counter was reset at the wrong time, before experiment started.
+- FIX: Time counter was reset at the wrong time, before session started.
 
 ### 0.4.6
 - MOD: Send sync out signal at periodic intervals.

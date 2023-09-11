@@ -29,7 +29,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './data/bags:/app/data/bags'
+      - './projects/$PROJECT_NAME:/app/project'
     network_mode: host
 
   bag_recorder:
@@ -84,9 +84,11 @@ services:
     entrypoint: 'bash /app/ros2_ws/eeg_preprocessor_entrypoint.sh'
     env_file:
       - ${ENV_FILE}
+    environment:
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
+      - './projects:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
-      - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -97,9 +99,11 @@ services:
       dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
     env_file:
       - ${ENV_FILE}
+    environment:
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
+      - './projects:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
-      - './measurements:/app/ros2_ws/measurements'
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -161,6 +165,8 @@ services:
       dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
     env_file:
       - ${ENV_FILE}
+    environment:
+      - DISPLAY
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - './data/neuronavigation:/app/data/neuronavigation/'
@@ -217,10 +223,13 @@ services:
     entrypoint: 'bash /app/ros2_ws/stimulus_presenter_entrypoint.sh'
     env_file:
       - ${ENV_FILE}
+    environment:
+      - DISPLAY
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - './projects:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
-      - './measurements:/app/ros2_ws/measurements'
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host

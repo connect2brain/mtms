@@ -18,7 +18,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 
   if (python_module == nullptr) {
     PyErr_Print();
-    std::cerr << "Failed to import module: " << script_name << std::endl;
+    std::cerr << "Failed to import Python module: " << script_name << std::endl;
     return;
   }
   Py_DECREF(script_name);
@@ -26,7 +26,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
   python_module_dict = PyModule_GetDict(python_module);
   if (python_module_dict == nullptr) {
     PyErr_Print();
-    std::cerr << "Fails to get module dictionary from: " << python_module << std::endl;
+    std::cerr << "Failed to get module dictionary from: " << python_module << std::endl;
     return;
   }
   Py_DECREF(python_module);
@@ -35,7 +35,7 @@ PythonProcessor::PythonProcessor(std::string script_path) {
 
   if (python_class == nullptr) {
     PyErr_Print();
-    std::cerr << "Failed to get class" << std::endl;
+    std::cerr << "Failed to get class PipelineStage." << std::endl;
     return;
   }
   Py_DECREF(python_module_dict);
@@ -45,20 +45,21 @@ PythonProcessor::PythonProcessor(std::string script_path) {
     if (python_instance == NULL) {
       PyErr_Print();
     }
-
     Py_DECREF(python_class);
+
   } else {
-    std::cout << "Cannot instantiate python class" << std::endl;
+    std::cout << "Cannot instantiate Python class." << std::endl;
     Py_DECREF(python_class);
     return;
   }
-  python_data_received_name = PyUnicode_FromString("data_received");
-  python_init_name = PyUnicode_FromString("init_experiment");
-  python_end_name = PyUnicode_FromString("end_experiment");
+
+  function_name_data_received = PyUnicode_FromString("data_received");
+  function_name_init_session = PyUnicode_FromString("init_session");
+  function_name_end_session = PyUnicode_FromString("end_session");
 }
 
 std::vector<Event> PythonProcessor::init() {
-  PyObject* result = PyObject_CallMethodObjArgs(python_instance, python_init_name, nullptr);
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_init_session, nullptr);
 
   /* Check Python script for crashing. */
   if (result == nullptr) {
@@ -70,7 +71,7 @@ std::vector<Event> PythonProcessor::init() {
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in call init method. Ensure you are returning a list" << std::endl;
+    std::cout << "Error in calling method for initializing session. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
@@ -83,8 +84,8 @@ std::vector<Event> PythonProcessor::init() {
   return events_out;
 }
 
-std::vector<Event> PythonProcessor::end_experiment() {
-  PyObject* result = PyObject_CallMethodObjArgs(python_instance, python_end_name, nullptr);
+std::vector<Event> PythonProcessor::end_session() {
+  PyObject* result = PyObject_CallMethodObjArgs(python_instance, function_name_end_session, nullptr);
 
   /* Check Python script for crashing. */
   if (result == nullptr) {
@@ -96,7 +97,7 @@ std::vector<Event> PythonProcessor::end_experiment() {
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in call end_experiment method. Ensure you are returning a list" << std::endl;
+    std::cout << "Error in calling method for ending session. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
@@ -108,7 +109,6 @@ std::vector<Event> PythonProcessor::end_experiment() {
   auto events_out = convert_pyobject_events_to_events(events);
   return events_out;
 }
-
 
 PyObject *PythonProcessor::convert_vector_to_pyobject(std::vector<double> data) {
   PyObject *l = PyList_New(data.size());
@@ -135,27 +135,26 @@ std::vector<double> PythonProcessor::convert_pyobject_to_vector(PyObject *data) 
   return l;
 }
 
-
 event_interfaces::msg::EventInfo PythonProcessor::parse_event_info(PyObject *event) {
   auto event_info_as_pyobject = PyObject_GetAttrString(event, "event_info");
   if (event_info_as_pyobject == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event_info_as_pyobject" << std::endl;
+    std::cout << "Error in event_info_as_pyobject." << std::endl;
   }
   auto id = PyDict_GetItemString(event_info_as_pyobject, "id");
   if (id == nullptr) {
     PyErr_Print();
-    std::cout << "Error on id" << std::endl;
+    std::cout << "Error in event info: id." << std::endl;
   }
   auto execution_condition = PyDict_GetItemString(event_info_as_pyobject, "execution_condition");
   if (execution_condition == nullptr) {
     PyErr_Print();
-    std::cout << "Error on execution_condition" << std::endl;
+    std::cout << "Error in event info: execution_condition." << std::endl;
   }
   auto execution_time = PyDict_GetItemString(event_info_as_pyobject, "execution_time");
   if (execution_time == nullptr) {
     PyErr_Print();
-    std::cout << "Error on execution_time" << std::endl;
+    std::cout << "Error in event info: execution_time" << std::endl;
   }
 
   event_interfaces::msg::EventInfo event_info;
@@ -175,13 +174,13 @@ event_interfaces::msg::Charge PythonProcessor::parse_charge(PyObject *event) {
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event channel" << std::endl;
+    std::cout << "Error in charge event: channel." << std::endl;
   }
 
   auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
   if (target_voltage == nullptr) {
     PyErr_Print();
-    std::cout << "Error on target_voltage channel" << std::endl;
+    std::cout << "Error in charge event: target_voltage." << std::endl;
   }
 
   charge.channel = PyLong_AsUnsignedLong(channel);
@@ -201,13 +200,13 @@ event_interfaces::msg::Discharge PythonProcessor::parse_discharge(PyObject *even
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event channel" << std::endl;
+    std::cout << "Error in discharge event: channel." << std::endl;
   }
 
   auto target_voltage = PyObject_GetAttrString(event, "target_voltage");
   if (target_voltage == nullptr) {
     PyErr_Print();
-    std::cout << "Error on target_voltage" << std::endl;
+    std::cout << "Error in discharge event: target_voltage." << std::endl;
   }
 
   discharge.channel = PyLong_AsUnsignedLong(channel);
@@ -228,13 +227,13 @@ event_interfaces::msg::TriggerOut PythonProcessor::parse_trigger_out(PyObject *e
 
   if (port == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event port" << std::endl;
+    std::cout << "Error in trigger out event: port." << std::endl;
   }
 
   auto duration_us = PyObject_GetAttrString(event, "duration_us");
   if (duration_us == nullptr) {
     PyErr_Print();
-    std::cout << "Error on duration_us" << std::endl;
+    std::cout << "Error in trigger out event: duration_us." << std::endl;
   }
 
   trigger_out.port = PyLong_AsUnsignedLong(port);
@@ -253,7 +252,7 @@ event_interfaces::msg::Stimulus PythonProcessor::parse_stimulus(PyObject *event)
   auto state = PyObject_GetAttrString(event, "state");
   if (state == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event state" << std::endl;
+    std::cout << "Error in stimulus event: state." << std::endl;
   }
   stimulus.state = PyLong_AsUnsignedLong(state);
   stimulus.event_info = parse_event_info(event);
@@ -269,13 +268,13 @@ event_interfaces::msg::Pulse PythonProcessor::parse_pulse(PyObject *event) {
   auto channel = PyObject_GetAttrString(event, "channel");
   if (channel == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event channel" << std::endl;
+    std::cout << "Error in pulse event: channel." << std::endl;
   }
 
   auto waveform = PyObject_GetAttrString(event, "waveform");
   if (waveform == nullptr) {
     PyErr_Print();
-    std::cout << "Error on event waveform" << std::endl;
+    std::cout << "Error in pulse event: waveform." << std::endl;
   }
 
   for (auto i = 0; i < PyList_Size(waveform); i++) {
@@ -356,7 +355,7 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
 
     if (!PyList_Check(channel_data_as_pyobject)) {
       RCLCPP_ERROR(rclcpp::get_logger("eeg_preprocessor"),
-                   "Error in call raw_eeg_received method. Ensure you are returning a list from python pre processor");
+                   "Error in calling method for receiving data in EEG preprocessor stage. Ensure that each returned sample is a list.");
       PyErr_Print();
     }
     sample.eeg_channels = convert_pyobject_to_vector(channel_data_as_pyobject);
@@ -364,30 +363,28 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
     auto time_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "time");
     sample.time = PyFloat_AsDouble(time_as_pyobject);
 
-    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_experiment");
+    auto first_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "first_sample_of_session");
     auto v = PyLong_AsLong(first_as_pyobject);
-    sample.first_sample_of_experiment = v == 1;
+    sample.first_sample_of_session = v == 1;
 
     new_samples.push_back(sample);
-
   }
 
   return new_samples;
-
 }
 
 std::vector<eeg_interfaces::msg::EegDatapoint>
 PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
-  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+  auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
   PyObject* result = PyObject_CallMethodObjArgs(
       python_instance,
-      python_data_received_name,
+      function_name_data_received,
       list,
       time,
-      first_sample_of_experiment,
+      first_sample_of_session,
       nullptr
   );
 
@@ -401,13 +398,13 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in call raw_eeg_received method. Ensure you are returning a list" << std::endl;
+    std::cout << "Error in calling method for receiving data in EEG preprocessor stage. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
   Py_DECREF(list);
   Py_DECREF(time);
-  Py_DECREF(first_sample_of_experiment);
+  Py_DECREF(first_sample_of_session);
 
   std::vector<PyObject *> samples;
 
@@ -420,7 +417,6 @@ PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   Py_DECREF(result);
 
   return cleaned_samples;
-
 }
 
 std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {
@@ -429,7 +425,7 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
 
   PyObject* result = PyObject_CallMethodObjArgs(
       python_instance,
-      python_data_received_name,
+      function_name_data_received,
       time,
       state,
       nullptr
@@ -445,7 +441,7 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in call present_stimulus_received method. Ensure you are returning a list" << std::endl;
+    std::cout << "Error in calling method for receiving data in present stimulus stage. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
@@ -464,18 +460,17 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
   return events_out;
 }
 
-
 std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
   auto list = convert_vector_to_pyobject(sample.eeg_channels);
   auto time = PyFloat_FromDouble(sample.time);
-  auto first_sample_of_experiment = PyBool_FromLong(sample.first_sample_of_experiment ? 1L : 0L);
+  auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
   PyObject* result = PyObject_CallMethodObjArgs(
     python_instance,
-    python_data_received_name,
+    function_name_data_received,
     list,
     time,
-    first_sample_of_experiment,
+    first_sample_of_session,
     nullptr
   );
 
@@ -489,13 +484,13 @@ std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::Ee
   }
 
   if (!PyList_Check(result)) {
-    std::cout << "Error in call data_received method. Ensure you are returning a list" << std::endl;
+    std::cout << "Error in calling method for receiving data in EEG processor stage. Ensure that the return value is a list." << std::endl;
     PyErr_Print();
   }
 
   Py_DECREF(list);
   Py_DECREF(time);
-  Py_DECREF(first_sample_of_experiment);
+  Py_DECREF(first_sample_of_session);
 
   std::vector<PyObject *> events;
 

@@ -4,7 +4,7 @@ import Providers from './providers/Providers'
 import styled from 'styled-components'
 import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
-import Experiment from './views/Experiment'
+import Session from './views/Session'
 import DataVisualize from './views/DataVisualize'
 import { MultipleViews } from './views/MultipleViews'
 import { Header } from './styles/StyledTypography'
@@ -20,7 +20,7 @@ const App = () => {
         <Routes>
           <Route path='/' element={<MultipleViews />} />
           <Route path='/targets' element={<Targets />} />
-          <Route path='/experiment' element={<Experiment />} />
+          <Route path='/session' element={<Session />} />
           <Route path='/plot' element={<DataVisualize />} />
         </Routes>
       </Wrapper>
