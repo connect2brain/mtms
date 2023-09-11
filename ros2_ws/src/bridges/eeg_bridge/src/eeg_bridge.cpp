@@ -49,7 +49,7 @@ const uint8_t MEASUREMENT_END_PACKET_ID = 4;
 const uint8_t TRIGGER_A_IN = 2;
 const uint8_t TRIGGER_B_IN = 8;
 
-const std::string EEG_RAW_TOPIC = "/eeg/raw_data";
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
 
@@ -77,27 +77,27 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
      Instead of trying to clean it up, we should ask for the manufacturer to provide more detailed
      information about individual channels in the measurement start packet. */
 
-  descriptor.description = "EEG channel count for primary amplifier";
-  this->declare_parameter("eeg_channels_primary_amplifier", NULL, descriptor);
-  this->get_parameter("eeg_channels_primary_amplifier", this->eeg_channels_primary_amplifier_);
+  descriptor.description = "EEG channel count for amplifier 1";
+  this->declare_parameter("number_of_eeg_channels_amplifier_1", NULL, descriptor);
+  this->get_parameter("number_of_eeg_channels_amplifier_1", this->number_of_eeg_channels_amplifier_1_);
 
-  descriptor.description = "EMG channel count for primary amplifier";
-  this->declare_parameter("emg_channels_primary_amplifier", NULL, descriptor);
-  this->get_parameter("emg_channels_primary_amplifier", this->emg_channels_primary_amplifier_);
+  descriptor.description = "EMG channel count for amplifier 1";
+  this->declare_parameter("number_of_emg_channels_amplifier_1", NULL, descriptor);
+  this->get_parameter("number_of_emg_channels_amplifier_1", this->number_of_emg_channels_amplifier_1_);
 
-  descriptor.description = "EEG channel count for secondary amplifier";
-  this->declare_parameter("eeg_channels_secondary_amplifier", NULL, descriptor);
-  this->get_parameter("eeg_channels_secondary_amplifier", this->eeg_channels_secondary_amplifier_);
+  descriptor.description = "EEG channel count for amplifier 2";
+  this->declare_parameter("number_of_eeg_channels_amplifier_2", NULL, descriptor);
+  this->get_parameter("number_of_eeg_channels_amplifier_2", this->number_of_eeg_channels_amplifier_2_);
 
-  descriptor.description = "EMG channel count for secondary amplifier";
-  this->declare_parameter("emg_channels_secondary_amplifier", NULL, descriptor);
-  this->get_parameter("emg_channels_secondary_amplifier", this->emg_channels_secondary_amplifier_);
+  descriptor.description = "EMG channel count for amplifier 2";
+  this->declare_parameter("number_of_emg_channels_amplifier_2", NULL, descriptor);
+  this->get_parameter("number_of_emg_channels_amplifier_2", this->number_of_emg_channels_amplifier_2_);
 
   this->set_channel_types();
 
   this->init_socket();
 
-  this->reset_experiment();
+  this->reset_session();
 }
 
 void EegBridge::create_publishers() {
@@ -121,21 +121,23 @@ void EegBridge::create_publishers() {
 }
 
 void EegBridge::subscribe_to_system_state() {
-  this->experiment_been_stopped = false;
+  this->session_been_stopped = false;
   this->system_state_received = false;
 
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
     this->system_state_received = true;
-    experiment_state = message->experiment_state;
 
-    /* Stopping an experiment takes several seconds, whereas if another experiment is started immediately after the previous
+    session_state = message->session_state;
+    device_state = message->device_state;
+
+    /* Stopping a session takes several seconds, whereas if another session is started immediately after the previous
        one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
-       to ensure that we notice if the experiment is stopped. */
-    if (experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPING ||
-        experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+       to ensure that we notice if the session is stopped. */
+    if (session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
+        session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED) {
 
-      this->reset_experiment();
-      this->experiment_been_stopped = true;
+      this->reset_session();
+      this->session_been_stopped = true;
     }
   };
 
@@ -168,16 +170,16 @@ void EegBridge::subscribe_to_system_state() {
 }
 
 void EegBridge::set_channel_types() {
-  uint8_t channels_primary = this->eeg_channels_primary_amplifier_ + this->emg_channels_primary_amplifier_;
-  uint8_t channels_secondary = this->eeg_channels_secondary_amplifier_ + this->emg_channels_secondary_amplifier_;
+  uint8_t channels_amplifier_1 = this->number_of_eeg_channels_amplifier_1_ + this->number_of_emg_channels_amplifier_1_;
+  uint8_t channels_amplifier_2 = this->number_of_eeg_channels_amplifier_2_ + this->number_of_emg_channels_amplifier_2_;
 
-  uint8_t channels_total = channels_primary + channels_secondary;
+  uint8_t channels_total = channels_amplifier_1 + channels_amplifier_2;
 
   ChannelType type;
   for (uint8_t i = 1; i <= channels_total; i++) {
-    if (i > channels_total - this->emg_channels_secondary_amplifier_) {
+    if (i > channels_total - this->number_of_emg_channels_amplifier_2_) {
       type = this->ChannelType::EMG;
-    } else if (i > this->eeg_channels_primary_amplifier_ && i <= channels_primary) {
+    } else if (i > this->number_of_eeg_channels_amplifier_1_ && i <= channels_amplifier_1) {
       type = this->ChannelType::EMG;
     } else {
       type = this->ChannelType::EEG;
@@ -186,7 +188,7 @@ void EegBridge::set_channel_types() {
   }
 }
 
-void EegBridge::reset_experiment() {
+void EegBridge::reset_session() {
   first_trigger_received = false;
   time_correction = 0;
   sync_index = 1;
@@ -314,9 +316,9 @@ void EegBridge::handle_trigger_packet() {
       /* Upon receiving the first trigger, reset time. */
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       this->first_trigger_received = true;
-      this->first_sample_of_experiment_ = true;
+      this->first_sample_of_session_ = true;
 
-      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.2f s.", this->first_trigger_timestamp_);
+      RCLCPP_INFO(this->get_logger(), "Session start trigger received, timestamp: %.2f s.", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(new_trigger_timestamp);
     }
@@ -344,7 +346,7 @@ void EegBridge::handle_sample_packet() {
      so also the next if statement will be executed. */
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
     this->publish_trigger_from_buffer(time);
-    this->first_sample_of_experiment_ = true;
+    this->first_sample_of_session_ = true;
   }
 
   /* If first trigger has not been received yet, ignore the sample packet. */
@@ -354,13 +356,13 @@ void EegBridge::handle_sample_packet() {
       double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
       this->publish_eeg_datapoint(time_diff);
-      this->first_sample_of_experiment_ = false;
+      this->first_sample_of_session_ = false;
 
     } else {
       RCLCPP_WARN_THROTTLE(this->get_logger(),
                           *this->get_clock(),
                           1000,
-                          "Sample packet arrived %.4f s before experiment start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
+                          "Sample packet arrived %.4f s before session start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
                           this->first_trigger_timestamp_ - time,
                           this->first_trigger_timestamp_,
                           time
@@ -383,7 +385,6 @@ void EegBridge::handle_measurement_start_packet() {
 
   this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                       (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
-  RCLCPP_INFO(this->get_logger(), "  - Number of channels set to %d.", this->n_channels_);
 
   this->send_trigger_as_channel = false;
   for (uint8_t i = 0; i < this->n_channels_; i++) {
@@ -403,6 +404,8 @@ void EegBridge::handle_measurement_start_packet() {
 
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
+
+  RCLCPP_INFO(this->get_logger(), "  - Total number of EEG, EMG channels set to %d.", this->n_channels_excluding_trigger_);
 
   /* Publish EEG info. */
 
@@ -425,47 +428,57 @@ void EegBridge::handle_eeg_data_packet() {
 
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart streaming.");
-
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Streaming data on EEG device but no measurement start packet received. Please restart EEG streaming.");
         break;
       }
 
-      if (!this->experiment_been_stopped) {
-        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Experiment is ongoing, cannot sync to an ongoing experiment. Please restart experiment.");
-
+      if (!this->session_been_stopped) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Session is ongoing, cannot sync to an ongoing session. Please restart session.");
         break;
+      }
+
+      /* If session is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
+      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+         !this->first_trigger_received) {
+
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received, please check that 'Sync' port in mTMS device is connected to 'Trigger A in' in EEG device.");
       }
 
       if (!this->send_trigger_as_channel) {
 
-        /* If sending trigger as a packet, wait until we receive the first trigger and that the experiment is started. */
+        /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
         if (this->first_trigger_received &&
-            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
+            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
-
         }
 
       } else {
 
         /* If sending trigger as channel, we need to handle packets before the first trigger is received as it will be
-           sent as a part of a sample packet. When the first trigger is received, we also expect the experiment to be
+           sent as a part of a sample packet. When the first trigger is received, we also expect the session to be
            started. */
         if (!this->first_trigger_received ||
-            this->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED) {
+            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
       }
 
-      if (this->experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 60000, "Waiting for experiment to start...");
+      if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for device to start...");
+        break;
+      }
+
+      if (this->session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
+        break;
       }
 
       break;
 
     case TRIGGER_PACKET_ID:
-      if (!this->experiment_been_stopped) {
+      if (!this->session_been_stopped) {
         break;
       }
 
@@ -505,7 +518,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
       this->first_trigger_timestamp_ = time;
       this->first_trigger_received = true;
 
-      RCLCPP_INFO(this->get_logger(), "Experiment start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+      RCLCPP_INFO(this->get_logger(), "Session start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(time);
     }
@@ -546,7 +559,7 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
 
     i += 3;
   }
-  message.first_sample_of_experiment = this->first_sample_of_experiment_;
+  message.first_sample_of_session = this->first_sample_of_session_;
 
   this->publisher_data_->publish(message);
   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 10000, "Streaming EEG data into topic %s.", EEG_RAW_TOPIC.c_str());

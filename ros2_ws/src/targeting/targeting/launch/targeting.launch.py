@@ -13,9 +13,9 @@ def generate_launch_description():
         description="Logging level",
     )
 
-    site_arg = DeclareLaunchArgument(
-        "site",
-        description="Site",
+    coil_array_arg = DeclareLaunchArgument(
+        "coil-array",
+        description="Coil array",
     )
 
     logger = LaunchConfiguration("log-level")
@@ -26,7 +26,7 @@ def generate_launch_description():
             name="targeting",
             parameters=[
                 {
-                    "site": LaunchConfiguration("site"),
+                    "coil_array": LaunchConfiguration("coil-array"),
                 },
             ],
             output="screen",
@@ -36,6 +36,6 @@ def generate_launch_description():
 
     ld.add_action(node)
     ld.add_action(log_arg)
-    ld.add_action(site_arg)
+    ld.add_action(coil_array_arg)
 
     return ld

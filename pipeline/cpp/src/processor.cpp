@@ -7,13 +7,13 @@
 #include "utils.h"
 
 std::vector<eeg_sample>
-Processor::raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
+Processor::raw_eeg_received(std::vector<double> channel_data, double time, bool first_sample_of_session) {
   std::vector<eeg_sample> cleaned_samples;
 
   eeg_sample sample;
   sample.channel_data = channel_data;
   sample.time = time;
-  sample.first_sample_of_experiment = first_sample_of_experiment;
+  sample.first_sample_of_session = first_sample_of_session;
 
   cleaned_samples.push_back(sample);
 
@@ -22,7 +22,7 @@ Processor::raw_eeg_received(std::vector<double> channel_data, double time, bool 
 }
 
 std::vector<mtms_device_event>
-Processor::data_received(std::vector<double> channel_data, double time, bool first_sample_of_experiment) {
+Processor::data_received(std::vector<double> channel_data, double time, bool first_sample_of_session) {
   this->samples.append(channel_data);
   this->samples_collected++;
 
@@ -38,14 +38,14 @@ Processor::data_received(std::vector<double> channel_data, double time, bool fir
   return events;
 }
 
-std::vector<mtms_device_event> Processor::end_experiment() {
-  std::cout << "in end experiment" << std::endl;
+std::vector<mtms_device_event> Processor::end_session() {
+  std::cout << "in end session" << std::endl;
   std::vector<mtms_device_event> events;
   return events;
 }
 
-std::vector<mtms_device_event> Processor::init_experiment() {
-  std::cout << "in init experiment" << std::endl;
+std::vector<mtms_device_event> Processor::init_session() {
+  std::cout << "in init session" << std::endl;
 
   std::vector<mtms_device_event> events;
   return events;

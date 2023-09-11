@@ -31,7 +31,7 @@ CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint samp
       sample.eeg_channels.data(),
       sample.eeg_channels.size(),
       sample.time,
-      sample.first_sample_of_experiment,
+      sample.first_sample_of_session,
       events,
       samples
   );
@@ -56,7 +56,7 @@ std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(eeg_interfaces:
       sample.eeg_channels.data(),
       sample.eeg_channels.size(),
       sample.time,
-      sample.first_sample_of_experiment,
+      sample.first_sample_of_session,
       events,
       samples
   );
@@ -75,7 +75,7 @@ std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(eeg_interfaces:
 std::vector<Event> CompiledMatlabProcessor::init() {
   std::vector<Event> matlab_events;
   coder::array<matlab_event, 1U> events;
-  inner_processor->init_experiment(events);
+  inner_processor->init_session(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto matlab_event = *i;
@@ -85,10 +85,10 @@ std::vector<Event> CompiledMatlabProcessor::init() {
   return matlab_events;
 }
 
-std::vector<Event> CompiledMatlabProcessor::end_experiment() {
+std::vector<Event> CompiledMatlabProcessor::end_session() {
   std::vector<Event> matlab_events;
   coder::array<matlab_event, 1U> events;
-  inner_processor->end_experiment(events);
+  inner_processor->end_session(events);
 
   for (auto i = events.begin(); i != events.end(); i++) {
     auto matlab_event = *i;

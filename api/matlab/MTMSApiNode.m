@@ -10,8 +10,8 @@ classdef MTMSApiNode < handle
 
         start_device_client
         stop_device_client
-        start_experiment_client
-        stop_experiment_client
+        start_session_client
+        stop_session_client
 
         send_charge_publisher
         send_discharge_publisher
@@ -57,8 +57,8 @@ classdef MTMSApiNode < handle
             obj.start_device_client = ros2svcclient(obj.node, "/mtms_device/start_device", "mtms_device_interfaces/StartDevice");
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
-            obj.start_experiment_client = ros2svcclient(obj.node, "/mtms_device/start_experiment", "mtms_device_interfaces/StartExperiment");
-            obj.stop_experiment_client = ros2svcclient(obj.node, "/mtms_device/stop_experiment", "mtms_device_interfaces/StopExperiment");
+            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/start_session", "mtms_device_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/stop_session", "mtms_device_interfaces/StopSession");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
@@ -114,12 +114,12 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function success = start_experiment(obj)
-            %start_experiment Start experiment on mTMS device
+        function success = start_session(obj)
+            %start_session Start session on mTMS device
             %
-            %   Start an experiment on the mTMS device.
+            %   Start an session on the mTMS device.
 
-            client = obj.start_experiment_client;
+            client = obj.start_session_client;
 
             request = ros2message(client);
 
@@ -127,12 +127,12 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function success = stop_experiment(obj)
-            %stop_experiment Stop experiment on mTMS device
+        function success = stop_session(obj)
+            %stop_session Stop session on mTMS device
             %
-            %   Stop an experiment on the mTMS device.
+            %   Stop an session on the mTMS device.
 
-            client = obj.stop_experiment_client;
+            client = obj.stop_session_client;
 
             request = ros2message(client);
 

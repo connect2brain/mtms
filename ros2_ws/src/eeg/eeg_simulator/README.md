@@ -13,7 +13,7 @@
 The data file is located in eeg/data/ directory in the repository root. To use custom CSV data, copy the CSV file to the directory and modify data-file
 parameter accordingly. The CSV file should consist of one column per channel and one row per sample, with values separated by commas.
 
-5. Check that the data is published by running `ros2 topic echo /eeg/raw_data` in another terminal.
+5. Check that the data is published by running `ros2 topic echo /eeg/raw` in another terminal.
 
 The file `random_data.csv` contains 100 lines of random values between 0 and 1, 128 values per line (i.e., 0.2 seconds of data with the sampling frequency 500 Hz, configurable EEG and EMG channels).
 

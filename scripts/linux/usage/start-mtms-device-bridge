@@ -15,17 +15,17 @@ if [ ! -f "$ENV_FILE" ]; then
 fi
 
 # Load and export the environment variable
-export $(grep "^SITE=" $ENV_FILE | xargs)
+export $(grep "^MTMS_DEVICE_GENERATION=" $ENV_FILE | xargs)
 export $(grep "^BITFILE_VERSION=" $ENV_FILE | xargs)
 export $(grep "^RESOURCE=" $ENV_FILE | xargs)
 
-echo "Site: $SITE"
+echo "mTMS device generation: $MTMS_DEVICE_GENERATION"
 echo "Bitfile version: $BITFILE_VERSION"
 
 # Configure mTMS bridge
 export BITFILE_DIRECTORY=$MTMS_ROOT/bitfiles
 
-export BITFILE_PREFIX="NiFpga_mTMS_${SITE}_${BITFILE_VERSION}"
+export BITFILE_PREFIX="NiFpga_mTMS_generation_${MTMS_DEVICE_GENERATION}_${BITFILE_VERSION}"
 
 export BITFILE=$BITFILE_PREFIX.lvbitx
 export BITFILE_SIGNATURE="$(cat $BITFILE_DIRECTORY/$BITFILE_PREFIX.signature)"

@@ -24,7 +24,7 @@ public:
       messages_received_since_last_full_second++;
     };
 
-    subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw_data",
+    subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw",
                                                                                  10,
                                                                                  subscription_callback);
 

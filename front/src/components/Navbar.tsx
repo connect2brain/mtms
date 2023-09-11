@@ -15,8 +15,8 @@ export const Navbar = () => {
       <TabButton selected={location.pathname === '/'} onClick={() => goToUrl('/')}>
         Targets table
       </TabButton>
-      <TabButton selected={location.pathname === '/experiment'} onClick={() => goToUrl('/experiment')}>
-        Experiment
+      <TabButton selected={location.pathname === '/session'} onClick={() => goToUrl('/session')}>
+        Session
       </TabButton>
       <TabButton selected={location.pathname === '/plot'} onClick={() => goToUrl('/plot')}>
         Plot

@@ -49,7 +49,7 @@ class TriggerOut:
 
 
 class Sample:
-    def __init__(self, sample, time, first_sample_of_experiment):
+    def __init__(self, sample, time, first_sample_of_session):
         self.sample = sample
         self.time = time
-        self.first_sample_of_experiment = first_sample_of_experiment
+        self.first_sample_of_session = first_sample_of_session
