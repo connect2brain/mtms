@@ -3,7 +3,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession, AllowStimulation
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
@@ -21,6 +21,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
     ROS_SERVICE_START_SESSION = ('/mtms_device/start_session', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/mtms_device/stop_session', StopSession)
+
+    ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
 
     ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
@@ -49,6 +51,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_STOP_DEVICE,
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
+        ROS_SERVICE_ALLOW_STIMULATION,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
@@ -146,6 +149,16 @@ class MTMSApiNode(Node):
         return self.call_service(client, request)
 
     # Events
+
+    def allow_stimulation(self, allow_stimulation):
+        topic, service_type = self.ROS_SERVICE_ALLOW_STIMULATION
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        request.allow_stimulation = allow_stimulation
+
+        return self.call_service(client, request)
 
     def send_event_trigger(self):
         topic, message_type = self.ROS_MESSAGE_SEND_EVENT_TRIGGER
