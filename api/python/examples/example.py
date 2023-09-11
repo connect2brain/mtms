@@ -27,6 +27,9 @@ api.send_charge(
     time=time,
 )
 
+# Allow stimulation before sending a pulse.
+api.allow_stimulation(True)
+
 # Send pulse on channel 1, using the default waveform.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False

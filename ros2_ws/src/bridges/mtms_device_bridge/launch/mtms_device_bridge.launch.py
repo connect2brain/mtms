@@ -29,6 +29,8 @@ def generate_launch_description():
         "start_session_handler",
         "stop_session_handler",
 
+        "allow_stimulation_handler",
+
         "pulse_handler",
         "trigger_out_handler",
         "charge_handler",
