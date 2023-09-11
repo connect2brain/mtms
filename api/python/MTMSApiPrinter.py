@@ -42,6 +42,7 @@ class MTMSApiEnums():
         (PulseError.TOO_MANY_PULSES, "Too many pulses", bcolors.FAIL),
         (PulseError.OVERLAPPING_WITH_CHARGING, "Overlapping with charging", bcolors.FAIL),
         (PulseError.OVERLAPPING_WITH_DISCHARGING, "Overlapping with discharging", bcolors.FAIL),
+        (PulseError.NOT_ALLOWED, "Not allowed", bcolors.FAIL),
         (PulseError.TRIGGERING_FAILURE, "Triggering failure", bcolors.FAIL),
         (PulseError.UNKNOWN_ERROR, "Unknown error", bcolors.FAIL),
     )
