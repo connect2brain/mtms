@@ -4,18 +4,18 @@ set -e
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 
-if [ -z "$BAG_NAME" ]; then
-  echo "Error: BAG_NAME is unset in .env file."
+if [ -z "$BAG_ANALYSIS_BAG_NAME" ]; then
+  echo "Error: BAG_ANALYSIS_BAG_NAME is unset in .env file."
   exit 1
 fi
 
-if [ -z "$BAG_TOPIC" ]; then
-  echo "Error: BAG_TOPIC is unset in .env file."
+if [ -z "$BAG_ANALYSIS_TOPIC" ]; then
+  echo "Error: BAG_ANALYSIS_TOPIC is unset in .env file."
   exit 1
 fi
 
-if [ -z "$BAG_TIMESTAMP" ]; then
-  python3 bag_exporter.py --bag $BAG_NAME --topic $BAG_TOPIC --full
+if [ -z "$BAG_ANALYSIS_TIMESTAMP" ]; then
+  python3 bag_exporter.py --bag $BAG_ANALYSIS_BAG_NAME --topic $BAG_ANALYSIS_TOPIC
 else
-  python3 bag_exporter.py --bag $BAG_NAME --timestamp $BAG_TIMESTAMP --topic $BAG_TOPIC --full
+  python3 bag_exporter.py --bag $BAG_ANALYSIS_BAG_NAME --timestamp $BAG_ANALYSIS_TIMESTAMP --topic $BAG_ANALYSIS_TOPIC
 fi

@@ -1,7 +1,7 @@
 api = MTMSApi();
 
 api.start_device();
-api.start_experiment();
+api.start_session();
 
 %%     Single events
 
@@ -52,6 +52,13 @@ time = api.get_time() + 3.0;
 wait_for_completion = false;  % Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
 api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
+
+% Create a custom waveform.
+
+phases = {'RISING', 'HOLD', 'FALLING'};
+durations_in_ticks = {2400, 1200, 1480};
+
+custom_waveform = api.create_waveform(phases, durations_in_ticks);
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
@@ -127,10 +134,10 @@ emg_channel = 1;
 [amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
 
 
-%% Restart experiment
+%% Restart session
 
-api.stop_experiment()
-api.start_experiment()
+api.stop_session()
+api.start_session()
 
 
 %% Stop device

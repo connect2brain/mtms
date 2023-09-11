@@ -1,5 +1,5 @@
-export interface ExperimentMessage {
-  experiment: IExperiment
+export interface SessionMessage {
+  session: ISession
 }
 
 export interface PulseSequence {
@@ -20,7 +20,7 @@ export interface Train {
   ibi: number
 }
 
-export interface IExperiment {
+export interface ISession {
   train: Train
   nofTrains: number
   iti: number

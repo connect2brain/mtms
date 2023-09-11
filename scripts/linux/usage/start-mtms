@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
 # Check that the project name is set.
 if [ -z "$PROJECT_NAME" ]; then
     echo "Error: Project name is undefined. Please use set-project script to set the project."
@@ -23,7 +27,7 @@ export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
 
 get_env_var () {
   VAR_NAME=$1
-  VAR_VALUE=$(grep -w "$VAR_NAME" $ENV_FILE | cut -d= -f2)
+  VAR_VALUE=$(grep "^$VAR_NAME=" $ENV_FILE | cut -d= -f2)
   if [ -z "$VAR_VALUE" ]; then
     echo "ERROR: $VAR_NAME not found in $ENV_FILE"
     exit 1
@@ -35,34 +39,50 @@ get_env_var () {
 # Get environment variables
 BAG_NAME=$(get_env_var "BAG_NAME")
 
-EEG_CHANNELS_PRIMARY_AMPLIFIER=$(get_env_var "EEG_CHANNELS_PRIMARY_AMPLIFIER")
-EMG_CHANNELS_PRIMARY_AMPLIFIER=$(get_env_var "EMG_CHANNELS_PRIMARY_AMPLIFIER")
-EEG_CHANNELS_SECONDARY_AMPLIFIER=$(get_env_var "EEG_CHANNELS_SECONDARY_AMPLIFIER")
-EMG_CHANNELS_SECONDARY_AMPLIFIER=$(get_env_var "EMG_CHANNELS_SECONDARY_AMPLIFIER")
+NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1=$(get_env_var "NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1")
+NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1=$(get_env_var "NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1")
+NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2=$(get_env_var "NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2")
+NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2=$(get_env_var "NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2")
 
+EEG_PROCESSOR_ENABLE=$(get_env_var "EEG_PROCESSOR_ENABLE")
 EEG_PROCESSOR_TYPE=$(get_env_var "EEG_PROCESSOR_TYPE")
 EEG_PROCESSOR_SCRIPT=$(get_env_var "EEG_PROCESSOR_SCRIPT")
-EEG_PROCESSOR_PREPROCESS=$(get_env_var "EEG_PROCESSOR_PREPROCESS")
 
+EEG_PREPROCESSOR_ENABLE=$(get_env_var "EEG_PREPROCESSOR_ENABLE")
 EEG_PREPROCESSOR_TYPE=$(get_env_var "EEG_PREPROCESSOR_TYPE")
 EEG_PREPROCESSOR_SCRIPT=$(get_env_var "EEG_PREPROCESSOR_SCRIPT")
 
+STIMULUS_PRESENTER_ENABLE=$(get_env_var "STIMULUS_PRESENTER_ENABLE")
 STIMULUS_PRESENTER_TYPE=$(get_env_var "STIMULUS_PRESENTER_TYPE")
 STIMULUS_PRESENTER_SCRIPT=$(get_env_var "STIMULUS_PRESENTER_SCRIPT")
 
 # Print environment variables
-echo "Project: $PROJECT_NAME"
 echo ""
-echo "Bag name: $BAG_NAME"
+echo "Project: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
-echo "# of EEG channels, primary amplifier: $EEG_CHANNELS_PRIMARY_AMPLIFIER"
-echo "# of EMG channels, primary amplifier: $EMG_CHANNELS_PRIMARY_AMPLIFIER"
+echo "Bag name: ${BOLD}$BAG_NAME${RESET}"
 echo ""
-echo "# of EEG channels, secondary amplifier: $EEG_CHANNELS_SECONDARY_AMPLIFIER"
-echo "# of EMG channels, secondary amplifier: $EMG_CHANNELS_SECONDARY_AMPLIFIER"
+echo "# of EEG channels, amplifier 1: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1${RESET}"
+echo "# of EMG channels, amplifier 1: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1${RESET}"
 echo ""
-echo "EEG processor: $EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)"
-echo "Stimulus presenter: $STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)"
+echo "# of EEG channels, amplifier 2: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2${RESET}"
+echo "# of EMG channels, amplifier 2: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2${RESET}"
+echo ""
+
+if [ "$EEG_PREPROCESSOR_ENABLE" == "true" ]; then
+  echo "EEG preprocessor: ${BOLD}$EEG_PREPROCESSOR_SCRIPT ($EEG_PREPROCESSOR_TYPE)${RESET}"
+fi
+if [ "$EEG_PROCESSOR_ENABLE" == "true" ]; then
+  echo "EEG processor: ${BOLD}$EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)${RESET}"
+fi
+if [ "$STIMULUS_PRESENTER_ENABLE" == "true" ]; then
+  echo "Stimulus presenter: ${BOLD}$STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)${RESET}"
+fi
+
+if [ ! "$EEG_PREPROCESSOR_ENABLE" == "true" ] && [ ! "$EEG_PROCESSOR_ENABLE" == "true" ] && [ ! "$STIMULUS_PRESENTER_ENABLE" == "true" ]; then
+  echo "${BOLD}No real-time pipeline defined.${RESET}"
+fi
+
 echo ""
 
 # Ask the user to double-check
@@ -70,20 +90,21 @@ read -p "Please double-check the values. Are they correct? (y/N) " answer
 
 if [ ! "$answer" == "y" ]; then
   echo ""
-  echo "Please update the values in $ENV_FILE and try again."
+  echo "Please reconfigure by running: ${BOLD}configure-project${RESET}"
   exit 1
 fi
 
 # Services needed for the API
-services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" "eeg_simulator")
+services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "targeting" "bag_recorder" \
+  "eeg_simulator" "eeg_preprocessor" "eeg_processor" "stimulus_presenter")
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
-  gnome-terminal --geometry=135x10 -- bash -c "start-service $service"
+  gnome-terminal --geometry=135x6 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
 done
 
 # Start mTMS device bridge separately because it is not containerized yet.
-gnome-terminal --geometry=135x10 -- bash -c "start-mtms-device-bridge"
+gnome-terminal --geometry=135x6 -- bash -c "start-mtms-device-bridge; echo 'Press any key to close'; read -n1"
 
 # Wait for the process to start and get its PID
 while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
@@ -102,6 +123,11 @@ function handle_sigint {
 
     # Shut down mTMS device bridge.
     kill -s SIGINT -- -$PID_MTMS_DEVICE_BRIDGE
+
+    # Kill the process groups of services
+    for service in "${services[@]}"; do
+      pkill -f "setsid start-service $service"
+    done
 
     exit 0
 }

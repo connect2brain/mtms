@@ -3,7 +3,7 @@ from rclpy.node import Node
 import time
 
 from event_interfaces.msg import TriggerOut, Pulse, Charge
-from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartSession, StopSession
 
 from .pulses import generate_standard_pulse_command, generate_standard_charge_command, generate_timed_pulses, generate_timed_charges, generate_trigger_out_command
 
@@ -20,14 +20,14 @@ class PulseGenerator(Node):
         self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
         self.start_device_client = self.create_client(StartDevice, '/mtms_device/start_device')
-        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
+        self.start_session_client = self.create_client(StartSession, '/mtms_device/start_session')
+        self.stop_session_client = self.create_client(StopSession, '/mtms_device/stop_session')
 
         self.client_futures = []
 
         self.pulse_sent_at = None
 
-        self.restart_experiment()
+        self.restart_session()
 
         self.pulses = generate_standard_pulse_command()
         self.charges = generate_standard_charge_command(1200)
@@ -74,10 +74,10 @@ class PulseGenerator(Node):
             self.charge_publisher(charge)
             self.get_logger().info(f"Sent charge request for channel {charge.channel} {charge.target_voltage}V")
 
-    def restart_experiment(self):
-        self.stop_experiment_client.call_async(StopExperiment.Request())
+    def restart_session(self):
+        self.stop_session_client.call_async(StopSession.Request())
         time.sleep(0.1)
-        self.start_experiment_client.call_async(StartExperiment.Request())
+        self.start_session_client.call_async(StartSession.Request())
 
     def spin(self):
         while rclpy.ok():

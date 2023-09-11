@@ -43,5 +43,5 @@ int main() {
     }
   }
   coder::array<matlab_event, 1U> events;
-  p->end_experiment(events);
+  p->end_session(events);
 }

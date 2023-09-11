@@ -9,7 +9,7 @@ from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
 
-BAG_BASE_DIR = 'data/bags/'
+BAG_BASE_DIR = 'project/bags/'
 
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
@@ -65,7 +65,7 @@ class BagFileParser:
 
     def save_topic_timestamps(self, topic, path):
         messages = self.get_messages(topic)
-        timestamps = list(map(lambda sample: str(sample.time), messages))
+        timestamps = list(map(lambda sample: str(sample.event_info.execution_time), messages))
 
         with open(path, 'w') as f:
             f.write("\n".join(timestamps))
@@ -124,7 +124,7 @@ for topic in topics:
     prefix_formatted = f"{prefix}_" if len(prefix) > 0 else ""
 
     # Add prefix, drop the leading / and replace remaining / with _.
-    # For instance, with prefix "experiment1", and topic "/eeg/raw_data", yields "experiment1_eeg_raw_data"
+    # For instance, with prefix "session1", and topic "/eeg/raw", yields "session1_eeg_raw"
     output_file_name = f"{prefix_formatted}{topic[1:].replace('/', '_')}"
 
     output_path = os.path.join(BAG_BASE_DIR, bag_dir, output_file_name)

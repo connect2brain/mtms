@@ -10,7 +10,7 @@ import copy
 
 import rclpy
 
-from mtms_device_interfaces.msg import ExperimentState, DeviceState
+from mtms_device_interfaces.msg import SessionState, DeviceState
 from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from MTMSApiNode import MTMSApiNode
@@ -28,8 +28,9 @@ class MTMSApi:
     #
     # Consequently, TIME_EPSILON must be large enough to allow time to send the events to
     # the mTMS device, but not too large so that the events are not executed 'immediately'.
-    # Settle for 0.1 s (100 ms) for now, but change if needed.
-    TIME_EPSILON = 0.1
+    # Settle for 0.15 s (150 ms) for now, but change if needed.
+    #
+    TIME_EPSILON = 0.15
 
     def __init__(self):
         """
@@ -74,24 +75,24 @@ class MTMSApi:
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
             pass
 
-    def start_experiment(self):
+    def start_session(self):
         """
-        Start an experiment, waiting until the experiment state is reported as started.
+        Start an session, waiting until the session state is reported as started.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.start_experiment()
-        while self.get_experiment_state() != ExperimentState.STARTED:
+        self.node.start_session()
+        while self.get_session_state() != SessionState.STARTED:
             pass
 
-    def stop_experiment(self):
+    def stop_session(self):
         """
-        Stop the current experiment, waiting until the experiment state is reported as stopped.
+        Stop the current session, waiting until the session state is reported as stopped.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.stop_experiment()
-        while self.get_experiment_state() != ExperimentState.STOPPED:
+        self.node.stop_session()
+        while self.get_session_state() != SessionState.STOPPED:
             pass
 
     # Wait
@@ -135,7 +136,7 @@ class MTMSApi:
         Parameters
         ----------
         time : float
-            The time to wait until (in seconds).
+            The time to wait until (as seconds).
         """
         self.node.wait_for_new_state()
         while self.get_time() < time:
@@ -175,22 +176,22 @@ class MTMSApi:
         self.node.wait_for_new_state()
         return self.node.system_state.device_state.value
 
-    def get_experiment_state(self):
+    def get_session_state(self):
         """
-        Return the current state of the experiment.
+        Return the current state of the session.
 
         Returns
         -------
         int
-            The current state of the experiment. One of the following:
+            The current state of the session. One of the following:
 
-            * ExperimentState.STOPPED : Experiment is stopped.
-            * ExperimentState.STARTING : Experiment is starting.
-            * ExperimentState.STARTED : Experiment is started.
-            * ExperimentState.STOPPING : Experiment is stopping.
+            * SessionState.STOPPED : Session is stopped.
+            * SessionState.STARTING : Session is starting.
+            * SessionState.STARTED : Session is started.
+            * SessionState.STOPPING : Session is stopping.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.experiment_state.value
+        return self.node.system_state.session_state.value
 
     def get_voltage(self, channel):
         """
@@ -246,7 +247,7 @@ class MTMSApi:
 
     def get_time(self):
         """
-        Return the current time from the start of the experiment.
+        Return the current time from the start of the session.
 
         Returns
         -------
@@ -272,8 +273,11 @@ class MTMSApi:
         """
         return self.node.get_event_feedback(id)
 
+    def is_session_started(self):
+        return self.get_session_state() == SessionState.STARTED
+
     # Events
-    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=0.0, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
 
@@ -300,7 +304,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The time at which the pulse should be sent. Default is 0.0.
+            The time at which the pulse is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         reverse_polarity : bool, optional
             Whether to reverse the polarity of the waveform. Default is False.
         wait_for_completion : bool, optional
@@ -315,6 +319,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each pulse sent.
         """
+        assert self.is_session_started(), "Session not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+
         id = self._next_event_id()
 
         waveform_ = copy.deepcopy(waveform)
@@ -334,7 +341,7 @@ class MTMSApi:
 
         return id
 
-    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a charge to a specified channel.
 
@@ -353,7 +360,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
+            The time at which charging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the charge to complete before returning. Default is True.
 
@@ -366,6 +373,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each charge sent.
         """
+        assert self.is_session_started(), "Session not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+
         id = self._next_event_id()
 
         target_voltage = int(target_voltage)
@@ -382,7 +392,7 @@ class MTMSApi:
 
         return id
 
-    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a discharge to a specified channel.
 
@@ -401,7 +411,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
+            The time at which discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the discharge to complete before returning. Default is True.
 
@@ -414,6 +424,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each discharge sent.
         """
+        assert self.is_session_started(), "Session not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+
         id = self._next_event_id()
 
         target_voltage = int(target_voltage)
@@ -430,7 +443,7 @@ class MTMSApi:
 
         return id
 
-    def send_trigger_out(self, port, duration_us, execution_condition=ExecutionCondition.TIMED, time=0, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us=int(1e6), execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Sends a trigger output to a specified port.
 
@@ -439,7 +452,7 @@ class MTMSApi:
         port : int
             The port number to send the trigger output to.
         duration_us : int
-            The duration of the trigger in microseconds.
+            The duration of the trigger in microseconds. Defaults to 1e6 (one millisecond).
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
             
@@ -449,7 +462,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            The time at which the trigger should be sent. Default is 0.0.
+            The time at which the trigger is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the trigger to complete before returning. Default is True.
 
@@ -462,6 +475,9 @@ class MTMSApi:
         -----
         The event ID is incremented with each trigger sent.
         """
+        assert self.is_session_started(), "Session not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+
         id = self._next_event_id()
 
         self.node.send_trigger_out(
@@ -493,11 +509,11 @@ class MTMSApi:
     def stop_device_without_waiting(self):
         self.node.stop_device()
 
-    def start_experiment_without_waiting(self):
-        self.node.start_experiment()
+    def start_session_without_waiting(self):
+        self.node.start_session()
 
-    def stop_experiment_without_waiting(self):
-        self.node.stop_experiment()
+    def stop_session_without_waiting(self):
+        self.node.stop_session()
 
     def wait_until_not_operational(self):
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
@@ -587,6 +603,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_session_started(), "Session not started."
         assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
             len(target_voltages), self.N_CHANNELS)
 
@@ -622,6 +639,8 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_session_started(), "Session not started."
+
         target_voltages = self.N_CHANNELS * [0]
 
         ids = self.send_immediate_charge_or_discharge_to_all_channels(
@@ -631,7 +650,7 @@ class MTMSApi:
 
         return ids
 
-    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time=0.0, wait_for_completion=True):
+    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time, wait_for_completion=True):
         """
         Send timed default pulse commands to all channels.
 
@@ -639,8 +658,8 @@ class MTMSApi:
         ----------
         reverse_polarities : list of bools
             List of boolean values indicating whether to reverse polarities for each channel.
-        time : float, optional
-            Time delay before sending the pulse, by default 0.0.
+        time : float
+            The time at which the pulse is executed.
         wait_for_completion : bool, optional
             Whether to wait for the completion of all commands, by default True.
 
@@ -649,6 +668,7 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_session_started(), "Session not started."
         assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
             len(reverse_polarities), self.N_CHANNELS)
 
@@ -689,6 +709,8 @@ class MTMSApi:
         list
             IDs for each sent command.
         """
+        assert self.is_session_started(), "Session not started."
+
         time = self.get_time() + self.TIME_EPSILON
 
         ids = self.send_timed_default_pulse_to_all_channels(
@@ -698,7 +720,7 @@ class MTMSApi:
         )
         return ids
 
-    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=0.0, wait_for_completion=True):
+    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send charge or discharge command to a specified channel based on the current and target voltage.
 
@@ -717,7 +739,7 @@ class MTMSApi:
 
             Default is ExecutionCondition.TIMED
         time : float, optional
-            Time delay before sending the pulse, by default 0.0.
+            The time at which charging or discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         wait_for_completion : bool, optional
             Whether to wait for the completion of the command, by default True.
 
@@ -726,6 +748,9 @@ class MTMSApi:
         int
             ID of the sent command.
         """
+        assert self.is_session_started(), "Session not started."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
 
@@ -748,7 +773,7 @@ class MTMSApi:
         Parameters
         ----------
         time : float
-            Time point to analyze the MEP.
+            The time at which MEP analysis begins.
         emg_channel : int
             Channel number for the EMG.
         mep_configuration : object

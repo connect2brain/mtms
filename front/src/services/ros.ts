@@ -67,10 +67,10 @@ export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   messageType: 'ui_interfaces/Trigger',
 })
 
-/* Set up start_experiment service */
-export const startExperimentService = new ROSLIB.Service({
+/* Set up start_session service */
+export const startSessionService = new ROSLIB.Service({
   ros: ros,
-  name: '/stimulation/start_experiment',
+  name: '/stimulation/start_session',
   serviceType: 'ui_interfaces/ToggleNavigation',
 })
 

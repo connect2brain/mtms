@@ -4,42 +4,65 @@ from ..base.execution_condition import ExecutionCondition
 
 
 class PipelineStage(BasePipelineStage):
+    # Corresponds to 1 s of data with sampling frequency 1000 Hz.
+    SAMPLE_BUFFER_SIZE = 1000
+
     def __init__(self):
-        super().__init__(auto_enqueue=True, window_size=5000, channels=62)
-        self.event_index = 1
-        self.samples_collected = 0
-        self.sampling_frequency = 5000
-        self.samples_needed = 100
+        super().__init__(
+            sample_buffer_size=self.SAMPLE_BUFFER_SIZE,
+            analysis_interval_in_samples=100,
+        )
+        self.event_index = 0
 
-    def init_experiment(self):
-        super().init_experiment()
-
+    def init_session(self):
+        super().init_session()
         return []
 
-    def end_experiment(self):
-        super().end_experiment()
-
+    def end_session(self):
+        super().end_session()
         return []
 
-    def data_received(self, sample, time, first_sample_of_experiment):
-        super().data_received(sample, time, first_sample_of_experiment)
-        self.samples_collected += 1
+    def data_received(self, sample, time, first_sample_of_session):
+        super().data_received(sample, time, first_sample_of_session)
 
-        if self.samples.full and self.samples_collected % self.samples_needed == 0:
-            samples = self.samples.get_buffer()
+        if not self.is_ready_to_analyze():
+            return []
 
-            event_info = {
-                "id": self.event_index,
-                "execution_condition": ExecutionCondition.IMMEDIATE.value,
-                "execution_time": time,
-            }
-            self.event_index += 1
+        samples = self.sample_buffer.get_buffer()
 
-            #event = TriggerOut(1, 1000, event_info)
-            event = Stimulus(1, event_info)
+        event = self.create_trigger_out_event(time)
+        return [event]
 
-            self.samples_collected = 0
+    def create_stimulus_event(self, time):
+        event_info = {
+            "id": self.event_index,
+            "execution_condition": ExecutionCondition.IMMEDIATE.value,
+            "execution_time": time,
+            "decision_time": time,
+        }
+        event = Stimulus(
+            state=1,
+            event_info=event_info,
+        )
 
-            return [event]
+        self.event_index += 1
 
-        return []
+        return event
+
+    # Unused in this example script.
+    def create_trigger_out_event(self, time):
+        event_info = {
+            "id": self.event_index,
+            "execution_condition": ExecutionCondition.IMMEDIATE.value,
+            "execution_time": time,
+            "decision_time": time,
+        }
+        event = TriggerOut(
+            port=1,
+            duration_us=1000,
+            event_info=event_info,
+        )
+
+        self.event_index += 1
+
+        return event

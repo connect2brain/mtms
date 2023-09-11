@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
 import PulseSequenceConfiguration from './PulseSequenceConfiguration'
-import { IExperiment, ExperimentMessage, Train } from '../types/pulseSequence'
-import { startExperimentService } from '../services/ros'
+import { ISession, SessionMessage, Train } from '../types/pulseSequence'
+import { startSessionService } from '../services/ros'
 import ROSLIB from 'roslib'
 import { objectKeysToSnakeCase } from '../utils'
 import styled from 'styled-components'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
-import { setDescription } from 'reducers/experimentReducer'
+import { setDescription } from 'reducers/sessionReducer'
 
-const Experiment = () => {
+const Session = () => {
   const { description, channels, iti, ibi, nofBurstsInTrains, nofTrains } = useAppSelector(
-    (state) => state.experiment,
+    (state) => state.session,
   )
 
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -36,14 +36,14 @@ const Experiment = () => {
       nofBursts: nofBurstsInTrains,
     }
 
-    const experiment: IExperiment = {
+    const session: ISession = {
       iti,
       description,
       nofTrains,
       train,
     }
-    const messageData: ExperimentMessage = {
-      experiment,
+    const messageData: SessionMessage = {
+      session,
     }
 
     console.log('starting sequence:', messageData)
@@ -52,10 +52,10 @@ const Experiment = () => {
 
     const message = new ROSLIB.Message(messageDataSnakeCase)
     const request = new ROSLIB.ServiceRequest({
-      experiment: message,
+      session: message,
     })
 
-    startExperimentService.callService(
+    startSessionService.callService(
       request,
       (response) => {
         if (!response.success) {
@@ -78,7 +78,7 @@ const Experiment = () => {
 
   return (
     <div>
-      <h1>Experiment</h1>
+      <h1>Session</h1>
       <label htmlFor='description'>Description </label>
       <input
         name='description'
@@ -105,4 +105,4 @@ const StatusMessage = styled.p<{
   color: ${(p) => (p.status === 'OK' ? p.theme.colors.primary : p.theme.colors.error)};
 `
 
-export default Experiment
+export default Session
