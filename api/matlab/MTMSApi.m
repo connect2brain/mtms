@@ -77,6 +77,7 @@ classdef MTMSApi < handle
         % Start the mTMS device, waiting until the device reports its state as operational.
         % Does not require any parameters. Does not return any value.
 
+            obj.node.start_device();
             while obj.get_device_state() ~= obj.device_states.OPERATIONAL
     
             end
@@ -106,6 +107,7 @@ classdef MTMSApi < handle
         % Stop an session, waiting until the session state is reported as stopped.
         % Does not require any parameters. Does not return any value.
 
+            obj.node.stop_session();
             while obj.get_session_state() ~= obj.session_states.STOPPED
     
             end
@@ -152,7 +154,7 @@ classdef MTMSApi < handle
         % :param ids: The ids of the events to wait for.
         % :type ids: list of ints
 
-        for i = 1:length(ids)
+            for i = 1:length(ids)
                 obj.wait_for_completion(ids(i));
             end
         end
