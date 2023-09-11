@@ -277,6 +277,19 @@ class MTMSApi:
         return self.get_session_state() == SessionState.STARTED
 
     # Events
+    def allow_stimulation(self, allow_stimulation=False):
+        """
+        Allow or disallow executing stimulation pulses.
+
+        Parameters
+        ----------
+        allow_stimulation : bool
+            Either True or False. If True, allow executing stimulation pulses.
+        """
+        self.node.allow_stimulation(
+            allow_stimulation=allow_stimulation,
+        )
+
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
