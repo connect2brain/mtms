@@ -13,6 +13,8 @@ classdef MTMSApiNode < handle
         start_session_client
         stop_session_client
 
+        allow_stimulation_client
+
         send_charge_publisher
         send_discharge_publisher
         send_trigger_out_publisher
@@ -59,6 +61,8 @@ classdef MTMSApiNode < handle
 
             obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/start_session", "mtms_device_interfaces/StartSession");
             obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/stop_session", "mtms_device_interfaces/StopSession");
+
+            obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
@@ -152,6 +156,20 @@ classdef MTMSApiNode < handle
             event_trigger = ros2message(publisher);
 
             send(publisher, event_trigger);
+        end
+
+        function success = allow_stimulation(obj, allow_stimulation)
+            %allow_stimulation Allow or disallow stimulation.
+            %
+            %   Allow or disallow stimulation.
+
+            client = obj.allow_stimulation_client;
+
+            request = ros2message(client);
+            request.allow_stimulation = allow_stimulation;
+
+            response = call(client, request);
+            success = response.success;
         end
 
         function send_pulse(obj, id, execution_condition, time, channel, waveform)
