@@ -12,7 +12,7 @@ classdef ROSProcessor < handle
             setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp");
             obj.node = ros2node("ros_processor");
 
-            obj.eeg_data_subscriber = ros2subscriber(obj.node, "/eeg/raw_data", "eeg_interfaces/EegDatapoint", @obj.eeg_data_callback);
+            obj.eeg_data_subscriber = ros2subscriber(obj.node, "/eeg/raw", "eeg_interfaces/EegDatapoint", @obj.eeg_data_callback);
             obj.processor = MatlabProcessor();
             obj.data_received = 0;
         end
@@ -22,11 +22,11 @@ classdef ROSProcessor < handle
 
             channel_data = message.eeg_channels;
             time = message.time;
-            first_sample_of_experiment = message.first_sample_of_experiment;
+            first_sample_of_session = message.first_sample_of_session;
 
             %tic
             if obj.data_received <= 5000
-                obj.processor.data_received(channel_data, time, first_sample_of_experiment);
+                obj.processor.data_received(channel_data, time, first_sample_of_session);
             end
             %toc
         end

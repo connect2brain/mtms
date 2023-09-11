@@ -34,7 +34,7 @@ const initialChannels: ChannelInfoWithEnabled[] = [
   },
 ]
 
-interface ExperimentState {
+interface SessionState {
   description: string
   channels: ChannelInfoWithEnabled[]
   isis: number[]
@@ -45,7 +45,7 @@ interface ExperimentState {
   ibi: number
 }
 
-const initialState: ExperimentState = {
+const initialState: SessionState = {
   description: '',
   channels: initialChannels,
   isis: [],
@@ -56,8 +56,8 @@ const initialState: ExperimentState = {
   ibi: 0,
 }
 
-const experimentSlice = createSlice({
-  name: 'experiment',
+const sessionSlice = createSlice({
+  name: 'session',
   initialState,
   reducers: {
     setDescription: (state, action: PayloadAction<string>) => {
@@ -96,6 +96,6 @@ export const {
   setNofPulsesInBursts,
   setNofBurstsInTrains,
   setNofTrains,
-} = experimentSlice.actions
+} = sessionSlice.actions
 
-export default experimentSlice.reducer
+export default sessionSlice.reducer

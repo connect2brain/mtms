@@ -1,12 +1,15 @@
-from .base.base_pipeline_stage import BasePipelineStage
-from .base.events import Stimulus
-from .base.execution_condition import ExecutionCondition
+from ..base.base_pipeline_stage import BasePipelineStage
+from ..base.events import Stimulus
+from ..base.execution_condition import ExecutionCondition
+
 from .analysis_utils import (
     get_alpha_estimate,
     compute_baseline_stats,
     scale_alpha_estimate_to_step,
 )
 
+
+# XXX: Bitrotten as of July 2023, needs to be updated and cleaned up.
 
 class PipelineStage(BasePipelineStage):
     # TODO: discuss these parameters
@@ -41,23 +44,23 @@ class PipelineStage(BasePipelineStage):
         print("Baseline samples needed: ", self.baseline_samples_needed)
 
 
-    def init_experiment(self):
-        super().init_experiment()
+    def init_session(self):
+        super().init_session()
         self.running = True
 
         return []
 
-    def end_experiment(self):
+    def end_session(self):
         self.running = False
-        super().end_experiment()
+        super().end_session()
         self.samples_collected = 0
         self.baseline_samples_collected = 0
         self.send_baseline_over_event = False
         self.baseline_mode = True
         return []
 
-    def data_received(self, sample, time, first_sample_of_experiment):
-        super().data_received(sample, time, first_sample_of_experiment)
+    def data_received(self, sample, time, first_sample_of_session):
+        super().data_received(sample, time, first_sample_of_session)
         self.samples_collected += 1
 
         if self.samples.full and self.samples_collected % self.samples_needed == 0:

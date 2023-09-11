@@ -6,16 +6,16 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         commands
         samples
         events_sent
-        experiment_in_progress
+        session_in_progress
         last_sample_received_at
         auto_enqueue
     end
 
     methods (Abstract)
         constructor(obj, arg1, arg2)
-        on_data_received(obj, channel_data, time, first_sample_of_experiment)
-        on_init_experiment(obj)
-        on_end_experiment(obj)
+        on_data_received(obj, channel_data, time, first_sample_of_session)
+        on_init_session(obj)
+        on_end_session(obj)
     end
 
     methods
@@ -28,7 +28,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             obj.window_size = uint16(50);
             obj.channel_count = uint16(62);
             obj.data = ring_buffer(obj.window_size, obj.channel_count);
-            obj.experiment_in_progress = false;
+            obj.session_in_progress = false;
             obj.last_sample_received_at = double(0);
             obj.auto_enqueue = false;
 
@@ -71,7 +71,7 @@ classdef (Abstract) AbstractMatlabProcessor < handle
         end
 
 
-        function [commands, samples] = data_received(obj, channel_data, time, first_sample_of_experiment)
+        function [commands, samples] = data_received(obj, channel_data, time, first_sample_of_session)
             coder.inline("never");
             obj.set_commands([]);
             obj.set_eeg_samples([]);
@@ -82,15 +82,15 @@ classdef (Abstract) AbstractMatlabProcessor < handle
                 fprintf("WARN! Sample channels (%u) does not equal initial channel count (%u) \n", s, obj.channel_count);
             end
 
-            if first_sample_of_experiment
-                obj.experiment_in_progress = true;
+            if first_sample_of_session
+                obj.session_in_progress = true;
             end
 
             if obj.auto_enqueue
                 obj.enqueue(channel_data);
             end
  
-            obj.on_data_received(channel_data, time, first_sample_of_experiment);
+            obj.on_data_received(channel_data, time, first_sample_of_session);
             
             obj.events_sent = obj.events_sent + numel(obj.commands);
             obj.last_sample_received_at = time;
@@ -99,22 +99,22 @@ classdef (Abstract) AbstractMatlabProcessor < handle
             samples = obj.samples;
         end
 
-        function [commands, samples] = init_experiment(obj)
+        function [commands, samples] = init_session(obj)
             coder.inline("never");
 
-            obj.on_init_experiment();
+            obj.on_init_session();
             obj.events_sent = obj.events_sent + numel(obj.commands);
 
             commands = obj.commands;
             samples = obj.samples;
         end
 
-        function [commands, samples] = end_experiment(obj)
+        function [commands, samples] = end_session(obj)
             coder.inline("never");
             
-            obj.experiment_in_progress = false;
+            obj.session_in_progress = false;
 
-            obj.on_end_experiment();
+            obj.on_end_session();
             obj.events_sent = obj.events_sent + numel(obj.commands);
 
             commands = obj.commands;

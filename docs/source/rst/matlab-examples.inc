@@ -1,4 +1,4 @@
-Initialize device and experiment
+Initialize device and session
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: matlab
@@ -6,7 +6,7 @@ Initialize device and experiment
     api = MTMSApi();
 
     api.start_device();
-    api.start_experiment();
+    api.start_session();
 
 Execute single events
 ~~~~~~~~~~~~~~~~~~~~~
@@ -157,13 +157,13 @@ Targeting combined with MEP analysis
     [amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);    
 
 
-Restart experiment
+Restart session
 ~~~~~~~~~~~~~~~~~~
 
 .. code-block:: matlab
 
-    api.stop_experiment()
-    api.start_experiment()
+    api.stop_session()
+    api.start_session()
 
 
 Stop device

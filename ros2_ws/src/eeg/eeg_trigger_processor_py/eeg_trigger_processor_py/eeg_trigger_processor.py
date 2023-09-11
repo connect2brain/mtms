@@ -4,7 +4,7 @@ import time
 
 from event_interfaces.msg import Pulse, Charge, TriggerOut, EventInfo
 
-from mtms_device_interfaces.srv import StartDevice, StartExperiment, StopExperiment
+from mtms_device_interfaces.srv import StartDevice, StartSession, StopSession
 
 from eeg_interfaces.msg import EegDatapoint, Trigger
 
@@ -18,11 +18,11 @@ class EegProcessor(Node):
 
     def __init__(self):
         super().__init__('eeg_trigger_processor')
-        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw_data', self.data_reader_callback, 10)
+        self.data_subscriber = self.create_subscription(EegDatapoint, '/eeg/raw', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger_received', self.trigger_reader_callback, 10)
 
-        self.start_experiment_client = self.create_client(StartExperiment, '/mtms_device/start_experiment')
-        self.stop_experiment_client = self.create_client(StopExperiment, '/mtms_device/stop_experiment')
+        self.start_session_client = self.create_client(StartSession, '/mtms_device/start_session')
+        self.stop_session_client = self.create_client(StopSession, '/mtms_device/stop_session')
 
         self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10)
 
@@ -34,8 +34,8 @@ class EegProcessor(Node):
         self.init_device()
 
     def init_device(self):
-        self.restart_experiment()
-        self.get_logger().info('Experiment started')
+        self.restart_session()
+        self.get_logger().info('Session started')
 
     def data_reader_callback(self, msg):
         pass
@@ -68,10 +68,10 @@ class EegProcessor(Node):
 
         self.send_trigger_out_publisher.publish(trigger_out)
 
-    def restart_experiment(self):
-        self.stop_experiment_client.call_async(StopExperiment.Request())
+    def restart_session(self):
+        self.stop_session_client.call_async(StopSession.Request())
         time.sleep(0.1)
-        self.start_experiment_client.call_async(StartExperiment.Request())
+        self.start_session_client.call_async(StartSession.Request())
 
     def spin(self):
         while rclpy.ok():

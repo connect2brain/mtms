@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+if [ "$STIMULUS_PRESENTER_ENABLE" != "true" ]; then
+  echo "Stimulus presenter is disabled, exiting."
+  exit 1
+fi
+
 source /opt/ros/galactic/setup.bash
 source /app/ros2_ws/install/setup.bash
 

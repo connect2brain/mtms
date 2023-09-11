@@ -19,13 +19,13 @@ public:
 
   virtual MatlabProcessorInterface *init();
 
-  virtual void init_experiment(coder::array<matlab_event, 1U> &ret);
+  virtual void init_session(coder::array<matlab_event, 1U> &ret);
 
-  virtual void end_experiment(coder::array<matlab_event, 1U> &ret);
+  virtual void end_session(coder::array<matlab_event, 1U> &ret);
 
   virtual void data_received(const double channel_data_data[], int channel_data_size,
                              double time,
-                             boolean_T first_sample_of_experiment,
+                             boolean_T first_sample_of_session,
                              coder::array<matlab_event, 1U> &ret,
                              coder::array<matlab_eeg_sample, 1U> &b_samples);
 

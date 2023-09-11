@@ -1,15 +1,11 @@
-from .base.events import TriggerOut
-from psychopy import visual, core
-import numpy as np
-import serial
-
 from enum import Enum
 
+import numpy as np
+import serial
+from psychopy import visual, core
 
-class ExecutionCondition(Enum):
-    TIMED = 0
-    WAIT_FOR_TRIGGER = 1
-    IMMEDIATE = 2
+from ..base.events import TriggerOut
+from ..base.execution_condition import ExecutionCondition
 
 
 # reminder to set permissions to use parallel port from the shell
@@ -79,7 +75,7 @@ class PipelineStage:
         self.quit_duration = quit_duration
 
 
-    def init_experiment(self):
+    def init_session(self):
         self.mywin = visual.Window(
             size=[900, 600],
             monitor="testMonitor",
@@ -135,7 +131,7 @@ class PipelineStage:
     def init_break(self, execution_time):
         print(f"Break invoked at {execution_time}")
         if self.block == self.nblocks:
-            self.end_experiment()
+            self.end_session()
         else:
             # View a short message during the break.
             break_text = 'Break!\n' + str(self.block) + ' blocks done.\n' + str(self.nblocks - self.block) + ' blocks to go.'
@@ -150,7 +146,7 @@ class PipelineStage:
         self.text_stim.draw()
         self.mywin.flip()
         self.trigger(8)
-        # Press any button to continue with experiment
+        # Press any button to continue with session
         self.mode = PresenterMode.BREAK
         self.set_timer(execution_time, self.break_duration)
         return []
@@ -204,7 +200,7 @@ class PipelineStage:
         return []
 
 
-    def end_experiment(self):
+    def end_session(self):
         message = visual.TextStim(self.mywin,
                 text='We are done!\nWindow closes in ' + str(self.quit_duration)+ ' seconds.',
                 autoDraw=False,

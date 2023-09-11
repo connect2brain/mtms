@@ -42,19 +42,15 @@ public:
   ProcessorNode(std::string node_name);
 
   virtual void publish_events(double_t time, const std::vector<Event> &events) = 0;
-
   void load_processor_script(std::string processor_type, std::string processor_script_path);
-
-  void subscribe_to_experiment_state();
-
-
-  typename rclcpp::Subscription<SubscriptionType>::SharedPtr subscription;
+  void subscribe_to_session_state();
 
   ProcessorWrapper *processor;
 
+  typename rclcpp::Subscription<SubscriptionType>::SharedPtr input_data_subscription;
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscription;
-  mtms_device_interfaces::msg::ExperimentState experiment_state;
 
+  mtms_device_interfaces::msg::SessionState session_state;
 };
 
 
@@ -71,30 +67,30 @@ ProcessorNode<SubscriptionType, OutputType>::ProcessorNode(std::string node_name
 
   this->load_processor_script(processor_type, processor_script_path);
 
-  this->subscribe_to_experiment_state();
+  this->subscribe_to_session_state();
 }
 
 template<class SubscriptionType, class OutputType>
-void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_experiment_state() {
+void ProcessorNode<SubscriptionType, OutputType>::subscribe_to_session_state() {
   auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
 
-    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STOPPED &&
-        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STOPPED) {
+    if (message->session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED &&
+        session_state.value != mtms_device_interfaces::msg::SessionState::STOPPED) {
 
-      std::vector<Event> events = this->processor->end_experiment();
+      std::vector<Event> events = this->processor->end_session();
       publish_events(message->time, events);
 
     }
 
-    if (message->experiment_state.value == mtms_device_interfaces::msg::ExperimentState::STARTED &&
-        experiment_state.value != mtms_device_interfaces::msg::ExperimentState::STARTED) {
+    if (message->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+        session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
 
       std::vector<Event> events = this->processor->init();
       publish_events(message->time, events);
 
     }
 
-    experiment_state = message->experiment_state;
+    session_state = message->session_state;
 
   };
 

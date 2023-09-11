@@ -1,4 +1,4 @@
-function out = run_processor(window_size, channel_count, data_sample, time, first_sample_of_experiment)
+function out = run_processor(window_size, channel_count, data_sample, time, first_sample_of_session)
 
     % HACK: to make variable size data samples
     actual_window_size = uint32(20);
@@ -49,9 +49,9 @@ function out = run_processor(window_size, channel_count, data_sample, time, firs
     end
 
 
-    [commands, eeg_samples]= obj.init_experiment();
+    [commands, eeg_samples]= obj.init_session();
 
-    [commands, eeg_samples] = obj.data_received(actual_data_sample, time, first_sample_of_experiment);
+    [commands, eeg_samples] = obj.data_received(actual_data_sample, time, first_sample_of_session);
     actual_data_sample2 = ones(actual_window_size, 1);
     [commands, eeg_samples]= obj.data_received(actual_data_sample2, time + 1, false);
     
@@ -59,17 +59,17 @@ function out = run_processor(window_size, channel_count, data_sample, time, firs
     s = sum(data);
 
 
-    data = obj.end_experiment();
+    data = obj.end_session();
 
     auto_enqueue = obj.auto_enqueue;
 
     ring_buf = obj.data;
     
-    in_progress = obj.experiment_in_progress;
+    in_progress = obj.session_in_progress;
 
     % out = data(2);
     time = obj.last_sample_received_at;
-    experiment_started = obj.experiment_in_progress;
+    session_started = obj.session_in_progress;
 
     
     ring_buf.append([1.2, 0.2, 1.5, 4, 1000.9]);

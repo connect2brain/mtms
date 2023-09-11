@@ -75,11 +75,11 @@ public:
     /* Read ROS parameters. */
     auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
 
-    descriptor.description = "Site";
+    descriptor.description = "Coil array";
     descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
-    this->declare_parameter("site", "", descriptor);
+    this->declare_parameter("coil_array", "", descriptor);
 
-    this->site = this->get_parameter("site").get_parameter_value().get<std::string>();
+    this->coil_array = this->get_parameter("coil_array").get_parameter_value().get<std::string>();
 
     /* Define callbacks for service calls. */
 
@@ -217,7 +217,7 @@ private:
 
     RCLCPP_INFO(rclcpp::get_logger("targeting"), "Initializing lookup table...");
 
-    std::string filePath = "data/" + site + "/targeting.csv";
+    std::string filePath = "data/" + coil_array + "/targeting.csv";
     std::ifstream file(filePath.c_str(), std::ios::in);
 
     if (!file.is_open()) {
@@ -267,7 +267,7 @@ private:
   rclcpp::Service<targeting_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
   rclcpp::Service<targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
 
-  std::string site;
+  std::string coil_array;
 };
 
 
