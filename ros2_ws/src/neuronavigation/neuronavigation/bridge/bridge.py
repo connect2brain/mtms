@@ -348,7 +348,11 @@ def main():
         x11 = ctypes.cdll.LoadLibrary('libX11.so')
         x11.XInitThreads()
 
-    app.main(connection=connection)
+    # HACK: The host used for connecting to the robot. However, ideally robot would be another ROS node and,
+    #   therefore, automatically discovered. Settle for this for now.
+    remote_host = 'http://localhost:5000'
+
+    app.main(connection=connection, remote_host=remote_host)
 
 
 if __file__ == 'main':
