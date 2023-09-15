@@ -234,6 +234,16 @@ services:
     privileged: true
     network_mode: host
 
+  stimulation_allower:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
   targeting:
     build:
       context: .

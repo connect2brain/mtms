@@ -101,6 +101,13 @@ services:
       context: ..
       dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
 
+  stimulation_allower:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+
   targeting:
     networks:
       - cinetwork
