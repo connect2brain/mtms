@@ -165,6 +165,15 @@ services:
         constraints:
           - node.role == manager
 
+  stimulation_allower:
+    image: okahilak/mtms:stimulation_allower
+    environment:
+      - ROS_LOG_LEVEL=info
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
   targeting:
     image: okahilak/mtms:targeting
     environment:
