@@ -13,6 +13,10 @@ call C:\dev\ros2_humble\local_setup.bat
 cd %MTMS_ROOT%\ros2_ws
 
 REM Note that neuronavigation_interfaces and ui_interfaces are NOT rebuilt to save some time when starting neuronavigation.
+REM
+REM Before running this for the first time, ensure that you have run manually:
+REM
+REM colcon build --packages-select neuronavigation_interfaces ui_interfaces
 colcon build --packages-select neuronavigation
 call install\local_setup.bat
 
