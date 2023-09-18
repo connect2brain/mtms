@@ -1,4 +1,4 @@
-FROM osrf/ros:humble-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -37,7 +37,7 @@ COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/humble/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Create a directory for pipeline
 
