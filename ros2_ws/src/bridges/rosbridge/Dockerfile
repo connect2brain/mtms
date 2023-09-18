@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -33,7 +33,7 @@ RUN shopt -s globstar && dos2unix **
 
 # Build ROS packages
 
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/iron/setup.bash && \
     colcon build
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux
