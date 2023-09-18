@@ -1,5 +1,5 @@
 # Build environment
-FROM osrf/ros:galactic-desktop as builder
+FROM osrf/ros:iron-desktop as builder
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
@@ -22,10 +22,10 @@ COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/eeg_interfaces/
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Production environment
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 WORKDIR /app
 COPY --from=builder /app/ros2_ws/build/ ros2_ws/build/
 COPY --from=builder /app/ros2_ws/install/ ros2_ws/install/

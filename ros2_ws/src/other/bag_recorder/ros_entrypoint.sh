@@ -11,7 +11,7 @@ if [ -z "$BAG_NAME" ]; then
     exit 1
 fi
 
-source /opt/ros/galactic/setup.bash
+source /opt/ros/iron/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 ros2 bag record -a -o /app/projects/$PROJECT_NAME/bags/$(date +%Y-%m-%d_%H-%M-%S)_$BAG_NAME
