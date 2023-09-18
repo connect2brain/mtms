@@ -4,7 +4,7 @@ source install-docker.sh
 source install-ros.sh
 
 # Install Cyclone DDS for ROS
-sudo apt install -y ros-humble-rmw-cyclonedds-cpp
+sudo apt install -y ros-iron-rmw-cyclonedds-cpp
 
 # Tools for troubleshooting
 sudo apt install -y net-tools wireshark
@@ -18,8 +18,8 @@ if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
 fi
 
 # Add ROS sourcing to .bashrc unless it is already there
-if ! grep -q "source /opt/ros/humble/setup.bash" ~/.bashrc; then
-    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+if ! grep -q "source /opt/ros/iron/setup.bash" ~/.bashrc; then
+    echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 fi
 
 if ! grep -q "source $MTMS_ROOT/ros2_ws/install/local_setup.bash" ~/.bashrc; then
