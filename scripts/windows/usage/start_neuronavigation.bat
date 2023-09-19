@@ -20,4 +20,6 @@ REM colcon build --packages-select neuronavigation_interfaces ui_interfaces
 colcon build --packages-select neuronavigation
 call install\local_setup.bat
 
-ros2 run neuronavigation start
+REM
+REM E-field is disabled for now, enable when it works in production.
+ros2 run neuronavigation start --ros-args -p electric_field_enable:=false

@@ -2,6 +2,7 @@
 
 import ctypes
 import platform
+import sys
 from threading import Thread
 
 import rclpy
@@ -41,6 +42,15 @@ class NeuronavigationNode(Node):
     def __init__(self):
         super().__init__("neuronavigation")
 
+        # ROS parameters
+        descriptor = ParameterDescriptor(
+            name='Enable or disable electric field',
+            type=ParameterType.PARAMETER_BOOL,
+        )
+        self.declare_parameter('electric_field_enable', descriptor=descriptor)
+        self.electric_field_enable = self.get_parameter('electric_field_enable').value
+
+        # Create publishers, subscribers, and services
         qos_persist_latest = QoSProfile(
             depth=1,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
@@ -64,14 +74,7 @@ class NeuronavigationNode(Node):
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
-        # descriptor = ParameterDescriptor(
-        #     name='EField',
-        #     type=ParameterType.PARAMETER_BOOL,
-        # )
-        # self.declare_parameter('Activate_EField', descriptor=descriptor)
-        # self.Activate_EField = self.get_parameter('Activate_EField').value
-        self.Activate_EField = True
-        if self.Activate_EField:
+        if self.electric_field_enable:
             self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/init not available, waiting...')
@@ -352,7 +355,9 @@ def main():
     #   therefore, automatically discovered. Settle for this for now.
     remote_host = 'http://localhost:5000'
 
-    app.main(connection=connection, remote_host=remote_host)
+    # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
+    sys.argv = [sys.argv[0]]
+    app.main(connection=connection, remote_host=None)
 
 
 if __file__ == 'main':
