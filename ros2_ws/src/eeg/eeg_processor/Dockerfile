@@ -2,15 +2,23 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
+# Setup environment
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install dependencies
 
 WORKDIR /build
 
 RUN apt-get update
-RUN apt-get install -y dos2unix wget python3-pip
-
-# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y \
+    dos2unix \
+    wget \
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp
 
 # PsychoPy and its dependencies
 RUN apt-get install -y libgtk-3-dev

@@ -2,15 +2,19 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
+# Setup environment
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
 # Install dependencies
 
 RUN apt-get update
 
 RUN apt-get install -y \
-    dos2unix
+    dos2unix \
+    ros-iron-rmw-cyclonedds-cpp
 
 WORKDIR /app/ros2_ws
-
 
 # Build interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
