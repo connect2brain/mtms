@@ -2,13 +2,18 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
+# Setup environment
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
 # Install dependencies
 
 RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
-    python3-pip
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp
 
 RUN pip install PySerial
 

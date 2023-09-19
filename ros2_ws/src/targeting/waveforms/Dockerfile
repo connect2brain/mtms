@@ -2,13 +2,19 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
+# Setup environment
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
 # Install dependencies
+
 WORKDIR /build
 
 RUN apt-get update
 
 RUN apt-get install -y \
-    dos2unix
+    dos2unix \
+    ros-iron-rmw-cyclonedds-cpp
 
 # Copy ROS workspace
 
