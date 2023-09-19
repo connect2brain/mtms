@@ -2,9 +2,18 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
-# Install dependencies for InVesalius
+# Setup environment
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Install general dependencies
 
 RUN apt-get update
+
+RUN apt-get install -y \
+    ros-iron-rmw-cyclonedds-cpp
+
+# Install dependencies for InVesalius
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y \
