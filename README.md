@@ -381,18 +381,6 @@ BUSID  DEVICE                                                        STATE
 
 ---
 
-# Building
-You can build the project docker images with `docker-compose.build.yml` by running `docker-compose -f docker-compose.build.yml build`. 
-
-Use `tag-docker-images.sh` and `push-docker-tags.sh` to tag the built images and push them to Docker Hub.
-
-Deploy new images workflow:
-1. `docker-compose -f docker-compose.build.yml build`
-2. `./tag-docker-images.sh`
-3. `./push-docker-tags.sh`
-
----
-
 # Production environment
 Production environment utilizes Docker Swarm to deploy and manage nodes across two host machines. Ensure that the machines are connected to the same router.
 
