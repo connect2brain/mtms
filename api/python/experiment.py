@@ -1,0 +1,207 @@
+from datetime import datetime
+
+import numpy as np
+from pytimedinput import timedKey
+
+from event_interfaces.msg import ExecutionCondition
+
+
+class Experiment:
+    def __init__(self, experiment_name, api):
+        self.api = api
+        self.time_of_experiment = datetime.now()
+        self.event_log = open("experiment_{}_{}.csv".format(
+            experiment_name,
+            self.time_of_experiment.strftime('%Y-%m-%d_%H%M%S')), "w"
+        )
+        self.trials = []
+
+        np.random.seed(1)
+
+    def configure_mep_analysis(self, enabled, mep_configuration):
+        self.analyze_mep_enabled = enabled
+        self.mep_configuration = mep_configuration
+
+    def add_trials(self, actions, condition):
+        self.trials += [
+            {
+                'time': None,
+                'condition': condition,
+                'actions': action,
+            } for action in actions
+        ]
+        self.num_of_trials = len(self.trials)
+
+    def permute_trials(self):
+        self.trials = np.random.permutation(self.trials)
+
+    def add_trial_times(self, isi_low, isi_high, first_trial_time=5.0):
+        time = first_trial_time
+        for i in range(self.num_of_trials):
+            self.trials[i]['time'] = time
+            time += np.random.uniform(isi_low, isi_high)
+
+    def execute_pulse(self, condition, time, params):
+        x = int(params['x'])
+        y = int(params['y'])
+        angle = int(params['angle'])
+        intensity = int(params['intensity'])
+        delta_time = params['delta_time']
+
+        time_adjusted = time + delta_time
+
+        voltages, reverse_polarities = self.api.get_channel_voltages(
+            displacement_x=x,
+            displacement_y=y,
+            rotation_angle=angle,
+            intensity=intensity,
+        )
+
+        self.api.send_immediate_charge_or_discharge_to_all_channels(
+            target_voltages=voltages,
+            wait_for_completion=False,
+        )
+
+        self.api.send_timed_default_pulse_to_all_channels(
+            reverse_polarities=reverse_polarities,
+            time=time_adjusted,
+            wait_for_completion=False,
+        )
+
+        print("Executing pulse at ({}, {}, {}) with intensity {} V/m at time {:.4f} s.".format(x, y, angle, intensity, time_adjusted))
+
+        self.event_log.write("{};{};pulse;{};{}\n".format(time_adjusted, condition, x, y))
+        self.event_log.flush()
+
+    def execute_trigger(self, condition, time, params):
+        port = params['port']
+        delta_time = params['delta_time']
+
+        time_adjusted = time + delta_time
+
+        self.api.send_trigger_out(
+            port=port,
+            execution_condition=ExecutionCondition.TIMED,
+            time=time_adjusted,
+            wait_for_completion=False,
+        )
+
+        print("Executing trigger on port {} at time {:.4f} s.".format(port, time_adjusted))
+
+        self.event_log.write("{};{};trigger\n".format(time_adjusted, condition))
+        self.event_log.flush()
+
+    def perform_trial(self, trial):
+        condition = trial['condition']
+        time = trial['time']
+        actions = trial['actions']
+
+        for action in actions:
+            action_type = action['type']
+            params = action['params']
+
+            if action_type == 'pulse':
+                self.execute_pulse(condition, time, params)
+
+            elif action_type == 'trigger':
+                self.execute_trigger(condition, time, params)
+
+        if self.analyze_mep_enabled:
+            amplitude, latency = self.analyze_mep(time)
+            trial['mep'] = {
+                'amplitude': amplitude,
+                'latency': latency,
+            }
+
+        self.api.wait_until(time + 0.1)
+
+        self.event_log.write("stimulated\n")
+        self.event_log.flush()
+
+    def analyze_mep(self, time):
+        emg_channel = 1
+
+        print("Analyzing MEP on EMG channel {} at time {:.4f} s.".format(emg_channel, time))
+
+        amplitude, latency, errors = self.api.analyze_mep(
+            emg_channel=emg_channel,
+            time=time,
+            mep_configuration=self.mep_configuration,
+        )
+
+        if errors.mep_error.value != 0:
+            print("WARNING: MEP error occurred.")
+
+        if errors.gather_mep_error.value!= 0:
+            print("WARNING: Gather MEP error occurred.")
+
+        if errors.gather_preactivation_error.value!= 0:
+            print("WARNING: Gather preactivation error occurred.")
+
+        return amplitude, latency
+
+    def perform(self):
+        # Restart session.
+        self.api.stop_session()
+        self.api.start_session()
+
+        self.api.allow_stimulation(True)
+
+        i = 0
+        while i < self.num_of_trials:
+            trial = self.trials[i]
+
+            print("______________")
+            print("Trial {}".format(i + 1))
+
+            _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
+
+            if timed_out:
+                self.perform_trial(trial)
+                i += 1
+
+            else:
+                self.event_log.write("INTERRUPTED;")
+                self.event_log.flush()
+
+                ans = None
+                while not (ans == 'y' or ans == 'Y' or ans == 'n' or ans == 'N'):
+                    ans = input("Continue? (Y/N) ")
+
+                if ans == 'y' or ans == 'Y':
+                    self.event_log.write("continued\n")
+                    self.event_log.flush()
+                    continue
+                else:
+                    self.event_log.write("aborted\n")
+                    self.event_log.flush()
+                    break
+
+        self.event_log.close()
+
+    def get_valid_trials(self):
+        valid_trial_indices = ['mep' in trial and trial['mep']['amplitude'] is not None for trial in self.trials]
+        valid_trials = self.trials[valid_trial_indices]
+
+        return valid_trials
+
+    def get_mep_amplitude(self, trial):
+        return trial['mep']['amplitude'] if 'mep' in trial else None
+
+    def get_param(self, trial, param):
+        return trial['actions'][0]['params'][param]
+
+    def write_to_csv(self):
+        with open("experiment_design_{}.csv".format(self.time_of_experiment.strftime('%Y-%m-%d_%H%M%S')), "w") as f:
+            for i in range(self.num_of_trials):
+                trial = self.trials[i]
+
+                condition = trial['condition']
+                time = trial['time']
+                actions = trial['actions']
+
+                x = self.get_param(trial, 'x')
+                y = self.get_param(trial, 'y')
+                mep_amplitude = self.get_mep_amplitude(trial)
+
+                f.write("{};{};{};{};{};{}\n".format(i, time, condition, x, y, mep_amplitude))
