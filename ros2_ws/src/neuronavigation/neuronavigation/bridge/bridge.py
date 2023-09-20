@@ -8,7 +8,7 @@ from threading import Thread
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, QoSProfile
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 from geometry_msgs.msg import Point
@@ -39,6 +39,9 @@ class NeuronavigationNode(Node):
     _COLOR_NON_TARGET = (230, 98, 48)  # hex: #E66230, $non-target-color
     _COLOR_SELECTED = (112, 112, 112)  # hex: #707070, $darker-gray
 
+    # HACK: Needs to match the corresponding value in stimulation allower ROS node.
+    COIL_AT_TARGET_DEADLINE_MS = 100
+
     def __init__(self):
         super().__init__("neuronavigation")
 
@@ -59,8 +62,22 @@ class NeuronavigationNode(Node):
         callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
-        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10, callback_group=callback_group)
 
+        # Create publisher for 'coil at target' message.
+        qos_coil_at_target = QoSProfile(
+            depth=1,
+            history=HistoryPolicy.KEEP_LAST,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL
+        )
+        coil_at_target_deadline_ns = self.COIL_AT_TARGET_DEADLINE_MS * 10 ** 6
+        qos_coil_at_target.deadline.sec = coil_at_target_deadline_ns // 1_000_000_000
+        qos_coil_at_target.deadline.nanosec = coil_at_target_deadline_ns % 1_000_000_000
+        qos_coil_at_target.lifespan = qos_coil_at_target.deadline
+
+        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", qos_coil_at_target, callback_group=callback_group)
+
+        # Create other publishers.
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest, callback_group=callback_group)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest, callback_group=callback_group)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
