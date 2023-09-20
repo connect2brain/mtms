@@ -125,7 +125,7 @@ class MTMSApiPrinter():
             temperature = '{:4}'.format(channel_state.temperature)
             temperatures_str += temperature
 
-            pulse_count = '{:4}'.format(channel_state.pulse_count)
+            pulse_count = '{:6}'.format(channel_state.pulse_count)
             pulse_counts_str += pulse_count
 
         startup_error = state.startup_error
