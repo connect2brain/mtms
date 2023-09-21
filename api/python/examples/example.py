@@ -1,9 +1,14 @@
-from event_interfaces.msg import ExecutionCondition, WaveformPhase
-
-from mep_interfaces.msg import MepConfiguration, PreactivationCheck
-from eeg_interfaces.msg import TimeWindow
-
 from MTMSApi import MTMSApi
+
+from event_interfaces.msg import (
+    ExecutionCondition,
+    WaveformPhase
+)
+from mep_interfaces.msg import (
+    MepConfiguration,
+    PreactivationCheck
+)
+from eeg_interfaces.msg import TimeWindow
 
 
 api = MTMSApi()
@@ -27,12 +32,11 @@ api.send_charge(
     time=time,
 )
 
-# Allow stimulation before sending a pulse.
-api.allow_stimulation(True)
-
 # Send pulse on channel 1, using the default waveform.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
+
+api.allow_stimulation(True)
 
 api.send_pulse(
     channel=channel,
@@ -61,6 +65,36 @@ api.send_trigger_out(
     time=time,
 )
 
+# Send pulse on channel 1 and a simultaneous trigger out on port 1.
+channel = 1
+waveform = api.get_default_waveform(channel)
+reverse_polarity = False
+execution_condition = ExecutionCondition.TIMED
+time = api.get_time() + 1.0
+
+api.allow_stimulation(True)
+
+api.send_pulse(
+    channel=channel,
+    waveform=waveform,
+    execution_condition=execution_condition,
+    time=time,
+    reverse_polarity=reverse_polarity,
+    wait_for_completion=False,
+)
+
+port = 1
+duration_us = 1000
+
+api.send_trigger_out(
+    port=port,
+    duration_us=duration_us,
+    execution_condition=execution_condition,
+    time=time,
+    wait_for_completion=False,
+)
+
+api.wait(2)
 
 ## Send pulse on channel 1 and analyze MEP.
 
