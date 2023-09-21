@@ -514,6 +514,7 @@ void EegBridge::handle_eeg_data_packet() {
       RCLCPP_DEBUG(this->get_logger(), "Measurement end packet received.");
       RCLCPP_INFO(this->get_logger(), "Measurement ended on the EEG device.");
 
+      this->session_been_stopped = false;
       break;
 
     default:
