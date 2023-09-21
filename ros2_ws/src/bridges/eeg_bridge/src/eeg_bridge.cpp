@@ -27,6 +27,7 @@ const uint8_t MEASUREMENT_START_PACKET_N_CHANNELS_INDEX = 16;
 const uint8_t MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX = 18;
 
 const double_t SYNC_INTERVAL = 1.0;
+const double_t MAXIMUM_TIME_CORRECTION_ADJUSTMENT_PER_SYNC_TRIGGER = 0.001;
 
 /* HACK: If source channel matches the value below, it indicates the existence
  *  of trigger in the sample packet. This is documented in NeurOne's manual.
@@ -299,9 +300,18 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  time_correction = (sync_time - first_trigger_timestamp_) - sync_index * SYNC_INTERVAL;
-  sync_index++;
-  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f s.", time_correction);
+  double_t new_time_correction = (sync_time - this->first_trigger_timestamp_) - this->sync_index * SYNC_INTERVAL;
+
+  /* NOTE: Bittium's EEG device can be configured to send double triggers whenever an incoming trigger is received by the device. This happens when "Enabled"
+     checkbox is ticked in Trigger A configuration in Settings menu. There seems to be no way to distinguish between the two triggers by the UDP packet contents,
+     hence the additional check that we do not receive triggers too often. */
+  if (abs(new_time_correction - this->time_correction) > MAXIMUM_TIME_CORRECTION_ADJUSTMENT_PER_SYNC_TRIGGER) {
+    RCLCPP_ERROR(this->get_logger(), "Sync triggers received too frequently or infrequently. Check EEG software configuration for double triggers.");
+  }
+
+  this->time_correction = new_time_correction;
+  this->sync_index++;
+  RCLCPP_INFO(this->get_logger(), "Sync trigger received. Updated time correction to %f s.", this->time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
