@@ -5,8 +5,9 @@ various analyses of the EEG/EMG data.
 
 It uses the Robot Operating System (ROS2) to interact with the device.
 """
-import time
 import copy
+import signal
+import time
 
 import rclpy
 
@@ -42,6 +43,13 @@ class MTMSApi:
         self.node = MTMSApiNode()
         self.event_id = 0
 
+        self.interrupt_requested = False
+        signal.signal(signal.SIGINT, self.handle_sigint)
+
+    def handle_sigint(self, signum, frame):
+        self.interrupt_requested = True
+        raise KeyboardInterrupt
+
     # General
 
     def _next_event_id(self):
@@ -63,7 +71,9 @@ class MTMSApi:
         """
         self.node.start_device()
         while self.get_device_state() != DeviceState.OPERATIONAL:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def stop_device(self):
         """
@@ -73,7 +83,9 @@ class MTMSApi:
         """
         self.node.stop_device()
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def start_session(self):
         """
@@ -83,7 +95,9 @@ class MTMSApi:
         """
         self.node.start_session()
         while self.get_session_state() != SessionState.STARTED:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def stop_session(self):
         """
@@ -93,7 +107,9 @@ class MTMSApi:
         """
         self.node.stop_session()
         while self.get_session_state() != SessionState.STOPPED:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     # Wait
 
@@ -109,6 +125,9 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.node.get_event_feedback(id) is None:
             self.node.wait_for_new_state()
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def _wait_for_completions(self, ids):
         """
@@ -121,6 +140,9 @@ class MTMSApi:
         """
         for id in ids:
             self._wait_for_completion(id)
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def wait_forever(self):
         """
@@ -128,6 +150,9 @@ class MTMSApi:
         """
         while True:
             self.node.wait_for_new_state()
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def wait_until(self, time):
         """
@@ -141,6 +166,9 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_time() < time:
             self.node.wait_for_new_state()
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def wait(self, time):
         """
@@ -156,6 +184,9 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_wallclock_time() < start_time + time:
             self.node.wait_for_new_state()
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     # Getters
 
@@ -530,11 +561,15 @@ class MTMSApi:
 
     def wait_until_not_operational(self):
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     def wait_until_operational(self):
         while self.get_device_state() != DeviceState.OPERATIONAL:
-            pass
+            if self.interrupt_requested:
+                self.interrupt_requested = False
+                break
 
     # Helpers
 
