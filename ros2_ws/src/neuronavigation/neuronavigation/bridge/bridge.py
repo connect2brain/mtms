@@ -374,7 +374,7 @@ def main():
 
     # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
     sys.argv = [sys.argv[0]]
-    app.main(connection=connection, remote_host=None)
+    app.main(connection=connection, remote_host=remote_host)
 
 
 if __file__ == 'main':
