@@ -147,37 +147,39 @@ class Experiment:
 
         self.api.allow_stimulation(True)
 
-        i = 0
-        while i < self.num_of_trials:
-            trial = self.trials[i]
+        try:
+            i = 0
+            while i < self.num_of_trials:
+                trial = self.trials[i]
 
-            print("______________")
-            print("Trial {}".format(i + 1))
+                print("______________")
+                print("Trial {}".format(i + 1))
 
-            _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
+                _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
 
-            if timed_out:
-                self.perform_trial(trial)
-                i += 1
+                if timed_out:
+                    self.perform_trial(trial)
+                    i += 1
 
-            else:
-                self.event_log.write("INTERRUPTED;")
-                self.event_log.flush()
-
-                ans = None
-                while not (ans == 'y' or ans == 'Y' or ans == 'n' or ans == 'N'):
-                    ans = input("Continue? (Y/N) ")
-
-                if ans == 'y' or ans == 'Y':
-                    self.event_log.write("continued\n")
-                    self.event_log.flush()
-                    continue
                 else:
-                    self.event_log.write("aborted\n")
+                    self.event_log.write("INTERRUPTED;")
                     self.event_log.flush()
-                    break
 
-        self.event_log.close()
+                    ans = None
+                    while ans not in ['y', 'Y', 'n', 'N']:
+                        ans = input("Continue? (Y/N) ")
+
+                    if ans in ['y', 'Y']:
+                        self.event_log.write("continued\n")
+                        self.event_log.flush()
+                        continue
+                    else:
+                        self.event_log.write("aborted\n")
+                        self.event_log.flush()
+                        break
+        finally:
+            self.api.stop_session()
+            self.event_log.close()
 
     def get_valid_trials(self):
         valid_trial_indices = ['mep' in trial and trial['mep']['amplitude'] is not None for trial in self.trials]
