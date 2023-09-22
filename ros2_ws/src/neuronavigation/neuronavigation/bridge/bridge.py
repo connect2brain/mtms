@@ -40,7 +40,7 @@ class NeuronavigationNode(Node):
     _COLOR_SELECTED = (112, 112, 112)  # hex: #707070, $darker-gray
 
     # HACK: Needs to match the corresponding value in stimulation allower ROS node.
-    COIL_AT_TARGET_DEADLINE_MS = 100
+    COIL_AT_TARGET_DEADLINE_S = 0.3
 
     def __init__(self):
         super().__init__("neuronavigation")
@@ -64,17 +64,15 @@ class NeuronavigationNode(Node):
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
         # Create publisher for 'coil at target' message.
+        deadline_coil_at_target = rclpy.duration.Duration(seconds=self.COIL_AT_TARGET_DEADLINE_S)
         qos_coil_at_target = QoSProfile(
             depth=1,
             history=HistoryPolicy.KEEP_LAST,
             reliability=ReliabilityPolicy.RELIABLE,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            deadline=deadline_coil_at_target,
+            lifespan=deadline_coil_at_target,
         )
-        coil_at_target_deadline_ns = self.COIL_AT_TARGET_DEADLINE_MS * 10 ** 6
-        qos_coil_at_target.deadline.sec = coil_at_target_deadline_ns // 1_000_000_000
-        qos_coil_at_target.deadline.nanosec = coil_at_target_deadline_ns % 1_000_000_000
-        qos_coil_at_target.lifespan = qos_coil_at_target.deadline
-
         self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", qos_coil_at_target, callback_group=callback_group)
 
         # Create other publishers.
