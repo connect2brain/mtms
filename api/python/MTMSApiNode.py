@@ -384,6 +384,12 @@ class MTMSApiNode(Node):
 
         # Get result from ROS action.
         get_result_future = goal_handle.get_result_async()
+
+        # XXX: Because of the custom SIGINT handler (defined in the constructor of MTMSApi class),
+        #   waiting for the MEP here cannot be interrupted by Ctrl+C. It turned out to be hard to
+        #   keep ROS in a working state after Ctrl+C without overriding the default SIGINT handler,
+        #   hence the current solution. Maybe this could be looked further into at some point.
+        #
         rclpy.spin_until_future_complete(self, get_result_future)
 
         result = get_result_future.result()
