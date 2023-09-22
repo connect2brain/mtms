@@ -1,10 +1,10 @@
+@echo off
+
 REM This script is used to start neuronavigation on the Windows computer in the lab in Aalto. Its contents are
 REM bound to change; for instance, we currently have to run neuronavigation outside Docker to be able to use
 REM Optitrack motion tracking. Once Optitrack works with Docker, this can be changed to just run something like:
 REM
 REM docker-compose up neuronavigation
-
-@echo off
 
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
@@ -20,6 +20,8 @@ REM colcon build --packages-select neuronavigation_interfaces ui_interfaces
 colcon build --packages-select neuronavigation
 call install\local_setup.bat
 
-REM
 REM E-field is disabled for now, enable when it works in production.
 ros2 run neuronavigation start --ros-args -p electric_field_enable:=false
+
+REM Ask for a keypress before closing the terminal window so that potential errors are shown to the user.
+pause
