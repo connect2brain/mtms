@@ -43,11 +43,9 @@ class MTMSApi:
         self.node = MTMSApiNode()
         self.event_id = 0
 
-        self.interrupt_requested = False
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def handle_sigint(self, signum, frame):
-        self.interrupt_requested = True
         raise KeyboardInterrupt
 
     # General
@@ -71,9 +69,7 @@ class MTMSApi:
         """
         self.node.start_device()
         while self.get_device_state() != DeviceState.OPERATIONAL:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            pass
 
     def stop_device(self):
         """
@@ -83,9 +79,14 @@ class MTMSApi:
         """
         self.node.stop_device()
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            # For safety reasons, be very explicit when stopping session and/or device, which
+            # lowers the capacitor voltages down to zero; we want the operator to know exactly
+            # when it is finished - hence do not allow interrupting waiting for the device to
+            # be stopped using SIGINT.
+            try:
+                pass
+            except KeyboardInterrupt:
+                pass
 
     def start_session(self):
         """
@@ -95,9 +96,7 @@ class MTMSApi:
         """
         self.node.start_session()
         while self.get_session_state() != SessionState.STARTED:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            pass
 
     def stop_session(self):
         """
@@ -107,9 +106,14 @@ class MTMSApi:
         """
         self.node.stop_session()
         while self.get_session_state() != SessionState.STOPPED:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            # For safety reasons, be very explicit when stopping session and/or device, which
+            # lowers the capacitor voltages down to zero; we want the operator to know exactly
+            # when it is finished - hence do not allow interrupting waiting for the session to
+            # be stopped using SIGINT.
+            try:
+                pass
+            except KeyboardInterrupt:
+                pass
 
     # Wait
 
@@ -125,9 +129,6 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.node.get_event_feedback(id) is None:
             self.node.wait_for_new_state()
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
 
     def _wait_for_completions(self, ids):
         """
@@ -140,9 +141,6 @@ class MTMSApi:
         """
         for id in ids:
             self._wait_for_completion(id)
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
 
     def wait_forever(self):
         """
@@ -150,9 +148,6 @@ class MTMSApi:
         """
         while True:
             self.node.wait_for_new_state()
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
 
     def wait_until(self, time):
         """
@@ -166,9 +161,6 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_time() < time:
             self.node.wait_for_new_state()
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
 
     def wait(self, time):
         """
@@ -184,9 +176,6 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_wallclock_time() < start_time + time:
             self.node.wait_for_new_state()
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
 
     # Getters
 
@@ -561,15 +550,11 @@ class MTMSApi:
 
     def wait_until_not_operational(self):
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            pass
 
     def wait_until_operational(self):
         while self.get_device_state() != DeviceState.OPERATIONAL:
-            if self.interrupt_requested:
-                self.interrupt_requested = False
-                break
+            pass
 
     # Helpers
 
