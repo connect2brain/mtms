@@ -63,12 +63,14 @@ class MTMSApi:
 
     def start_device(self):
         """
-        Start the mTMS device, waiting until the device reports its state as operational.
+        Start the mTMS device, waiting until the device reports its state as operational or start-up fails.
 
         Does not require any parameters, and does not return any value.
         """
         self.node.start_device()
-        while self.get_device_state() != DeviceState.OPERATIONAL:
+
+        # If start-up fails, device state will end up as 'Not operational'. Hence, check both conditions.
+        while self.get_device_state() not in [DeviceState.OPERATIONAL, DeviceState.NOT_OPERATIONAL]:
             pass
 
     def stop_device(self):
