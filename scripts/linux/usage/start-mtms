@@ -97,7 +97,8 @@ fi
 # Services needed for the API
 services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "stimulation_allower" \
   "targeting" "bag_recorder" "eeg_simulator" "eeg_preprocessor" \
-  "eeg_processor" "stimulus_presenter" "pedal_listener")
+  "eeg_processor" "stimulus_presenter" "pedal_listener" \
+  "front" "rosbridge")
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
