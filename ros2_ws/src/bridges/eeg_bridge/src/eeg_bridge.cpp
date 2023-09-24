@@ -53,6 +53,7 @@ const uint8_t TRIGGER_B_IN = 8;
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
+const std::string NODE_MESSAGE_TOPIC = "/node/message";
 
 const uint8_t VERBOSE = 0;
 
@@ -119,6 +120,13 @@ void EegBridge::create_publishers() {
   this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
   this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
   this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
+  this->publisher_node_message_ = this->create_publisher<std_msgs::msg::String>(NODE_MESSAGE_TOPIC, 10);
+}
+
+void EegBridge::send_node_message(std::string str) {
+  auto msg = std_msgs::msg::String();
+  msg.data = str;
+  this->publisher_node_message_->publish(msg);
 }
 
 void EegBridge::subscribe_to_system_state() {
@@ -227,8 +235,6 @@ void EegBridge::spin() {
 
   RCLCPP_DEBUG(this->get_logger(), "Waiting for measurement start packet...");
 
-  RCLCPP_INFO(this->get_logger(), "\033[1mPlease start the measurement on the EEG device.\033[0m");
-
   auto base_interface = this->get_node_base_interface();
 
   /* HACK: See comment in wait_for_system_state function. */
@@ -237,6 +243,8 @@ void EegBridge::spin() {
       rclcpp::spin_some(base_interface);
       if (this->read_eeg_data_from_socket()) {
         this->handle_eeg_data_packet();
+      } else {
+        this->send_node_message("Please start the measurement on the EEG device.");
       }
     }
   } catch (const rclcpp::exceptions::RCLError & ex) {
@@ -444,14 +452,14 @@ void EegBridge::handle_eeg_data_packet() {
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "\033[1mPlease restart the measurement on the EEG device.\033[0m");
+        this->send_node_message("Please restart the measurement on the EEG device.");
 
         break;
       }
 
       if (!this->session_been_stopped) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "An mTMS session is ongoing, cannot synchronize EEG data with an ongoing session.");
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "\033[1mPlease stop the ongoing session on the mTMS device.\033[0m");
+        this->send_node_message("Please stop the ongoing session on the mTMS device.");
 
         break;
       }
@@ -486,14 +494,14 @@ void EegBridge::handle_eeg_data_packet() {
 
       if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for mTMS device to start...");
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "\033[1mPlease start the mTMS device.\033[0m");
+        this->send_node_message("Please start the mTMS device.");
 
         break;
       }
 
       if (this->session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "\033[1mPlease start the session on the mTMS device.\033[0m");
+        this->send_node_message("Please start the session on the mTMS device.");
 
         break;
       }
