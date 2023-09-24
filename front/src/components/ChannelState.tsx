@@ -11,7 +11,8 @@ export const ChannelState = (state: ChannelStateType) => {
         return <span key={key}>{key}</span>
       })
     } else {
-      return <span>No error(s)</span>
+      /* No errors, do not display anything. */
+      return <span></span>
     }
   }
 
