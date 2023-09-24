@@ -21,14 +21,17 @@ if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
     exit 1
 fi
 
-# Set ENV_FILE to point to .env of the project
-export ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
+# Set SITE_ENV_FILE to point to .env of the site
+export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
+
+# Set PROJECT_ENV_FILE to point to .env of the project
+export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
 get_env_var () {
   VAR_NAME=$1
-  VAR_VALUE=$(grep "^$VAR_NAME=" $ENV_FILE | cut -d= -f2)
+  VAR_VALUE=$(grep "^$VAR_NAME=" $PROJECT_ENV_FILE | cut -d= -f2)
   if [ -z "$VAR_VALUE" ]; then
-    echo "ERROR: $VAR_NAME not found in $ENV_FILE"
+    echo "ERROR: $VAR_NAME not found in $PROJECT_ENV_FILE"
     exit 1
   else
     echo "$VAR_VALUE"
