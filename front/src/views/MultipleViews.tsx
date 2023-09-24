@@ -14,10 +14,34 @@ export const MultipleViews = () => {
   return (
     <div>
       <OptionWrapper>
-        <a href="#" onClick={() => setCurrentView('systemControl')}>System Control</a><br />
-        <a href="#" onClick={() => setCurrentView('plot')}>EEG plot</a><br />
-        <a href="#" onClick={() => setCurrentView('webGLPlot')}>EEG WebGL plot</a><br />
-        <a href="#" onClick={() => setCurrentView('targets')}>Targets table</a><br />
+        <a
+          href="#"
+          onClick={() => setCurrentView('systemControl')}
+          className={currentView === 'systemControl' ? 'active' : ''}
+        >
+          System Control
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('plot')}
+          className={currentView === 'plot' ? 'active' : ''}
+        >
+          EEG
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('webGLPlot')}
+          className={currentView === 'webGLPlot' ? 'active' : ''}
+        >
+          EEG (WebGL)
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('targets')}
+          className={currentView === 'targets' ? 'active' : ''}
+        >
+          Targeting
+        </a>
       </OptionWrapper>
       <ViewContainer>
         {currentView === 'systemControl' && (
@@ -29,21 +53,21 @@ export const MultipleViews = () => {
 
         {currentView === 'plot' && (
           <Wrapper>
-            <SmallHeader>EEG plot</SmallHeader>
+            <SmallHeader>EEG</SmallHeader>
             <DataVisualize />
           </Wrapper>
         )}
 
         {currentView === 'webGLPlot' && (
           <Wrapper>
-            <SmallHeader>EEG WebGL plot</SmallHeader>
+            <SmallHeader>EEG (WebGL)</SmallHeader>
             <DataVisualizeWebGL />
           </Wrapper>
         )}
 
         {currentView === 'targets' && (
           <Wrapper>
-            <SmallHeader>Targets table</SmallHeader>
+            <SmallHeader>Targeting</SmallHeader>
             <Targets />
           </Wrapper>
         )}
@@ -59,6 +83,23 @@ const ViewContainer = styled.div`
 
 const OptionWrapper = styled.div`
   margin: 0.5rem;
+
+  a {
+    text-decoration: none;
+    color: #505050;   // Darker gray for regular links
+    padding: 0.5rem;
+    display: inline-block;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #303030;  // Even darker gray for hover
+    }
+
+    &.active {
+      color: #222222;  // Almost black for active link
+      font-weight: bold;
+    }
+  }
 `
 
 const Wrapper = styled.div`
