@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Get the site from the first argument
+SITE="$1"
+
+if [ -z "$SITE" ]; then
+    echo "Error: Site is undefined. Please provide it as an argument to the script."
+    echo ""
+    exit 1
+fi
+
+# Install Docker and ROS
 source install-docker.sh
 source install-ros.sh
 
@@ -11,6 +21,11 @@ sudo apt install -y net-tools wireshark
 
 # Tools for customizing GNOME (not required)
 sudo apt install wmctrl
+
+# Add environment variable to .bashrc, setting the site
+if ! grep -q "export SITE=$SITE" ~/.bashrc; then
+    echo "export SITE=$SITE" >> ~/.bashrc
+fi
 
 # Add environment variable to .bashrc, pointing to repository root
 if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
