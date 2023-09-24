@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { ChannelState as ChannelStateType, DeviceState, SessionState, SystemStateMessage } from 'types/mtmsDevice'
+import { ChannelState as ChannelStateType, DeviceState, HumanReadableDeviceState, SessionState, HumanReadableSessionState, SystemStateMessage } from 'types/mtmsDevice'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
 
@@ -65,15 +65,33 @@ export const SystemState = ({ systemState }: Props) => {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
+  const getHumanReadableDeviceState = (deviceState: any, value: any) => {
+    const key = getKeyByValue(DeviceState, value)
+    if (key) {
+      return HumanReadableDeviceState[key as keyof typeof HumanReadableDeviceState] || 'Unknown state'
+    } else {
+      return 'Unknown state'
+    }
+  }
+
+  const getHumanReadableSessionState = (sessionState: any, value: any) => {
+    const key = getKeyByValue(SessionState, value)
+    if (key) {
+      return HumanReadableSessionState[key as keyof typeof HumanReadableSessionState] || 'Unknown state'
+    } else {
+      return 'Unknown state'
+    }
+  }
+
   return (
     <div>
       <StateRow>
         <StateTitle>Device</StateTitle>
-        <StateValue>{getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</StateValue>
+        <StateValue>{getHumanReadableDeviceState(DeviceState, systemState.device_state.value)}</StateValue>
       </StateRow>
       <StateRow>
         <StateTitle>Session</StateTitle>
-        <StateValue>{getKeyByValue(SessionState, systemState.session_state.value) || 'No error'}</StateValue>
+        <StateValue>{getHumanReadableSessionState(SessionState, systemState.session_state.value)}</StateValue>
       </StateRow>
       <br />
       <StateRow>
