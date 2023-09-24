@@ -3,15 +3,32 @@ import styled from 'styled-components'
 
 import { nodeMessageSubscriber } from 'services/ros'
 
+type MessageWithTimestamp = {
+  message: string
+  timestamp: Date
+}
+
 export const NodeState: React.FC = () => {
-  const [messages, setMessages] = useState<string[]>([])
+  const [messages, setMessages] = useState<MessageWithTimestamp[]>([])
+
+  const removeMessage = (targetMsg: MessageWithTimestamp) => {
+    setMessages(prev => prev.filter(msg => msg !== targetMsg))
+  }
 
   useEffect(() => {
     const handleNewMessage = (message: any) => {
-      setMessages(prev => [...prev, message.data])
+      const newMessageWithTimestamp: MessageWithTimestamp = {
+        message: message.data,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, newMessageWithTimestamp])
+
+      setTimeout(() => {
+        removeMessage(newMessageWithTimestamp)
+      }, 5000)
     }
     nodeMessageSubscriber.subscribe(handleNewMessage)
-    
+
     return () => {
       nodeMessageSubscriber.unsubscribe(handleNewMessage)
     }
@@ -22,10 +39,10 @@ export const NodeState: React.FC = () => {
   return (
     <MessagesContainer>
       <Header>Messages</Header>
-      {[...lastMessages].reverse().map((message, index) => (
-          <Message key={index} style={{ opacity: (3 - index) / 3 }}>
-              {message}
-          </Message>
+      {[...lastMessages].reverse().map((msg, index) => (
+        <Message key={index} style={{ opacity: (3 - index) / 3 }}>
+          <span>{msg.timestamp.toLocaleTimeString()}</span> &#8212; {msg.message}
+        </Message>
       ))}
     </MessagesContainer>
   )
