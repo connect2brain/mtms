@@ -4,15 +4,28 @@
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Check that the project name is set.
+# Set the path to the project directory
+PROJECT_DIR="$MTMS_ROOT/projects"
+
+# Get the project name from the first argument
+PROJECT_NAME="$1"
+
 if [ -z "$PROJECT_NAME" ]; then
-    echo "Error: Project name is undefined. Please use set-project script to set the project."
+    echo "Error: Project name is undefined. Please provide it as an argument to the script."
     echo ""
+    exit 1
+fi
+
+# Check if the project directory exists
+if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
+    echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME${RESET}"
+    echo ""
+    echo "Run 'list-projects' to see available projects."
     exit 1
 fi
 
 code $MTMS_ROOT/projects/$PROJECT_NAME/.env
 
 echo ""
-echo "Start system by running: ${BOLD}start-mtms${RESET}"
+echo "Start the system by running: ${BOLD}start-mtms [project-name]${RESET}"
 echo ""
