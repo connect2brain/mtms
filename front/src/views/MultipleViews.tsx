@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+
 import { SessionControl } from '../components/SessionControl'
 import { SystemState } from '../components/SystemState'
+
 import Targets from './Targets'
 import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
@@ -19,7 +21,7 @@ export const MultipleViews = () => {
           onClick={() => setCurrentView('systemControl')}
           className={currentView === 'systemControl' ? 'active' : ''}
         >
-          System Control
+          System
         </a>
         <a
           href="#"
@@ -46,7 +48,7 @@ export const MultipleViews = () => {
       <ViewContainer>
         {currentView === 'systemControl' && (
           <Wrapper>
-            <SmallHeader>System control</SmallHeader>
+            <SmallHeader>System</SmallHeader>
             <SystemControl />
           </Wrapper>
         )}
@@ -106,5 +108,5 @@ const Wrapper = styled.div`
   width: 100%;
   padding: 0.5rem;
   margin: 0.5rem;
-  border: 1px solid ${(p) => p.theme.colors.darkgray};
+  border: 3px solid ${(p) => p.theme.colors.darkgray};
 `
