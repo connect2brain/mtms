@@ -15,9 +15,9 @@ fi
 
 # Check if the project directory exists
 if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
-    echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME{RESET}"
+    echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME${RESET}"
     echo ""
-    echo "Run 'list-projects' to see available projects."
+    echo "Run 'list' to see available projects."
     exit 1
 fi
 
