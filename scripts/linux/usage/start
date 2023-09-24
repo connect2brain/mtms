@@ -4,9 +4,6 @@
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Set the path to the project directory
-export PROJECT_DIR="$MTMS_ROOT/projects"
-
 # Get the project name from the first argument
 export PROJECT_NAME="$1"
 
@@ -17,7 +14,7 @@ if [ -z "$PROJECT_NAME" ]; then
 fi
 
 # Check if the project directory exists
-if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
+if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
     echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME{RESET}"
     echo ""
     echo "Run 'list-projects' to see available projects."
@@ -25,7 +22,7 @@ if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
 fi
 
 # Set ENV_FILE to point to .env of the project
-export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
+export ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
 get_env_var () {
   VAR_NAME=$1
