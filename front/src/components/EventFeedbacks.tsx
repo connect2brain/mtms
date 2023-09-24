@@ -24,19 +24,19 @@ export const EventFeedbacks = ({ feedback }: Props) => {
 
   return (
     <div>
-      <h3>Event feedbacks</h3>
-      <h4>Successful events:</h4>
+      <h3>Actions</h3>
+      <h4>Successful</h4>
       <EventContainer>
         {successfulEvents.map((successfulEvent) => {
-          return <p key={`successful-event-${successfulEvent.id}`}>ID: {successfulEvent.id}</p>
+          return <p key={`successful-event-${successfulEvent.id}`}>{successfulEvent.id}</p>
         })}
       </EventContainer>
-      <h4>Failed events:</h4>
+      <h4>Failed</h4>
       <EventContainer>
         {failedEvents.map((failedEvent) => {
           return (
             <p key={`failed-event-${failedEvent.id}`}>
-              ID: {failedEvent.id}, reason: {getKeyByValue(errorsByType[failedEvent.type], failedEvent.error.value)}
+              {failedEvent.id}, reason: {getKeyByValue(errorsByType[failedEvent.type], failedEvent.error.value)}
             </p>
           )
         })}
@@ -46,7 +46,7 @@ export const EventFeedbacks = ({ feedback }: Props) => {
 }
 
 const EventContainer = styled.div`
-  max-height: 400px;
+  max-height: 75px;
   overflow-y: auto;
   overflow-x: hidden;
 `
