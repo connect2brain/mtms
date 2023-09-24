@@ -24,8 +24,8 @@ if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
     exit 1
 fi
 
-code $MTMS_ROOT/projects/$PROJECT_NAME/.env
+code --wait --new-window $MTMS_ROOT/projects/$PROJECT_NAME/.env
 
 echo ""
-echo "Start the system by running: ${BOLD}start-mtms [project-name]${RESET}"
+echo "Project $BOLD$PROJECT_NAME$RESET successfully configured."
 echo ""
