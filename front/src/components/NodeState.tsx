@@ -9,6 +9,8 @@ type MessageWithTimestamp = {
 }
 
 export const NodeState: React.FC = () => {
+  const locale = process.env.REACT_APP_LOCALE || 'en-US'
+
   const [messages, setMessages] = useState<MessageWithTimestamp[]>([])
 
   const removeMessage = (targetMsg: MessageWithTimestamp) => {
@@ -41,7 +43,7 @@ export const NodeState: React.FC = () => {
       <Header>Messages</Header>
       {[...lastMessages].reverse().map((msg, index) => (
         <Message key={index} style={{ opacity: (3 - index) / 3 }}>
-          <span>{msg.timestamp.toLocaleTimeString()}</span> &#8212; {msg.message}
+          <span>{msg.timestamp.toLocaleTimeString(locale)}</span> &#8212; {msg.message}
         </Message>
       ))}
     </MessagesContainer>
