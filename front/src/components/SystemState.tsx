@@ -82,7 +82,7 @@ export const SystemState = ({ systemState }: Props) => {
       </StateRow>
       <StateRow>
         <StateTitle>System time</StateTitle>
-        <StateValue>{systemState.time} s</StateValue>
+        <StateValue>{systemState.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />
       <ErrorTitle>Errors</ErrorTitle>
