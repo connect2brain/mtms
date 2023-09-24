@@ -9,83 +9,44 @@ import DataVisualizeWebGL from './DataVisualizeWebGL'
 import { SystemControl } from './SystemControl'
 
 export const MultipleViews = () => {
-  const [displaySystemControl, setDisplaySystemControl] = useState(true)
-  const [displayPlot, setDisplayPlot] = useState(false)
-  const [displayWebGLPlot, setDisplayWebGLPlot] = useState(false)
-  const [displayTargets, setDisplayTargets] = useState(false)
-  const [displaySession, setDisplaySession] = useState(false)
-
-  const toggleView = (enabled: boolean, toggleFunction: React.Dispatch<React.SetStateAction<boolean>>) => {
-    toggleFunction(!enabled)
-  }
+  const [currentView, setCurrentView] = useState('systemControl')
 
   return (
     <div>
       <OptionWrapper>
-        <input
-          id='toggle-system-control'
-          type='checkbox'
-          checked={displaySystemControl}
-          onChange={() => toggleView(displaySystemControl, setDisplaySystemControl)}
-        />
-        <label htmlFor='toggle-system-control'>System Control</label>
-        <br />
-
-        <input
-          id='toggle-plot'
-          type='checkbox'
-          checked={displayPlot}
-          onChange={() => toggleView(displayPlot, setDisplayPlot)}
-        />
-        <label htmlFor='toggle-plot'>EEG plot</label>
-        <br />
-
-        <input
-          id='toggle-webgl-plot'
-          type='checkbox'
-          checked={displayWebGLPlot}
-          onChange={() => toggleView(displayWebGLPlot, setDisplayWebGLPlot)}
-        />
-        <label htmlFor='toggle-webgl-plot'>EEG WebGL plot</label>
-        <br />
-
-        <input
-          id='toggle-targets'
-          type='checkbox'
-          checked={displayTargets}
-          onChange={() => toggleView(displayTargets, setDisplayTargets)}
-        />
-        <label htmlFor='toggle-targets'>Targets table</label>
-        <br />
+        <a href="#" onClick={() => setCurrentView('systemControl')}>System Control</a><br />
+        <a href="#" onClick={() => setCurrentView('plot')}>EEG plot</a><br />
+        <a href="#" onClick={() => setCurrentView('webGLPlot')}>EEG WebGL plot</a><br />
+        <a href="#" onClick={() => setCurrentView('targets')}>Targets table</a><br />
       </OptionWrapper>
       <ViewContainer>
-        {displaySystemControl ? (
+        {currentView === 'systemControl' && (
           <Wrapper>
             <SmallHeader>System control</SmallHeader>
             <SystemControl />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayPlot ? (
+        {currentView === 'plot' && (
           <Wrapper>
             <SmallHeader>EEG plot</SmallHeader>
             <DataVisualize />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayWebGLPlot ? (
+        {currentView === 'webGLPlot' && (
           <Wrapper>
             <SmallHeader>EEG WebGL plot</SmallHeader>
             <DataVisualizeWebGL />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayTargets ? (
+        {currentView === 'targets' && (
           <Wrapper>
             <SmallHeader>Targets table</SmallHeader>
             <Targets />
           </Wrapper>
-        ) : null}
+        )}
       </ViewContainer>
     </div>
   )
@@ -101,7 +62,7 @@ const OptionWrapper = styled.div`
 `
 
 const Wrapper = styled.div`
-  width: 48%;
+  width: 100%;
   padding: 0.5rem;
   margin: 0.5rem;
   border: 1px solid ${(p) => p.theme.colors.darkgray};
