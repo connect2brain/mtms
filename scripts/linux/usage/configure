@@ -4,9 +4,6 @@
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Set the path to the project directory
-PROJECT_DIR="$MTMS_ROOT/projects"
-
 # Get the project name from the first argument
 PROJECT_NAME="$1"
 
@@ -17,14 +14,14 @@ if [ -z "$PROJECT_NAME" ]; then
 fi
 
 # Check if the project directory exists
-if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
+if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
     echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME${RESET}"
     echo ""
     echo "Run 'list' to see available projects."
     exit 1
 fi
 
-code --wait --new-window $MTMS_ROOT/projects/$PROJECT_NAME/.env
+code --wait --new-window $PROJECTS_ROOT/$PROJECT_NAME/.env
 
 echo ""
 echo "Project $BOLD$PROJECT_NAME$RESET successfully configured."

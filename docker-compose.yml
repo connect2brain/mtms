@@ -29,7 +29,7 @@ services:
     env_file:
       - ${ENV_FILE}
     volumes:
-      - './projects/$PROJECT_NAME:/app/project'
+      - '$PROJECTS_ROOT/$PROJECT_NAME:/app/project'
     network_mode: host
 
   bag_recorder:
@@ -41,7 +41,7 @@ services:
     environment:
       - PROJECT_NAME=$PROJECT_NAME
     volumes:
-      - './projects:/app/projects'
+      - '$PROJECTS_ROOT:/app/projects'
     network_mode: host
 
   eeg_gatherer:
@@ -87,7 +87,7 @@ services:
     environment:
       - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
-      - './projects:/app/projects'
+      - '$PROJECTS_ROOT:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
     # The container needs to be privileged to set real-time priority.
     privileged: true
@@ -102,7 +102,7 @@ services:
     environment:
       - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
-      - './projects:/app/projects'
+      - '$PROJECTS_ROOT:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
     # The container needs to be privileged to set real-time priority.
     privileged: true
@@ -227,7 +227,7 @@ services:
       - DISPLAY
       - PROJECT_DIR=/app/projects/$PROJECT_NAME/
     volumes:
-      - './projects:/app/projects'
+      - '$PROJECTS_ROOT:/app/projects'
       - './pipeline:/app/ros2_ws/pipeline/'
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
     # The container needs to be privileged to set real-time priority.
