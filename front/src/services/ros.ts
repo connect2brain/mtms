@@ -60,6 +60,13 @@ export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
   messageType: 'ui_interfaces/EegBatch',
 })
 
+/* Set up listener for node messages. */
+export const nodeMessageSubscriber = new ROSLIB.Topic({
+  ros: ros,
+  name: '/node/message',
+  messageType: 'std_msgs/String',
+})
+
 /* Set up listener for planner state. */
 export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   ros: ros,
