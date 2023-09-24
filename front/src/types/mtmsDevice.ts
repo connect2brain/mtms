@@ -12,12 +12,27 @@ export const DeviceState = {
   SHUTDOWN: 3,
 }
 
+export const HumanReadableDeviceState = {
+  'NOT_OPERATIONAL': 'Not operational',
+  'STARTUP': 'Starting up...',
+  'OPERATIONAL': 'Operational',
+  'SHUTDOWN': 'Shutting down...'
+}
+
 export const SessionState = {
   STOPPED: 0,
   STARTING: 1,
   STARTED: 2,
   STOPPING: 3,
 }
+
+export const HumanReadableSessionState = {
+  'STOPPED': 'Stopped',
+  'STARTING': 'Starting...',
+  'STARTED': 'Started',
+  'STOPPING': 'Stopping...'
+}
+
 
 interface Error {
   value: number
