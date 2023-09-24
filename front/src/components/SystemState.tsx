@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
+
 import { ChannelState as ChannelStateType, DeviceState, HumanReadableDeviceState, SessionState, HumanReadableSessionState, SystemStateMessage } from 'types/mtmsDevice'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
@@ -18,13 +19,19 @@ export const SystemState = ({ systemState }: Props) => {
   const channelStatesTable = () => {
     return (
       <ChannelTable>
+        <colgroup>
+          <ColStyle className="indexCol" />
+          <ColStyle className="voltageCol" />
+          <ColStyle className="pulseCol" />
+          <ColStyle className="errorCol" />
+        </colgroup>
         <Thead>
           <tr>
-            <Th>Index</Th>
-            <Th>Voltage</Th>
+            <Th>#</Th>
+            <Th>Voltage (V)</Th>
             {/*<Th>Temperature</Th>*/}
-            <Th>Pulse count</Th>
-            <Th>Error</Th>
+            <Th># of pulses</Th>
+            <Th>Errors</Th>
           </tr>
         </Thead>
         <tbody>
@@ -169,24 +176,33 @@ const ChannelTable = styled.table`
   table-layout: fixed;
   width: 100%;
 `
+
+const ColStyle = styled.col`
+  &.indexCol {
+    width: 10%;
+  }
+  &.voltageCol {
+    width: 30%;
+  }
+  &.pulseCol {
+    width: 30%;
+  }
+  &.errorCol {
+    width: 30%;
+  }
+`
+
 const Thead = styled.thead`
   top: 0;
   margin: 0 0 0 0;
   width: 100%;
   z-index: 1;
+  background-color: #fff;
 `
+
 const Th = styled.th`
   padding: 0.25rem 0.5rem;
-  text-align: left;
+  text-align: right;
   border-top: none !important;
   border-bottom: none !important;
-
-  :last-of-type {
-    box-shadow: inset 0 1px 0 ${(p) => p.theme.colors.gray}, inset 0 -1px 0 ${(p) => p.theme.colors.gray};
-  }
-
-  :not(:last-of-type) {
-    box-shadow: inset 0 1px 0 ${(p) => p.theme.colors.gray}, inset 0 -1px 0 ${(p) => p.theme.colors.gray},
-      inset -1px 0 0 ${(p) => p.theme.colors.gray};
-  }
 `
