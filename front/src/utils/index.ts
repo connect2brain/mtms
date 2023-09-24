@@ -104,6 +104,7 @@ export const createPulsesFromSelectedTargets = (targets: Target[]): Pulse[] => {
 export const getKeyByValue = (object: any, value: any) => {
   return Object.keys(object).find((key) => object[key] === value)
 }
+
 export const getKeyByValueExcluding = (object: any, key: string, value: any) => {
   return Object.keys(object).filter(k => k !== key).find((key) => object[key] === value)
 }
