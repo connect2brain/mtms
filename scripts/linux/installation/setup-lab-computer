@@ -40,3 +40,8 @@ fi
 if ! grep -q "export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage" ~/.bashrc; then
     echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
 fi
+
+# Automatically show instructions in .bashrc
+if ! grep -q "export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage" ~/.bashrc; then
+    echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
+fi
