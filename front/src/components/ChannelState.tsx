@@ -1,5 +1,7 @@
-import { ChannelState as ChannelStateType } from 'types/mtmsDevice'
 import React from 'react'
+import styled from 'styled-components'
+
+import { ChannelState as ChannelStateType } from 'types/mtmsDevice'
 import { getTrueKeys } from '../utils'
 
 export const ChannelState = (state: ChannelStateType) => {
@@ -18,11 +20,16 @@ export const ChannelState = (state: ChannelStateType) => {
 
   return (
       <tr>
-        <td>{state.channel_index}</td>
-        <td>{state.voltage}</td>
-        {/*<td>{state.temperature}</td>*/}
-        <td>{state.pulse_count}</td>
-        <td>{getListValue(state.channel_error)}</td>
+        <Td>{state.channel_index}</Td>
+        <Td>{state.voltage}</Td>
+        {/*<Td>{state.temperature}</Td>*/}
+        <Td>{state.pulse_count}</Td>
+        <Td>{getListValue(state.channel_error)}</Td>
       </tr>
   )
 }
+
+const Td = styled.td` 
+  text-align: right; /* Right align for the data cells */
+  /* ... other styles if any ... */
+`
