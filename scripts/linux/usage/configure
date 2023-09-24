@@ -20,7 +20,7 @@ fi
 if [ ! -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
     echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME${RESET}"
     echo ""
-    echo "Run 'list-projects' to see available projects."
+    echo "Run 'list' to see available projects."
     exit 1
 fi
 
