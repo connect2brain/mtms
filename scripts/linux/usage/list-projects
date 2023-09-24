@@ -19,11 +19,3 @@ for dir in $PROJECT_DIRS; do
 done
 
 echo ""
-echo "Set project by running:"
-echo ""
-echo "${BOLD}source set-project [project-name]${RESET}"
-echo ""
-echo "Or create a new project by running:"
-echo ""
-echo "${BOLD}source create-project [project-name]${RESET}"
-echo ""
