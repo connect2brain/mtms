@@ -4,9 +4,6 @@
 BOLD=$(tput bold)
 RESET=$(tput sgr0)
 
-# Set the path to the project directory
-PROJECT_DIR="$MTMS_ROOT/projects"
-
 # Get the project name from the first argument
 PROJECT_NAME="$1"
 
@@ -17,14 +14,14 @@ if [ -z "$PROJECT_NAME" ]; then
 fi
 
 # Check if the project directory exists
-if [ -d "$PROJECT_DIR/$PROJECT_NAME" ]; then
+if [ -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
     echo "Error: Project already exists: ${BOLD}$PROJECT_NAME${RESET}"
     echo ""
     exit 1
 fi
 
-mkdir $PROJECT_DIR/$PROJECT_NAME
-cp $MTMS_ROOT/.env $PROJECT_DIR/$PROJECT_NAME
+mkdir $PROJECTS_ROOT/$PROJECT_NAME
+cp $MTMS_ROOT/.env $PROJECTS_ROOT/$PROJECT_NAME
 
 echo ""
 echo "Project successfully created: ${BOLD}$PROJECT_NAME${RESET}"

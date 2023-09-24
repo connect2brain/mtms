@@ -17,7 +17,7 @@ fi
 xhost +local:docker
 
 # Set ENV_FILE to point to .env of the project
-export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
+export ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
 cd $MTMS_ROOT
 docker-compose build $SERVICE_NAME
