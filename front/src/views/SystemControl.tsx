@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import styled from 'styled-components'
+
 import {
   chargeFeedbackSubscriber,
   dischargeFeedbackSubscriber,
@@ -14,6 +16,7 @@ import {
   DischargeFeedbackMessage,
   TriggerOutFeedbackMessage,
 } from 'types/event'
+
 import { SystemState } from 'components/SystemState'
 import { SessionControl } from 'components/SessionControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
@@ -129,11 +132,30 @@ export const SystemControl = () => {
   }
 
   return (
-    <div>
-      <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
-      <SystemState systemState={systemState} />
-      <hr />
-      <EventFeedbacks feedback={feedback} />
-    </div>
+    <Wrapper>
+      <Panel>
+        <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
+      </Panel>
+      <Panel>
+        <SystemState systemState={systemState} />
+      </Panel>
+      <Panel>
+        <EventFeedbacks feedback={feedback} />
+      </Panel>
+    </Wrapper>
   )
 }
+
+const Wrapper = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+`
+
+const Panel = styled.div`
+  padding: 1rem;
+  border-radius: 5px;
+  background-color: #f7f7f7; /* a light gray */
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1); /* subtle shadow for depth */
+`
