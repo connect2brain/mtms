@@ -17,6 +17,7 @@ import {
   TriggerOutFeedbackMessage,
 } from 'types/event'
 
+import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
 import { SessionControl } from 'components/SessionControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
@@ -133,29 +134,61 @@ export const SystemControl = () => {
 
   return (
     <Wrapper>
-      <Panel>
+      <PanelA>
         <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
-      </Panel>
-      <Panel>
-        <SystemState systemState={systemState} />
-      </Panel>
-      <Panel>
+      </PanelA>
+      <VerticalDividedPanelB>
+        <SubPanel>
+          <NodeState />
+        </SubPanel>
+        <SubPanel>
+          <SystemState systemState={systemState} />
+        </SubPanel>
+      </VerticalDividedPanelB>
+      <PanelC>
         <EventFeedbacks feedback={feedback} />
-      </Panel>
+      </PanelC>
     </Wrapper>
   )
 }
 
 const Wrapper = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto 1fr;
   gap: 1rem;
   padding: 1rem;
 `
 
-const Panel = styled.div`
+const styledPanel = `
   padding: 1rem;
   border-radius: 5px;
-  background-color: #f7f7f7; /* a light gray */
-  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1); /* subtle shadow for depth */
+  background-color: #f7f7f7;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
+`
+
+const PanelA = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  ${styledPanel}
+`
+
+const VerticalDividedPanelB = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 96%;
+  ${styledPanel}
+`
+
+const SubPanel = styled(PanelA)`
+  margin: 0;
+`
+
+const PanelC = styled.div`
+  grid-row: 2 / 3;
+  grid-column: 1 / 3;
+  ${styledPanel}
 `
