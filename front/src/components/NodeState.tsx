@@ -27,7 +27,7 @@ export const NodeState: React.FC = () => {
 
       setTimeout(() => {
         removeMessage(newMessageWithTimestamp)
-      }, 5000)
+      }, 1000)
     }
     nodeMessageSubscriber.subscribe(handleNewMessage)
 
