@@ -276,8 +276,8 @@ void EegBridge::init_socket() {
   }
 
   struct timeval read_timeout;
-  read_timeout.tv_sec = 1;
-  read_timeout.tv_usec = 0;
+  read_timeout.tv_sec = 0;
+  read_timeout.tv_usec = 200000;
   setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 }
 
