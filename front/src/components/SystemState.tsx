@@ -53,26 +53,77 @@ export const SystemState = ({ systemState }: Props) => {
 
   return (
     <div>
-      <p>Device state: {getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</p>
-      <p>Session state: {getKeyByValue(SessionState, systemState.session_state.value) || 'No error'}</p>
-
+      <StateRow>
+        <StateTitle>Device</StateTitle>
+        <StateValue>{getKeyByValue(DeviceState, systemState.device_state.value) || 'No error'}</StateValue>
+      </StateRow>
+      <StateRow>
+        <StateTitle>Session</StateTitle>
+        <StateValue>{getKeyByValue(SessionState, systemState.session_state.value) || 'No error'}</StateValue>
+      </StateRow>
       <br />
-
-      <p>Latest update: {latestUpdate?.toISOString()}</p>
-      <p>System time: {systemState.time} s</p>
-      <p>Cumulative system errors: {getListValue(systemState.system_error_cumulative)}</p>
-      <p>Current system errors: {getListValue(systemState.system_error_current)}</p>
-      <p>Emergency system errors: {getListValue(systemState.system_error_emergency)}</p>
-      <p>
-        Startup error:{' '}
-        {getKeyByValueExcluding(systemState.startup_error, 'value', systemState.startup_error.value) || 'No error'}
-      </p>
-
-      <h3>Channels</h3>
+      <StateRow>
+        <StateTitle>Time</StateTitle>
+        <StateValue>{latestUpdate?.toISOString()}</StateValue>
+      </StateRow>
+      <StateRow>
+        <StateTitle>System time</StateTitle>
+        <StateValue>{systemState.time} s</StateValue>
+      </StateRow>
+      <br />
+      <ErrorTitle>Errors</ErrorTitle>
+      <ErrorsContainer>
+        <ErrorItem>Current {getListValue(systemState.system_error_current)}</ErrorItem>
+        <ErrorItem>Cumulative {getListValue(systemState.system_error_cumulative)}</ErrorItem>
+        <ErrorItem>Emergency {getListValue(systemState.system_error_emergency)}</ErrorItem>
+        <ErrorItem>
+          Startup {' '}
+          {getKeyByValueExcluding(systemState.startup_error, 'value', systemState.startup_error.value) || ''}
+        </ErrorItem>
+      </ErrorsContainer>
+      <ChannelTitle>Channels</ChannelTitle>
       <ChannelTableContainer>{channelStatesTable()}</ChannelTableContainer>
     </div>
   )
 }
+
+const StateRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+`
+
+const StateTitle = styled.span`
+  font-weight: bold;
+  color: #333;
+  margin-right: 1rem;
+`
+
+const StateValue = styled.span``
+
+const ErrorsContainer = styled.div`
+  margin-top: 1rem;
+  margin-left: 1rem;
+`
+
+const ErrorTitle = styled.span`
+  font-weight: bold;
+  color: #333;
+  margin-right: 1rem;
+  margin-bottom: 0.5rem;
+`
+
+const ErrorItem = styled.p`
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #444;
+  margin-left: 0.5rem;
+`
+
+const ChannelTitle = styled.h3`
+  font-weight: bold;
+  color: #333;
+`
 
 const ChannelTableContainer = styled.div`
   overflow-y: auto;
