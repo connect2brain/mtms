@@ -7,8 +7,8 @@ RESET=$(tput sgr0)
 
 echo "${BOLD}${UNDERLINE}Instructions for using the mTMS system${RESET}"
 echo ""
-echo "• List existing projects: ${BOLD}list-projects${RESET}"
-echo "• Create a new project:   ${BOLD}create-project [project-name]${RESET}"
-echo "• Configure the project:  ${BOLD}configure-project [project-name]${RESET}"
-echo "• Start the system:       ${BOLD}start-mtms [project-name]${RESET}"
+echo "• List existing projects: ${BOLD}list${RESET}"
+echo "• Create a new project:   ${BOLD}create [project-name]${RESET}"
+echo "• Configure the project:  ${BOLD}configure [project-name]${RESET}"
+echo "• Start the system:       ${BOLD}start [project-name]${RESET}"
 echo ""
