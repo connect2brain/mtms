@@ -53,7 +53,9 @@ export const SessionControl = ({ deviceState, sessionState }: Props) => {
       <StyledButton
         onClick={toggleSession}
         disabled={
-          sessionState.value === SessionState.STARTING || sessionState.value === SessionState.STOPPING
+          deviceState.value !== DeviceState.OPERATIONAL ||
+          sessionState.value === SessionState.STARTING ||
+          sessionState.value === SessionState.STOPPING
         }
       >
         {sessionText()} session
