@@ -7,15 +7,12 @@ import { Route, Routes } from 'react-router-dom'
 import Session from './views/Session'
 import DataVisualize from './views/DataVisualize'
 import { MultipleViews } from './views/MultipleViews'
-import { Header } from './styles/StyledTypography'
+import { Header as StyledHeader } from './styles/StyledTypography'
 
 const App = () => {
   return (
     <Providers>
       <Header>mTMS control panel</Header>
-
-      <hr />
-
       <Wrapper>
         <Routes>
           <Route path='/' element={<MultipleViews />} />
@@ -28,9 +25,22 @@ const App = () => {
   )
 }
 
-const Wrapper = styled.div`
+const Header = styled(StyledHeader)`
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 1rem;
   padding: 0.5rem;
+  background-color: #f2f2f2;
+  border-bottom: 2px solid #ddd;
+  border-radius: 3px 3px 0 0;
+`
+
+const Wrapper = styled.div`
+  padding: 1rem;
   margin: 0.5rem;
+  background-color: #e8e8e8;
+  border-radius: 5px;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.1);
 `
 
 export default App
