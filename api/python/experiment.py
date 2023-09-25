@@ -243,15 +243,15 @@ class Experiment:
         )
         self.output_file.write(s)
 
-    def ask_to_continue(self):
+    def yes_or_no(self, text="Continue?"):
         ans = None
         while ans not in ['y', 'Y', 'n', 'N']:
-            ans = input("Continue? (Y/N) ")
+            ans = input("{} (Y/N) ".format(text))
         return ans
 
     def pause(self):
         start = time.time()
-        ans = self.ask_to_continue()
+        ans = self.yes_or_no()
         end = time.time()
 
         self.total_duration_of_pauses += end - start
@@ -277,7 +277,7 @@ class Experiment:
 
             print("")
             print("Stimulation is allowed")
-            ans = self.ask_to_continue()
+            ans = self.yes_or_no()
             if ans in ['y', 'Y']:
                 break
 
@@ -303,9 +303,10 @@ class Experiment:
                 print("Testing the experiment: Capping # of trials to 10")
                 print("")
 
-            for i in range(self.num_of_trials):
+            i = 0
+            while i < self.num_of_trials:
                 trial = self.trials[i]
-                _, timed_out = timedKey("Press any key to pause before the next trial ", allowCharacters="", timeout=0.5)
+                _, timed_out = timedKey("Press any key to pause before the trial ", allowCharacters="", timeout=0.5)
 
                 if not timed_out:
                     stop_experiment = self.pause()
@@ -322,7 +323,28 @@ class Experiment:
                 self.perform_trial(trial)
                 self.write_trial(i, trial)
 
-                print("Trial finished.")
+                mep_success = self.get_mep_attribute(trial, 'success')
+                if mep_success:
+                    i += 1
+                    print("Trial finished.")
+                else:
+                    start = time.time()
+
+                    ans = self.yes_or_no("Redo trial?")
+
+                    end = time.time()
+                    self.total_duration_of_pauses += end - start
+
+                    if ans in ['N', 'n']:
+                        i += 1
+                    else:
+                        # HACK: Okay, this is quite hacky, but let's settle for it for now.
+                        #   A proper way to implement redoing trials would be to not plan
+                        #   the trial times so carefully in advance, but instead adapt on the fly.
+                        if i > 0:
+                            self.total_duration_of_pauses += self.trials[i]['time'] - self.trials[i-1]['time']
+                        else:
+                            self.total_duration_of_pauses += self.trials[i]['time']
         finally:
             self.api.stop_session()
             self.output_file.close()
