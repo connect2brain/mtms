@@ -243,13 +243,15 @@ class Experiment:
         )
         self.output_file.write(s)
 
-    def pause(self):
-        start = time.time()
-
+    def ask_to_continue(self):
         ans = None
         while ans not in ['y', 'Y', 'n', 'N']:
             ans = input("Continue? (Y/N) ")
+        return ans
 
+    def pause(self):
+        start = time.time()
+        ans = self.ask_to_continue()
         end = time.time()
 
         self.total_duration_of_pauses += end - start
@@ -258,6 +260,29 @@ class Experiment:
             return False
 
         return True
+
+    def ensure_stimulation_allowed(self):
+        if self.api.is_stimulation_allowed():
+            return
+
+        start = time.time()
+
+        while True:
+            while True:
+                allowed = self.api.is_stimulation_allowed()
+                if allowed:
+                    break
+                print("{}Stimulation is not allowed, waiting...{}".format(Color.YELLOW, Color.END))
+                time.sleep(1)
+
+            print("")
+            print("Stimulation is allowed")
+            ans = self.ask_to_continue()
+            if ans in ['y', 'Y']:
+                break
+
+        end = time.time()
+        self.total_duration_of_pauses += end - start
 
     def perform(self):
         # Start the device if not started.
@@ -286,6 +311,8 @@ class Experiment:
                     stop_experiment = self.pause()
                     if stop_experiment:
                         break
+
+                self.ensure_stimulation_allowed()
 
                 print("")
                 print("")
