@@ -135,6 +135,42 @@ class Experiment:
         print("")
         print("Executing trigger on port {} at time {:.4f} s.".format(port, time_adjusted))
 
+    def validate_pulse(self, params):
+        x = int(params['x'])
+        y = int(params['y'])
+        angle = int(params['angle'])
+        intensity = int(params['intensity'])
+
+        print("Validating pulse at ({}, {}, {}) with intensity {} V/m.".format(x, y, angle, intensity))
+
+        maximum_intensity = self.api.get_maximum_intensity(
+            displacement_x=x,
+            displacement_y=y,
+            rotation_angle=angle,
+        )
+
+        if intensity > maximum_intensity:
+            print("The intensity ({} V/m) of the trial is higher than the maximum intensity ({} V/m). Skipping trial.".format(
+                intensity,
+                maximum_intensity,
+            ))
+            return False
+
+        return True
+
+    def validate_trial(self, trial):
+        actions = trial['actions']
+        for action in actions:
+            action_type = action['type']
+            params = action['params']
+
+            if action_type == 'pulse':
+                pulse_ok = self.validate_pulse(params)
+                if not pulse_ok:
+                    return False
+
+        return True
+
     def perform_trial(self, trial):
         condition = trial['condition']
         time = trial['time']
@@ -319,6 +355,11 @@ class Experiment:
                 print("")
                 print("{}{}Trial {}{}".format(Color.BOLD, Color.UNDERLINE, i + 1, Color.END))
                 print("")
+
+                trial_ok = self.validate_trial(trial)
+                if not trial_ok:
+                    i += 1
+                    continue
 
                 self.perform_trial(trial)
                 self.write_trial(i, trial)
