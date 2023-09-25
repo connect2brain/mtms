@@ -40,7 +40,7 @@ class NeuronavigationNode(Node):
     _COLOR_SELECTED = (112, 112, 112)  # hex: #707070, $darker-gray
 
     # HACK: Needs to match the corresponding value in stimulation allower ROS node.
-    COIL_AT_TARGET_DEADLINE_S = 0.3
+    COIL_AT_TARGET_DEADLINE_S = 0.6
 
     def __init__(self):
         super().__init__("neuronavigation")
