@@ -11,7 +11,7 @@ using namespace std::chrono_literals;
 using std::placeholders::_1;
 
 /* HACK: Needs to match the value in neuronavigation bridge. */
-const milliseconds COIL_AT_TARGET_PUBLISHING_INTERVAL = 300ms;
+const milliseconds COIL_AT_TARGET_PUBLISHING_INTERVAL = 600ms;
 
 class StimulationAllower : public rclcpp::Node {
 
