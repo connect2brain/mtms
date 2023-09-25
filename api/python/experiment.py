@@ -8,8 +8,9 @@ from event_interfaces.msg import ExecutionCondition
 
 
 class Experiment:
-    def __init__(self, experiment_name, api):
+    def __init__(self, experiment_name, test_experiment, api):
         self.api = api
+        self.test_experiment = test_experiment
         self.time_of_experiment = datetime.now()
         self.event_log = open("experiment_{}_{}.csv".format(
             experiment_name,
@@ -49,6 +50,11 @@ class Experiment:
         angle = int(params['angle'])
         intensity = int(params['intensity'])
         delta_time = params['delta_time']
+
+        # Cap intensity at 5 V/m when testing the experiment.
+        if self.test_experiment is True:
+            print("Testing the experiment: Capping intensity to 5 V/m")
+            intensity = min(intensity, 5)
 
         time_adjusted = time + delta_time
 
@@ -145,14 +151,21 @@ class Experiment:
         return amplitude, latency
 
     def perform(self):
+
         # Restart session.
         self.api.stop_session()
         self.api.start_session()
 
-        self.api.allow_stimulation(True)
+        self.api.allow_stimulation(not self.test_experiment)
 
         try:
             i = 0
+
+            # Cap number of trials to perform to 10 when testing the experiment.
+            if self.test_experiment:
+                self.num_of_trials = 10
+                print("Testing the experiment: Capping # of trials to 10")
+
             while i < self.num_of_trials:
                 trial = self.trials[i]
 
