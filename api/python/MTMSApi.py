@@ -620,6 +620,19 @@ class MTMSApi:
             rotation_angle=rotation_angle,
         )
 
+    # Stimulation
+
+    def is_stimulation_allowed(self):
+        """
+        Return True if stimulation is allowed, otherwise False.
+
+        Returns
+        -------
+        bool
+            True if stimulation is allowed, otherwise False.
+        """
+        return self.node.is_stimulation_allowed()
+
     # Compound events
 
     def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages, wait_for_completion=True):
