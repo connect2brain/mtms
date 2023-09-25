@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_device_interfaces/srv/allow_stimulation.hpp"
+#include "stimulation_interfaces/srv/get_stimulation_allowed.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -17,6 +18,16 @@ class StimulationAllower : public rclcpp::Node {
 
 public:
   StimulationAllower() : Node("stimulation_allower") {
+
+    auto get_stimulation_allowed_callback = [this](
+        [[maybe_unused]] const std::shared_ptr<stimulation_interfaces::srv::GetStimulationAllowed::Request> request,
+        std::shared_ptr<stimulation_interfaces::srv::GetStimulationAllowed::Response> response) -> void {
+
+      response->success = true;
+      response->stimulation_allowed = this->stimulation_allowed;
+
+      RCLCPP_INFO(rclcpp::get_logger("stimulation_allower"), "Successfully responded to get stimulation allowed request.");
+    };
 
     /* Create QoS profile for 'coil at target' subscriber. */
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -37,10 +48,18 @@ public:
       "/neuronavigation/coil_at_target", qos, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
     client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation");
+
+    /* Create service for querying status of stimulation allowed.*/
+    get_stimulation_allowed_service_ = this->create_service<stimulation_interfaces::srv::GetStimulationAllowed>(
+        "/stimulation/allowed", get_stimulation_allowed_callback);
   }
 
 private:
   void allow_stimulation(bool value) {
+    /* Update the local status. */
+    this->stimulation_allowed = value;
+
+    /* Send the new status to the mTMS device. */
     auto request = std::make_shared<mtms_device_interfaces::srv::AllowStimulation::Request>();
     request->allow_stimulation = value;
 
@@ -61,8 +80,11 @@ private:
 
     allow_stimulation(value);
   }
+
+  bool stimulation_allowed;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_;
   rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr client_;
+  rclcpp::Service<stimulation_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
 };
 
 
