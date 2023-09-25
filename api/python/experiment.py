@@ -7,6 +7,19 @@ from pytimedinput import timedKey
 from event_interfaces.msg import ExecutionCondition
 
 
+class Color:
+   PURPLE = '\033[95m'
+   CYAN = '\033[96m'
+   DARKCYAN = '\033[36m'
+   BLUE = '\033[94m'
+   GREEN = '\033[92m'
+   YELLOW = '\033[93m'
+   RED = '\033[91m'
+   BOLD = '\033[1m'
+   UNDERLINE = '\033[4m'
+   END = '\033[0m'
+
+
 class Experiment:
     def __init__(self, experiment_name, test_experiment, api):
         self.api = api
@@ -54,6 +67,8 @@ class Experiment:
         # Cap intensity at 5 V/m when testing the experiment.
         if self.test_experiment is True:
             print("Testing the experiment: Capping intensity to 5 V/m")
+            print("")
+
             intensity = min(intensity, 5)
 
         time_adjusted = time + delta_time
@@ -76,6 +91,7 @@ class Experiment:
             wait_for_completion=False,
         )
 
+        print("")
         print("Executing pulse at ({}, {}, {}) with intensity {} V/m at time {:.4f} s.".format(x, y, angle, intensity, time_adjusted))
 
         self.event_log.write("{};{};pulse;{};{}\n".format(time_adjusted, condition, x, y))
@@ -94,6 +110,7 @@ class Experiment:
             wait_for_completion=False,
         )
 
+        print("")
         print("Executing trigger on port {} at time {:.4f} s.".format(port, time_adjusted))
 
         self.event_log.write("{};{};trigger\n".format(time_adjusted, condition))
@@ -131,6 +148,7 @@ class Experiment:
     def analyze_mep(self, time):
         emg_channel = 1
 
+        print("")
         print("Analyzing MEP on EMG channel {} at time {:.4f} s.".format(emg_channel, time))
 
         amplitude, latency, errors = self.api.analyze_mep(
@@ -147,6 +165,10 @@ class Experiment:
 
         if errors.gather_preactivation_error.value!= 0:
             print("WARNING: Gather preactivation error occurred.")
+
+        print("")
+        print("Successfully analyzed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).".format(amplitude, 1000 * latency))
+        print("")
 
         return amplitude, latency
 
@@ -187,20 +209,25 @@ class Experiment:
             if self.test_experiment:
                 self.num_of_trials = 10
                 print("Testing the experiment: Capping # of trials to 10")
+                print("")
 
             for i in range(self.num_of_trials):
                 trial = self.trials[i]
-                _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
+                _, timed_out = timedKey("Press any key to pause before the next trial ", allowCharacters="", timeout=0.5)
 
                 if not timed_out:
                     stop_experiment = self.pause()
                     if stop_experiment:
                         break
 
-                print("______________")
-                print("Trial {}".format(i + 1))
+                print("")
+                print("")
+                print("{}Trial {}{}".format(Color.BOLD, i + 1, Color.END))
+                print("")
 
                 self.perform_trial(trial)
+
+                print("Trial finished.")
         finally:
             self.api.stop_session()
             self.event_log.close()
