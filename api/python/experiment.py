@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime
 
@@ -21,22 +22,28 @@ class Color:
 
 
 class Experiment:
-    def __init__(self, experiment_name, test_experiment, api):
+    def __init__(self, experiment_name, test_experiment, output_directory, api):
         self.experiment_name = experiment_name
         self.test_experiment = test_experiment
+        self.output_directory = output_directory
         self.api = api
+
+        os.makedirs(output_directory, exist_ok=True)
 
         self.time_of_experiment = datetime.now()
         self.log_filename = "{}_{}_log.csv".format(
             self.time_of_experiment.strftime('%Y-%m-%d_%H-%M-%S'),
             self.experiment_name,
         )
+        self.log_path = os.path.join(self.output_directory, self.log_filename)
+
         self.results_filename = "{}_{}_results.csv".format(
             self.time_of_experiment.strftime('%Y-%m-%d_%H-%M-%S'),
             self.experiment_name,
         )
+        self.results_path = os.path.join(self.output_directory, self.results_filename)
 
-        self.event_log = open(self.log_filename, "w")
+        self.event_log = open(self.log_path, "w")
         self.trials = []
         self.total_duration_of_pauses = 0.0
 
@@ -233,7 +240,7 @@ class Experiment:
 
                 print("")
                 print("")
-                print("{}Trial {}{}".format(Color.BOLD, i + 1, Color.END))
+                print("{}{}Trial {}{}".format(Color.BOLD, Color.UNDERLINE, i + 1, Color.END))
                 print("")
 
                 self.perform_trial(trial)
@@ -256,7 +263,7 @@ class Experiment:
         return trial['actions'][0]['params'][param]
 
     def write_to_csv(self):
-        with open(self.results_filename, "w") as f:
+        with open(self.results_path, "w") as f:
             for i in range(self.num_of_trials):
                 trial = self.trials[i]
 
