@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 from pytimedinput import timedKey
 
-from event_interfaces.msg import ExecutionCondition
+from event_interfaces.msg import ExecutionCondition, PulseError
 
 
 class Color:
@@ -48,6 +48,7 @@ class Experiment:
             "Time (pause adjusted)",
             "x (mm)",
             "y (mm)",
+            "Pulse success",
             "MEP success",
             "MEP amplitude (uV)",
             "MEP latency (s)",
@@ -107,7 +108,7 @@ class Experiment:
             wait_for_completion=False,
         )
 
-        self.api.send_timed_default_pulse_to_all_channels(
+        ids = self.api.send_timed_default_pulse_to_all_channels(
             reverse_polarities=reverse_polarities,
             time=time,
             wait_for_completion=False,
@@ -115,6 +116,8 @@ class Experiment:
 
         print("")
         print("Executing pulse at ({}, {}, {}) with intensity {} V/m at time {:.4f} s.".format(x, y, angle, intensity, time))
+
+        return ids
 
     def execute_trigger(self, condition, time, params):
         port = params['port']
@@ -144,23 +147,44 @@ class Experiment:
             params = action['params']
 
             if action_type == 'pulse':
-                self.execute_pulse(condition, time_pause_adjusted, params)
+                pulse_ids = self.execute_pulse(condition, time_pause_adjusted, params)
 
             elif action_type == 'trigger':
                 self.execute_trigger(condition, time_pause_adjusted, params)
 
         if self.analyze_mep_enabled:
-            amplitude, latency = self.analyze_mep(time_pause_adjusted)
-
-            success = False if amplitude is None or latency is None else True
-
-            trial['mep'] = {
-                'amplitude': amplitude,
-                'latency': latency,
-                'success': success,
-            }
+            mep_measurement_success, amplitude, latency = self.analyze_mep(time_pause_adjusted)
 
         self.api.wait_until(time + 0.1)
+
+        # Determine if the pulse was executed successfully.
+        pulse_feedbacks = [self.api.get_event_feedback(id) for id in pulse_ids]
+        pulses_ok = [feedback.value == PulseError.NO_ERROR for feedback in pulse_feedbacks]
+        pulse_success = all(pulses_ok)
+
+        # Determine if MEP was successful.
+        # 
+        # Note: For MEP to be successful, both the pulse and the measurement of the MEP must be successful.
+        #
+        mep_success = pulse_success and mep_measurement_success
+
+        trial['mep'] = {
+            'amplitude': amplitude,
+            'latency': latency,
+            'success': mep_success,
+        }
+        trial['pulse_success'] = pulse_success
+
+        print("")
+        if mep_success:
+            print("Successfully analyzed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).".format(amplitude, 1000 * latency))
+        elif mep_measurement_success:
+            print("{}MEP measurement was successful but pulse failed.{}".format(Color.RED, Color.END))
+        elif pulse_success:
+            print("{}Pulse was successful but MEP analysis failed.{}".format(Color.RED, Color.END))
+        else:
+            print("{}Pulse and MEP measurement both failed.{}".format(Color.RED, Color.END))
+        print("")
 
     def analyze_mep(self, time):
         emg_channel = 1
@@ -188,15 +212,7 @@ class Experiment:
             print("WARNING: Gather preactivation error occurred.")
             success = False
 
-        if success:
-            print("")
-            print("Successfully analyzed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).".format(amplitude, 1000 * latency))
-            print("")
-        else:
-            print("")
-            print("{}MEP analysis failed{}".format(Color.RED, Color.END))
-
-        return amplitude, latency
+        return success, amplitude, latency
 
     def write_trial(self, i, trial):
         condition = trial['condition']
@@ -206,17 +222,21 @@ class Experiment:
 
         x = self.get_param(trial, 'x')
         y = self.get_param(trial, 'y')
+
+        pulse_success = trial['pulse_success']
+
         mep_success = self.get_mep_attribute(trial, 'success')
         mep_amplitude = self.get_mep_attribute(trial, 'amplitude')
         mep_latency = self.get_mep_attribute(trial, 'latency')
 
-        s = "{};{};{:.3f};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
+        s = "{};{};{:.3f};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
             i,
             condition,
             time,
             time_pause_adjusted,
             x,
             y,
+            "true" if pulse_success else "false",
             "true" if mep_success else "false",
             mep_amplitude if mep_success else 0.0,
             mep_latency if mep_success else 0.0,
@@ -249,7 +269,7 @@ class Experiment:
 
         # Do not allow stimulation when testing the experiment.
         if self.test_experiment:
-            self.api.allow_stimulation(False)
+            self.api.allow_stimulation(True)
 
         try:
             # Cap number of trials to perform to 10 when testing the experiment.
