@@ -26,7 +26,6 @@ class GridFactory:
             params['y'],
             angle,
             intensity,
-            0.0,
         ) for params in self.to_params(grid)]
 
         return pulses
