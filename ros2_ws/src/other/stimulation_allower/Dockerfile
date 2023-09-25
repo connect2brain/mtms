@@ -21,6 +21,7 @@ WORKDIR /app
 COPY ros2_ws/src/other/stimulation_allower ros2_ws/src/other/stimulation_allower/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/stimulation_interfaces ros2_ws/src/interfaces/stimulation_interfaces/
 
 # Build ROS packages
 
