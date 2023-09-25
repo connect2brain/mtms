@@ -202,7 +202,8 @@ class Experiment:
         self.api.start_session()
 
         # Do not allow stimulation when testing the experiment.
-        self.api.allow_stimulation(not self.test_experiment)
+        if self.test_experiment:
+            self.api.allow_stimulation(False)
 
         try:
             # Cap number of trials to perform to 10 when testing the experiment.
