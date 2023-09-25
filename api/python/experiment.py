@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 
 import numpy as np
@@ -15,6 +16,7 @@ class Experiment:
             self.time_of_experiment.strftime('%Y-%m-%d_%H%M%S')), "w"
         )
         self.trials = []
+        self.total_duration_of_pauses = 0.0
 
         np.random.seed(1)
 
@@ -96,6 +98,8 @@ class Experiment:
         time = trial['time']
         actions = trial['actions']
 
+        time += self.total_duration_of_pauses
+
         for action in actions:
             action_type = action['type']
             params = action['params']
@@ -165,9 +169,15 @@ class Experiment:
                     self.event_log.write("INTERRUPTED;")
                     self.event_log.flush()
 
+                    start = time.time()
+
                     ans = None
                     while ans not in ['y', 'Y', 'n', 'N']:
                         ans = input("Continue? (Y/N) ")
+
+                    end = time.time()
+
+                    self.total_duration_of_pauses += end - start
 
                     if ans in ['y', 'Y']:
                         self.event_log.write("continued\n")
