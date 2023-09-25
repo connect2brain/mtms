@@ -22,7 +22,7 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/GetStimulationAllowed.srv"
+  "srv/IsStimulationAllowed.srv"
  )
 
 ament_package()
