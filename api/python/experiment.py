@@ -135,13 +135,16 @@ class Experiment:
         print("")
         print("Executing trigger on port {} at time {:.4f} s.".format(port, time_adjusted))
 
-    def validate_pulse(self, params):
+    # Validation
+
+    def validate_pulse(self, params, verbose):
         x = int(params['x'])
         y = int(params['y'])
         angle = int(params['angle'])
         intensity = int(params['intensity'])
 
-        print("Validating pulse at ({}, {}, {}) with intensity {} V/m.".format(x, y, angle, intensity))
+        if verbose:
+            print("Validating pulse at ({}, {}, {}) with intensity {} V/m.".format(x, y, angle, intensity))
 
         maximum_intensity = self.api.get_maximum_intensity(
             displacement_x=x,
@@ -150,26 +153,41 @@ class Experiment:
         )
 
         if intensity > maximum_intensity:
-            print("The intensity ({} V/m) of the trial is higher than the maximum intensity ({} V/m). Skipping trial.".format(
-                intensity,
-                maximum_intensity,
-            ))
+            if verbose:
+                print("The intensity ({} V/m) of the trial is higher than the maximum intensity ({} V/m). Skipping trial.".format(
+                    intensity,
+                    maximum_intensity,
+                ))
+
             return False
 
         return True
 
-    def validate_trial(self, trial):
+    def validate_trial(self, trial, verbose=True):
         actions = trial['actions']
         for action in actions:
             action_type = action['type']
             params = action['params']
 
             if action_type == 'pulse':
-                pulse_ok = self.validate_pulse(params)
+                pulse_ok = self.validate_pulse(params, verbose=verbose)
                 if not pulse_ok:
                     return False
 
         return True
+
+    def check_valid_trials(self):
+        num_of_all_trials = len(self.trials)
+        num_of_valid_trials = 0
+
+        for trial in self.trials:
+            trial_ok = self.validate_trial(trial, verbose=False)
+            if trial_ok:
+                num_of_valid_trials += 1
+
+        print("{}/{} of the trials are valid.".format(num_of_valid_trials, num_of_all_trials))
+
+    # Performing trial
 
     def perform_trial(self, trial):
         condition = trial['condition']
