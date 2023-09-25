@@ -13,6 +13,8 @@ from mep_interfaces.action import AnalyzeMep
 
 from targeting_interfaces.srv import GetChannelVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
 
+from stimulation_interfaces.srv import IsStimulationAllowed
+
 from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
@@ -36,6 +38,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
+    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/stimulation/allowed', IsStimulationAllowed)
+
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
     ROS_MESSAGES = (
@@ -56,6 +60,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
+        ROS_SERVICE_IS_STIMULATION_ALLOWED,
     )
 
     ROS_ACTIONS = (
@@ -358,6 +363,19 @@ class MTMSApiNode(Node):
         assert value.success, "Failed request."
 
         return value.waveform
+
+    # Stimulation
+
+    def is_stimulation_allowed(self):
+        topic, service_type = self.ROS_SERVICE_IS_STIMULATION_ALLOWED
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        value = self.call_service(client, request)
+        assert value.success, "Failed request."
+
+        return value.stimulation_allowed
 
     # MEP analysis
 

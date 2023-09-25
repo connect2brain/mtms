@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_device_interfaces/srv/allow_stimulation.hpp"
-#include "stimulation_interfaces/srv/get_stimulation_allowed.hpp"
+#include "stimulation_interfaces/srv/is_stimulation_allowed.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -19,9 +19,9 @@ class StimulationAllower : public rclcpp::Node {
 public:
   StimulationAllower() : Node("stimulation_allower") {
 
-    auto get_stimulation_allowed_callback = [this](
-        [[maybe_unused]] const std::shared_ptr<stimulation_interfaces::srv::GetStimulationAllowed::Request> request,
-        std::shared_ptr<stimulation_interfaces::srv::GetStimulationAllowed::Response> response) -> void {
+    auto is_stimulation_allowed_callback = [this](
+        [[maybe_unused]] const std::shared_ptr<stimulation_interfaces::srv::IsStimulationAllowed::Request> request,
+        std::shared_ptr<stimulation_interfaces::srv::IsStimulationAllowed::Response> response) -> void {
 
       response->success = true;
       response->stimulation_allowed = this->stimulation_allowed;
@@ -50,8 +50,8 @@ public:
     client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation");
 
     /* Create service for querying status of stimulation allowed.*/
-    get_stimulation_allowed_service_ = this->create_service<stimulation_interfaces::srv::GetStimulationAllowed>(
-        "/stimulation/allowed", get_stimulation_allowed_callback);
+    is_stimulation_allowed_service_ = this->create_service<stimulation_interfaces::srv::IsStimulationAllowed>(
+        "/stimulation/allowed", is_stimulation_allowed_callback);
   }
 
 private:
@@ -84,7 +84,7 @@ private:
   bool stimulation_allowed;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_;
   rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr client_;
-  rclcpp::Service<stimulation_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
+  rclcpp::Service<stimulation_interfaces::srv::IsStimulationAllowed>::SharedPtr is_stimulation_allowed_service_;
 };
 
 

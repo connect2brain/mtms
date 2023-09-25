@@ -1,5 +1,0 @@
-# ROS service for getting if stimulation is allowed.
-
----
-bool success
-bool stimulation_allowed
