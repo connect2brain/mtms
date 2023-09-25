@@ -204,6 +204,8 @@ class Experiment:
         return True
 
     def perform(self):
+        # Start the device if not started.
+        self.api.start_device()
 
         # Restart session.
         self.api.stop_session()
