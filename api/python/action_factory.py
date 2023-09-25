@@ -1,5 +1,5 @@
 class ActionFactory:
-    def create_pulse(self, x, y, angle, intensity, delta_time=0.0):
+    def create_pulse(self, x, y, angle, intensity):
         action = {
             'type': 'pulse',
             'params': {
@@ -7,7 +7,6 @@ class ActionFactory:
                 'y': y,
                 'angle': angle,
                 'intensity': intensity,
-                'delta_time': delta_time,
             },
         }
         return action
