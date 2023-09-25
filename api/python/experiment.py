@@ -150,56 +150,57 @@ class Experiment:
 
         return amplitude, latency
 
+    def pause(self):
+        self.event_log.write("INTERRUPTED;")
+        self.event_log.flush()
+
+        start = time.time()
+
+        ans = None
+        while ans not in ['y', 'Y', 'n', 'N']:
+            ans = input("Continue? (Y/N) ")
+
+        end = time.time()
+
+        self.total_duration_of_pauses += end - start
+
+        if ans in ['y', 'Y']:
+            self.event_log.write("continued\n")
+            self.event_log.flush()
+            return False
+
+        self.event_log.write("aborted\n")
+        self.event_log.flush()
+        return True
+
     def perform(self):
 
         # Restart session.
         self.api.stop_session()
         self.api.start_session()
 
+        # Do not allow stimulation when testing the experiment.
         self.api.allow_stimulation(not self.test_experiment)
 
         try:
-            i = 0
-
             # Cap number of trials to perform to 10 when testing the experiment.
             if self.test_experiment:
                 self.num_of_trials = 10
                 print("Testing the experiment: Capping # of trials to 10")
 
-            while i < self.num_of_trials:
+            for i in range(self.num_of_trials):
                 trial = self.trials[i]
+                _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
+
+                if not timed_out:
+                    stop_experiment = self.pause()
+                    if stop_experiment:
+                        break
 
                 print("______________")
                 print("Trial {}".format(i + 1))
 
-                _, timed_out = timedKey("  Press any key to pause ", allowCharacters="", timeout=0.5)
-
-                if timed_out:
-                    self.perform_trial(trial)
-                    i += 1
-
-                else:
-                    self.event_log.write("INTERRUPTED;")
-                    self.event_log.flush()
-
-                    start = time.time()
-
-                    ans = None
-                    while ans not in ['y', 'Y', 'n', 'N']:
-                        ans = input("Continue? (Y/N) ")
-
-                    end = time.time()
-
-                    self.total_duration_of_pauses += end - start
-
-                    if ans in ['y', 'Y']:
-                        self.event_log.write("continued\n")
-                        self.event_log.flush()
-                        continue
-                    else:
-                        self.event_log.write("aborted\n")
-                        self.event_log.flush()
-                        break
+                self.perform_trial(trial)
         finally:
             self.api.stop_session()
             self.event_log.close()
