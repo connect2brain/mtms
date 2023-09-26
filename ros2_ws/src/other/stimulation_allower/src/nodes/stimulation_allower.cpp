@@ -29,8 +29,14 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("stimulation_allower"), "Successfully responded to get stimulation allowed request.");
     };
 
+    /* Create QoS to persist the latest sample. */
+    auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+
     /* Create QoS profile for 'coil at target' subscriber. */
-    auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    auto qos_deadline = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
         .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
         .deadline(std::chrono::nanoseconds(COIL_AT_TARGET_PUBLISHING_INTERVAL))
@@ -45,11 +51,14 @@ public:
     };
 
     /* Create subscribers and service client. */
+    neuronavigation_started_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
+      "/neuronavigation/started", qos_persist_latest, std::bind(&StimulationAllower::neuronavigation_started_callback, this, _1));
+
     target_mode_enabled_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
-      "/neuronavigation/target_mode/enabled", 10, std::bind(&StimulationAllower::target_mode_enabled_callback, this, _1));
+      "/neuronavigation/target_mode/enabled", qos_persist_latest, std::bind(&StimulationAllower::target_mode_enabled_callback, this, _1));
 
     coil_at_target_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
-      "/neuronavigation/coil_at_target", qos, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
+      "/neuronavigation/coil_at_target", qos_deadline, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
     client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation");
 
@@ -60,10 +69,16 @@ public:
 
 private:
   void update_stimulation_allowed() {
+    RCLCPP_INFO(this->get_logger(), "Neuronavigation: %s, target mode: %s, coil at target: %s",
+      this->neuronavigation_started ? "started" : "stopped",
+      this->target_mode_enabled ? "enabled" : "disabled",
+      this->coil_at_target ? "true" : "false");
+
     /* Allow stimulation if:
-          - target mode is enabled and coil is at the target, or
-          - target mode is disabled. */
-    this->stimulation_allowed = !this->target_mode_enabled || this->coil_at_target;
+          - neuronavigation is not started,
+          - neuronavigation is started but target mode is disabled, or
+          - neuronavigation is started, target mode is enabled, and coil is at the target. */
+    this->stimulation_allowed = !this->neuronavigation_started || !this->target_mode_enabled || this->coil_at_target;
 
     RCLCPP_INFO(this->get_logger(), "%s stimulation.", this->stimulation_allowed ? "Allowing" : "Disallowing");
 
@@ -81,26 +96,28 @@ private:
     auto result_future = client_->async_send_request(request);
   }
 
-  void coil_at_target_callback(const std_msgs::msg::Bool::SharedPtr msg) {
-    this->coil_at_target = msg->data;
-
-    RCLCPP_INFO(this->get_logger(), "Coil is%sat target.", this->coil_at_target ? " " : " not ");
-
+  void neuronavigation_started_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+    this->neuronavigation_started = msg->data;
     update_stimulation_allowed();
   }
 
   void target_mode_enabled_callback(const std_msgs::msg::Bool::SharedPtr msg) {
     this->target_mode_enabled = msg->data;
-
-    RCLCPP_INFO(this->get_logger(), "Target mode %s.", this->target_mode_enabled ? "enabled" : "disabled");
-
     update_stimulation_allowed();
   }
 
+  void coil_at_target_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+    this->coil_at_target = msg->data;
+    update_stimulation_allowed();
+  }
+
+  bool neuronavigation_started = false;
   bool coil_at_target = false;
   bool target_mode_enabled = false;
+
   bool stimulation_allowed = true;
 
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr neuronavigation_started_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr target_mode_enabled_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr coil_at_target_subscription_;
   rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr client_;
