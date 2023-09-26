@@ -38,13 +38,17 @@ public:
 
     rclcpp::SubscriptionOptions subscription_options;
     subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) -> void {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "'Coil at target' message was not received within deadline. Disallowing stimulation.");
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "'Coil at target' message was not received within deadline, setting to false.");
 
-      this->allow_stimulation(false);
+      this->coil_at_target = false;
+      this->update_stimulation_allowed();
     };
 
-    /* Create subscriber and service client. */
-    subscription_ = this->create_subscription<std_msgs::msg::Bool>(
+    /* Create subscribers and service client. */
+    target_mode_enabled_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
+      "/neuronavigation/target_mode/enabled", 10, std::bind(&StimulationAllower::target_mode_enabled_callback, this, _1));
+
+    coil_at_target_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       "/neuronavigation/coil_at_target", qos, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
     client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation");
@@ -55,13 +59,17 @@ public:
   }
 
 private:
-  void allow_stimulation(bool value) {
-    /* Update the local status. */
-    this->stimulation_allowed = value;
+  void update_stimulation_allowed() {
+    /* Allow stimulation if:
+          - target mode is enabled and coil is at the target, or
+          - target mode is disabled. */
+    this->stimulation_allowed = !this->target_mode_enabled || this->coil_at_target;
+
+    RCLCPP_INFO(this->get_logger(), "%s stimulation.", this->stimulation_allowed ? "Allowing" : "Disallowing");
 
     /* Send the new status to the mTMS device. */
     auto request = std::make_shared<mtms_device_interfaces::srv::AllowStimulation::Request>();
-    request->allow_stimulation = value;
+    request->allow_stimulation = this->stimulation_allowed;
 
     while (!client_->wait_for_service(std::chrono::seconds(1))) {
       if (!rclcpp::ok()) {
@@ -74,15 +82,27 @@ private:
   }
 
   void coil_at_target_callback(const std_msgs::msg::Bool::SharedPtr msg) {
-    auto value = msg->data;
+    this->coil_at_target = msg->data;
 
-    RCLCPP_INFO(this->get_logger(), "%s stimulation.", value ? "Allowing" : "Disallowing");
+    RCLCPP_INFO(this->get_logger(), "Coil is%sat target.", this->coil_at_target ? " " : " not ");
 
-    allow_stimulation(value);
+    update_stimulation_allowed();
   }
 
-  bool stimulation_allowed;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_;
+  void target_mode_enabled_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+    this->target_mode_enabled = msg->data;
+
+    RCLCPP_INFO(this->get_logger(), "Target mode %s.", this->target_mode_enabled ? "enabled" : "disabled");
+
+    update_stimulation_allowed();
+  }
+
+  bool coil_at_target = false;
+  bool target_mode_enabled = false;
+  bool stimulation_allowed = true;
+
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr target_mode_enabled_subscription_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr coil_at_target_subscription_;
   rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr client_;
   rclcpp::Service<stimulation_interfaces::srv::IsStimulationAllowed>::SharedPtr is_stimulation_allowed_service_;
 };
