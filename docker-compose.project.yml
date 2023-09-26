@@ -1,0 +1,102 @@
+version: '2'
+
+services:
+  bag_exporter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT/$PROJECT_NAME:/app/project'
+    network_mode: host
+
+  bag_recorder:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    environment:
+      - PROJECT_NAME=$PROJECT_NAME
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    network_mode: host
+
+  eeg_bridge:
+    ports:
+      - "50000:50000/udp"
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
+    # EEG bridge uses both site- and project-specific environment.
+    env_file:
+      - ${SITE_ENV_FILE}
+      - ${PROJECT_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  eeg_preprocessor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    entrypoint: 'bash /app/ros2_ws/eeg_preprocessor_entrypoint.sh'
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    environment:
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+      - './pipeline:/app/ros2_ws/pipeline/'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  eeg_processor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    environment:
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+      - './pipeline:/app/ros2_ws/pipeline/'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    # this option is needed for the container to achieve the same performance as without docker. Optionally, also
+    # privileged: true can be used
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
+      - './data/eeg:/app/data/eeg/'
+    network_mode: host
+
+  stimulus_presenter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+    entrypoint: 'bash /app/ros2_ws/stimulus_presenter_entrypoint.sh'
+    env_file:
+      - ${PROJECT_ENV_FILE}
+    environment:
+      - DISPLAY
+      - PROJECT_DIR=/app/projects/$PROJECT_NAME/
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+      - './pipeline:/app/ros2_ws/pipeline/'
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host

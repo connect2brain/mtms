@@ -97,27 +97,11 @@ if [ ! "$answer" == "y" ]; then
 fi
 
 # Services needed for the API
-services=("eeg_bridge" "eeg_gatherer" "mep_analyzer" "waveforms" "stimulation_allower" \
-  "targeting" "bag_recorder" "eeg_simulator" "eeg_preprocessor" \
-  "eeg_processor" "stimulus_presenter" "pedal_listener" \
-  "front" "rosbridge")
+services=("bag_recorder" "eeg_bridge" "eeg_simulator" "eeg_preprocessor" "eeg_processor" "stimulus_presenter")
 
 # Iterate over the services and open a new terminal window for each one
 for service in "${services[@]}"; do
   gnome-terminal --geometry=135x6 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
-done
-
-# Start mTMS device bridge separately because it is not containerized yet.
-gnome-terminal --geometry=135x6 -- bash -c "
-    trap 'echo Interrupted; exit' SIGINT;
-    start-mtms-device-bridge;
-    echo 'Press any key to close';
-    read -n1"
-
-# Wait for the process to start and get its PID
-while [[ -z $PID_MTMS_DEVICE_BRIDGE ]]; do
-    PID_MTMS_DEVICE_BRIDGE=$(pgrep -f "start-mtms-device-bridge")
-    sleep 1
 done
 
 echo "Running... Press Ctrl-C to stop the system."
@@ -127,10 +111,7 @@ function handle_sigint {
     echo "Ctrl-C pressed. Shutting down processes and exiting..."
 
     # Shut down Docker processes.
-    cd $MTMS_ROOT && docker-compose down
-
-    # Shut down mTMS device bridge.
-    kill -s SIGINT -- -$PID_MTMS_DEVICE_BRIDGE
+    cd $MTMS_ROOT && docker-compose -f docker-compose.project.yml down
 
     # Kill the process groups of services
     for service in "${services[@]}"; do
