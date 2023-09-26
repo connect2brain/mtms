@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/usr/bin/pkill -f "ros2 launch mtms_device_bridge mtms_device_bridge.launch.py"
