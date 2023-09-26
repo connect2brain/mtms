@@ -23,5 +23,5 @@ export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
 export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
 cd $MTMS_ROOT
-docker-compose build $SERVICE_NAME
-docker-compose up $SERVICE_NAME
+docker-compose -f docker-compose.project.yml build $SERVICE_NAME
+docker-compose -f docker-compose.project.yml up $SERVICE_NAME

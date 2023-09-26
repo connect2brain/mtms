@@ -1,0 +1,106 @@
+version: '2'
+
+services:
+  eeg_batcher:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_batcher/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    privileged: true
+    network_mode: host
+
+  efield:
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE_NAME:-Dockerfile}
+      args:
+        - DOCKERFILE_NAME=${DOCKERFILE_NAME}
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - './data/neuronavigation:/app/data/neuronavigation/'
+    network_mode: host
+    tty: true 
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  mtms_device_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/mtms_device_bridge/Dockerfile
+    # The container needs to be privileged to access FPGA.
+    privileged: true
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    environment:
+      - DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - './data/neuronavigation:/app/data/neuronavigation/'
+      # Mount the configuration to local filesystem so that it is retained when the container is restarted.
+      - './.config/invesalius:/root/.config/invesalius'
+
+    # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
+    privileged: true
+    network_mode: host
+
+  optitrack_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  planner:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/ui/planner/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
+    network_mode: host
+
+  pulse_sequence_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
+    network_mode: host
+
+  topic_frequency:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/topic_frequency/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    privileged: true
+    network_mode: host
+
+  trigger_controller:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
+    privileged: true
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host

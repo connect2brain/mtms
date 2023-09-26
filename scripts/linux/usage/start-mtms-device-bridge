@@ -1,11 +1,14 @@
 #!/bin/bash
 
-# Check that SITE_ENV_FILE is set.
-if [ -z "$SITE_ENV_FILE" ]; then
-    echo "Error: SITE_ENV_FILE environment variable is unset."
+# Check that SITE is set.
+if [ -z "$SITE" ]; then
+    echo "Error: SITE environment variable is unset."
     echo ""
     exit 1
 fi
+
+# Set SITE_ENV_FILE to point to .env of the site
+export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
 
 # Check that the .env file exists
 if [ ! -f "$SITE_ENV_FILE" ]; then
@@ -30,9 +33,16 @@ export BITFILE_PREFIX="NiFpga_mTMS_generation_${MTMS_DEVICE_GENERATION}_${BITFIL
 export BITFILE=$BITFILE_PREFIX.lvbitx
 export BITFILE_SIGNATURE="$(cat $BITFILE_DIRECTORY/$BITFILE_PREFIX.signature)"
 
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Initialize ROS
+source /opt/ros/iron/setup.bash
+
 # Build mTMS bridge
-cd mtms/ros2_ws
+cd $MTMS_ROOT/ros2_ws
 colcon build --packages-select event_interfaces mtms_device_interfaces mtms_device_bridge
+
+source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
 # Start mTMS bridge
 ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false
