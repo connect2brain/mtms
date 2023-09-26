@@ -63,8 +63,11 @@ class NeuronavigationNode(Node):
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
+        # Create publisher for neuronavigation started.
+        self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started", qos_persist_latest, callback_group=callback_group)
+
         # Create publisher for 'target mode' message.
-        self._target_mode_publisher = self.create_publisher(Bool, "neuronavigation/target_mode/enabled", 10, callback_group=callback_group)
+        self._target_mode_publisher = self.create_publisher(Bool, "neuronavigation/target_mode/enabled", qos_persist_latest, callback_group=callback_group)
 
         # Create publisher for 'coil at target' message.
         deadline_coil_at_target = rclpy.duration.Duration(seconds=self.COIL_AT_TARGET_DEADLINE_S)
@@ -185,6 +188,12 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/focus")
         self._focus_publisher.publish(msg)
 
+    def update_neuronavigation_started(self, started):
+        msg = Bool()
+        msg.data = started
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/started".format(started))
+        self._neuronavigation_started_publisher.publish(msg)
+
     def update_target_mode(self, enabled):
         msg = Bool()
         msg.data = enabled
@@ -303,6 +312,11 @@ class Connection(Thread):
         self.node.update_focus(
             position=position,
             orientation=orientation,
+        )
+
+    def update_neuronavigation_started(self, started):
+        self.node.update_neuronavigation_started(
+            started=started,
         )
 
     def update_target_mode(self, enabled):
