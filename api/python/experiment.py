@@ -41,7 +41,7 @@ class Experiment:
         # Enable line buffering by using 'buffering' argument.
         self.output_file = open(self.output_path, "w", buffering=1)
 
-        header = "{};{};{};{};{};{};{};{};{}\n".format(
+        header = "{};{};{};{};{};{};{};{};{};{}\n".format(
             "Trial index",
             "Description",
             "Time",
@@ -413,7 +413,7 @@ class Experiment:
         print("")
 
     def get_valid_trials(self):
-        valid_trial_indices = ['mep' in trial and trial['mep']['amplitude'] is not None for trial in self.trials]
+        valid_trial_indices = ['mep' in trial and trial['mep']['amplitude'] is not None and trial['pulse_success'] is True for trial in self.trials]
         valid_trials = self.trials[valid_trial_indices]
 
         return valid_trials
