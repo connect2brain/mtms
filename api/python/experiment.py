@@ -41,13 +41,14 @@ class Experiment:
         # Enable line buffering by using 'buffering' argument.
         self.output_file = open(self.output_path, "w", buffering=1)
 
-        header = "{};{};{};{};{};{};{};{};{};{}\n".format(
+        header = "{};{};{};{};{};{};{};{};{};{};{}\n".format(
             "Trial index",
             "Description",
             "Time",
             "Time (pause adjusted)",
             "x (mm)",
             "y (mm)",
+            "Angle (deg)",
             "Pulse success",
             "MEP success",
             "MEP amplitude (uV)",
@@ -276,6 +277,7 @@ class Experiment:
 
         x = self.get_param(trial, 'x')
         y = self.get_param(trial, 'y')
+        angle = self.get_param(trial, 'angle')
 
         pulse_success = trial['pulse_success']
 
@@ -283,13 +285,14 @@ class Experiment:
         mep_amplitude = self.get_mep_attribute(trial, 'amplitude')
         mep_latency = self.get_mep_attribute(trial, 'latency')
 
-        s = "{};{};{:.3f};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
+        s = "{};{};{:.3f};{:.3f};{};{};{};{};{};{:.1f};{:.4f}\n".format(
             i,
             condition,
             time,
             time_pause_adjusted,
             x,
             y,
+            angle,
             "true" if pulse_success else "false",
             "true" if mep_success else "false",
             mep_amplitude if mep_success else 0.0,
@@ -389,6 +392,8 @@ class Experiment:
                 else:
                     start = time.time()
 
+                    ans = 'Y'
+#                    print("Redoing trial...")
                     ans = self.yes_or_no("Redo trial?")
 
                     end = time.time()
