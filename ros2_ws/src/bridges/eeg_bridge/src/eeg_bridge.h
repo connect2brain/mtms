@@ -25,6 +25,15 @@
 using namespace std::chrono_literals;
 
 
+enum EegBridgeState {
+  WAITING_FOR_MTMS_DEVICE_START,
+  WAITING_FOR_MEASUREMENT_START,
+  WAITING_FOR_MEASUREMENT_STOP,
+  WAITING_FOR_SESSION_STOP,
+  WAITING_FOR_SESSION_START,
+  STREAMING,
+};
+
 class EegBridge : public rclcpp::Node {
 
 public:
@@ -55,6 +64,7 @@ public:
   void reset_session();
 
 private:
+  EegBridgeState eeg_bridge_state;
 
   mtms_device_interfaces::msg::DeviceState device_state;
   mtms_device_interfaces::msg::SessionState session_state;
