@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.0
+- FIX: Do not disallow stimulation at the start of a session.
+
 ### 0.4.9
 - FIX: Implementation of pulse got stuck because FIFO got full.
 - MOD: Change SignalOut to TriggerOut.
