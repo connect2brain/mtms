@@ -100,6 +100,8 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->init_socket();
 
   this->reset_session();
+
+  this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
 }
 
 void EegBridge::create_publishers() {
@@ -244,7 +246,35 @@ void EegBridge::spin() {
       if (this->read_eeg_data_from_socket()) {
         this->handle_eeg_data_packet();
       } else {
-        this->send_node_message("Please start the measurement on the EEG device.");
+        /* Timeout when reading EEG data indicates that the EEG measurement has stopped,
+           change the state accordingly. */
+        this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
+      }
+
+      switch (this->eeg_bridge_state) {
+        case WAITING_FOR_MTMS_DEVICE_START:
+          this->send_node_message("Please start the mTMS device.");
+          break;
+
+        case WAITING_FOR_MEASUREMENT_START:
+          this->send_node_message("Please start the measurement on the EEG device.");
+          break;
+
+        case WAITING_FOR_MEASUREMENT_STOP:
+          this->send_node_message("Please restart the measurement on the EEG device.");
+          break;
+
+        case WAITING_FOR_SESSION_START:
+          this->send_node_message("Ready to start a session.");
+          break;
+
+        case WAITING_FOR_SESSION_STOP:
+          this->send_node_message("Please stop the session on the mTMS device.");
+          break;
+
+        case STREAMING:
+          /* Do not notify the UI if streaming and there is no error. */
+          break;
       }
     }
   } catch (const rclcpp::exceptions::RCLError & ex) {
@@ -452,17 +482,24 @@ void EegBridge::handle_eeg_data_packet() {
     case SAMPLE_PACKET_ID:
       if (!this->measurement_start_packet_received_) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
-        this->send_node_message("Please restart the measurement on the EEG device.");
 
+        this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_STOP;
         break;
       }
 
       if (!this->session_been_stopped) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "An mTMS session is ongoing, cannot synchronize EEG data with an ongoing session.");
-        this->send_node_message("Please stop the ongoing session on the mTMS device.");
 
+        this->eeg_bridge_state = WAITING_FOR_SESSION_STOP;
         break;
       }
+
+      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+          this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
+
+        this->eeg_bridge_state = STREAMING;
+      }
+
 
       /* If session is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
       if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
@@ -494,15 +531,15 @@ void EegBridge::handle_eeg_data_packet() {
 
       if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for mTMS device to start...");
-        this->send_node_message("Please start the mTMS device.");
 
+        this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
         break;
       }
 
       if (this->session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
-        this->send_node_message("Please start the session on the mTMS device.");
 
+        this->eeg_bridge_state = WAITING_FOR_SESSION_START;
         break;
       }
 
