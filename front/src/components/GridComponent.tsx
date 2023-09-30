@@ -162,12 +162,16 @@ export const GridComponent: React.FC<GridComponentProps> = ({ multiSelectMode = 
     }
 
     const handleCellMouseEnter = (x: number, y: number) => {
-      if (isMouseDown && multiSelectMode) {
-        if (dragAction === 'selecting') {
-          selectCell(x, y)
-        } else {
-          deselectCell(x, y)
-        }
+      if (isMouseDown) {
+          if (multiSelectMode) {
+              if (dragAction === 'selecting') {
+                  selectCell(x, y)
+              } else {
+                  deselectCell(x, y)
+              }
+          } else {
+              setSelectedPoints([{ x, y }])
+          }
       }
     }
 
