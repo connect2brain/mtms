@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
+
 import { GridControls } from './GridControls'
 
 interface Point {
