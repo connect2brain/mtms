@@ -20,9 +20,11 @@ const styledPanel = `
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
 `
 
-const PanelA = styled.div`
+const GridPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
+  width: 600px;
+  height: 500px;
   ${styledPanel}
 `
 
@@ -47,23 +49,25 @@ const TabBar = styled.div`
   }
 `
 
-const PanelB = styled.div`
+const AnglePanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 87%;
+  width: 600px;
+  height: 500px;
   ${styledPanel}
 `
 
-const PanelC = styled.div`
+const IntensityPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 3 / 3;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 87%;
+  width: 100px;
+  height: 500px;
   ${styledPanel}
 `
 
@@ -101,26 +105,26 @@ export const ExperimentControl = () => {
       </TabBar>
 
       <Wrapper>
-        <PanelA>
+        <GridPanel>
           {activeTab === 'singleLocation' && <GridComponent />}
           {activeTab === 'multipleLocations' && <GridComponent multiSelectMode={true} />}
-        </PanelA>
-        <PanelB>
+        </GridPanel>
+        <AnglePanel>
         {activeTab === 'singleLocation' &&
           <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
         }
         {activeTab === 'multipleLocations' &&
           <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} multiSelectMode={true} />
         }
-        </PanelB>
-        <PanelC>
+        </AnglePanel>
+        <IntensityPanel>
         {activeTab === 'singleLocation' &&
           <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
         }
         {activeTab === 'multipleLocations' &&
           <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
         }
-        </PanelC>
+        </IntensityPanel>
       </Wrapper>
     </>
   )
