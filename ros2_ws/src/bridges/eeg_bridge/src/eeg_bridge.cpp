@@ -486,6 +486,11 @@ void EegBridge::handle_eeg_data_packet() {
       break;
 
     case SAMPLE_PACKET_ID:
+      /* Ignore sample packets if in an error state, preventing streaming. */
+      if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC) {
+        break;
+      }
+
       if (!this->measurement_start_packet_received_) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
 
