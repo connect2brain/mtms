@@ -19,6 +19,9 @@ fi
 source install-docker
 source install-ros
 
+# Setup systemd
+source setup-systemd
+
 # Install Cyclone DDS for ROS
 apt install -y ros-iron-rmw-cyclonedds-cpp
 
