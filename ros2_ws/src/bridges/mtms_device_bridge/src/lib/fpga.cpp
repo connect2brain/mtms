@@ -84,11 +84,3 @@ bool close_fpga() {
 
   return true;
 }
-
-bool run_fpga() {
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Running FPGA.");
-
-  NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
-
-  return true;
-}
