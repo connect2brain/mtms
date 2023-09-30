@@ -61,7 +61,7 @@ export const SessionControl = ({ deviceState, sessionState }: Props) => {
         {sessionText()} session
       </StyledButton>
     </div>
-  )
+)
 }
 
 const StyledButton = styled.button`
