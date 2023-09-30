@@ -22,6 +22,15 @@ const GridInternalContainer = styled.div`
   gap: 20px;
 `
 
+const GridTitle = styled.h2`
+  font-size: 24px;
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  margin-right: 200px;
+  font-weight: bold;
+`
+
 const GridContainer = styled.div`
   position: relative;
   width: max-content;
@@ -198,6 +207,7 @@ export const GridComponent: React.FC<GridComponentProps> = ({ multiSelectMode = 
 
     return (
         <div>
+          <GridTitle>Position</GridTitle>
           <GridInternalContainer>
             <GridContainer
               onMouseUp={handleMouseUp}
