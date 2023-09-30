@@ -3,12 +3,16 @@ import styled from 'styled-components'
 
 import { GridControls } from './GridControls'
 
-interface Point {
+type SetSelectedPoints = React.Dispatch<React.SetStateAction<Point[]>>;
+
+export interface Point {
   x: number
   y: number
 }
 
 interface GridComponentProps {
+  selectedPoints: Point[]
+  setSelectedPoints: SetSelectedPoints
   multiSelectMode?: boolean
 }
 
@@ -121,10 +125,10 @@ const CoordinateValue = styled.span`
   margin-right: 12px;
 `
 
-export const GridComponent: React.FC<GridComponentProps> = ({ multiSelectMode = false }) => {
+export const GridComponent: React.FC<GridComponentProps> = ({
+      selectedPoints, setSelectedPoints, multiSelectMode = false }) => {
     const [shape, setShape] = useState<'circle' | 'square' | null>(null)
     const [shapeSize, setShapeSize] = useState<number>(0)
-    const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
     const [isMouseDown, setIsMouseDown] = useState<boolean>(false)
     const [dragAction, setDragAction] = useState<'selecting' | 'deselecting'>('selecting')
     const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null)
