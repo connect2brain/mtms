@@ -9,6 +9,7 @@ import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
 import { SystemControl } from './SystemControl'
+import { ExperimentControl } from './ExperimentControl'
 
 export const MultipleViews = () => {
   const [currentView, setCurrentView] = useState('systemControl')
@@ -22,6 +23,13 @@ export const MultipleViews = () => {
           className={currentView === 'systemControl' ? 'active' : ''}
         >
           System
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('experiment')}
+          className={currentView === 'experiment' ? 'active' : ''}
+        >
+          Experiment
         </a>
         <a
           href="#"
@@ -50,6 +58,13 @@ export const MultipleViews = () => {
           <Wrapper>
             <SmallHeader>System</SmallHeader>
             <SystemControl />
+          </Wrapper>
+        )}
+
+        {currentView === 'experiment' && (
+          <Wrapper>
+            <SmallHeader>Experiment</SmallHeader>
+            <ExperimentControl />
           </Wrapper>
         )}
 
