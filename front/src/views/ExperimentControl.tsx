@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { GridComponent } from 'components/GridComponent'
+import { GridComponent, Point } from 'components/GridComponent'
 import { AngleSelector } from 'components/AngleSelector'
 import { IntensitySelector } from 'components/IntensitySelector'
+
+import { getMaximumIntensity } from 'services/ros'
 
 const Wrapper = styled.div`
   display: grid;
@@ -74,6 +76,8 @@ const IntensityPanel = styled.div`
 export const ExperimentControl = () => {
   const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
+  const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
+  const [intensityThreshold, setIntensityThreshold] = useState(100)
 
   const handleIntensityChange = (value: number) => {
     console.log(`Selected intensity: ${value} V/m`)
@@ -84,6 +88,17 @@ export const ExperimentControl = () => {
       setSelectedAngles([])
     }
   }, [activeTab])
+
+  useEffect(() => {
+    if (selectedPoints.length === 1 && selectedAngles.length === 1) {
+      const x: number = selectedPoints[0].x
+      const y: number = selectedPoints[0].y
+      const angle: number = selectedAngles[0]
+      getMaximumIntensity(x, y, angle, (maximum_intensity) => {
+        setIntensityThreshold(maximum_intensity)
+      })
+    }
+  }, [selectedAngles, selectedPoints])
 
   return (
     <>
@@ -106,8 +121,16 @@ export const ExperimentControl = () => {
 
       <Wrapper>
         <GridPanel>
-          {activeTab === 'singleLocation' && <GridComponent />}
-          {activeTab === 'multipleLocations' && <GridComponent multiSelectMode={true} />}
+          {activeTab === 'singleLocation' &&
+          <GridComponent
+            selectedPoints={selectedPoints}
+            setSelectedPoints={setSelectedPoints}
+          />}
+          {activeTab === 'multipleLocations' && <GridComponent
+            selectedPoints={selectedPoints}
+            setSelectedPoints={setSelectedPoints}
+            multiSelectMode={true}
+          />}
         </GridPanel>
         <AnglePanel>
         {activeTab === 'singleLocation' &&
@@ -119,10 +142,10 @@ export const ExperimentControl = () => {
         </AnglePanel>
         <IntensityPanel>
         {activeTab === 'singleLocation' &&
-          <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
+          <IntensitySelector min={0} max={150} threshold={intensityThreshold} onValueChange={handleIntensityChange}/>
         }
         {activeTab === 'multipleLocations' &&
-          <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
+          <IntensitySelector min={0} max={150} threshold={intensityThreshold} onValueChange={handleIntensityChange}/>
         }
         </IntensityPanel>
       </Wrapper>
