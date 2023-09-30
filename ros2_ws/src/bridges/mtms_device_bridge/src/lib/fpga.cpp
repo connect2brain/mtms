@@ -7,18 +7,15 @@ NiFpga_Session session;
 NiFpga_Status status;
 bool fpga_opened = false;
 
-bool init_fpga() {
-  /* must be called before any other calls */
+bool try_init_fpga() {
+  /* Must be called before any other calls. */
   status = NiFpga_Initialize();
   if (NiFpga_IsError(status)) {
     RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA could not be initialized, exiting.");
     return false;
   }
 
-  /* opens a session, downloads the bitstream, and runs the FPGA */
-
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
-
+  /* Opens a session, downloads the bitstream, and runs the FPGA. */
   auto bitfile = std::getenv("BITFILE");
   auto bitfile_directory = std::getenv("BITFILE_DIRECTORY");
   auto bitfile_signature = std::getenv("BITFILE_SIGNATURE");
@@ -52,8 +49,8 @@ bool init_fpga() {
       &session));
 
   if (NiFpga_IsError(status)) {
-    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
-    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "RESOURCE environment variable set to: %s", resource_str.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded (resource: %s), exiting. Status: %d",
+      resource_str.c_str(), status);
 
     return false;
   }
@@ -62,6 +59,16 @@ bool init_fpga() {
 
   fpga_opened = true;
   return true;
+}
+
+void init_fpga() {
+  while (true) {
+    if (try_init_fpga()) {
+      break;
+    }
+    RCLCPP_WARN(rclcpp::get_logger("run_fpga"), "Initialization attempt failed. Retrying...");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
 }
 
 bool close_fpga() {

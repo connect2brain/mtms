@@ -7,7 +7,7 @@
 #define ON_UNIX
 #endif
 
-bool init_fpga();
+void init_fpga();
 bool close_fpga();
 bool run_fpga();
 
