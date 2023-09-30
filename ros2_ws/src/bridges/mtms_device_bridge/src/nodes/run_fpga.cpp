@@ -5,11 +5,7 @@
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv)
 {
-  if (!init_fpga())
-  {
-    return 1;
-  }
-
+  init_fpga();
   run_fpga();
 
   close_fpga();

@@ -31,9 +31,7 @@ private:
 };
 
 int main(int argc, char **argv) {
-  if (!init_fpga()) {
-    return 1;
-  }
+  init_fpga();
 
   rclcpp::init(argc, argv);
 
