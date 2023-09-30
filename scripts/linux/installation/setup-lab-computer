@@ -31,9 +31,14 @@ apt install -y net-tools wireshark
 # Tools for customizing GNOME (not required)
 apt install wmctrl
 
-# Add environment variable to .bashrc, setting the site
+# Set the site in .bashrc
 if ! grep -q "export SITE=$SITE" ~/.bashrc; then
     echo "export SITE=$SITE" >> ~/.bashrc
+fi
+
+# Set the site environment variable in .bashrc
+if ! grep -q 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' ~/.bashrc; then
+    echo 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' >> ~/.bashrc
 fi
 
 # Add environment variable to .bashrc, pointing to repository root
