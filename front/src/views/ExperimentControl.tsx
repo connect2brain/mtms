@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 import { GridComponent } from 'components/GridComponent'
-import { GridControls } from 'components/GridControls'
+import { AngleSelector } from 'components/AngleSelector'
 
 const Wrapper = styled.div`
   display: grid;
@@ -25,12 +25,80 @@ const PanelA = styled.div`
   ${styledPanel}
 `
 
+const TabBar = styled.div`
+  margin: 0.5rem;
+
+  a {
+    text-decoration: none;
+    color: #505050;
+    padding: 0.5rem;
+    display: inline-block;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #303030;
+    }
+
+    &.active {
+      color: #222222;
+      font-weight: bold;
+    }
+  }
+`
+
+const VerticalDividedPanelB = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 80%;
+  ${styledPanel}
+`
+
 export const ExperimentControl = () => {
+  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
+  const [selectedAngles, setSelectedAngles] = useState<number[]>([])
+
+  useEffect(() => {
+    if (activeTab === 'singleLocation') {
+      setSelectedAngles([])
+    }
+  }, [activeTab])
+
   return (
-    <Wrapper>
-      <PanelA>
-        <GridComponent multiSelectMode={false} />
-      </PanelA>
-    </Wrapper>
+    <>
+      <TabBar>
+        <a
+          href="#"
+          onClick={() => setActiveTab('singleLocation')}
+          className={activeTab === 'singleLocation' ? 'active' : ''}
+        >
+          Single Location
+        </a>
+        <a
+          href="#"
+          onClick={() => setActiveTab('multipleLocations')}
+          className={activeTab === 'multipleLocations' ? 'active' : ''}
+        >
+          Multiple Locations
+        </a>
+      </TabBar>
+
+      <Wrapper>
+        <PanelA>
+          {activeTab === 'singleLocation' && <GridComponent />}
+          {activeTab === 'multipleLocations' && <GridComponent multiSelectMode={true} />}
+        </PanelA>
+        <VerticalDividedPanelB>
+        {activeTab === 'singleLocation' &&
+          <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
+        }
+        {activeTab === 'multipleLocations' &&
+          <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} multiSelectMode={true} />
+        }
+        </VerticalDividedPanelB>
+      </Wrapper>
+    </>
   )
 }
