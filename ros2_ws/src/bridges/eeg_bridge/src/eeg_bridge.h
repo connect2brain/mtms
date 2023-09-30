@@ -32,6 +32,7 @@ enum EegBridgeState {
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
+  ERROR_OUT_OF_SYNC
 };
 
 class EegBridge : public rclcpp::Node {
