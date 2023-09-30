@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Ensure the script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the script as root or use sudo."
+    exit 1
+fi
+
 # Get the site from the first argument
 SITE="$1"
 
@@ -10,17 +16,17 @@ if [ -z "$SITE" ]; then
 fi
 
 # Install Docker and ROS
-source install-docker.sh
-source install-ros.sh
+source install-docker
+source install-ros
 
 # Install Cyclone DDS for ROS
-sudo apt install -y ros-iron-rmw-cyclonedds-cpp
+apt install -y ros-iron-rmw-cyclonedds-cpp
 
 # Tools for troubleshooting
-sudo apt install -y net-tools wireshark
+apt install -y net-tools wireshark
 
 # Tools for customizing GNOME (not required)
-sudo apt install wmctrl
+apt install wmctrl
 
 # Add environment variable to .bashrc, setting the site
 if ! grep -q "export SITE=$SITE" ~/.bashrc; then
@@ -61,7 +67,7 @@ if ! grep -q 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' ~/.bashrc; then
     echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
 fi
 
-# Automatically show instructions in .bashrc
+# Automatically show instructions when opening a new terminal
 if ! grep -q "instructions" ~/.bashrc; then
     echo 'instructions' >> ~/.bashrc
 fi
