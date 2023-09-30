@@ -106,7 +106,7 @@ export const SystemState = ({ systemState }: Props) => {
         <StateValue>{latestUpdate ? formatDate(latestUpdate.toISOString()) : ''}</StateValue>
       </StateRow>
       <StateRow>
-        <StateTitle>System time</StateTitle>
+        <StateTitle>Session time</StateTitle>
         <StateValue>{systemState.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />
