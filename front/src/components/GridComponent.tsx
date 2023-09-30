@@ -80,17 +80,17 @@ const YAxisCenterLabel = styled(AxisLabel)`
 `
 
 const PosteriorLabel = styled(AxisLabel)`
-  top: 70px;
-  left: -30px;
-  transform: rotate(-90deg);
-  transform-origin: top left;
-`
-
-const AnteriorLabel = styled(AxisLabel)`
-  bottom: 5px;
+  bottom: 1px;
   left: -11px;
   transform: rotate(-90deg);
   transform-origin: bottom left;
+`
+
+const AnteriorLabel = styled(AxisLabel)`
+  top: 65px;
+  left: -30px;
+  transform: rotate(-90deg);
+  transform-origin: top left;
 `
 
 const CoordinateDisplay = styled.div<{ isActive: boolean }>`
@@ -199,41 +199,43 @@ export const GridComponent: React.FC<GridComponentProps> = ({ multiSelectMode = 
         <div>
           <GridInternalContainer>
             <GridContainer
-                onMouseUp={handleMouseUp}
-                onMouseEnter={() => setIsHoveringOverGrid(true)}
-                onMouseLeave={() => {
-                  setIsHoveringOverGrid(false)
-                  setHoveredPoint(null)
-                }}
+              onMouseUp={handleMouseUp}
+              onMouseEnter={() => setIsHoveringOverGrid(true)}
+              onMouseLeave={() => {
+                setIsHoveringOverGrid(false)
+                setHoveredPoint(null)
+              }}
             >
             <Grid>
-            {Array.from({ length: 31 }).map((_, rowIndex) => (
-                <GridRow key={rowIndex}>
-                {Array.from({ length: 31 }).map((_, colIndex) => (
-                    <GridCell
-                      key={colIndex}
-                      isSelected={isPointSelected(colIndex - 15, rowIndex - 15)}
-                      isOriginLine={colIndex === 15 || rowIndex === 15}
-                      onMouseDown={() => handleCellMouseDown(colIndex - 15, rowIndex - 15)}
-                      onMouseEnter={() => {
-                        handleCellMouseEnter(colIndex - 15, rowIndex - 15)
-                        setHoveredPoint({ x: colIndex - 15, y: rowIndex - 15 })
-                      }}
-                      onMouseLeave={() => {
-                        setHoveredPoint(null)
-                      }}
-                    />
-                ))}
-                </GridRow>
-            ))}
+            {Array.from({ length: 31 }).map((_, rowIndex) => {
+              const invertedRowIndex = 30 - rowIndex
+              return (
+              <GridRow key={rowIndex}>
+                  {Array.from({ length: 31 }).map((_, colIndex) => (
+                      <GridCell
+                        key={colIndex}
+                        isSelected={isPointSelected(colIndex - 15, invertedRowIndex - 15)}
+                        isOriginLine={colIndex === 15 || invertedRowIndex === 15}
+                        onMouseDown={() => handleCellMouseDown(colIndex - 15, invertedRowIndex - 15)}
+                        onMouseEnter={() => {
+                          handleCellMouseEnter(colIndex - 15, invertedRowIndex - 15)
+                          setHoveredPoint({ x: colIndex - 15, y: invertedRowIndex - 15 })
+                        }}
+                        onMouseLeave={() => {
+                          setHoveredPoint(null)
+                        }}
+                      />
+                  ))}
+              </GridRow>
+              )
+            })}
             </Grid>
-            <XAxisCenterLabel>x (mm)</XAxisCenterLabel>
-
+        <XAxisCenterLabel>x (mm)</XAxisCenterLabel>
         <LeftLabel>Left</LeftLabel>
         <RightLabel>Right</RightLabel>
         <YAxisCenterLabel>y (mm)</YAxisCenterLabel>
-        <PosteriorLabel>Posterior</PosteriorLabel>
         <AnteriorLabel>Anterior</AnteriorLabel>
+        <PosteriorLabel>Posterior</PosteriorLabel>
         <CoordinateDisplay isActive={isHoveringOverGrid}>
           x: <CoordinateValue>{hoveredPoint ? hoveredPoint.x : '–'}</CoordinateValue>
           y: <CoordinateValue>{hoveredPoint ? hoveredPoint.y : '–'}</CoordinateValue>
