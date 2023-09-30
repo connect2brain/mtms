@@ -5,5 +5,8 @@ cd $MTMS_ROOT
 # Set SITE_ENV_FILE to point to .env of the site
 export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
 
+# Build the containers defined in docker-compose.core.yml
+docker-compose -f docker-compose.core.yml build
+
 # Start the containers defined in docker-compose.core.yml
 docker-compose -f docker-compose.core.yml up
