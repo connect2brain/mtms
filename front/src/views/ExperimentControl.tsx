@@ -3,6 +3,7 @@ import styled from 'styled-components'
 
 import { GridComponent } from 'components/GridComponent'
 import { AngleSelector } from 'components/AngleSelector'
+import { IntensitySelector } from 'components/IntensitySelector'
 
 const Wrapper = styled.div`
   display: grid;
@@ -46,19 +47,33 @@ const TabBar = styled.div`
   }
 `
 
-const VerticalDividedPanelB = styled.div`
+const PanelB = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 80%;
+  height: 87%;
+  ${styledPanel}
+`
+
+const PanelC = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 3 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  height: 87%;
   ${styledPanel}
 `
 
 export const ExperimentControl = () => {
   const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
+
+  const handleIntensityChange = (value: number) => {
+    console.log(`Selected intensity: ${value} V/m`)
+  }
 
   useEffect(() => {
     if (activeTab === 'singleLocation') {
@@ -90,14 +105,22 @@ export const ExperimentControl = () => {
           {activeTab === 'singleLocation' && <GridComponent />}
           {activeTab === 'multipleLocations' && <GridComponent multiSelectMode={true} />}
         </PanelA>
-        <VerticalDividedPanelB>
+        <PanelB>
         {activeTab === 'singleLocation' &&
           <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
         }
         {activeTab === 'multipleLocations' &&
           <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} multiSelectMode={true} />
         }
-        </VerticalDividedPanelB>
+        </PanelB>
+        <PanelC>
+        {activeTab === 'singleLocation' &&
+          <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
+        }
+        {activeTab === 'multipleLocations' &&
+          <IntensitySelector min={0} max={150} threshold={100} onValueChange={handleIntensityChange}/>
+        }
+        </PanelC>
       </Wrapper>
     </>
   )
