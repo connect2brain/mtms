@@ -59,6 +59,7 @@ const CircleButton = styled(StyledButton)`
 
 const StyledLabel = styled.label`
   margin-right: 8px;
+  margin-bottom: 5px;
 `
 
 export const AngleControls: React.FC<{
