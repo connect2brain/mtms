@@ -244,10 +244,7 @@ private:
 };
 
 int main(int argc, char **argv) {
-  if (!init_fpga()) {
-    return 1;
-  }
-
+  init_fpga();
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
@@ -264,7 +261,6 @@ int main(int argc, char **argv) {
 #endif
 
   RCLCPP_INFO(rclcpp::get_logger("system_state_bridge"), "System state bridge ready.");
-
 
   rclcpp::spin(node);
   rclcpp::shutdown();
