@@ -8,6 +8,15 @@ interface IntensitySelectorProps {
   onValueChange: (value: number) => void
 }
 
+const IntensityTitle = styled.h2`
+  font-size: 18px;
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  margin-right: 30px;
+  font-weight: bold;
+`
+
 const ThresholdLabel = styled.span`
   position: absolute;
   font-size: 12px; /* Adjust as needed */
@@ -61,23 +70,24 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
 
   return (
     <div>
+      <IntensityTitle>Intensity</IntensityTitle>
       <IntensitySelectorContainer>
         <ThresholdLine top={thresholdPosition} />
-          <input
-            className="intensitySlider"
-            type="range"
-            min={min}
-            max={max}
-            value={selectedIntensity}
-            onChange={handleChange}
-            style={{
-              writingMode: 'vertical-lr',
-              WebkitAppearance: 'slider-vertical', /* WebKit */
-              width: '8px',
-              height: '200px',
-              zIndex: 2
-            }}
-          />
+        <input
+          className="intensitySlider"
+          type="range"
+          min={min}
+          max={max}
+          value={selectedIntensity}
+          onChange={handleChange}
+          style={{
+            writingMode: 'vertical-lr',
+            WebkitAppearance: 'slider-vertical', /* WebKit */
+            width: '8px',
+            height: '200px',
+            zIndex: 2
+          }}
+        />
         <ThresholdLabel style={{ top: thresholdPosition }}>
           <b>Max:</b> {threshold}
         </ThresholdLabel>
