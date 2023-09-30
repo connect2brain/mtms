@@ -275,6 +275,10 @@ void EegBridge::spin() {
         case STREAMING:
           /* Do not notify the UI if streaming and there is no error. */
           break;
+
+        case ERROR_OUT_OF_SYNC:
+          this->send_node_message("Error: Out of sync between EEG and the mTMS device. Please stop the session.");
+          break;
       }
     }
   } catch (const rclcpp::exceptions::RCLError & ex) {
@@ -346,7 +350,9 @@ void EegBridge::handle_sync_trigger(double_t sync_time) {
      checkbox is ticked in Trigger A configuration in Settings menu. There seems to be no way to distinguish between the two triggers by the UDP packet contents,
      hence the additional check that we do not receive triggers too often. */
   if (abs(new_time_correction - this->time_correction) > MAXIMUM_TIME_CORRECTION_ADJUSTMENT_PER_SYNC_TRIGGER) {
-    RCLCPP_ERROR(this->get_logger(), "Sync triggers received too frequently or infrequently. Check EEG software configuration for double triggers.");
+    RCLCPP_ERROR(this->get_logger(), "Sync triggers received too frequently or infrequently. Check the BNC cable and EEG software configuration for double triggers.");
+
+    this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
   }
 
   this->time_correction = new_time_correction;
