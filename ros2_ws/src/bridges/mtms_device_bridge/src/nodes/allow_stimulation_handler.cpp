@@ -13,7 +13,7 @@ void allow_stimulation([[maybe_unused]] const std::shared_ptr<mtms_device_interf
   bool allow_stimulation = request->allow_stimulation;
 
   /* TODO: Currently, the control in FPGA is called "Ready to stimulate" instead of "Allow stimulation". Unify naming. */
-  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Readytostimulate, allow_stimulation));
+  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Allowstimulation, allow_stimulation));
 
   response->success = true;
   RCLCPP_INFO(rclcpp::get_logger("allow_stimulation_handler"), "%s stimulation", allow_stimulation ? "Allow" : "Disallow");
