@@ -16,9 +16,6 @@ fi
 # Allow Docker containers to connect to the host X server.
 xhost +local:docker
 
-# Set SITE_ENV_FILE to point to .env of the site
-export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
-
 # Set PROJECT_ENV_FILE to point to .env of the project
 export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 

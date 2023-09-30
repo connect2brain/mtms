@@ -21,9 +21,6 @@ if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
     exit 1
 fi
 
-# Set SITE_ENV_FILE to point to .env of the site
-export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
-
 # Set PROJECT_ENV_FILE to point to .env of the project
 export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
