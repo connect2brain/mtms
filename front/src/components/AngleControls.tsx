@@ -34,7 +34,7 @@ const StyledRow = styled.div`
 `
 
 const StyledNarrowInput = styled.input`
-  width: 35px;
+  width: 45px;
   margin-right: 8px;
   padding: 4px;
 `
@@ -61,55 +61,43 @@ const StyledLabel = styled.label`
   margin-right: 8px;
 `
 
-interface GridControlsProps {
-  onShapeSelected: (shape: 'circle' | 'square', size: number) => void
-  onReset: () => void
-  onDecimate: (rate: number) => void;
-}
-
-export const GridControls: React.FC<GridControlsProps> = ({
-    onShapeSelected,
-    onReset,
-    onDecimate
-  }) => {
-    const [shapeSize, setShapeSize] = useState<number>(8)
-    const [decimationRate, setDecimationRate] = useState<number>(2)
+export const AngleControls: React.FC<{
+    onFillAngles: (startAngle: number, increment: number) => void
+    onReset: () => void
+  }> = ({ onFillAngles, onReset }) => {
+    const [startAngle, setStartAngle] = useState<number>(0)
+    const [increment, setIncrement] = useState<number>(30)
 
     return (
       <ControlsContainer>
         <ControlBox>
-          <TopLabel>Shape</TopLabel>
+          <TopLabel>Angles</TopLabel>
           <StyledRow>
-            <StyledLabel>Size:</StyledLabel>
+            <StyledLabel>Start Angle:</StyledLabel>
             <StyledNarrowInput
               type="number"
-              value={shapeSize}
-              onChange={e => setShapeSize(Math.max(1, parseInt(e.target.value)))}
+              value={startAngle}
+              onChange={e => setStartAngle(Math.max(0, Math.min(350, parseInt(e.target.value))))}
             />
           </StyledRow>
           <StyledRow>
-            <CircleButton onClick={() => onShapeSelected('circle', shapeSize)}>Circle</CircleButton>
-            <StyledButton onClick={() => onShapeSelected('square', shapeSize)}>Square</StyledButton>
+            <StyledLabel>Increment:</StyledLabel>
+            <StyledNarrowInput
+              type="number"
+              value={increment}
+              onChange={e => setIncrement(Math.max(0, Math.min(350, parseInt(e.target.value))))}
+            />
+          </StyledRow>
+          <StyledRow>
+            <StyledButton onClick={() => onFillAngles(startAngle, increment)}>
+              Fill
+            </StyledButton>
           </StyledRow>
         </ControlBox>
 
         <ControlBox>
-          <TopLabel>Decimation</TopLabel>
-          <StyledRow>
-            <StyledLabel>Rate:</StyledLabel>
-            <StyledNarrowInput
-              type="number"
-              value={decimationRate}
-              onChange={e => setDecimationRate(Math.max(1, parseInt(e.target.value)))}
-            />
-          </StyledRow>
-          <StyledRow>
-            <StyledButton onClick={() => onDecimate(decimationRate)}>Decimate</StyledButton>
-          </StyledRow>
-        </ControlBox>
-        <ControlBox>
-          <StyledButton onClick={onReset}>Reset grid</StyledButton>
+          <StyledButton onClick={onReset}>Reset angles</StyledButton>
         </ControlBox>
       </ControlsContainer>
-  )
-    }
+    )
+  }
