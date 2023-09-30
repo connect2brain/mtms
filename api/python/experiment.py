@@ -318,29 +318,6 @@ class Experiment:
 
         return True
 
-    def ensure_stimulation_allowed(self):
-        if self.api.is_stimulation_allowed():
-            return
-
-        start = time.time()
-
-        while True:
-            while True:
-                allowed = self.api.is_stimulation_allowed()
-                if allowed:
-                    break
-                print("{}Stimulation is not allowed, waiting...{}".format(Color.YELLOW, Color.END))
-                time.sleep(1)
-
-            print("")
-            print("Stimulation is allowed")
-            ans = self.yes_or_no()
-            if ans in ['y', 'Y']:
-                break
-
-        end = time.time()
-        self.total_duration_of_pauses += end - start
-
     def perform(self):
         # Start the device if not started.
         self.api.start_device()
@@ -370,8 +347,6 @@ class Experiment:
                     if stop_experiment:
                         break
 
-                self.ensure_stimulation_allowed()
-
                 print("")
                 print("")
                 print("{}{}Trial {}{}".format(Color.BOLD, Color.UNDERLINE, i + 1, Color.END))
@@ -390,25 +365,15 @@ class Experiment:
                     i += 1
                     print("Trial finished.")
                 else:
-                    start = time.time()
+                    print("Redoing trial...")
 
-                    ans = 'Y'
-#                    print("Redoing trial...")
-                    ans = self.yes_or_no("Redo trial?")
-
-                    end = time.time()
-                    self.total_duration_of_pauses += end - start
-
-                    if ans in ['N', 'n']:
-                        i += 1
+                    # HACK: Okay, this is quite hacky, but let's settle for it for now.
+                    #   A proper way to implement redoing trials would be to not plan
+                    #   the trial times so carefully in advance, but instead adapt on the fly.
+                    if i > 0:
+                        self.total_duration_of_pauses += self.trials[i]['time'] - self.trials[i-1]['time']
                     else:
-                        # HACK: Okay, this is quite hacky, but let's settle for it for now.
-                        #   A proper way to implement redoing trials would be to not plan
-                        #   the trial times so carefully in advance, but instead adapt on the fly.
-                        if i > 0:
-                            self.total_duration_of_pauses += self.trials[i]['time'] - self.trials[i-1]['time']
-                        else:
-                            self.total_duration_of_pauses += self.trials[i]['time']
+                        self.total_duration_of_pauses += self.trials[i]['time']
         finally:
             self.api.stop_session()
             self.output_file.close()
