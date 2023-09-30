@@ -25,6 +25,35 @@ export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
 })
 
+/* Set up get maximum intensity service.*/
+const getMaximumIntensityService = new ROSLIB.Service({
+  ros: ros,
+  name: '/targeting/get_maximum_intensity',
+  serviceType: 'targeting_interfaces/GetMaximumIntensity',
+})
+
+export const getMaximumIntensity =
+    (x: number, y: number, angle: number, callback: (maximum_intensity: number) => void) => {
+  const request = new ROSLIB.ServiceRequest() as any
+  request.displacement_x = x
+  request.displacement_y = y
+  request.rotation_angle = angle
+
+  getMaximumIntensityService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to get maximum intensity')
+      } else {
+        callback(response.maximum_intensity)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to get maximum intensity, error:')
+    },
+  )
+}
+
 /* Set up toggle_navigation service.*/
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
