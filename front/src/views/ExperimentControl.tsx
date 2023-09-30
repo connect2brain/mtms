@@ -86,6 +86,7 @@ export const ExperimentControl = () => {
   useEffect(() => {
     if (activeTab === 'singleLocation') {
       setSelectedAngles([])
+      setSelectedPoints([])
     }
   }, [activeTab])
 
