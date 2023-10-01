@@ -48,9 +48,6 @@ const Input = styled.input`
 `
 
 const Wrapper = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr;
   gap: 1rem;
   padding: 1rem;
 `
@@ -83,6 +80,14 @@ const TabBar = styled.div`
   }
 `
 
+const StimulationParametersPanel = styled.div`
+  display: grid;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
+`
+
 const GridPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
@@ -94,8 +99,6 @@ const GridPanel = styled.div`
 const AnglePanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
-  display: flex;
-  flex-direction: column;
   gap: 1.5rem;
   width: 600px;
   height: 500px;
@@ -104,9 +107,7 @@ const AnglePanel = styled.div`
 
 const IntensityPanel = styled.div`
   grid-row: 1 / 2;
-  grid-column: 3 / 3;
-  display: flex;
-  flex-direction: column;
+  grid-column: 3 / 4;
   gap: 1.5rem;
   width: 100px;
   height: 500px;
@@ -116,40 +117,40 @@ const IntensityPanel = styled.div`
 /* Config panels */
 const ConfigPanel = styled.div`
   display: grid;
-  grid-template-rows: repeat(2, 1fr);
-  grid-template-columns: repeat(2, 1fr);
-  width: 600px;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(4, 1fr);
+  width: 500px;
   height: 550px;
-  ${styledPanel}
+  gap: 20px;
 `
 
 const TriggerPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
-  width: 240px;
-  height: 160px;
+  width: 272px;
+  height: 240px;
   ${styledPanel}
 `
 
 const MepPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
-  width: 240px;
-  height: 160px;
+  width: 272px;
+  height: 240px;
   ${styledPanel}
 `
 
 const TrialsPanel = styled.div`
-  grid-row: 2 / 3;
-  grid-column: 1 / 2;
-  width: 240px;
+  grid-row: 1 / 2;
+  grid-column: 3 / 4;
+  width: 300px;
   height: 240px;
   ${styledPanel}
 `
 
 const StimulatePanel = styled.div`
-  grid-row: 2 / 3;
-  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  grid-column: 4 / 5;
   width: 240px;
   height: 240px;
   ${styledPanel}
@@ -338,7 +339,7 @@ export const ExperimentControl = () => {
         </a>
       </TabBar>
 
-      <Wrapper>
+      <StimulationParametersPanel>
         <GridPanel>
           {activeTab === 'singleLocation' &&
           <LocationSelector
@@ -377,7 +378,8 @@ export const ExperimentControl = () => {
           />
         }
         </IntensityPanel>
-        <ConfigPanel>
+      </StimulationParametersPanel>
+      <ConfigPanel>
           <TriggerPanel>
             <SmallerTitle>Triggers</SmallerTitle>
             <TriggerRow>
@@ -467,7 +469,6 @@ export const ExperimentControl = () => {
             </StyledButton>
           </StimulatePanel>
         </ConfigPanel>
-      </Wrapper>
     </>
   )
 }
