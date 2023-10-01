@@ -4,24 +4,29 @@ import styled from 'styled-components'
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
 import { IntensitySelector } from 'components/Experiment/IntensitySelector'
+import { TriggerSelector } from 'components/Experiment/TriggerSelector'
+
+import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
+
+import { SmallerTitle } from 'components/Experiment/Styles'
 
 import { getMaximumIntensity } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
-const ExperimentMetaData = styled.div`
+const ExperimentMetadata = styled.div`
   margin-bottom: 40px;
 `
 
 const InputRow = styled.div`
   display: flex;
   justify-content: flex-start;
-  align-items: center;     // This will center the items vertically.
-  gap: 10px;               // Provides spacing between the items.
-  margin-bottom: 10px;     // Provides spacing between rows.
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
 `
 
 const Label = styled.label`
-  width: 150px;  // Adjust based on your longest label
+  width: 150px;
   text-align: left;
   margin-right: 10px;
   margin-left: 30px;
@@ -56,14 +61,6 @@ const styledPanel = `
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
 `
 
-const GridPanel = styled.div`
-  grid-row: 1 / 2;
-  grid-column: 1 / 2;
-  width: 600px;
-  height: 500px;
-  ${styledPanel}
-`
-
 const TabBar = styled.div`
   margin: 0.5rem;
 
@@ -83,6 +80,14 @@ const TabBar = styled.div`
       font-weight: bold;
     }
   }
+`
+
+const GridPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  width: 600px;
+  height: 500px;
+  ${styledPanel}
 `
 
 const AnglePanel = styled.div`
@@ -107,6 +112,64 @@ const IntensityPanel = styled.div`
   ${styledPanel}
 `
 
+const ConfigPanel = styled.div`
+  grid-row: 2 / 2;
+  grid-column: 1 / 3;
+  display: flex;
+  flex-direction: row;
+  width: 600px;
+  height: 500px;
+  ${styledPanel}
+`
+
+const TriggerPanel = styled.div`
+  grid-row: 1 / 1;
+  grid-column: 1 / 2;
+  width: 240px;
+  height: 160px;
+  ${styledPanel}
+`
+
+const MepPanel = styled.div`
+  grid-row: 1 / 1;
+  grid-column: 2 / 2;
+  margin-left: 25px;
+  width: 240px;
+  height: 160px;
+  ${styledPanel}
+`
+
+const TriggerRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+`
+
+const TriggerLabel = styled.label`
+  width: 0px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: left;
+  display: inline-block;
+`
+
+const MepRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+`
+
+const MepEnabledLabel = styled.label`
+  width: 200px;
+  font-size: 15px;
+  text-align: right;
+  margin-right: 30px;
+`
+
 export const ExperimentControl = () => {
   const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
@@ -115,6 +178,34 @@ export const ExperimentControl = () => {
 
   const [experimentName, setExperimentName] = useState<string>('')
   const [subjectName, setSubjectName] = useState<string>('')
+
+  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(false)
+  const [trigger1Delay, setTrigger1Delay] = useState<number>(0)
+
+  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(false)
+  const [trigger2Delay, setTrigger2Delay] = useState<number>(0)
+
+  const [mepEnabled, setMepEnabled] = useState<boolean>(false)
+
+  const handleTrigger1EnabledChange = (value: boolean) => {
+    setTrigger1Enabled(value)
+  }
+
+  const handleTrigger1DelayChange = (value: number) => {
+    setTrigger1Delay(value)
+  }
+
+  const handleTrigger2EnabledChange = (value: boolean) => {
+    setTrigger2Enabled(value)
+  }
+
+  const handleTrigger2DelayChange = (value: number) => {
+    setTrigger2Delay(value)
+  }
+
+  const handleMepEnabled = (value: boolean) => {
+    setMepEnabled(value)
+  }
 
   const handleIntensityChange = (value: number) => {
     console.log(`Selected intensity: ${value} V/m`)
@@ -140,7 +231,7 @@ export const ExperimentControl = () => {
 
   return (
     <>
-      <ExperimentMetaData>
+      <ExperimentMetadata>
         <InputRow>
           <Label>Name:</Label>
           <Input
@@ -161,7 +252,7 @@ export const ExperimentControl = () => {
             style={{ backgroundColor: subjectName ? 'transparent' : 'lightgray' }}
           />
         </InputRow>
-      </ExperimentMetaData>
+      </ExperimentMetadata>
 
       <TabBar>
         <a
@@ -219,6 +310,40 @@ export const ExperimentControl = () => {
           />
         }
         </IntensityPanel>
+        <ConfigPanel>
+          <TriggerPanel>
+            <SmallerTitle>Triggers</SmallerTitle>
+            <TriggerRow>
+              <TriggerLabel>1</TriggerLabel>
+              <TriggerSelector
+                enabled={trigger1Enabled}
+                enabledHandler={handleTrigger1EnabledChange}
+                delay={trigger1Delay}
+                delayHandler={handleTrigger1DelayChange}
+              />
+            </TriggerRow>
+            <TriggerRow>
+              <TriggerLabel>2</TriggerLabel>
+              <TriggerSelector
+                enabled={trigger2Enabled}
+                enabledHandler={handleTrigger2EnabledChange}
+                delay={trigger2Delay}
+                delayHandler={handleTrigger2DelayChange}
+              />
+            </TriggerRow>
+          </TriggerPanel>
+          <MepPanel>
+            <SmallerTitle>MEP analysis</SmallerTitle>
+            <MepRow>
+              <MepEnabledLabel>Enabled:</MepEnabledLabel>
+              <ToggleSwitch
+                type="flat"
+                checked={mepEnabled}
+                onChange={handleMepEnabled}
+              />
+            </MepRow>
+          </MepPanel>
+        </ConfigPanel>
       </Wrapper>
     </>
   )
