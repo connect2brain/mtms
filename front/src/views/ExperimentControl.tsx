@@ -8,7 +8,8 @@ import { TriggerSelector } from 'components/Experiment/TriggerSelector'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { SmallerTitle } from 'components/Experiment/Styles'
+import { SmallerTitle, ExperimentInput } from 'components/Experiment/Styles'
+import { StyledButton } from 'styles/General'
 
 import { getMaximumIntensity } from 'services/ros'
 
@@ -112,18 +113,18 @@ const IntensityPanel = styled.div`
   ${styledPanel}
 `
 
+/* Config panels */
 const ConfigPanel = styled.div`
-  grid-row: 2 / 2;
-  grid-column: 1 / 3;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   width: 600px;
-  height: 500px;
+  height: 550px;
   ${styledPanel}
 `
 
 const TriggerPanel = styled.div`
-  grid-row: 1 / 1;
+  grid-row: 1 / 2;
   grid-column: 1 / 2;
   width: 240px;
   height: 160px;
@@ -131,14 +132,60 @@ const TriggerPanel = styled.div`
 `
 
 const MepPanel = styled.div`
-  grid-row: 1 / 1;
-  grid-column: 2 / 2;
-  margin-left: 25px;
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
   width: 240px;
   height: 160px;
   ${styledPanel}
 `
 
+const TrialsPanel = styled.div`
+  grid-row: 2 / 3;
+  grid-column: 1 / 2;
+  width: 240px;
+  height: 240px;
+  ${styledPanel}
+`
+
+const StimulatePanel = styled.div`
+  grid-row: 2 / 3;
+  grid-column: 2 / 3;
+  width: 240px;
+  height: 240px;
+  ${styledPanel}
+`
+
+/* General config-related */
+const ConfigRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-right: 0px;
+`
+
+const ConfigLabel = styled.label`
+  width: 300px;
+  font-size: 14px;
+`
+
+/* Trials-related */
+const IndentedLabel = styled(ConfigLabel)`
+  padding-left: 15px;
+`
+
+const CloseConfigRow = styled(ConfigRow)`
+  margin-bottom: 10px;
+`
+
+const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
+  filter: ${props => props.isGrayedOut ? 'grayscale(100%)' : 'none'};
+  opacity: ${props => props.isGrayedOut ? '0.5' : '1'};
+  transition: filter 0.3s ease, opacity 0.3s ease;
+`
+
+/* Triggers */
 const TriggerRow = styled.div`
   display: flex;
   justify-content: flex-start;
@@ -153,21 +200,6 @@ const TriggerLabel = styled.label`
   font-weight: bold;
   text-align: left;
   display: inline-block;
-`
-
-const MepRow = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-`
-
-const MepEnabledLabel = styled.label`
-  width: 200px;
-  font-size: 15px;
-  text-align: right;
-  margin-right: 30px;
 `
 
 export const ExperimentControl = () => {
@@ -187,24 +219,59 @@ export const ExperimentControl = () => {
 
   const [mepEnabled, setMepEnabled] = useState<boolean>(false)
 
-  const handleTrigger1EnabledChange = (value: boolean) => {
+  const [numOfTrials, setNumOfTrials] = useState<number>(10)
+  const [waitForTrigger, setWaitForTrigger] = useState<boolean>(false)
+
+  const [itiMin, setItiMin] = useState<number>(3.5)
+  const [itiMax, setItiMax] = useState<number>(4.5)
+
+  const stimulate = () => {
+    console.log('stimulate')
+  }
+
+  const changeTrigger1Enabled = (value: boolean) => {
     setTrigger1Enabled(value)
   }
 
-  const handleTrigger1DelayChange = (value: number) => {
+  const changeTrigger1Delay = (value: number) => {
     setTrigger1Delay(value)
   }
 
-  const handleTrigger2EnabledChange = (value: boolean) => {
+  const changeTrigger2Enabled = (value: boolean) => {
     setTrigger2Enabled(value)
   }
 
-  const handleTrigger2DelayChange = (value: number) => {
+  const changeTrigger2Delay = (value: number) => {
     setTrigger2Delay(value)
   }
 
-  const handleMepEnabled = (value: boolean) => {
+  const changeMepEnabled = (value: boolean) => {
     setMepEnabled(value)
+  }
+
+  const changeNumOfTrials = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.max(Number(event.target.value), 1)
+    if (!isNaN(value)) {
+      setNumOfTrials(value)
+    }
+  }
+
+  const changeWaitForTrigger = (value: boolean) => {
+    setWaitForTrigger(value)
+  }
+
+  const changeItiMin = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value)
+    if (!isNaN(value) && value >= -99 && value <= 99) {
+      setItiMin(value)
+    }
+  }
+
+  const changeItiMax = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value)
+    if (!isNaN(value) && value >= -99 && value <= 99) {
+      setItiMax(value)
+    }
   }
 
   const handleIntensityChange = (value: number) => {
@@ -317,32 +384,88 @@ export const ExperimentControl = () => {
               <TriggerLabel>1</TriggerLabel>
               <TriggerSelector
                 enabled={trigger1Enabled}
-                enabledHandler={handleTrigger1EnabledChange}
+                enabledHandler={changeTrigger1Enabled}
                 delay={trigger1Delay}
-                delayHandler={handleTrigger1DelayChange}
+                delayHandler={changeTrigger1Delay}
               />
             </TriggerRow>
             <TriggerRow>
               <TriggerLabel>2</TriggerLabel>
               <TriggerSelector
                 enabled={trigger2Enabled}
-                enabledHandler={handleTrigger2EnabledChange}
+                enabledHandler={changeTrigger2Enabled}
                 delay={trigger2Delay}
-                delayHandler={handleTrigger2DelayChange}
+                delayHandler={changeTrigger2Delay}
               />
             </TriggerRow>
           </TriggerPanel>
           <MepPanel>
             <SmallerTitle>MEP analysis</SmallerTitle>
-            <MepRow>
-              <MepEnabledLabel>Enabled:</MepEnabledLabel>
+            <ConfigRow>
+              <ConfigLabel>Enabled:</ConfigLabel>
               <ToggleSwitch
                 type="flat"
                 checked={mepEnabled}
-                onChange={handleMepEnabled}
+                onChange={changeMepEnabled}
               />
-            </MepRow>
+            </ConfigRow>
           </MepPanel>
+          <TrialsPanel>
+            <SmallerTitle>Trials</SmallerTitle>
+            <ConfigRow>
+              <ConfigLabel># of trials:</ConfigLabel>
+              <ExperimentInput
+                type="text"
+                value={numOfTrials}
+                min={0}
+                max={999}
+                onChange={changeNumOfTrials}
+              />
+            </ConfigRow>
+            <ConfigRow>
+              <ConfigLabel>Wait for trigger:</ConfigLabel>
+              <ToggleSwitch
+                type="flat"
+                checked={waitForTrigger}
+                onChange={changeWaitForTrigger}
+              />
+            </ConfigRow>
+            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === 1}>
+              <ConfigRow>
+                <ConfigLabel>Interval (s)</ConfigLabel>
+              </ConfigRow>
+              <CloseConfigRow>
+                <IndentedLabel>Min:</IndentedLabel>
+                <ExperimentInput
+                  type="number"
+                  value={itiMin}
+                  min={0}
+                  step={0.1}
+                  onChange={changeItiMin}
+                  disabled={waitForTrigger || numOfTrials === 1}
+                />
+              </CloseConfigRow>
+              <CloseConfigRow>
+                <IndentedLabel>Max:</IndentedLabel>
+                  <ExperimentInput
+                    type="number"
+                    value={itiMax}
+                    min={0}
+                    step={0.1}
+                    onChange={changeItiMax}
+                    disabled={waitForTrigger || numOfTrials === 1}
+                />
+              </CloseConfigRow>
+            </GrayedOutPanel>
+          </TrialsPanel>
+          <StimulatePanel>
+            <SmallerTitle>Stimulation</SmallerTitle>
+            <StyledButton
+              onClick={stimulate}
+            >
+              Start
+            </StyledButton>
+          </StimulatePanel>
         </ConfigPanel>
       </Wrapper>
     </>
