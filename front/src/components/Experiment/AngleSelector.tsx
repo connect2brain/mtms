@@ -47,9 +47,26 @@ const AngleLabel = styled.text`
   transition: color 0.2s;
 `
 
+/* Large angle text shown next to the grid only when not in multiSelectMode. */
+const LargeAngleText = styled.text`
+    margin-top: 160px;
+    margin-left: 50px;
+    font-size: 36px;
+    font-weight: bold;
+    text-anchor: middle;
+    fill: black;
+    opacity: 0;
+    transition: opacity 0.5s;
+
+    &[data-visible="true"] {
+        opacity: 1;
+    }
+`
+
 export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, setSelectedAngles, multiSelectMode }) => {
     const [isDragging, setIsDragging] = useState<boolean>(false)
     const [dragMode, setDragMode] = useState<'selecting' | 'deselecting' | null>(null)
+    const [hoveredAngle, setHoveredAngle] = useState<number | null>(null)
 
     const handleFillAngles = (startAngle: number, increment: number) => {
         const angles: number[] = []
@@ -75,12 +92,17 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
                 setDragMode('selecting')
             }
         } else {
+          if (selectedAngles.includes(angle)) {
+            setSelectedAngles([])
+          } else {
             setSelectedAngles([angle])
+          }
         }
         setIsDragging(true)
     }
 
     const handleSectorMouseEnter = (angle: number) => {
+        setHoveredAngle(angle)
         if (isDragging) {
             if (multiSelectMode) {
                 if (dragMode === 'selecting' && !selectedAngles.includes(angle)) {
@@ -109,7 +131,7 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
       <LargerTitle>Angle</LargerTitle>
       <SelectorInternalContainer>
         <SelectorContainer onMouseUp={handleMouseUp}>
-            <SVGContainer width="400" height="400" viewBox="0 0 400 400">
+            <SVGContainer width="400" height="400" viewBox="0 0 400 400" onMouseLeave={() => setHoveredAngle(null)}>
                 <circle cx="200" cy="200" r="150" fill="lightgray" />
                 {Array.from({ length: 36 }).map((_, index) => {
                     const angle = index * 10
@@ -131,6 +153,12 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
                 })}
             </SVGContainer>
         </SelectorContainer>
+        {!multiSelectMode &&
+          <LargeAngleText x="200" y="380" data-visible={selectedAngles.length > 0}>
+            { (selectedAngles.length > 0 || hoveredAngle !== null) &&
+            `${selectedAngles.length > 0 ? selectedAngles[0] : hoveredAngle}°`}
+          </LargeAngleText>
+        }
         {multiSelectMode &&
               <AngleControls onFillAngles={handleFillAngles} onReset={handleResetAngles} />
             }
