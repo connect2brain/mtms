@@ -24,6 +24,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/AnalyzeMepErrors.msg"
+  "msg/Mep.msg"
   "msg/MepConfiguration.msg"
   "msg/MepError.msg"
   "msg/PreactivationCheck.msg"

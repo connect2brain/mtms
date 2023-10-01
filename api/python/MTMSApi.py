@@ -1,6 +1,6 @@
 """
 This Python module provides an API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform 
+It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform
 various analyses of the EEG/EMG data.
 
 It uses the Robot Operating System (ROS2) to interact with the device.
@@ -19,7 +19,7 @@ from MTMSApiNode import MTMSApiNode
 class MTMSApi:
     """
     An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-    """    
+    """
     # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
 
@@ -217,7 +217,7 @@ class MTMSApi:
 
     def get_voltage(self, channel):
         """
-        Return the capacitor voltage (V) of the given channel. 
+        Return the capacitor voltage (V) of the given channel.
 
         Parameters
         ----------
@@ -234,7 +234,7 @@ class MTMSApi:
 
     def get_temperature(self, channel):
         """
-        Return the coil temperature of the given channel if a temperature sensor is present, 
+        Return the coil temperature of the given channel if a temperature sensor is present,
         otherwise return None.
 
         Parameters
@@ -332,7 +332,7 @@ class MTMSApi:
 
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -388,7 +388,7 @@ class MTMSApi:
             The target voltage for charging. Range: 0-1500
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -439,7 +439,7 @@ class MTMSApi:
             The target voltage for the discharge.
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -490,7 +490,7 @@ class MTMSApi:
             The duration of the trigger in microseconds. Defaults to 1e6 (one millisecond).
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -587,7 +587,7 @@ class MTMSApi:
         -------
         array-like
             Channel voltages.
-        """        
+        """
         return self.node.get_channel_voltages(
             displacement_x=displacement_x,
             displacement_y=displacement_y,
@@ -613,7 +613,7 @@ class MTMSApi:
         float
             The maximum intensity.
         """
-        
+
         return self.node.get_maximum_intensity(
             displacement_x=displacement_x,
             displacement_y=displacement_y,
@@ -780,7 +780,7 @@ class MTMSApi:
             Target voltage for the channel.
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -814,7 +814,7 @@ class MTMSApi:
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel, mep_configuration):
+    def analyze_mep(self, time, mep_configuration):
         """
         Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
 
@@ -822,31 +822,28 @@ class MTMSApi:
         ----------
         time : float
             The time at which MEP analysis begins.
-        emg_channel : int
-            Channel number for the EMG.
         mep_configuration : object
             Configuration object for the MEP.
 
         Returns
         -------
         tuple
-            A tuple containing the amplitude, latency, and any errors encountered during the analysis.
+            A tuple containing the MEP message, consisting of the fields amplitude and latency, and any errors encountered during the analysis.
         """
-        amplitude, latency, errors = self.node.analyze_mep(
+        mep, errors = self.node.analyze_mep(
             time=time,
-            emg_channel=emg_channel,
             mep_configuration=mep_configuration,
         )
 
         # HACK: ROS2 doesn't support NaN values, therefore they are encoded as 0.0 values. Do the decoding
         #   here. Maybe it would better to use non-zero errors instead as criterion for returning Nones?
         #
-        if amplitude == 0.0:
-            amplitude = None
-        if latency == 0.0:
-            latency = None
+        if mep.amplitude == 0.0:
+            mep.amplitude = None
+        if mep.latency == 0.0:
+            mep.latency = None
 
-        return amplitude, latency, errors
+        return mep, errors
 
     # Other
 

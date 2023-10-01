@@ -21,7 +21,7 @@ Execute single events
 
 .. rubric:: Charge channel 1 to 20 V
 .. code-block::
-    
+
     channel = 1
     target_voltage = 20
     execution_condition = ExecutionCondition.IMMEDIATE
@@ -37,7 +37,7 @@ Execute single events
 
 .. rubric:: Send pulse on channel 1, using the default waveform
 .. code-block::
-        
+
     waveform = api.get_default_waveform(channel)
     reverse_polarity = False
 
@@ -102,9 +102,9 @@ Send pulse on channel 1 and analyze MEP.
 .. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
 .. code-block::
 
-    emg_channel = 1
-
     mep_configuration = MepConfiguration(
+        emg_channel=1,
+
         time_window=TimeWindow(
             start=0.020,  # in ms, after the stimulation pulse
             end=0.040,  # in ms
@@ -119,11 +119,13 @@ Send pulse on channel 1 and analyze MEP.
         ),
     )
 
-    amplitude, latency, errors = api.analyze_mep(
-        emg_channel=emg_channel,
+    mep, errors = api.analyze_mep(
         time=time,
         mep_configuration=mep_configuration,
     )
+
+    amplitude = mep.amplitude
+    latency = mep.latency
 
 
 Targeting
@@ -206,9 +208,9 @@ Targeting combined with MEP analysis
 .. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
 .. code-block::
 
-    emg_channel = 1
-
     mep_configuration = MepConfiguration(
+        emg_channel=1,
+
         time_window=TimeWindow(
             start=0.020,  # in ms, after the stimulation pulse
             end=0.040,  # in ms
@@ -223,11 +225,13 @@ Targeting combined with MEP analysis
         ),
     )
 
-    amplitude, latency, errors = api.analyze_mep(
-        emg_channel=emg_channel,
+    mep, errors = api.analyze_mep(
         time=time,
         mep_configuration=mep_configuration,
     )
+
+    amplitude = mep.amplitude
+    latency = mep.latency
 
 
 Restart session
@@ -243,7 +247,7 @@ Stop device
 ~~~~~~~~~~~
 
 .. code-block::
-    
+
     api.stop_device()
 
 
