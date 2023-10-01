@@ -51,7 +51,7 @@ const GridCell = styled.div<GridCellProps>`
     props.isOriginLine ? '#ddd' : 'transparent'};
 
   &:hover {
-    background-color: rgba(0, 123, 255, 0.4);
+    background-color: ${props => !props.isSelected ? 'rgba(0, 123, 255, 0.4)' : '#007bff'};
   }
 
   cursor: pointer;
@@ -117,6 +117,16 @@ const CoordinateValue = styled.span`
   margin-right: 12px;
 `
 
+/* Large coordinate text shown next to the grid only when not in multiSelectMode. */
+const CoordinateText = styled.div<{ isActive: boolean }>`
+  margin-left: 20px;
+  margin-top: 160px;
+  font-weight: bold;
+  font-size: 18px;
+  color: ${props => props.isActive ? 'black' : 'rgba(0, 0, 0, 0)'};
+  transition: color 0.3s ease;
+`
+
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
       selectedPoints, setSelectedPoints, multiSelectMode = false }) => {
     const [shape, setShape] = useState<'circle' | 'square' | null>(null)
@@ -125,6 +135,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     const [dragAction, setDragAction] = useState<'selecting' | 'deselecting'>('selecting')
     const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null)
     const [isHoveringOverGrid, setIsHoveringOverGrid] = useState<boolean>(false)
+    const [selectedSinglePoint, setSelectedSinglePoint] = useState<Point | null>(null)
 
     const resetGrid = () => {
         setSelectedPoints([])
@@ -141,12 +152,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
     const deselectCell = (x: number, y: number) => {
       setSelectedPoints(prevPoints => prevPoints.filter(point => !(point.x === x && point.y === y)))
+      setSelectedSinglePoint(null)
     }
 
     const handleCellMouseDown = (x: number, y: number) => {
       setIsMouseDown(true)
       if (!multiSelectMode) {
           setSelectedPoints([])
+          setSelectedSinglePoint({ x, y })
       }
       if (isPointSelected(x, y)) {
           setDragAction('deselecting')
@@ -158,6 +171,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     }
 
     const handleCellMouseEnter = (x: number, y: number) => {
+      setHoveredPoint({ x, y })
       if (isMouseDown) {
           if (multiSelectMode) {
               if (dragAction === 'selecting') {
@@ -167,6 +181,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
               }
           } else {
               setSelectedPoints([{ x, y }])
+              setSelectedSinglePoint({ x, y })
           }
       }
     }
@@ -205,6 +220,18 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       )
     }
 
+    const getXDirection = (x: number) => {
+      if (x > 0) return `${x} mm to the right`
+      if (x < 0) return `${Math.abs(x)} mm to the left`
+      return `${x} mm`
+    }
+
+    const getYDirection = (y: number) => {
+      if (y > 0) return `${y} mm anterior`
+      if (y < 0) return `${Math.abs(y)} mm posterior`
+      return `${y} mm`
+    }
+
     return (
         <div>
           <LargerTitle>Location</LargerTitle>
@@ -232,9 +259,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                           handleCellMouseEnter(colIndex - 15, invertedRowIndex - 15)
                           setHoveredPoint({ x: colIndex - 15, y: invertedRowIndex - 15 })
                         }}
-                        onMouseLeave={() => {
-                          setHoveredPoint(null)
-                        }}
                       />
                   ))}
               </GridRow>
@@ -259,6 +283,25 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             onDecimate={handleDecimate}
           />
         }
+        { !multiSelectMode && (
+            <div>
+                <CoordinateText isActive={selectedSinglePoint !== null}>
+                    {selectedSinglePoint ? (
+                        <>
+                            <div>{getXDirection(selectedSinglePoint.x)}</div>
+                            <div>{getYDirection(selectedSinglePoint.y)}</div>
+                        </>
+                    ) : (
+                        hoveredPoint && (
+                            <>
+                                <div>{getXDirection(hoveredPoint.x)}</div>
+                                <div>{getYDirection(hoveredPoint.y)}</div>
+                            </>
+                        )
+                    )}
+                </CoordinateText>
+            </div>
+        )}
         </GridInternalContainer>
     </div>
   )
