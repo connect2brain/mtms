@@ -1,8 +1,6 @@
 # ROS service for getting maximum intensity for a given target.
 
-int8 displacement_x
-int8 displacement_y
-uint16 rotation_angle
+ElectricTarget target
 ---
 bool success
 uint8 maximum_intensity

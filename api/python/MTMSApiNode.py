@@ -313,9 +313,9 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.displacement_x = displacement_x
-        request.displacement_y = displacement_y
-        request.rotation_angle = rotation_angle
+        request.target.displacement_x = displacement_x
+        request.target.displacement_y = displacement_y
+        request.target.rotation_angle = rotation_angle
         request.intensity = intensity
 
         value = self.call_service(client, request)
@@ -329,9 +329,9 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.displacement_x = displacement_x
-        request.displacement_y = displacement_y
-        request.rotation_angle = rotation_angle
+        request.target.displacement_x = displacement_x
+        request.target.displacement_y = displacement_y
+        request.target.rotation_angle = rotation_angle
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement or rotation angle."
@@ -379,7 +379,7 @@ class MTMSApiNode(Node):
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel, mep_configuration):
+    def analyze_mep(self, time, mep_configuration):
         topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
         client = self.ros_action_clients[topic]
@@ -388,7 +388,6 @@ class MTMSApiNode(Node):
         goal = action_type.Goal()
 
         goal.time = time
-        goal.emg_channel = emg_channel
         goal.mep_configuration = mep_configuration
 
         # Send goal to ROS action.
@@ -415,7 +414,7 @@ class MTMSApiNode(Node):
             self.get_logger().info('Analyze MEP result failed.')
             return None, None
 
-        return result.result.amplitude, result.result.latency, result.result.errors
+        return result.result.mep, result.result.errors
 
     # System state
 
