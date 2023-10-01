@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { SmallerTitle } from './Styles'
+import { SmallerTitle, ExperimentInput } from './Styles'
 
 interface IntensitySelectorProps {
   min: number
@@ -14,13 +14,13 @@ const MaximumIntensityLabel = styled.span`
   position: absolute;
   font-size: 12px; /* Adjust as needed */
   color: red;
-  right: 85%;
+  right: 80%;
   transform: translateY(-50%);
 `
 
 const MaximumIntensityLine = styled.div<{ top: string }>`
   position: absolute;
-  width: 30%;
+  width: 25%;
   height: 2px;
   background-color: red;
   top: ${props => props.top};
@@ -33,19 +33,14 @@ const IntensitySelectorContainer = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
-  width: 70px;
-`
-
-const IntensityInput = styled.input`
-  marginTop: 0px;
-  width: 40px;
+  width: 90px;
 `
 
 const IntensityLabel = styled.span`
   font-size: 0.85em;
   font-weight: bold;
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 20px;
+  margin-bottom: 10px;
 `
 
 export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, maximumIntensity, onValueChange }) => {
@@ -57,7 +52,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
     onValueChange(value)
   }
 
-  const sliderHeight = 200
+  const sliderHeight = 350
   const maximumIntensityPositionInPixels = sliderHeight * (1 - (maximumIntensity - min) / (max - min))
   const maximumIntensityPosition = `${maximumIntensityPositionInPixels}px`
 
@@ -77,7 +72,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
             writingMode: 'vertical-lr',
             WebkitAppearance: 'slider-vertical', /* WebKit */
             width: '8px',
-            height: '200px',
+            height: '350px',
             zIndex: 2
           }}
         />
@@ -85,7 +80,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
           <b>Max:</b> {maximumIntensity}
         </MaximumIntensityLabel>
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
-        <IntensityInput
+        <ExperimentInput
           type="number"
           value={selectedIntensity}
           min={min}

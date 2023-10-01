@@ -13,6 +13,7 @@ const DelayLabel = styled.label<{ isEnabled: boolean }>`
 
 const DelayInput = styled.input<{ isEnabled: boolean }>`
     margin-top: 0px;
+    pointer-events: ${props => props.isEnabled ? 'auto' : 'none'};
     margin-right: 20px;
     width: 30px;
     background-color: ${props => props.isEnabled ? 'white' : '#f0f0f0'};

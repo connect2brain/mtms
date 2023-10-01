@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import { startDevice, startSession, stopDevice, stopSession } from 'services/session'
 import { DeviceState, DeviceStateMessage, SessionState, SessionStateMessage } from 'types/mtmsDevice'
 
+import { StyledButton } from 'styles/General'
+
 type Props = {
   deviceState: DeviceStateMessage
   sessionState: SessionStateMessage
@@ -63,28 +65,3 @@ export const SessionControl = ({ deviceState, sessionState }: Props) => {
     </div>
 )
 }
-
-const StyledButton = styled.button`
-  width: 200px;
-  height: 50px;
-
-  font-size: 1.00rem;
-  padding: 0.8rem 0.5rem;
-  margin-bottom: 0.8rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #007BFF;
-  color: white;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-  &:disabled {
-    background-color: #CCCCCC;
-    color: #888888;
-  }
-  &:hover:disabled {
-    background-color: #CCCCCC;
-  }
-`
