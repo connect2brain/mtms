@@ -77,7 +77,7 @@ export const ExperimentControl = () => {
   const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
   const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
-  const [intensityThreshold, setIntensityThreshold] = useState(100)
+  const [maximumIntensity, setMaximumIntensity] = useState(100)
 
   const handleIntensityChange = (value: number) => {
     console.log(`Selected intensity: ${value} V/m`)
@@ -96,7 +96,7 @@ export const ExperimentControl = () => {
       const y: number = selectedPoints[0].y
       const angle: number = selectedAngles[0]
       getMaximumIntensity(x, y, angle, (maximum_intensity) => {
-        setIntensityThreshold(maximum_intensity)
+        setMaximumIntensity(maximum_intensity)
       })
     }
   }, [selectedAngles, selectedPoints])
@@ -143,10 +143,20 @@ export const ExperimentControl = () => {
         </AnglePanel>
         <IntensityPanel>
         {activeTab === 'singleLocation' &&
-          <IntensitySelector min={0} max={150} threshold={intensityThreshold} onValueChange={handleIntensityChange}/>
+          <IntensitySelector
+            min={0}
+            max={150}
+            maximumIntensity={maximumIntensity}
+            onValueChange={handleIntensityChange}
+          />
         }
         {activeTab === 'multipleLocations' &&
-          <IntensitySelector min={0} max={150} threshold={intensityThreshold} onValueChange={handleIntensityChange}/>
+          <IntensitySelector
+            min={0}
+            max={150}
+            maximumIntensity={maximumIntensity}
+            onValueChange={handleIntensityChange}
+          />
         }
         </IntensityPanel>
       </Wrapper>
