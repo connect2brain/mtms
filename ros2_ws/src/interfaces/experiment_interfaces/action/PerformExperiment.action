@@ -1,0 +1,9 @@
+ExperimentMetadata metadata
+
+Trial[] trials
+IntertrialInterval[] intertrial_intervals
+
+ExperimentConfig config
+---
+TrialResult[] trial_results
+---
