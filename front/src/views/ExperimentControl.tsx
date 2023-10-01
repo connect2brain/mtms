@@ -7,6 +7,40 @@ import { IntensitySelector } from 'components/Experiment/IntensitySelector'
 
 import { getMaximumIntensity } from 'services/ros'
 
+/* Styles for inputs for experiment metadata (= experiment and subject name) */
+const ExperimentMetaData = styled.div`
+  margin-bottom: 40px;
+`
+
+const InputRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;     // This will center the items vertically.
+  gap: 10px;               // Provides spacing between the items.
+  margin-bottom: 10px;     // Provides spacing between rows.
+`
+
+const Label = styled.label`
+  width: 150px;  // Adjust based on your longest label
+  text-align: left;
+  margin-right: 10px;
+  margin-left: 30px;
+  display: inline-block;
+`
+
+const Input = styled.input`
+  width: 300px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: background-color 0.2s;
+
+  &:focus {
+    background-color: transparent;  // resets the background to transparent when the input is focused
+  }
+`
+
 const Wrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -79,6 +113,9 @@ export const ExperimentControl = () => {
   const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
   const [maximumIntensity, setMaximumIntensity] = useState(100)
 
+  const [experimentName, setExperimentName] = useState<string>('')
+  const [subjectName, setSubjectName] = useState<string>('')
+
   const handleIntensityChange = (value: number) => {
     console.log(`Selected intensity: ${value} V/m`)
   }
@@ -103,6 +140,29 @@ export const ExperimentControl = () => {
 
   return (
     <>
+      <ExperimentMetaData>
+        <InputRow>
+          <Label>Name:</Label>
+          <Input
+            type="text"
+            placeholder="E.g., Resting motor threshold experiment 1"
+            value={experimentName}
+            onChange={e => setExperimentName(e.target.value)}
+            style={{ backgroundColor: experimentName ? 'transparent' : 'lightgray' }}
+          />
+        </InputRow>
+        <InputRow>
+          <Label>Subject:</Label>
+          <Input
+            type="text"
+            placeholder="E.g., Subject 1"
+            value={subjectName}
+            onChange={e => setSubjectName(e.target.value)}
+            style={{ backgroundColor: subjectName ? 'transparent' : 'lightgray' }}
+          />
+        </InputRow>
+      </ExperimentMetaData>
+
       <TabBar>
         <a
           href="#"
