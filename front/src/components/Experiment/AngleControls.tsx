@@ -1,37 +1,7 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-const ControlsContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`
-
-const ControlBox = styled.div`
-  border: 4px solid #e0e0e0;
-  padding: 10px;
-  border-radius: 5px;
-  margin-right: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`
-
-const TopLabel = styled.div`
-  font-weight: bold;
-  margin-bottom: 8px;
-  text-align: center;
-  width: 100%;
-`
-
-const StyledRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-  width: 100%;
-  flex-wrap: wrap;
-`
+import { ControlsContainer, ControlBox, TopLabel, StyledRow } from './Styles'
 
 const StyledNarrowInput = styled.input`
   width: 45px;
@@ -97,7 +67,7 @@ export const AngleControls: React.FC<{
         </ControlBox>
 
         <ControlBox>
-          <StyledButton onClick={onReset}>Reset angles</StyledButton>
+          <StyledButton onClick={onReset}>Reset</StyledButton>
         </ControlBox>
       </ControlsContainer>
     )

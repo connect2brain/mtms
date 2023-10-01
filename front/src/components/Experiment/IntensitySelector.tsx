@@ -1,21 +1,14 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
+import { SmallerTitle } from './Styles'
+
 interface IntensitySelectorProps {
   min: number
   max: number
   threshold: number
   onValueChange: (value: number) => void
 }
-
-const IntensityTitle = styled.h2`
-  font-size: 18px;
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-  margin-right: 30px;
-  font-weight: bold;
-`
 
 const ThresholdLabel = styled.span`
   position: absolute;
@@ -70,7 +63,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
 
   return (
     <div>
-      <IntensityTitle>Intensity</IntensityTitle>
+      <SmallerTitle>Intensity</SmallerTitle>
       <IntensitySelectorContainer>
         <ThresholdLine top={thresholdPosition} />
         <input
