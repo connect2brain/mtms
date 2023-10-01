@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { SmallerTitle, ExperimentInput } from './Styles'
+import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 
 interface IntensitySelectorProps {
   min: number

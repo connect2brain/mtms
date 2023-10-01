@@ -8,7 +8,7 @@ import { TriggerSelector } from 'components/Experiment/TriggerSelector'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { SmallerTitle, ExperimentInput } from 'components/Experiment/Styles'
+import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
 import { getMaximumIntensity } from 'services/ros'
