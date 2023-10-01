@@ -6,11 +6,11 @@ import { SmallerTitle } from './Styles'
 interface IntensitySelectorProps {
   min: number
   max: number
-  threshold: number
+  maximumIntensity: number
   onValueChange: (value: number) => void
 }
 
-const ThresholdLabel = styled.span`
+const MaximumIntensityLabel = styled.span`
   position: absolute;
   font-size: 12px; /* Adjust as needed */
   color: red;
@@ -18,7 +18,7 @@ const ThresholdLabel = styled.span`
   transform: translateY(-50%);
 `
 
-const ThresholdLine = styled.div<{ top: string }>`
+const MaximumIntensityLine = styled.div<{ top: string }>`
   position: absolute;
   width: 30%;
   height: 2px;
@@ -48,7 +48,7 @@ const IntensityLabel = styled.span`
   margin-bottom: 5px;
 `
 
-export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, threshold, onValueChange }) => {
+export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, maximumIntensity, onValueChange }) => {
   const [selectedIntensity, setSelectedIntensity] = useState<number>((min + max) / 2)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,14 +58,14 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
   }
 
   const sliderHeight = 200
-  const thresholdPositionInPixels = sliderHeight * (1 - (threshold - min) / (max - min))
-  const thresholdPosition = `${thresholdPositionInPixels}px`
+  const maximumIntensityPositionInPixels = sliderHeight * (1 - (maximumIntensity - min) / (max - min))
+  const maximumIntensityPosition = `${maximumIntensityPositionInPixels}px`
 
   return (
     <div>
       <SmallerTitle>Intensity</SmallerTitle>
       <IntensitySelectorContainer>
-        <ThresholdLine top={thresholdPosition} />
+        <MaximumIntensityLine top={maximumIntensityPosition} />
         <input
           className="intensitySlider"
           type="range"
@@ -81,9 +81,9 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
             zIndex: 2
           }}
         />
-        <ThresholdLabel style={{ top: thresholdPosition }}>
-          <b>Max:</b> {threshold}
-        </ThresholdLabel>
+        <MaximumIntensityLabel style={{ top: maximumIntensityPosition }}>
+          <b>Max:</b> {maximumIntensity}
+        </MaximumIntensityLabel>
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
         <IntensityInput
           type="number"
