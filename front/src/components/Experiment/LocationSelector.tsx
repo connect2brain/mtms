@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import { LocationControls } from './LocationControls'
-import { LargerTitle } from './Styles'
+import { LargerTitle } from 'styles/ExperimentStyles'
 
 type SetSelectedPoints = React.Dispatch<React.SetStateAction<Point[]>>;
 
