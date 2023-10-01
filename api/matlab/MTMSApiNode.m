@@ -1,6 +1,6 @@
 classdef MTMSApiNode < handle
     %MTMSApiNode A class for communicating with other ROS nodes.
-    
+
     properties
         node
         printer
@@ -22,7 +22,7 @@ classdef MTMSApiNode < handle
 
         send_event_trigger_publisher
 
-        system_state_subscriber 
+        system_state_subscriber
 
         pulse_feedback_subscriber
         trigger_out_feedback_subscriber
@@ -89,7 +89,7 @@ classdef MTMSApiNode < handle
 
             obj.analyze_mep_client = ros2svcclient(obj.node, "/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
         end
-        
+
         % Starting and stopping
 
         function success = start_device(obj)
@@ -201,7 +201,7 @@ classdef MTMSApiNode < handle
             publisher = obj.send_charge_publisher;
 
             charge = ros2message(publisher);
-            
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
@@ -248,7 +248,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
-            
+
             trigger_out.event_info = event_info;
             trigger_out.port = uint8(port);
             trigger_out.duration_us = uint32(duration_us);
@@ -261,7 +261,7 @@ classdef MTMSApiNode < handle
         function update_event_feedback(obj, feedback)
             id = feedback.id;
             error = feedback.error;
-    
+
             obj.event_feedback(id) = error;
         end
 
@@ -272,7 +272,7 @@ classdef MTMSApiNode < handle
             % implying that it is empty, isKey returns an error.
             if ~isConfigured(obj.event_feedback) || ~isKey(obj.event_feedback, id)
                 return
-            end 
+            end
 
             feedback = obj.event_feedback(id);
         end
@@ -299,23 +299,23 @@ classdef MTMSApiNode < handle
         end
 
         % Targeting
-    
+
         function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
 
             client = obj.get_channel_voltages_client;
 
             request = ros2message(client);
 
-            request.displacement_x = int8(displacement_x);
-            request.displacement_y = int8(displacement_y);
-            request.rotation_angle = uint16(rotation_angle);
+            request.target.displacement_x = int8(displacement_x);
+            request.target.displacement_y = int8(displacement_y);
+            request.target.rotation_angle = uint16(rotation_angle);
             request.intensity = uint8(intensity);
 
             response = call(client, request);
             success = response.success;
 
             assert(success, "Invalid displacement, rotation angle, or intensity.");
-    
+
             voltages = response.voltages;
             reverse_polarities = response.reversed_polarities;
         end
@@ -326,9 +326,9 @@ classdef MTMSApiNode < handle
 
             request = ros2message(client);
 
-            request.displacement_x = int8(displacement_x);
-            request.displacement_y = int8(displacement_y);
-            request.rotation_angle = uint16(rotation_angle);
+            request.target.displacement_x = int8(displacement_x);
+            request.target.displacement_y = int8(displacement_y);
+            request.target.rotation_angle = uint16(rotation_angle);
 
             response = call(client, request);
             success = response.success;
@@ -342,47 +342,45 @@ classdef MTMSApiNode < handle
             client = obj.get_default_waveform_client;
 
             request = ros2message(client);
-    
+
             request.channel = int8(channel);
 
             response = call(client, request);
             success = response.success;
 
             assert(success, "Invalid channel.");
-    
+
             waveform = response.waveform;
         end
-    
+
         function waveform = reverse_polarity(obj, waveform)
             client = obj.reverse_polarity_client;
 
             request = ros2message(client);
-    
+
             request.waveform = waveform;
 
             response = call(client, request);
             success = response.success;
 
             assert(success, "Failed request.");
-    
+
             waveform = response.waveform;
         end
 
         % Other
 
-        function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
+        function [mep, errors] = analyze_mep(obj, time, mep_configuration)
             client = obj.analyze_mep_client;
 
             request = ros2message(client);
-    
-            request.emg_channel = uint8(emg_channel);
+
             request.time = time;
             request.mep_configuration = mep_configuration;
 
             response = call(client, request);
 
-            amplitude = response.amplitude;
-            latency = response.latency;
+            mep = response.mep;
             errors = response.errors;
         end
 
