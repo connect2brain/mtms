@@ -118,9 +118,9 @@ api.send_pulse(
 )
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
-emg_channel = 1
-
 mep_configuration = MepConfiguration(
+    emg_channel=1,
+
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse
         end=0.040,  # in ms
@@ -135,11 +135,13 @@ mep_configuration = MepConfiguration(
     ),
 )
 
-amplitude, latency, errors = api.analyze_mep(
-    emg_channel=emg_channel,
+mep, errors = api.analyze_mep(
     time=time,
     mep_configuration=mep_configuration,
 )
+
+amplitude = mep.amplitude
+latency = mep.latency
 
 
 ## Targeting
@@ -204,9 +206,9 @@ api.send_timed_default_pulse_to_all_channels(
 )
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
-emg_channel = 1
-
 mep_configuration = MepConfiguration(
+    emg_channel=1,
+
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse
         end=0.040,  # in ms
@@ -221,12 +223,13 @@ mep_configuration = MepConfiguration(
     ),
 )
 
-amplitude, latency, errors = api.analyze_mep(
-    emg_channel=emg_channel,
+mep, errors = api.analyze_mep(
     time=time,
     mep_configuration=mep_configuration,
 )
 
+amplitude = mep.amplitude
+latency = mep.latency
 
 ## Restart session
 api.stop_session()

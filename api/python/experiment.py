@@ -218,7 +218,7 @@ class Experiment:
         pulse_success = all(pulses_ok)
 
         # Determine if MEP was successful.
-        # 
+        #
         # Note: For MEP to be successful, both the pulse and the measurement of the MEP must be successful.
         #
         mep_success = pulse_success and mep_measurement_success
@@ -242,16 +242,18 @@ class Experiment:
         print("")
 
     def analyze_mep(self, time):
-        emg_channel = 1
+        emg_channel = self.mep_configuration.emg_channel
 
         print("")
         print("Analyzing MEP on EMG channel {} at time {:.4f} s.".format(emg_channel, time))
 
-        amplitude, latency, errors = self.api.analyze_mep(
-            emg_channel=emg_channel,
+        mep, errors = self.api.analyze_mep(
             time=time,
             mep_configuration=self.mep_configuration,
         )
+
+        amplitude = mep.amplitude
+        latency = mep.latency
 
         success = True
 

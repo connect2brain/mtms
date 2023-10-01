@@ -1,12 +1,12 @@
 % This Matlab module provides an API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-% It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform 
+% It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform
 % various analyses of the EEG/EMG data.
 %
 % It uses the Robot Operating System (ROS2) to interact with the device.
 
 classdef MTMSApi < handle
     % An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-    
+
     properties (Constant)
         % TODO: Channel count hardcoded for now.
         N_CHANNELS = 5
@@ -40,7 +40,7 @@ classdef MTMSApi < handle
 
         function obj = MTMSApi()
         % Initializes the MTMSApi object. Does not require any parameters.
-        %     
+        %
         % :returns: An MTMSApi object with five properties:
         %
         %   * 'node' - An instance of the MTMSApiNode class.
@@ -62,7 +62,7 @@ classdef MTMSApi < handle
         % General
 
         function event_id = next_event_id(obj)
-        % Increment the event ID and return the new ID. 
+        % Increment the event ID and return the new ID.
         %
         % :returns: The incremented event ID.
         % :rtype: int
@@ -79,42 +79,42 @@ classdef MTMSApi < handle
 
             obj.node.start_device();
             while obj.get_device_state() ~= obj.device_states.OPERATIONAL
-    
+
             end
         end
-    
+
         function stop_device(obj)
         % Stop the mTMS device, waiting until the device reports its state as non-operational.
         % Does not require any parameters. Does not return any value.
 
             obj.node.stop_device();
             while obj.get_device_state() ~= obj.device_states.NOT_OPERATIONAL
-    
+
             end
         end
-    
+
         function start_session(obj)
         % Start an session, waiting until the session state is reported as started.
         % Does not require any parameters. Does not return any value.
 
             obj.node.start_session();
             while obj.get_session_state() ~= obj.session_states.STARTED
-    
+
             end
         end
-    
+
         function stop_session(obj)
         % Stop an session, waiting until the session state is reported as stopped.
         % Does not require any parameters. Does not return any value.
 
             obj.node.stop_session();
             while obj.get_session_state() ~= obj.session_states.STOPPED
-    
+
             end
         end
-    
+
         % Wait
-    
+
         function wait_forever(obj)
         % Continuously wait for a new system state indefinitely.
         % Does not require any parameters. Does not return any value.
@@ -123,10 +123,10 @@ classdef MTMSApi < handle
                 obj.node.wait_for_new_state();
             end
         end
-    
+
         function wait_until(obj, time)
         % Wait until the system time is equal to or greater than the specified time.
-        % 
+        %
         % :param time: The time until which the function should wait.
         % :type time: float
 
@@ -135,7 +135,7 @@ classdef MTMSApi < handle
                 obj.node.wait_for_new_state();
             end
         end
-    
+
         function wait_for_completion(obj, id)
         % Wait until the completion of an event with a given ID.
         %
@@ -147,7 +147,7 @@ classdef MTMSApi < handle
                 obj.node.wait_for_new_state();
             end
         end
-    
+
         function wait_for_completions(obj, ids)
         % Wait until the completion of events with given IDs.
         %
@@ -158,40 +158,40 @@ classdef MTMSApi < handle
                 obj.wait_for_completion(ids(i));
             end
         end
-    
+
         function wait(obj, time)
         % Wait for a specified amount of time.
-        % 
+        %
         % :param time: The time to wait.
         % :type time: float
 
             start_time = obj.get_wallclock_time();
-    
+
             obj.node.wait_for_new_state();
-            
+
             while obj.get_wallclock_time() < start_time + seconds(time)
                 obj.node.wait_for_new_state();
             end
         end
-    
+
         % Getters
-    
+
         function state = get_device_state(obj)
         % Return the current state of the device.
         % Does not require any parameters.
-        % 
+        %
         % :return: The current state of the device. One of the following
         %
         %   * DeviceState.NOT_OPERATIONAL : Device is unoperational.
         %   * DeviceState.STARTUP : Device is starting up.
         %   * DeviceState.OPERATIONAL : Device is operational.
         %   * DeviceState.SHUTDOWN : Device is shutting down.
-        % :rtype: int 
+        % :rtype: int
 
             obj.node.wait_for_new_state();
             state = obj.node.system_state.device_state.value;
         end
-    
+
         function state = get_session_state(obj)
         % Return the current state of the session.
         % Does not require any parameters.
@@ -207,10 +207,10 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
             state = obj.node.system_state.session_state.value;
         end
-    
+
         function voltage = get_voltage(obj, channel)
         % Return the capacitor voltage (V) of the given channel.
-        % 
+        %
         % :param channel: The channel ID.
         % :type channel: int
         % :return: The capacitor voltage (V) of the specified channel.
@@ -219,11 +219,11 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
             voltage = obj.node.system_state.channel_states(channel).voltage;
         end
-    
+
         function temperature = get_temperature(obj, channel)
-        % Return the coil temperature of the given channel if a temperature sensor is present, 
+        % Return the coil temperature of the given channel if a temperature sensor is present,
         % otherwise return None.
-        % 
+        %
         % :param channel: The channel ID.
         % :type channel: int
         % :return: The coil temperature of the specified channel.
@@ -231,10 +231,10 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
             temperature = obj.node.system_state.channel_states(channel).temperature;
         end
-    
+
         function pulse_count = get_pulse_count(obj, channel)
         % Return the total number of pulses generated with the coil connected to the specified channel.
-        % 
+        %
         % :param channel: The channel ID.
         % :type channel: int
         % :return: The total number of pulses generated.
@@ -243,35 +243,35 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
             pulse_count = obj.node.system_state.channel_states(channel).pulse_count;
         end
-    
+
         function time = get_time(obj)
         % Return the current time from the start of the session.
-        % 
+        %
         % :return: The current time as seconds.
         % :rtype: float
 
             obj.node.wait_for_new_state();
             time = obj.node.system_state.time;
         end
-    
+
         function feedback = get_event_feedback(obj, id)
         % Return feedback for a specified event id.
-        % 
+        %
         % :param channel: The event ID.
         % :type channel: int
         % :return: The feedback.
-        % :rtype: int    
-    
+        % :rtype: int
+
             feedback = obj.node.get_event_feedback(id);
         end
-    
+
         % Events
 
         function started = is_session_started(obj)
         % Return whether session has started (true or false).
-        % 
+        %
         % :return: Whether session has started.
-        % :rtype: bool 
+        % :rtype: bool
 
             started = obj.get_session_state() == obj.session_states.STARTED;
         end
@@ -282,7 +282,7 @@ classdef MTMSApi < handle
         % :param allow_stimulation: Either true (allow) or false (disallow).
         %
         % :return: True if allowing or disallowing was successful.
-        % :rtype: bool 
+        % :rtype: bool
 
             success = obj.node.allow_stimulation(allow_stimulation);
         end
@@ -314,12 +314,12 @@ classdef MTMSApi < handle
         % :type time: float, optional
         %
         % :param reverse_polarity: Whether to reverse the polarity of the waveform. Default is false.
-        % :type reverse_polarity: bool, optional        
+        % :type reverse_polarity: bool, optional
         % :param wait_for_completion: Whether to wait for the pulse to complete before returning. Default is true.
         % :type wait_for_completion: bool, optional
         % :return: The ID of the event.
         % :rtype: int
-        %   
+        %
         % .. note:: The event ID is incremented with each pulse sent.
 
             assert(obj.is_session_started(), sprintf("Session not started."));
@@ -337,7 +337,7 @@ classdef MTMSApi < handle
                 obj.wait_for_completion(id);
             end
         end
-    
+
         function id = send_charge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
         % Send a charge to a specified channel.
         %
@@ -368,7 +368,7 @@ classdef MTMSApi < handle
             id = obj.next_event_id();
 
             obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
-    
+
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
@@ -402,14 +402,14 @@ classdef MTMSApi < handle
             assert(obj.is_session_started(), sprintf("Session not started."));
 
             id = obj.next_event_id();
-    
+
             obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
-    
+
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
-    
+
         function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
         % Sends a trigger output to a specified port.
         %
@@ -440,20 +440,20 @@ classdef MTMSApi < handle
             id = obj.next_event_id();
 
             obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
-    
+
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
-    
+
         function send_event_trigger(obj)
         % Executes the events which have execution_condition set to ExecutionCondition.TRIGGERED.
         %
         % Does not require any parameters. Does not return any value.
-        
+
             obj.node.send_event_trigger();
         end
-    
+
         % Waveforms and targeting
 
         function waveform = create_waveform(obj, phases, durations_in_ticks)
@@ -482,11 +482,11 @@ classdef MTMSApi < handle
         function waveform = get_default_waveform(obj, channel)
             waveform = obj.node.get_default_waveform(channel);
         end
-    
+
         function waveform = reverse_polarity(obj, waveform)
             waveform = obj.node.reverse_polarity(waveform);
         end
-    
+
         function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
         % Return the channel voltages (V) given the displacements, rotation angle and intensity.
         %
@@ -523,35 +523,35 @@ classdef MTMSApi < handle
 
         % Other
 
-        function [amplitude, latency, errors] = analyze_mep(obj, emg_channel, time, mep_configuration)
+        function [mep, errors] = analyze_mep(obj, time, mep_configuration)
         % Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
         %
         % :param time: Time point to analyze the MEP.
         % :type time: float
-        % :param emg_channel: Channel number for the EMG.
-        % :type emg_channel: int
         % :param mep_configuration: Configuration object for the MEP.
         % :type mep_configuration: object
         %
-        % :return: A list containing the amplitude, latency, and any errors encountered during the analysis.
+        % :return: A MEP object containing amplitude and latency, and an errors object containing any errors encountered during the analysis.
         % :rtype: list
 
-            [amplitude, latency, errors] = obj.node.analyze_mep(emg_channel, time, mep_configuration);
+            [mep, errors] = obj.node.analyze_mep(time, mep_configuration);
 
             % HACK: ROS2 doesn't support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
-            if amplitude == 0.0
-                amplitude = NaN;
+            if mep.amplitude == 0.0
+                mep.amplitude = NaN;
             end
-            if latency == 0.0
-                amplitude = NaN;
+            if mep.latency == 0.0
+                mep.amplitude = NaN;
             end
         end
 
-        function mep_configuration = create_mep_configuration(obj, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
+        function mep_configuration = create_mep_configuration(obj, emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
             % FIXME: Placeholder
             % Create an MEP configuration given the start and end of time window, and four parameters
             % defining the preactivation check: whether the check is enabled, start and end time for the check, and preactivation voltage range limit.
             %
+            % :param emg_channel: The EMG channel number.
+            % :type emg_channel: int
             % :param mep_start_time: Start of the configuration time window.
             % :type mep_start_time: float
             % :param mep_end_time: End of the configuration time window.
@@ -564,22 +564,24 @@ classdef MTMSApi < handle
             % :type mep_end_time: float
             % :param preactivation_voltage_range_limit: Voltage range limit.
             % :type mep_end_time: float
-            % 
+            %
             % :return: MEP configuration
             % :rtype: ???
-            
+
             mep_configuration = ros2message('mep_interfaces/MepConfiguration');
-            
+
+            mep_configuration.emg_channel = emg_channel;
+
             mep_configuration.time_window.start = mep_start_time;
             mep_configuration.time_window.end = mep_end_time;
-            
+
             preactivation_check = ros2message('mep_interfaces/PreactivationCheck');
-            
+
             preactivation_check.enabled = preactivation_check_enabled;
             preactivation_check.time_window.start = preactivation_start_time;
             preactivation_check.time_window.end = preactivation_end_time;
             preactivation_check.voltage_range_limit = preactivation_voltage_range_limit;
-            
+
             mep_configuration.preactivation_check = preactivation_check;
         end
 
@@ -638,15 +640,15 @@ classdef MTMSApi < handle
             for channel = 1:obj.N_CHANNELS
                 target_voltage = target_voltages(channel);
 
-                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, false);    
+                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, false);
                 ids = [ids new_id];
             end
-    
+
             if wait_for_completion
                 obj.wait_for_completions(ids);
             end
         end
-    
+
         function ids = send_immediate_full_discharge_to_all_channels(obj, wait_for_completion)
         % Send immediate full discharge commands to all channels.
         %
@@ -655,11 +657,11 @@ classdef MTMSApi < handle
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
-        
+
             assert(obj.is_session_started(), sprintf("Session not started."));
 
             target_voltages = zeros(1, obj.N_CHANNELS);
-    
+
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
         end
 
@@ -680,7 +682,7 @@ classdef MTMSApi < handle
 
             assert(length(reverse_polarities) == obj.N_CHANNELS, ...
                 sprintf("Reverse polarities only defined for %d channels, channel count %d.", length(reverse_polarities), obj.N_CHANNELS));
-    
+
             ids = [];
             for channel = 1:obj.N_CHANNELS
                 reverse_polarity = reverse_polarities(channel);
@@ -689,12 +691,12 @@ classdef MTMSApi < handle
                 new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity, false);
                 ids = [ids new_id];
             end
-    
+
             if wait_for_completion
                 obj.wait_for_completions(ids);
             end
         end
-    
+
         function ids = send_immediate_default_pulse_to_all_channels(obj, reverse_polarities, wait_for_completion)
         % Send immediate default pulse commands to all channels.
         %
@@ -709,16 +711,16 @@ classdef MTMSApi < handle
             assert(obj.is_session_started(), sprintf("Session not started."));
 
             time = obj.get_time() + obj.TIME_EPSILON;
-    
+
             ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_completion);
         end
-        
+
         % Other
-    
+
         function print_system_state(obj)
             obj.node.wait_for_new_state()
         end
-    
+
         function time = get_wallclock_time(obj)
             time = datetime("now");
         end
