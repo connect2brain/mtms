@@ -223,13 +223,13 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     const getXDirection = (x: number) => {
       if (x > 0) return `${x} mm to the right`
       if (x < 0) return `${Math.abs(x)} mm to the left`
-      return `${x} mm`
+      return null
     }
 
     const getYDirection = (y: number) => {
       if (y > 0) return `${y} mm anterior`
       if (y < 0) return `${Math.abs(y)} mm posterior`
-      return `${y} mm`
+      return null
     }
 
     return (
@@ -284,23 +284,39 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           />
         }
         { !multiSelectMode && (
-            <div>
-                <CoordinateText isActive={selectedSinglePoint !== null}>
-                    {selectedSinglePoint ? (
-                        <>
-                            <div>{getXDirection(selectedSinglePoint.x)}</div>
-                            <div>{getYDirection(selectedSinglePoint.y)}</div>
-                        </>
-                    ) : (
-                        hoveredPoint && (
-                            <>
-                                <div>{getXDirection(hoveredPoint.x)}</div>
-                                <div>{getYDirection(hoveredPoint.y)}</div>
-                            </>
-                        )
-                    )}
-                </CoordinateText>
-            </div>
+          <div>
+              <CoordinateText isActive={selectedSinglePoint !== null}>
+                  {selectedSinglePoint ? (
+                      <>
+                          {selectedSinglePoint.x === 0 && selectedSinglePoint.y === 0 ? (
+                              <div>Center</div>
+                          ) : (
+                              <>
+                                  {getXDirection(selectedSinglePoint.x) &&
+                                    <div>{getXDirection(selectedSinglePoint.x)}</div>}
+                                  {getYDirection(selectedSinglePoint.y) &&
+                                    <div>{getYDirection(selectedSinglePoint.y)}</div>}
+                              </>
+                          )}
+                      </>
+                  ) : (
+                      hoveredPoint && (
+                          <>
+                              {hoveredPoint.x === 0 && hoveredPoint.y === 0 ? (
+                                  <div>Center</div>
+                              ) : (
+                                  <>
+                                      {getXDirection(hoveredPoint.x) &&
+                                        <div>{getXDirection(hoveredPoint.x)}</div>}
+                                      {getYDirection(hoveredPoint.y) &&
+                                        <div>{getYDirection(hoveredPoint.y)}</div>}
+                                  </>
+                              )}
+                          </>
+                      )
+                  )}
+              </CoordinateText>
+          </div>
         )}
         </GridInternalContainer>
     </div>
