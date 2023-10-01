@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { GridControls } from './GridControls'
+import { LocationControls } from './LocationControls'
+import { LargerTitle } from './Styles'
 
 type SetSelectedPoints = React.Dispatch<React.SetStateAction<Point[]>>;
 
@@ -10,7 +11,7 @@ export interface Point {
   y: number
 }
 
-interface GridComponentProps {
+interface LocationSelectorProps {
   selectedPoints: Point[]
   setSelectedPoints: SetSelectedPoints
   multiSelectMode?: boolean
@@ -24,15 +25,6 @@ interface GridCellProps {
 const GridInternalContainer = styled.div`
   display: flex;
   gap: 20px;
-`
-
-const GridTitle = styled.h2`
-  font-size: 24px;
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-  margin-right: 200px;
-  font-weight: bold;
 `
 
 const GridContainer = styled.div`
@@ -125,7 +117,7 @@ const CoordinateValue = styled.span`
   margin-right: 12px;
 `
 
-export const GridComponent: React.FC<GridComponentProps> = ({
+export const LocationSelector: React.FC<LocationSelectorProps> = ({
       selectedPoints, setSelectedPoints, multiSelectMode = false }) => {
     const [shape, setShape] = useState<'circle' | 'square' | null>(null)
     const [shapeSize, setShapeSize] = useState<number>(0)
@@ -215,7 +207,7 @@ export const GridComponent: React.FC<GridComponentProps> = ({
 
     return (
         <div>
-          <GridTitle>Position</GridTitle>
+          <LargerTitle>Location</LargerTitle>
           <GridInternalContainer>
             <GridContainer
               onMouseUp={handleMouseUp}
@@ -261,7 +253,7 @@ export const GridComponent: React.FC<GridComponentProps> = ({
         </CoordinateDisplay>
         </GridContainer>
         { multiSelectMode &&
-          <GridControls
+          <LocationControls
             onShapeSelected={handleShapeSelected}
             onReset={resetGrid}
             onDecimate={handleDecimate}

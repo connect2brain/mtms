@@ -2,27 +2,15 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import { AngleControls } from './AngleControls'
+import { LargerTitle } from './Styles'
 
 type SetSelectedAngles = React.Dispatch<React.SetStateAction<number[]>>;
-
-interface Props {
-    multiSelectMode?: boolean
-}
 
 interface AngleSelectorProps {
     selectedAngles: number[];
     setSelectedAngles: SetSelectedAngles;
     multiSelectMode?: boolean;
 }
-
-const AngleTitle = styled.h2`
-  font-size: 24px;
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
-  margin-right: 200px;
-  font-weight: bold;
-`
 
 const SelectorInternalContainer = styled.div`
   display: flex;
@@ -118,7 +106,7 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
 
     return (
       <div>
-      <AngleTitle>Angle</AngleTitle>
+      <LargerTitle>Angle</LargerTitle>
       <SelectorInternalContainer>
         <SelectorContainer onMouseUp={handleMouseUp}>
             <SVGContainer width="400" height="400" viewBox="0 0 400 400">

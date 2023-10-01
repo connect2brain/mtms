@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { GridComponent, Point } from 'components/GridComponent'
-import { AngleSelector } from 'components/AngleSelector'
-import { IntensitySelector } from 'components/IntensitySelector'
+import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
+import { AngleSelector } from 'components/Experiment/AngleSelector'
+import { IntensitySelector } from 'components/Experiment/IntensitySelector'
 
 import { getMaximumIntensity } from 'services/ros'
 
@@ -123,11 +123,11 @@ export const ExperimentControl = () => {
       <Wrapper>
         <GridPanel>
           {activeTab === 'singleLocation' &&
-          <GridComponent
+          <LocationSelector
             selectedPoints={selectedPoints}
             setSelectedPoints={setSelectedPoints}
           />}
-          {activeTab === 'multipleLocations' && <GridComponent
+          {activeTab === 'multipleLocations' && <LocationSelector
             selectedPoints={selectedPoints}
             setSelectedPoints={setSelectedPoints}
             multiSelectMode={true}
