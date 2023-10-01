@@ -52,3 +52,13 @@ export const StyledRow = styled.div`
   width: 100%;
   flex-wrap: wrap;
 `
+
+/* A generic input field for changing parameters of an experiment. */
+export const ExperimentInput = styled.input`
+  marginTop: 0px;
+  width: 40px;
+  margin-right: 40px;
+  border: 2px solid black;
+  background-color: 'white';
+  color: 'black';
+`
