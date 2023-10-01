@@ -6,6 +6,7 @@ import { SmallerTitle, ExperimentInput } from './Styles'
 interface IntensitySelectorProps {
   min: number
   max: number
+  showMaximumIntensity: boolean
   maximumIntensity: number
   onValueChange: (value: number) => void
 }
@@ -43,7 +44,9 @@ const IntensityLabel = styled.span`
   margin-bottom: 10px;
 `
 
-export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, maximumIntensity, onValueChange }) => {
+export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
+    min, max, showMaximumIntensity, maximumIntensity, onValueChange }) => {
+
   const [selectedIntensity, setSelectedIntensity] = useState<number>((min + max) / 2)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,7 +63,14 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
     <div>
       <SmallerTitle>Intensity</SmallerTitle>
       <IntensitySelectorContainer>
-        <MaximumIntensityLine top={maximumIntensityPosition} />
+        {showMaximumIntensity &&
+        <>
+          <MaximumIntensityLine top={maximumIntensityPosition} />
+          <MaximumIntensityLabel style={{ top: maximumIntensityPosition }}>
+            <b>Max:</b> {maximumIntensity}
+          </MaximumIntensityLabel>
+        </>
+        }
         <input
           className="intensitySlider"
           type="range"
@@ -76,9 +86,6 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({ min, max, 
             zIndex: 2
           }}
         />
-        <MaximumIntensityLabel style={{ top: maximumIntensityPosition }}>
-          <b>Max:</b> {maximumIntensity}
-        </MaximumIntensityLabel>
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
         <ExperimentInput
           type="number"

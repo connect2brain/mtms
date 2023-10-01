@@ -365,6 +365,7 @@ export const ExperimentControl = () => {
           <IntensitySelector
             min={0}
             max={150}
+            showMaximumIntensity={true}
             maximumIntensity={maximumIntensity}
             onValueChange={handleIntensityChange}
           />
@@ -373,7 +374,8 @@ export const ExperimentControl = () => {
           <IntensitySelector
             min={0}
             max={150}
-            maximumIntensity={maximumIntensity}
+            showMaximumIntensity={false}
+            maximumIntensity={0}
             onValueChange={handleIntensityChange}
           />
         }
