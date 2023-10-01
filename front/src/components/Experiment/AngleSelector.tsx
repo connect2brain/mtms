@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import { AngleControls } from './AngleControls'
-import { LargerTitle } from './Styles'
+import { LargerTitle } from 'styles/ExperimentStyles'
 
 type SetSelectedAngles = React.Dispatch<React.SetStateAction<number[]>>;
 

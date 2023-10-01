@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { ControlsContainer, ControlBox, TopLabel, StyledRow } from './Styles'
+import { ControlsContainer, ControlBox, TopLabel, StyledRow } from 'styles/ExperimentStyles'
 
 const StyledNarrowInput = styled.input`
   width: 35px;
