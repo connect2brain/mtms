@@ -34,10 +34,11 @@ const getMaximumIntensityService = new ROSLIB.Service({
 
 export const getMaximumIntensity =
     (x: number, y: number, angle: number, callback: (maximum_intensity: number) => void) => {
-  const request = new ROSLIB.ServiceRequest() as any
-  request.displacement_x = x
-  request.displacement_y = y
-  request.rotation_angle = angle
+  const request = new ROSLIB.ServiceRequest({
+    displacement_x: x,
+    displacement_y: y,
+    rotation_angle: angle
+  }) as any
 
   getMaximumIntensityService.callService(
     request,
@@ -111,7 +112,7 @@ export const startSessionService = new ROSLIB.Service({
 })
 
 export const clearRosState = () => {
-  const request = new ROSLIB.ServiceRequest()
+  const request = new ROSLIB.ServiceRequest({})
   console.log('clearing ros state')
   clearStateService.callService(
     request,
