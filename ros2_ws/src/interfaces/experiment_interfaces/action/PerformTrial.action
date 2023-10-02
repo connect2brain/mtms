@@ -1,0 +1,9 @@
+Trial trial
+float64 earliest_time
+
+# If true, wait for trigger (a pedal press or a electric trigger signal) before the trial is
+# performed. In that case, ignore 'earliest_time' field.
+bool wait_for_trigger
+---
+TrialResult trial_result
+---
