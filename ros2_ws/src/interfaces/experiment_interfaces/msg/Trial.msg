@@ -1,2 +1,4 @@
-targeting_interfaces/ElectricTarget target
-uint8 intensity
+Stimulus[] stimuli
+float64[] stimulus_times_since_trial_start
+
+TrialConfig config

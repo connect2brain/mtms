@@ -24,14 +24,18 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/ExperimentConfig.msg"
   "msg/ExperimentMetadata.msg"
   "msg/IntertrialInterval.msg"
+  "msg/Stimulus.msg"
+  "msg/StimulusResult.msg"
   "msg/Trial.msg"
+  "msg/TrialConfig.msg"
   "msg/TrialResult.msg"
   "msg/TriggerConfig.msg"
 
   "action/PerformExperiment.action"
+  "action/PerformStimulus.action"
+  "action/PerformTrial.action"
 
   DEPENDENCIES mep_interfaces targeting_interfaces
 )
