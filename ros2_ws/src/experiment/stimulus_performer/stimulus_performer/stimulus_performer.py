@@ -12,6 +12,7 @@ from event_interfaces.msg import ExecutionCondition, Pulse, TriggerOut, \
 
 from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
 from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
+from utility_interfaces.srv import GetNextId
 
 import rclpy
 from rclpy.action import ActionServer
@@ -44,6 +45,11 @@ class StimulusPerformerNode(Node):
             self.perform_stimulus_action_handler,
             callback_group=self.callback_group,
         )
+
+        # Create service client for getting next ID.
+        self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
+        while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
         # Create service client for targeting.
         self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages', callback_group=self.callback_group)
@@ -86,7 +92,7 @@ class StimulusPerformerNode(Node):
         return self.system_state.device_state.value
 
     def is_device_started(self):
-        return self.get_device_state() == DeviceState.STARTED
+        return self.get_device_state() == DeviceState.OPERATIONAL
 
     def get_session_state(self):
         return self.system_state.session_state.value
@@ -172,14 +178,6 @@ class StimulusPerformerNode(Node):
 
         return result
 
-    ## Other
-
-    # TODO: Think about potential race conditions that can occur here when having multiple actions.
-    def get_next_event_id(self):
-        id = self.event_id
-        self.event_id += 1
-        return id
-
     ## Service calls
 
     def async_service_call(self, client, request):
@@ -200,7 +198,17 @@ class StimulusPerformerNode(Node):
         response = response_value[0]
         return response
 
-    # Targeting-related
+    # Utility services
+
+    def get_next_id(self):
+        request = GetNextId.Request()
+
+        response = self.async_service_call(self.get_next_id_client, request)
+        assert response.success, "Getting next ID failed."
+
+        return response.id
+
+    # Targeting services
 
     def get_channel_voltages(self, target, intensity):
         request = GetChannelVoltages.Request()
@@ -233,7 +241,7 @@ class StimulusPerformerNode(Node):
 
         return response.waveform
 
-    # Pulse and trigger out -related
+    # Pulse and trigger out services
 
     def timed_trigger_out(self, id, time, port):
         message = TriggerOut()
@@ -270,7 +278,7 @@ class StimulusPerformerNode(Node):
 
         ids = [None] * self.NUM_OF_CHANNELS
         for i in range(self.NUM_OF_CHANNELS):
-            id = self.get_next_event_id()
+            id = self.get_next_id()
 
             # XXX: Try to remove this indexing inconsistency.
             channel = i + 1
@@ -295,6 +303,8 @@ class StimulusPerformerNode(Node):
             ids[i] = id
 
         return ids
+
+    # General
 
     def wait_for_events_to_finish(self, ids):
         while True:
@@ -351,7 +361,7 @@ class StimulusPerformerNode(Node):
         trigger_ids = []
         for i in range(num_of_trigger_ports):
             if stimulus.triggers[i].enabled:
-                id = self.get_next_event_id()
+                id = self.get_next_id()
                 delayed_time = time + stimulus.triggers[i].delay
                 port = i + 1
 
