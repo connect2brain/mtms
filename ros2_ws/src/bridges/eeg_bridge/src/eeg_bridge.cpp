@@ -618,7 +618,7 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
   message.time = time_since_trigger;
 
   int i = FIRST_CHANNEL_INDEX;
-  for (int channel = 1; channel <= this->n_channels_excluding_trigger_; channel++) {
+  for (int channel = 0; channel < this->n_channels_excluding_trigger_; channel++) {
 
     int result = (uint8_t) buffer[i] << 16 |
                  (uint8_t) buffer[i + 1] << 8 |
@@ -632,7 +632,7 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
     result_uv *= DC_MODE_SCALE;
     result_uv /= NANO_TO_MICRO_CONVERSION;
 
-    if (channel_types[channel - 1] == ChannelType::EEG) {
+    if (channel_types[channel] == ChannelType::EEG) {
       message.eeg_channels.push_back(result_uv);
     } else {
       message.emg_channels.push_back(result_uv);
