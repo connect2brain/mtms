@@ -291,10 +291,11 @@ class AnalyzeMepNode(Node):
         if not rclpy.ok():
             # TODO: Send an error if ROS node shuts down.
 
+            success = False
             amplitude = None
             latency = None
 
-            return errors, amplitude, latency
+            return success, errors, amplitude, latency
 
         # Collect errors from gatherers.
 
@@ -309,10 +310,11 @@ class AnalyzeMepNode(Node):
             errors.mep_error = MepError(value=MepError.GATHERING_DATA_FAILED)
 
         if errors.mep_error.value != MepError.NO_ERROR:
+            success = False
             amplitude = None
             latency = None
 
-            return errors, amplitude, latency
+            return success, errors, amplitude, latency
 
         self.logger.info('{}: Successfully gathered data.'.format(goal_id))
 
@@ -328,10 +330,11 @@ class AnalyzeMepNode(Node):
         errors.mep_error = mep_error
 
         if errors.mep_error.value != MepError.NO_ERROR:
+            success = False
             amplitude = None
             latency = None
 
-            return errors, amplitude, latency
+            return success, errors, amplitude, latency
 
         # Check preactivation
 
@@ -345,10 +348,11 @@ class AnalyzeMepNode(Node):
             errors.mep_error = mep_error
 
             if errors.mep_error.value != MepError.NO_ERROR:
+                success = False
                 amplitude = None
                 latency = None
 
-                return errors, amplitude, latency
+                return success, errors, amplitude, latency
 
         # Compute MEP based on gathered data.
 
@@ -359,7 +363,13 @@ class AnalyzeMepNode(Node):
             mep_buffer=gathered_mep_buffer.eeg_buffer,
         )
 
-        return errors, amplitude, latency
+        # Combine errors into a single success indicator.
+        success = \
+            errors.gather_mep_error.value == GatherEegError.NO_ERROR and \
+            errors.gather_preactivation_error.value == GatherEegError.NO_ERROR and \
+            errors.mep_error.value == MepError.NO_ERROR
+
+        return success, errors, amplitude, latency
 
     def analyze_mep_action_handler(self, goal_handle):
         request = goal_handle.request
@@ -375,7 +385,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -391,6 +401,7 @@ class AnalyzeMepNode(Node):
         result.mep.amplitude = amplitude if amplitude is not None else 0.0
         result.mep.latency = latency if latency is not None else 0.0
         result.errors = errors
+        result.success = success
 
         self.logger.info('{}: Done.'.format(goal_id))
 
@@ -408,7 +419,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}: '.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -418,6 +429,7 @@ class AnalyzeMepNode(Node):
         response.mep.amplitude = amplitude if amplitude is not None else 0.0
         response.mep.latency = latency if latency is not None else 0.0
         response.errors = errors
+        response.success = success
 
         self.logger.info('{}: Done.'.format(goal_id))
 
