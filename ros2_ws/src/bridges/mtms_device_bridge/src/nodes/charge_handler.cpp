@@ -40,7 +40,11 @@ public:
       /* Serialize charge. */
 
       // Charge requires the channel here instead of the beginning of the message
-      serialized_message.add_byte(channel);
+
+      /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
+           indexing here. It would rather be the responsibility of FPGA to do the conversion;
+           move the logic there eventually. */
+      serialized_message.add_byte(channel + 1);
 
       uint16_t target_voltage = charge->target_voltage;
       serialized_message.add_uint16(target_voltage);

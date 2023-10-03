@@ -230,7 +230,7 @@ class MTMSApi:
             The capacitor voltage (V) of the specified channel.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].voltage
+        return self.node.system_state.channel_states[channel].voltage
 
     def get_temperature(self, channel):
         """
@@ -248,7 +248,7 @@ class MTMSApi:
             The coil temperature of the specified channel.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].temperature
+        return self.node.system_state.channel_states[channel].temperature
 
     def get_pulse_count(self, channel):
         """
@@ -265,7 +265,7 @@ class MTMSApi:
             The total number of pulses generated.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].pulse_count
+        return self.node.system_state.channel_states[channel].pulse_count
 
     def get_time(self):
         """
