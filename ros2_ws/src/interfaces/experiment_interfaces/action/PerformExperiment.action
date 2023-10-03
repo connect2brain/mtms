@@ -1,7 +1,13 @@
 ExperimentMetadata metadata
 
 Trial[] trials
-IntertrialInterval[] intertrial_intervals
+IntertrialInterval intertrial_interval
+
+bool randomize_trials
+
+# If true, wait for trigger (a pedal press or a electric trigger signal) before performing each trial in
+# the experiment. In that case, ignore 'intertrial_interval' field.
+bool wait_for_trigger
 ---
 bool success
 TrialResult[] trial_results
