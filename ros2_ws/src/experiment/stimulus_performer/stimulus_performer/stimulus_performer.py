@@ -66,6 +66,8 @@ class StimulusPerformerNode(Node):
         while not self.reverse_polarity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /waveforms/reverse_polarity not available, waiting...')
 
+        # Create subscriber for system state.
+
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1, callback_group=self.callback_group)
         self.system_state = None
@@ -280,7 +282,7 @@ class StimulusPerformerNode(Node):
         for channel in range(self.NUM_OF_CHANNELS):
             id = self.get_next_id()
 
-            reverse_polarity = reversed_polarities[i]
+            reverse_polarity = reversed_polarities[channel]
             waveform = self.get_default_waveform(
                 channel=channel,
             )
