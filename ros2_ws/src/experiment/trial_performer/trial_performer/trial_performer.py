@@ -282,6 +282,7 @@ class TrialPerformerNode(Node):
         goal_handle.succeed()
 
         result.trial_result = trial_result
+        result.success = True
 
         self.logger.info('{}: Done.'.format(goal_id))
 
@@ -413,7 +414,6 @@ class TrialPerformerNode(Node):
 
         trial_result = TrialResult()
 
-        trial_result.success = success
         trial_result.mep = mep
         trial_result.trial_finish_time = trial_finish_time
         trial_result.num_of_attempts = num_of_attempts
