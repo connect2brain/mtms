@@ -190,29 +190,24 @@ class AnalyzeMepNode(Node):
 
     def validate_emg_channel(self, goal_id, emg_channel, eeg_buffer):
 
-        # Assuming that all datapoints have the same channel count.
-        emg_channel_count = len(eeg_buffer[0].emg_channels)
+        # Assuming that all datapoints have the same number of channels.
+        num_of_emg_channels = len(eeg_buffer[0].emg_channels)
 
-        if emg_channel > emg_channel_count:
-            self.logger.warn('{}: Failure: Requested channel ({}) larger than channel count ({}). Please check the channel counts defined in .env.'.format(
+        # EMG channel indexing starts from 0, hence decrement.
+        maximum_channel_index = num_of_emg_channels - 1
+
+        if emg_channel >= maximum_channel_index:
+            self.logger.warn('{}: Failure: Requested channel ({}) larger than the maximum channel ({}). Please check the channel counts defined in .env.'.format(
                 goal_id,
                 emg_channel,
-                emg_channel_count,
-            ))
-            return MepError(value=MepError.INVALID_EMG_CHANNEL)
-
-        if emg_channel == 0:
-            self.logger.warn('{}: Failure: Requested channel is zero, the channel numbering starts from 1.'.format(
-                goal_id,
+                maximum_channel_index,
             ))
             return MepError(value=MepError.INVALID_EMG_CHANNEL)
 
         return MepError(value=MepError.NO_ERROR)
 
     def get_channel_from_eeg_buffer(self, emg_channel, eeg_buffer):
-
-        # EMG channel numbering starts from 1, therefore decrement when indexing the array.
-        channel_data = np.array([d.emg_channels[emg_channel - 1] for d in eeg_buffer])
+        channel_data = np.array([d.emg_channels[emg_channel] for d in eeg_buffer])
         timestamps = np.array([d.time for d in eeg_buffer])
 
         return channel_data, timestamps

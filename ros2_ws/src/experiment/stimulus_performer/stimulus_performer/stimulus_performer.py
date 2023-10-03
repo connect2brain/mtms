@@ -146,7 +146,7 @@ class StimulusPerformerNode(Node):
         self.logger.info('{}:   - Delay: {}'.format(goal_id, stimulus.triggers[1].delay))
         self.logger.info('{}:'.format(goal_id))
 
-    # Performing trial
+    # Performing stimulus
 
     def perform_stimulus_action_handler(self, goal_handle):
         request = goal_handle.request
@@ -277,14 +277,10 @@ class StimulusPerformerNode(Node):
         _, reversed_polarities = self.get_channel_voltages(target, intensity)
 
         ids = [None] * self.NUM_OF_CHANNELS
-        for i in range(self.NUM_OF_CHANNELS):
+        for channel in range(self.NUM_OF_CHANNELS):
             id = self.get_next_id()
 
-            # XXX: Try to remove this indexing inconsistency.
-            channel = i + 1
-
             reverse_polarity = reversed_polarities[i]
-
             waveform = self.get_default_waveform(
                 channel=channel,
             )
@@ -300,7 +296,7 @@ class StimulusPerformerNode(Node):
                 channel=channel,
                 waveform=waveform,
             )
-            ids[i] = id
+            ids[channel] = id
 
         return ids
 
