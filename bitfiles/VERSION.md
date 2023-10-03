@@ -1,7 +1,17 @@
 ## Version history
 
-### 0.5.0
+### 0.5.2
+- FIX: Explicitly allow stimulation at the start of a session.
+
+### 0.5.1
 - FIX: Do not disallow stimulation at the start of a session.
+
+### 0.5.0
+- MOD: Change pulse polarity on Tubingen device to the original polarity (before fix in v0.4.6).
+- MOD: Change 'Experiment' to 'Session' throughout the FPGA.
+- ADD: Tools to use in installing the device
+- DEL: Outdated installation tools
+- ADD: 'Ready to stimulate' control, used to externally prevent pulse.
 
 ### 0.4.9
 - FIX: Implementation of pulse got stuck because FIFO got full.
@@ -46,7 +56,7 @@
 - FIX: IGBT feedback check in startup - startup did not pass on Tubingen device.
 - FIX: Discharge controller readings during and after shutdown - they showed nonsensical values occasionally.
 
-### 0.4.0 
+### 0.4.0
 
 - MOD: Change pulse final state and IGBT startup state to 'Hold' instead of 'Alternative hold'.
 - ADD: Support Aalto target in the redesigned version of FPGA interface.
