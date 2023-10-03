@@ -14,16 +14,12 @@ from mep_interfaces.action import AnalyzeMep
 
 from targeting_interfaces.srv import GetChannelVoltages
 
-from rcl_interfaces.msg import ParameterDescriptor, ParameterType
-
 import rclpy
 from rclpy.action import ActionClient, ActionServer
 from rclpy.node import Node
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
-
-from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
 
 
 class TrialPerformerNode(Node):
