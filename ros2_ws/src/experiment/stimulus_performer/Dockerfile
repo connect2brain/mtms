@@ -25,6 +25,7 @@ COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interf
 COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
+COPY ros2_ws/src/interfaces/utility_interfaces ros2_ws/src/interfaces/utility_interfaces/
 
 # Build ROS packages
 
