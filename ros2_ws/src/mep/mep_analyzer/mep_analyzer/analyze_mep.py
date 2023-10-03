@@ -196,7 +196,7 @@ class AnalyzeMepNode(Node):
         # EMG channel indexing starts from 0, hence decrement.
         maximum_channel_index = num_of_emg_channels - 1
 
-        if emg_channel >= maximum_channel_index:
+        if emg_channel > maximum_channel_index:
             self.logger.warn('{}: Failure: Requested channel ({}) larger than the maximum channel ({}). Please check the channel counts defined in .env.'.format(
                 goal_id,
                 emg_channel,
