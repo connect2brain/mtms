@@ -1,0 +1,8 @@
+ExperimentMetadata metadata
+
+uint16 trial_index
+
+Trial trial
+TrialResult trial_result
+---
+bool success
