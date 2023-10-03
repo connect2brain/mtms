@@ -33,7 +33,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrialResult.msg"
   "msg/TriggerConfig.msg"
 
+  "srv/CountValidTrials.srv"
   "srv/ValidateTrial.srv"
+  "srv/LogTrial.srv"
 
   "action/PerformExperiment.action"
   "action/PerformStimulus.action"
