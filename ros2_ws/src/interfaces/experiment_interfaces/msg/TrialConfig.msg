@@ -1,2 +1,2 @@
-bool mep_analysis_enabled
+bool analyze_mep
 mep_interfaces/MepConfiguration mep_config
