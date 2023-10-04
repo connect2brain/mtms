@@ -12,6 +12,10 @@ RUN apt-get install -y \
 
 WORKDIR /app/ros2_ws
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Build interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
