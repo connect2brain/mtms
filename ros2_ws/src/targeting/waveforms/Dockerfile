@@ -12,6 +12,10 @@ RUN apt-get install -y \
     dos2unix \
     ros-iron-rmw-cyclonedds-cpp
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Copy ROS workspace
 
 WORKDIR /app

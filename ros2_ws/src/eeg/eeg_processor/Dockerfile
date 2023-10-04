@@ -30,6 +30,10 @@ ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
 RUN pip3 install git+https://github.com/zubara/mneflow.git
 RUN apt-get install -y python3-tk
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Copy ROS workspace
 
 WORKDIR /app

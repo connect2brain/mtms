@@ -9,6 +9,10 @@ WORKDIR /app
 # Add `/app/node_modules/.bin` to $PATH.
 ENV PATH /app/node_modules/.bin:$PATH
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Install app dependencies.
 COPY /front/package.json /front/yarn.lock ./
 RUN yarn install --silent
