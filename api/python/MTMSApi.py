@@ -656,9 +656,8 @@ class MTMSApi:
             len(target_voltages), self.N_CHANNELS)
 
         ids = []
-        for i in range(self.N_CHANNELS):
-            target_voltage = target_voltages[i]
-            channel = i + 1
+        for channel in range(self.N_CHANNELS):
+            target_voltage = target_voltages[channel]
 
             id = self.send_charge_or_discharge(
                 execution_condition=ExecutionCondition.IMMEDIATE,
@@ -721,9 +720,8 @@ class MTMSApi:
             len(reverse_polarities), self.N_CHANNELS)
 
         ids = []
-        for i in range(self.N_CHANNELS):
-            reverse_polarity = reverse_polarities[i]
-            channel = i + 1
+        for channel in range(self.N_CHANNELS):
+            reverse_polarity = reverse_polarities[channel]
             waveform = self.get_default_waveform(channel=channel)
 
             id = self.send_pulse(
