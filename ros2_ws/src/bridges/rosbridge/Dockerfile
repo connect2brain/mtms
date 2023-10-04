@@ -15,6 +15,10 @@ RUN pip install \
     pymongo \
     tornado
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Copy ROS workspace
 
 WORKDIR /app/ros2_ws

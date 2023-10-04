@@ -42,6 +42,10 @@ ENV LC_ALL en_US.UTF-8
 
 RUN pip install vtk==9.1.0 pyacvd==0.2.7 pypolaris==0.0.6
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 ## InVesalius
 
 WORKDIR /app
