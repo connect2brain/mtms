@@ -58,10 +58,6 @@ ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 #ENV CPATH /usr/local/cuda-12-1/targets/x86_64-linux/include/:
 SHELL ["/bin/bash", "-c"]
 
-# Setup environment (other than CUDA)
-
-ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-
 # Install dependencies
 
 RUN apt-get update

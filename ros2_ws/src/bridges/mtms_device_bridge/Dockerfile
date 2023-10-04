@@ -2,10 +2,6 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
-# Setup environment
-
-ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-
 # Install dependencies
 WORKDIR /build
 
