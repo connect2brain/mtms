@@ -1,6 +1,7 @@
 [Unit]
 Description=mTMS device bridge service
-After=network.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Environment=MTMS_ROOT=/home/mtms/mtms
