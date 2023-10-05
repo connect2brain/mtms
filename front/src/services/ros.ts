@@ -35,9 +35,11 @@ const getMaximumIntensityService = new ROSLIB.Service({
 export const getMaximumIntensity =
     (x: number, y: number, angle: number, callback: (maximum_intensity: number) => void) => {
   const request = new ROSLIB.ServiceRequest({
-    displacement_x: x,
-    displacement_y: y,
-    rotation_angle: angle
+    target: {
+      displacement_x: x,
+      displacement_y: y,
+      rotation_angle: angle
+    }
   }) as any
 
   getMaximumIntensityService.callService(
@@ -51,6 +53,7 @@ export const getMaximumIntensity =
     },
     (error) => {
       console.log('ERROR: Failed to get maximum intensity, error:')
+      console.log(error)
     },
   )
 }
