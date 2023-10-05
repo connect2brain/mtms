@@ -65,7 +65,7 @@ void init_fpga() {
     }
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  /* Sleep for a while longer to ensure that the FPGA program is started by 'Run FPGA' node. */
+  /* Sleep for a while longer to ensure that there is enough time for 'Run FPGA' node to start the FPGA program. */
   std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
