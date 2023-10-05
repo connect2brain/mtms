@@ -9,6 +9,8 @@
 
 bool try_init_fpga();
 void init_fpga();
+
+bool is_fpga_ok();
 bool close_fpga();
 
 extern NiFpga_Session session;

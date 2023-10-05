@@ -11,6 +11,7 @@ public:
   FpgaConnection(): Node("fpga_connection") {
     this->publisher_node_message_ = this->create_publisher<std_msgs::msg::String>(NODE_MESSAGE_TOPIC, 10);
   }
+
   void send_node_message(std::string str) {
     auto msg = std_msgs::msg::String();
     msg.data = str;
@@ -21,32 +22,39 @@ private:
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_node_message_;
 };
 
+/* Otherwise similar to the shared init_fpga() function, used by the other ROS nodes in the
+   mTMS device bridge, except that:
+
+     - Sends status messages to the UI
+     - Once the initialization is finished, runs the FPGA program (one and only one of the ROS nodes
+       needs to do that - the others can then use the already running program.)*/
+void init_and_run_fpga(std::shared_ptr<FpgaConnection> node) {
+  while (true) {
+    if (try_init_fpga()) {
+      break;
+    }
+    node->send_node_message("Please power on the mTMS device.");
+    rclcpp::spin_some(node);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
+}
+
 int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<FpgaConnection>();
 
-  bool fpga_initialized = false;
-  while (rclcpp::ok() && !fpga_initialized) {
-    if (!fpga_initialized) {
+  init_and_run_fpga(node);
 
-      fpga_initialized = try_init_fpga();
-      if (!fpga_initialized) {
-        node->send_node_message("Please power on the mTMS device.");
-
-        RCLCPP_WARN(rclcpp::get_logger("fpga_connection"), "Initialization attempt failed. Retrying...");
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-      }
+  while (rclcpp::ok()) {
+    if (!is_fpga_ok()) {
+      close_fpga();
+      init_and_run_fpga(node);
     }
     rclcpp::spin_some(node);
   }
-
-  RCLCPP_INFO(rclcpp::get_logger("fpga_connection"), "Initialization successful, running FPGA.");
-
-  rclcpp::shutdown();
-
-  /* TODO: Seems to not terminate gracefully when receiving SIGINT, causing a benign error in the logs. */
-  NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
-
   close_fpga();
+  rclcpp::shutdown();
 }
