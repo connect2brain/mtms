@@ -69,7 +69,6 @@ private:
 };
 
 int main(int argc, char **argv) {
-  init_fpga();
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
@@ -86,8 +85,15 @@ int main(int argc, char **argv) {
 #endif
   RCLCPP_INFO(rclcpp::get_logger("trigger_out_handler"), "Trigger out handler ready.");
 
-  rclcpp::spin(node);
-  rclcpp::shutdown();
+  init_fpga();
 
+  while (rclcpp::ok()) {
+    if (!is_fpga_ok()) {
+      close_fpga();
+      init_fpga();
+    }
+    rclcpp::spin_some(node);
+  }
   close_fpga();
+  rclcpp::shutdown();
 }
