@@ -19,7 +19,7 @@ import {
 
 import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
-import { SessionControl } from 'components/SessionControl'
+import { SystemControl } from 'components/SystemControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
@@ -135,7 +135,7 @@ export const SystemView = () => {
   return (
     <Wrapper>
       <PanelA>
-        <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
+        <SystemControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
       </PanelA>
       <VerticalDividedPanelB>
         <SubPanel>
