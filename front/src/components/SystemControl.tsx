@@ -10,7 +10,7 @@ type Props = {
   sessionState: SessionStateMessage
 }
 
-export const SessionControl = ({ deviceState, sessionState }: Props) => {
+export const SystemControl = ({ deviceState, sessionState }: Props) => {
   const deviceText = () => {
     if (deviceState.value === DeviceState.NOT_OPERATIONAL) return 'Start'
     if (deviceState.value === DeviceState.STARTUP) return 'Starting'
