@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
 
-import { SessionControl } from '../components/SessionControl'
+import { SystemControl } from '../components/SystemControl'
 import { SystemState } from '../components/SystemState'
 
 import Targets from './Targets'
