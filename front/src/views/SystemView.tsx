@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
+import { TabBar } from 'styles/General'
+
 import {
   chargeFeedbackSubscriber,
   dischargeFeedbackSubscriber,
@@ -88,6 +90,8 @@ const initialState = {
 }
 
 export const SystemView = () => {
+  const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics'>('overview')
+
   const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
   const [feedback, setFeedback] = useState<Feedback>()
 
@@ -133,22 +137,43 @@ export const SystemView = () => {
   }
 
   return (
-    <Wrapper>
-      <PanelA>
-        <SystemControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
-      </PanelA>
-      <VerticalDividedPanelB>
-        <SubPanel>
-          <NodeState />
-        </SubPanel>
-        <SubPanel>
-          <SystemState systemState={systemState} />
-        </SubPanel>
-      </VerticalDividedPanelB>
-      <PanelC>
-        <EventFeedbacks feedback={feedback} />
-      </PanelC>
-    </Wrapper>
+    <>
+      <TabBar>
+        <a
+          href="#"
+          onClick={() => setActiveTab('overview')}
+          className={activeTab === 'overview' ? 'active' : ''}
+        >
+          Overview
+        </a>
+        <a
+          href="#"
+          onClick={() => setActiveTab('diagnostics')}
+          className={activeTab === 'diagnostics' ? 'active' : ''}
+        >
+          Diagnostics
+        </a>
+      </TabBar>
+      <Wrapper>
+        {activeTab === 'overview' &&
+        <>
+          <PanelA>
+            <SystemControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
+          </PanelA>
+          <VerticalDividedPanelB>
+            <SubPanel>
+              <NodeState />
+            </SubPanel>
+            <SubPanel>
+              <SystemState systemState={systemState} />
+            </SubPanel>
+          </VerticalDividedPanelB>
+          <PanelC>
+            <EventFeedbacks feedback={feedback} />
+          </PanelC>
+        </>}
+      </Wrapper>
+    </>
   )
 }
 
