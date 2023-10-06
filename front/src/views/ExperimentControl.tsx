@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
+import { TabBar } from 'styles/General'
+
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
 import { IntensitySelector } from 'components/Experiment/IntensitySelector'
@@ -57,27 +59,6 @@ const styledPanel = `
   border-radius: 5px;
   background-color: #f7f7f7;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
-`
-
-const TabBar = styled.div`
-  margin: 0.5rem;
-
-  a {
-    text-decoration: none;
-    color: #505050;
-    padding: 0.5rem;
-    display: inline-block;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #303030;
-    }
-
-    &.active {
-      color: #222222;
-      font-weight: bold;
-    }
-  }
 `
 
 const StimulationParametersPanel = styled.div`
