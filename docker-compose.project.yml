@@ -23,20 +23,6 @@ services:
       - '$PROJECTS_ROOT:/app/projects'
     network_mode: host
 
-  eeg_bridge:
-    ports:
-      - "50000:50000/udp"
-    build:
-      context: .
-      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
-    # EEG bridge uses both site- and project-specific environment.
-    env_file:
-      - ${SITE_ENV_FILE}
-      - ${PROJECT_ENV_FILE}
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
-    network_mode: host
-
   eeg_preprocessor:
     build:
       context: .
