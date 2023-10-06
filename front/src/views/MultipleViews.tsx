@@ -8,19 +8,19 @@ import Targets from './Targets'
 import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
-import { SystemControl } from './SystemControl'
+import { SystemView } from './SystemView'
 import { ExperimentControl } from './ExperimentControl'
 
 export const MultipleViews = () => {
-  const [currentView, setCurrentView] = useState('systemControl')
+  const [currentView, setCurrentView] = useState('SystemView')
 
   return (
     <div>
       <OptionWrapper>
         <a
           href="#"
-          onClick={() => setCurrentView('systemControl')}
-          className={currentView === 'systemControl' ? 'active' : ''}
+          onClick={() => setCurrentView('SystemView')}
+          className={currentView === 'SystemView' ? 'active' : ''}
         >
           System
         </a>
@@ -54,10 +54,10 @@ export const MultipleViews = () => {
         </a>
       </OptionWrapper>
       <ViewContainer>
-        {currentView === 'systemControl' && (
+        {currentView === 'SystemView' && (
           <Wrapper>
             <SmallHeader>System</SmallHeader>
-            <SystemControl />
+            <SystemView />
           </Wrapper>
         )}
 
