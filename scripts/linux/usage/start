@@ -38,11 +38,6 @@ get_env_var () {
 # Get environment variables
 BAG_NAME=$(get_env_var "BAG_NAME")
 
-NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1=$(get_env_var "NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1")
-NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1=$(get_env_var "NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1")
-NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2=$(get_env_var "NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2")
-NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2=$(get_env_var "NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2")
-
 EEG_PROCESSOR_ENABLE=$(get_env_var "EEG_PROCESSOR_ENABLE")
 EEG_PROCESSOR_TYPE=$(get_env_var "EEG_PROCESSOR_TYPE")
 EEG_PROCESSOR_SCRIPT=$(get_env_var "EEG_PROCESSOR_SCRIPT")
@@ -60,12 +55,6 @@ echo ""
 echo "Project: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
 echo "Bag name: ${BOLD}$BAG_NAME${RESET}"
-echo ""
-echo "# of EEG channels, amplifier 1: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_1${RESET}"
-echo "# of EMG channels, amplifier 1: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_1${RESET}"
-echo ""
-echo "# of EEG channels, amplifier 2: ${BOLD}$NUMBER_OF_EEG_CHANNELS_AMPLIFIER_2${RESET}"
-echo "# of EMG channels, amplifier 2: ${BOLD}$NUMBER_OF_EMG_CHANNELS_AMPLIFIER_2${RESET}"
 echo ""
 
 if [ "$EEG_PREPROCESSOR_ENABLE" == "true" ]; then

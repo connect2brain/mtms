@@ -75,28 +75,6 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->declare_parameter("port", NULL, descriptor);
   this->get_parameter("port", this->port_);
 
-  /* HACK: Unfortunately, this is a terribly messy way of dividing the channels into EEG and EMG channels.
-     Instead of trying to clean it up, we should ask for the manufacturer to provide more detailed
-     information about individual channels in the measurement start packet. */
-
-  descriptor.description = "EEG channel count for amplifier 1";
-  this->declare_parameter("number_of_eeg_channels_amplifier_1", NULL, descriptor);
-  this->get_parameter("number_of_eeg_channels_amplifier_1", this->number_of_eeg_channels_amplifier_1_);
-
-  descriptor.description = "EMG channel count for amplifier 1";
-  this->declare_parameter("number_of_emg_channels_amplifier_1", NULL, descriptor);
-  this->get_parameter("number_of_emg_channels_amplifier_1", this->number_of_emg_channels_amplifier_1_);
-
-  descriptor.description = "EEG channel count for amplifier 2";
-  this->declare_parameter("number_of_eeg_channels_amplifier_2", NULL, descriptor);
-  this->get_parameter("number_of_eeg_channels_amplifier_2", this->number_of_eeg_channels_amplifier_2_);
-
-  descriptor.description = "EMG channel count for amplifier 2";
-  this->declare_parameter("number_of_emg_channels_amplifier_2", NULL, descriptor);
-  this->get_parameter("number_of_emg_channels_amplifier_2", this->number_of_emg_channels_amplifier_2_);
-
-  this->set_channel_types();
-
   this->init_socket();
 
   this->reset_session();
@@ -178,25 +156,6 @@ void EegBridge::subscribe_to_system_state() {
 
   this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
                                                                                                         system_state_callback, subscription_options);
-}
-
-void EegBridge::set_channel_types() {
-  uint8_t channels_amplifier_1 = this->number_of_eeg_channels_amplifier_1_ + this->number_of_emg_channels_amplifier_1_;
-  uint8_t channels_amplifier_2 = this->number_of_eeg_channels_amplifier_2_ + this->number_of_emg_channels_amplifier_2_;
-
-  uint8_t channels_total = channels_amplifier_1 + channels_amplifier_2;
-
-  ChannelType type;
-  for (uint8_t i = 1; i <= channels_total; i++) {
-    if (i > channels_total - this->number_of_emg_channels_amplifier_2_) {
-      type = this->ChannelType::EMG;
-    } else if (i > this->number_of_eeg_channels_amplifier_1_ && i <= channels_amplifier_1) {
-      type = this->ChannelType::EMG;
-    } else {
-      type = this->ChannelType::EEG;
-    }
-    this->channel_types[i - 1] = type;
-  }
 }
 
 void EegBridge::reset_session() {
@@ -446,11 +405,26 @@ void EegBridge::handle_measurement_start_packet() {
                       (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
 
   this->send_trigger_as_channel = false;
+
+  uint8_t num_of_eeg_channels = 0;
+  uint8_t num_of_emg_channels = 0;
   for (uint8_t i = 0; i < this->n_channels_; i++) {
     uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
                               buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
     if (source_channel == SOURCE_CHANNEL_FOR_TRIGGER) {
       this->send_trigger_as_channel = true;
+      continue;
+    }
+
+    /* The limits below come from NeurOne's amplifier configuration: each amplifier supports 40 channels in total; the monopolar (EEG)
+       channels are numbered 1-32 and the bipolar (EMG) channels are numbered 33-40. The channels of the second amplifier are numbered
+       after the channels of the first amplifier, thus, starting at 41. */
+    if ((source_channel >= 33 && source_channel <= 40) || (source_channel >= 73 && source_channel <= 80)) {
+      this->channel_types[i] = this->ChannelType::EMG;
+      num_of_emg_channels++;
+    } else {
+      this->channel_types[i] = this->ChannelType::EEG;
+      num_of_eeg_channels++;
     }
   }
 
@@ -464,7 +438,10 @@ void EegBridge::handle_measurement_start_packet() {
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
 
-  RCLCPP_INFO(this->get_logger(), "  - Total number of EEG and EMG channels set to %d.", this->n_channels_excluding_trigger_);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_channels);
+
+  RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->n_channels_excluding_trigger_);
 
   /* Publish EEG info. */
 

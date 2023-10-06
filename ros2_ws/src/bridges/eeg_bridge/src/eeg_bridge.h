@@ -40,7 +40,6 @@ class EegBridge : public rclcpp::Node {
 public:
   EegBridge();
 
-  void set_channel_types();
   void create_publishers();
   void send_node_message(std::string str);
 
@@ -108,12 +107,6 @@ private:
   };
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
   bool send_trigger_as_channel;
-
-  uint8_t number_of_eeg_channels_amplifier_1_;
-  uint8_t number_of_emg_channels_amplifier_1_;
-  uint8_t number_of_eeg_channels_amplifier_2_;
-  uint8_t number_of_emg_channels_amplifier_2_;
 };
-
 
 #endif //EEG_BRIDGE_EEG_BRIDGE_H
