@@ -87,7 +87,7 @@ const initialState = {
   time: 0,
 }
 
-export const SystemControl = () => {
+export const SystemView = () => {
   const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
   const [feedback, setFeedback] = useState<Feedback>()
 
