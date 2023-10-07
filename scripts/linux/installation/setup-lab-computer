@@ -36,14 +36,14 @@ if ! grep -q "export SITE=$SITE" ~/.bashrc; then
     echo "export SITE=$SITE" >> ~/.bashrc
 fi
 
-# Set the site environment variable in .bashrc
-if ! grep -q 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' ~/.bashrc; then
-    echo 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' >> ~/.bashrc
-fi
-
 # Add environment variable to .bashrc, pointing to repository root
 if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
     echo "export MTMS_ROOT=/home/mtms/mtms" >> ~/.bashrc
+fi
+
+# Set the site environment variable in .bashrc
+if ! grep -q 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' ~/.bashrc; then
+    echo 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' >> ~/.bashrc
 fi
 
 # Add environment variable to .bashrc, pointing to projects directory
@@ -51,18 +51,19 @@ if ! grep -q "export PROJECTS_ROOT=/home/mtms/projects" ~/.bashrc; then
     echo "export PROJECTS_ROOT=/home/mtms/projects" >> ~/.bashrc
 fi
 
+# Add environment variable to .bashrc to configure ROS to use Cyclone DDS
+if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
+    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
+fi
+
 # Add ROS sourcing to .bashrc unless it is already there
 if ! grep -q "source /opt/ros/iron/setup.bash" ~/.bashrc; then
     echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
 fi
 
+# Add sourcing of ROS packages to .bashrc
 if ! grep -q 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' ~/.bashrc; then
     echo 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' >> ~/.bashrc
-fi
-
-# Add environment variable to .bashrc to configure ROS to use Cyclone DDS
-if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
-    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 fi
 
 # Add path to Python API to PYTHONPATH
