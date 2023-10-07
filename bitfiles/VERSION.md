@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.3
+- ADD: 'Allow trigger out' functionality, used to externally prevent trigger outs.
+
 ### 0.5.2
 - FIX: Explicitly allow stimulation at the start of a session.
 
