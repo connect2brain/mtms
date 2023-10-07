@@ -161,7 +161,7 @@ public:
 
       response->maximum_intensity = min(INTENSITY_LIMIT, (uint8_t) max_intensity);
 
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request.");
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request with %d V/m", response->maximum_intensity);
     };
 
     get_channel_voltages = this->create_service<targeting_interfaces::srv::GetChannelVoltages>(
