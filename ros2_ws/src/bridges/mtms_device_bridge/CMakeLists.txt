@@ -126,6 +126,22 @@ target_include_directories(allow_stimulation_handler
 
 ament_target_dependencies(allow_stimulation_handler rclcpp std_msgs mtms_device_interfaces)
 
+# Install allow trigger out handler.
+
+add_executable(allow_trigger_out_handler
+  src/nodes/allow_trigger_out_handler.cpp
+  src/lib/fpga.cpp
+  src/lib/NiFpga.c
+  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
+
+target_include_directories(allow_trigger_out_handler
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(allow_trigger_out_handler rclcpp std_msgs mtms_device_interfaces)
+
 # Install pulse handler.
 
 add_executable(pulse_handler
