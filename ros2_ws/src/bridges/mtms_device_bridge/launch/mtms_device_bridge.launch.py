@@ -30,6 +30,7 @@ def generate_launch_description():
         "stop_session_handler",
 
         "allow_stimulation_handler",
+        "allow_trigger_out_handler",
 
         "pulse_handler",
         "trigger_out_handler",
