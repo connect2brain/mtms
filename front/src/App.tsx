@@ -14,12 +14,7 @@ const App = () => {
     <Providers>
       <Header>mTMS control panel</Header>
       <Wrapper>
-        <Routes>
-          <Route path='/' element={<MultipleViews />} />
-          <Route path='/targets' element={<Targets />} />
-          <Route path='/session' element={<Session />} />
-          <Route path='/plot' element={<DataVisualize />} />
-        </Routes>
+        <MultipleViews />
       </Wrapper>
     </Providers>
   )
