@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: front/Dockerfile
-    ports:
-      - "3000:3000"
     env_file:
       - ${SITE_ENV_FILE}
     environment:
@@ -17,8 +15,6 @@ services:
     network_mode: host
 
   eeg_bridge:
-    ports:
-      - "50000:50000/udp"
     build:
       context: .
       dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
@@ -80,8 +76,6 @@ services:
       dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
-    ports:
-      - "9090:9090"
     network_mode: host
 
   stimulus_performer:
