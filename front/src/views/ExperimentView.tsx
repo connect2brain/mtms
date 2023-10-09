@@ -276,7 +276,7 @@ export const ExperimentView = () => {
   const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(false)
   const [trigger2Delay, setTrigger2Delay] = useState<number>(0)
 
-  const [mepEnabled, setMepEnabled] = useState<boolean>(false)
+  const [mepEnabled, setMepEnabled] = useState<boolean>(true)
   const [emgChannel, setEmgChannel] = useState<number>(1)
 
   const [numOfRepetitions, setNumOfRepetitions] = useState<number>(10)
