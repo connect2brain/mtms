@@ -269,6 +269,7 @@ export const ExperimentView = () => {
   const [trigger2Delay, setTrigger2Delay] = useState<number>(0)
 
   const [mepEnabled, setMepEnabled] = useState<boolean>(false)
+  const [emgChannel, setEmgChannel] = useState<number>(1)
 
   const [numOfRepetitions, setNumOfRepetitions] = useState<number>(10)
   const [waitForTrigger, setWaitForTrigger] = useState<boolean>(false)
@@ -305,6 +306,16 @@ export const ExperimentView = () => {
 
   const changeMepEnabled = (value: boolean) => {
     setMepEnabled(value)
+  }
+
+  const changeEmgChannel = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.max(Math.min(Number(event.target.value), 16), 1)
+
+    /* TODO: Validate EMG channel value here, based on the number of available EMG channels,
+         published in EegInfo topic by EEG bridge. */
+    if (!isNaN(value)) {
+      setEmgChannel(value)
+    }
   }
 
   const changeNumOfRepetitions = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -385,8 +396,9 @@ export const ExperimentView = () => {
         }
 
         const mep_config: MepConfiguration = {
-          /* TODO: Hard-coded for now - make configurable. */
-          emg_channel: 0,
+          /* 0-based indexing is internally used for EMG channels, hence decrement to allow
+            the user to use 1-based indexing. */
+          emg_channel: emgChannel - 1,
           time_window: mep_config_time_window,
           preactivation_check: preactivation_check
         }
@@ -618,6 +630,19 @@ export const ExperimentView = () => {
                 onChange={changeMepEnabled}
               />
             </ConfigRow>
+            <GrayedOutPanel isGrayedOut={!mepEnabled}>
+              <ConfigRow>
+                <IndentedLabel>EMG channel:</IndentedLabel>
+                <ExperimentInput
+                  type="text"
+                  value={emgChannel}
+                  min={0}
+                  max={16}
+                  onChange={changeEmgChannel}
+                  disabled={!mepEnabled}
+                  />
+              </ConfigRow>
+            </GrayedOutPanel>
           </MepPanel>
           <TrialsPanel>
             <SmallerTitle>{activeTab === 'singleLocation' ? 'Trials' : 'Repetitions'}</SmallerTitle>
