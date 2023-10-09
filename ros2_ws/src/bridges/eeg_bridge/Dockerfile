@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -7,7 +7,12 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 
 RUN apt-get install -y \
-    dos2unix
+    dos2unix \
+    ros-iron-rmw-cyclonedds-cpp
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
@@ -19,7 +24,7 @@ COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_d
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/iron/setup.bash && \
     colcon build --symlink-install
 
 # Copy entrypoint

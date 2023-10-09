@@ -1,29 +1,54 @@
 #!/bin/bash
 
-source install-docker.sh
-source install-ros.sh
+# Ensure the script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the script as root or use sudo."
+    exit 1
+fi
+
+# Get the site from the first argument
+SITE="$1"
+
+if [ -z "$SITE" ]; then
+    echo "Error: Site is undefined. Please provide it as an argument to the script."
+    echo ""
+    exit 1
+fi
+
+# Install Docker and ROS
+source install-docker
+source install-ros
+
+# Setup systemd
+source setup-systemd
 
 # Install Cyclone DDS for ROS
-sudo apt install -y ros-humble-rmw-cyclonedds-cpp
+apt install -y ros-iron-rmw-cyclonedds-cpp
 
 # Tools for troubleshooting
-sudo apt install -y net-tools wireshark
+apt install -y net-tools wireshark
 
 # Tools for customizing GNOME (not required)
-sudo apt install wmctrl
+apt install wmctrl
+
+# Set the site in .bashrc
+if ! grep -q "export SITE=$SITE" ~/.bashrc; then
+    echo "export SITE=$SITE" >> ~/.bashrc
+fi
 
 # Add environment variable to .bashrc, pointing to repository root
 if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
     echo "export MTMS_ROOT=/home/mtms/mtms" >> ~/.bashrc
 fi
 
-# Add ROS sourcing to .bashrc unless it is already there
-if ! grep -q "source /opt/ros/humble/setup.bash" ~/.bashrc; then
-    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+# Set the site environment variable in .bashrc
+if ! grep -q 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' ~/.bashrc; then
+    echo 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' >> ~/.bashrc
 fi
 
-if ! grep -q "source $MTMS_ROOT/ros2_ws/install/local_setup.bash" ~/.bashrc; then
-    echo 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' >> ~/.bashrc
+# Add environment variable to .bashrc, pointing to projects directory
+if ! grep -q "export PROJECTS_ROOT=/home/mtms/projects" ~/.bashrc; then
+    echo "export PROJECTS_ROOT=/home/mtms/projects" >> ~/.bashrc
 fi
 
 # Add environment variable to .bashrc to configure ROS to use Cyclone DDS
@@ -31,12 +56,27 @@ if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 fi
 
+# Add ROS sourcing to .bashrc unless it is already there
+if ! grep -q "source /opt/ros/iron/setup.bash" ~/.bashrc; then
+    echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
+fi
+
+# Add sourcing of ROS packages to .bashrc
+if ! grep -q 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' ~/.bashrc; then
+    echo 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' >> ~/.bashrc
+fi
+
 # Add path to Python API to PYTHONPATH
-if ! grep -q "export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH" ~/.bashrc; then
+if ! grep -q 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH' ~/.bashrc; then
     echo 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH' >> ~/.bashrc
 fi
 
 # Add script directory to path in .bashrc
-if ! grep -q "export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage" ~/.bashrc; then
+if ! grep -q 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' ~/.bashrc; then
     echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
+fi
+
+# Automatically show instructions when opening a new terminal
+if ! grep -q "instructions" ~/.bashrc; then
+    echo 'instructions' >> ~/.bashrc
 fi

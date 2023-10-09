@@ -7,9 +7,11 @@
 #define ON_UNIX
 #endif
 
-bool init_fpga();
+bool try_init_fpga();
+void init_fpga();
+
+bool is_fpga_ok();
 bool close_fpga();
-bool run_fpga();
 
 extern NiFpga_Session session;
 extern NiFpga_Status status;

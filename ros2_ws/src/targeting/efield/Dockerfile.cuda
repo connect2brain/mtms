@@ -1,5 +1,5 @@
 # Cuda image adapted from: https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.0.0/ubuntu2004/base/Dockerfile
-FROM osrf/ros:galactic-desktop as base
+FROM osrf/ros:iron-desktop as base
 FROM base as base-amd64
 
 ENV NVARCH x86_64
@@ -63,14 +63,18 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update
 
 RUN apt-get install -y \
-    dos2unix
+    dos2unix \
+    ros-iron-rmw-cyclonedds-cpp
 
 WORKDIR /app/ros2_ws
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Build interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
-RUN source /opt/ros/galactic/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 
 # Copy efield packages
@@ -85,7 +89,7 @@ ENV PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/cuda-12.1/bin/nvc
 RUN cd src/targeting/efield/efield_libraries && cmake . && make
 
 # Build efield packages
-RUN source /opt/ros/galactic/setup.bash && colcon build --packages-select efield
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select efield
 
 
 COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .

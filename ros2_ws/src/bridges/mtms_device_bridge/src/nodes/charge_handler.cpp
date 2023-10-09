@@ -40,7 +40,11 @@ public:
       /* Serialize charge. */
 
       // Charge requires the channel here instead of the beginning of the message
-      serialized_message.add_byte(channel);
+
+      /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
+           indexing here. It would rather be the responsibility of FPGA to do the conversion;
+           move the logic there eventually. */
+      serialized_message.add_byte(channel + 1);
 
       uint16_t target_voltage = charge->target_voltage;
       serialized_message.add_uint16(target_voltage);
@@ -81,10 +85,6 @@ private:
 };
 
 int main(int argc, char **argv) {
-  if (!init_fpga()) {
-    return 1;
-  }
-
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
@@ -102,9 +102,15 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Charge handler ready.");
 
-  rclcpp::spin(node);
+  init_fpga();
 
-  rclcpp::shutdown();
-
+  while (rclcpp::ok()) {
+    if (!is_fpga_ok()) {
+      close_fpga();
+      init_fpga();
+    }
+    rclcpp::spin_some(node);
+  }
   close_fpga();
+  rclcpp::shutdown();
 }

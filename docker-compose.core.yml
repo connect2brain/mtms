@@ -1,0 +1,147 @@
+version: '2'
+
+services:
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - './front:/app'
+      - '/app/node_modules'
+    network_mode: host
+
+  eeg_bridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  eeg_gatherer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_gatherer/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  experiment_performer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/experiment/experiment_performer/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  id_assigner:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/id_assigner/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  mep_analyzer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  pedal_listener:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
+    # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
+    privileged: true
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  rosbridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
+  stimulus_performer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/experiment/stimulus_performer/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  stimulation_allower:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  targeting:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  trial_performer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/experiment/trial_performer/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  trial_validator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/experiment/trial_validator/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  voltage_setter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/mtms_device/voltage_setter/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  waveforms:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host

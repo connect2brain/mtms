@@ -17,28 +17,7 @@ def generate_launch_description():
         description="Port",
     )
 
-    number_of_eeg_channels_amplifier_1_arg = DeclareLaunchArgument(
-        "number-of-eeg-channels-amplifier-1",
-        description="EEG channel count for amplifier 1",
-    )
-
-    number_of_emg_channels_amplifier_1_arg = DeclareLaunchArgument(
-        "number-of-emg-channels-amplifier-1",
-        description="EMG channel count for amplifier 1",
-    )
-
-    number_of_eeg_channels_amplifier_2_arg = DeclareLaunchArgument(
-        "number-of-eeg-channels-amplifier-2",
-        description="EEG channel count for amplifier 2",
-    )
-
-    number_of_emg_channels_amplifier_2_arg = DeclareLaunchArgument(
-        "number-of-emg-channels-amplifier-2",
-        description="EMG channel count for amplifier 2",
-    )
-
     logger = LaunchConfiguration("log-level")
-
     node = Node(
             package="eeg_bridge",
             executable="eeg_bridge",
@@ -46,10 +25,6 @@ def generate_launch_description():
             parameters=[
                 {
                     "port": LaunchConfiguration("port"),
-                    "number_of_eeg_channels_amplifier_1": LaunchConfiguration("number-of-eeg-channels-amplifier-1"),
-                    "number_of_emg_channels_amplifier_1": LaunchConfiguration("number-of-emg-channels-amplifier-1"),
-                    "number_of_eeg_channels_amplifier_2": LaunchConfiguration("number-of-eeg-channels-amplifier-2"),
-                    "number_of_emg_channels_amplifier_2": LaunchConfiguration("number-of-emg-channels-amplifier-2"),
                 }
             ],
             output="screen",
@@ -60,9 +35,5 @@ def generate_launch_description():
     ld.add_action(node)
     ld.add_action(log_arg)
     ld.add_action(port_arg)
-    ld.add_action(number_of_eeg_channels_amplifier_1_arg)
-    ld.add_action(number_of_emg_channels_amplifier_1_arg)
-    ld.add_action(number_of_eeg_channels_amplifier_2_arg)
-    ld.add_action(number_of_emg_channels_amplifier_2_arg)
 
     return ld

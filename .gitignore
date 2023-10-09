@@ -27,9 +27,6 @@ matlab_msg_gen/
 # The config for neuronavigation is stored in .config directory.
 .config/
 
-# The directory for research projects; used for, e.g., storing data.
-projects/
-
 # Not used by the project but potentially by individual developers.
 .idea
 .vscode
