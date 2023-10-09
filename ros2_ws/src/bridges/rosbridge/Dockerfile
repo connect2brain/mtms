@@ -24,11 +24,13 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite
 COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces
-COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces
+COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces
+COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
 COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces
+COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
