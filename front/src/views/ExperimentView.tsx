@@ -695,7 +695,7 @@ export const ExperimentView = () => {
                 onChange={changeWaitForTrigger}
               />
             </ConfigRow>
-            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfRepetitions === 1}>
+            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials < 2}>
               <ConfigRow>
                 <ConfigLabel>Interval (s)</ConfigLabel>
               </ConfigRow>
@@ -707,7 +707,7 @@ export const ExperimentView = () => {
                   min={0}
                   step={0.1}
                   onChange={changeItiMin}
-                  disabled={waitForTrigger || numOfRepetitions === 1}
+                  disabled={waitForTrigger || numOfTrials < 2}
                 />
               </CloseConfigRow>
               <CloseConfigRow>
@@ -718,7 +718,7 @@ export const ExperimentView = () => {
                     min={0}
                     step={0.1}
                     onChange={changeItiMax}
-                    disabled={waitForTrigger || numOfRepetitions === 1}
+                    disabled={waitForTrigger || numOfTrials < 2}
                 />
               </CloseConfigRow>
             </GrayedOutPanel>
