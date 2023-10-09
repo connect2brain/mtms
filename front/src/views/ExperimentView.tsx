@@ -201,7 +201,7 @@ export const ExperimentView = () => {
 
   const [mepEnabled, setMepEnabled] = useState<boolean>(false)
 
-  const [numOfTrials, setNumOfTrials] = useState<number>(10)
+  const [numOfRepetitions, setNumOfRepetitions] = useState<number>(10)
   const [waitForTrigger, setWaitForTrigger] = useState<boolean>(false)
 
   const [itiMin, setItiMin] = useState<number>(3.5)
@@ -231,10 +231,10 @@ export const ExperimentView = () => {
     setMepEnabled(value)
   }
 
-  const changeNumOfTrials = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const changeNumOfRepetitions = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(Number(event.target.value), 1)
     if (!isNaN(value)) {
-      setNumOfTrials(value)
+      setNumOfRepetitions(value)
     }
   }
 
@@ -396,15 +396,15 @@ export const ExperimentView = () => {
             </ConfigRow>
           </MepPanel>
           <TrialsPanel>
-            <SmallerTitle>Trials</SmallerTitle>
+            <SmallerTitle>{activeTab === 'singleLocation' ? 'Trials' : 'Repetitions'}</SmallerTitle>
             <ConfigRow>
-              <ConfigLabel># of trials:</ConfigLabel>
+              <ConfigLabel># of {activeTab === 'singleLocation' ? 'trials' : 'repetitions'}:</ConfigLabel>
               <ExperimentInput
                 type="text"
-                value={numOfTrials}
+                value={numOfRepetitions}
                 min={0}
                 max={999}
-                onChange={changeNumOfTrials}
+                onChange={changeNumOfRepetitions}
               />
             </ConfigRow>
             <ConfigRow>
@@ -415,7 +415,7 @@ export const ExperimentView = () => {
                 onChange={changeWaitForTrigger}
               />
             </ConfigRow>
-            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === 1}>
+            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfRepetitions === 1}>
               <ConfigRow>
                 <ConfigLabel>Interval (s)</ConfigLabel>
               </ConfigRow>
@@ -427,7 +427,7 @@ export const ExperimentView = () => {
                   min={0}
                   step={0.1}
                   onChange={changeItiMin}
-                  disabled={waitForTrigger || numOfTrials === 1}
+                  disabled={waitForTrigger || numOfRepetitions === 1}
                 />
               </CloseConfigRow>
               <CloseConfigRow>
@@ -438,7 +438,7 @@ export const ExperimentView = () => {
                     min={0}
                     step={0.1}
                     onChange={changeItiMax}
-                    disabled={waitForTrigger || numOfTrials === 1}
+                    disabled={waitForTrigger || numOfRepetitions === 1}
                 />
               </CloseConfigRow>
             </GrayedOutPanel>
