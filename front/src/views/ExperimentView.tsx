@@ -13,7 +13,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
-import { getMaximumIntensity } from 'services/ros'
+import { getMaximumIntensity, countValidTrials } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -129,7 +129,7 @@ const TrialsPanel = styled.div`
   ${styledPanel}
 `
 
-const StimulatePanel = styled.div`
+const ExperimentPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 4 / 5;
   width: 240px;
@@ -143,7 +143,7 @@ const ConfigRow = styled.div`
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   padding-right: 0px;
 `
 
@@ -158,7 +158,7 @@ const IndentedLabel = styled(ConfigLabel)`
 `
 
 const CloseConfigRow = styled(ConfigRow)`
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 `
 
 const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
@@ -184,14 +184,83 @@ const TriggerLabel = styled.label`
   display: inline-block;
 `
 
-export const ExperimentView = () => {
-  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
-  const [selectedAngles, setSelectedAngles] = useState<number[]>([])
-  const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
-  const [maximumIntensity, setMaximumIntensity] = useState(100)
+/* TODO: Move type definitions elsewhere. */
 
+type TriggerConfig = {
+  enabled: boolean
+  delay: number
+}
+
+type IntertrialInterval = {
+  min: number
+  max: number
+  tolerance: number
+}
+
+type Metadata = {
+  experiment_name: string
+  subject_name: string
+}
+
+type Experiment = {
+  metadata: Metadata
+
+  trials: Trial[]
+  intertrial_interval: IntertrialInterval
+
+  randomize_trials: boolean
+  wait_for_trigger: boolean
+}
+
+type Stimulus = {
+  target: {
+    displacement_x: number
+    displacement_y: number
+    rotation_angle: number
+  }
+  intensity: number
+  triggers: TriggerConfig[]
+}
+
+type TimeWindow = {
+  start: number
+  end: number
+}
+
+type PreactivationCheck = {
+  enabled: boolean
+  time_window: TimeWindow
+  voltage_range_limit: number
+}
+
+type MepConfiguration = {
+  emg_channel: number
+  time_window: TimeWindow
+  preactivation_check: PreactivationCheck
+}
+
+type TrialConfig =  {
+  analyze_mep: boolean
+  mep_config: MepConfiguration
+}
+
+type Trial = {
+  stimuli: Stimulus[]
+  stimulus_times_since_trial_start: number[]
+  config: TrialConfig
+}
+
+export const ExperimentView = () => {
   const [experimentName, setExperimentName] = useState<string>('')
   const [subjectName, setSubjectName] = useState<string>('')
+
+  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
+
+  const [selectedAngles, setSelectedAngles] = useState<number[]>([])
+  const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
+  const [intensity, setIntensity] = useState(100)
+
+  const [maximumIntensity, setMaximumIntensity] = useState(100)
 
   const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(false)
   const [trigger1Delay, setTrigger1Delay] = useState<number>(0)
@@ -206,6 +275,13 @@ export const ExperimentView = () => {
 
   const [itiMin, setItiMin] = useState<number>(3.5)
   const [itiMax, setItiMax] = useState<number>(4.5)
+
+  const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
+  const [numOfTrials, setNumOfTrials] = useState<number>(0)
+
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
+
+  const [isStartButtonDisabled, setIsStartButtonDisabled] = useState(false)
 
   const stimulate = () => {
     console.log('stimulate')
@@ -257,16 +333,129 @@ export const ExperimentView = () => {
   }
 
   const handleIntensityChange = (value: number) => {
-    console.log(`Selected intensity: ${value} V/m`)
+    setIntensity(value)
+    setIsStartButtonDisabled(true)
+  }
+
+  const formTrials = (): Trial[] => {
+    const trials: Trial[] = []
+
+    selectedPoints.forEach((point: Point) => {
+      selectedAngles.forEach((angle: number) => {
+        const triggers: TriggerConfig[] = [
+          {
+            enabled: trigger1Enabled,
+            /* Delay is presented as milliseconds in the UI, transform to seconds. */
+            delay: trigger1Delay / 1000
+          },
+          {
+            enabled: trigger2Enabled,
+            /* Delay is presented as milliseconds in the UI, transform to seconds. */
+            delay: trigger2Delay / 1000
+          }
+        ]
+
+        const stimulus: Stimulus = {
+          target: {
+            displacement_x: point.x,
+            displacement_y: point.y,
+            rotation_angle: angle
+          },
+          intensity: intensity,
+          triggers: triggers
+        }
+
+        /* TODO: Hard-coded for now - make configurable. */
+        const mep_config_time_window: TimeWindow = {
+          start: 0.01,
+          end: 0.04
+        }
+
+        /* TODO: Hard-coded for now - make configurable. */
+        const preactivation_check_time_window: TimeWindow = {
+          start: -0.05,
+          end: -0.01
+        }
+
+        /* TODO: Hard-coded for now - make configurable. */
+        const preactivation_check: PreactivationCheck = {
+          enabled: false,
+          time_window: preactivation_check_time_window,
+          voltage_range_limit: 90
+        }
+
+        const mep_config: MepConfiguration = {
+          /* TODO: Hard-coded for now - make configurable. */
+          emg_channel: 0,
+          time_window: mep_config_time_window,
+          preactivation_check: preactivation_check
+        }
+
+        const trial_config: TrialConfig = {
+          analyze_mep: mepEnabled,
+          mep_config: mep_config
+        }
+
+        const trial: Trial = {
+          stimuli: [stimulus],
+          stimulus_times_since_trial_start: [0],
+          config: trial_config
+        }
+        trials.push(trial)
+      })
+    })
+    return trials
+  }
+
+  const formExperiment = (): Experiment => {
+    const trials = formTrials()
+    const repeatedTrials = ([] as Trial[]).concat(...Array(numOfRepetitions).fill(trials))
+
+    const experiment: Experiment = {
+      metadata: {
+        experiment_name: experimentName,
+        subject_name: subjectName
+      },
+
+      trials: repeatedTrials,
+      intertrial_interval: {
+        min: itiMin,
+        max: itiMax,
+        tolerance: 0.0
+      },
+
+      randomize_trials: true,
+      wait_for_trigger: waitForTrigger
+    }
+    return experiment
+  }
+
+  const updateValidTrials = (experiment: Experiment) => {
+    countValidTrials(experiment.trials, (numOfValidTrials) => {
+      setNumOfValidTrials(numOfValidTrials)
+
+      /* TODO: If there are several simultaneous callbacks, only the last of them should enable the
+        start button; currently all of them enable it. */
+      setIsStartButtonDisabled(false)
+    })
   }
 
   useEffect(() => {
     if (activeTab === 'singleLocation') {
       setSelectedAngles([])
       setSelectedPoints([])
+
+      setNumOfTrials(0)
+      setNumOfValidTrials(null)
+
+      setNumOfRepetitions(10)
+    }
+    if (activeTab === 'multipleLocations') {
+      setNumOfRepetitions(1)
     }
   }, [activeTab])
 
+  /* Updates the maximum intensity display. */
   useEffect(() => {
     if (selectedPoints.length === 1 && selectedAngles.length === 1) {
       const x: number = selectedPoints[0].x
@@ -277,6 +466,34 @@ export const ExperimentView = () => {
       })
     }
   }, [selectedAngles, selectedPoints])
+
+  /* Update # of valid trials. */
+  useEffect(() => {
+    if (selectedPoints.length == 0 || selectedAngles.length == 0) {
+      return
+    }
+    const experiment: Experiment = formExperiment()
+
+    const numOfTrials = experiment.trials.length
+    setNumOfTrials(numOfTrials)
+
+    setIsStartButtonDisabled(true)
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+
+    const timer = setTimeout(() => {
+      updateValidTrials(experiment)
+    }, 200)
+
+    setDebounceTimer(timer)
+
+    // Cleanup function to clear the timer if the component is unmounted or if the effect runs again
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [selectedAngles, selectedPoints, intensity, numOfRepetitions])
 
   return (
     <>
@@ -335,10 +552,17 @@ export const ExperimentView = () => {
         </GridPanel>
         <AnglePanel>
         {activeTab === 'singleLocation' &&
-          <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
+          <AngleSelector
+            selectedAngles={selectedAngles}
+            setSelectedAngles={setSelectedAngles}
+          />
         }
         {activeTab === 'multipleLocations' &&
-          <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} multiSelectMode={true} />
+          <AngleSelector
+            selectedAngles={selectedAngles}
+            setSelectedAngles={setSelectedAngles}
+            multiSelectMode={true}
+          />
         }
         </AnglePanel>
         <IntensityPanel>
@@ -443,14 +667,27 @@ export const ExperimentView = () => {
               </CloseConfigRow>
             </GrayedOutPanel>
           </TrialsPanel>
-          <StimulatePanel>
-            <SmallerTitle>Stimulation</SmallerTitle>
+          <ExperimentPanel>
+            <SmallerTitle>Experiment</SmallerTitle>
+            <ConfigRow>
+              <ConfigLabel>Trials</ConfigLabel>
+            </ConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Total:</IndentedLabel>
+              <ConfigLabel>{numOfTrials}</ConfigLabel>
+            </CloseConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Valid:</IndentedLabel>
+              <ConfigLabel>{numOfValidTrials !== null ? numOfValidTrials : '\u2013'}</ConfigLabel>
+            </CloseConfigRow>
+            <CloseConfigRow></CloseConfigRow>
             <StyledButton
               onClick={stimulate}
+              disabled={isStartButtonDisabled}
             >
-              Start
+              {isStartButtonDisabled ? 'Updating...' : 'Start'}
             </StyledButton>
-          </StimulatePanel>
+          </ExperimentPanel>
         </ConfigPanel>
     </>
   )
