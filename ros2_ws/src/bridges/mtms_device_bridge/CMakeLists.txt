@@ -262,6 +262,7 @@ install(TARGETS
   stop_session_handler
 
   allow_stimulation_handler
+  allow_trigger_out_handler
 
   charge_handler
   discharge_handler
