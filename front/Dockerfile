@@ -15,13 +15,12 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Install app dependencies.
 COPY /front/package.json /front/yarn.lock ./
-RUN yarn install --silent
-RUN yarn global add react-scripts@5.0.0 --silent
+RUN yarn install
+RUN yarn global add react-scripts@5.0.0
 
 # Fix .cache EACCESS error. Taken from:
 #
 # https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat
-#
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 
 # Add app.
