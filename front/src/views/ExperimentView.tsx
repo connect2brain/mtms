@@ -537,6 +537,8 @@ export const ExperimentView = () => {
 
   /* Utilities */
   const formatDuration = (duration: number): string => {
+    duration = Math.round(duration)
+
     const hours = Math.floor(duration / 3600)
     const minutes = Math.floor((duration % 3600) / 60)
     const seconds = duration % 60
