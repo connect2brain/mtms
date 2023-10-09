@@ -159,3 +159,30 @@ export const countValidTrials =
     },
   )
 }
+
+/* Set up perform experiment service. */
+const performExperimentService = new ROSLIB.Service({
+  ros: ros,
+  name: '/experiment/perform_service',
+  serviceType: 'experiment_interfaces/PerformExperimentService',
+})
+
+export const performExperiment =
+    (experiment: any, callback: (numOfValidTrials: number) => void) => {
+  const request = new ROSLIB.ServiceRequest(experiment) as any
+
+  performExperimentService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to perform experiment: success field was false.')
+      } else {
+        callback(response.trial_results)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to perform experiment, error:')
+      console.log(error)
+    },
+  )
+}

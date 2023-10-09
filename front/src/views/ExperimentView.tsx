@@ -13,7 +13,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
-import { getMaximumIntensity, countValidTrials } from 'services/ros'
+import { getMaximumIntensity, countValidTrials, performExperiment } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -250,6 +250,12 @@ type Trial = {
   config: TrialConfig
 }
 
+enum StartButtonState {
+  ReadyForExperiment,
+  UpdatingTrialInfo,
+  PerformingExperiment
+}
+
 export const ExperimentView = () => {
   const [experimentName, setExperimentName] = useState<string>('')
   const [subjectName, setSubjectName] = useState<string>('')
@@ -285,10 +291,16 @@ export const ExperimentView = () => {
 
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
-  const [isStartButtonDisabled, setIsStartButtonDisabled] = useState(false)
+  const [startButtonState, setStartButtonState] = useState(StartButtonState.ReadyForExperiment)
 
-  const stimulate = () => {
-    console.log('stimulate')
+  const perform = () => {
+    setStartButtonState(StartButtonState.PerformingExperiment)
+
+    const experiment: Experiment = formExperiment()
+    performExperiment(experiment, (trial_results) => {
+      console.log(trial_results)
+      setStartButtonState(StartButtonState.ReadyForExperiment)
+    })
   }
 
   const changeTrigger1Enabled = (value: boolean) => {
@@ -348,7 +360,7 @@ export const ExperimentView = () => {
 
   const handleIntensityChange = (value: number) => {
     setIntensity(value)
-    setIsStartButtonDisabled(true)
+    setStartButtonState(StartButtonState.UpdatingTrialInfo)
   }
 
   const formTrials = (): Trial[] => {
@@ -451,7 +463,7 @@ export const ExperimentView = () => {
 
       /* TODO: If there are several simultaneous callbacks, only the last of them should enable the
         start button; currently all of them enable it. */
-      setIsStartButtonDisabled(false)
+      setStartButtonState(StartButtonState.ReadyForExperiment)
     })
   }
 
@@ -496,7 +508,7 @@ export const ExperimentView = () => {
     const numOfTrials = experiment.trials.length
     setNumOfTrials(numOfTrials)
 
-    setIsStartButtonDisabled(true)
+    setStartButtonState(StartButtonState.UpdatingTrialInfo)
 
     if (debounceTimer) {
       clearTimeout(debounceTimer)
@@ -523,7 +535,7 @@ export const ExperimentView = () => {
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
 
-  /* Helper functions */
+  /* Utilities */
   const formatDuration = (duration: number): string => {
     const hours = Math.floor(duration / 3600)
     const minutes = Math.floor((duration % 3600) / 60)
@@ -543,6 +555,18 @@ export const ExperimentView = () => {
 
     return result.trim()
   }
+
+  const startButtonStateToString = (startButtonState: StartButtonState): string => {
+    switch (startButtonState) {
+      case StartButtonState.UpdatingTrialInfo:
+        return 'Updating...'
+      case StartButtonState.ReadyForExperiment:
+        return 'Start'
+      case StartButtonState.PerformingExperiment:
+        return 'Pause'
+    }
+  }
+
 
   return (
     <>
@@ -751,10 +775,10 @@ export const ExperimentView = () => {
             </CloseConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
-              onClick={stimulate}
-              disabled={isStartButtonDisabled}
+              onClick={perform}
+              disabled={startButtonState === StartButtonState.UpdatingTrialInfo}
             >
-              {isStartButtonDisabled ? 'Updating...' : 'Start'}
+              {startButtonStateToString(startButtonState)}
             </StyledButton>
           </ExperimentPanel>
         </ConfigPanel>
