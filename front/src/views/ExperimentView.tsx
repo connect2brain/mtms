@@ -258,8 +258,10 @@ export const ExperimentView = () => {
 
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
   const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
-  const [intensity, setIntensity] = useState(100)
 
+  /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
+    component - remove the dependency. */
+  const [intensity, setIntensity] = useState(40)
   const [maximumIntensity, setMaximumIntensity] = useState(100)
 
   const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(false)
