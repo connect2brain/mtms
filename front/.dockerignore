@@ -1,2 +1,5 @@
 node_modules
 build
+
+# We're using Yarn, so avoid copying npm-related files into the container
+package-lock.json
