@@ -130,3 +130,32 @@ export const clearRosState = () => {
     },
   )
 }
+
+/* Set up count valid trials service. */
+const countValidTrialsService = new ROSLIB.Service({
+  ros: ros,
+  name: '/experiment/count_valid_trials',
+  serviceType: 'experiment_interfaces/CountValidTrials',
+})
+
+export const countValidTrials =
+    (trials: any, callback: (numOfValidTrials: number) => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    trials: trials
+  }) as any
+
+  countValidTrialsService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to count valid trials: success field was false.')
+      } else {
+        callback(response.num_of_valid_trials)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to count valid trials, error:')
+      console.log(error)
+    },
+  )
+}
