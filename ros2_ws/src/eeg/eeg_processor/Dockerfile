@@ -34,20 +34,23 @@ RUN apt-get install -y python3-tk
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/eeg/eeg_processor ros2_ws/src/eeg/eeg_processor/
-COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
-COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
-
-# Build ROS packages
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
+# ROS node
+COPY ros2_ws/src/eeg/eeg_processor ros2_ws/src/eeg/eeg_processor/
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select eeg_processor
+
 # Create a directory for pipeline
+
+WORKDIR /app
 
 RUN mkdir -p pipeline
 RUN mkdir -p measurements
