@@ -65,7 +65,7 @@ export const triggerOutFeedbackSubscriber = new ROSLIB.Topic<TriggerOutFeedbackM
 })
 
 export const startSession = () => {
-  const request = new ROSLIB.ServiceRequest()
+  const request = new ROSLIB.ServiceRequest({})
   startSessionService.callService(
     request,
     (response) => {
@@ -81,7 +81,7 @@ export const startSession = () => {
 }
 
 export const stopSession = () => {
-  const request = new ROSLIB.ServiceRequest()
+  const request = new ROSLIB.ServiceRequest({})
   stopSessionService.callService(
     request,
     (response) => {
@@ -97,7 +97,7 @@ export const stopSession = () => {
 }
 
 export const startDevice = () => {
-  const request = new ROSLIB.ServiceRequest()
+  const request = new ROSLIB.ServiceRequest({})
   startDeviceService.callService(
     request,
     (response) => {
@@ -113,7 +113,7 @@ export const startDevice = () => {
 }
 
 export const stopDevice = () => {
-  const request = new ROSLIB.ServiceRequest()
+  const request = new ROSLIB.ServiceRequest({})
   stopDeviceService.callService(
     request,
     (response) => {

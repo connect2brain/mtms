@@ -1,0 +1,2 @@
+float64 amplitude
+float64 latency

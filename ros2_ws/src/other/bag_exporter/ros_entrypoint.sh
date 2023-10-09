@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source /opt/ros/galactic/setup.bash
+source /opt/ros/iron/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 if [ -z "$BAG_ANALYSIS_BAG_NAME" ]; then

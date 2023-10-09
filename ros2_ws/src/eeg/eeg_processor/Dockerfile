@@ -1,16 +1,20 @@
-FROM osrf/ros:humble-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
+
+# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 
 WORKDIR /build
 
 RUN apt-get update
-RUN apt-get install -y dos2unix wget python3-pip
-
-# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get install -y \
+    dos2unix \
+    wget \
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp
 
 # PsychoPy and its dependencies
 RUN apt-get install -y libgtk-3-dev
@@ -26,6 +30,10 @@ ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
 RUN pip3 install git+https://github.com/zubara/mneflow.git
 RUN apt-get install -y python3-tk
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Copy ROS workspace
 
 WORKDIR /app
@@ -37,7 +45,7 @@ COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/humble/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Create a directory for pipeline
 

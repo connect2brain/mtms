@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -6,7 +6,10 @@ SHELL ["/bin/bash", "-c"]
 WORKDIR /build
 
 RUN apt-get update
-RUN apt-get install wget unzip
+RUN apt-get install -y \
+    wget \
+    unzip \
+    ros-iron-rmw-cyclonedds-cpp
 
 # FPGA dependencies, instructions from https://www.ni.com/fi-fi/support/documentation/supplemental/18/downloading-and-installing-ni-driver-software-on-linux-desktop.html
 RUN wget https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2022Q2/NILinux2022Q2DeviceDrivers.zip
@@ -28,6 +31,10 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 # Copy ROS workspace
 
 WORKDIR /app
@@ -38,7 +45,7 @@ COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interf
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/iron/setup.bash && \
     colcon build
 
 # Copy entrypoint

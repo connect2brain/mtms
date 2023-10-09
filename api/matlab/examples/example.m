@@ -16,6 +16,10 @@ wait_for_completion = true;
 api.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
 
 
+%% Allow stimulation before sending a pulse.
+
+api.allow_stimulation(true);
+
 %% Send pulse on channel 1, using the default waveform.
 
 waveform = api.get_default_waveform(channel);
@@ -62,6 +66,8 @@ custom_waveform = api.create_waveform(phases, durations_in_ticks);
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
+emg_channel = 1;
+
 mep_start_time = 0.02;  % in ms, after the stimulation pulse
 mep_end_time = 0.04;  % in ms
 preactivation_check_enabled = true;
@@ -69,11 +75,12 @@ preactivation_start_time = -0.02;  % in ms, minus sign indicates that the window
 preactivation_end_time = -0.01;
 preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
-mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
+mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-emg_channel = 1;
-[amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
+[mep, errors] = api.analyze_mep(time, mep_configuration);
 
+amplitude = mep.amplitude;
+latency = mep.latency;
 
 %% Targeting
 
@@ -121,6 +128,8 @@ api.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
+emg_channel = 1;
+
 mep_start_time = 0.02;  % in ms, after the stimulation pulse
 mep_end_time = 0.04;  % in ms
 preactivation_check_enabled = true;
@@ -128,11 +137,12 @@ preactivation_start_time = -0.02;  % in ms, minus sign indicates that the window
 preactivation_end_time = -0.01;
 preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
-mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
+mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-emg_channel = 1;
-[amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
+[mep, errors] = api.analyze_mep(time, mep_configuration);
 
+amplitude = mep.amplitude;
+latency = mep.latency;
 
 %% Restart session
 

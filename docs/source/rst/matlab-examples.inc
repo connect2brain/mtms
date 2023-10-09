@@ -13,7 +13,7 @@ Execute single events
 
 .. rubric:: Charge channel 1 to 20 V
 .. code-block:: matlab
-    
+
     channel = 1;
     target_voltage = 20;
     execution_condition = api.execution_conditions.IMMEDIATE;
@@ -25,11 +25,11 @@ Execute single events
 
 .. rubric:: Send pulse on channel 1, using the default waveform
 .. code-block:: matlab
-            
+
     waveform = api.get_default_waveform(channel);
     reverse_polarity = false;
 
-    api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);       
+    api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
 
 .. rubric:: Discharge channel 1 completely
 .. code-block:: matlab
@@ -69,6 +69,8 @@ Send pulse on channel 1 and analyze MEP.
 .. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
 .. code-block:: matlab
 
+    emg_channel = 1;
+
     mep_start_time = 0.02;  % in ms, after the stimulation pulse
     mep_end_time = 0.04;  % in ms
     preactivation_check_enabled = true;
@@ -76,10 +78,12 @@ Send pulse on channel 1 and analyze MEP.
     preactivation_end_time = -0.01;
     preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
-    mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
+    mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-    emg_channel = 1;
-    [amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);
+    [mep, errors] = api.analyze_mep(time, mep_configuration);
+
+    amplitude = mep.amplitude;
+    latency = mep.latency;
 
 
 Targeting
@@ -93,7 +97,7 @@ Targeting
     rotation_angle = 90;  % deg
     intensity = 20;  % V/m
 
-    [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);    
+    [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
 
 .. rubric:: Get maximum intensity
 .. code-block:: matlab
@@ -144,6 +148,8 @@ Targeting combined with MEP analysis
 .. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
 .. code-block:: matlab
 
+    emg_channel = 1;
+
     mep_start_time = 0.02;  % in ms, after the stimulation pulse
     mep_end_time = 0.04;  % in ms
     preactivation_check_enabled = true;
@@ -151,10 +157,12 @@ Targeting combined with MEP analysis
     preactivation_end_time = -0.01;
     preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
-    mep_configuration = api.create_mep_configuration(mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
+    mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-    emg_channel = 1;
-    [amplitude, latency, errors] = api.analyze_mep(emg_channel, time, mep_configuration);    
+    [mep, errors] = api.analyze_mep(time, mep_configuration);
+
+    amplitude = mep.amplitude;
+    latency = mep.latency;
 
 
 Restart session
@@ -170,11 +178,11 @@ Stop device
 ~~~~~~~~~~~
 
 .. code-block:: matlab
-    
+
     api.stop_device()
 
 
 End-to-end experiment
 ~~~~~~~~~~~~~~~~~~~~~
 
-    TODO: Nothing here at the moment.    
+    TODO: Nothing here at the moment.

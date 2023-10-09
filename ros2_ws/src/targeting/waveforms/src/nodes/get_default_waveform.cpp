@@ -31,7 +31,7 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("get_default_waveform"), "Request received: Default waveform for channel %d", channel);
 
-      if (channel < 1 || channel > N_CHANNELS) {
+      if (channel >= N_CHANNELS) {
         RCLCPP_WARN(rclcpp::get_logger("get_default_waveform"), "Invalid channel: %d.", channel);
 
         response->success = false;
@@ -43,7 +43,7 @@ public:
         piece.waveform_phase.value = DEFAULT_WAVEFORM[i][0];
 
         if (i == std::size(DEFAULT_WAVEFORM) - 1) {
-          piece.duration_in_ticks = LAST_WAVEFORM_PHASE_DURATION[channel - 1];
+          piece.duration_in_ticks = LAST_WAVEFORM_PHASE_DURATION[channel];
         } else {
           piece.duration_in_ticks = DEFAULT_WAVEFORM[i][1];
         }

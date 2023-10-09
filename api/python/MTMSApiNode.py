@@ -3,7 +3,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession
+from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession, AllowStimulation
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
@@ -13,6 +13,8 @@ from mep_interfaces.action import AnalyzeMep
 
 from targeting_interfaces.srv import GetChannelVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
 
+from stimulation_interfaces.srv import IsStimulationAllowed
+
 from MTMSApiPrinter import MTMSApiPrinter
 
 class MTMSApiNode(Node):
@@ -21,6 +23,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
     ROS_SERVICE_START_SESSION = ('/mtms_device/start_session', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/mtms_device/stop_session', StopSession)
+
+    ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
 
     ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
@@ -33,6 +37,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
+
+    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/stimulation/allowed', IsStimulationAllowed)
 
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
@@ -49,10 +55,12 @@ class MTMSApiNode(Node):
         ROS_SERVICE_STOP_DEVICE,
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
+        ROS_SERVICE_ALLOW_STIMULATION,
         ROS_SERVICE_GET_CHANNEL_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
+        ROS_SERVICE_IS_STIMULATION_ALLOWED,
     )
 
     ROS_ACTIONS = (
@@ -146,6 +154,16 @@ class MTMSApiNode(Node):
         return self.call_service(client, request)
 
     # Events
+
+    def allow_stimulation(self, allow_stimulation):
+        topic, service_type = self.ROS_SERVICE_ALLOW_STIMULATION
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        request.allow_stimulation = allow_stimulation
+
+        return self.call_service(client, request)
 
     def send_event_trigger(self):
         topic, message_type = self.ROS_MESSAGE_SEND_EVENT_TRIGGER
@@ -295,9 +313,9 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.displacement_x = displacement_x
-        request.displacement_y = displacement_y
-        request.rotation_angle = rotation_angle
+        request.target.displacement_x = displacement_x
+        request.target.displacement_y = displacement_y
+        request.target.rotation_angle = rotation_angle
         request.intensity = intensity
 
         value = self.call_service(client, request)
@@ -311,9 +329,9 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.displacement_x = displacement_x
-        request.displacement_y = displacement_y
-        request.rotation_angle = rotation_angle
+        request.target.displacement_x = displacement_x
+        request.target.displacement_y = displacement_y
+        request.target.rotation_angle = rotation_angle
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement or rotation angle."
@@ -346,9 +364,22 @@ class MTMSApiNode(Node):
 
         return value.waveform
 
+    # Stimulation
+
+    def is_stimulation_allowed(self):
+        topic, service_type = self.ROS_SERVICE_IS_STIMULATION_ALLOWED
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        value = self.call_service(client, request)
+        assert value.success, "Failed request."
+
+        return value.stimulation_allowed
+
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel, mep_configuration):
+    def analyze_mep(self, time, mep_configuration):
         topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
         client = self.ros_action_clients[topic]
@@ -357,7 +388,6 @@ class MTMSApiNode(Node):
         goal = action_type.Goal()
 
         goal.time = time
-        goal.emg_channel = emg_channel
         goal.mep_configuration = mep_configuration
 
         # Send goal to ROS action.
@@ -371,6 +401,12 @@ class MTMSApiNode(Node):
 
         # Get result from ROS action.
         get_result_future = goal_handle.get_result_async()
+
+        # XXX: Because of the custom SIGINT handler (defined in the constructor of MTMSApi class),
+        #   waiting for the MEP here cannot be interrupted by Ctrl+C. It turned out to be hard to
+        #   keep ROS in a working state after Ctrl+C without overriding the default SIGINT handler,
+        #   hence the current solution. Maybe this could be looked further into at some point.
+        #
         rclpy.spin_until_future_complete(self, get_result_future)
 
         result = get_result_future.result()
@@ -378,7 +414,7 @@ class MTMSApiNode(Node):
             self.get_logger().info('Analyze MEP result failed.')
             return None, None
 
-        return result.result.amplitude, result.result.latency, result.result.errors
+        return result.result.mep, result.result.errors
 
     # System state
 

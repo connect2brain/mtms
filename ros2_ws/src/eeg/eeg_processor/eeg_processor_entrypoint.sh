@@ -6,7 +6,7 @@ if [ "$EEG_PROCESSOR_ENABLE" != "true" ]; then
   exit 1
 fi
 
-source /opt/ros/galactic/setup.bash
+source /opt/ros/iron/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 ros2 launch eeg_processor eeg_processor.launch.py \

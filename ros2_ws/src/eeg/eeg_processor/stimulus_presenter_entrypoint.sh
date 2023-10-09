@@ -6,7 +6,7 @@ if [ "$STIMULUS_PRESENTER_ENABLE" != "true" ]; then
   exit 1
 fi
 
-source /opt/ros/galactic/setup.bash
+source /opt/ros/iron/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 ros2 launch eeg_processor stimulus_presenter.launch.py \

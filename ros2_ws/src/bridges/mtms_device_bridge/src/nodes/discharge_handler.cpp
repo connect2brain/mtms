@@ -33,7 +33,10 @@ public:
       double_t execution_time = event_info.execution_time;
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
 
-      serialized_message.init(channel);
+      /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
+           indexing here. It would rather be the responsibility of FPGA to do the conversion;
+           move the logic there eventually. */
+      serialized_message.init(channel + 1);
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(execution_time_ticks);
@@ -78,10 +81,6 @@ private:
 };
 
 int main(int argc, char **argv) {
-  if (!init_fpga()) {
-    return 1;
-  }
-
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
@@ -99,8 +98,15 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Discharge handler ready.");
 
-  rclcpp::spin(node);
-  rclcpp::shutdown();
+  init_fpga();
 
+  while (rclcpp::ok()) {
+    if (!is_fpga_ok()) {
+      close_fpga();
+      init_fpga();
+    }
+    rclcpp::spin_some(node);
+  }
   close_fpga();
+  rclcpp::shutdown();
 }

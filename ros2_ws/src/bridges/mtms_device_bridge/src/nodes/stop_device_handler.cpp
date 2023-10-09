@@ -28,10 +28,6 @@ private:
 };
 
 int main(int argc, char **argv) {
-  if (!init_fpga()) {
-    return 1;
-  }
-
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
@@ -49,8 +45,15 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("stop_device_handler"), "Stop device handler ready.");
 
-  rclcpp::spin(node);
-  rclcpp::shutdown();
+  init_fpga();
 
+  while (rclcpp::ok()) {
+    if (!is_fpga_ok()) {
+      close_fpga();
+      init_fpga();
+    }
+    rclcpp::spin_some(node);
+  }
   close_fpga();
+  rclcpp::shutdown();
 }

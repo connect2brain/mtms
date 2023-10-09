@@ -1,54 +1,22 @@
 version: '3.5'
 
+# Includes a service for every service listed in docker-compose.core.yml and docker-compose.project.yml
+#   in repository root; we do not want to include development-level services (defined in docker-compose.dev.yml) in tests.
 services:
-  planner:
+  ## Core services (docker-compose.core.yml):
+  front:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/ui/planner/Dockerfile
+      dockerfile: front/Dockerfile
 
-  pulse_sequence_controller:
+  eeg_bridge:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/ui/pulse_sequence_controller/Dockerfile
-
-  neuronavigation:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
-
-  efield:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/targeting/efield/Dockerfile
-
-  pedal_listener:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
-
-  trigger_controller:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
-
-  eeg_simulator:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
+      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
 
   eeg_gatherer:
     networks:
@@ -57,35 +25,19 @@ services:
       context: ..
       dockerfile: ros2_ws/src/eeg/eeg_gatherer/Dockerfile
 
-  eeg_processor:
+  experiment_performer:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+      dockerfile: ros2_ws/src/experiment/experiment_performer/Dockerfile
 
-  eeg_bridge:
-    networks:
-      - cinetwork
-    ports:
-      - "50000:50000/udp"
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/bridges/eeg_bridge/Dockerfile
-
-  mtms_device_bridge:
+  id_assigner:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/bridges/mtms_device_bridge/Dockerfile
-
-  eeg_batcher:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/eeg/eeg_batcher/Dockerfile
+      dockerfile: ros2_ws/src/other/id_assigner/Dockerfile
 
   mep_analyzer:
     networks:
@@ -94,12 +46,33 @@ services:
       context: ..
       dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
 
-  optitrack_bridge:
+  pedal_listener:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
+      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
+
+  rosbridge:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
+
+  stimulus_performer:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/experiment/stimulus_performer/Dockerfile
+
+  stimulus_allower:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
 
   targeting:
     networks:
@@ -108,12 +81,70 @@ services:
       context: ..
       dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
 
+  trial_performer:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/experiment/trial_performer/Dockerfile
+
+  trial_validator:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/experiment/trial_validator/Dockerfile
+
+  voltage_setter:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/mtms_device/voltage_setter/Dockerfile
+
   waveforms:
     networks:
       - cinetwork
     build:
       context: ..
       dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
+
+  ## Project-specific services (docker-compose.project.yml):
+  bag_exporter:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
+
+  bag_recorder:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
+
+  # Only include EEG processor here, as EEG preprocessor and stimulus presenter use the same Dockerfile as EEG processor.
+  eeg_processor:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/eeg/eeg_processor/Dockerfile
+
+  eeg_simulator:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
+
+  trial_logger:
+    networks:
+      - cinetwork
+    build:
+      context: ..
+      dockerfile: ros2_ws/src/experiment/trial_logger/Dockerfile
 
 networks:
   cinetwork:
