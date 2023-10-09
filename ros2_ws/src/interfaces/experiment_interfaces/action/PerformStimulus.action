@@ -1,0 +1,5 @@
+Stimulus stimulus
+float64 time
+---
+StimulusResult stimulus_result
+---

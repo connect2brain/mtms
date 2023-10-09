@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Ensure the script is run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run the script as root or use sudo."
+    exit 1
+fi
+
+# Copy service starting the mTMS core containers
+cp systemd/mtms-core-containers.service /etc/systemd/system
+
+# Copy service starting the mTMS device bridge
+cp systemd/mtms-device-bridge.service /etc/systemd/system
+
+# Reload systemd to recognize the new services
+systemctl daemon-reload
+
+# Enable service starting the mTMS core containers.
+systemctl enable mtms-core-containers.service
+
+# Enable service starting the mTMS device bridge
+systemctl enable mtms-device-bridge.service

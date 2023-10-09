@@ -30,7 +30,7 @@ There is no need to install the real environment for development, as it cannot b
 
 ## Sourcing ROS
 After you have installed ROS, you need to also source ROS each time you want to use it. Otherwise, ROS is not on the path, and it cannot be used. Moreover, you also need to source our ROS nodes. It might be useful to either alias these commands, or to add them to .bashrc.
-1. `source /opt/ros/humble/setup.bash`
+1. `source /opt/ros/iron/setup.bash`
 2. `source /path/to/mtms/ros2_ws/install/local_setup.bash`
 
 

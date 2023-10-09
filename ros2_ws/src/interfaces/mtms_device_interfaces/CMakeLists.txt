@@ -38,7 +38,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/StartSession.srv"
         "srv/StopSession.srv"
 
+        "srv/AllowStimulation.srv"
+
         "srv/SendSettings.srv"
+
+        "action/SetVoltages.action"
         )
 
 ament_package()

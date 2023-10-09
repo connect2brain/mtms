@@ -58,6 +58,7 @@ classdef MTMSApiEnums < handle
                 {pulse_error.TOO_MANY_PULSES, "Too many pulses", "fail"},
                 {pulse_error.OVERLAPPING_WITH_CHARGING, "Overlapping with charging", "fail"},
                 {pulse_error.OVERLAPPING_WITH_DISCHARGING, "Overlapping with discharging", "fail"},
+                {pulse_error.NOT_ALLOWED, "Not allowed", "fail"},
                 {pulse_error.TRIGGERING_FAILURE, "Triggering failure", "fail"},
                 {pulse_error.UNKNOWN_ERROR, "Unknown error", "fail"},
             };

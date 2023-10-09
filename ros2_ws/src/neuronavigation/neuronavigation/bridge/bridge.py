@@ -2,12 +2,13 @@
 
 import ctypes
 import platform
+import sys
 from threading import Thread
 
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, QoSProfile
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 from geometry_msgs.msg import Point
@@ -38,9 +39,21 @@ class NeuronavigationNode(Node):
     _COLOR_NON_TARGET = (230, 98, 48)  # hex: #E66230, $non-target-color
     _COLOR_SELECTED = (112, 112, 112)  # hex: #707070, $darker-gray
 
+    # HACK: Needs to match the corresponding value in stimulation allower ROS node.
+    COIL_AT_TARGET_DEADLINE_S = 0.6
+
     def __init__(self):
         super().__init__("neuronavigation")
 
+        # ROS parameters
+        descriptor = ParameterDescriptor(
+            name='Enable or disable electric field',
+            type=ParameterType.PARAMETER_BOOL,
+        )
+        self.declare_parameter('electric_field_enable', descriptor=descriptor)
+        self.electric_field_enable = self.get_parameter('electric_field_enable').value
+
+        # Create publishers, subscribers, and services
         qos_persist_latest = QoSProfile(
             depth=1,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
@@ -49,8 +62,26 @@ class NeuronavigationNode(Node):
         callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
-        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", 10, callback_group=callback_group)
 
+        # Create publisher for neuronavigation started.
+        self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started", qos_persist_latest, callback_group=callback_group)
+
+        # Create publisher for 'target mode' message.
+        self._target_mode_publisher = self.create_publisher(Bool, "neuronavigation/target_mode/enabled", qos_persist_latest, callback_group=callback_group)
+
+        # Create publisher for 'coil at target' message.
+        deadline_coil_at_target = rclpy.duration.Duration(seconds=self.COIL_AT_TARGET_DEADLINE_S)
+        qos_coil_at_target = QoSProfile(
+            depth=1,
+            history=HistoryPolicy.KEEP_LAST,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            deadline=deadline_coil_at_target,
+            lifespan=deadline_coil_at_target,
+        )
+        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", qos_coil_at_target, callback_group=callback_group)
+
+        # Create other publishers.
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest, callback_group=callback_group)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest, callback_group=callback_group)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
@@ -64,14 +95,7 @@ class NeuronavigationNode(Node):
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
-        # descriptor = ParameterDescriptor(
-        #     name='EField',
-        #     type=ParameterType.PARAMETER_BOOL,
-        # )
-        # self.declare_parameter('Activate_EField', descriptor=descriptor)
-        # self.Activate_EField = self.get_parameter('Activate_EField').value
-        self.Activate_EField = True
-        if self.Activate_EField:
+        if self.electric_field_enable:
             self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/init not available, waiting...')
@@ -164,10 +188,22 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/focus")
         self._focus_publisher.publish(msg)
 
+    def update_neuronavigation_started(self, started):
+        msg = Bool()
+        msg.data = started
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/started".format(started))
+        self._neuronavigation_started_publisher.publish(msg)
+
+    def update_target_mode(self, enabled):
+        msg = Bool()
+        msg.data = enabled
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/target_mode/enabled".format(enabled))
+        self._target_mode_publisher.publish(msg)
+
     def update_coil_at_target(self, state):
         msg = Bool()
         msg.data = state
-        self.get_logger().info("Publishing to the topic /neuronavigation/coil_at_target")
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
         self._coil_at_target_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
@@ -278,6 +314,16 @@ class Connection(Thread):
             orientation=orientation,
         )
 
+    def update_neuronavigation_started(self, started):
+        self.node.update_neuronavigation_started(
+            started=started,
+        )
+
+    def update_target_mode(self, enabled):
+        self.node.update_target_mode(
+            enabled=enabled,
+        )
+
     def update_coil_at_target(self, state):
         self.node.update_coil_at_target(
             state=state,
@@ -352,6 +398,8 @@ def main():
     #   therefore, automatically discovered. Settle for this for now.
     remote_host = 'http://localhost:5000'
 
+    # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
+    sys.argv = [sys.argv[0]]
     app.main(connection=connection, remote_host=remote_host)
 
 

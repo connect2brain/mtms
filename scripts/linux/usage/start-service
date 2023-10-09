@@ -16,9 +16,9 @@ fi
 # Allow Docker containers to connect to the host X server.
 xhost +local:docker
 
-# Set ENV_FILE to point to .env of the project
-export ENV_FILE=$MTMS_ROOT/projects/$PROJECT_NAME/.env
+# Set PROJECT_ENV_FILE to point to .env of the project
+export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
 
 cd $MTMS_ROOT
-docker-compose build $SERVICE_NAME
-docker-compose up $SERVICE_NAME
+docker-compose -f docker-compose.project.yml build $SERVICE_NAME
+docker-compose -f docker-compose.project.yml up $SERVICE_NAME

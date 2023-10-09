@@ -86,9 +86,9 @@ public:
     auto get_channel_voltages_callback = [this](
         const std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Request> request,
         std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Response> response) -> void {
-      int8_t displacement_x = request->displacement_x;
-      int8_t displacement_y = request->displacement_y;
-      uint16_t rotation_angle = request->rotation_angle;
+      int8_t displacement_x = request->target.displacement_x;
+      int8_t displacement_y = request->target.displacement_y;
+      uint16_t rotation_angle = request->target.rotation_angle;
       uint8_t intensity = request->intensity;
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for channel voltages: (x, y, angle, intensity) = (%d, %d, %d, %d)",
@@ -131,9 +131,9 @@ public:
     auto get_maximum_intensity_callback = [this](
         const std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Request> request,
         std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Response> response) -> void {
-      int8_t displacement_x = request->displacement_x;
-      int8_t displacement_y = request->displacement_y;
-      uint16_t rotation_angle = request->rotation_angle;
+      int8_t displacement_x = request->target.displacement_x;
+      int8_t displacement_y = request->target.displacement_y;
+      uint16_t rotation_angle = request->target.rotation_angle;
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d)",
         displacement_x, displacement_y, rotation_angle);

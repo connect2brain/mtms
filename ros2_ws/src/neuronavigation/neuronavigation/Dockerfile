@@ -1,10 +1,15 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
-# Install dependencies for InVesalius
+# Install general dependencies
 
 RUN apt-get update
+
+RUN apt-get install -y \
+    ros-iron-rmw-cyclonedds-cpp
+
+# Install dependencies for InVesalius
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y \
@@ -37,6 +42,10 @@ ENV LC_ALL en_US.UTF-8
 
 RUN pip install vtk==9.1.0 pyacvd==0.2.7 pypolaris==0.0.6
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
 ## InVesalius
 
 WORKDIR /app
@@ -59,7 +68,7 @@ COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/ne
 COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
 
 RUN cd ros2_ws && \
-    source /opt/ros/galactic/setup.bash && \
+    source /opt/ros/iron/setup.bash && \
     colcon build --packages-select neuronavigation_interfaces ui_interfaces
 
 # Copy rest of InVesalius
@@ -71,7 +80,7 @@ COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neurona
 COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
 
 RUN cd ros2_ws && \
-    source /opt/ros/galactic/setup.bash && \
+    source /opt/ros/iron/setup.bash && \
     colcon build --packages-select neuronavigation
 
 COPY ros2_ws/src/neuronavigation/neuronavigation/ros_entrypoint.sh .

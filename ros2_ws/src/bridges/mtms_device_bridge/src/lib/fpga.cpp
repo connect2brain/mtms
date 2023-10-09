@@ -5,20 +5,16 @@
 
 NiFpga_Session session;
 NiFpga_Status status;
-bool fpga_opened = false;
 
-bool init_fpga() {
-  /* must be called before any other calls */
+bool try_init_fpga() {
+  /* Must be called before any other calls. */
   status = NiFpga_Initialize();
   if (NiFpga_IsError(status)) {
     RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA could not be initialized, exiting.");
     return false;
   }
 
-  /* opens a session, downloads the bitstream, and runs the FPGA */
-
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Opening FPGA.");
-
+  /* Opens a session, downloads the bitstream, and runs the FPGA. */
   auto bitfile = std::getenv("BITFILE");
   auto bitfile_directory = std::getenv("BITFILE_DIRECTORY");
   auto bitfile_signature = std::getenv("BITFILE_SIGNATURE");
@@ -52,36 +48,54 @@ bool init_fpga() {
       &session));
 
   if (NiFpga_IsError(status)) {
-    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded, exiting. Status: %d", status);
-    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "RESOURCE environment variable set to: %s", resource_str.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA bitfile could not be loaded (resource: %s), exiting. Status: %d",
+      resource_str.c_str(), status);
 
     return false;
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "FPGA initialized.");
+  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Initialization successful.");
+  return true;
+}
 
-  fpga_opened = true;
+void init_fpga() {
+  while (true) {
+    if (try_init_fpga()) {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
+  /* Sleep for a while longer to ensure that there is enough time for 'Run FPGA' node to start the FPGA program. */
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+}
+
+bool is_fpga_ok() {
+  NiFpga_Status status;
+  NiFpga_FpgaViState state;
+  uint32_t stateValue;
+
+  status = NiFpga_GetFpgaViState(session, &stateValue);
+
+  if (status != NiFpga_Status_Success) {
+      RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"), "Error getting FPGA VI state: %d", status);
+      return false;
+  }
+
+  state = (NiFpga_FpgaViState)stateValue;
+  if (state != NiFpga_FpgaViState_Running) {
+      return false;
+  }
   return true;
 }
 
 bool close_fpga() {
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Closing FPGA.");
+  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Closing FPGA connection.");
 
-  if (fpga_opened) {
-    /* must close if we successfully opened */
-    NiFpga_MergeStatus(&status, NiFpga_Close(session, 0));
-  }
+  /* must close if we successfully opened */
+  NiFpga_MergeStatus(&status, NiFpga_Close(session, 0));
 
   /* must be called after all other calls */
   NiFpga_MergeStatus(&status, NiFpga_Finalize());
-
-  return true;
-}
-
-bool run_fpga() {
-  RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Running FPGA.");
-
-  NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
 
   return true;
 }
