@@ -283,7 +283,7 @@ class ExperimentPerformerNode(Node):
 
         return result
 
-    def perform_experiment_service(self, request, response):
+    def perform_experiment_service_handler(self, request, response):
         metadata = request.metadata
         trials = request.trials
         intertrial_interval = request.intertrial_interval
@@ -332,10 +332,10 @@ class ExperimentPerformerNode(Node):
             if self.validate_trial(trial):
                 valid_trials.append(trial)
 
-        self.logger.info('{}: {} out of {} trials are valid.'.format(
+        self.logger.info('{}: {}/{} of the trials are valid.'.format(
             goal_id,
-            len(trials),
             len(valid_trials),
+            len(trials),
         ))
         return valid_trials
 
@@ -353,6 +353,7 @@ class ExperimentPerformerNode(Node):
         num_of_valid_trials = len(valid_trials)
 
         response.num_of_valid_trials = num_of_valid_trials
+        response.success = True
 
         return response
 
