@@ -47,7 +47,7 @@ const IntensityLabel = styled.span`
 export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
     min, max, showMaximumIntensity, maximumIntensity, onValueChange }) => {
 
-  const [selectedIntensity, setSelectedIntensity] = useState<number>((min + max) / 2)
+  const [selectedIntensity, setSelectedIntensity] = useState<number>(40)
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value)
