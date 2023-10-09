@@ -6,7 +6,7 @@ import numpy as np
 from experiment_interfaces.msg import ExperimentMetadata, IntertrialInterval, \
     Trial, TrialConfig, TrialResult, TriggerConfig
 from experiment_interfaces.action import PerformExperiment, PerformTrial
-from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PerformExperimentService, PauseExperiment, ResumeExperiment, CancelExperiment
+from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PerformExperimentService, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
 from mep_interfaces.msg import Mep
 
@@ -105,6 +105,12 @@ class ExperimentPerformerNode(Node):
         self.validate_trial_client = self.create_client(ValidateTrial, '/trial/validate', callback_group=self.callback_group)
         while not self.validate_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /trial/validate not available, waiting...')
+
+        # Create service client for logging a trial.
+
+        self.log_trial_client = self.create_client(LogTrial, '/trial/log', callback_group=self.callback_group)
+        while not self.log_trial_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /trial/log not available, waiting...')
 
         # Create subscriber for system state.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
@@ -278,6 +284,18 @@ class ExperimentPerformerNode(Node):
         assert response.success, "Validating trial was not successful."
 
         return response.is_trial_valid
+
+    def log_trial(self, metadata, trial, trial_index, trial_result):
+        request = LogTrial.Request()
+
+        request.metadata = metadata
+        request.trial = trial
+        request.trial_index = trial_index
+        request.trial_result = trial_result
+
+        response = self.async_service_call(self.log_trial_client, request)
+
+        assert response.success, "Logging trial was not successful."
 
     # Performing experiment
 
@@ -483,7 +501,7 @@ class ExperimentPerformerNode(Node):
             trial_results = []
             success = False
 
-            return trial_result, success
+            return trial_results, success
 
         num_of_valid_trials = len(valid_trials)
         trial_results = []
@@ -499,9 +517,10 @@ class ExperimentPerformerNode(Node):
 
         for i in range(num_of_valid_trials):
             trial = valid_trials[i]
+            trial_index = i + 1
 
             # The starting time of the first trial is handled differently, hence the check.
-            is_first_trial = i == 0
+            is_first_trial = trial_index == 1
 
             trial_result = self.perform_trial(
                 goal_id=goal_id,
@@ -518,6 +537,13 @@ class ExperimentPerformerNode(Node):
                 i + 1,
                 num_of_valid_trials
             ))
+
+            self.log_trial(
+                metadata=metadata,
+                trial=trial,
+                trial_index=trial_index,
+                trial_result=trial_result,
+            )
 
             time.sleep(0.1)
 
