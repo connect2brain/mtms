@@ -13,7 +13,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
-import { getMaximumIntensity, countValidTrials, performExperiment } from 'services/ros'
+import { getMaximumIntensity, countValidTrials, performExperiment, pauseExperiment, resumeExperiment } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -297,7 +297,7 @@ export const ExperimentView = () => {
     setStartButtonState(StartButtonState.PerformingExperiment)
 
     const experiment: Experiment = formExperiment()
-    performExperiment(experiment, (trial_results) => {
+    performExperiment(experiment, (trial_results, success) => {
       console.log(trial_results)
       setStartButtonState(StartButtonState.ReadyForExperiment)
     })
@@ -569,6 +569,21 @@ export const ExperimentView = () => {
     }
   }
 
+  const runStartButtonAction = (startButtonState: StartButtonState) => {
+    switch (startButtonState) {
+      case StartButtonState.UpdatingTrialInfo:
+        break
+      case StartButtonState.ReadyForExperiment:
+        perform()
+        break
+      case StartButtonState.PerformingExperiment:
+        pauseExperiment(() => {
+          console.log('paused')
+        })
+        break
+    }
+  }
+
 
   return (
     <>
@@ -777,7 +792,7 @@ export const ExperimentView = () => {
             </CloseConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
-              onClick={perform}
+              onClick={() => runStartButtonAction(startButtonState)}
               disabled={startButtonState === StartButtonState.UpdatingTrialInfo}
             >
               {startButtonStateToString(startButtonState)}

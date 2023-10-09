@@ -168,7 +168,7 @@ const performExperimentService = new ROSLIB.Service({
 })
 
 export const performExperiment =
-    (experiment: any, callback: (numOfValidTrials: number) => void) => {
+    (experiment: any, callback: (trialResults: any, success: boolean) => void) => {
   const request = new ROSLIB.ServiceRequest(experiment) as any
 
   performExperimentService.callService(
@@ -176,12 +176,65 @@ export const performExperiment =
     (response) => {
       if (!response.success) {
         console.log('ERROR: Failed to perform experiment: success field was false.')
+        callback(response.trial_results, false)
       } else {
-        callback(response.trial_results)
+        callback(response.trial_results, true)
       }
     },
     (error) => {
       console.log('ERROR: Failed to perform experiment, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set up pause experiment service. */
+const pauseExperimentService = new ROSLIB.Service({
+  ros: ros,
+  name: '/experiment/pause',
+  serviceType: 'experiment_interfaces/PauseExperiment',
+})
+
+export const pauseExperiment = (callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({}) as any
+
+  pauseExperimentService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to pause experiment: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to pause experiment, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set up resume experiment service. */
+const resumeExperimentService = new ROSLIB.Service({
+  ros: ros,
+  name: '/experiment/resume',
+  serviceType: 'experiment_interfaces/ResumeExperiment',
+})
+
+export const resumeExperiment = (callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({}) as any
+
+  resumeExperimentService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to resume experiment: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to resume experiment, error:')
       console.log(error)
     },
   )
