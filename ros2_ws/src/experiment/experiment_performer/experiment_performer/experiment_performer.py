@@ -6,7 +6,7 @@ import numpy as np
 from experiment_interfaces.msg import ExperimentMetadata, IntertrialInterval, \
     Trial, TrialConfig, TrialResult, TriggerConfig
 from experiment_interfaces.action import PerformExperiment, PerformTrial
-from experiment_interfaces.srv import ValidateTrial, CountValidTrials
+from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PerformExperimentService
 
 from mep_interfaces.msg import Mep
 
@@ -44,9 +44,21 @@ class ExperimentPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
+        # Create service for performing experiment.
+        #
+        # XXX: Only needed because rosbridge does not support actions, see a more comprehensive comment
+        #   in PerformExperiment.srv.
+
+        self.perform_experiment_service = self.create_service(
+            PerformExperimentService,
+            '/experiment/perform_service',
+            self.perform_experiment_service_handler,
+            callback_group=self.callback_group,
+        )
+
         # Create service for counting valid trials in an experiment.
 
-        self.service = self.create_service(
+        self.count_valid_trials_service = self.create_service(
             CountValidTrials,
             '/experiment/count_valid_trials',
             self.count_valid_trials_callback,
@@ -270,6 +282,49 @@ class ExperimentPerformerNode(Node):
         self.logger.info('{}: Done.'.format(goal_id))
 
         return result
+
+    def perform_experiment_service(self, request, response):
+        metadata = request.metadata
+        trials = request.trials
+        intertrial_interval = request.intertrial_interval
+        wait_for_trigger = request.wait_for_trigger
+        randomize_trials = request.randomize_trials
+
+        # HACK: Service calls are not assigned an ID by ROS, therefore assign a constant ID here.
+        #   It is used only as the prefix for the log messages.
+        #
+        goal_id = "abcd"
+
+        self.logger.info('{}:'.format(goal_id))
+        self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
+
+        # XXX: There should probably be an Experiment message so the request wouldn't have
+        #   to be passed directly.
+        self.log_experiment_config(
+            goal_id=goal_id,
+            experiment=request
+        )
+
+        valid_trials = self.get_valid_trials(
+            goal_id=goal_id,
+            trials=trials,
+        )
+
+        trial_results = self.perform_experiment(
+            goal_id=goal_id,
+            metadata=metadata,
+            valid_trials=valid_trials,
+            intertrial_interval=intertrial_interval,
+            wait_for_trigger=wait_for_trigger,
+            randomize_trials=randomize_trials,
+        )
+
+        response.success = True
+        response.trial_results = trial_results
+
+        self.logger.info('{}: Done.'.format(goal_id))
+
+        return response
 
     def get_valid_trials(self, goal_id, trials):
         valid_trials = []
