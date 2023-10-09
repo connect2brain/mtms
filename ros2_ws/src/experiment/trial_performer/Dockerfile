@@ -14,25 +14,27 @@ RUN apt-get install -y \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/experiment/trial_performer ros2_ws/src/experiment/trial_performer/
-
-COPY ros2_ws/src/interfaces/experiment_interfaces ros2_ws/src/interfaces/experiment_interfaces/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
-COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
-COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
-COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
-
-# Build ROS packages
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
-    colcon build --symlink-install
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
+COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
+
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/experiment/trial_performer src/experiment/trial_performer/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select trial_performer
 
 # Copy entrypoint
+
+WORKDIR /app
 
 COPY ros2_ws/src/experiment/trial_performer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
