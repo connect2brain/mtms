@@ -278,7 +278,7 @@ export const ExperimentView = () => {
   const [itiMax, setItiMax] = useState<number>(4.5)
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
-  const [numOfTrials, setNumOfTrials] = useState<number>(0)
+  const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
 
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
@@ -483,6 +483,10 @@ export const ExperimentView = () => {
   /* Update # of valid trials. */
   useEffect(() => {
     if (selectedPoints.length == 0 || selectedAngles.length == 0) {
+      setNumOfTrials(null)
+      setNumOfValidTrials(null)
+      setDuration(null)
+
       return
     }
     const experiment: Experiment = formExperiment()
@@ -695,7 +699,7 @@ export const ExperimentView = () => {
                 onChange={changeWaitForTrigger}
               />
             </ConfigRow>
-            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials < 2}>
+            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
               <ConfigRow>
                 <ConfigLabel>Interval (s)</ConfigLabel>
               </ConfigRow>
@@ -707,7 +711,7 @@ export const ExperimentView = () => {
                   min={0}
                   step={0.1}
                   onChange={changeItiMin}
-                  disabled={waitForTrigger || numOfTrials < 2}
+                  disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
                 />
               </CloseConfigRow>
               <CloseConfigRow>
@@ -718,7 +722,7 @@ export const ExperimentView = () => {
                     min={0}
                     step={0.1}
                     onChange={changeItiMax}
-                    disabled={waitForTrigger || numOfTrials < 2}
+                    disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
                 />
               </CloseConfigRow>
             </GrayedOutPanel>
@@ -730,7 +734,7 @@ export const ExperimentView = () => {
             </ConfigRow>
             <CloseConfigRow>
               <IndentedLabel>Total:</IndentedLabel>
-              <ConfigLabel>{numOfTrials}</ConfigLabel>
+              <ConfigLabel>{numOfTrials !== null ? numOfTrials : '\u2013'}</ConfigLabel>
             </CloseConfigRow>
             <CloseConfigRow>
               <IndentedLabel>Valid:</IndentedLabel>
@@ -741,7 +745,7 @@ export const ExperimentView = () => {
             </ConfigRow>
             <CloseConfigRow>
               <IndentedLabel>Duration:</IndentedLabel>
-              <ConfigLabel>{duration ? formatDuration(duration) : ''}</ConfigLabel>
+              <ConfigLabel>{duration ? formatDuration(duration) : '\u2013'}</ConfigLabel>
             </CloseConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
