@@ -184,7 +184,7 @@ const TriggerLabel = styled.label`
   display: inline-block;
 `
 
-export const ExperimentControl = () => {
+export const ExperimentView = () => {
   const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
   const [selectedAngles, setSelectedAngles] = useState<number[]>([])
   const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
