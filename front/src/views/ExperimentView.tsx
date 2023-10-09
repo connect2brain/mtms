@@ -279,6 +279,7 @@ export const ExperimentView = () => {
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
   const [numOfTrials, setNumOfTrials] = useState<number>(0)
+  const [duration, setDuration] = useState<number | null>(null)
 
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
@@ -507,6 +508,36 @@ export const ExperimentView = () => {
     }
   }, [selectedAngles, selectedPoints, intensity, numOfRepetitions])
 
+  /* Updates the experiment duration. */
+  useEffect(() => {
+    if (numOfValidTrials === null) {
+      return
+    }
+    const duration = numOfValidTrials * (itiMin + itiMax) / 2
+    setDuration(duration)
+  }, [itiMin, itiMax, numOfValidTrials])
+
+  /* Helper functions */
+  const formatDuration = (duration: number): string => {
+    const hours = Math.floor(duration / 3600)
+    const minutes = Math.floor((duration % 3600) / 60)
+    const seconds = duration % 60
+
+    let result = ''
+
+    if (hours > 0) {
+      result += `${hours} h `
+    }
+    if (minutes > 0) {
+      result += `${minutes} min `
+    }
+    if (seconds > 0 || result === '') {
+      result += `${seconds} s`
+    }
+
+    return result.trim()
+  }
+
   return (
     <>
       <ExperimentMetadata>
@@ -704,6 +735,13 @@ export const ExperimentView = () => {
             <CloseConfigRow>
               <IndentedLabel>Valid:</IndentedLabel>
               <ConfigLabel>{numOfValidTrials !== null ? numOfValidTrials : '\u2013'}</ConfigLabel>
+            </CloseConfigRow>
+            <ConfigRow>
+              <ConfigLabel>Experiment</ConfigLabel>
+            </ConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Duration:</IndentedLabel>
+              <ConfigLabel>{duration ? formatDuration(duration) : ''}</ConfigLabel>
             </CloseConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
