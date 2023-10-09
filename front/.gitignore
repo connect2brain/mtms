@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# We're using Yarn, so avoid tracking npm-related files
+package-lock.json
