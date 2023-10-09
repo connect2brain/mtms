@@ -9,7 +9,7 @@ import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
 import { SystemView } from './SystemView'
-import { ExperimentControl } from './ExperimentControl'
+import { ExperimentView } from './ExperimentView'
 
 export const MultipleViews = () => {
   const [currentView, setCurrentView] = useState('SystemView')
@@ -64,7 +64,7 @@ export const MultipleViews = () => {
         {currentView === 'experiment' && (
           <Wrapper>
             <SmallHeader>Experiment</SmallHeader>
-            <ExperimentControl />
+            <ExperimentView />
           </Wrapper>
         )}
 
