@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
@@ -8,11 +8,16 @@ RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
-    python3-pip
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp
 
 RUN pip install \
     pymongo \
     tornado
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
@@ -23,6 +28,7 @@ COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
+COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
@@ -33,7 +39,7 @@ RUN shopt -s globstar && dos2unix **
 
 # Build ROS packages
 
-RUN source /opt/ros/galactic/setup.bash && \
+RUN source /opt/ros/iron/setup.bash && \
     colcon build
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux

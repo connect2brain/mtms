@@ -1,2 +1,4 @@
+uint8 emg_channel
+
 eeg_interfaces/TimeWindow time_window
 PreactivationCheck preactivation_check

@@ -1,12 +1,13 @@
 """
 This Python module provides an API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform 
+It includes the functionality to start and stop the device, send pulses, charges, and discharges, and to perform
 various analyses of the EEG/EMG data.
 
 It uses the Robot Operating System (ROS2) to interact with the device.
 """
-import time
 import copy
+import signal
+import time
 
 import rclpy
 
@@ -18,7 +19,7 @@ from MTMSApiNode import MTMSApiNode
 class MTMSApi:
     """
     An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
-    """    
+    """
     # TODO: Channel count hardcoded for now.
     N_CHANNELS = 5
 
@@ -42,6 +43,11 @@ class MTMSApi:
         self.node = MTMSApiNode()
         self.event_id = 0
 
+        signal.signal(signal.SIGINT, self.handle_sigint)
+
+    def handle_sigint(self, signum, frame):
+        raise KeyboardInterrupt
+
     # General
 
     def _next_event_id(self):
@@ -57,12 +63,14 @@ class MTMSApi:
 
     def start_device(self):
         """
-        Start the mTMS device, waiting until the device reports its state as operational.
+        Start the mTMS device, waiting until the device reports its state as operational or start-up fails.
 
         Does not require any parameters, and does not return any value.
         """
         self.node.start_device()
-        while self.get_device_state() != DeviceState.OPERATIONAL:
+
+        # If start-up fails, device state will end up as 'Not operational'. Hence, check both conditions.
+        while self.get_device_state() not in [DeviceState.OPERATIONAL, DeviceState.NOT_OPERATIONAL]:
             pass
 
     def stop_device(self):
@@ -73,7 +81,14 @@ class MTMSApi:
         """
         self.node.stop_device()
         while self.get_device_state() != DeviceState.NOT_OPERATIONAL:
-            pass
+            # For safety reasons, be very explicit when stopping session and/or device, which
+            # lowers the capacitor voltages down to zero; we want the operator to know exactly
+            # when it is finished - hence do not allow interrupting waiting for the device to
+            # be stopped using SIGINT.
+            try:
+                pass
+            except KeyboardInterrupt:
+                pass
 
     def start_session(self):
         """
@@ -93,7 +108,14 @@ class MTMSApi:
         """
         self.node.stop_session()
         while self.get_session_state() != SessionState.STOPPED:
-            pass
+            # For safety reasons, be very explicit when stopping session and/or device, which
+            # lowers the capacitor voltages down to zero; we want the operator to know exactly
+            # when it is finished - hence do not allow interrupting waiting for the session to
+            # be stopped using SIGINT.
+            try:
+                pass
+            except KeyboardInterrupt:
+                pass
 
     # Wait
 
@@ -195,7 +217,7 @@ class MTMSApi:
 
     def get_voltage(self, channel):
         """
-        Return the capacitor voltage (V) of the given channel. 
+        Return the capacitor voltage (V) of the given channel.
 
         Parameters
         ----------
@@ -208,11 +230,11 @@ class MTMSApi:
             The capacitor voltage (V) of the specified channel.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].voltage
+        return self.node.system_state.channel_states[channel].voltage
 
     def get_temperature(self, channel):
         """
-        Return the coil temperature of the given channel if a temperature sensor is present, 
+        Return the coil temperature of the given channel if a temperature sensor is present,
         otherwise return None.
 
         Parameters
@@ -226,7 +248,7 @@ class MTMSApi:
             The coil temperature of the specified channel.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].temperature
+        return self.node.system_state.channel_states[channel].temperature
 
     def get_pulse_count(self, channel):
         """
@@ -243,7 +265,7 @@ class MTMSApi:
             The total number of pulses generated.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.channel_states[channel - 1].pulse_count
+        return self.node.system_state.channel_states[channel].pulse_count
 
     def get_time(self):
         """
@@ -277,6 +299,19 @@ class MTMSApi:
         return self.get_session_state() == SessionState.STARTED
 
     # Events
+    def allow_stimulation(self, allow_stimulation=False):
+        """
+        Allow or disallow executing stimulation pulses.
+
+        Parameters
+        ----------
+        allow_stimulation : bool
+            Either True or False. If True, allow executing stimulation pulses.
+        """
+        self.node.allow_stimulation(
+            allow_stimulation=allow_stimulation,
+        )
+
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
@@ -297,7 +332,7 @@ class MTMSApi:
 
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -353,7 +388,7 @@ class MTMSApi:
             The target voltage for charging. Range: 0-1500
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -404,7 +439,7 @@ class MTMSApi:
             The target voltage for the discharge.
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -455,7 +490,7 @@ class MTMSApi:
             The duration of the trigger in microseconds. Defaults to 1e6 (one millisecond).
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -552,7 +587,7 @@ class MTMSApi:
         -------
         array-like
             Channel voltages.
-        """        
+        """
         return self.node.get_channel_voltages(
             displacement_x=displacement_x,
             displacement_y=displacement_y,
@@ -578,12 +613,25 @@ class MTMSApi:
         float
             The maximum intensity.
         """
-        
+
         return self.node.get_maximum_intensity(
             displacement_x=displacement_x,
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
         )
+
+    # Stimulation
+
+    def is_stimulation_allowed(self):
+        """
+        Return True if stimulation is allowed, otherwise False.
+
+        Returns
+        -------
+        bool
+            True if stimulation is allowed, otherwise False.
+        """
+        return self.node.is_stimulation_allowed()
 
     # Compound events
 
@@ -608,9 +656,8 @@ class MTMSApi:
             len(target_voltages), self.N_CHANNELS)
 
         ids = []
-        for i in range(self.N_CHANNELS):
-            target_voltage = target_voltages[i]
-            channel = i + 1
+        for channel in range(self.N_CHANNELS):
+            target_voltage = target_voltages[channel]
 
             id = self.send_charge_or_discharge(
                 execution_condition=ExecutionCondition.IMMEDIATE,
@@ -673,9 +720,8 @@ class MTMSApi:
             len(reverse_polarities), self.N_CHANNELS)
 
         ids = []
-        for i in range(self.N_CHANNELS):
-            reverse_polarity = reverse_polarities[i]
-            channel = i + 1
+        for channel in range(self.N_CHANNELS):
+            reverse_polarity = reverse_polarities[channel]
             waveform = self.get_default_waveform(channel=channel)
 
             id = self.send_pulse(
@@ -732,7 +778,7 @@ class MTMSApi:
             Target voltage for the channel.
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
-            
+
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
             * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
@@ -766,7 +812,7 @@ class MTMSApi:
 
     # MEP analysis
 
-    def analyze_mep(self, time, emg_channel, mep_configuration):
+    def analyze_mep(self, time, mep_configuration):
         """
         Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
 
@@ -774,31 +820,28 @@ class MTMSApi:
         ----------
         time : float
             The time at which MEP analysis begins.
-        emg_channel : int
-            Channel number for the EMG.
         mep_configuration : object
             Configuration object for the MEP.
 
         Returns
         -------
         tuple
-            A tuple containing the amplitude, latency, and any errors encountered during the analysis.
+            A tuple containing the MEP message, consisting of the fields amplitude and latency, and any errors encountered during the analysis.
         """
-        amplitude, latency, errors = self.node.analyze_mep(
+        mep, errors = self.node.analyze_mep(
             time=time,
-            emg_channel=emg_channel,
             mep_configuration=mep_configuration,
         )
 
         # HACK: ROS2 doesn't support NaN values, therefore they are encoded as 0.0 values. Do the decoding
         #   here. Maybe it would better to use non-zero errors instead as criterion for returning Nones?
         #
-        if amplitude == 0.0:
-            amplitude = None
-        if latency == 0.0:
-            latency = None
+        if mep.amplitude == 0.0:
+            mep.amplitude = None
+        if mep.latency == 0.0:
+            mep.latency = None
 
-        return amplitude, latency, errors
+        return mep, errors
 
     # Other
 

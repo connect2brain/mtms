@@ -4,8 +4,8 @@
 
 1. Install MATLAB
 2. Install ROS Toolbox for MATLAB
-3. Add `/home/mtms/workspace/mtms/api/matlab` to the path in MATLAB (change path according to your setup).
-4. Run `ros2RegisterMessages('/home/mtms/workspace/mtms/api/matlab')` (change path according to your setup).
+3. Add `/home/mtms/mtms/api/matlab` to the path in MATLAB (change path according to your setup).
+4. Run `ros2RegisterMessages('/home/mtms/mtms/api/matlab')` (change path according to your setup).
 5. Check using `ros2 msg list` that the ROS messages are registered. There should be mTMS-specific message types such as ones starting with `mtms` string.
 
 ## Using API
@@ -44,7 +44,7 @@ is to use Anaconda or to build it from the source code.
 libraries.
 4. Run `!which python3.9`.
 5. Run `pyenv('Version', '<the result from previous command>')`.
-6. Run `ros2genmsg('/home/mtms/workspace/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')` (change path according to your setup).
+6. Run `ros2genmsg('/home/mtms/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')` (change path according to your setup).
 7. Move `matlab_msg_gen.zip` to `api/matlab` directory in mTMS repository, replace the existing file.
 8. Commit the updated ZIP file and push.
 
@@ -64,10 +64,12 @@ sudo make install
 LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 matlab
 ```
 
+NOTE: The instructions below have been tested, and they work in Aalto mTMS lab in Sep 2023:
+
 In MATLAB, run:
 
 ```
-pyenv('Version', '/opt/python3.9.5')
+pyenv('Version', '/opt/python3.9.5/bin/python3.9')
 ros2genmsg('/home/mtms/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')
 ```
 
@@ -81,6 +83,6 @@ To fix this issue, run the following command:
 `setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp")`.
 
 ### ros2genmsg error: `No packages with '.msg' files found under [path to mTMS repository]/ros2_ws/src/interfaces/fpga_interfaces. Each message package directory must contain a directory named 'msg' that then contains '.msg' files.`
-- Ensure that you are running ros2genmsg with the correct path; the path parameter should be, e.g., '/home/mtms/workspace/mtms/ros2_ws/src/interfaces' instead of '/home/mtms/workspace/mtms/ros2_ws/src/interfaces/fpga_interfaces'.
+- Ensure that you are running ros2genmsg with the correct path; the path parameter should be, e.g., '/home/mtms/mtms/ros2_ws/src/interfaces' instead of '/home/mtms/mtms/ros2_ws/src/interfaces/fpga_interfaces'.
 - Check that you do not have subdirectories inside any of the `msg` directories (however, there can be subdirectories inside `srv` directories).
 - Check also that the paths to msg and srv files are correctly defined in CMakeLists.

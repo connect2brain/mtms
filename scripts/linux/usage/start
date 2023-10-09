@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# Define the text formatting codes
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
+# Get the project name from the first argument
+export PROJECT_NAME="$1"
+
+if [ -z "$PROJECT_NAME" ]; then
+    echo "Error: Project name is undefined. Please provide it as an argument to the script."
+    echo ""
+    exit 1
+fi
+
+# Check if the project directory exists
+if [ ! -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
+    echo "Error: Project does not exist: ${BOLD}$PROJECT_NAME${RESET}"
+    echo ""
+    echo "Run 'list' to see available projects."
+    exit 1
+fi
+
+# Set PROJECT_ENV_FILE to point to .env of the project
+export PROJECT_ENV_FILE=$PROJECTS_ROOT/$PROJECT_NAME/.env
+
+get_env_var () {
+  VAR_NAME=$1
+  VAR_VALUE=$(grep "^$VAR_NAME=" $PROJECT_ENV_FILE | cut -d= -f2)
+  if [ -z "$VAR_VALUE" ]; then
+    echo "ERROR: $VAR_NAME not found in $PROJECT_ENV_FILE"
+    exit 1
+  else
+    echo "$VAR_VALUE"
+  fi
+}
+
+# Get environment variables
+BAG_NAME=$(get_env_var "BAG_NAME")
+
+EEG_PROCESSOR_ENABLE=$(get_env_var "EEG_PROCESSOR_ENABLE")
+EEG_PROCESSOR_TYPE=$(get_env_var "EEG_PROCESSOR_TYPE")
+EEG_PROCESSOR_SCRIPT=$(get_env_var "EEG_PROCESSOR_SCRIPT")
+
+EEG_PREPROCESSOR_ENABLE=$(get_env_var "EEG_PREPROCESSOR_ENABLE")
+EEG_PREPROCESSOR_TYPE=$(get_env_var "EEG_PREPROCESSOR_TYPE")
+EEG_PREPROCESSOR_SCRIPT=$(get_env_var "EEG_PREPROCESSOR_SCRIPT")
+
+STIMULUS_PRESENTER_ENABLE=$(get_env_var "STIMULUS_PRESENTER_ENABLE")
+STIMULUS_PRESENTER_TYPE=$(get_env_var "STIMULUS_PRESENTER_TYPE")
+STIMULUS_PRESENTER_SCRIPT=$(get_env_var "STIMULUS_PRESENTER_SCRIPT")
+
+# Print environment variables
+echo ""
+echo "Project: ${BOLD}$PROJECT_NAME${RESET}"
+echo ""
+echo "Bag name: ${BOLD}$BAG_NAME${RESET}"
+echo ""
+
+if [ "$EEG_PREPROCESSOR_ENABLE" == "true" ]; then
+  echo "EEG preprocessor: ${BOLD}$EEG_PREPROCESSOR_SCRIPT ($EEG_PREPROCESSOR_TYPE)${RESET}"
+fi
+if [ "$EEG_PROCESSOR_ENABLE" == "true" ]; then
+  echo "EEG processor: ${BOLD}$EEG_PROCESSOR_SCRIPT ($EEG_PROCESSOR_TYPE)${RESET}"
+fi
+if [ "$STIMULUS_PRESENTER_ENABLE" == "true" ]; then
+  echo "Stimulus presenter: ${BOLD}$STIMULUS_PRESENTER_SCRIPT ($STIMULUS_PRESENTER_TYPE)${RESET}"
+fi
+
+if [ ! "$EEG_PREPROCESSOR_ENABLE" == "true" ] && [ ! "$EEG_PROCESSOR_ENABLE" == "true" ] && [ ! "$STIMULUS_PRESENTER_ENABLE" == "true" ]; then
+  echo "${BOLD}No real-time pipeline defined.${RESET}"
+fi
+
+echo ""
+
+# Ask the user to double-check
+read -p "Please double-check the values. Are they correct? (y/N) " answer
+
+if [ ! "$answer" == "y" ]; then
+  echo ""
+  echo "Please reconfigure by running: ${BOLD}configure-project${RESET}"
+  exit 1
+fi
+
+# Services needed for the API
+services=("bag_recorder" "eeg_bridge" "eeg_simulator" "eeg_preprocessor" \
+  "eeg_processor" "stimulus_presenter" "trial_logger")
+
+# Iterate over the services and open a new terminal window for each one
+for service in "${services[@]}"; do
+  gnome-terminal --geometry=135x6 -- bash -c "setsid start-service $service; echo 'Press any key to close'; read -n1"
+done
+
+echo "Running... Press Ctrl-C to stop the system."
+
+# Define a function to handle the SIGINT signal
+function handle_sigint {
+    echo "Ctrl-C pressed. Shutting down processes and exiting..."
+
+    # Shut down Docker processes.
+    cd $MTMS_ROOT && docker-compose -f docker-compose.project.yml down
+
+    # Kill the process groups of services
+    for service in "${services[@]}"; do
+      pkill -f "setsid start-service $service"
+    done
+
+    exit 0
+}
+
+# Trap the SIGINT signal and call the handle_sigint function
+trap handle_sigint SIGINT
+
+sleep infinity

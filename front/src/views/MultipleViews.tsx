@@ -1,91 +1,93 @@
 import React, { useState } from 'react'
 import styled from 'styled-components'
-import { SessionControl } from '../components/SessionControl'
+
+import { SystemControl } from '../components/SystemControl'
 import { SystemState } from '../components/SystemState'
+
 import Targets from './Targets'
 import DataVisualize from './DataVisualize'
 import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
-import { SystemControl } from './SystemControl'
+import { SystemView } from './SystemView'
+import { ExperimentControl } from './ExperimentControl'
 
 export const MultipleViews = () => {
-  const [displaySystemControl, setDisplaySystemControl] = useState(true)
-  const [displayPlot, setDisplayPlot] = useState(false)
-  const [displayWebGLPlot, setDisplayWebGLPlot] = useState(false)
-  const [displayTargets, setDisplayTargets] = useState(false)
-  const [displaySession, setDisplaySession] = useState(false)
-
-  const toggleView = (enabled: boolean, toggleFunction: React.Dispatch<React.SetStateAction<boolean>>) => {
-    toggleFunction(!enabled)
-  }
+  const [currentView, setCurrentView] = useState('SystemView')
 
   return (
     <div>
       <OptionWrapper>
-        <input
-          id='toggle-system-control'
-          type='checkbox'
-          checked={displaySystemControl}
-          onChange={() => toggleView(displaySystemControl, setDisplaySystemControl)}
-        />
-        <label htmlFor='toggle-system-control'>System Control</label>
-        <br />
-
-        <input
-          id='toggle-plot'
-          type='checkbox'
-          checked={displayPlot}
-          onChange={() => toggleView(displayPlot, setDisplayPlot)}
-        />
-        <label htmlFor='toggle-plot'>EEG plot</label>
-        <br />
-
-        <input
-          id='toggle-webgl-plot'
-          type='checkbox'
-          checked={displayWebGLPlot}
-          onChange={() => toggleView(displayWebGLPlot, setDisplayWebGLPlot)}
-        />
-        <label htmlFor='toggle-webgl-plot'>EEG WebGL plot</label>
-        <br />
-
-        <input
-          id='toggle-targets'
-          type='checkbox'
-          checked={displayTargets}
-          onChange={() => toggleView(displayTargets, setDisplayTargets)}
-        />
-        <label htmlFor='toggle-targets'>Targets table</label>
-        <br />
+        <a
+          href="#"
+          onClick={() => setCurrentView('SystemView')}
+          className={currentView === 'SystemView' ? 'active' : ''}
+        >
+          System
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('experiment')}
+          className={currentView === 'experiment' ? 'active' : ''}
+        >
+          Experiment
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('plot')}
+          className={currentView === 'plot' ? 'active' : ''}
+        >
+          EEG
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('webGLPlot')}
+          className={currentView === 'webGLPlot' ? 'active' : ''}
+        >
+          EEG (WebGL)
+        </a>
+        <a
+          href="#"
+          onClick={() => setCurrentView('targets')}
+          className={currentView === 'targets' ? 'active' : ''}
+        >
+          Targeting
+        </a>
       </OptionWrapper>
       <ViewContainer>
-        {displaySystemControl ? (
+        {currentView === 'SystemView' && (
           <Wrapper>
-            <SmallHeader>System control</SmallHeader>
-            <SystemControl />
+            <SmallHeader>System</SmallHeader>
+            <SystemView />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayPlot ? (
+        {currentView === 'experiment' && (
           <Wrapper>
-            <SmallHeader>EEG plot</SmallHeader>
+            <SmallHeader>Experiment</SmallHeader>
+            <ExperimentControl />
+          </Wrapper>
+        )}
+
+        {currentView === 'plot' && (
+          <Wrapper>
+            <SmallHeader>EEG</SmallHeader>
             <DataVisualize />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayWebGLPlot ? (
+        {currentView === 'webGLPlot' && (
           <Wrapper>
-            <SmallHeader>EEG WebGL plot</SmallHeader>
+            <SmallHeader>EEG (WebGL)</SmallHeader>
             <DataVisualizeWebGL />
           </Wrapper>
-        ) : null}
+        )}
 
-        {displayTargets ? (
+        {currentView === 'targets' && (
           <Wrapper>
-            <SmallHeader>Targets table</SmallHeader>
+            <SmallHeader>Targeting</SmallHeader>
             <Targets />
           </Wrapper>
-        ) : null}
+        )}
       </ViewContainer>
     </div>
   )
@@ -98,11 +100,28 @@ const ViewContainer = styled.div`
 
 const OptionWrapper = styled.div`
   margin: 0.5rem;
+
+  a {
+    text-decoration: none;
+    color: #505050;   // Darker gray for regular links
+    padding: 0.5rem;
+    display: inline-block;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #303030;  // Even darker gray for hover
+    }
+
+    &.active {
+      color: #222222;  // Almost black for active link
+      font-weight: bold;
+    }
+  }
 `
 
 const Wrapper = styled.div`
-  width: 48%;
+  width: 100%;
   padding: 0.5rem;
   margin: 0.5rem;
-  border: 1px solid ${(p) => p.theme.colors.darkgray};
+  border: 3px solid ${(p) => p.theme.colors.darkgray};
 `
