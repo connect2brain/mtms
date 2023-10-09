@@ -47,6 +47,9 @@ class EegDeviceSimulator():
         trigger_defs = [(0 >> i) & 0xFF for i in (24, 16, 8, 0)]                   # uint32 field
 
         # TODO: Figure out what values these should actually be
+        #
+        # TODO: Information about which channels are EMG and which are EEG is encoded in the source channels;
+        #   see EEG bridge for how to decode them. That logic would need to be implemented here, as well.
         source_channels = []
         for i in range(self.num_of_eeg_channels):
             packed = struct.pack('2B', (0 >> 8) & 0xFF, 0 & 0xFF)
