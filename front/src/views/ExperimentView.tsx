@@ -36,6 +36,20 @@ const Label = styled.label`
   display: inline-block;
 `
 
+const Select = styled.select`
+  width: 318px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: background-color 0.2s;
+  appearance: none;
+
+  &:focus {
+    background-color: transparent;
+  }
+`
+
 const Input = styled.input`
   width: 300px;
   padding: 8px;
@@ -45,13 +59,8 @@ const Input = styled.input`
   transition: background-color 0.2s;
 
   &:focus {
-    background-color: transparent;  // resets the background to transparent when the input is focused
+    background-color: transparent;
   }
-`
-
-const Wrapper = styled.div`
-  gap: 1rem;
-  padding: 1rem;
 `
 
 const styledPanel = `
@@ -611,17 +620,17 @@ export const ExperimentView = () => {
       <ExperimentMetadata>
         <InputRow>
           <Label>Project:</Label>
-          <select onChange={handleProjectChange} value={selectedProject}>
+          <Select onChange={handleProjectChange} value={selectedProject}>
           {projects.map((project, index) => (
             <option key={index} value={project}>
               {project}
             </option>
           ))}
-          </select>
+          </Select>
         </InputRow>
 
         <InputRow>
-          <Label>Name:</Label>
+          <Label>Experiment:</Label>
           <Input
             type="text"
             placeholder="E.g., Resting motor threshold experiment 1"
