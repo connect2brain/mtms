@@ -108,7 +108,7 @@ const IntensityPanel = styled.div`
 const ConfigPanel = styled.div`
   display: grid;
   grid-template-rows: repeat(1, 1fr);
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   width: 500px;
   height: 550px;
   gap: 20px;
@@ -133,14 +133,22 @@ const MepPanel = styled.div`
 const TrialsPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
-  width: 300px;
+  width: 270px;
+  height: 240px;
+  ${styledPanel}
+`
+
+const PausePanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 4 / 5;
+  width: 270px;
   height: 240px;
   ${styledPanel}
 `
 
 const ExperimentPanel = styled.div`
   grid-row: 1 / 2;
-  grid-column: 4 / 5;
+  grid-column: 5 / 6;
   width: 240px;
   height: 240px;
   ${styledPanel}
@@ -219,6 +227,9 @@ type Experiment = {
 
   randomize_trials: boolean
   wait_for_trigger: boolean
+
+  autopause: boolean
+  autopause_interval: number
 }
 
 type Stimulus = {
@@ -296,6 +307,9 @@ export const ExperimentView = () => {
 
   const [itiMin, setItiMin] = useState<number>(3.5)
   const [itiMax, setItiMax] = useState<number>(4.5)
+
+  const [autopause, setAutopause] = useState<boolean>(true)
+  const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(10)
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
   const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
@@ -378,6 +392,17 @@ export const ExperimentView = () => {
     const value = Number(event.target.value)
     if (!isNaN(value) && value >= -99 && value <= 99) {
       setItiMax(value)
+    }
+  }
+
+  const changeAutopause = (value: boolean) => {
+    setAutopause(value)
+  }
+
+  const changeAutopauseInterval = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value)
+    if (!isNaN(value)) {
+      setAutopauseIntervalMinutes(value)
     }
   }
 
@@ -475,7 +500,10 @@ export const ExperimentView = () => {
       },
 
       randomize_trials: true,
-      wait_for_trigger: waitForTrigger
+      wait_for_trigger: waitForTrigger,
+
+      autopause: autopause,
+      autopause_interval: autopauseIntervalMinutes * 60
     }
     return experiment
   }
@@ -811,6 +839,29 @@ export const ExperimentView = () => {
               </CloseConfigRow>
             </GrayedOutPanel>
           </TrialsPanel>
+          <PausePanel>
+            <SmallerTitle>Pause</SmallerTitle>
+            <ConfigRow>
+              <ConfigLabel>Automatic:</ConfigLabel>
+              <ToggleSwitch
+                type="flat"
+                checked={autopause}
+                onChange={changeAutopause}
+              />
+            </ConfigRow>
+            <GrayedOutPanel isGrayedOut={!autopause}>
+              <ConfigRow>
+                <IndentedLabel>Interval (min):</IndentedLabel>
+                <ExperimentInput
+                  type="number"
+                  value={autopauseIntervalMinutes}
+                  min={1}
+                  onChange={changeAutopauseInterval}
+                  disabled={!autopause}
+                />
+              </ConfigRow>
+            </GrayedOutPanel>
+          </PausePanel>
           <ExperimentPanel>
             <SmallerTitle>Experiment</SmallerTitle>
             <ConfigRow>

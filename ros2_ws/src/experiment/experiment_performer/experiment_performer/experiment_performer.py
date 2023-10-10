@@ -125,7 +125,7 @@ class ExperimentPerformerNode(Node):
         with self.state_lock:
             self.paused = value
 
-    def get_paused(self):  
+    def get_paused(self):
         with self.state_lock:
             return self.paused
 
@@ -133,7 +133,7 @@ class ExperimentPerformerNode(Node):
         with self.state_lock:
             self.canceled = value
 
-    def get_canceled(self):  
+    def get_canceled(self):
         with self.state_lock:
             return self.canceled
 
@@ -307,6 +307,8 @@ class ExperimentPerformerNode(Node):
         intertrial_interval = request.intertrial_interval
         wait_for_trigger = request.wait_for_trigger
         randomize_trials = request.randomize_trials
+        autopause = request.autopause
+        autopause_interval = request.autopause_interval
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -335,6 +337,8 @@ class ExperimentPerformerNode(Node):
             intertrial_interval=intertrial_interval,
             wait_for_trigger=wait_for_trigger,
             randomize_trials=randomize_trials,
+            autopause=autopause,
+            autopause_interval=autopause_interval,
         )
 
         # Create and return a Result object.
@@ -356,6 +360,8 @@ class ExperimentPerformerNode(Node):
         intertrial_interval = request.intertrial_interval
         wait_for_trigger = request.wait_for_trigger
         randomize_trials = request.randomize_trials
+        autopause = request.autopause
+        autopause_interval = request.autopause_interval
 
         # HACK: Service calls are not assigned an ID by ROS, therefore assign a constant ID here.
         #   It is used only as the prefix for the log messages.
@@ -384,6 +390,8 @@ class ExperimentPerformerNode(Node):
             intertrial_interval=intertrial_interval,
             wait_for_trigger=wait_for_trigger,
             randomize_trials=randomize_trials,
+            autopause=autopause,
+            autopause_interval=autopause_interval,
         )
 
         response.trial_results = trial_results
@@ -487,7 +495,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials):
+    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
         # Initialize state variables
         self.set_paused(False)
         self.set_canceled(False)
@@ -514,6 +522,7 @@ class ExperimentPerformerNode(Node):
             valid_trials = np.random.permutation(valid_trials)
 
         success = True
+        last_resume_time = self.get_current_time()
 
         for i in range(num_of_valid_trials):
             trial = valid_trials[i]
@@ -545,7 +554,13 @@ class ExperimentPerformerNode(Node):
                 trial_result=trial_result,
             )
 
+            # Add a delay to allow other ROS service calls to run.
             time.sleep(0.1)
+
+            if autopause:
+                current_time = self.get_current_time()
+                if current_time > last_resume_time + autopause_interval:
+                    self.set_paused(True)
 
             # Check if the experiment was paused, wait until resumed.
             if self.get_paused():
@@ -554,6 +569,7 @@ class ExperimentPerformerNode(Node):
                     time.sleep(0.1)
 
                 self.logger.info('{}: Experiment resumed.'.format(goal_id))
+                last_resume_time = self.get_current_time()
 
             # Check if the experiment was canceled.
             if self.get_canceled():
