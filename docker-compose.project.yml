@@ -86,14 +86,3 @@ services:
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
-
-  trial_logger:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/experiment/trial_logger/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-      - ${PROJECT_ENV_FILE}
-    volumes:
-      - '$PROJECTS_ROOT/$PROJECT_NAME:/app/project'
-    network_mode: host
