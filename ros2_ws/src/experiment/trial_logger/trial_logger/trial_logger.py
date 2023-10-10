@@ -3,14 +3,16 @@ import re
 from datetime import datetime
 
 from experiment_interfaces.srv import LogTrial
+from std_msgs.msg import String
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 
 class TrialLoggerNode(Node):
 
-    CSV_DIRECTORY = '/app/project/csv'
+    PROJECTS_ROOT = '/app/projects/'
 
     TRIAL_COLUMNS = [
         "Trial index",
@@ -36,13 +38,23 @@ class TrialLoggerNode(Node):
             self.log_trial_callback,
         )
 
+        # Create subscriber for active project.
+        qos_persist_latest = QoSProfile(
+            depth=1,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+        )
+        self.active_project_subscriber = self.create_subscription(String, '/projects/active', self.handle_active_project_subscription, qos_persist_latest)
+
     def open_log_file(self, metadata):
         subject_name = self.sanitize_filename(metadata.subject_name)
         experiment_name = self.sanitize_filename(metadata.experiment_name)
 
+        basepath = os.path.join(self.PROJECTS_ROOT, self.project, 'csv')
+
         # Ensure the directory exists
-        if not os.path.exists(self.CSV_DIRECTORY):
-            os.makedirs(self.CSV_DIRECTORY)
+        if not os.path.exists(basepath):
+            os.makedirs(basepath)
 
         # The pattern below matches filenames with the format:
         #
@@ -50,7 +62,7 @@ class TrialLoggerNode(Node):
         pattern = re.compile(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})_" + re.escape(experiment_name) + "_" + re.escape(subject_name) + r"\.csv")
 
         matching_files = []
-        for filename in os.listdir(self.CSV_DIRECTORY):
+        for filename in os.listdir(basepath):
             if pattern.match(filename):
                 matching_files.append(filename)
 
@@ -60,7 +72,7 @@ class TrialLoggerNode(Node):
         if matching_files:
             # Take the file with the latest timestamp
             filename = matching_files[0]
-            filepath = os.path.join(self.CSV_DIRECTORY, filename)
+            filepath = os.path.join(basepath, filename)
             mode = 'a+'
 
             new_file_created = False
@@ -68,7 +80,7 @@ class TrialLoggerNode(Node):
             # Create a new file
             current_timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             filename = f"{current_timestamp}_{experiment_name}_{subject_name}.csv"
-            filepath = os.path.join(self.CSV_DIRECTORY, filename)
+            filepath = os.path.join(basepath, filename)
             mode = 'w+'
 
             new_file_created = True
@@ -139,6 +151,11 @@ class TrialLoggerNode(Node):
         self.get_logger().info('Done.')
 
         return response
+
+    def handle_active_project_subscription(self, msg):
+        self.project = msg.data
+
+        self.get_logger().info('Changed project to: {}.'.format(self.project))
 
 def main(args=None):
     rclpy.init(args=args)
