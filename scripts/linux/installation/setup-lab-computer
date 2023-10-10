@@ -56,6 +56,11 @@ if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
     echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
 fi
 
+# Add environment variable to .bashrc to configure DDS
+if ! grep -q 'export CYCLONEDDS_URI=file://$MTMS_ROOT/config/cyclonedds.xml' ~/.bashrc; then
+    echo 'export CYCLONEDDS_URI=file://$MTMS_ROOT/config/cyclonedds.xml' >> ~/.bashrc
+fi
+
 # Add ROS sourcing to .bashrc unless it is already there
 if ! grep -q "source /opt/ros/iron/setup.bash" ~/.bashrc; then
     echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
