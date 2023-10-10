@@ -13,7 +13,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
-import { getMaximumIntensity, countValidTrials, performExperiment, pauseExperiment, resumeExperiment } from 'services/ros'
+import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, setActiveProject } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -257,6 +257,9 @@ enum StartButtonState {
 }
 
 export const ExperimentView = () => {
+  const [projects, setProjects] = useState<string[]>([])
+  const [selectedProject, setSelectedProject] = useState<string>('')
+
   const [experimentName, setExperimentName] = useState<string>('')
   const [subjectName, setSubjectName] = useState<string>('')
 
@@ -300,6 +303,17 @@ export const ExperimentView = () => {
     performExperiment(experiment, (trial_results, success) => {
       console.log(trial_results)
       setStartButtonState(StartButtonState.ReadyForExperiment)
+    })
+  }
+
+  const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value
+    setSelectedProject(value)
+
+    /* TODO: The naming is a bit confusing here: setActiveProject makes a ROS service call; naming should
+      somehow reflect that to distinguish it from setSelectedProject. */
+    setActiveProject(value, () => {
+      console.log('Project set to ' + value)
     })
   }
 
@@ -482,6 +496,13 @@ export const ExperimentView = () => {
     }
   }, [activeTab])
 
+  /* Set list of projects. */
+  useEffect(() => {
+    listProjects((projects) => {
+      setProjects(projects)
+    })
+  }, [])
+
   /* Updates the maximum intensity display. */
   useEffect(() => {
     if (selectedPoints.length === 1 && selectedAngles.length === 1) {
@@ -588,6 +609,17 @@ export const ExperimentView = () => {
   return (
     <>
       <ExperimentMetadata>
+        <InputRow>
+          <Label>Project:</Label>
+          <select onChange={handleProjectChange} value={selectedProject}>
+          {projects.map((project, index) => (
+            <option key={index} value={project}>
+              {project}
+            </option>
+          ))}
+          </select>
+        </InputRow>
+
         <InputRow>
           <Label>Name:</Label>
           <Input
