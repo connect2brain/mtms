@@ -6,7 +6,6 @@ import { TabBar } from 'styles/General'
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
 import { IntensitySelector } from 'components/Experiment/IntensitySelector'
-import { TriggerSelector } from 'components/Experiment/TriggerSelector'
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
 import { ValidatedInput } from 'components/ValidatedInput'
@@ -348,38 +347,6 @@ export const ExperimentView = () => {
     setActiveProject(value, () => {
       console.log('Project set to ' + value)
     })
-  }
-
-  const changeMepEnabled = (value: boolean) => {
-    setMepEnabled(value)
-  }
-
-  const changeEmgChannel = (value: number) => {
-    setEmgChannel(value)
-  }
-
-  const changeNumOfRepetitions = (value: number) => {
-    setNumOfRepetitions(value)
-  }
-
-  const changeWaitForTrigger = (value: boolean) => {
-    setWaitForTrigger(value)
-  }
-
-  const changeItiMin = (value: number) => {
-    setItiMin(value)
-  }
-
-  const changeItiMax = (value: number) => {
-    setItiMax(value)
-  }
-
-  const changeAutopause = (value: boolean) => {
-    setAutopause(value)
-  }
-
-  const changeAutopauseInterval = (value: number) => {
-    setAutopauseIntervalMinutes(value)
   }
 
   const handleIntensityChange = (value: number) => {
@@ -774,7 +741,7 @@ export const ExperimentView = () => {
               <ToggleSwitch
                 type="flat"
                 checked={mepEnabled}
-                onChange={changeMepEnabled}
+                onChange={setMepEnabled}
               />
             </ConfigRow>
             <GrayedOutPanel isGrayedOut={!mepEnabled}>
@@ -790,7 +757,7 @@ export const ExperimentView = () => {
                   defaultValue={1}
                   min={1}
                   max={16}
-                  onChange={changeEmgChannel}
+                  onChange={setEmgChannel}
                   disabled={!mepEnabled}
                   />
               </ConfigRow>
@@ -806,7 +773,7 @@ export const ExperimentView = () => {
                 defaultValue={1}
                 min={1}
                 max={999}
-                onChange={changeNumOfRepetitions}
+                onChange={setNumOfRepetitions}
               />
             </ConfigRow>
             <ConfigRow>
@@ -814,7 +781,7 @@ export const ExperimentView = () => {
               <ToggleSwitch
                 type="flat"
                 checked={waitForTrigger}
-                onChange={changeWaitForTrigger}
+                onChange={setWaitForTrigger}
               />
             </ConfigRow>
             <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
@@ -830,7 +797,7 @@ export const ExperimentView = () => {
                   min={0.1}
                   max={100}
                   step={0.1}
-                  onChange={changeItiMin}
+                  onChange={setItiMin}
                   disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
                 />
               </CloseConfigRow>
@@ -843,7 +810,7 @@ export const ExperimentView = () => {
                     min={0.1}
                     max={100}
                     step={0.1}
-                    onChange={changeItiMax}
+                    onChange={setItiMax}
                     disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
                 />
               </CloseConfigRow>
@@ -856,7 +823,7 @@ export const ExperimentView = () => {
               <ToggleSwitch
                 type="flat"
                 checked={autopause}
-                onChange={changeAutopause}
+                onChange={setAutopause}
               />
             </ConfigRow>
             <GrayedOutPanel isGrayedOut={!autopause}>
@@ -868,7 +835,7 @@ export const ExperimentView = () => {
                   defaultValue={10}
                   min={1}
                   max={99}
-                  onChange={changeAutopauseInterval}
+                  onChange={setAutopauseIntervalMinutes}
                   disabled={!autopause}
                 />
               </ConfigRow>
