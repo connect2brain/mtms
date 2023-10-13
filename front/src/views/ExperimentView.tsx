@@ -7,10 +7,11 @@ import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
 import { IntensitySelector } from 'components/Experiment/IntensitySelector'
 import { TriggerSelector } from 'components/Experiment/TriggerSelector'
-
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { SmallerTitle, ExperimentInput } from 'styles/ExperimentStyles'
+import { ValidatedInput } from 'components/ValidatedInput'
+
+import { SmallerTitle } from 'styles/ExperimentStyles'
 import { StyledButton } from 'styles/General'
 
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, setActiveProject } from 'services/ros'
@@ -360,50 +361,32 @@ export const ExperimentView = () => {
     setMepEnabled(value)
   }
 
-  const changeEmgChannel = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(Math.min(Number(event.target.value), 16), 1)
-
-    /* TODO: Validate EMG channel value here, based on the number of available EMG channels,
-         published in EegInfo topic by EEG bridge. */
-    if (!isNaN(value)) {
-      setEmgChannel(value)
-    }
+  const changeEmgChannel = (value: number) => {
+    setEmgChannel(value)
   }
 
-  const changeNumOfRepetitions = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Math.max(Number(event.target.value), 1)
-    if (!isNaN(value)) {
-      setNumOfRepetitions(value)
-    }
+  const changeNumOfRepetitions = (value: number) => {
+    setNumOfRepetitions(value)
   }
 
   const changeWaitForTrigger = (value: boolean) => {
     setWaitForTrigger(value)
   }
 
-  const changeItiMin = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value)
-    if (!isNaN(value) && value >= -99 && value <= 99) {
-      setItiMin(value)
-    }
+  const changeItiMin = (value: number) => {
+    setItiMin(value)
   }
 
-  const changeItiMax = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value)
-    if (!isNaN(value) && value >= -99 && value <= 99) {
-      setItiMax(value)
-    }
+  const changeItiMax = (value: number) => {
+    setItiMax(value)
   }
 
   const changeAutopause = (value: boolean) => {
     setAutopause(value)
   }
 
-  const changeAutopauseInterval = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value)
-    if (!isNaN(value)) {
-      setAutopauseIntervalMinutes(value)
-    }
+  const changeAutopauseInterval = (value: number) => {
+    setAutopauseIntervalMinutes(value)
   }
 
   const handleIntensityChange = (value: number) => {
@@ -780,10 +763,15 @@ export const ExperimentView = () => {
             <GrayedOutPanel isGrayedOut={!mepEnabled}>
               <ConfigRow>
                 <IndentedLabel>EMG channel:</IndentedLabel>
-                <ExperimentInput
+                {/*
+                  TODO: Validate EMG channel by passing a prop to ValidatedInput, based on the
+                  number of available EMG channels, published in EegInfo topic by EEG bridge.
+                */}
+                <ValidatedInput
                   type="text"
                   value={emgChannel}
-                  min={0}
+                  defaultValue={1}
+                  min={1}
                   max={16}
                   onChange={changeEmgChannel}
                   disabled={!mepEnabled}
@@ -795,10 +783,11 @@ export const ExperimentView = () => {
             <SmallerTitle>{activeTab === 'singleLocation' ? 'Trials' : 'Repetitions'}</SmallerTitle>
             <ConfigRow>
               <ConfigLabel># of {activeTab === 'singleLocation' ? 'trials' : 'repetitions'}:</ConfigLabel>
-              <ExperimentInput
+              <ValidatedInput
                 type="text"
                 value={numOfRepetitions}
-                min={0}
+                defaultValue={1}
+                min={1}
                 max={999}
                 onChange={changeNumOfRepetitions}
               />
@@ -817,10 +806,12 @@ export const ExperimentView = () => {
               </ConfigRow>
               <CloseConfigRow>
                 <IndentedLabel>Min:</IndentedLabel>
-                <ExperimentInput
+                <ValidatedInput
                   type="number"
                   value={itiMin}
-                  min={0}
+                  defaultValue={3.0}
+                  min={0.1}
+                  max={100}
                   step={0.1}
                   onChange={changeItiMin}
                   disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
@@ -828,10 +819,12 @@ export const ExperimentView = () => {
               </CloseConfigRow>
               <CloseConfigRow>
                 <IndentedLabel>Max:</IndentedLabel>
-                  <ExperimentInput
+                  <ValidatedInput
                     type="number"
                     value={itiMax}
-                    min={0}
+                    defaultValue={4.0}
+                    min={0.1}
+                    max={100}
                     step={0.1}
                     onChange={changeItiMax}
                     disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
@@ -852,10 +845,12 @@ export const ExperimentView = () => {
             <GrayedOutPanel isGrayedOut={!autopause}>
               <ConfigRow>
                 <IndentedLabel>Interval (min):</IndentedLabel>
-                <ExperimentInput
+                <ValidatedInput
                   type="number"
                   value={autopauseIntervalMinutes}
+                  defaultValue={10}
                   min={1}
+                  max={99}
                   onChange={changeAutopauseInterval}
                   disabled={!autopause}
                 />
