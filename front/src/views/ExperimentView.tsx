@@ -202,6 +202,15 @@ const TriggerLabel = styled.label`
   display: inline-block;
 `
 
+const DelayLabel = styled.label`
+    margin-left: -8px;
+    margin-right: 15px;
+    font-size: 11px;
+    font-weight: bold;
+    text-align: right;
+    color: 'black';
+`
+
 /* TODO: Move type definitions elsewhere. */
 
 type TriggerConfig = {
@@ -339,22 +348,6 @@ export const ExperimentView = () => {
     setActiveProject(value, () => {
       console.log('Project set to ' + value)
     })
-  }
-
-  const changeTrigger1Enabled = (value: boolean) => {
-    setTrigger1Enabled(value)
-  }
-
-  const changeTrigger1Delay = (value: number) => {
-    setTrigger1Delay(value)
-  }
-
-  const changeTrigger2Enabled = (value: boolean) => {
-    setTrigger2Enabled(value)
-  }
-
-  const changeTrigger2Delay = (value: number) => {
-    setTrigger2Delay(value)
   }
 
   const changeMepEnabled = (value: boolean) => {
@@ -733,21 +726,45 @@ export const ExperimentView = () => {
             <SmallerTitle>Triggers</SmallerTitle>
             <TriggerRow>
               <TriggerLabel>1</TriggerLabel>
-              <TriggerSelector
-                enabled={trigger1Enabled}
-                enabledHandler={changeTrigger1Enabled}
-                delay={trigger1Delay}
-                delayHandler={changeTrigger1Delay}
+              <ToggleSwitch
+                type="flat"
+                checked={trigger1Enabled}
+                onChange={setTrigger1Enabled}
               />
+              <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
+                <DelayLabel>Delay (ms)</DelayLabel>
+              </GrayedOutPanel>
+              <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
+                <ValidatedInput
+                  value={trigger1Delay}
+                  min={-99}
+                  max={99}
+                  defaultValue={0}
+                  onChange={setTrigger1Delay}
+                  disabled={!trigger1Enabled}
+                />
+              </GrayedOutPanel>
             </TriggerRow>
             <TriggerRow>
-              <TriggerLabel>2</TriggerLabel>
-              <TriggerSelector
-                enabled={trigger2Enabled}
-                enabledHandler={changeTrigger2Enabled}
-                delay={trigger2Delay}
-                delayHandler={changeTrigger2Delay}
+            <TriggerLabel>2</TriggerLabel>
+              <ToggleSwitch
+                type="flat"
+                checked={trigger2Enabled}
+                onChange={setTrigger2Enabled}
               />
+              <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
+                <DelayLabel>Delay (ms)</DelayLabel>
+              </GrayedOutPanel>
+              <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
+                <ValidatedInput
+                  value={trigger2Delay}
+                  min={-99}
+                  max={99}
+                  defaultValue={0}
+                  onChange={setTrigger2Delay}
+                  disabled={!trigger2Enabled}
+                />
+              </GrayedOutPanel>
             </TriggerRow>
           </TriggerPanel>
           <MepPanel>
