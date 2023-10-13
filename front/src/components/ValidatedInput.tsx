@@ -43,7 +43,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
     if (isNaN(numericValue)) {
       numericValue = defaultValue
     }
-    
+
     // Boundary checks
     if (min !== undefined && numericValue < min) {
       numericValue = min
