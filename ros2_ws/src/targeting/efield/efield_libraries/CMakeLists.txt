@@ -10,6 +10,8 @@ set(phi_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libphi.so)
 set(tms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms.so)
 set(tms_cuda_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms_cuda.so)
 
+find_package(CUDAToolkit)
+find_package(Eigen3 REQUIRED)
 add_library(linalg SHARED IMPORTED GLOBAL)
 add_library(phi SHARED IMPORTED GLOBAL)
 add_library(tms SHARED IMPORTED GLOBAL)
@@ -24,7 +26,7 @@ add_library(efield_estimation SHARED
         src/efield_estimation.cpp
         include/efield_estimation.h)
 
-target_link_libraries(efield_estimation PUBLIC linalg phi tms tms_cuda)
+target_link_libraries(efield_estimation PUBLIC linalg phi tms tms_cuda Eigen3::Eigen)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
