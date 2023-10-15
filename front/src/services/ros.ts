@@ -160,32 +160,29 @@ export const countValidTrials =
   )
 }
 
-/* Set up perform experiment service. */
-const performExperimentService = new ROSLIB.Service({
+/* Set up perform experiment action.
+
+   TODO: After ROSLIB types are updated with the action support, bypassing
+     the type checks (that is, ROSLIB as any) can be removed everywhere. */
+const performExperimentAction: any = new (ROSLIB as any).ActionHandle({
   ros: ros,
-  name: '/experiment/perform_service',
-  serviceType: 'experiment_interfaces/PerformExperimentService',
+  name: '/experiment/perform',
+  actionType: 'experiment_interfaces/PerformExperiment',
 })
 
 export const performExperiment =
     (experiment: any, callback: (trialResults: any, success: boolean) => void) => {
-  const request = new ROSLIB.ServiceRequest(experiment) as any
+  const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
-  performExperimentService.callService(
-    request,
-    (response) => {
-      if (!response.success) {
-        console.log('ERROR: Failed to perform experiment: success field was false.')
-        callback(response.trial_results, false)
-      } else {
-        callback(response.trial_results, true)
-      }
-    },
-    (error) => {
-      console.log('ERROR: Failed to perform experiment, error:')
-      console.log(error)
-    },
-  )
+  performExperimentAction.createClient(goal)
+  performExperimentAction.on('result', (response: any) => {
+    if (!response.success) {
+      console.log('ERROR: Failed to perform experiment: success field was false.')
+      callback(response.trial_results, false)
+    } else {
+      callback(response.trial_results, true)
+    }
+  })
 }
 
 /* Set up pause experiment service. */
