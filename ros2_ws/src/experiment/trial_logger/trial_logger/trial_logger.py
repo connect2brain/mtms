@@ -100,7 +100,7 @@ class TrialLoggerNode(Node):
         header = ";".join(self.TRIAL_COLUMNS) + '\n'
         file.write(header)
 
-    def log_trial_row(self, file, trial_index, trial, trial_result):
+    def log_trial_row(self, file, trial_index, trial, trial_result, num_of_attempts):
         assert len(trial.stimuli) == 1, "Does not support multistimulus trials yet!"
 
         stimulus = trial.stimuli[0]
@@ -108,7 +108,7 @@ class TrialLoggerNode(Node):
 
         row = "{};{};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
             trial_index,
-            trial_result.num_of_attempts,
+            num_of_attempts,
             trial_result.trial_finish_time,
             target.displacement_x,
             target.displacement_y,
@@ -118,7 +118,7 @@ class TrialLoggerNode(Node):
         )
         file.write(row)
 
-    def log_trial(self, metadata, trial_index, trial, trial_result):
+    def log_trial(self, metadata, trial_index, trial, trial_result, num_of_attempts):
         file, new_file_created = self.open_log_file(metadata)
 
         # If the file was just created, write the header as the first line.
@@ -130,6 +130,7 @@ class TrialLoggerNode(Node):
             trial_index=trial_index,
             trial=trial,
             trial_result=trial_result,
+            num_of_attempts=num_of_attempts,
         )
 
     def log_trial_callback(self, request, response):
@@ -137,6 +138,7 @@ class TrialLoggerNode(Node):
         trial_index = request.trial_index
         trial = request.trial
         trial_result = request.trial_result
+        num_of_attempts = request.num_of_attempts
 
         self.get_logger().info('Logging a trial with the index {}.'.format(trial_index))
 
@@ -145,6 +147,7 @@ class TrialLoggerNode(Node):
             trial_index=trial_index,
             trial=trial,
             trial_result=trial_result,
+            num_of_attempts=num_of_attempts,
         )
         response.success = True
 

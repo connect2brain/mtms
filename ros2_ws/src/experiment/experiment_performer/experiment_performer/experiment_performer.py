@@ -266,8 +266,6 @@ class ExperimentPerformerNode(Node):
 
         result = self.get_result_from_container(result_container)
 
-        assert result.success, "Performing trial was not successful."
-
         return result
 
     # Service callers
@@ -282,13 +280,14 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, metadata, trial, trial_index, trial_result):
+    def log_trial(self, metadata, trial, trial_index, trial_result, num_of_attempts):
         request = LogTrial.Request()
 
         request.metadata = metadata
         request.trial = trial
         request.trial_index = trial_index
         request.trial_result = trial_result
+        request.num_of_attempts = num_of_attempts
 
         response = self.async_service_call(self.log_trial_client, request)
 
@@ -327,7 +326,7 @@ class ExperimentPerformerNode(Node):
             trials=trials,
         )
 
-        trial_results, success = self.perform_experiment(
+        success, trial_results = self.perform_experiment(
             goal_id=goal_id,
             metadata=metadata,
             valid_trials=valid_trials,
@@ -445,6 +444,19 @@ class ExperimentPerformerNode(Node):
 
         return True
 
+    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval):
+        if num_of_attempts > 1:
+            return self.TRIAL_REDO_INTERVAL_S
+
+        # Start the first trial at FIRST_TRIAL_TIME_S seconds, otherwise follow intertrial interval.
+        if is_first_trial:
+            return self.FIRST_TRIAL_TIME_S
+        else:
+            return np.random.uniform(
+                low=intertrial_interval.min,
+                high=intertrial_interval.max,
+            )
+
     def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
         # Initialize state variables
         self.set_paused(False)
@@ -459,7 +471,7 @@ class ExperimentPerformerNode(Node):
             trial_results = []
             success = False
 
-            return trial_results, success
+            return success, trial_results
 
         num_of_valid_trials = len(valid_trials)
         trial_results = []
@@ -474,35 +486,62 @@ class ExperimentPerformerNode(Node):
         success = True
         last_resume_time = self.get_current_time()
 
-        for i in range(num_of_valid_trials):
+        i = 0
+        num_of_attempts = 0
+        while i < num_of_valid_trials:
             trial = valid_trials[i]
-            trial_index = i + 1
 
             # The starting time of the first trial is handled differently, hence the check.
-            is_first_trial = trial_index == 1
+            is_first_trial = i == 0
 
-            trial_result = self.perform_trial(
-                goal_id=goal_id,
-                trial=trial,
-                intertrial_interval=intertrial_interval,
-                wait_for_trigger=wait_for_trigger,
+            num_of_attempts += 1
+            time_to_next_trial = self.get_time_to_next_trial(
+                num_of_attempts=num_of_attempts,
                 is_first_trial=is_first_trial,
+                intertrial_interval=intertrial_interval,
             )
+            earliest_trial_time = self.get_current_time() + time_to_next_trial
 
-            trial_results.append(trial_result)
-
-            self.logger.info('{}: Successfully performed trial {} / {}.'.format(
+            self.logger.info('{}: Performing trial {} / {}, attempt number {}'.format(
                 goal_id,
                 i + 1,
-                num_of_valid_trials
+                num_of_valid_trials,
+                num_of_attempts,
             ))
 
-            self.log_trial(
-                metadata=metadata,
+            result = self.sync_perform_trial_action(
                 trial=trial,
-                trial_index=trial_index,
-                trial_result=trial_result,
+                earliest_trial_time=earliest_trial_time,
+                wait_for_trigger=wait_for_trigger,
             )
+            trial_result = result.trial_result
+            success = result.success
+
+            if success:
+                self.logger.info('{}: Successfully performed trial {} / {}.'.format(
+                    goal_id,
+                    i + 1,
+                    num_of_valid_trials
+                ))
+                trial_results.append(trial_result)
+
+                trial_index = i + 1
+                self.log_trial(
+                    metadata=metadata,
+                    trial=trial,
+                    trial_index=trial_index,
+                    trial_result=trial_result,
+                    num_of_attempts=num_of_attempts,
+                )
+
+                i += 1
+                num_of_attempts = 0
+            else:
+                self.logger.info('{}: Trial not successful, redoing in {} seconds.'.format(
+                    goal_id,
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
+                num_of_attempts += 1
 
             # Add a delay to allow other ROS service calls to run.
             time.sleep(0.1)
@@ -528,29 +567,8 @@ class ExperimentPerformerNode(Node):
                 success = False
                 break
 
-        return trial_results, success
-
-    def perform_trial(self, goal_id, trial, intertrial_interval, wait_for_trigger, is_first_trial):
-        # Start the first trial at FIRST_TRIAL_TIME_S seconds, otherwise follow intertrial interval.
-        if is_first_trial:
-            time_to_next_trial = self.FIRST_TRIAL_TIME_S
-        else:
-            time_to_next_trial = np.random.uniform(
-                low=intertrial_interval.min,
-                high=intertrial_interval.max,
-            )
-
-        earliest_trial_time = self.system_state.time + time_to_next_trial
-
-        result = self.sync_perform_trial_action(
-            trial=trial,
-            earliest_trial_time=earliest_trial_time,
-            wait_for_trigger=wait_for_trigger,
-        )
-
-        trial_result = result.trial_result
-
-        return trial_result
+        success = True
+        return success, trial_results
 
 def main(args=None):
     rclpy.init(args=args)
