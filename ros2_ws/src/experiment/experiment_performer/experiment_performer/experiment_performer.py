@@ -145,18 +145,27 @@ class ExperimentPerformerNode(Node):
         self.system_state = system_state
 
     def get_device_state(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.device_state.value
 
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
     def get_session_state(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.session_state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
     def get_current_time(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.time
 
     # Logging
