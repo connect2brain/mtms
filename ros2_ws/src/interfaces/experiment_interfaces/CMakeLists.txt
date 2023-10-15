@@ -38,7 +38,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ValidateTrial.srv"
 
   "srv/CancelExperiment.srv"
-  "srv/PerformExperimentService.srv"
   "srv/PauseExperiment.srv"
   "srv/ResumeExperiment.srv"
 
