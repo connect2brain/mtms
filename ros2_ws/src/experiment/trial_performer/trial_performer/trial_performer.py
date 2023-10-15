@@ -277,7 +277,7 @@ class TrialPerformerNode(Node):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        trial_result = self.perform_trial(
+        success, trial_result = self.perform_trial(
             goal_id=goal_id,
             trial=trial,
             earliest_trial_time=earliest_trial_time,
@@ -291,7 +291,7 @@ class TrialPerformerNode(Node):
         goal_handle.succeed()
 
         result.trial_result = trial_result
-        result.success = True
+        result.success = success
 
         self.logger.info('{}: Done.'.format(goal_id))
 
@@ -313,11 +313,9 @@ class TrialPerformerNode(Node):
     def attempt_trial(self, goal_id, voltages, earliest_trial_time, stimulus, config):
         self.sync_set_voltages(voltages)
 
-        current_time = self.get_current_time()
-
         # Earliest feasible trial time cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
-        earliest_feasible_trial_time = current_time + self.TRIAL_TIME_MARGINAL_S
+        earliest_feasible_trial_time = self.get_current_time() + self.TRIAL_TIME_MARGINAL_S
 
         trial_time = max(earliest_trial_time, earliest_feasible_trial_time)
 
@@ -378,12 +376,12 @@ class TrialPerformerNode(Node):
 
         self.log_trial_config(goal_id, trial.config)
 
-        success = self.check_goal_feasible(goal_id)
-        if not success:
+        feasible = self.check_goal_feasible(goal_id)
+        if not feasible:
             trial_result = TrialResult()
-            trial_result.success = False
+            success = False
 
-            return trial_result
+            return success, trial_result
 
         num_of_stimuli = len(stimuli)
         assert num_of_stimuli == 1, "Only one stimulus per trial currently supported!"
@@ -395,29 +393,15 @@ class TrialPerformerNode(Node):
 
         voltages, _ = self.get_channel_voltages(target, intensity)
 
-        num_of_attempts = 0
-        while True:
-            num_of_attempts += 1
-            self.logger.info('{}: Performing trial, attempt: {}'.format(
-                goal_id,
-                num_of_attempts,
-            ))
+        self.logger.info('{}: Performing trial...'.format(goal_id))
 
-            success, mep = self.attempt_trial(
-                goal_id=goal_id,
-                voltages=voltages,
-                earliest_trial_time=earliest_trial_time,
-                stimulus=stimulus,
-                config=config,
-            )
-            if success:
-                break
-
-            self.logger.info('{}: Trial not successful, redoing in {} seconds.'.format(
-                goal_id,
-                self.TRIAL_REDO_INTERVAL_S,
-            ))
-            time.sleep(self.TRIAL_REDO_INTERVAL_S)
+        success, mep = self.attempt_trial(
+            goal_id=goal_id,
+            voltages=voltages,
+            earliest_trial_time=earliest_trial_time,
+            stimulus=stimulus,
+            config=config,
+        )
 
         trial_finish_time = self.get_current_time()
 
@@ -425,9 +409,8 @@ class TrialPerformerNode(Node):
 
         trial_result.mep = mep
         trial_result.trial_finish_time = trial_finish_time
-        trial_result.num_of_attempts = num_of_attempts
 
-        return trial_result
+        return success, trial_result
 
 def main(args=None):
     rclpy.init(args=args)
