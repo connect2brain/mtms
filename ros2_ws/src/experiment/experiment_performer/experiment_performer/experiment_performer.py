@@ -4,7 +4,7 @@ from threading import Event, Lock
 import numpy as np
 
 from experiment_interfaces.msg import ExperimentMetadata, IntertrialInterval, \
-    Trial, TrialConfig, TrialResult, TriggerConfig
+    Trial, TrialConfig, TrialResult, TriggerConfig, ExperimentState
 from experiment_interfaces.action import PerformExperiment, PerformTrial
 from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
@@ -25,6 +25,7 @@ class ExperimentPerformerNode(Node):
     ROS_ACTION_PERFORM_TRIAL = ('/trial/perform', PerformTrial)
 
     FIRST_TRIAL_TIME_S = 1.0
+    TRIAL_REDO_INTERVAL_S = 3.0
 
     def __init__(self):
         super().__init__('experiment_performer_node')
@@ -104,26 +105,19 @@ class ExperimentPerformerNode(Node):
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
         self.system_state = None
 
-        # Create a lock so that service and action calls can modify the node state concurrently.
-        self.state_lock = Lock()
+        # Create a lock so that service and action calls can modify the experiment state concurrently.
+        self.experiment_state_lock = Lock()
+        self.experiment_state = ExperimentState.NOT_RUNNING
 
-    # Node state
+    # Experiment state
 
-    def set_paused(self, value):
-        with self.state_lock:
-            self.paused = value
+    def set_experiment_state(self, state):
+        with self.experiment_state_lock:
+            self.experiment_state = state
 
-    def get_paused(self):
-        with self.state_lock:
-            return self.paused
-
-    def set_canceled(self, value):
-        with self.state_lock:
-            self.canceled = value
-
-    def get_canceled(self):
-        with self.state_lock:
-            return self.canceled
+    def get_experiment_state(self):
+        with self.experiment_state_lock:
+            return self.experiment_state
 
     # ROS callbacks and callers
 
@@ -280,12 +274,12 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, metadata, trial, trial_index, trial_result, num_of_attempts):
+    def log_trial(self, metadata, trial, trial_number, trial_result, num_of_attempts):
         request = LogTrial.Request()
 
         request.metadata = metadata
         request.trial = trial
-        request.trial_index = trial_index
+        request.trial_number = trial_number
         request.trial_result = trial_result
         request.num_of_attempts = num_of_attempts
 
@@ -327,6 +321,7 @@ class ExperimentPerformerNode(Node):
         )
 
         success, trial_results = self.perform_experiment(
+            goal_handle=goal_handle,
             goal_id=goal_id,
             metadata=metadata,
             valid_trials=valid_trials,
@@ -363,36 +358,54 @@ class ExperimentPerformerNode(Node):
         goal_id = "abcd"
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Pausing the experiment after the trial...'.format(goal_id))
 
-        self.set_paused(True)
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to pause while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
+        self.logger.info('{}: Pausing the experiment after the current trial attempt...'.format(goal_id))
+
+        self.set_experiment_state(ExperimentState.PAUSED)
 
         response.success = True
-
         return response
 
     def resume_experiment_callback(self, request, response):
         goal_id = "abcd"
 
         self.logger.info('{}:'.format(goal_id))
+
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to resume while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
         self.logger.info('{}: Resuming the experiment.'.format(goal_id))
 
-        self.set_paused(False)
+        self.set_experiment_state(ExperimentState.RUNNING)
 
         response.success = True
-
         return response
 
     def cancel_experiment_callback(self, request, response):
         goal_id = "abcd"
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Canceling the experiment after the trial...'.format(goal_id))
 
-        self.set_canceled(True)
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to cancel while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
+        self.logger.info('{}: Canceling the experiment after the current trial attempt...'.format(goal_id))
+
+        self.set_experiment_state(ExperimentState.CANCELED)
 
         response.success = True
-
         return response
 
     def get_valid_trials(self, goal_id, trials):
@@ -457,10 +470,21 @@ class ExperimentPerformerNode(Node):
                 high=intertrial_interval.max,
             )
 
-    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
-        # Initialize state variables
-        self.set_paused(False)
-        self.set_canceled(False)
+    def send_feedback(self, goal_handle, experiment_state, trial, num_of_attempts, trial_number, total_trials):
+        feedback_msg = PerformExperiment.Feedback()
+
+        feedback_msg.experiment_state = ExperimentState(value=experiment_state)
+        feedback_msg.trial = trial
+        feedback_msg.attempt_number = num_of_attempts
+        feedback_msg.trial_number = trial_number
+        feedback_msg.total_trials = total_trials
+
+        goal_handle.publish_feedback(feedback_msg)
+
+    def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
+
+        # Initialize experiment state
+        self.set_experiment_state(ExperimentState.RUNNING)
 
         # Check that the goal is feasible
         feasible = self.check_goal_feasible(
@@ -489,12 +513,59 @@ class ExperimentPerformerNode(Node):
         i = 0
         num_of_attempts = 0
         while i < num_of_valid_trials:
+            num_of_attempts += 1
+
             trial = valid_trials[i]
+            trial_number = i + 1
+
+            # Check if autopause interval has passed.
+            if autopause:
+                current_time = self.get_current_time()
+                if current_time > last_resume_time + autopause_interval:
+                    self.set_experiment_state(ExperimentState.PAUSED)
+
+            experiment_state = self.get_experiment_state()
+
+            # Send feedback at the start of a new trial attempt.
+            self.send_feedback(
+                goal_handle=goal_handle,
+                experiment_state=experiment_state,
+                trial=trial,
+                num_of_attempts=num_of_attempts,
+                trial_number=trial_number,
+                total_trials=num_of_valid_trials,
+            )
+
+            # Check if the experiment was paused, wait until resumed.
+            if experiment_state == ExperimentState.PAUSED:
+                self.logger.info('{}: Experiment paused...'.format(goal_id))
+                while experiment_state == ExperimentState.PAUSED:
+                    time.sleep(0.1)
+                    experiment_state = self.get_experiment_state()
+
+                self.logger.info('{}: Experiment resumed.'.format(goal_id))
+                last_resume_time = self.get_current_time()
+
+            # Check if the experiment was canceled.
+            if experiment_state == ExperimentState.CANCELED:
+                self.logger.info('{}: Experiment canceled.'.format(goal_id))
+
+                success = False
+                break
+
+            # Send feedback again after pausing has been finished.
+            self.send_feedback(
+                goal_handle=goal_handle,
+                experiment_state=experiment_state,
+                trial=trial,
+                num_of_attempts=num_of_attempts,
+                trial_number=trial_number,
+                total_trials=num_of_valid_trials,
+            )
 
             # The starting time of the first trial is handled differently, hence the check.
             is_first_trial = i == 0
 
-            num_of_attempts += 1
             time_to_next_trial = self.get_time_to_next_trial(
                 num_of_attempts=num_of_attempts,
                 is_first_trial=is_first_trial,
@@ -525,11 +596,10 @@ class ExperimentPerformerNode(Node):
                 ))
                 trial_results.append(trial_result)
 
-                trial_index = i + 1
                 self.log_trial(
                     metadata=metadata,
                     trial=trial,
-                    trial_index=trial_index,
+                    trial_number=trial_number,
                     trial_result=trial_result,
                     num_of_attempts=num_of_attempts,
                 )
@@ -545,27 +615,6 @@ class ExperimentPerformerNode(Node):
 
             # Add a delay to allow other ROS service calls to run.
             time.sleep(0.1)
-
-            if autopause:
-                current_time = self.get_current_time()
-                if current_time > last_resume_time + autopause_interval:
-                    self.set_paused(True)
-
-            # Check if the experiment was paused, wait until resumed.
-            if self.get_paused():
-                self.logger.info('{}: Experiment paused...'.format(goal_id))
-                while self.get_paused():
-                    time.sleep(0.1)
-
-                self.logger.info('{}: Experiment resumed.'.format(goal_id))
-                last_resume_time = self.get_current_time()
-
-            # Check if the experiment was canceled.
-            if self.get_canceled():
-                self.logger.info('{}: Experiment canceled.'.format(goal_id))
-
-                success = False
-                break
 
         success = True
         return success, trial_results
