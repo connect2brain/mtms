@@ -11,9 +11,9 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledButton } from 'styles/General'
+import { StyledButton, StyledRedButton } from 'styles/General'
 
-import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, setActiveProject } from 'services/ros'
+import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -295,6 +295,11 @@ enum StartButtonState {
   Resume,
 }
 
+enum CancelButtonState {
+  Cancel,
+  Canceling,
+}
+
 enum ExperimentState {
   NotRunning,
   Running,
@@ -362,6 +367,7 @@ export const ExperimentView = () => {
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
   const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
+  const [cancelButtonState, setCancelButtonState] = useState(CancelButtonState.Cancel)
 
   const [trialNumber, setTrialNumber] = useState<number | null>(null)
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
@@ -373,6 +379,7 @@ export const ExperimentView = () => {
       setTrialNumber(null)
       setAttemptNumber(null)
       setExperimentState(ExperimentState.NotRunning)
+      setCancelButtonState(CancelButtonState.Cancel)
     }
     const feedback_callback = (feedback: any) => {
       setTrialNumber(feedback.trial_number)
@@ -737,6 +744,15 @@ export const ExperimentView = () => {
     }
   }
 
+  const cancelButtonStateToString = (cancelButtonState: CancelButtonState): string => {
+    switch (cancelButtonState) {
+      case CancelButtonState.Cancel:
+        return 'Cancel'
+      case CancelButtonState.Canceling:
+        return 'Canceling...'
+    }
+  }
+
   const runStartButtonAction = (startButtonState: StartButtonState) => {
     switch (startButtonState) {
       case StartButtonState.Updating:
@@ -755,6 +771,12 @@ export const ExperimentView = () => {
         })
         break
     }
+  }
+
+  const runCancelButtonAction = () => {
+    cancelExperiment(() => {
+      setCancelButtonState(CancelButtonState.Canceling)
+    })
   }
 
 
@@ -1051,10 +1073,22 @@ export const ExperimentView = () => {
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
               onClick={() => runStartButtonAction(startButtonState)}
-              disabled={startButtonState === StartButtonState.Updating || startButtonState === StartButtonState.Pausing}
+              disabled={
+                startButtonState === StartButtonState.Updating ||
+                startButtonState === StartButtonState.Pausing
+              }
             >
               {startButtonStateToString(startButtonState)}
             </StyledButton>
+            <StyledRedButton
+              onClick={() => runCancelButtonAction()}
+              disabled={
+                experimentState === ExperimentState.NotRunning ||
+                cancelButtonState == CancelButtonState.Canceling
+              }
+            >
+              {cancelButtonStateToString(cancelButtonState)}
+            </StyledRedButton>
           </StatusPanel>
         </ConfigPanel>
     </>

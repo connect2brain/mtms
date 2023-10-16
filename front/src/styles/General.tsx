@@ -25,6 +25,13 @@ export const StyledButton = styled.button`
   }
 `
 
+export const StyledRedButton = styled(StyledButton)`
+  background-color: #A00000;
+  &:hover {
+    background-color: #700000;
+  }
+`
+
 export const TabBar = styled.div`
   margin: 0.5rem;
 
