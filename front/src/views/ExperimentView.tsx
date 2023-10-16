@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { TabBar } from 'styles/General'
@@ -502,14 +502,37 @@ export const ExperimentView = () => {
     return experiment
   }
 
-  const updateValidTrials = (experiment: Experiment) => {
-    countValidTrials(experiment.trials, (numOfValidTrials) => {
-      setNumOfValidTrials(numOfValidTrials)
+  const callCountRef = useRef(0)
 
-      /* TODO: If there are several simultaneous callbacks, only the last of them should enable the
-        start button; currently all of them enable it. */
-      setStartButtonState(StartButtonState.Start)
+  const updateValidTrials = (experiment: Experiment) => {
+    callCountRef.current += 1
+    const currentCallCount = callCountRef.current
+
+    countValidTrials(experiment.trials, (numOfValidTrials) => {
+      if (currentCallCount === callCountRef.current) {
+        setNumOfValidTrials(numOfValidTrials)
+        setStartButtonState(StartButtonState.Start)
+      }
     })
+  }
+
+  const updateValidTrialsWithDebounce = (experiment: Experiment) => {
+    setStartButtonState(StartButtonState.Updating)
+
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
+    }
+
+    const timer = setTimeout(() => {
+      updateValidTrials(experiment)
+    }, 200)
+
+    setDebounceTimer(timer)
+
+    // Cleanup function to clear the timer if the component is unmounted or if the effect runs again
+    return () => {
+      clearTimeout(timer)
+    }
   }
 
   useEffect(() => {
@@ -546,7 +569,7 @@ export const ExperimentView = () => {
     }
   }, [selectedAngles, selectedPoints])
 
-  /* Update # of valid trials. */
+  /* Update the number of valid trials. */
   useEffect(() => {
     if (selectedPoints.length == 0 || selectedAngles.length == 0) {
       setNumOfTrials(null)
@@ -560,22 +583,7 @@ export const ExperimentView = () => {
     const numOfTrials = experiment.trials.length
     setNumOfTrials(numOfTrials)
 
-    setStartButtonState(StartButtonState.Updating)
-
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
-    }
-
-    const timer = setTimeout(() => {
-      updateValidTrials(experiment)
-    }, 200)
-
-    setDebounceTimer(timer)
-
-    // Cleanup function to clear the timer if the component is unmounted or if the effect runs again
-    return () => {
-      clearTimeout(timer)
-    }
+    updateValidTrialsWithDebounce(experiment)
   }, [selectedAngles, selectedPoints, intensity, numOfRepetitions])
 
   /* Update the experiment duration. */
