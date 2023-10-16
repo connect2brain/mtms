@@ -171,17 +171,23 @@ const performExperimentAction: any = new (ROSLIB as any).ActionHandle({
 })
 
 export const performExperiment =
-    (experiment: any, callback: (trialResults: any, success: boolean) => void) => {
+    (experiment: any,
+     done_callback: (trialResults: any, success: boolean) => void,
+     feedback_callback: (response: any) => void) => {
+
   const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
   performExperimentAction.createClient(goal)
   performExperimentAction.on('result', (response: any) => {
     if (!response.success) {
       console.log('ERROR: Failed to perform experiment: success field was false.')
-      callback(response.trial_results, false)
+      done_callback(response.trial_results, false)
     } else {
-      callback(response.trial_results, true)
+      done_callback(response.trial_results, true)
     }
+  })
+  performExperimentAction.on('feedback', (response: any) => {
+    feedback_callback(response.values.feedback)
   })
 }
 

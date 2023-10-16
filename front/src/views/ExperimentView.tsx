@@ -280,9 +280,18 @@ type Trial = {
 }
 
 enum StartButtonState {
-  ReadyForExperiment,
-  UpdatingTrialInfo,
-  PerformingExperiment
+  Start,
+  Updating,
+  Pausing,
+  Pause,
+  Resume,
+}
+
+enum ExperimentState {
+  NotRunning,
+  Running,
+  Paused,
+  Canceled
 }
 
 /* Session storage utilities. */
@@ -344,16 +353,24 @@ export const ExperimentView = () => {
 
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
-  const [startButtonState, setStartButtonState] = useState(StartButtonState.ReadyForExperiment)
+  const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
+
+  const [trialNumber, setTrialNumber] = useState<number | null>(null)
+  const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
+  const [experimentState, setExperimentState] = useState<number | null>(null)
 
   const perform = () => {
-    setStartButtonState(StartButtonState.PerformingExperiment)
-
     const experiment: Experiment = formExperiment()
-    performExperiment(experiment, (trial_results, success) => {
-      console.log(trial_results)
-      setStartButtonState(StartButtonState.ReadyForExperiment)
-    })
+    const done_callback = (trial_results: any, success: boolean) => {
+      setExperimentState(ExperimentState.NotRunning)
+    }
+    const feedback_callback = (feedback: any) => {
+      console.log(feedback)
+      setTrialNumber(feedback.trial_number)
+      setAttemptNumber(feedback.attempt_number)
+      setExperimentState(feedback.experiment_state.value)
+    }
+    performExperiment(experiment, done_callback, feedback_callback)
   }
 
   const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -369,7 +386,7 @@ export const ExperimentView = () => {
 
   const handleIntensityChange = (intensity: number) => {
     setIntensity(intensity)
-    setStartButtonState(StartButtonState.UpdatingTrialInfo)
+    setStartButtonState(StartButtonState.Updating)
   }
 
   const formTrials = (): Trial[] => {
@@ -475,7 +492,7 @@ export const ExperimentView = () => {
 
       /* TODO: If there are several simultaneous callbacks, only the last of them should enable the
         start button; currently all of them enable it. */
-      setStartButtonState(StartButtonState.ReadyForExperiment)
+      setStartButtonState(StartButtonState.Start)
     })
   }
 
@@ -527,7 +544,7 @@ export const ExperimentView = () => {
     const numOfTrials = experiment.trials.length
     setNumOfTrials(numOfTrials)
 
-    setStartButtonState(StartButtonState.UpdatingTrialInfo)
+    setStartButtonState(StartButtonState.Updating)
 
     if (debounceTimer) {
       clearTimeout(debounceTimer)
@@ -553,6 +570,23 @@ export const ExperimentView = () => {
     const duration = numOfValidTrials * (itiMin + itiMax) / 2
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
+
+  /* Update experiment state. */
+  useEffect(() => {
+    switch (experimentState) {
+      case ExperimentState.NotRunning:
+        setStartButtonState(StartButtonState.Start)
+        break
+
+      case ExperimentState.Running:
+        setStartButtonState(StartButtonState.Pause)
+        break
+
+      case ExperimentState.Paused:
+        setStartButtonState(StartButtonState.Resume)
+        break
+    }
+  }, [experimentState])
 
   /* Update session storage. */
   useEffect(() => {
@@ -660,25 +694,34 @@ export const ExperimentView = () => {
 
   const startButtonStateToString = (startButtonState: StartButtonState): string => {
     switch (startButtonState) {
-      case StartButtonState.UpdatingTrialInfo:
+      case StartButtonState.Updating:
         return 'Updating...'
-      case StartButtonState.ReadyForExperiment:
+      case StartButtonState.Start:
         return 'Start'
-      case StartButtonState.PerformingExperiment:
+      case StartButtonState.Pausing:
+        return 'Pausing...'
+      case StartButtonState.Pause:
         return 'Pause'
+      case StartButtonState.Resume:
+        return 'Resume'
     }
   }
 
   const runStartButtonAction = (startButtonState: StartButtonState) => {
     switch (startButtonState) {
-      case StartButtonState.UpdatingTrialInfo:
+      case StartButtonState.Updating:
         break
-      case StartButtonState.ReadyForExperiment:
+      case StartButtonState.Start:
         perform()
         break
-      case StartButtonState.PerformingExperiment:
+      case StartButtonState.Pause:
         pauseExperiment(() => {
-          console.log('paused')
+          setStartButtonState(StartButtonState.Pausing)
+        })
+        break
+      case StartButtonState.Resume:
+        resumeExperiment(() => {
+          console.log('resumed')
         })
         break
     }
@@ -963,7 +1006,7 @@ export const ExperimentView = () => {
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
               onClick={() => runStartButtonAction(startButtonState)}
-              disabled={startButtonState === StartButtonState.UpdatingTrialInfo}
+              disabled={startButtonState === StartButtonState.Updating || startButtonState === StartButtonState.Pausing}
             >
               {startButtonStateToString(startButtonState)}
             </StyledButton>
