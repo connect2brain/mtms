@@ -369,7 +369,7 @@ export const ExperimentView = () => {
   const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
   const [duration, setDuration] = useState<number | null>(null)
 
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
   const [cancelButtonState, setCancelButtonState] = useState(CancelButtonState.Cancel)
@@ -524,15 +524,15 @@ export const ExperimentView = () => {
   const updateValidTrialsWithDebounce = (experiment: Experiment) => {
     setStartButtonState(StartButtonState.Updating)
 
-    if (debounceTimer) {
-      clearTimeout(debounceTimer)
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
     }
 
     const timer = setTimeout(() => {
       updateValidTrials(experiment)
-    }, 200)
+    }, 500)
 
-    setDebounceTimer(timer)
+    debounceTimerRef.current = timer
 
     // Cleanup function to clear the timer if the component is unmounted or if the effect runs again
     return () => {
