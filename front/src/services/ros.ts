@@ -243,6 +243,32 @@ export const resumeExperiment = (callback: () => void) => {
   )
 }
 
+/* Set up cancel experiment service. */
+const cancelExperimentService = new ROSLIB.Service({
+  ros: ros,
+  name: '/experiment/cancel',
+  serviceType: 'experiment_interfaces/CancelExperiment',
+})
+
+export const cancelExperiment = (callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({}) as any
+
+  cancelExperimentService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to cancel experiment: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to cancel experiment, error:')
+      console.log(error)
+    },
+  )
+}
+
 /* Set up list projects service. */
 const listProjectsService = new ROSLIB.Service({
   ros: ros,
