@@ -100,14 +100,14 @@ class TrialLoggerNode(Node):
         header = ";".join(self.TRIAL_COLUMNS) + '\n'
         file.write(header)
 
-    def log_trial_row(self, file, trial_index, trial, trial_result, num_of_attempts):
+    def log_trial_row(self, file, trial_number, trial, trial_result, num_of_attempts):
         assert len(trial.stimuli) == 1, "Does not support multistimulus trials yet!"
 
         stimulus = trial.stimuli[0]
         target = stimulus.target
 
         row = "{};{};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
-            trial_index,
+            trial_number,
             num_of_attempts,
             trial_result.trial_finish_time,
             target.displacement_x,
@@ -118,7 +118,7 @@ class TrialLoggerNode(Node):
         )
         file.write(row)
 
-    def log_trial(self, metadata, trial_index, trial, trial_result, num_of_attempts):
+    def log_trial(self, metadata, trial_number, trial, trial_result, num_of_attempts):
         file, new_file_created = self.open_log_file(metadata)
 
         # If the file was just created, write the header as the first line.
@@ -127,7 +127,7 @@ class TrialLoggerNode(Node):
 
         self.log_trial_row(
             file=file,
-            trial_index=trial_index,
+            trial_number=trial_number,
             trial=trial,
             trial_result=trial_result,
             num_of_attempts=num_of_attempts,
@@ -135,16 +135,16 @@ class TrialLoggerNode(Node):
 
     def log_trial_callback(self, request, response):
         metadata = request.metadata
-        trial_index = request.trial_index
+        trial_number = request.trial_number
         trial = request.trial
         trial_result = request.trial_result
         num_of_attempts = request.num_of_attempts
 
-        self.get_logger().info('Logging a trial with the index {}.'.format(trial_index))
+        self.get_logger().info('Logging a trial with the index {}.'.format(trial_number))
 
         self.log_trial(
             metadata=metadata,
-            trial_index=trial_index,
+            trial_number=trial_number,
             trial=trial,
             trial_result=trial_result,
             num_of_attempts=num_of_attempts,
