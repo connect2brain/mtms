@@ -307,6 +307,11 @@ enum ExperimentState {
   Canceled
 }
 
+enum ExperimentTab {
+  SingleLocation,
+  MultipleLocations
+}
+
 /* Session storage utilities. */
 
 const getData = (): any => {
@@ -332,7 +337,7 @@ export const ExperimentView = () => {
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
 
-  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>(() => getKey('activeTab', 'singleLocation'))
+  const [activeTab, setActiveTab] = useState<ExperimentTab>(() => getKey('activeTab', ExperimentTab.SingleLocation))
 
   const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', []))
   const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', []))
@@ -535,20 +540,26 @@ export const ExperimentView = () => {
     }
   }
 
-  useEffect(() => {
-    if (activeTab === 'singleLocation') {
-      setSelectedAngles([])
-      setSelectedPoints([])
+  const changeActiveTab = (activeTab: ExperimentTab) => {
+    setActiveTab(activeTab)
 
-      setNumOfTrials(0)
-      setNumOfValidTrials(null)
+    switch (activeTab) {
+      case ExperimentTab.SingleLocation:
+        setSelectedAngles([])
+        setSelectedPoints([])
 
-      setNumOfRepetitions(10)
+        setNumOfTrials(0)
+        setNumOfValidTrials(null)
+
+        setNumOfRepetitions(10)
+
+        break
+      case ExperimentTab.MultipleLocations:
+        setNumOfRepetitions(1)
+
+        break
     }
-    if (activeTab === 'multipleLocations') {
-      setNumOfRepetitions(1)
-    }
-  }, [activeTab])
+  }
 
   /* Set list of projects. */
   useEffect(() => {
@@ -827,15 +838,15 @@ export const ExperimentView = () => {
       <TabBar>
         <a
           href="#"
-          onClick={() => setActiveTab('singleLocation')}
-          className={activeTab === 'singleLocation' ? 'active' : ''}
+          onClick={() => changeActiveTab(ExperimentTab.SingleLocation)}
+          className={activeTab === ExperimentTab.SingleLocation ? 'active' : ''}
         >
           Single Location
         </a>
         <a
           href="#"
-          onClick={() => setActiveTab('multipleLocations')}
-          className={activeTab === 'multipleLocations' ? 'active' : ''}
+          onClick={() => changeActiveTab(ExperimentTab.MultipleLocations)}
+          className={activeTab === ExperimentTab.MultipleLocations ? 'active' : ''}
         >
           Multiple Locations
         </a>
@@ -843,25 +854,25 @@ export const ExperimentView = () => {
 
       <StimulationParametersPanel>
         <GridPanel>
-          {activeTab === 'singleLocation' &&
+          {activeTab === ExperimentTab.SingleLocation &&
           <LocationSelector
             selectedPoints={selectedPoints}
             setSelectedPoints={setSelectedPoints}
           />}
-          {activeTab === 'multipleLocations' && <LocationSelector
+          {activeTab === ExperimentTab.MultipleLocations && <LocationSelector
             selectedPoints={selectedPoints}
             setSelectedPoints={setSelectedPoints}
             multiSelectMode={true}
           />}
         </GridPanel>
         <AnglePanel>
-        {activeTab === 'singleLocation' &&
+        {activeTab === ExperimentTab.SingleLocation &&
           <AngleSelector
             selectedAngles={selectedAngles}
             setSelectedAngles={setSelectedAngles}
           />
         }
-        {activeTab === 'multipleLocations' &&
+        {activeTab === ExperimentTab.MultipleLocations &&
           <AngleSelector
             selectedAngles={selectedAngles}
             setSelectedAngles={setSelectedAngles}
@@ -870,7 +881,7 @@ export const ExperimentView = () => {
         }
         </AnglePanel>
         <IntensityPanel>
-        {activeTab === 'singleLocation' &&
+        {activeTab === ExperimentTab.SingleLocation &&
           <IntensitySelector
             min={0}
             max={150}
@@ -879,7 +890,7 @@ export const ExperimentView = () => {
             onValueChange={handleIntensityChange}
           />
         }
-        {activeTab === 'multipleLocations' &&
+        {activeTab === ExperimentTab.MultipleLocations &&
           <IntensitySelector
             min={0}
             max={150}
@@ -966,9 +977,9 @@ export const ExperimentView = () => {
             </GrayedOutPanel>
           </MepPanel>
           <TrialsPanel>
-            <SmallerTitle>{activeTab === 'singleLocation' ? 'Trials' : 'Repetitions'}</SmallerTitle>
+            <SmallerTitle>{activeTab === ExperimentTab.SingleLocation ? 'Trials' : 'Repetitions'}</SmallerTitle>
             <ConfigRow>
-              <ConfigLabel># of {activeTab === 'singleLocation' ? 'trials' : 'repetitions'}:</ConfigLabel>
+              <ConfigLabel># of {activeTab === ExperimentTab.SingleLocation ? 'trials' : 'repetitions'}:</ConfigLabel>
               <ValidatedInput
                 type="text"
                 value={numOfRepetitions}
