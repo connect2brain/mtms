@@ -285,40 +285,58 @@ enum StartButtonState {
   PerformingExperiment
 }
 
+/* Session storage utilities. */
+
+const getData = (): any => {
+  const data = sessionStorage.getItem('experiment')
+  return data ? JSON.parse(data) : {}
+}
+
+const storeKey = (key: string, value: any) => {
+  const currentData = getData()
+  currentData[key] = value
+  sessionStorage.setItem('experiment', JSON.stringify(currentData))
+}
+
+const getKey = (key: string, defaultValue: any): any => {
+  const data = getData()
+  return data[key] || defaultValue
+}
+
 export const ExperimentView = () => {
   const [projects, setProjects] = useState<string[]>([])
-  const [selectedProject, setSelectedProject] = useState<string>('')
 
-  const [experimentName, setExperimentName] = useState<string>('')
-  const [subjectName, setSubjectName] = useState<string>('')
+  const [selectedProject, setSelectedProject] = useState<string>(() => getKey('activeProject', ''))
+  const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
+  const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
 
-  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>('singleLocation')
+  const [activeTab, setActiveTab] = useState<'singleLocation' | 'multipleLocations'>(() => getKey('activeTab', 'singleLocation'))
 
-  const [selectedAngles, setSelectedAngles] = useState<number[]>([])
-  const [selectedPoints, setSelectedPoints] = useState<Point[]>([])
+  const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', []))
+  const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', []))
 
   /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
     component - remove the dependency. */
-  const [intensity, setIntensity] = useState(40)
-  const [maximumIntensity, setMaximumIntensity] = useState(100)
+  const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 40))
+  const [maximumIntensity, setMaximumIntensity] = useState<number>(() => getKey('maximumIntensity', 100))
 
-  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(false)
-  const [trigger1Delay, setTrigger1Delay] = useState<number>(0)
+  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', false))
+  const [trigger1Delay, setTrigger1Delay] = useState<number>(() => getKey('trigger1Delay', 0))
 
-  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(false)
-  const [trigger2Delay, setTrigger2Delay] = useState<number>(0)
+  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(() => getKey('trigger2Enabled', false))
+  const [trigger2Delay, setTrigger2Delay] = useState<number>(() => getKey('trigger2Delay', 0))
 
-  const [mepEnabled, setMepEnabled] = useState<boolean>(true)
-  const [emgChannel, setEmgChannel] = useState<number>(1)
+  const [mepEnabled, setMepEnabled] = useState<boolean>(() => getKey('mepEnabled', true))
+  const [emgChannel, setEmgChannel] = useState<number>(() => getKey('emgChannel', 1))
 
-  const [numOfRepetitions, setNumOfRepetitions] = useState<number>(10)
-  const [waitForTrigger, setWaitForTrigger] = useState<boolean>(false)
+  const [numOfRepetitions, setNumOfRepetitions] = useState<number>(() => getKey('numOfRepetitions', 10))
+  const [waitForTrigger, setWaitForTrigger] = useState<boolean>(() => getKey('waitForTrigger', false))
 
-  const [itiMin, setItiMin] = useState<number>(3.5)
-  const [itiMax, setItiMax] = useState<number>(4.5)
+  const [itiMin, setItiMin] = useState<number>(() => getKey('itiMin', 3.5))
+  const [itiMax, setItiMax] = useState<number>(() => getKey('itiMax', 4.5))
 
-  const [autopause, setAutopause] = useState<boolean>(true)
-  const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(10)
+  const [autopause, setAutopause] = useState<boolean>(() => getKey('autopause', true))
+  const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(() => getKey('autopauseIntervalMinutes', 10))
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
   const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
@@ -339,18 +357,18 @@ export const ExperimentView = () => {
   }
 
   const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value
-    setSelectedProject(value)
+    const activeProject = event.target.value
+    setSelectedProject(activeProject)
 
     /* TODO: The naming is a bit confusing here: setActiveProject makes a ROS service call; naming should
       somehow reflect that to distinguish it from setSelectedProject. */
-    setActiveProject(value, () => {
-      console.log('Project set to ' + value)
+    setActiveProject(activeProject, () => {
+      console.log('Active project set to ' + activeProject)
     })
   }
 
-  const handleIntensityChange = (value: number) => {
-    setIntensity(value)
+  const handleIntensityChange = (intensity: number) => {
+    setIntensity(intensity)
     setStartButtonState(StartButtonState.UpdatingTrialInfo)
   }
 
@@ -527,7 +545,7 @@ export const ExperimentView = () => {
     }
   }, [selectedAngles, selectedPoints, intensity, numOfRepetitions])
 
-  /* Updates the experiment duration. */
+  /* Update the experiment duration. */
   useEffect(() => {
     if (numOfValidTrials === null) {
       return
@@ -535,6 +553,87 @@ export const ExperimentView = () => {
     const duration = numOfValidTrials * (itiMin + itiMax) / 2
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
+
+  /* Update session storage. */
+  useEffect(() => {
+    storeKey('activeProject', selectedProject)
+  }, [selectedProject])
+
+  useEffect(() => {
+    storeKey('experimentName', experimentName)
+  }, [experimentName])
+
+  useEffect(() => {
+    storeKey('subjectName', subjectName)
+  }, [subjectName])
+
+  useEffect(() => {
+    storeKey('activeTab', activeTab)
+  }, [activeTab])
+
+  useEffect(() => {
+    storeKey('selectedAngles', selectedAngles)
+  }, [selectedAngles])
+
+  useEffect(() => {
+    storeKey('selectedPoints', selectedPoints)
+  }, [selectedPoints])
+
+  useEffect(() => {
+    storeKey('intensity', intensity)
+  }, [intensity])
+
+  useEffect(() => {
+    storeKey('maximumIntensity', maximumIntensity)
+  }, [maximumIntensity])
+
+  useEffect(() => {
+    storeKey('trigger1Enabled', trigger1Enabled)
+  }, [trigger1Enabled])
+
+  useEffect(() => {
+    storeKey('trigger1Delay', trigger1Delay)
+  }, [trigger1Delay])
+
+  useEffect(() => {
+    storeKey('trigger2Enabled', trigger2Enabled)
+  }, [trigger2Enabled])
+
+  useEffect(() => {
+    storeKey('trigger2Delay', trigger2Delay)
+  }, [trigger2Delay])
+
+  useEffect(() => {
+    storeKey('mepEnabled', mepEnabled)
+  }, [mepEnabled])
+
+  useEffect(() => {
+    storeKey('emgChannel', emgChannel)
+  }, [emgChannel])
+
+  useEffect(() => {
+    storeKey('numOfRepetitions', numOfRepetitions)
+  }, [numOfRepetitions])
+
+  useEffect(() => {
+    storeKey('waitForTrigger', waitForTrigger)
+  }, [waitForTrigger])
+
+  useEffect(() => {
+    storeKey('itiMin', itiMin)
+  }, [itiMin])
+
+  useEffect(() => {
+    storeKey('itiMax', itiMax)
+  }, [itiMax])
+
+  useEffect(() => {
+    storeKey('autopause', autopause)
+  }, [autopause])
+
+  useEffect(() => {
+    storeKey('autopauseIntervalMinutes', autopauseIntervalMinutes)
+  }, [autopauseIntervalMinutes])
 
   /* Utilities */
   const formatDuration = (duration: number): string => {
