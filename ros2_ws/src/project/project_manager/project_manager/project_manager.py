@@ -40,13 +40,24 @@ class ProjectManagerNode(Node):
         )
         self.active_project_publisher = self.create_publisher(String, "/projects/active", qos_persist_latest)
 
-        # Internal state to store the active project.
-        self.active_project = ""
+        # Set active project initially to the first project on the list.
+        projects = self.list_projects()
+        self.set_active_project(projects[0])
+
+    def set_active_project(self, active_project):
+        self.active_project = active_project
+
+        msg = String()
+        msg.data = active_project
+        self.active_project_publisher.publish(msg)
+
+    def list_projects(self):
+        return [d for d in os.listdir(self.PROJECTS_ROOT) if os.path.isdir(os.path.join(self.PROJECTS_ROOT, d))]
 
     def list_projects_callback(self, request, response):
         try:
             # List directories in PROJECTS_ROOT
-            response.projects = [d for d in os.listdir(self.PROJECTS_ROOT) if os.path.isdir(os.path.join(self.PROJECTS_ROOT, d))]
+            response.projects = self.list_projects()
 
             self.logger.info("Projects successfully listed.")
             response.success = True
@@ -62,12 +73,7 @@ class ProjectManagerNode(Node):
 
         # Check if the specified project exists
         if project in [d for d in os.listdir(self.PROJECTS_ROOT) if os.path.isdir(os.path.join(self.PROJECTS_ROOT, d))]:
-            self.active_project = project
-
-            # Publish the active project
-            msg = String()
-            msg.data = project
-            self.active_project_publisher.publish(msg)
+            self.set_active_project(project)
 
             self.logger.info("Project successfully set to: {}.".format(project))
             response.success = True
