@@ -1,8 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
-
-import { SystemControl } from '../components/SystemControl'
-import { SystemState } from '../components/SystemState'
 
 import Targets from './Targets'
 import DataVisualize from './DataVisualize'
@@ -11,8 +8,23 @@ import DataVisualizeWebGL from './DataVisualizeWebGL'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
 
+/* Session storage utilities. */
+
+const storeKey = (key: string, value: any) => {
+  sessionStorage.setItem(key, JSON.stringify(value))
+}
+
+const getKey = (key: string, defaultValue: any): any => {
+  const storedValue = sessionStorage.getItem(key)
+  return storedValue !== null ? JSON.parse(storedValue) : defaultValue
+}
+
 export const MultipleViews = () => {
-  const [currentView, setCurrentView] = useState('SystemView')
+  const [currentView, setCurrentView] = useState(() => getKey('currentView', 'SystemView'))
+
+  useEffect(() => {
+    storeKey('currentView', currentView)
+  }, [currentView])
 
   return (
     <div>
