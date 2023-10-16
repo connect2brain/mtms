@@ -108,8 +108,8 @@ const IntensityPanel = styled.div`
 const ConfigPanel = styled.div`
   display: grid;
   grid-template-rows: repeat(1, 1fr);
-  grid-template-columns: repeat(5, 1fr);
-  width: 500px;
+  grid-template-columns: repeat(6, 1fr);
+  width: 600px;
   height: 550px;
   gap: 20px;
 `
@@ -149,6 +149,14 @@ const PausePanel = styled.div`
 const ExperimentPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 5 / 6;
+  width: 240px;
+  height: 240px;
+  ${styledPanel}
+`
+
+const StatusPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 6 / 7;
   width: 240px;
   height: 240px;
   ${styledPanel}
@@ -357,15 +365,16 @@ export const ExperimentView = () => {
 
   const [trialNumber, setTrialNumber] = useState<number | null>(null)
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
-  const [experimentState, setExperimentState] = useState<number | null>(null)
+  const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
 
   const perform = () => {
     const experiment: Experiment = formExperiment()
     const done_callback = (trial_results: any, success: boolean) => {
+      setTrialNumber(null)
+      setAttemptNumber(null)
       setExperimentState(ExperimentState.NotRunning)
     }
     const feedback_callback = (feedback: any) => {
-      console.log(feedback)
       setTrialNumber(feedback.trial_number)
       setAttemptNumber(feedback.attempt_number)
       setExperimentState(feedback.experiment_state.value)
@@ -692,6 +701,27 @@ export const ExperimentView = () => {
     return result.trim()
   }
 
+  const formatExperimentState = (): string => {
+    switch (experimentState) {
+      case ExperimentState.NotRunning:
+        return 'Not running'
+      case ExperimentState.Running:
+        return 'Running'
+      case ExperimentState.Paused:
+        return 'Paused'
+      case ExperimentState.Canceled:
+        return 'Canceled'
+    }
+    return 'Unknown'
+  }
+
+  const formatTrialNumber = () => {
+    if (trialNumber === null || numOfValidTrials === null) {
+      return '\u2013'
+    }
+    return trialNumber.toString() + '/' + numOfValidTrials.toString()
+  }
+
   const startButtonStateToString = (startButtonState: StartButtonState): string => {
     switch (startButtonState) {
       case StartButtonState.Updating:
@@ -1003,6 +1033,21 @@ export const ExperimentView = () => {
               <IndentedLabel>Duration:</IndentedLabel>
               <ConfigLabel>{duration ? formatDuration(duration) : '\u2013'}</ConfigLabel>
             </CloseConfigRow>
+          </ExperimentPanel>
+          <StatusPanel>
+            <SmallerTitle>Status</SmallerTitle>
+            <ConfigRow>
+              <ConfigLabel>Experiment</ConfigLabel>
+              <ConfigLabel>{formatExperimentState()} </ConfigLabel>
+            </ConfigRow>
+            <ConfigRow>
+              <IndentedLabel>Trial:</IndentedLabel>
+              <ConfigLabel>{formatTrialNumber()} </ConfigLabel>
+            </ConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Attempt:</IndentedLabel>
+              <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
+            </CloseConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
               onClick={() => runStartButtonAction(startButtonState)}
@@ -1010,7 +1055,7 @@ export const ExperimentView = () => {
             >
               {startButtonStateToString(startButtonState)}
             </StyledButton>
-          </ExperimentPanel>
+          </StatusPanel>
         </ConfigPanel>
     </>
   )
