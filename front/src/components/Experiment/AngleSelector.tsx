@@ -48,7 +48,7 @@ const AngleLabel = styled.text`
 `
 
 /* Large angle text shown next to the grid only when not in multiSelectMode. */
-const LargeAngleText = styled.text`
+const LargeAngleText = styled.div`
     margin-top: 160px;
     margin-left: 50px;
     font-size: 36px;
@@ -154,14 +154,14 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
             </SVGContainer>
         </SelectorContainer>
         {!multiSelectMode &&
-          <LargeAngleText x="200" y="380" data-visible={selectedAngles.length > 0}>
+          <LargeAngleText data-visible={selectedAngles.length > 0}>
             { (selectedAngles.length > 0 || hoveredAngle !== null) &&
             `${selectedAngles.length > 0 ? selectedAngles[0] : hoveredAngle}°`}
           </LargeAngleText>
         }
         {multiSelectMode &&
-              <AngleControls onFillAngles={handleFillAngles} onReset={handleResetAngles} />
-            }
+          <AngleControls onFillAngles={handleFillAngles} onReset={handleResetAngles} />
+        }
       </SelectorInternalContainer>
       </div>
     )
