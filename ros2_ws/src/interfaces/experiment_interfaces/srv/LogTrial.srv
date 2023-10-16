@@ -1,6 +1,6 @@
 ExperimentMetadata metadata
 
-uint16 trial_index
+uint16 trial_number
 
 Trial trial
 TrialResult trial_result

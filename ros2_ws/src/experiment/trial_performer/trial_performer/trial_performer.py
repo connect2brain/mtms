@@ -35,8 +35,6 @@ class TrialPerformerNode(Node):
     # before performing the stimulus.
     TRIAL_TIME_MARGINAL_S = 0.1
 
-    TRIAL_REDO_INTERVAL_S = 3.0
-
     def __init__(self):
         super().__init__('trial_performer_node')
 
