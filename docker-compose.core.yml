@@ -10,8 +10,8 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     volumes:
-      - './front:/app'
-      - '/app/node_modules'
+      - './front/src:/app/src'
+      - './front/public:/app/public'
     network_mode: host
 
   eeg_bridge:
