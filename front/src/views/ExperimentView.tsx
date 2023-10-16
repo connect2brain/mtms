@@ -300,7 +300,7 @@ const storeKey = (key: string, value: any) => {
 
 const getKey = (key: string, defaultValue: any): any => {
   const data = getData()
-  return data[key] || defaultValue
+  return key in data ? data[key] : defaultValue
 }
 
 export const ExperimentView = () => {
