@@ -138,7 +138,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     const [selectedSinglePoint, setSelectedSinglePoint] = useState<Point | null>(null)
 
     const resetGrid = () => {
-        setSelectedPoints([])
+      setSelectedPoints([])
     }
 
     const isPointSelected = (x: number, y: number): boolean =>
