@@ -17,6 +17,8 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/session_state.hpp"
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
 
 #define BUFFER_LENGTH 250
 #define MAX_NUMBER_OF_CHANNELS 80
@@ -41,7 +43,7 @@ public:
   EegBridge();
 
   void create_publishers();
-  void send_node_message(std::string str);
+  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message);
 
   void subscribe_to_system_state();
   void wait_for_system_state();
@@ -79,7 +81,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr publisher_eeg_info_;
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_node_message_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;
 
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
 
