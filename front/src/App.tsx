@@ -1,24 +1,41 @@
 import React, { useState } from 'react'
-import './App.css'
-import Providers from './providers/Providers'
-import styled from 'styled-components'
-import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
-import Session from './views/Session'
-import DataVisualize from './views/DataVisualize'
-import { MultipleViews } from './views/MultipleViews'
-import { Header as StyledHeader } from './styles/StyledTypography'
+import styled from 'styled-components'
+
+import './App.css'
+
+import Providers from './providers/Providers'
+import { HealthcheckProvider } from './providers/HealthcheckProvider'
+import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
+import { MultipleViews } from 'views/MultipleViews'
+import { Header as StyledHeader } from 'styles/StyledTypography'
+import { StyledPanel } from 'styles/General'
 
 const App = () => {
   return (
     <Providers>
-      <Header>mTMS control panel</Header>
-      <Wrapper>
-        <MultipleViews />
-      </Wrapper>
+      <HealthcheckProvider>
+        <Header>mTMS control panel</Header>
+        <HealthcheckPanel>
+          <HealthcheckStatusDisplay />
+        </HealthcheckPanel>
+        <Wrapper>
+          <MultipleViews />
+        </Wrapper>
+      </HealthcheckProvider>
     </Providers>
   )
 }
+
+const HealthcheckPanel = styled.div`
+  width: 155px;
+  height: 40px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+  ${StyledPanel}
+`
 
 const Header = styled(StyledHeader)`
   font-size: 1.8rem;
