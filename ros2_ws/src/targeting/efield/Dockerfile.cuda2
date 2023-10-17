@@ -1,4 +1,4 @@
-FROM osrf/ros:galactic-desktop as base
+FROM osrf/ros:iron-desktop as base
 FROM base as base-amd64
 
 ENV NVARCH x86_64
@@ -65,18 +65,23 @@ RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
-    wget
+    wget \
+    ros-iron-rmw-cyclonedds-cpp
     
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 WORKDIR /app/ros2_ws
 
 
 # Build interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
-RUN source /opt/ros/galactic/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 
 # Copy efield packages
@@ -93,7 +98,7 @@ ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
 RUN cd src/targeting/efield/efield_libraries && cmake . && make
 
 # Build efield packages
-RUN source /opt/ros/galactic/setup.bash && colcon build --packages-select efield
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select efield
 
 
 COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .
