@@ -27,16 +27,12 @@ RUN apt-get install -y \
     python3-psutil \
     python3-vtkgdcm \
     python3-gdcm \
-    cython3 \
     python3-h5py \
     python3-imageio \
-    python3-keras \
     python3-pubsub \
-    dos2unix \
-    locales \
     python3-pip
 
-RUN pip install vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.7 pypolaris==0.0.6
+RUN pip install vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.7 pypolaris==0.0.6 python-socketio
 
 # HACK: As of now, wxPython >=4.1.0 (required by InVesalius) for Ubuntu 22 is not stored in PyPi, hence
 #       install using an own wheel file.
@@ -52,8 +48,6 @@ RUN locale-gen  \
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
-
-RUN pip install vtk==9.1.0 pyacvd==0.2.7 pypolaris==0.0.6
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
