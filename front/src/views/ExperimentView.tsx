@@ -11,7 +11,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledButton, StyledRedButton } from 'styles/General'
+import { StyledPanel, StyledButton, StyledRedButton } from 'styles/General'
 
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
 
@@ -63,13 +63,6 @@ const Input = styled.input`
   }
 `
 
-const styledPanel = `
-  padding: 25px 0px 40px 35px;
-  border-radius: 5px;
-  background-color: #f7f7f7;
-  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
-`
-
 const StimulationParametersPanel = styled.div`
   display: grid;
   grid-template-rows: repeat(1, 1fr);
@@ -83,7 +76,7 @@ const GridPanel = styled.div`
   grid-column: 1 / 2;
   width: 600px;
   height: 500px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const AnglePanel = styled.div`
@@ -92,7 +85,7 @@ const AnglePanel = styled.div`
   gap: 1.5rem;
   width: 600px;
   height: 500px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const IntensityPanel = styled.div`
@@ -101,7 +94,7 @@ const IntensityPanel = styled.div`
   gap: 1.5rem;
   width: 100px;
   height: 500px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 /* Config panels */
@@ -119,7 +112,7 @@ const TriggerPanel = styled.div`
   grid-column: 1 / 2;
   width: 272px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const MepPanel = styled.div`
@@ -127,7 +120,7 @@ const MepPanel = styled.div`
   grid-column: 2 / 3;
   width: 272px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const TrialsPanel = styled.div`
@@ -135,7 +128,7 @@ const TrialsPanel = styled.div`
   grid-column: 3 / 4;
   width: 270px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const PausePanel = styled.div`
@@ -143,7 +136,7 @@ const PausePanel = styled.div`
   grid-column: 4 / 5;
   width: 270px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const ExperimentPanel = styled.div`
@@ -151,7 +144,7 @@ const ExperimentPanel = styled.div`
   grid-column: 5 / 6;
   width: 240px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 const StatusPanel = styled.div`
@@ -159,7 +152,7 @@ const StatusPanel = styled.div`
   grid-column: 6 / 7;
   width: 240px;
   height: 240px;
-  ${styledPanel}
+  ${StyledPanel}
 `
 
 /* General config-related */
