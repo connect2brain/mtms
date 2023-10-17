@@ -40,7 +40,7 @@ source /opt/ros/iron/setup.bash
 
 # Build mTMS bridge
 cd $MTMS_ROOT/ros2_ws
-colcon build --packages-select event_interfaces mtms_device_interfaces mtms_device_bridge
+colcon build --packages-select event_interfaces mtms_device_interfaces system_interfaces mtms_device_bridge
 
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
