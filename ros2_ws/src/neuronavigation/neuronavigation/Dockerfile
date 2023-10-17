@@ -27,12 +27,9 @@ RUN apt-get install -y \
     python3-psutil \
     python3-vtkgdcm \
     python3-gdcm \
-    cython3 \
     python3-h5py \
     python3-imageio \
     python3-pubsub \
-    dos2unix \
-    locales \
     python3-pip
 
 RUN pip install vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.7 pypolaris==0.0.6 python-socketio
