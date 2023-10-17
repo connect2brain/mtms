@@ -13,6 +13,9 @@ RUN apt-get install -y \
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y \
+    cython3 \
+    dos2unix \
+    locales \
     python3-wxgtk4.0 \
     python3-numpy \
     python3-scipy \
@@ -33,6 +36,16 @@ RUN apt-get install -y \
     locales \
     python3-pip
 
+RUN pip install vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.7 pypolaris==0.0.6
+
+# HACK: As of now, wxPython >=4.1.0 (required by InVesalius) for Ubuntu 22 is not stored in PyPi, hence
+#       install using an own wheel file.
+#
+COPY ros2_ws/src/neuronavigation/neuronavigation/wheels/wxPython-4.2.0-cp310-cp310-linux_x86_64.whl /app/wheels/
+
+RUN pip install /app/wheels/wxPython-4.2.0-cp310-cp310-linux_x86_64.whl
+
+# Language and locale
 RUN locale-gen  \
     en_US.UTF-8 \
     en_GB.UTF-8
