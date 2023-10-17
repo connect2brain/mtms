@@ -11,6 +11,7 @@
 
   <depend>mtms_device_interfaces</depend>
   <depend>event_interfaces</depend>
+  <depend>system_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
