@@ -15,6 +15,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
+find_package(system_interfaces REQUIRED)
 
 # Install run_fpga executable.
 
@@ -29,7 +30,7 @@ target_include_directories(run_fpga
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces system_interfaces)
 
 # Install system state bridge.
 
