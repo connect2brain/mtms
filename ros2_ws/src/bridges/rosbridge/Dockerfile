@@ -31,6 +31,7 @@ COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
 COPY ros2_ws/src/interfaces/project_interfaces src/interfaces/project_interfaces
+COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces
 COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces
 COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
 

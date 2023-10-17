@@ -1,5 +1,12 @@
 import styled from 'styled-components'
 
+export const StyledPanel = `
+  padding: 25px 0px 40px 35px;
+  border-radius: 5px;
+  background-color: #f7f7f7;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
+`
+
 export const StyledButton = styled.button`
   width: 200px;
   height: 50px;
