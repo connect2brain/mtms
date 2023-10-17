@@ -8,8 +8,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+
 find_package(eeg_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
+find_package(system_interfaces REQUIRED)
 
 add_executable(eeg_bridge
         src/eeg_bridge.h
@@ -20,8 +22,8 @@ add_executable(eeg_bridge
         src/scheduling_utils.h
         )
 add_executable(mock_eeg_bridge src/mock_eeg_bridge.cpp)
-ament_target_dependencies(eeg_bridge rclcpp std_msgs eeg_interfaces mtms_device_interfaces)
-ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs eeg_interfaces mtms_device_interfaces)
+ament_target_dependencies(eeg_bridge rclcpp std_msgs eeg_interfaces mtms_device_interfaces system_interfaces)
+ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs eeg_interfaces mtms_device_interfaces system_interfaces)
 
 
 install(TARGETS
