@@ -242,7 +242,7 @@ void EegBridge::spin() {
 
         case WAITING_FOR_SESSION_START:
           status_value = system_interfaces::msg::HealthcheckStatus::READY;
-          this->publish_healthcheck(status_value, "", "Ready to start an experiment.");
+          this->publish_healthcheck(status_value, "Ready", "Ready to start an experiment.");
           break;
 
         case WAITING_FOR_SESSION_STOP:
