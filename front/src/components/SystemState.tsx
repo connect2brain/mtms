@@ -50,7 +50,7 @@ export const SystemState = ({ systemState }: Props) => {
 
     if (keys.length > 0) {
       return keys.map((key) => {
-        return <span key={key}>{key}</span>
+        return <span key={key}>{key}, </span>
       })
     } else {
       /* No errors, do not display anything. */
@@ -112,11 +112,11 @@ export const SystemState = ({ systemState }: Props) => {
       <br />
       <ErrorTitle>Errors</ErrorTitle>
       <ErrorsContainer>
-        <ErrorItem>Current {getListValue(systemState.system_error_current)}</ErrorItem>
-        <ErrorItem>Cumulative {getListValue(systemState.system_error_cumulative)}</ErrorItem>
-        <ErrorItem>Emergency {getListValue(systemState.system_error_emergency)}</ErrorItem>
+        <ErrorItem>Current: {getListValue(systemState.system_error_current)}</ErrorItem>
+        <ErrorItem>Cumulative: {getListValue(systemState.system_error_cumulative)}</ErrorItem>
+        <ErrorItem>Emergency: {getListValue(systemState.system_error_emergency)}</ErrorItem>
         <ErrorItem>
-          Startup {' '}
+          Startup: {' '}
           {getKeyByValueExcluding(systemState.startup_error, 'value', systemState.startup_error.value) || ''}
         </ErrorItem>
       </ErrorsContainer>
