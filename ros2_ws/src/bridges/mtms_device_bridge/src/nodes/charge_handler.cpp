@@ -22,6 +22,11 @@ public:
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Charge> charge) -> void {
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("charge_handler"), "FPGA not in OK state while attempting to charge");
+        return;
+      }
+
       uint8_t channel = charge->channel;
 
       /* Serialize event. */
@@ -81,7 +86,6 @@ private:
   rclcpp::Subscription<event_interfaces::msg::Charge>::SharedPtr send_charge_subscriber_;
   SerializedMessage serialized_message;
   bool safe_mode;
-
 };
 
 int main(int argc, char **argv) {
@@ -104,13 +108,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }
