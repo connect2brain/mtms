@@ -22,6 +22,11 @@ public:
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Discharge> discharge) -> void {
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"), "FPGA not in OK state while attempting to discharge");
+        return;
+      }
+
       uint8_t channel = discharge->channel;
 
       /* Serialize event info. */
@@ -100,13 +105,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }

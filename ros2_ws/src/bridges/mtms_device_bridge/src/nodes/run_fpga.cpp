@@ -34,13 +34,11 @@ private:
 /* Otherwise similar to the shared init_fpga() function, used by the other ROS nodes in the
    mTMS device bridge, except that:
 
-     - Sends status messages to the UI
-     - Once the initialization is finished, runs the FPGA program (one and only one of the ROS nodes
-       needs to do that - the others can then use the already running program.)
+     - Sends healthcheck messages to the UI
      - If the FPGA has been powered off during the same session, ask the user to wait for one minute
        before powering on again. */
-void init_and_run_fpga(std::shared_ptr<FpgaConnection> node, bool one_minute_wait) {
-  int waiting_time_left = one_minute_wait ? 60 : 0;
+void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first_time) {
+  int waiting_time_left = first_time ? 0 : 60;
 
   uint8_t status_value;
   while (true) {
@@ -65,7 +63,9 @@ void init_and_run_fpga(std::shared_ptr<FpgaConnection> node, bool one_minute_wai
   }
   status_value = system_interfaces::msg::HealthcheckStatus::READY;
   node->publish_healthcheck(status_value, "Ready", "");
+}
 
+void run_fpga() {
   NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
 }
 
@@ -74,15 +74,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   auto node = std::make_shared<FpgaConnection>();
 
-  init_and_run_fpga(node, false);
-
+  bool first_time = true;
   while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_and_run_fpga(node, true);
-    }
-    rclcpp::spin_some(node);
+    init_fpga_with_healthcheck(node, first_time);
+    first_time = false;
+
+    run_fpga();
+    close_fpga();
   }
+
   close_fpga();
   rclcpp::shutdown();
 }
