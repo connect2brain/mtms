@@ -9,6 +9,11 @@
 
 void allow_trigger_out([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::AllowTriggerOut::Request> request,
                         std::shared_ptr<mtms_device_interfaces::srv::AllowTriggerOut::Response> response) {
+  if (!is_fpga_ok()) {
+    RCLCPP_WARN(rclcpp::get_logger("allow_trigger_out"), "FPGA not in OK state during service call");
+    response->success = false;
+    return;
+  }
 
   bool allow_trigger_out = request->allow_trigger_out;
 
@@ -49,13 +54,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }
