@@ -52,17 +52,38 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'system_interfaces/Healthcheck'
     }) as Topic<Healthcheck>
 
+    let eegTimeout: NodeJS.Timeout | null = null
+    let mtmsTimeout: NodeJS.Timeout | null = null
+
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
+      if (eegTimeout) {
+        clearTimeout(eegTimeout)
+      }
+      eegTimeout = setTimeout(() => {
+        setEegHealthcheck(null)
+      }, 1000)
     })
 
     mtmsSubscriber.subscribe((message) => {
       setMtmsDeviceHealthcheck(message)
+      if (mtmsTimeout) {
+        clearTimeout(mtmsTimeout)
+      }
+      mtmsTimeout = setTimeout(() => {
+        setMtmsDeviceHealthcheck(null)
+      }, 1000)
     })
 
     return () => {
       eegSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
+      if (eegTimeout) {
+        clearTimeout(eegTimeout)
+      }
+      if (mtmsTimeout) {
+        clearTimeout(mtmsTimeout)
+      }
     }
   }, [])
 
