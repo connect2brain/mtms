@@ -17,4 +17,6 @@ extern NiFpga_Session session;
 extern NiFpga_Status status;
 extern bool fpga_opened;
 
+const uint16_t FPGA_OK_CHECK_INTERVAL_MS = 500;
+
 #endif

@@ -163,6 +163,10 @@ private:
   }
 
   void update_feedback_topics() {
+    if (!is_fpga_ok()) {
+      RCLCPP_WARN(rclcpp::get_logger("feedback_monitor_bridge"), "FPGA not in OK state while attempting to read event feedback");
+      return;
+    }
     read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data);
     read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data);
     read_fifo_and_publish("Trigger out", trigger_out_feedback_fifo, trigger_out_data);
@@ -201,13 +205,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }
