@@ -45,6 +45,12 @@ public:
     RCLCPP_INFO(this->get_logger(), "Reading data from file %s in directory %s.", data_file_name_.c_str(), DATA_DIRECTORY.c_str());
 
     data_path_ = DATA_DIRECTORY + data_file_name_;
+
+    /* HACK: When EEG simulator is started simultaneously with EEG processor, it may start streaming already
+         before EEG processor is up and running. Hence, wait for several seconds here to ensure that EEG
+         processor is running. The correct fix would be to make starting and stopping the EEG simulator more
+         explicit, e.g., so that it is done using start-session ROS service, as it is done with the real
+         EEG device. */
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     file_.open(data_path_, std::ios::in);
@@ -94,7 +100,10 @@ private:
     msg.time = current_time_;
 
     eeg_publisher_->publish(msg);
-    RCLCPP_INFO(this->get_logger(), "Published EEG datapoint in topic %s with timestamp %.4f s.", EEG_RAW_TOPIC.c_str(), current_time_);
+    if (static_cast<int>(current_time_) > static_cast<int>(last_log_time_)) {
+        RCLCPP_INFO(this->get_logger(), "Published EEG datapoint in topic %s with timestamp %.4f s.", EEG_RAW_TOPIC.c_str(), current_time_);
+        last_log_time_ = current_time_;
+    }
 
     current_time_ += sampling_period_;
   }
@@ -116,6 +125,8 @@ private:
 
   double current_time_ = 0.0;
   double sampling_period_ = 0.0;
+
+  double last_log_time_ = -1.0;
 
   std::string data_file_name_;
   std::string data_path_;
