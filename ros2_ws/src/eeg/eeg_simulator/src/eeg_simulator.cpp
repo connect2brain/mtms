@@ -1,0 +1,156 @@
+#include <chrono>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <memory>
+#include <thread>
+#include <string>
+
+#include "rclcpp/rclcpp.hpp"
+#include "rcl_interfaces/msg/parameter_descriptor.hpp"
+#include "rcl_interfaces/msg/parameter_type.hpp"
+
+#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_info.hpp"
+#include "eeg_interfaces/msg/trigger.hpp"
+
+
+/* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
+     side yet. For a previous Python reference implementation, see commit c0afb515b. */
+class EegSimulator : public rclcpp::Node {
+public:
+  EegSimulator() : Node("eeg_simulator") {
+    eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
+    trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_RECEIVED_TOPIC, 10);
+    eeg_info_publisher_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, rclcpp::QoS(1).transient_local());
+
+    this->declare_parameter<std::string>("data_file", "");
+    data_file_name_ = this->get_parameter("data_file").as_string();
+
+    this->declare_parameter<int>("sampling_frequency", 0);
+    sampling_frequency_ = this->get_parameter("sampling_frequency").as_int();
+
+    sampling_period_ = 1.0 / sampling_frequency_;
+
+    this->declare_parameter<bool>("loop", false);
+    loop_ = this->get_parameter("loop").as_bool();
+
+    this->declare_parameter<int>("eeg_channels", 0);
+    eeg_channels_ = this->get_parameter("eeg_channels").as_int();
+
+    this->declare_parameter<int>("emg_channels", 0);
+    emg_channels_ = this->get_parameter("emg_channels").as_int();
+    total_channels_ = eeg_channels_ + emg_channels_;
+
+    RCLCPP_INFO(this->get_logger(), "Reading data from file %s in directory %s.", data_file_name_.c_str(), DATA_DIRECTORY.c_str());
+
+    data_path_ = DATA_DIRECTORY + data_file_name_;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+
+    file_.open(data_path_, std::ios::in);
+    publish_data_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period_), std::bind(&EegSimulator::publish_data, this));
+    publish_trigger_timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&EegSimulator::publish_trigger, this));
+
+    eeg_interfaces::msg::EegInfo eeg_info;
+    eeg_info.sampling_frequency = sampling_frequency_;
+    eeg_info.n_channels = eeg_channels_;
+    eeg_info.send_trigger_as_channel = false;
+
+    eeg_info_publisher_->publish(eeg_info);
+  }
+
+private:
+  void publish_data() {
+    std::string line;
+    std::getline(file_, line);
+
+    if (line.empty() && loop_) {
+        file_.clear();
+        file_.seekg(0, std::ios::beg);
+        std::getline(file_, line);
+    } else if (line.empty() && !loop_) {
+        RCLCPP_INFO(this->get_logger(), "Published all samples from file");
+        return;
+    }
+
+    std::stringstream ss(line);
+    std::string number;
+    std::vector<double> data;
+
+    while (std::getline(ss, number, ',')) {
+        data.push_back(std::stod(number));
+    }
+
+    if (total_channels_ > static_cast<int>(data.size())) {
+        RCLCPP_ERROR(this->get_logger(), "Total # of EEG and EMG channels (%d) exceeds # of channels in data (%zu)", total_channels_, data.size());
+        return;
+    }
+
+    eeg_interfaces::msg::EegDatapoint msg;
+
+    msg.eeg_channels.insert(msg.eeg_channels.end(), data.begin(), data.begin() + eeg_channels_);
+    msg.emg_channels.insert(msg.emg_channels.end(), data.begin() + eeg_channels_, data.begin() + total_channels_);
+    msg.first_sample_of_session = current_time_ > 0 ? false : true;
+    msg.time = current_time_;
+
+    eeg_publisher_->publish(msg);
+    RCLCPP_INFO(this->get_logger(), "Published EEG datapoint in topic %s with timestamp %.4f s.", EEG_RAW_TOPIC.c_str(), current_time_);
+
+    current_time_ += sampling_period_;
+  }
+
+  void publish_trigger() {
+    RCLCPP_INFO(this->get_logger(), "Publishing trigger");
+
+    eeg_interfaces::msg::Trigger msg;
+    msg.index = 0;
+    msg.time = current_time_;
+
+    trigger_publisher_->publish(msg);
+  }
+
+  const std::string EEG_RAW_TOPIC = "/eeg/raw";
+  const std::string EEG_INFO_TOPIC = "/eeg/info";
+  const std::string EEG_TRIGGER_RECEIVED_TOPIC = "/eeg/trigger_received";
+  const std::string DATA_DIRECTORY = "data/eeg/";
+
+  double current_time_ = 0.0;
+  double sampling_period_ = 0.0;
+
+  std::string data_file_name_;
+  std::string data_path_;
+  int sampling_frequency_ = 0;
+  bool loop_ = false;
+  int eeg_channels_ = 0;
+  int emg_channels_ = 0;
+  int total_channels_ = 0;
+  std::ifstream file_;
+
+  rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_publisher_;
+  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher_;
+
+  rclcpp::TimerBase::SharedPtr publish_data_timer_;
+  rclcpp::TimerBase::SharedPtr publish_trigger_timer_;
+};
+
+int main(int argc, char *argv[]) {
+  rclcpp::init(argc, argv);
+
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_simulator"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<EegSimulator>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_simulator"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+  return 0;
+}
