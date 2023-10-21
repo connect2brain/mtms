@@ -14,18 +14,21 @@ RUN apt-get install -y \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/other/topic_frequency ros2_ws/src/other/topic_frequency/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
-
-# Build ROS packages
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
+# ROS node
+COPY ros2_ws/src/other/topic_frequency src/other/topic_frequency
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select topic_frequency
+
 # Copy entrypoint
+
+WORKDIR /app
 
 COPY ros2_ws/src/other/topic_frequency/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh

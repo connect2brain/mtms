@@ -15,6 +15,8 @@ class TopicFrequency : public rclcpp::Node {
 
 public:
   TopicFrequency() : Node("topic_frequency") {
+    this->declare_parameter<std::string>("topic", "/eeg/raw");
+    topic_ = this->get_parameter("topic").as_string();
 
     messages_received_since_last_full_second = 0;
     messages_received = 0;
@@ -24,9 +26,9 @@ public:
       messages_received_since_last_full_second++;
     };
 
-    subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/raw",
-                                                                                 10,
-                                                                                 subscription_callback);
+    subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>(topic_,
+                                                                                10,
+                                                                                subscription_callback);
 
     timer = this->create_wall_timer(1000ms, std::bind(&TopicFrequency::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "Started timer");
@@ -44,6 +46,7 @@ private:
   rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr subscription;
   unsigned int messages_received;
   unsigned int messages_received_since_last_full_second;
+  std::string topic_;
 };
 
 
