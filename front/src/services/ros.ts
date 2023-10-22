@@ -3,7 +3,7 @@ import ROSLIB from 'roslib'
 
 import { ROS_URL } from '../utils/constants'
 import { PositionMessage, StateMessage } from '../types/target'
-import { EegBatchMessage, EegDatapointMessage, EegTriggerMessage } from '../types/eeg'
+import { EegBatchMessage, EegDatapointMessage, EegTriggerMessage, EegInfo } from '../types/eeg'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,
@@ -25,6 +25,13 @@ export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
   ros: ros,
   name: '/neuronavigation/focus',
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
+})
+
+/* Subscriber for EEG info. */
+export const eegInfoSubscriber = new ROSLIB.Topic<EegInfo>({
+  ros: ros,
+  name: '/eeg/info',
+  messageType: 'eeg_interfaces/EegInfo',
 })
 
 /* Set up get maximum intensity service.*/
