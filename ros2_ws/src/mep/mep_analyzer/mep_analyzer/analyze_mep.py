@@ -191,10 +191,10 @@ class AnalyzeMepNode(Node):
     def validate_emg_channel(self, goal_id, emg_channel, eeg_buffer):
 
         # Assuming that all datapoints have the same number of channels.
-        num_of_emg_channels = len(eeg_buffer[0].emg_channels)
+        num_of_emg_data = len(eeg_buffer[0].emg_data)
 
         # EMG channel indexing starts from 0, hence decrement.
-        maximum_channel_index = num_of_emg_channels - 1
+        maximum_channel_index = num_of_emg_data - 1
 
         if emg_channel > maximum_channel_index:
             self.logger.warn('{}: Failure: Requested channel ({}) larger than the maximum channel ({}). Please check the channel counts defined in .env.'.format(
@@ -207,7 +207,7 @@ class AnalyzeMepNode(Node):
         return MepError(value=MepError.NO_ERROR)
 
     def get_channel_from_eeg_buffer(self, emg_channel, eeg_buffer):
-        channel_data = np.array([d.emg_channels[emg_channel] for d in eeg_buffer])
+        channel_data = np.array([d.emg_data[emg_channel] for d in eeg_buffer])
         timestamps = np.array([d.time for d in eeg_buffer])
 
         return channel_data, timestamps

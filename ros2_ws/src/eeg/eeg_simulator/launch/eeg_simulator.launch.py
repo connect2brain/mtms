@@ -27,12 +27,12 @@ def generate_launch_description():
         description="Loop through the data file",
     )
 
-    eeg_channels_arg = DeclareLaunchArgument(
+    eeg_data_arg = DeclareLaunchArgument(
         "eeg-channels",
         description="Number of EEG channels",
     )
 
-    emg_channels_arg = DeclareLaunchArgument(
+    emg_data_arg = DeclareLaunchArgument(
         "emg-channels",
         description="Number of EMG channels",
     )
@@ -52,8 +52,8 @@ def generate_launch_description():
                 "data_file": LaunchConfiguration("data-file"),
                 "sampling_frequency": LaunchConfiguration("sampling-frequency"),
                 "loop": LaunchConfiguration("loop"),
-                "eeg_channels": LaunchConfiguration("eeg-channels"),
-                "emg_channels": LaunchConfiguration("emg-channels"),
+                "eeg_data": LaunchConfiguration("eeg-channels"),
+                "emg_data": LaunchConfiguration("emg-channels"),
                 "simulate_eeg_device":LaunchConfiguration("simulate-eeg-device")
             }
         ],
@@ -64,8 +64,8 @@ def generate_launch_description():
     ld.add_action(data_file_arg)
     ld.add_action(loop_arg)
     ld.add_action(sampling_frequency_arg)
-    ld.add_action(eeg_channels_arg)
-    ld.add_action(emg_channels_arg)
+    ld.add_action(eeg_data_arg)
+    ld.add_action(emg_data_arg)
     ld.add_action(simulate_eeg_device_arg)
 
     return ld

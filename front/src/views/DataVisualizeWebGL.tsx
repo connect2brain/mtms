@@ -45,7 +45,7 @@ const DataVisualizeWebGL = () => {
       const point = message.batch[i]
       eegTimestamps.push(point.time)
 
-      const filtered = c3(point.eeg_channels)
+      const filtered = c3(point.eeg_data)
       const y = scaleY(filtered)
 
       const finalPoint = {
