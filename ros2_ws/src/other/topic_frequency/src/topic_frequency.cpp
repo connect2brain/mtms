@@ -6,7 +6,7 @@
 #include "memory_utils.h"
 
 #include "rclcpp/rclcpp.hpp"
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 
 using namespace std::chrono_literals;
 
@@ -21,12 +21,12 @@ public:
     messages_received_since_last_full_second = 0;
     messages_received = 0;
 
-    auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
+    auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
       messages_received++;
       messages_received_since_last_full_second++;
     };
 
-    subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>(topic_,
+    subscription = this->create_subscription<eeg_interfaces::msg::EegSample>(topic_,
                                                                                 10,
                                                                                 subscription_callback);
 
@@ -43,7 +43,7 @@ public:
 
 private:
   rclcpp::TimerBase::SharedPtr timer;
-  rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr subscription;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr subscription;
   unsigned int messages_received;
   unsigned int messages_received_since_last_full_second;
   std::string topic_;

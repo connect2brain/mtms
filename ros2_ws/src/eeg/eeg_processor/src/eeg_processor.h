@@ -12,7 +12,7 @@
 #include "event_interfaces/msg/charge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
 
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 
 #include "event.h"
@@ -21,13 +21,13 @@
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
-class EegProcessor : public ProcessorNode<eeg_interfaces::msg::EegDatapoint, Event> {
+class EegProcessor : public ProcessorNode<eeg_interfaces::msg::EegSample, Event> {
 public:
   EegProcessor();
 private:
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t current_time);
-  void handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg);
+  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
   virtual void publish_events(double_t time, const std::vector<Event> &events);
 

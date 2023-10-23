@@ -11,7 +11,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
@@ -60,7 +60,7 @@ public:
 
   int get_trigger_package_from_buffer();
   void publish_trigger_from_buffer(double_t time);
-  void publish_eeg_datapoint(double_t time_since_trigger);
+  void publish_eeg_sample(double_t time_since_trigger);
 
   void handle_sync_trigger(double_t sync_time);
   void reset_session();
@@ -78,7 +78,7 @@ private:
   bool first_trigger_received;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr publisher_data_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr publisher_eeg_info_;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;

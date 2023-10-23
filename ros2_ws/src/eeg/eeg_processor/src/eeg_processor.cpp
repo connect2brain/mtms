@@ -2,7 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 
 #include "eeg_processor.h"
 #include "processor_node.h"
@@ -53,7 +53,7 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
 
   /* Create subscription for EEG data. */
 
-  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
     auto start = std::chrono::high_resolution_clock::now();
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -63,7 +63,7 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
                          this->eeg_topic.c_str(),
                          msg->time);
 
-    this->handle_eeg_datapoint(msg);
+    this->handle_eeg_sample(msg);
 
     /* Print the time taken to process the datapoint. */
 
@@ -75,7 +75,7 @@ EegProcessor::EegProcessor() : ProcessorNode("eeg_processor") {
                  1000 * elapsed.count());
   };
 
-  this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(this->eeg_topic, 5000,
+  this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegSample>(this->eeg_topic, 5000,
                                                                                                         eeg_subscription_callback);
 
   /* Initialize variables. */
@@ -117,7 +117,7 @@ void EegProcessor::check_dropped_samples(double_t current_time) {
   this->previous_time = current_time;
 }
 
-void EegProcessor::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+void EegProcessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   auto current_time = msg->time;
 
   check_dropped_samples(current_time);
