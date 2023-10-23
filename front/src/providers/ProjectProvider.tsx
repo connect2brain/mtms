@@ -1,0 +1,48 @@
+import React, { useState, useEffect, ReactNode } from 'react'
+import { Topic, Message } from 'roslib'
+
+import { ros } from 'services/ros'
+
+interface RosString extends ROSLIB.Message {
+  data: string
+}
+
+interface ProjectContextType {
+  activeProject: string
+}
+
+const defaultProjectState: ProjectContextType = {
+  activeProject: ''
+}
+
+export const ProjectContext = React.createContext<ProjectContextType>(defaultProjectState)
+
+interface ProjectProviderProps {
+  children: ReactNode
+}
+
+export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) => {
+  const [activeProject, setActiveProject] = useState<string>('')
+
+  useEffect(() => {
+    const activeProjectSubscriber = new Topic({
+      ros: ros,
+      name: '/projects/active',
+      messageType: 'std_msgs/String'
+    }) as Topic<RosString>
+
+    activeProjectSubscriber.subscribe((message) => {
+      setActiveProject(message.data)
+    })
+
+    return () => {
+      activeProjectSubscriber.unsubscribe()
+    }
+  }, [])
+
+  return (
+    <ProjectContext.Provider value={{ activeProject }}>
+      {children}
+    </ProjectContext.Provider>
+  )
+}
