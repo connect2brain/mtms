@@ -331,3 +331,31 @@ export const setActiveProject = (project: string, callback: () => void) => {
     },
   )
 }
+
+/* Set up set preprocessor service. */
+const setPreprocessorService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/preprocessor/set',
+  serviceType: 'project_interfaces/SetPreprocessor',
+})
+
+export const setPreprocessorRos = (preprocessor: string, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    preprocessor: preprocessor
+  }) as any
+
+  setPreprocessorService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set preprocessor: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set preprocessor, error:')
+      console.log(error)
+    },
+  )
+}

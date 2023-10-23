@@ -6,23 +6,30 @@ import './App.css'
 
 import Providers from './providers/Providers'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
+import { PipelineProvider } from './providers/PipelineProvider'
+
 import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 import { Header as StyledHeader } from 'styles/StyledTypography'
 import { StyledPanel } from 'styles/General'
+import { ProjectProvider } from 'providers/ProjectProvider'
 
 const App = () => {
   return (
     <Providers>
-      <HealthcheckProvider>
-        <Header>mTMS control panel</Header>
-        <HealthcheckPanel>
-          <HealthcheckStatusDisplay />
-        </HealthcheckPanel>
-        <Wrapper>
-          <MultipleViews />
-        </Wrapper>
-      </HealthcheckProvider>
+      <ProjectProvider>
+        <PipelineProvider>
+          <HealthcheckProvider>
+            <Header>mTMS control panel</Header>
+            <HealthcheckPanel>
+              <HealthcheckStatusDisplay />
+            </HealthcheckPanel>
+            <Wrapper>
+              <MultipleViews />
+            </Wrapper>
+          </HealthcheckProvider>
+        </PipelineProvider>
+      </ProjectProvider>
     </Providers>
   )
 }

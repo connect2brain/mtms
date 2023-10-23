@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
-import Targets from './Targets'
 import DataVisualize from './DataVisualize'
-import { SmallHeader } from '../styles/StyledTypography'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
+
+import Targets from './Targets'
+import { SmallHeader } from '../styles/StyledTypography'
+
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
+import { PipelineView } from './PipelineView'
 
 /* Session storage utilities. */
 
@@ -45,6 +48,13 @@ export const MultipleViews = () => {
         </a>
         <a
           href="#"
+          onClick={() => setCurrentView('pipeline')}
+          className={currentView === 'pipeline' ? 'active' : ''}
+        >
+          Pipeline
+        </a>
+        <a
+          href="#"
           onClick={() => setCurrentView('plot')}
           className={currentView === 'plot' ? 'active' : ''}
         >
@@ -77,6 +87,13 @@ export const MultipleViews = () => {
           <Wrapper>
             <SmallHeader>Experiment</SmallHeader>
             <ExperimentView />
+          </Wrapper>
+        )}
+
+        {currentView === 'pipeline' && (
+          <Wrapper>
+            <SmallHeader>Pipeline</SmallHeader>
+            <PipelineView />
           </Wrapper>
         )}
 
