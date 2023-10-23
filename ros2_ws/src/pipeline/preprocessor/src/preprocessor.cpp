@@ -14,7 +14,7 @@ const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string PROJECTS_DIRECTORY = "projects/";
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
-  this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_PREPROCESSED_TOPIC, 5000);
+  this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
   /* Create subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -180,7 +180,7 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   check_dropped_samples(current_time);
 
-  auto preprocessed_msg = eeg_interfaces::msg::EegSample();
+  auto preprocessed_msg = eeg_interfaces::msg::PreprocessedEegSample();
 
   this->eeg_preprocessed_publisher->publish(preprocessed_msg);
 }
