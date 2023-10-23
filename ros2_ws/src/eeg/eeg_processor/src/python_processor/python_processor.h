@@ -15,8 +15,8 @@ public:
   ~PythonProcessor();
 
   std::vector<Event> init();
-  std::vector<eeg_interfaces::msg::EegDatapoint> raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
-  std::vector<Event> cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample);
+  std::vector<eeg_interfaces::msg::EegSample> raw_eeg_received(eeg_interfaces::msg::EegSample sample);
+  std::vector<Event> cleaned_eeg_received(eeg_interfaces::msg::EegSample sample);
   std::vector<Event> present_stimulus_received(event_interfaces::msg::Stimulus event);
   std::vector<Event> end_session();
 
@@ -27,7 +27,7 @@ private:
   static std::vector<Event> convert_pyobject_events_to_events(std::vector<PyObject *> events);
 
   static event_interfaces::msg::EventInfo parse_event_info(PyObject *event);
-  static std::vector<eeg_interfaces::msg::EegDatapoint> convert_pyobject_samples_to_samples(std::vector<PyObject *> samples);
+  static std::vector<eeg_interfaces::msg::EegSample> convert_pyobject_samples_to_samples(std::vector<PyObject *> samples);
 
   static event_interfaces::msg::Charge parse_charge(PyObject *event);
   static event_interfaces::msg::Discharge parse_discharge(PyObject *event);

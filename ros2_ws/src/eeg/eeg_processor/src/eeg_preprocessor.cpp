@@ -15,7 +15,7 @@ const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_CLEANED_TOPIC = "/eeg/cleaned";
 
 EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
-  this->cleaned_eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_CLEANED_TOPIC, 5000);
+  this->cleaned_eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_CLEANED_TOPIC, 5000);
 
   /* Create subscription for EEG info. */
 
@@ -40,7 +40,7 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
 
   /* Create subscription for EEG data. */
 
-  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
     auto start = std::chrono::high_resolution_clock::now();
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -50,7 +50,7 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
                          EEG_RAW_TOPIC.c_str(),
                          msg->time);
 
-    this->handle_eeg_datapoint(msg);
+    this->handle_eeg_sample(msg);
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
@@ -68,7 +68,7 @@ EegPreprocessor::EegPreprocessor() : ProcessorNode("eeg_preprocessor") {
                  1000 * elapsed.count());
   };
 
-  this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 5000,
+  this->input_data_subscription = this->template create_subscription<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 5000,
                                                                                                         eeg_subscription_callback);
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 
@@ -111,7 +111,7 @@ void EegPreprocessor::check_dropped_samples(double_t current_time) {
   this->previous_time = current_time;
 }
 
-void EegPreprocessor::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   auto current_time = msg->time;
 
   check_dropped_samples(current_time);
@@ -121,8 +121,8 @@ void EegPreprocessor::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces:
 }
 
 void
-EegPreprocessor::publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &samples) {
-  for (eeg_interfaces::msg::EegDatapoint sample: samples) {
+EegPreprocessor::publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegSample> &samples) {
+  for (eeg_interfaces::msg::EegSample sample: samples) {
     this->cleaned_eeg_publisher->publish(sample);
   }
 }

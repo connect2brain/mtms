@@ -30,14 +30,14 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
   this->input_data_subscription = this->template create_subscription<event_interfaces::msg::Stimulus>("/event/send/stimulus", 5000,
                                                                                                       stimulus_subscription_callback);
 
-  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> message) -> void {
+  auto eeg_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
     std::vector<unsigned> ids_to_remove;
 
     for (unsigned i = 0; i < this->event_buffer.size(); i++) {
 
       auto event = this->event_buffer[i];
 
-      /* If current time >= the time the event was supposed to be executed at, execute it and remove it from buffer. 
+      /* If current time >= the time the event was supposed to be executed at, execute it and remove it from buffer.
          Otherwise, keep it in the buffer. */
       if (message->time >= event.event_info.execution_time) {
         auto events = this->processor->present_stimulus_received(event);
@@ -46,14 +46,14 @@ StimulusPresenter::StimulusPresenter() : ProcessorNode("stimulus_presenter") {
       }
     }
 
-    /* Erase executed events from the buffer. Not performed simultaneously with the previous loop to not affect the 
+    /* Erase executed events from the buffer. Not performed simultaneously with the previous loop to not affect the
        loop indices. */
     for (auto id_to_remove: ids_to_remove) {
       this->event_buffer.erase(this->event_buffer.begin() + id_to_remove);
     }
   };
 
-  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>("/eeg/cleaned", 5000,
+  this->eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegSample>("/eeg/cleaned", 5000,
                                                                                         eeg_subscription_callback);
 
 }

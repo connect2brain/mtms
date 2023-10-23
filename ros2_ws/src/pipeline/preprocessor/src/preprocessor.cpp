@@ -14,7 +14,7 @@ const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string PROJECTS_DIRECTORY = "projects/";
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
-  this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_PREPROCESSED_TOPIC, 5000);
+  this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
   /* Create subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -29,7 +29,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
 
   /* Create subscriber for EEG data. */
 
-  auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) -> void {
+  auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
     auto start = std::chrono::high_resolution_clock::now();
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -39,7 +39,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
                          EEG_RAW_TOPIC.c_str(),
                          msg->time);
 
-    this->handle_eeg_datapoint(msg);
+    this->handle_eeg_sample(msg);
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
@@ -57,7 +57,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
                  1000 * elapsed.count());
   };
 
-  this->eeg_raw_subscriber = create_subscription<eeg_interfaces::msg::EegDatapoint>(
+  this->eeg_raw_subscriber = create_subscription<eeg_interfaces::msg::EegSample>(
     EEG_RAW_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     5000,
@@ -175,12 +175,12 @@ void EegPreprocessor::check_dropped_samples(double_t current_time) {
   this->previous_time = current_time;
 }
 
-void EegPreprocessor::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   auto current_time = msg->time;
 
   check_dropped_samples(current_time);
 
-  auto preprocessed_msg = eeg_interfaces::msg::EegDatapoint();
+  auto preprocessed_msg = eeg_interfaces::msg::EegSample();
 
   this->eeg_preprocessed_publisher->publish(preprocessed_msg);
 }

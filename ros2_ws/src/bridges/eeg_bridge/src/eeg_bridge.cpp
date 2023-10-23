@@ -97,7 +97,7 @@ void EegBridge::create_publishers() {
 
   auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
+  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
   this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
   this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
   this->publisher_healthcheck_ = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
@@ -390,7 +390,7 @@ void EegBridge::handle_sample_packet() {
     if (time >= this->first_trigger_timestamp_) {
       double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
 
-      this->publish_eeg_datapoint(time_diff);
+      this->publish_eeg_sample(time_diff);
       this->first_sample_of_session_ = false;
 
     } else {
@@ -609,9 +609,9 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
   this->publisher_trigger_->publish(trigger_msg);
 }
 
-void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
+void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
 
-  auto message = eeg_interfaces::msg::EegDatapoint();
+  auto message = eeg_interfaces::msg::EegSample();
   message.time = time_since_trigger;
 
   int i = FIRST_CHANNEL_INDEX;
