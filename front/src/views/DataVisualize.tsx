@@ -36,7 +36,7 @@ const DataVisualize = () => {
   const newEegBatch = (message: EegBatchMessage) => {
     const mappedData = message.batch.map((point) => {
       return {
-        y: c3(point.eeg_channels),
+        y: c3(point.eeg_data),
         x: startTime.getTime() + point.time * 1000,
       }
     })

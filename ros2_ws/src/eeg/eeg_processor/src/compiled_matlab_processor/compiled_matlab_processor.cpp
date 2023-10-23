@@ -28,8 +28,8 @@ CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegSample sample)
   coder::array<matlab_eeg_sample, 1U> samples;
 
   inner_processor->data_received(
-      sample.eeg_channels.data(),
-      sample.eeg_channels.size(),
+      sample.eeg_data.data(),
+      sample.eeg_data.size(),
       sample.time,
       sample.first_sample_of_session,
       events,
@@ -53,8 +53,8 @@ std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(eeg_interfaces:
   coder::array<matlab_eeg_sample, 1U> samples;
 
   inner_processor->data_received(
-      sample.eeg_channels.data(),
-      sample.eeg_channels.size(),
+      sample.eeg_data.data(),
+      sample.eeg_data.size(),
       sample.time,
       sample.first_sample_of_session,
       events,
