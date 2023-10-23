@@ -1,10 +1,26 @@
+import time
+import threading
+
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, LivelinessPolicy
+from rclpy.qos import (
+    QoSProfile,
+    DurabilityPolicy,
+    HistoryPolicy,
+    ReliabilityPolicy,
+    LivelinessPolicy,
+)
 from rclpy.duration import Duration
 from std_msgs.msg import String
 
-from mtms_device_interfaces.msg import SystemState
+from mtms_device_interfaces.msg import (
+    SystemState,
+    DeviceState,
+    SessionState,
+    SystemError,
+    StartupError,
+    ChannelState,
+)
 from mtms_device_interfaces.srv import (
     AllowStimulation,
     SendSettings,
@@ -33,6 +49,7 @@ class MTMSSimulator(Node):
     Simulates the mTMS device by replacing the mtms_device_bridge. Creates the corresponding nodes of the
     ros2 node interface described by the mtms_device_bridge packages.
     """
+
     SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 20
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
 
@@ -96,8 +113,10 @@ class MTMSSimulator(Node):
         )
         self.node_message_publisher = self.create_publisher(String, "/node/message", 10)
 
-        deadline_ns = 1000*(MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS +
-                       MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS)
+        deadline_ns = 1000 * (
+            MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS
+            + MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS
+        )
         lifespan_ns = deadline_ns
 
         system_state_qos = QoSProfile(
@@ -110,6 +129,23 @@ class MTMSSimulator(Node):
         )
         self.system_state_publisher = self.create_publisher(
             SystemState, "/mtms_device/system_state", system_state_qos
+        )
+
+        channel_states: list[ChannelState] = []
+
+        self.system_state = {
+            "channel_states": channel_states,
+            "system_error_cumulative": SystemError(),
+            "system_error_current": SystemError(),
+            "system_error_emergency": SystemError(),
+            "startup_error": StartupError.NO_ERROR,
+            "device_state": DeviceState.NOT_OPERATIONAL,
+            "sessions_state": SessionState.STOPPED,
+        }
+
+        self.create_timer(
+            MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS / 1000,
+            self.system_state_callback,
         )
 
     def allow_stimulation_handler(self, request, response):
@@ -144,6 +180,12 @@ class MTMSSimulator(Node):
 
     def trigger_out_handler(self, trigger_out):
         pass
+
+    def system_state_callback(self):
+        msg = SystemState(**self.system_state)
+        msg.time = time.time()  # in seconds, NOTE: MIGHT BE WRONG UNITS
+
+        self.system_state_publisher.publish(msg)
 
 
 def main(args=None):
