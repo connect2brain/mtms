@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "eeg_interfaces/msg/eeg_batch.hpp"
 
@@ -19,13 +19,13 @@ public:
   EegBatcher();
 
 private:
-  std::vector<eeg_interfaces::msg::EegDatapoint> batch;
+  std::vector<eeg_interfaces::msg::EegSample> batch;
   unsigned int batch_index;
   unsigned int batch_size;
   unsigned int downsample_ratio;
   unsigned int send_counter;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_subscription;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_subscription;
   rclcpp::Publisher<eeg_interfaces::msg::EegBatch>::SharedPtr batch_publisher;
 };
 

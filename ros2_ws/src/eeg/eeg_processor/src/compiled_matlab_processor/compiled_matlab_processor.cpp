@@ -22,8 +22,8 @@ CompiledMatlabProcessor::CompiledMatlabProcessor(const std::string &script_path)
 std::vector<Event> CompiledMatlabProcessor::present_stimulus_received(event_interfaces::msg::Stimulus event) {}
 
 
-std::vector<eeg_interfaces::msg::EegDatapoint>
-CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
+std::vector<eeg_interfaces::msg::EegSample>
+CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegSample sample) {
   coder::array<matlab_event, 1U> events;
   coder::array<matlab_eeg_sample, 1U> samples;
 
@@ -36,7 +36,7 @@ CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint samp
       samples
   );
 
-  std::vector<eeg_interfaces::msg::EegDatapoint> output;
+  std::vector<eeg_interfaces::msg::EegSample> output;
 
   for (auto i = samples.begin(); i != samples.end(); i++) {
     auto matlab_sample = *i;
@@ -48,7 +48,7 @@ CompiledMatlabProcessor::raw_eeg_received(eeg_interfaces::msg::EegDatapoint samp
 
 }
 
-std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegDatapoint sample) {
+std::vector<Event> CompiledMatlabProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegSample sample) {
   coder::array<matlab_event, 1U> events;
   coder::array<matlab_eeg_sample, 1U> samples;
 

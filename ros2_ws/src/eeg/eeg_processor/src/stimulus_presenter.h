@@ -6,7 +6,7 @@
 #define EEG_PROCESSOR_STIMULUS_PRESENTER_H
 
 #include "event_interfaces/msg/trigger_out.hpp"
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "processor_node.h"
 
 class StimulusPresenter : public ProcessorNode<event_interfaces::msg::Stimulus, Event> {
@@ -20,7 +20,7 @@ private:
   rclcpp::Publisher<event_interfaces::msg::Pulse>::SharedPtr pulse_publisher;
   rclcpp::Publisher<event_interfaces::msg::TriggerOut>::SharedPtr trigger_out_publisher;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_subscription;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_subscription;
 
   std::vector<event_interfaces::msg::Stimulus> event_buffer;
 
