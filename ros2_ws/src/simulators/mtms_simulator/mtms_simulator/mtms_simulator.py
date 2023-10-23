@@ -18,7 +18,7 @@ from mtms_device_interfaces.msg import (
     SystemError,
     StartupError,
     ChannelState,
-    Settings
+    Settings,
 )
 from mtms_device_interfaces.srv import (
     AllowStimulation,
@@ -131,9 +131,9 @@ class MTMSSimulator(Node):
         )
 
         # Internal state variables
-        self.system_state = SystemState()
-        self.allow_stimulation = False
-        self.settings = Settings()
+        self.system_state: SystemState = SystemState()
+        self.allow_stimulation: bool = False
+        self.settings: Settings = Settings()
 
         self.create_timer(
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS / 1000,
@@ -141,7 +141,7 @@ class MTMSSimulator(Node):
         )
 
     def allow_stimulation_handler(self, request, response):
-        self.allow_stimulation = True
+        self.allow_stimulation = request.allow_stimulation
         response.success = True
         return response
 
