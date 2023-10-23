@@ -1,8 +1,8 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { EegTrigger, EegDatapoint, EegBatchMessage, EegBatch } from 'types/eeg'
+import { EegTrigger, EegSample, EegBatchMessage, EegBatch } from 'types/eeg'
 
 interface EegState {
-  eeg: EegDatapoint[]
+  eeg: EegSample[]
   triggers: EegTrigger[]
   maxLength: number
 }
@@ -17,14 +17,14 @@ const eegSlice = createSlice({
   name: 'eeg',
   initialState,
   reducers: {
-    setEeg: (state, action: PayloadAction<EegDatapoint[]>) => {
+    setEeg: (state, action: PayloadAction<EegSample[]>) => {
       state.eeg = action.payload
     },
-    addBatch: (state, action: PayloadAction<EegDatapoint[]>) => {
+    addBatch: (state, action: PayloadAction<EegSample[]>) => {
       state.eeg.push(...action.payload)
       state.eeg.splice(0, Math.max(0, state.eeg.length - state.maxLength))
     },
-    addEegDatapoint: (state, action: PayloadAction<EegDatapoint>) => {
+    addEegSample: (state, action: PayloadAction<EegSample>) => {
       state.eeg.push(action.payload)
       if (state.eeg.length > state.maxLength) {
         state.eeg.shift()
@@ -42,5 +42,5 @@ const eegSlice = createSlice({
   },
 })
 
-export const { setEeg, setMaxLength, addEegTrigger, addEegDatapoint, addBatch } = eegSlice.actions
+export const { setEeg, setMaxLength, addEegTrigger, addEegSample, addBatch } = eegSlice.actions
 export default eegSlice.reducer

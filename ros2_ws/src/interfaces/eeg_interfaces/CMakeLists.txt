@@ -23,7 +23,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EegBatch.msg"
-  "msg/EegDatapoint.msg"
+  "msg/EegSample.msg"
   "msg/EegInfo.msg"
   "msg/GatherEegError.msg"
   "msg/TimeWindow.msg"

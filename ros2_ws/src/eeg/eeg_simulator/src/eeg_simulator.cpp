@@ -10,7 +10,7 @@
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rcl_interfaces/msg/parameter_type.hpp"
 
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
@@ -20,7 +20,7 @@
 class EegSimulator : public rclcpp::Node {
 public:
   EegSimulator() : Node("eeg_simulator") {
-    eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
+    eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
     trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_RECEIVED_TOPIC, 10);
     eeg_info_publisher_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, rclcpp::QoS(1).transient_local());
 
@@ -92,7 +92,7 @@ private:
         return;
     }
 
-    eeg_interfaces::msg::EegDatapoint msg;
+    eeg_interfaces::msg::EegSample msg;
 
     msg.eeg_channels.insert(msg.eeg_channels.end(), data.begin(), data.begin() + eeg_channels_);
     msg.emg_channels.insert(msg.emg_channels.end(), data.begin() + eeg_channels_, data.begin() + total_channels_);
@@ -137,7 +137,7 @@ private:
   int total_channels_ = 0;
   std::ifstream file_;
 
-  rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_publisher_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_publisher_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher_;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher_;
 

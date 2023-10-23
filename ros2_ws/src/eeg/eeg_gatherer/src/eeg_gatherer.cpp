@@ -21,7 +21,7 @@ EegGatherer::EegGatherer(std::string goal_id, double_t start_time, double_t end_
 
   this->sampling_period = 1.0 / this->sampling_frequency;
 
-  this->eeg_buffer = std::vector<eeg_interfaces::msg::EegDatapoint>();
+  this->eeg_buffer = std::vector<eeg_interfaces::msg::EegSample>();
 
   this->state = DataGatheringState::CHECK_IF_VALID_REQUEST;
 
@@ -81,7 +81,7 @@ bool EegGatherer::handle_state__wait_for_mep(double_t current_time) {
   return next_sample;
 }
 
-bool EegGatherer::handle_state__gather_data(double_t current_time, const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+bool EegGatherer::handle_state__gather_data(double_t current_time, const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   bool next_sample = false;
 
   if (current_time < this->end_time) {
@@ -95,7 +95,7 @@ bool EegGatherer::handle_state__gather_data(double_t current_time, const std::sh
   return next_sample;
 }
 
-void EegGatherer::handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg) {
+void EegGatherer::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   auto current_time = msg->time;
 
   check_dropped_samples(current_time);
@@ -163,7 +163,7 @@ eeg_interfaces::msg::GatherEegError::SharedPtr EegGatherer::get_error() {
   return error;
 }
 
-std::vector<eeg_interfaces::msg::EegDatapoint>& EegGatherer::get_eeg_buffer() {
+std::vector<eeg_interfaces::msg::EegSample>& EegGatherer::get_eeg_buffer() {
   assert (is_finished());
 
   return this->eeg_buffer;
