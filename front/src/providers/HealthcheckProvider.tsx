@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, ReactNode } from 'react'
+import React, { useState, useEffect, ReactNode } from 'react'
 import { Topic, Message } from 'roslib'
 
 import { ros } from 'services/ros'

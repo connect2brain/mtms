@@ -22,8 +22,11 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/PreprocessorList.msg"
+
   "srv/ListProjects.srv"
   "srv/SetActiveProject.srv"
+  "srv/SetPreprocessor.srv"
 )
 
 ament_package()
