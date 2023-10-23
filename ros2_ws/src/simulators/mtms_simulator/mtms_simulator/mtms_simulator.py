@@ -154,10 +154,16 @@ class MTMSSimulator(Node):
         return response
 
     def start_session_handler(self, request, response):
-        pass
+        # TODO: Check if STARTING phase required
+        self.system_state.session_state = SessionState.STARTED
+        response.success = True
+        return response
 
     def stop_session_handler(self, request, response):
-        pass
+        # TODO: Check if STOPPING phase required
+        self.system_state.session_state = SessionState.STOPPED
+        response.success = True
+        return response
 
     def charge_handler(self, message):
         pass
