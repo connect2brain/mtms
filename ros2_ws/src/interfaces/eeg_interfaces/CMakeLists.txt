@@ -22,16 +22,18 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EegBatch.msg"
-  "msg/EegSample.msg"
   "msg/EegInfo.msg"
-  "msg/GatherEegError.msg"
-  "msg/TimeWindow.msg"
-  "msg/Trigger.msg"
+  "msg/EegSample.msg"
+  "msg/PreprocessedEegSample.msg"
 
+  "msg/EegBatch.msg"
+
+  "msg/Trigger.msg"
   "srv/TriggerPulse.srv"
 
+  "msg/GatherEegError.msg"
   "action/GatherEeg.action"
+  "msg/TimeWindow.msg"
  )
 
 ament_package()

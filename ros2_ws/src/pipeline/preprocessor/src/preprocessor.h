@@ -11,8 +11,9 @@
 
 #include "std_msgs/msg/string.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
 
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor.hpp"
@@ -42,7 +43,7 @@ private:
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
-  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_preprocessed_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_publisher;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
