@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { TabBar } from 'styles/General'
@@ -14,6 +14,8 @@ import { SmallerTitle } from 'styles/ExperimentStyles'
 import { StyledPanel, StyledButton, StyledRedButton } from 'styles/General'
 
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
+
+import { ProjectContext } from 'providers/ProjectProvider'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -324,9 +326,10 @@ const getKey = (key: string, defaultValue: any): any => {
 }
 
 export const ExperimentView = () => {
+  const { activeProject } = useContext(ProjectContext)
+
   const [projects, setProjects] = useState<string[]>([])
 
-  const [selectedProject, setSelectedProject] = useState<string>(() => getKey('activeProject', ''))
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
 
@@ -388,13 +391,9 @@ export const ExperimentView = () => {
   }
 
   const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const activeProject = event.target.value
-    setSelectedProject(activeProject)
-
-    /* TODO: The naming is a bit confusing here: setActiveProject makes a ROS service call; naming should
-      somehow reflect that to distinguish it from setSelectedProject. */
-    setActiveProject(activeProject, () => {
-      console.log('Active project set to ' + activeProject)
+    const newActiveProject = event.target.value
+    setActiveProject(newActiveProject, () => {
+      console.log('Active project set to ' + newActiveProject)
     })
   }
 
@@ -618,10 +617,6 @@ export const ExperimentView = () => {
 
   /* Update session storage. */
   useEffect(() => {
-    storeKey('activeProject', selectedProject)
-  }, [selectedProject])
-
-  useEffect(() => {
     storeKey('experimentName', experimentName)
   }, [experimentName])
 
@@ -797,7 +792,7 @@ export const ExperimentView = () => {
       <ExperimentMetadata>
         <InputRow>
           <Label>Project:</Label>
-          <Select onChange={handleProjectChange} value={selectedProject}>
+          <Select onChange={handleProjectChange} value={activeProject}>
           {projects.map((project, index) => (
             <option key={index} value={project}>
               {project}
