@@ -1,5 +1,4 @@
 import time
-import threading
 
 import rclpy
 from rclpy.node import Node
@@ -8,7 +7,6 @@ from rclpy.qos import (
     DurabilityPolicy,
     HistoryPolicy,
     ReliabilityPolicy,
-    LivelinessPolicy,
 )
 from rclpy.duration import Duration
 from std_msgs.msg import String
@@ -131,17 +129,7 @@ class MTMSSimulator(Node):
             SystemState, "/mtms_device/system_state", system_state_qos
         )
 
-        channel_states: list[ChannelState] = []
-
-        self.system_state = {
-            "channel_states": channel_states,
-            "system_error_cumulative": SystemError(),
-            "system_error_current": SystemError(),
-            "system_error_emergency": SystemError(),
-            "startup_error": StartupError.NO_ERROR,
-            "device_state": DeviceState.NOT_OPERATIONAL,
-            "sessions_state": SessionState.STOPPED,
-        }
+        self.system_state = SystemState()
 
         self.create_timer(
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS / 1000,
@@ -155,10 +143,15 @@ class MTMSSimulator(Node):
         pass
 
     def start_device_handler(self, request, response):
-        pass
+        # TODO: Check if STARTUP phase required
+        self.system_state.device_state = DeviceState.OPERATIONAL
+        response.success = True
+        return response
 
     def stop_device_handler(self, request, response):
-        pass
+        self.system_state.device_state = DeviceState.SHUTDOWN
+        response.success = True
+        return response
 
     def start_session_handler(self, request, response):
         pass
@@ -182,7 +175,7 @@ class MTMSSimulator(Node):
         pass
 
     def system_state_callback(self):
-        msg = SystemState(**self.system_state)
+        msg = self.system_state
         msg.time = time.time()  # in seconds, NOTE: MIGHT BE WRONG UNITS
 
         self.system_state_publisher.publish(msg)
