@@ -20,7 +20,7 @@ classdef ROSProcessor < handle
         function out = eeg_data_callback(obj, message)
             obj.data_received = obj.data_received + 1;
 
-            channel_data = message.eeg_channels;
+            channel_data = message.eeg_data;
             time = message.time;
             first_sample_of_session = message.first_sample_of_session;
 

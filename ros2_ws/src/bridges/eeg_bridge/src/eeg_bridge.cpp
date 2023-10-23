@@ -426,8 +426,8 @@ void EegBridge::handle_measurement_start_packet() {
 
   this->send_trigger_as_channel = false;
 
-  uint8_t num_of_eeg_channels = 0;
-  uint8_t num_of_emg_channels = 0;
+  uint8_t num_of_eeg_data = 0;
+  uint8_t num_of_emg_data = 0;
   for (uint8_t i = 0; i < this->n_channels_; i++) {
     uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
                               buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
@@ -441,10 +441,10 @@ void EegBridge::handle_measurement_start_packet() {
        after the channels of the first amplifier, thus, starting at 41. */
     if ((source_channel >= 33 && source_channel <= 40) || (source_channel >= 73 && source_channel <= 80)) {
       this->channel_types[i] = this->ChannelType::EMG;
-      num_of_emg_channels++;
+      num_of_emg_data++;
     } else {
       this->channel_types[i] = this->ChannelType::EEG;
-      num_of_eeg_channels++;
+      num_of_eeg_data++;
     }
   }
 
@@ -458,8 +458,8 @@ void EegBridge::handle_measurement_start_packet() {
     this->n_channels_excluding_trigger_ = this->n_channels_;
   }
 
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_data);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_data);
 
   RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->n_channels_excluding_trigger_);
 
@@ -630,9 +630,9 @@ void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
     result_uv /= NANO_TO_MICRO_CONVERSION;
 
     if (channel_types[channel] == ChannelType::EEG) {
-      message.eeg_channels.push_back(result_uv);
+      message.eeg_data.push_back(result_uv);
     } else {
-      message.emg_channels.push_back(result_uv);
+      message.emg_data.push_back(result_uv);
     }
 
     i += 3;
