@@ -129,7 +129,9 @@ class MTMSSimulator(Node):
             SystemState, "/mtms_device/system_state", system_state_qos
         )
 
+        # Internal state variables
         self.system_state = SystemState()
+        self.allow_stimulation = False
 
         self.create_timer(
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS / 1000,
@@ -137,7 +139,9 @@ class MTMSSimulator(Node):
         )
 
     def allow_stimulation_handler(self, request, response):
-        pass
+        self.allow_stimulation = True
+        response.success = True
+        return response
 
     def send_settings_handler(self, request, response):
         pass
