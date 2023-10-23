@@ -65,11 +65,11 @@ std::vector<Event> MatlabProcessor::cleaned_eeg_received(eeg_interfaces::msg::Ee
   );
   auto matlab_data_array_dims = matlab_data_array.getDimensions();
 
-  auto dim = matlab::data::ArrayDimensions(sample.eeg_channels.size());
+  auto dim = matlab::data::ArrayDimensions(sample.eeg_data.size());
   auto matlab_new_sample = factory.createArray<double>(
-      {1, sample.eeg_channels.size()},
-      sample.eeg_channels.data(),
-      sample.eeg_channels.data() + sample.eeg_channels.size()
+      {1, sample.eeg_data.size()},
+      sample.eeg_data.data(),
+      sample.eeg_data.data() + sample.eeg_data.size()
   );
 
 

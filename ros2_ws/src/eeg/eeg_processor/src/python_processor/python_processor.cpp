@@ -358,7 +358,7 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
                    "Error in calling method for receiving data in EEG preprocessor stage. Ensure that each returned sample is a list.");
       PyErr_Print();
     }
-    sample.eeg_channels = convert_pyobject_to_vector(channel_data_as_pyobject);
+    sample.eeg_data = convert_pyobject_to_vector(channel_data_as_pyobject);
 
     auto time_as_pyobject = PyObject_GetAttrString(sample_as_pyobject, "time");
     sample.time = PyFloat_AsDouble(time_as_pyobject);
@@ -375,7 +375,7 @@ PythonProcessor::convert_pyobject_samples_to_samples(std::vector<PyObject *> sam
 
 std::vector<eeg_interfaces::msg::EegSample>
 PythonProcessor::raw_eeg_received(eeg_interfaces::msg::EegSample sample) {
-  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto list = convert_vector_to_pyobject(sample.eeg_data);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
@@ -461,7 +461,7 @@ std::vector<Event> PythonProcessor::present_stimulus_received(event_interfaces::
 }
 
 std::vector<Event> PythonProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegSample sample) {
-  auto list = convert_vector_to_pyobject(sample.eeg_channels);
+  auto list = convert_vector_to_pyobject(sample.eeg_data);
   auto time = PyFloat_FromDouble(sample.time);
   auto first_sample_of_session = PyBool_FromLong(sample.first_sample_of_session ? 1L : 0L);
 
