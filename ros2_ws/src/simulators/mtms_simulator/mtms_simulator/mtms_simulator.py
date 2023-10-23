@@ -142,34 +142,41 @@ class MTMSSimulator(Node):
 
     def allow_stimulation_handler(self, request, response):
         self.allow_stimulation = request.allow_stimulation
+        self.get_logger().info("Allow stimulation set to %r" % self.allow_stimulation)
         response.success = True
         return response
 
     def send_settings_handler(self, request, response):
         self.settings = request.settings
+        self.get_logger().info("Received settings")
+        self.get_logger().debug("Settings: %r" % self.settings)
         response.success = True
         return response
 
     def start_device_handler(self, request, response):
         # TODO: Check if STARTUP phase required
         self.system_state.device_state = DeviceState.OPERATIONAL
+        self.get_logger().info("Device started")
         response.success = True
         return response
 
     def stop_device_handler(self, request, response):
         self.system_state.device_state = DeviceState.SHUTDOWN
+        self.get_logger().info("Device stopped")
         response.success = True
         return response
 
     def start_session_handler(self, request, response):
         # TODO: Check if STARTING phase required
         self.system_state.session_state = SessionState.STARTED
+        self.get_logger().info("Session started")
         response.success = True
         return response
 
     def stop_session_handler(self, request, response):
         # TODO: Check if STOPPING phase required
         self.system_state.session_state = SessionState.STOPPED
+        self.get_logger().info("Session stopped")
         response.success = True
         return response
 
