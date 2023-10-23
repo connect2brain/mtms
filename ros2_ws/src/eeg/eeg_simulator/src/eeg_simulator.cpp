@@ -35,12 +35,12 @@ public:
     this->declare_parameter<bool>("loop", false);
     loop_ = this->get_parameter("loop").as_bool();
 
-    this->declare_parameter<int>("eeg_channels", 0);
-    eeg_channels_ = this->get_parameter("eeg_channels").as_int();
+    this->declare_parameter<int>("eeg_data", 0);
+    eeg_data_ = this->get_parameter("eeg_data").as_int();
 
-    this->declare_parameter<int>("emg_channels", 0);
-    emg_channels_ = this->get_parameter("emg_channels").as_int();
-    total_channels_ = eeg_channels_ + emg_channels_;
+    this->declare_parameter<int>("emg_data", 0);
+    emg_data_ = this->get_parameter("emg_data").as_int();
+    total_channels_ = eeg_data_ + emg_data_;
 
     RCLCPP_INFO(this->get_logger(), "Reading data from file %s in directory %s.", data_file_name_.c_str(), DATA_DIRECTORY.c_str());
 
@@ -59,7 +59,7 @@ public:
 
     eeg_interfaces::msg::EegInfo eeg_info;
     eeg_info.sampling_frequency = sampling_frequency_;
-    eeg_info.n_channels = eeg_channels_;
+    eeg_info.n_channels = eeg_data_;
     eeg_info.send_trigger_as_channel = false;
 
     eeg_info_publisher_->publish(eeg_info);
@@ -94,8 +94,8 @@ private:
 
     eeg_interfaces::msg::EegSample msg;
 
-    msg.eeg_channels.insert(msg.eeg_channels.end(), data.begin(), data.begin() + eeg_channels_);
-    msg.emg_channels.insert(msg.emg_channels.end(), data.begin() + eeg_channels_, data.begin() + total_channels_);
+    msg.eeg_data.insert(msg.eeg_data.end(), data.begin(), data.begin() + eeg_data_);
+    msg.emg_data.insert(msg.emg_data.end(), data.begin() + eeg_data_, data.begin() + total_channels_);
     msg.first_sample_of_session = current_time_ > 0 ? false : true;
     msg.time = current_time_;
 
@@ -132,8 +132,8 @@ private:
   std::string data_path_;
   int sampling_frequency_ = 0;
   bool loop_ = false;
-  int eeg_channels_ = 0;
-  int emg_channels_ = 0;
+  int eeg_data_ = 0;
+  int emg_data_ = 0;
   int total_channels_ = 0;
   std::ifstream file_;
 

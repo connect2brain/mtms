@@ -24,7 +24,7 @@ std::vector<Event> CppProcessor::present_stimulus_received(event_interfaces::msg
 
 std::vector<eeg_interfaces::msg::EegSample> CppProcessor::raw_eeg_received(eeg_interfaces::msg::EegSample sample) {
   auto samples = inner_processor->raw_eeg_received(
-      sample.eeg_channels,
+      sample.eeg_data,
       sample.time,
       sample.first_sample_of_session
   );
@@ -34,7 +34,7 @@ std::vector<eeg_interfaces::msg::EegSample> CppProcessor::raw_eeg_received(eeg_i
   for (unsigned long i = 0; i < samples.size(); i++) {
     auto matlab_eeg_sample = samples[i];
     eeg_interfaces::msg::EegSample new_sample;
-    new_sample.eeg_channels = matlab_eeg_sample.channel_data;
+    new_sample.eeg_data = matlab_eeg_sample.channel_data;
     new_sample.time = matlab_eeg_sample.time;
     new_sample.first_sample_of_session = matlab_eeg_sample.first_sample_of_session;
     cleaned_samples.push_back(new_sample);
@@ -45,7 +45,7 @@ std::vector<eeg_interfaces::msg::EegSample> CppProcessor::raw_eeg_received(eeg_i
 
 std::vector<Event> CppProcessor::cleaned_eeg_received(eeg_interfaces::msg::EegSample sample) {
   auto events = inner_processor->data_received(
-      sample.eeg_channels,
+      sample.eeg_data,
       sample.time,
       sample.first_sample_of_session
   );

@@ -14,14 +14,14 @@ export const EventTypes = {
 }
 
 export interface EegSample {
-  eeg_channels: number[]
-  emg_channels: number[]
+  eeg_data: number[]
+  emg_data: number[]
   time: number
   first_sample_of_session: boolean
 }
 
 export interface EegSampleMessage extends ROSLIB.Message {
-  eeg_channels: number[]
+  eeg_data: number[]
   time: number
   first_sample_of_session: boolean
 }
