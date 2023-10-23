@@ -11,7 +11,7 @@
 
 #include "std_msgs/msg/string.hpp"
 
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 
 #include "project_interfaces/msg/preprocessor_list.hpp"
@@ -35,14 +35,14 @@ private:
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t current_time);
-  void handle_eeg_datapoint(const std::shared_ptr<eeg_interfaces::msg::EegDatapoint> msg);
+  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
-  void publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegDatapoint> &events);
+  void publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegSample> &events);
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_raw_subscriber;
-  rclcpp::Publisher<eeg_interfaces::msg::EegDatapoint>::SharedPtr eeg_preprocessed_publisher;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
+  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_preprocessed_publisher;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
