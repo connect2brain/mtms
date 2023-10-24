@@ -7,28 +7,38 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
 
 using namespace std::chrono_literals;
 
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
+const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 
 class TopicFrequency : public rclcpp::Node {
 
 public:
   TopicFrequency() : Node("topic_frequency") {
-    this->declare_parameter<std::string>("topic", "/eeg/raw");
-    topic_ = this->get_parameter("topic").as_string();
+    eeg_raw_messages = 0;
 
-    messages_received_since_last_full_second = 0;
-    messages_received = 0;
-
-    auto subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
-      messages_received++;
-      messages_received_since_last_full_second++;
+    /* Raw EEG */
+    auto eeg_raw_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
+      eeg_raw_messages++;
     };
 
-    subscription = this->create_subscription<eeg_interfaces::msg::EegSample>(topic_,
-                                                                                10,
-                                                                                subscription_callback);
+    eeg_raw_subscription = this->create_subscription<eeg_interfaces::msg::EegSample>(
+      EEG_RAW_TOPIC,
+      10,
+      eeg_raw_subscription_callback);
+
+    /* Preprocessed EEG */
+    auto eeg_preprocessed_subscription_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> message) -> void {
+      eeg_preprocessed_messages++;
+    };
+
+    eeg_preprocessed_subscription = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
+      EEG_PREPROCESSED_TOPIC,
+      10,
+      eeg_preprocessed_subscription_callback);
 
     timer = this->create_wall_timer(1000ms, std::bind(&TopicFrequency::timer_callback, this));
     RCLCPP_INFO(this->get_logger(), "Started timer");
@@ -36,17 +46,19 @@ public:
   }
 
   void timer_callback() {
-    RCLCPP_INFO(this->get_logger(), "Messages received during the last second: %d, total messages: %d", messages_received_since_last_full_second, messages_received);
-    messages_received_since_last_full_second = 0;
+    RCLCPP_INFO(this->get_logger(), "EEG raw messages received during the last second: %d", eeg_raw_messages);
+    RCLCPP_INFO(this->get_logger(), "EEG preprocessed messages received during the last second: %d", eeg_preprocessed_messages);
+    eeg_raw_messages = 0;
+    eeg_preprocessed_messages = 0;
   }
 
 
 private:
   rclcpp::TimerBase::SharedPtr timer;
-  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr subscription;
-  unsigned int messages_received;
-  unsigned int messages_received_since_last_full_second;
-  std::string topic_;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscription;
+  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_subscription;
+  unsigned int eeg_raw_messages;
+  unsigned int eeg_preprocessed_messages;
 };
 
 
