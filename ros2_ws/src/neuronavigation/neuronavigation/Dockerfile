@@ -13,7 +13,6 @@ RUN apt-get install -y \
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get install -y \
-    cython3 \
     dos2unix \
     locales \
     python3-wxgtk4.0 \
@@ -32,7 +31,7 @@ RUN apt-get install -y \
     python3-pubsub \
     python3-pip
 
-RUN pip install vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.7 pypolaris==0.0.6 python-socketio
+RUN pip install cython vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.9 pypolaris==0.0.6 python-socketio
 
 # HACK: As of now, wxPython >=4.1.0 (required by InVesalius) for Ubuntu 22 is not stored in PyPi, hence
 #       install using an own wheel file.
