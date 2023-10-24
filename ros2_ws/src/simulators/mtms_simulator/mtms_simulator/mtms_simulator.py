@@ -183,19 +183,20 @@ class MTMSSimulator(Node):
         return response
 
     def charge_handler(self, message):
-        pass
+        self.get_logger().info("Charge: %r" % message)
 
     def discharge_handler(self, message):
-        pass
+        self.get_logger().info("Discharge: %r" % message)
 
     def event_trigger_handler(self, message):
-        pass
+        self.get_logger().info("Pulse: %r" % message)
 
     def pulse_handler(self, message):
-        pass
+        self.get_logger().info("Pulse: %r" % message)
 
     def trigger_out_handler(self, trigger_out):
-        pass
+        self.get_logger().info("Trigger out activate")
+        self.get_logger().debug("Trigger out: %r" % trigger_out)
 
     def system_state_callback(self):
         msg = self.system_state
