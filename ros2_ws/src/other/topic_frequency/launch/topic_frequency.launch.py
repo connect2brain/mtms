@@ -12,23 +12,12 @@ def generate_launch_description():
         description="Logging level",
     )
 
-    topic_arg = DeclareLaunchArgument(
-        "topic",
-        description="Topic name",
-    )
-
     logger = LaunchConfiguration("log-level")
-    topic = LaunchConfiguration("topic")
 
     node = Node(
         package="topic_frequency",
         executable="topic_frequency",
         name="topic_frequency",
-        parameters=[
-            {
-                "topic": topic
-            }
-        ],
         arguments=['--ros-args', '--log-level', logger]
     )
 
