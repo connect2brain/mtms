@@ -132,6 +132,7 @@ class MTMSSimulator(Node):
 
         # Internal state variables
         self.system_state: SystemState = SystemState()
+        self.session_start_time = 0.0
         self.allow_stimulation: bool = False
         self.settings: Settings = Settings()
 
@@ -169,6 +170,7 @@ class MTMSSimulator(Node):
     def start_session_handler(self, request, response):
         # TODO: Check if STARTING phase required
         self.system_state.session_state = SessionState.STARTED
+        self.session_start_time = time.time()
         self.get_logger().info("Session started")
         response.success = True
         return response
@@ -197,7 +199,7 @@ class MTMSSimulator(Node):
 
     def system_state_callback(self):
         msg = self.system_state
-        msg.time = time.time()  # in seconds, NOTE: MIGHT BE WRONG UNITS
+        msg.time = time.time() - self.session_start_time  # in seconds, NOTE: MIGHT BE WRONG UNITS
 
         self.system_state_publisher.publish(msg)
 
