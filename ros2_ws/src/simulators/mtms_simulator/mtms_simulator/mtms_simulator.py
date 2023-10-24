@@ -77,7 +77,7 @@ class MTMSSimulator(Node):
             StartSession, "/mtms_device/start_session", self.start_session_handler
         )
         self.stop_session_service = self.create_service(
-            StopSession, "/mtmt/stop_session", self.stop_session_handler
+            StopSession, "/mtms_device/stop_session", self.stop_session_handler
         )
 
         # Subscribers
@@ -112,6 +112,7 @@ class MTMSSimulator(Node):
         )
         self.node_message_publisher = self.create_publisher(String, "/node/message", 10)
 
+        # QoS definition for System state.
         deadline_ns = 1000 * (
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS
             + MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS
@@ -156,20 +157,20 @@ class MTMSSimulator(Node):
 
     def start_device_handler(self, request, response):
         # TODO: Check if STARTUP phase required
-        self.system_state.device_state = DeviceState.OPERATIONAL
+        self.system_state.device_state.value = DeviceState.OPERATIONAL
         self.get_logger().info("Device started")
         response.success = True
         return response
 
     def stop_device_handler(self, request, response):
-        self.system_state.device_state = DeviceState.SHUTDOWN
+        self.system_state.device_state.value = DeviceState.SHUTDOWN
         self.get_logger().info("Device stopped")
         response.success = True
         return response
 
     def start_session_handler(self, request, response):
         # TODO: Check if STARTING phase required
-        self.system_state.session_state = SessionState.STARTED
+        self.system_state.session_state.value = SessionState.STARTED
         self.session_start_time = time.time()
         self.get_logger().info("Session started")
         response.success = True
@@ -177,7 +178,7 @@ class MTMSSimulator(Node):
 
     def stop_session_handler(self, request, response):
         # TODO: Check if STOPPING phase required
-        self.system_state.session_state = SessionState.STOPPED
+        self.system_state.session_state.value = SessionState.STOPPED
         self.get_logger().info("Session stopped")
         response.success = True
         return response
@@ -200,8 +201,9 @@ class MTMSSimulator(Node):
 
     def system_state_callback(self):
         msg = self.system_state
-        msg.time = time.time() - self.session_start_time  # in seconds, NOTE: MIGHT BE WRONG UNITS
-
+        msg.time = 0.0
+        if self.system_state.session_state.value == SessionState.STARTED:
+            msg.time = time.time() - self.session_start_time  # in seconds, NOTE: MIGHT BE WRONG UNITS
         self.system_state_publisher.publish(msg)
 
 
