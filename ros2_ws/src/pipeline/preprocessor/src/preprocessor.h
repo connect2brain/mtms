@@ -21,6 +21,8 @@
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
+class PreprocessorWrapper;
+
 class EegPreprocessor : public rclcpp::Node {
 public:
   EegPreprocessor();
@@ -51,11 +53,14 @@ private:
   rclcpp::Service<project_interfaces::srv::SetPreprocessor>::SharedPtr set_preprocessor_service;
 
   std::string active_project;
-  std::string preprocessor;
+  std::string script_directory;
+  std::string module_name;
 
   uint16_t sampling_frequency;
   double_t sampling_period;
   double_t previous_time;
+
+  std::unique_ptr<PreprocessorWrapper> preprocessor_wrapper;
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */

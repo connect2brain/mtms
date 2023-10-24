@@ -1,9 +1,13 @@
 #include <chrono>
 #include <filesystem>
 
+#include "preprocessor_wrapper.h"
 #include "preprocessor.h"
+
 #include "memory_utils.h"
 #include "scheduling_utils.h"
+
+#include "std_msgs/msg/string.hpp"
 
 using namespace std::placeholders;
 
@@ -40,12 +44,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
                          msg->time);
 
     this->handle_eeg_sample(msg);
-
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Published preprocessed EEG data on topic %s",
-                         EEG_PREPROCESSED_TOPIC.c_str());
 
     /* Print the time taken to preprocess the datapoint. */
 
@@ -87,6 +85,8 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
 
   this->previous_time = UNSET_PREVIOUS_TIME;
   this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
+
+  this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>();
 }
 
 /* Listing and setting EEG preprocessors. */
@@ -95,14 +95,21 @@ void EegPreprocessor::set_preprocessor(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response) {
 
-  this->preprocessor = request->preprocessor;
-  response->success = true;
+  this->module_name = request->preprocessor;
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor set to %s.", this->preprocessor.c_str());
+  this->preprocessor_wrapper->reset_module(this->script_directory, this->module_name);
+
+  RCLCPP_INFO(this->get_logger(), "Preprocessor set to %s.", this->module_name.c_str());
+
+  response->success = true;
 }
 
 void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
+
+  std::ostringstream oss;
+  oss << PROJECTS_DIRECTORY << this->active_project << "/preprocessor";
+  this->script_directory = oss.str();
 
   RCLCPP_INFO(this->get_logger(), "Active project set to to %s.", this->active_project.c_str());
 
@@ -110,29 +117,25 @@ void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::St
 }
 
 std::vector<std::string> EegPreprocessor::list_python_scripts(const std::string& path) {
-    std::vector<std::string> scripts;
+  std::vector<std::string> scripts;
 
-    /* Check that the directory exists. */
-    if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-        std::cerr << "Warning: Directory does not exist: " << path << std::endl;
-        return scripts;
-    }
-
-    /* List all .py files in the directory. */
-    for (const auto &entry : std::filesystem::directory_iterator(path)) {
-        if (entry.is_regular_file() && entry.path().extension() == ".py") {
-            scripts.push_back(entry.path().stem().string());
-        }
-    }
+  /* Check that the directory exists. */
+  if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+    std::cerr << "Warning: Directory does not exist: " << path << std::endl;
     return scripts;
+  }
+
+  /* List all .py files in the directory. */
+  for (const auto &entry : std::filesystem::directory_iterator(path)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".py") {
+      scripts.push_back(entry.path().stem().string());
+    }
+  }
+  return scripts;
 }
 
 void EegPreprocessor::update_preprocessor_list() {
-  std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << this->active_project << "/preprocessor";
-  std::string path = oss.str();
-
-  auto scripts = this->list_python_scripts(path);
+  auto scripts = this->list_python_scripts(this->script_directory);
 
   auto msg = project_interfaces::msg::PreprocessorList();
   msg.scripts = scripts;
@@ -180,9 +183,21 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   check_dropped_samples(current_time);
 
-  auto preprocessed_msg = eeg_interfaces::msg::PreprocessedEegSample();
+  if (this->preprocessor_wrapper->is_initialized()) {
+    auto preprocessed_sample = this->preprocessor_wrapper->process_sample(*msg);
 
-  this->eeg_preprocessed_publisher->publish(preprocessed_msg);
+    this->eeg_preprocessed_publisher->publish(preprocessed_sample);
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Published preprocessed EEG data on topic %s",
+                         EEG_PREPROCESSED_TOPIC.c_str());
+  } else {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "No preprocessor selected");
+  }
 }
 
 int main(int argc, char *argv[]) {
