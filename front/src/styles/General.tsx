@@ -59,3 +59,11 @@ export const TabBar = styled.div`
     }
   }
 `
+
+export const ProjectRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+`
