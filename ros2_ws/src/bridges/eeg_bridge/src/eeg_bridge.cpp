@@ -421,14 +421,14 @@ void EegBridge::handle_measurement_start_packet() {
                               (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
   RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency_);
 
-  this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
-                      (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
+  this->num_of_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
+                           (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
 
   this->send_trigger_as_channel = false;
 
-  uint8_t num_of_eeg_data = 0;
-  uint8_t num_of_emg_data = 0;
-  for (uint8_t i = 0; i < this->n_channels_; i++) {
+  uint8_t num_of_eeg_channels = 0;
+  uint8_t num_of_emg_channels = 0;
+  for (uint8_t i = 0; i < this->num_of_channels_; i++) {
     uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
                               buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
     if (source_channel == SOURCE_CHANNEL_FOR_TRIGGER) {
@@ -441,34 +441,35 @@ void EegBridge::handle_measurement_start_packet() {
        after the channels of the first amplifier, thus, starting at 41. */
     if ((source_channel >= 33 && source_channel <= 40) || (source_channel >= 73 && source_channel <= 80)) {
       this->channel_types[i] = this->ChannelType::EMG;
-      num_of_emg_data++;
+      num_of_emg_channels++;
     } else {
       this->channel_types[i] = this->ChannelType::EEG;
-      num_of_eeg_data++;
+      num_of_eeg_channels++;
     }
   }
 
   if (this->send_trigger_as_channel) {
     RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a channel.");
 
-    this->n_channels_excluding_trigger_ = this->n_channels_ - 1;
+    this->num_of_channels_excluding_trigger_ = this->num_of_channels_ - 1;
   } else {
     RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a packet.");
 
-    this->n_channels_excluding_trigger_ = this->n_channels_;
+    this->num_of_channels_excluding_trigger_ = this->num_of_channels_;
   }
 
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_data);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_data);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_channels);
 
-  RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->n_channels_excluding_trigger_);
+  RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->num_of_channels_excluding_trigger_);
 
   /* Publish EEG info. */
 
   auto eeg_info_msg = eeg_interfaces::msg::EegInfo();
 
   eeg_info_msg.sampling_frequency = this->sampling_frequency_;
-  eeg_info_msg.n_channels = this->n_channels_;
+  eeg_info_msg.num_of_eeg_channels = num_of_eeg_channels;
+  eeg_info_msg.num_of_emg_channels = num_of_emg_channels;
   eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
 
   this->publisher_eeg_info_->publish(eeg_info_msg);
@@ -576,7 +577,7 @@ void EegBridge::handle_eeg_data_packet() {
 }
 
 int EegBridge::get_trigger_package_from_buffer() {
-  auto index = FIRST_CHANNEL_INDEX + this->n_channels_excluding_trigger_ * 3;
+  auto index = FIRST_CHANNEL_INDEX + this->num_of_channels_excluding_trigger_ * 3;
 
   return (uint8_t) buffer[index] << 16 |
          (uint8_t) buffer[index + 1] << 8 |
@@ -615,7 +616,7 @@ void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
   message.time = time_since_trigger;
 
   int i = FIRST_CHANNEL_INDEX;
-  for (int channel = 0; channel < this->n_channels_excluding_trigger_; channel++) {
+  for (int channel = 0; channel < this->num_of_channels_excluding_trigger_; channel++) {
 
     int result = (uint8_t) buffer[i] << 16 |
                  (uint8_t) buffer[i + 1] << 8 |

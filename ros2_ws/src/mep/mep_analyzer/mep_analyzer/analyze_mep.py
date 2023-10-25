@@ -99,8 +99,8 @@ class AnalyzeMepNode(Node):
     # ROS callbacks and callers
 
     def eeg_info_callback(self, eeg_info):
-        # Update sampling frequency
 
+        # Update sampling frequency
         self.sampling_frequency = eeg_info.sampling_frequency
         self.logger.info('Sampling frequency updated to {} Hz.'.format(self.sampling_frequency))
 
@@ -191,10 +191,10 @@ class AnalyzeMepNode(Node):
     def validate_emg_channel(self, goal_id, emg_channel, eeg_buffer):
 
         # Assuming that all datapoints have the same number of channels.
-        num_of_emg_data = len(eeg_buffer[0].emg_data)
+        num_of_emg_channels = len(eeg_buffer[0].emg_data)
 
         # EMG channel indexing starts from 0, hence decrement.
-        maximum_channel_index = num_of_emg_data - 1
+        maximum_channel_index = num_of_emg_channels - 1
 
         if emg_channel > maximum_channel_index:
             self.logger.warn('{}: Failure: Requested channel ({}) larger than the maximum channel ({}). Please check the channel counts defined in .env.'.format(
