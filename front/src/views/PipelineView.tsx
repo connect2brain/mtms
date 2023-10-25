@@ -4,7 +4,9 @@ import styled from 'styled-components'
 import { TabBar } from 'styles/General'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, StyledButton, StyledRedButton } from 'styles/General'
+import { StyledPanel, ProjectRow } from 'styles/General'
+
+import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
 import { listProjects, setActiveProject, setPreprocessorRos } from 'services/ros'
 
@@ -16,7 +18,7 @@ const InputRow = styled.div`
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 30px;
 `
 
 const Label = styled.label`
@@ -27,6 +29,63 @@ const Label = styled.label`
   display: inline-block;
 `
 
+/* Pipeline definition */
+const PipelinePanel = styled.div`
+  display: grid;
+  grid-template-rows: repeat(1, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  width: 600px;
+  height: 550px;
+  gap: 20px;
+`
+
+const PreprocessorPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 1 / 2;
+  width: 250px;
+  height: 150px;
+
+  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
+  margin-right: 30px;
+
+  ${StyledPanel}
+`
+
+const DeciderPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 2 / 3;
+  width: 250px;
+  height: 150px;
+
+  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
+  margin-right: 30px;
+
+  ${StyledPanel}
+`
+
+const PresenterPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 3 / 4;
+  width: 250px;
+  height: 150px;
+  ${StyledPanel}
+`
+
+/* General config-related */
+const ConfigRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 0px;
+`
+
+const ConfigLabel = styled.label`
+  width: 300px;
+  font-size: 14px;
+`
+
 const Select = styled.select`
   width: 318px;
   padding: 8px;
@@ -35,6 +94,8 @@ const Select = styled.select`
   outline: none;
   transition: background-color 0.2s;
   appearance: none;
+
+  margin-right: 35px;
 
   &:focus {
     background-color: transparent;
@@ -64,7 +125,13 @@ export const PipelineView = () => {
   const { activeProject } = useContext(ProjectContext)
 
   const [projects, setProjects] = useState<string[]>([])
+
+  const [preprocessorEnabled, setPreprocessorEnabled] = useState<boolean>(() => getKey('preprocessorEnabled', false))
   const [preprocessor, setPreprocessor] = useState<string>('')
+
+  const [deciderEnabled, setDeciderEnabled] = useState<boolean>(() => getKey('deciderEnabled', false))
+
+  const [presenterEnabled, setPresenterEnabled] = useState<boolean>(() => getKey('presenterEnabled', false))
 
   const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newActiveProject = event.target.value
@@ -89,9 +156,22 @@ export const PipelineView = () => {
     })
   }, [])
 
+  /* Update session storage. */
+  useEffect(() => {
+    storeKey('preprocessorEnabled', preprocessorEnabled)
+  }, [preprocessorEnabled])
+
+  useEffect(() => {
+    storeKey('deciderEnabled', deciderEnabled)
+  }, [deciderEnabled])
+
+  useEffect(() => {
+    storeKey('presenterEnabled', presenterEnabled)
+  }, [presenterEnabled])
+
   return (
     <>
-      <InputRow>
+      <ProjectRow>
         <Label>Project:</Label>
         <Select onChange={handleProjectChange} value={activeProject}>
         {projects.map((project, index) => (
@@ -100,18 +180,59 @@ export const PipelineView = () => {
           </option>
         ))}
         </Select>
-      </InputRow>
+      </ProjectRow>
 
-      <InputRow>
-        <Label>Preprocessor:</Label>
-        <Select onChange={handlePreprocessorChange} value={preprocessor}>
-        {preprocessors.map((preprocessor, index) => (
-          <option key={index} value={preprocessor}>
-            {preprocessor}
-          </option>
-        ))}
-        </Select>
-      </InputRow>
+      <PipelinePanel>
+        <PreprocessorPanel>
+          <SmallerTitle>Preprocessor</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Enabled:</ConfigLabel>
+            <ToggleSwitch
+              type="flat"
+              checked={preprocessorEnabled}
+              onChange={setPreprocessorEnabled}
+            />
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Module:</ConfigLabel>
+            <Select onChange={handlePreprocessorChange} value={preprocessor}>
+            {preprocessors.map((preprocessor, index) => (
+              <option key={index} value={preprocessor}>
+                {preprocessor}
+              </option>
+            ))}
+            </Select>
+          </ConfigRow>
+        </PreprocessorPanel>
+        <DeciderPanel>
+          <SmallerTitle>Decider</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Enabled:</ConfigLabel>
+            <ToggleSwitch
+              type="flat"
+              checked={deciderEnabled}
+              onChange={setDeciderEnabled}
+            />
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Module:</ConfigLabel>
+          </ConfigRow>
+        </DeciderPanel>
+        <PresenterPanel>
+          <SmallerTitle>Presenter</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Enabled:</ConfigLabel>
+            <ToggleSwitch
+              type="flat"
+              checked={presenterEnabled}
+              onChange={setPresenterEnabled}
+            />
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Module:</ConfigLabel>
+          </ConfigRow>
+        </PresenterPanel>
+      </PipelinePanel>
      </>
   )
 }
