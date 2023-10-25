@@ -3,16 +3,22 @@ import { Topic, Message } from 'roslib'
 
 import { ros } from 'services/ros'
 
-interface Preprocessors extends ROSLIB.Message {
+interface PreprocessorList extends ROSLIB.Message {
   scripts: string[],
 }
 
+interface RosBoolean extends ROSLIB.Message {
+  data: boolean,
+}
+
 interface PipelineContextType {
-  preprocessors: string[]
+  preprocessorList: string[]
+  preprocessorEnabled: boolean
 }
 
 const defaultPipelineState: PipelineContextType = {
-  preprocessors: []
+  preprocessorList: [],
+  preprocessorEnabled: false
 }
 
 export const PipelineContext = React.createContext<PipelineContextType>(defaultPipelineState)
@@ -22,26 +28,41 @@ interface PipelineProviderProps {
 }
 
 export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) => {
-  const [preprocessors, setPreprocessors] = useState<string[]>([])
+  const [preprocessorList, setPreprocessorList] = useState<string[]>([])
+  const [preprocessorEnabled, setPreprocessorEnabled] = useState<boolean>(false)
 
   useEffect(() => {
-    const preprocessorsSubscriber = new Topic({
+    /* Subscriber for preprocessor list. */
+    const preprocessorListSubscriber = new Topic({
       ros: ros,
       name: '/pipeline/preprocessor/list',
       messageType: 'project_interfaces/PreprocessorList'
-    }) as Topic<Preprocessors>
+    }) as Topic<PreprocessorList>
 
-    preprocessorsSubscriber.subscribe((message) => {
-      setPreprocessors(message.scripts)
+    preprocessorListSubscriber.subscribe((message) => {
+      setPreprocessorList(message.scripts)
     })
 
+    /* Subscriber for preprocessor enabled. */
+    const preprocessorEnabledSubscriber = new Topic({
+      ros: ros,
+      name: '/pipeline/preprocessor/enabled',
+      messageType: 'std_msgs/Bool'
+    }) as Topic<RosBoolean>
+
+    preprocessorEnabledSubscriber.subscribe((message) => {
+      setPreprocessorEnabled(message.data)
+    })
+
+    /* Unsubscribers */
     return () => {
-      preprocessorsSubscriber.unsubscribe()
+      preprocessorListSubscriber.unsubscribe()
+      preprocessorEnabledSubscriber.unsubscribe()
     }
   }, [])
 
   return (
-    <PipelineContext.Provider value={{ preprocessors }}>
+    <PipelineContext.Provider value={{ preprocessorList, preprocessorEnabled }}>
       {children}
     </PipelineContext.Provider>
   )
