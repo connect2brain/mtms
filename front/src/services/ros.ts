@@ -359,3 +359,31 @@ export const setPreprocessorRos = (preprocessor: string, callback: () => void) =
     },
   )
 }
+
+/* Set up set preprocessor enabled service. */
+const setPreprocessorEnabledService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/preprocessor/enabled/set',
+  serviceType: 'project_interfaces/SetPreprocessorEnabled',
+})
+
+export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    enabled: enabled
+  }) as any
+
+  setPreprocessorEnabledService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set preprocessor enabled: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set preprocessor enabled, error:')
+      console.log(error)
+    },
+  )
+}
