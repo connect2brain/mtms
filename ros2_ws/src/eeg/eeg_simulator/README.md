@@ -8,7 +8,7 @@
 
 3. Go to the repository root.
 
-4. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=random_data.csv sampling-frequency:=500 loop:=true eeg-channels:=64 emg-channels:=10`. If in a different directory, modify the path of data-file accordingly.
+4. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=random_data.csv sampling-frequency:=500 loop:=true num-of-eeg-channels:=64 num-of-emg-channels:=10`. If in a different directory, modify the path of data-file accordingly.
 
 The data file is located in eeg/data/ directory in the repository root. To use custom CSV data, copy the CSV file to the directory and modify data-file
 parameter accordingly. The CSV file should consist of one column per channel and one row per sample, with values separated by commas.
