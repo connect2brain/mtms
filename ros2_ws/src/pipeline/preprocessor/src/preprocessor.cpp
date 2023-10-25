@@ -77,9 +77,19 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
     qos_persist_latest);
 
   /* Create service for changing preprocessor. */
-  set_preprocessor_service = this->create_service<project_interfaces::srv::SetPreprocessor>(
+  this->set_preprocessor_service = this->create_service<project_interfaces::srv::SetPreprocessor>(
     "/pipeline/preprocessor/set",
     std::bind(&EegPreprocessor::set_preprocessor, this, _1, _2));
+
+  /* Create service for enabling and disabling preprocessor. */
+  this->set_preprocessor_enabled_service = this->create_service<project_interfaces::srv::SetPreprocessorEnabled>(
+    "/pipeline/preprocessor/enabled/set",
+    std::bind(&EegPreprocessor::set_preprocessor_enabled, this, _1, _2));
+
+  /* Create publisher for preprocessor enabled. */
+  this->preprocessor_enabled_publisher = this->create_publisher<std_msgs::msg::Bool>(
+    "/pipeline/preprocessor/enabled",
+    qos_persist_latest);
 
   /* Initialize variables. */
 
@@ -92,6 +102,22 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
 }
 
 /* Listing and setting EEG preprocessors. */
+
+void EegPreprocessor::set_preprocessor_enabled(
+      const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response) {
+
+  this->preprocessor_enabled = request->enabled;
+
+  auto msg = std_msgs::msg::Bool();
+  msg.data = this->preprocessor_enabled;
+
+  this->preprocessor_enabled_publisher->publish(msg);
+
+  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", enabled ? "enabled" : "disabled");
+
+  response->success = true;
+}
 
 void EegPreprocessor::set_preprocessor(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,

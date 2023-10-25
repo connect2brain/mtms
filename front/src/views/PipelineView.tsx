@@ -8,7 +8,7 @@ import { StyledPanel, ProjectRow } from 'styles/General'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { listProjects, setActiveProject, setPreprocessorRos } from 'services/ros'
+import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnabledRos } from 'services/ros'
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
@@ -121,12 +121,13 @@ const getKey = (key: string, defaultValue: any): any => {
 }
 
 export const PipelineView = () => {
-  const { preprocessors } = useContext(PipelineContext)
   const { activeProject } = useContext(ProjectContext)
+
+  const { preprocessorList } = useContext(PipelineContext)
+  const { preprocessorEnabled } = useContext(PipelineContext)
 
   const [projects, setProjects] = useState<string[]>([])
 
-  const [preprocessorEnabled, setPreprocessorEnabled] = useState<boolean>(() => getKey('preprocessorEnabled', false))
   const [preprocessor, setPreprocessor] = useState<string>('')
 
   const [deciderEnabled, setDeciderEnabled] = useState<boolean>(() => getKey('deciderEnabled', false))
@@ -137,6 +138,12 @@ export const PipelineView = () => {
     const newActiveProject = event.target.value
     setActiveProject(newActiveProject, () => {
       console.log('Active project set to ' + newActiveProject)
+    })
+  }
+
+  const handlePreprocessorEnabled = (enabled: boolean) => {
+    setPreprocessorEnabledRos(enabled, () => {
+      console.log('Preprocessor ' + (enabled ? 'enabled' : 'disabled'))
     })
   }
 
@@ -190,13 +197,13 @@ export const PipelineView = () => {
             <ToggleSwitch
               type="flat"
               checked={preprocessorEnabled}
-              onChange={setPreprocessorEnabled}
+              onChange={handlePreprocessorEnabled}
             />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
             <Select onChange={handlePreprocessorChange} value={preprocessor}>
-            {preprocessors.map((preprocessor, index) => (
+            {preprocessorList.map((preprocessor, index) => (
               <option key={index} value={preprocessor}>
                 {preprocessor}
               </option>
