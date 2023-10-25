@@ -27,6 +27,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/ListProjects.srv"
   "srv/SetActiveProject.srv"
   "srv/SetPreprocessor.srv"
+  "srv/SetPreprocessorEnabled.srv"
 )
 
 ament_package()
