@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/eeg_sample.hpp"
@@ -17,6 +18,7 @@
 
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor.hpp"
+#include "project_interfaces/srv/set_preprocessor_enabled.hpp"
 
 #include "ring_buffer.h"
 
@@ -33,6 +35,10 @@ private:
   void set_preprocessor(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response);
+
+  void set_preprocessor_enabled(
+      const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response);
 
   void set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   std::vector<std::string> list_python_scripts(const std::string& path);
@@ -55,6 +61,11 @@ private:
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
 
   rclcpp::Service<project_interfaces::srv::SetPreprocessor>::SharedPtr set_preprocessor_service;
+
+  rclcpp::Service<project_interfaces::srv::SetPreprocessorEnabled>::SharedPtr set_preprocessor_enabled_service;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr preprocessor_enabled_publisher;
+
+  bool preprocessor_enabled;
 
   std::string active_project;
   std::string script_directory;
