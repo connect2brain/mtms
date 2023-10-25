@@ -25,31 +25,51 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
   preprocessor_module = py::module::import(module_name.c_str());
   preprocessor_instance = preprocessor_module.attr("Preprocessor")();
 
+  /* Extract the sample_window from preprocessor_instance. */
+  if (py::hasattr(preprocessor_instance, "sample_window")) {
+    py::list sample_window = preprocessor_instance.attr("sample_window").cast<py::list>();
+    if (sample_window.size() == 2) {
+      this->earliest_sample = sample_window[0].cast<int>();
+      this->latest_sample = sample_window[1].cast<int>();
+
+      this->buffer_size = latest_sample - earliest_sample + 1;
+    } else {
+      /* TODO: Error handling. */
+    }
+  } else {
+    /* TODO: Error handling. */
+  }
+
   _is_initialized = true;
 }
 
-void PreprocessorWrapper::initialize_arrays(std::size_t buffer_size, std::size_t eeg_data_size, std::size_t emg_data_size) {
-  py_time = std::make_unique<py::array_t<double>>(buffer_size);
+void PreprocessorWrapper::initialize_arrays() {
+  if (this->buffer_size != UNSET_SIZE &&
+      this->eeg_data_size != UNSET_SIZE &&
+      this->emg_data_size != UNSET_SIZE) {
 
-  std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
-  py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
+    py_time = std::make_unique<py::array_t<double>>(buffer_size);
 
-  std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
-  py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
+    std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
+    py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
 
-  this->buffer_size = buffer_size;
-  this->eeg_data_size = eeg_data_size;
-  this->emg_data_size = emg_data_size;
+    std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
+    py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
+  }
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {
-    py_time.reset();
-    py_eeg_data.reset();
-    py_emg_data.reset();
+  py_time.reset();
+  py_eeg_data.reset();
+  py_emg_data.reset();
 }
 
 bool PreprocessorWrapper::is_initialized() const {
-    return _is_initialized;
+  return this->_is_initialized;
+}
+
+std::size_t PreprocessorWrapper::get_buffer_size() const {
+  return this->buffer_size;
 }
 
 eeg_interfaces::msg::PreprocessedEegSample
@@ -81,10 +101,10 @@ PreprocessorWrapper::process(
   cpp_result.time = current_time;
 
   if (py::isinstance<py::dict>(result)) {
-      py::dict dict_result = result.cast<py::dict>();
-      cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
-      cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
-      cpp_result.valid = dict_result["valid"].cast<bool>();
+    py::dict dict_result = result.cast<py::dict>();
+    cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
+    cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
+    cpp_result.valid = dict_result["valid"].cast<bool>();
   }
   return cpp_result;
 }

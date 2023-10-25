@@ -38,6 +38,8 @@ private:
   std::vector<std::string> list_python_scripts(const std::string& path);
   void update_preprocessor_list();
 
+  void reset_sample_buffer();
+
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t current_time);
   void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
@@ -60,6 +62,9 @@ private:
 
   uint16_t sampling_frequency;
   double_t sampling_period;
+  uint8_t num_of_eeg_channels;
+  uint8_t num_of_emg_channels;
+
   double_t previous_time;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
