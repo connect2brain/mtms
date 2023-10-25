@@ -87,6 +87,8 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
   this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
 
   this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>();
+
+  this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
 }
 
 /* Listing and setting EEG preprocessors. */
@@ -97,7 +99,10 @@ void EegPreprocessor::set_preprocessor(
 
   this->module_name = request->preprocessor;
 
+  this->sample_buffer.set_size(100);
+
   this->preprocessor_wrapper->reset_module(this->script_directory, this->module_name);
+  this->preprocessor_wrapper->initialize_arrays(100, 64, 16);
 
   RCLCPP_INFO(this->get_logger(), "Preprocessor set to %s.", this->module_name.c_str());
 
@@ -183,21 +188,29 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   check_dropped_samples(current_time);
 
-  if (this->preprocessor_wrapper->is_initialized()) {
-    auto preprocessed_sample = this->preprocessor_wrapper->process_sample(*msg);
-
-    this->eeg_preprocessed_publisher->publish(preprocessed_sample);
+  if (!this->preprocessor_wrapper->is_initialized()) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Published preprocessed EEG data on topic %s",
-                         EEG_PREPROCESSED_TOPIC.c_str());
-  } else {
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "No preprocessor selected");
+                          *this->get_clock(),
+                          1000,
+                          "No preprocessor selected");
+    return;
   }
+
+  this->sample_buffer.append(msg);
+
+  if (!this->sample_buffer.is_full()) {
+    return;
+  }
+
+  auto preprocessed_sample = this->preprocessor_wrapper->process_sample_buffer(this->sample_buffer);
+
+  this->eeg_preprocessed_publisher->publish(preprocessed_sample);
+
+  RCLCPP_INFO_THROTTLE(this->get_logger(),
+                      *this->get_clock(),
+                      1000,
+                      "Published preprocessed EEG data on topic %s",
+                      EEG_PREPROCESSED_TOPIC.c_str());
 }
 
 int main(int argc, char *argv[]) {
