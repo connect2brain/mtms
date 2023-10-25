@@ -88,8 +88,8 @@ private:
   double_t first_trigger_timestamp_;
 
   bool measurement_start_packet_received_;
-  uint16_t n_channels_;
-  uint16_t n_channels_excluding_trigger_;
+  uint16_t num_of_channels_;
+  uint16_t num_of_channels_excluding_trigger_;
 
   /* TODO: Sampling frequency is unused for now. It could be published either as ROS message
    *   or as metadata of EEG data.
