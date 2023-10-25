@@ -53,7 +53,9 @@ bool PreprocessorWrapper::is_initialized() const {
 }
 
 eeg_interfaces::msg::PreprocessedEegSample
-PreprocessorWrapper::process_sample_buffer(const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer) {
+PreprocessorWrapper::process(
+    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
+    double_t current_time) {
 
   /* Fill the numpy arrays. */
   auto time_ptr = py_time->mutable_data();
@@ -71,14 +73,15 @@ PreprocessorWrapper::process_sample_buffer(const RingBuffer<std::shared_ptr<eeg_
   }
 
   /* Call the Python function. */
-  py::object result = preprocessor_instance.attr("process_sample_buffer")(*py_time, *py_eeg_data, *py_emg_data);
+  py::object result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data);
 
   /* Convert the Python dictionary to a ROS message. */
   eeg_interfaces::msg::PreprocessedEegSample cpp_result;
 
+  cpp_result.time = current_time;
+
   if (py::isinstance<py::dict>(result)) {
       py::dict dict_result = result.cast<py::dict>();
-      cpp_result.time = dict_result["time"].cast<double>();
       cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
       cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
       cpp_result.valid = dict_result["valid"].cast<bool>();
@@ -89,5 +92,5 @@ PreprocessorWrapper::process_sample_buffer(const RingBuffer<std::shared_ptr<eeg_
 PYBIND11_MODULE(my_module_wrapper, m) {
   py::class_<PreprocessorWrapper>(m, "PreprocessorWrapper")
     .def(py::init<>())
-    .def("process_sample_buffer", &PreprocessorWrapper::process_sample_buffer);
+    .def("process", &PreprocessorWrapper::process);
 }

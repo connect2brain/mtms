@@ -202,13 +202,16 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
     return;
   }
 
-  auto preprocessed_sample = this->preprocessor_wrapper->process_sample_buffer(this->sample_buffer);
+  auto preprocessed_sample = this->preprocessor_wrapper->process(
+    this->sample_buffer,
+    current_time);
 
   this->eeg_preprocessed_publisher->publish(preprocessed_sample);
 
   RCLCPP_INFO_THROTTLE(this->get_logger(),
                       *this->get_clock(),
                       1000,
+
                       "Published preprocessed EEG data on topic %s",
                       EEG_PREPROCESSED_TOPIC.c_str());
 }
