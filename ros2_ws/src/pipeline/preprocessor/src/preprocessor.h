@@ -18,6 +18,8 @@
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor.hpp"
 
+#include "ring_buffer.h"
+
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
@@ -59,6 +61,8 @@ private:
   uint16_t sampling_frequency;
   double_t sampling_period;
   double_t previous_time;
+
+  RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
 
   std::unique_ptr<PreprocessorWrapper> preprocessor_wrapper;
 
