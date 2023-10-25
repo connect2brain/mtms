@@ -21,9 +21,10 @@ private:
 public:
   RingBuffer() : capacity(0), current_size(0), head(0), tail(0) {}
 
-  /* Set the size of the buffer. Discards all current data. */
-  void set_size(size_t size) {
+  /* Reset buffer and set its size. Discards all current data. */
+  void reset(size_t size) {
     buffer.resize(size);
+
     capacity = size;
     current_size = 0;
     head = 0;

@@ -99,14 +99,28 @@ void EegPreprocessor::set_preprocessor(
 
   this->module_name = request->preprocessor;
 
-  this->sample_buffer.set_size(100);
-
+  /* Reset the wrapper to use the changed preprocessor module. */
   this->preprocessor_wrapper->reset_module(this->script_directory, this->module_name);
-  this->preprocessor_wrapper->initialize_arrays(100, 64, 16);
+
+  /* When preprocessor changes, its buffer size potentially changes, hence
+     re-initialize arrays in the wrapper. */
+  this->preprocessor_wrapper->initialize_arrays();
+
+  /* We don't want left-over samples from the previous preprocessor, hence
+     reset the sample buffer. */
+  reset_sample_buffer();
 
   RCLCPP_INFO(this->get_logger(), "Preprocessor set to %s.", this->module_name.c_str());
 
   response->success = true;
+}
+
+/* Reset sample buffer to the size determined by the Python module. */
+void EegPreprocessor::reset_sample_buffer() {
+  size_t buffer_size = this->preprocessor_wrapper->get_buffer_size();
+  this->sample_buffer.reset(buffer_size);
+
+  RCLCPP_INFO(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
 }
 
 void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
@@ -152,9 +166,22 @@ void EegPreprocessor::update_preprocessor_list() {
 
 void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg) {
   this->sampling_frequency = msg->sampling_frequency;
+  this->num_of_eeg_channels = msg->num_of_eeg_channels;
+  this->num_of_emg_channels = msg->num_of_emg_channels;
+
   this->sampling_period = 1.0 / this->sampling_frequency;
 
   RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d Hz.", this->sampling_frequency);
+  RCLCPP_INFO(this->get_logger(), "# of EEG channels updated to %d.", this->num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "# of EMG channels updated to %d.", this->num_of_emg_channels);
+
+  /* The number of EEG and EMG channels may have changed, therefore
+     re-initialize arrays in the wrapper. */
+  this->preprocessor_wrapper->initialize_arrays();
+
+  /* EEG info is updated if streaming is restarted on the EEG device. We don't want
+     left-over samples from the previous run, therefore reset the sample buffer. */
+  reset_sample_buffer();
 }
 
 /* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
