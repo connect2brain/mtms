@@ -23,7 +23,9 @@ public:
   void reset_module(const std::string& directory, const std::string& module_name);
   void initialize_arrays(std::size_t buffer_size, std::size_t eeg_data_size, std::size_t emg_data_size);
 
-  eeg_interfaces::msg::PreprocessedEegSample process_sample_buffer(const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer);
+  eeg_interfaces::msg::PreprocessedEegSample process(
+    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
+    double_t current_time);
 
   bool is_initialized() const;
 
