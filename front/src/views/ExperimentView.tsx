@@ -11,7 +11,7 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, StyledButton, StyledRedButton } from 'styles/General'
+import { StyledPanel, StyledButton, StyledRedButton, ProjectRow } from 'styles/General'
 
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
 
@@ -790,7 +790,7 @@ export const ExperimentView = () => {
   return (
     <>
       <ExperimentMetadata>
-        <InputRow>
+        <ProjectRow>
           <Label>Project:</Label>
           <Select onChange={handleProjectChange} value={activeProject}>
           {projects.map((project, index) => (
@@ -799,7 +799,7 @@ export const ExperimentView = () => {
             </option>
           ))}
           </Select>
-        </InputRow>
+        </ProjectRow>
 
         <InputRow>
           <Label>Experiment:</Label>
