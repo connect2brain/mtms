@@ -37,6 +37,7 @@ const PipelinePanel = styled.div`
   width: 600px;
   height: 550px;
   gap: 20px;
+  position: relative;
 `
 
 const PreprocessorPanel = styled.div`
@@ -69,6 +70,25 @@ const PresenterPanel = styled.div`
   width: 250px;
   height: 150px;
   ${StyledPanel}
+`
+
+const Arrow = styled.div`
+  width: 30px;       /* Arrow width */
+  height: 8px;       /* Arrow thickness */
+  background: #000;
+  position: absolute;
+  transform: translateY(-50%);
+
+  &:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -9px;
+    transform: translateY(-50%);
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 10px solid #000;
+  }
 `
 
 /* General config-related */
@@ -190,6 +210,9 @@ export const PipelineView = () => {
       </ProjectRow>
 
       <PipelinePanel>
+        <Arrow style={{ left: '292px', top: '110px'}} />
+        <Arrow style={{ left: '626px', top: '110px'}} />
+        <Arrow style={{ left: '620px', top: '230px', width: '40px', transform: 'rotate(45deg)'}} />
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
