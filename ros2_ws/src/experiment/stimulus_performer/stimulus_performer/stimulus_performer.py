@@ -261,6 +261,7 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.TIMED
         event_info.execution_time = float(time)
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.port = port
@@ -276,6 +277,7 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.TIMED
         event_info.execution_time = float(time)
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel

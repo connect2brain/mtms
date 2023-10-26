@@ -172,7 +172,7 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function send_pulse(obj, id, execution_condition, time, channel, waveform)
+        function send_pulse(obj, id, execution_condition, time, delay, channel, waveform)
             %send_pulse Send pulse event
             %
             %   Send pulse event to the mTMS device.
@@ -185,6 +185,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
@@ -193,7 +194,7 @@ classdef MTMSApiNode < handle
             send(publisher, pulse);
         end
 
-        function send_charge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_charge(obj, id, execution_condition, time, delay, channel, target_voltage)
             %send_charge Send charge event
             %
             %   Sends charge event to the mTMS device.
@@ -206,6 +207,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             charge.event_info = event_info;
             charge.channel = uint8(channel);
@@ -214,7 +216,7 @@ classdef MTMSApiNode < handle
             send(publisher, charge);
         end
 
-        function send_discharge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_discharge(obj, id, execution_condition, time, delay, channel, target_voltage)
             %send_discharge Send discharge command to mTMS device
             %
             %   Sends discharge command to the mTMS device.
@@ -227,6 +229,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             discharge.event_info = event_info;
             discharge.channel = uint8(channel);
@@ -235,7 +238,7 @@ classdef MTMSApiNode < handle
             send(publisher, discharge);
         end
 
-        function send_trigger_out(obj, id, execution_condition, time, port, duration_us)
+        function send_trigger_out(obj, id, execution_condition, time, delay, port, duration_us)
             %send_trigger_out Send trigger out event
             %
             %   Send trigger out event to the mTMS device.
@@ -248,6 +251,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             trigger_out.event_info = event_info;
             trigger_out.port = uint8(port);
