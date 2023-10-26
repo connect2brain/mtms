@@ -32,11 +32,11 @@ const Label = styled.label`
 /* Pipeline definition */
 const PipelinePanel = styled.div`
   display: grid;
-  grid-template-rows: repeat(1, 1fr);
+  grid-template-rows: repeat(2, 1fr);
   grid-template-columns: repeat(3, 1fr);
   width: 600px;
-  height: 550px;
-  gap: 20px;
+  height: 500px;
+  gap: 15px;
   position: relative;
 `
 
@@ -69,6 +69,14 @@ const PresenterPanel = styled.div`
   grid-column: 3 / 4;
   width: 250px;
   height: 150px;
+  ${StyledPanel}
+`
+
+const TmsPanel = styled.div`
+  grid-row: 2 / 3;
+  grid-column: 3 / 4;
+  width: 250px;
+  height: 90px;
   ${StyledPanel}
 `
 
@@ -210,9 +218,9 @@ export const PipelineView = () => {
       </ProjectRow>
 
       <PipelinePanel>
-        <Arrow style={{ left: '292px', top: '110px'}} />
-        <Arrow style={{ left: '626px', top: '110px'}} />
-        <Arrow style={{ left: '620px', top: '230px', width: '40px', transform: 'rotate(45deg)'}} />
+        <Arrow style={{ left: '289px', top: '110px'}} />
+        <Arrow style={{ left: '618px', top: '110px'}} />
+        <Arrow style={{ left: '613px', top: '230px', width: '44px', transform: 'rotate(45deg)'}} />
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
@@ -262,6 +270,13 @@ export const PipelineView = () => {
             <ConfigLabel>Module:</ConfigLabel>
           </ConfigRow>
         </PresenterPanel>
+        <TmsPanel>
+          <SmallerTitle>TMS</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Type:</ConfigLabel>
+            <ConfigLabel>Multi-locus</ConfigLabel>
+          </ConfigRow>
+        </TmsPanel>
       </PipelinePanel>
      </>
   )
