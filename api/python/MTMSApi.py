@@ -739,6 +739,56 @@ class MTMSApi:
 
         return ids
 
+    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED, wait_for_completion=True):
+        """
+        Send default pulse commands to all channels.
+
+        Parameters
+        ----------
+        reverse_polarities : list of bools
+            List of boolean values indicating whether to reverse polarities for each channel.
+        execution_condition : ExecutionCondition, optional
+            The condition under which the event should be executed. One of the following:
+
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
+            * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
+            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+
+            Default is ExecutionCondition.TIMED
+        time : float
+            The time at which the pulse is executed.
+        wait_for_completion : bool, optional
+            Whether to wait for the completion of all commands, by default True.
+
+        Returns
+        -------
+        list
+            IDs for each sent command.
+        """
+        assert self.is_session_started(), "Session not started."
+        assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
+            len(reverse_polarities), self.N_CHANNELS)
+
+        ids = []
+        for channel in range(self.N_CHANNELS):
+            reverse_polarity = reverse_polarities[channel]
+            waveform = self.get_default_waveform(channel=channel)
+
+            id = self.send_pulse(
+                execution_condition=execution_condition,
+                time=time,
+                channel=channel,
+                waveform=waveform,
+                reverse_polarity=reverse_polarity,
+                wait_for_completion=False,
+            )
+            ids.append(id)
+
+        if wait_for_completion:
+            self._wait_for_completions(ids=ids)
+
+        return ids
+
     def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, wait_for_completion=True):
         """
         Send immediate default pulse commands to all channels.
