@@ -8,7 +8,7 @@
 
 namespace py = pybind11;
 
-PreprocessorWrapper::PreprocessorWrapper() : _is_initialized(false) {
+PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger logger) : logger(logger), _is_initialized(false) {
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
@@ -34,11 +34,18 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
 
       this->buffer_size = latest_sample - earliest_sample + 1;
     } else {
-      /* TODO: Error handling. */
+      RCLCPP_WARN(logger, "sample_window class attribute is of incorrect length (should be two elements).");
     }
   } else {
-    /* TODO: Error handling. */
+    RCLCPP_WARN(logger, "sample_window class attribute not defined by the preprocessor.");
   }
+
+  RCLCPP_INFO(logger, "Preprocessor set to: %s.", module_name.c_str());
+  RCLCPP_INFO(logger, " ");
+  RCLCPP_INFO(logger, "Preprocessor configuration");
+  RCLCPP_INFO(logger, " ");
+  RCLCPP_INFO(logger, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
+  RCLCPP_INFO(logger, " ");
 
   _is_initialized = true;
 }
@@ -55,6 +62,8 @@ void PreprocessorWrapper::initialize_arrays() {
 
     std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
     py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
+
+    RCLCPP_DEBUG(logger, "Arrays initialized for time, EEG data, and EMG data.");
   }
 }
 
@@ -70,6 +79,14 @@ bool PreprocessorWrapper::is_initialized() const {
 
 std::size_t PreprocessorWrapper::get_buffer_size() const {
   return this->buffer_size;
+}
+
+void PreprocessorWrapper::set_eeg_data_size(size_t eeg_data_size) {
+  this->eeg_data_size = eeg_data_size;
+}
+
+void PreprocessorWrapper::set_emg_data_size(size_t emg_data_size) {
+  this->emg_data_size = emg_data_size;
 }
 
 eeg_interfaces::msg::PreprocessedEegSample
@@ -107,10 +124,4 @@ PreprocessorWrapper::process(
     cpp_result.valid = dict_result["valid"].cast<bool>();
   }
   return cpp_result;
-}
-
-PYBIND11_MODULE(my_module_wrapper, m) {
-  py::class_<PreprocessorWrapper>(m, "PreprocessorWrapper")
-    .def(py::init<>())
-    .def("process", &PreprocessorWrapper::process);
 }
