@@ -93,11 +93,11 @@ private:
     }
   }
 
-  void read_non_multiplexed_fifo_and_publish(std::string event_type,
-                                             NiFpga_mTMS_TargetToHostFifoU8 fifo) {
+  void read_and_publish_charge_feedback(NiFpga_mTMS_TargetToHostFifoU8 fifo) {
+
     size_t elements_remaining = 0;
     NiFpga_Status read_status;
-    std::vector<uint8_t> data(3);
+    std::vector<uint8_t> data(5);
 
     // Start by checking if there is enough data in the FIFO.
     read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 0, NiFpga_InfiniteTimeout,
@@ -107,8 +107,8 @@ private:
       return;
     }
 
-    while (elements_remaining > 2) {
-      read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 3, NiFpga_InfiniteTimeout,
+    while (elements_remaining >= 5) {
+      read_status = NiFpga_ReadFifoU8(session, fifo, data.data(), 5, NiFpga_InfiniteTimeout,
                                       &elements_remaining);
 
       if (NiFpga_IsError(read_status)) {
@@ -119,7 +119,20 @@ private:
 
       uint16_t id = data[0] * 256 + data[1];
       uint8_t error = data[2];
-      publish_feedback(event_type, id, error);
+      uint16_t charging_time = data[3] * 256 + data[4];
+
+      event_interfaces::msg::ChargeFeedback feedback;
+      feedback.id = id;
+      feedback.error.value = error;
+      feedback.charging_time = (double_t)charging_time / 1000;
+
+      charge_feedback_publisher_->publish(feedback);
+
+      RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"),
+                  "Publishing charge feedback: {id: %d, error: %d, charging time (ms): %d}",
+                  id,
+                  error,
+                  charging_time);
     }
   }
 
@@ -135,12 +148,6 @@ private:
       feedback.id = id;
       feedback.error.value = error;
       pulse_feedback_publisher_->publish(feedback);
-
-    } else if (event_type == "Charge") {
-      event_interfaces::msg::ChargeFeedback feedback;
-      feedback.id = id;
-      feedback.error.value = error;
-      charge_feedback_publisher_->publish(feedback);
 
     } else if (event_type == "Discharge") {
       event_interfaces::msg::DischargeFeedback feedback;
@@ -170,7 +177,8 @@ private:
     read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data);
     read_fifo_and_publish("Discharge", discharge_feedback_fifo, discharge_data);
     read_fifo_and_publish("Trigger out", trigger_out_feedback_fifo, trigger_out_data);
-    read_non_multiplexed_fifo_and_publish("Charge", charge_feedback_fifo);
+
+    read_and_publish_charge_feedback(charge_feedback_fifo);
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
