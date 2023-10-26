@@ -33,14 +33,14 @@ const Label = styled.label`
 const PipelinePanel = styled.div`
   display: grid;
   grid-template-rows: repeat(2, 1fr);
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   width: 600px;
   height: 500px;
   gap: 15px;
   position: relative;
 `
 
-const PreprocessorPanel = styled.div`
+const EegPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   width: 250px;
@@ -52,7 +52,7 @@ const PreprocessorPanel = styled.div`
   ${StyledPanel}
 `
 
-const DeciderPanel = styled.div`
+const PreprocessorPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   width: 250px;
@@ -64,9 +64,21 @@ const DeciderPanel = styled.div`
   ${StyledPanel}
 `
 
-const PresenterPanel = styled.div`
+const DeciderPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
+  width: 250px;
+  height: 150px;
+
+  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
+  margin-right: 30px;
+
+  ${StyledPanel}
+`
+
+const PresenterPanel = styled.div`
+  grid-row: 1 / 2;
+  grid-column: 4 / 5;
   width: 250px;
   height: 150px;
   ${StyledPanel}
@@ -74,7 +86,7 @@ const PresenterPanel = styled.div`
 
 const TmsPanel = styled.div`
   grid-row: 2 / 3;
-  grid-column: 3 / 4;
+  grid-column: 4 / 5;
   width: 250px;
   height: 90px;
   ${StyledPanel}
@@ -220,7 +232,23 @@ export const PipelineView = () => {
       <PipelinePanel>
         <Arrow style={{ left: '289px', top: '110px'}} />
         <Arrow style={{ left: '618px', top: '110px'}} />
-        <Arrow style={{ left: '613px', top: '230px', width: '44px', transform: 'rotate(45deg)'}} />
+        <Arrow style={{ left: '948px', top: '110px'}} />
+        <Arrow style={{ left: '942px', top: '230px', width: '44px', transform: 'rotate(45deg)'}} />
+        <EegPanel>
+          <SmallerTitle>EEG/EMG</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Sampling rate:</ConfigLabel>
+            <ConfigLabel>5 kHz</ConfigLabel>
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel># of EEG channels:</ConfigLabel>
+            <ConfigLabel>0</ConfigLabel>
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel># of EMG channels:</ConfigLabel>
+            <ConfigLabel>8</ConfigLabel>
+          </ConfigRow>
+        </EegPanel>
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
