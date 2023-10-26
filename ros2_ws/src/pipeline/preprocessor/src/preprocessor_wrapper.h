@@ -7,6 +7,8 @@
 #include <memory>
 #include <string>
 
+#include "rclcpp/rclcpp.hpp"
+
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -19,7 +21,7 @@ const size_t UNSET_SIZE = 0;
 
 class PreprocessorWrapper {
 public:
-  PreprocessorWrapper();
+  PreprocessorWrapper(rclcpp::Logger logger);
   ~PreprocessorWrapper();
 
   void reset_module(const std::string& directory, const std::string& module_name);
@@ -32,7 +34,12 @@ public:
   bool is_initialized() const;
   std::size_t get_buffer_size() const;
 
+  void set_eeg_data_size(size_t eeg_data_size);
+  void set_emg_data_size(size_t emg_data_size);
+
 private:
+  rclcpp::Logger logger;
+
   bool _is_initialized;
 
   py::module preprocessor_module;
