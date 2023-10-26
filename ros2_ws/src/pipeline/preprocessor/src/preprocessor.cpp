@@ -96,7 +96,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
   this->previous_time = UNSET_PREVIOUS_TIME;
   this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
 
-  this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>();
+  this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(this->get_logger());
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
 }
@@ -114,7 +114,7 @@ void EegPreprocessor::set_preprocessor_enabled(
 
   this->preprocessor_enabled_publisher->publish(msg);
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", enabled ? "enabled" : "disabled");
+  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", this->preprocessor_enabled ? "enabled" : "disabled");
 
   response->success = true;
 }
@@ -136,8 +136,6 @@ void EegPreprocessor::set_preprocessor(
      reset the sample buffer. */
   reset_sample_buffer();
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor set to %s.", this->module_name.c_str());
-
   response->success = true;
 }
 
@@ -146,7 +144,7 @@ void EegPreprocessor::reset_sample_buffer() {
   size_t buffer_size = this->preprocessor_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
-  RCLCPP_INFO(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
+  RCLCPP_DEBUG(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
 }
 
 void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
@@ -197,9 +195,16 @@ void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg:
 
   this->sampling_period = 1.0 / this->sampling_frequency;
 
-  RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d Hz.", this->sampling_frequency);
-  RCLCPP_INFO(this->get_logger(), "# of EEG channels updated to %d.", this->num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "# of EMG channels updated to %d.", this->num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Eeg configuration");
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), " ");
+
+  this->preprocessor_wrapper->set_eeg_data_size(this->num_of_eeg_channels);
+  this->preprocessor_wrapper->set_emg_data_size(this->num_of_emg_channels);
 
   /* The number of EEG and EMG channels may have changed, therefore
      re-initialize arrays in the wrapper. */
