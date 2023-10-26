@@ -6,3 +6,4 @@ event_info:
     value: 0
   execution_time: 10.0
   decision_time: 5.0
+  delay: 0.0

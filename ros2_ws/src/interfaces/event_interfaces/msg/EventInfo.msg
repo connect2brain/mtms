@@ -10,6 +10,10 @@ ExecutionCondition execution_condition
 
 float64 execution_time
 
+# Time in seconds how much the event is delayed.
+
+float64 delay
+
 # Time in seconds when the decision on the event was made.
 
 float64 decision_time
