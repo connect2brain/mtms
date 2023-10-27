@@ -6,21 +6,13 @@ import { ChannelState } from './ChannelState'
 
 import {
   SystemContext,
-  SessionState,
   DeviceState,
   HumanReadableDeviceState,
-  HumanReadableSessionState,
   ChannelState as ChannelStateType
 } from 'providers/SystemProvider'
 
 export const SystemState = () => {
   const { systemState } = useContext(SystemContext)
-
-  const [latestUpdate, setLatestUpdate] = useState<Date>()
-
-  useEffect(() => {
-    setLatestUpdate(new Date())
-  }, [systemState])
 
   const channelStatesTable = () => {
     return (
@@ -64,33 +56,10 @@ export const SystemState = () => {
     }
   }
 
-  const formatDate = (isoString: any) => {
-    const date = new Date(isoString)
-
-    const year = date.getUTCFullYear()
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(date.getUTCDate()).padStart(2, '0')
-
-    const hours = String(date.getUTCHours()).padStart(2, '0')
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0')
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
-  }
-
   const getHumanReadableDeviceState = (deviceState: any, value: any) => {
     const key = getKeyByValue(DeviceState, value)
     if (key) {
       return HumanReadableDeviceState[key as keyof typeof HumanReadableDeviceState] || 'Unknown state'
-    } else {
-      return 'Unknown state'
-    }
-  }
-
-  const getHumanReadableSessionState = (sessionState: any, value: any) => {
-    const key = getKeyByValue(SessionState, value)
-    if (key) {
-      return HumanReadableSessionState[key as keyof typeof HumanReadableSessionState] || 'Unknown state'
     } else {
       return 'Unknown state'
     }
@@ -101,19 +70,6 @@ export const SystemState = () => {
       <StateRow>
         <StateTitle>Device</StateTitle>
         <StateValue>{getHumanReadableDeviceState(DeviceState, systemState?.device_state.value)}</StateValue>
-      </StateRow>
-      <StateRow>
-        <StateTitle>Session</StateTitle>
-        <StateValue>{getHumanReadableSessionState(SessionState, systemState?.session_state.value)}</StateValue>
-      </StateRow>
-      <br />
-      <StateRow>
-        <StateTitle>Time</StateTitle>
-        <StateValue>{latestUpdate ? formatDate(latestUpdate.toISOString()) : ''}</StateValue>
-      </StateRow>
-      <StateRow>
-        <StateTitle>Session time</StateTitle>
-        <StateValue>{systemState?.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />
       <ErrorTitle>Errors</ErrorTitle>
