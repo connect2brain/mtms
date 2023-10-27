@@ -25,6 +25,7 @@ import {
   setActiveProject
 } from 'ros/ros'
 
+import { SystemContext } from 'providers/SystemProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
@@ -156,7 +157,7 @@ const StatusPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 6 / 7;
   width: 240px;
-  height: 240px;
+  height: 300px;
 `
 
 /* Trials-related */
@@ -309,6 +310,8 @@ export const ExperimentView = () => {
 
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
+
+  const { systemState } = useContext(SystemContext)
 
   const [projects, setProjects] = useState<string[]>([])
 
@@ -681,12 +684,15 @@ export const ExperimentView = () => {
   }, [autopauseIntervalMinutes])
 
   /* Utilities */
-  const formatDuration = (duration: number): string => {
-    duration = Math.round(duration)
+  const formatTime = (time: number | undefined): string => {
+    if (time == undefined) {
+      return ''
+    }
+    time = Math.round(time)
 
-    const hours = Math.floor(duration / 3600)
-    const minutes = Math.floor((duration % 3600) / 60)
-    const seconds = duration % 60
+    const hours = Math.floor(time / 3600)
+    const minutes = Math.floor((time % 3600) / 60)
+    const seconds = time % 60
 
     let result = ''
 
@@ -1049,7 +1055,7 @@ export const ExperimentView = () => {
             </ConfigRow>
             <CloseConfigRow>
               <IndentedLabel>Duration:</IndentedLabel>
-              <ConfigLabel>{duration ? formatDuration(duration) : '\u2013'}</ConfigLabel>
+              <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
             </CloseConfigRow>
           </ExperimentPanel>
           <StatusPanel>
@@ -1066,6 +1072,14 @@ export const ExperimentView = () => {
               <IndentedLabel>Attempt:</IndentedLabel>
               <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
             </CloseConfigRow>
+            <CloseConfigRow></CloseConfigRow>
+            <ConfigRow>
+              <ConfigLabel>Time:</ConfigLabel>
+              <ConfigLabel>{
+                experimentState === ExperimentState.Running || experimentState === ExperimentState.Paused ?
+                formatTime(systemState?.time) : '\u2013'}
+              </ConfigLabel>
+            </ConfigRow>
             <CloseConfigRow></CloseConfigRow>
             <StyledButton
               onClick={() => runStartButtonAction(startButtonState)}
