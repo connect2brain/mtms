@@ -97,3 +97,23 @@ export const ConfigLabel = styled.label`
 export const IndentedLabel = styled(ConfigLabel)`
   padding-left: 15px;
 `
+
+/* For showing, e.g., session state. */
+export const StateRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  margin-right: 15px;
+`
+
+export const StateTitle = styled.span`
+  font-weight: bold;
+  color: #333;
+  margin-right: 1rem;
+`
+
+export const IndentedStateTitle = styled(StateTitle)`
+  margin-left: 20px;
+`
+
+export const StateValue = styled.span``
