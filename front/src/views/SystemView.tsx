@@ -18,7 +18,6 @@ import {
   TriggerOutFeedbackMessage,
 } from 'types/event'
 
-import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
 import { DeviceControl } from 'components/DeviceControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
@@ -154,9 +153,6 @@ export const SystemView = () => {
             <DeviceControl />
           </PanelA>
           <VerticalDividedPanelB>
-            <SubPanel>
-              <NodeState />
-            </SubPanel>
             <SubPanel>
               <SystemState />
             </SubPanel>
