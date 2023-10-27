@@ -863,24 +863,24 @@ export const ExperimentView = () => {
         }
         </AnglePanel>
         <IntensityPanel>
-        {activeTab === ExperimentTab.SingleLocation &&
-          <IntensitySelector
-            min={0}
-            max={150}
-            showMaximumIntensity={true}
-            maximumIntensity={maximumIntensity}
-            onValueChange={handleIntensityChange}
-          />
-        }
-        {activeTab === ExperimentTab.MultipleLocations &&
-          <IntensitySelector
-            min={0}
-            max={150}
-            showMaximumIntensity={false}
-            maximumIntensity={0}
-            onValueChange={handleIntensityChange}
-          />
-        }
+          {activeTab === ExperimentTab.SingleLocation &&
+            <IntensitySelector
+              min={0}
+              max={150}
+              showMaximumIntensity={true}
+              maximumIntensity={maximumIntensity}
+              onValueChange={handleIntensityChange}
+            />
+          }
+          {activeTab === ExperimentTab.MultipleLocations &&
+            <IntensitySelector
+              min={0}
+              max={150}
+              showMaximumIntensity={false}
+              maximumIntensity={0}
+              onValueChange={handleIntensityChange}
+            />
+          }
         </IntensityPanel>
       </StimulationParametersPanel>
       <ConfigPanel>
