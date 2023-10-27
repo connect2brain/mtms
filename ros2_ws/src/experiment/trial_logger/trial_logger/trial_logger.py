@@ -21,6 +21,7 @@ class TrialLoggerNode(Node):
         "x (mm)",
         "y (mm)",
         "Angle (deg)",
+        "Intensity (V/m)",
         "MEP amplitude (uV)",
         "MEP latency (s)",
     ]
@@ -105,6 +106,7 @@ class TrialLoggerNode(Node):
 
         stimulus = trial.stimuli[0]
         target = stimulus.target
+        intensity = stimulus.intensity
 
         row = "{};{};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
             trial_number,
@@ -113,6 +115,7 @@ class TrialLoggerNode(Node):
             target.displacement_x,
             target.displacement_y,
             target.rotation_angle,
+            intensity,
             trial_result.mep.amplitude,
             trial_result.mep.latency,
         )
