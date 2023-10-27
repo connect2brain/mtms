@@ -661,7 +661,6 @@ class ExperimentPerformerNode(Node):
                     goal_id,
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
-                num_of_attempts += 1
 
             # Add a delay to allow other ROS service calls to run.
             time.sleep(0.1)
