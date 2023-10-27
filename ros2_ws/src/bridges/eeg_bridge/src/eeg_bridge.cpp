@@ -101,12 +101,20 @@ void EegBridge::create_publishers() {
   this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
   this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
   this->publisher_healthcheck_ = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
+  this->healthcheck_publisher_timer = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&EegBridge::publish_healthcheck, this));
 }
 
-void EegBridge::publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
+void EegBridge::update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message) {
+  this->status = status;
+  this->status_message = status_message;
+  this->actionable_message = actionable_message;
+}
+
+void EegBridge::publish_healthcheck() {
   auto healthcheck = system_interfaces::msg::Healthcheck();
 
-  healthcheck.status.value = status_value;
+  healthcheck.status.value = status;
   healthcheck.status_message = status_message;
   healthcheck.actionable_message = actionable_message;
 
@@ -171,13 +179,10 @@ void EegBridge::reset_session() {
 void EegBridge::wait_for_system_state() {
   RCLCPP_INFO(this->get_logger(), "Waiting for system state...");
 
-  /* Publish healthcheck.
-
-    TODO: wait_for_system_state function should probably be combined with the main
-      loop in spin(), so all healthcheck publishing could be done in the same
-      place within the main loop. */
-  uint8_t status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-  this->publish_healthcheck(status_value, "mTMS device not operational", "Please start the mTMS device.");
+  update_healthcheck(
+    system_interfaces::msg::HealthcheckStatus::NOT_READY,
+    "mTMS device not operational",
+    "Please start the mTMS device.");
 
   auto base_interface = this->get_node_base_interface();
 
@@ -226,28 +231,33 @@ void EegBridge::spin() {
 
       switch (this->eeg_bridge_state) {
         case WAITING_FOR_MTMS_DEVICE_START:
-          status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-          this->publish_healthcheck(status_value, "mTMS device is not operational", "Please start the mTMS device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "mTMS device is not operational",
+                                   "Please start the mTMS device.");
           break;
 
         case WAITING_FOR_MEASUREMENT_START:
-          status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-          this->publish_healthcheck(status_value, "Waiting for EEG measurement to start", "Please start the measurement on the EEG device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for EEG measurement to start",
+                                   "Please start the measurement on the EEG device.");
           break;
 
         case WAITING_FOR_MEASUREMENT_STOP:
-          status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-          this->publish_healthcheck(status_value, "Waiting for EEG measurement to stop", "Please restart the measurement on the EEG device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for EEG measurement to stop",
+                                   "Please restart the measurement on the EEG device.");
           break;
 
         case WAITING_FOR_SESSION_START:
-          status_value = system_interfaces::msg::HealthcheckStatus::READY;
-          this->publish_healthcheck(status_value, "Ready", "Ready to start an experiment.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
+                                   "Ready",
+                                   "Ready to start an experiment.");
           break;
 
         case WAITING_FOR_SESSION_STOP:
-          status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-          this->publish_healthcheck(status_value, "Waiting for session to stop.", "Please stop the session on the mTMS device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for session to stop",
+                                   "Please stop the session on the mTMS device.");
           break;
 
         case STREAMING:
@@ -255,8 +265,9 @@ void EegBridge::spin() {
           break;
 
         case ERROR_OUT_OF_SYNC:
-          status_value = system_interfaces::msg::HealthcheckStatus::ERROR;
-          this->publish_healthcheck(status_value, "Out of sync between EEG and mTMS device", "Please stop the session on the mTMS device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
+                                   "Out of sync between EEG and mTMS device",
+                                   "Please stop the session on the mTMS device.");
           break;
       }
     }
