@@ -1,11 +1,5 @@
 import ROSLIB from 'roslib'
 
-export interface EegInfo extends ROSLIB.Message {
-  sampling_frequency: number
-  n_channels: number
-  send_trigger_as_channel: boolean
-}
-
 export const EventTypes = {
   CHARGE: 0,
   PULSE: 1,
