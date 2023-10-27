@@ -3,6 +3,8 @@ import styled from 'styled-components'
 
 import { TabBar } from 'styles/General'
 
+import { SessionControl } from 'components/SessionControl'
+
 import { SmallerTitle } from 'styles/ExperimentStyles'
 import { StyledPanel, ProjectRow, ConfigRow, CloseConfigRow, ConfigLabel, IndentedLabel } from 'styles/General'
 
@@ -280,6 +282,7 @@ export const PipelineView = () => {
           </ConfigRow>
         </TmsPanel>
       </PipelinePanel>
+      <SessionControl />
      </>
   )
 }

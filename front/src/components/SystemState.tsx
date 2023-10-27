@@ -1,15 +1,21 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { ChannelState as ChannelStateType, DeviceState, HumanReadableDeviceState, SessionState, HumanReadableSessionState, SystemStateMessage } from 'types/mtmsDevice'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
 
-type Props = {
-  systemState: SystemStateMessage
-}
+import {
+  SystemContext,
+  SessionState,
+  DeviceState,
+  HumanReadableDeviceState,
+  HumanReadableSessionState,
+  ChannelState as ChannelStateType
+} from 'providers/SystemProvider'
 
-export const SystemState = ({ systemState }: Props) => {
+export const SystemState = () => {
+  const { systemState } = useContext(SystemContext)
+
   const [latestUpdate, setLatestUpdate] = useState<Date>()
 
   useEffect(() => {
@@ -35,7 +41,7 @@ export const SystemState = ({ systemState }: Props) => {
           </tr>
         </Thead>
         <tbody>
-          {systemState.channel_states
+          {systemState?.channel_states
             .sort((a: ChannelStateType, b: ChannelStateType) => a.channel_index - b.channel_index)
             .map((channel: ChannelStateType) => (
               <ChannelState key={`channel-${channel.channel_index}`} {...channel} />
@@ -94,11 +100,11 @@ export const SystemState = ({ systemState }: Props) => {
     <div>
       <StateRow>
         <StateTitle>Device</StateTitle>
-        <StateValue>{getHumanReadableDeviceState(DeviceState, systemState.device_state.value)}</StateValue>
+        <StateValue>{getHumanReadableDeviceState(DeviceState, systemState?.device_state.value)}</StateValue>
       </StateRow>
       <StateRow>
         <StateTitle>Session</StateTitle>
-        <StateValue>{getHumanReadableSessionState(SessionState, systemState.session_state.value)}</StateValue>
+        <StateValue>{getHumanReadableSessionState(SessionState, systemState?.session_state.value)}</StateValue>
       </StateRow>
       <br />
       <StateRow>
@@ -107,17 +113,17 @@ export const SystemState = ({ systemState }: Props) => {
       </StateRow>
       <StateRow>
         <StateTitle>Session time</StateTitle>
-        <StateValue>{systemState.time.toFixed(1)} s</StateValue>
+        <StateValue>{systemState?.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />
       <ErrorTitle>Errors</ErrorTitle>
       <ErrorsContainer>
-        <ErrorItem>Current: {getListValue(systemState.system_error_current)}</ErrorItem>
-        <ErrorItem>Cumulative: {getListValue(systemState.system_error_cumulative)}</ErrorItem>
-        <ErrorItem>Emergency: {getListValue(systemState.system_error_emergency)}</ErrorItem>
+        <ErrorItem>Current: {getListValue(systemState?.system_error_current)}</ErrorItem>
+        <ErrorItem>Cumulative: {getListValue(systemState?.system_error_cumulative)}</ErrorItem>
+        <ErrorItem>Emergency: {getListValue(systemState?.system_error_emergency)}</ErrorItem>
         <ErrorItem>
           Startup: {' '}
-          {getKeyByValueExcluding(systemState.startup_error, 'value', systemState.startup_error.value) || ''}
+          {getKeyByValueExcluding(systemState?.startup_error, 'value', systemState?.startup_error.value) || ''}
         </ErrorItem>
       </ErrorsContainer>
       <ChannelTitle>Channels</ChannelTitle>
