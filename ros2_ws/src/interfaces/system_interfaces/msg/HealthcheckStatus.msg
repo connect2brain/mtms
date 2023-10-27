@@ -9,6 +9,7 @@
 
 uint8 READY = 0
 uint8 NOT_READY = 1
-uint8 ERROR = 2
+uint8 DISABLED = 2
+uint8 ERROR = 3
 
 uint8 value
