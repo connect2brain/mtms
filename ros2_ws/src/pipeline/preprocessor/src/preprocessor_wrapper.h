@@ -27,7 +27,7 @@ public:
   void reset_module(const std::string& directory, const std::string& module_name);
   void initialize_arrays();
 
-  eeg_interfaces::msg::PreprocessedEegSample process(
+  std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
     double_t current_time);
 
