@@ -25,11 +25,11 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   const [activeProject, setActiveProject] = useState<string>('')
 
   useEffect(() => {
-    const activeProjectSubscriber = new Topic({
+    const activeProjectSubscriber = new Topic<RosString>({
       ros: ros,
       name: '/projects/active',
       messageType: 'std_msgs/String'
-    }) as Topic<RosString>
+    })
 
     activeProjectSubscriber.subscribe((message) => {
       setActiveProject(message.data)
