@@ -1,11 +1,7 @@
 import React from 'react'
-import styled from 'styled-components'
 
 import { startSession, stopSession } from 'ros/services/session'
-import { startDevice, stopDevice } from 'ros/services/device'
-
 import { DeviceState, DeviceStateMessage, SessionState, SessionStateMessage } from 'types/mtmsDevice'
-
 import { StyledButton } from 'styles/General'
 
 type Props = {
@@ -13,29 +9,13 @@ type Props = {
   sessionState: SessionStateMessage
 }
 
-export const SystemControl = ({ deviceState, sessionState }: Props) => {
-  const deviceText = () => {
-    if (deviceState.value === DeviceState.NOT_OPERATIONAL) return 'Start'
-    if (deviceState.value === DeviceState.STARTUP) return 'Starting'
-    if (deviceState.value === DeviceState.OPERATIONAL) return 'Stop'
-    if (deviceState.value === DeviceState.SHUTDOWN) return 'Stopping'
-    return '???'
-  }
-
+export const SessionControl = ({ deviceState, sessionState }: Props) => {
   const sessionText = () => {
     if (sessionState.value === SessionState.STOPPED) return 'Start'
     if (sessionState.value === SessionState.STARTING) return 'Starting'
     if (sessionState.value === SessionState.STARTED) return 'Stop'
     if (sessionState.value === SessionState.STOPPING) return 'Stopping'
     return '???'
-  }
-
-  const toggleDevice = () => {
-    if (deviceState.value === DeviceState.NOT_OPERATIONAL) {
-      startDevice()
-    } else if (deviceState.value === DeviceState.OPERATIONAL) {
-      stopDevice()
-    }
   }
 
   const toggleSession = () => {
@@ -47,14 +27,7 @@ export const SystemControl = ({ deviceState, sessionState }: Props) => {
   }
 
   return (
-    <div>
-      <StyledButton
-        onClick={toggleDevice}
-        disabled={deviceState.value === DeviceState.STARTUP || deviceState.value === DeviceState.SHUTDOWN}
-      >
-        {deviceText()} device
-      </StyledButton>
-      <br />
+    <>
       <StyledButton
         onClick={toggleSession}
         disabled={
@@ -65,6 +38,6 @@ export const SystemControl = ({ deviceState, sessionState }: Props) => {
       >
         {sessionText()} session
       </StyledButton>
-    </div>
+    </>
 )
 }
