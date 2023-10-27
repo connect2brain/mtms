@@ -91,10 +91,8 @@ private:
   uint16_t num_of_channels_;
   uint16_t num_of_channels_excluding_trigger_;
 
-  /* TODO: Sampling frequency is unused for now. It could be published either as ROS message
-   *   or as metadata of EEG data.
-   */
   uint32_t sampling_frequency_;
+  uint32_t sample_packets_received_ = 0;
 
   uint16_t port_;
   int socket_;
