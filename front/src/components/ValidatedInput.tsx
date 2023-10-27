@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
 const StyledInput = styled.input`
@@ -31,6 +31,10 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
   ...props
 }) => {
   const [tempValue, setTempValue] = useState<string>(value.toString())
+
+  useEffect(() => {
+    setTempValue(value.toString())
+  }, [value])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTempValue(e.target.value)
