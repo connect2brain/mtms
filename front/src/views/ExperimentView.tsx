@@ -17,6 +17,7 @@ import { StyledPanel, StyledButton, StyledRedButton, ProjectRow, ConfigRow,
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
 
 import { ProjectContext } from 'providers/ProjectProvider'
+import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -74,30 +75,27 @@ const StimulationParametersPanel = styled.div`
   margin-bottom: 20px;
 `
 
-const GridPanel = styled.div`
+const GridPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   width: 600px;
   height: 500px;
-  ${StyledPanel}
 `
 
-const AnglePanel = styled.div`
+const AnglePanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   gap: 1.5rem;
   width: 600px;
   height: 500px;
-  ${StyledPanel}
 `
 
-const IntensityPanel = styled.div`
+const IntensityPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
   gap: 1.5rem;
   width: 100px;
   height: 500px;
-  ${StyledPanel}
 `
 
 /* Config panels */
@@ -110,58 +108,52 @@ const ConfigPanel = styled.div`
   gap: 20px;
 `
 
-const TriggerPanel = styled.div`
+const TriggerPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   width: 272px;
   height: 240px;
-  ${StyledPanel}
 `
 
-const MepPanel = styled.div`
+const MepPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   width: 272px;
   height: 240px;
-  ${StyledPanel}
 `
 
-const TrialsPanel = styled.div`
+const TrialsPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
   width: 270px;
   height: 240px;
-  ${StyledPanel}
 `
 
-const PausePanel = styled.div`
+const PausePanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 4 / 5;
   width: 270px;
   height: 240px;
-  ${StyledPanel}
 `
 
-const ExperimentPanel = styled.div`
+const ExperimentPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 5 / 6;
   width: 240px;
   height: 240px;
-  ${StyledPanel}
 `
 
-const StatusPanel = styled.div`
+const StatusPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 6 / 7;
   width: 240px;
   height: 240px;
-  ${StyledPanel}
 `
 
 /* Trials-related */
 const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
   filter: ${props => props.isGrayedOut ? 'grayscale(100%)' : 'none'};
-  opacity: ${props => props.isGrayedOut ? '0.5' : '1'};
+  opacity: ${props => props.isGrayedOut ? '0.3' : '1'};
   transition: filter 0.3s ease, opacity 0.3s ease;
 `
 
@@ -183,12 +175,12 @@ const TriggerLabel = styled.label`
 `
 
 const DelayLabel = styled.label`
-    margin-left: -8px;
-    margin-right: 15px;
-    font-size: 11px;
-    font-weight: bold;
-    text-align: right;
-    color: 'black';
+  margin-left: -8px;
+  margin-right: 15px;
+  font-size: 11px;
+  font-weight: bold;
+  text-align: right;
+  color: 'black';
 `
 
 /* TODO: Move type definitions elsewhere. */
@@ -305,6 +297,9 @@ const getKey = (key: string, defaultValue: any): any => {
 
 export const ExperimentView = () => {
   const { activeProject } = useContext(ProjectContext)
+
+  const { mepHealthcheck } = useContext(HealthcheckContext)
+  const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
   const [projects, setProjects] = useState<string[]>([])
 
@@ -436,7 +431,8 @@ export const ExperimentView = () => {
         }
 
         const trial_config: TrialConfig = {
-          analyze_mep: mepEnabled,
+          /* Override mepEnabled if MEP healthcheck is not ok. */
+          analyze_mep: mepHealthcheckOk ? mepEnabled : false,
           mep_config: mep_config
         }
 
@@ -592,6 +588,11 @@ export const ExperimentView = () => {
         break
     }
   }, [experimentState])
+
+  /* Update MEP healthcheck ok status. */
+  useEffect(() => {
+    setMepHealthcheckOk(mepHealthcheck !== null && mepHealthcheck.status.value === HealthcheckStatus.READY)
+  }, [mepHealthcheck])
 
   /* Update session storage. */
   useEffect(() => {
@@ -913,7 +914,7 @@ export const ExperimentView = () => {
               </GrayedOutPanel>
             </TriggerRow>
           </TriggerPanel>
-          <MepPanel>
+          <MepPanel isGrayedOut={ !mepHealthcheckOk }>
             <SmallerTitle>MEP analysis</SmallerTitle>
             <ConfigRow>
               <ConfigLabel>Enabled:</ConfigLabel>
@@ -921,9 +922,10 @@ export const ExperimentView = () => {
                 type="flat"
                 checked={mepEnabled}
                 onChange={setMepEnabled}
+                disabled={!mepHealthcheckOk}
               />
             </ConfigRow>
-            <GrayedOutPanel isGrayedOut={!mepEnabled}>
+            <GrayedOutPanel isGrayedOut={!mepEnabled || !mepHealthcheckOk}>
               <ConfigRow>
                 <IndentedLabel>EMG channel:</IndentedLabel>
                 {/*
