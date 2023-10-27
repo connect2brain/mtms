@@ -23,7 +23,8 @@ import {
 
 import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
-import { SystemControl } from 'components/SystemControl'
+import { DeviceControl } from 'components/DeviceControl'
+import { SessionControl } from 'components/SessionControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
@@ -160,7 +161,9 @@ export const SystemView = () => {
         {activeTab === 'overview' &&
         <>
           <PanelA>
-            <SystemControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
+            <DeviceControl deviceState={systemState.device_state} />
+            <br />
+            <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
           </PanelA>
           <VerticalDividedPanelB>
             <SubPanel>
