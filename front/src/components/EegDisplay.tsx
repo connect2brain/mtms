@@ -10,7 +10,7 @@ const EegPanel = styled(StyledPanel)`
   width: 300px;
   height: 105px;
   position: fixed;
-  top: 125px;
+  top: 240px;
   right: 5px;
   z-index: 1000;
 `
