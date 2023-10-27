@@ -52,7 +52,14 @@ class ProjectManagerNode(Node):
         self.active_project_publisher.publish(msg)
 
     def list_projects(self):
-        return [d for d in os.listdir(self.PROJECTS_ROOT) if os.path.isdir(os.path.join(self.PROJECTS_ROOT, d))]
+        all_projects = [d for d in os.listdir(self.PROJECTS_ROOT) if os.path.isdir(os.path.join(self.PROJECTS_ROOT, d))]
+
+        # If 'example' project exists, list it first to make UI default to it.
+        if "example" in all_projects:
+            all_projects.remove("example")
+            return ["example"] + sorted(all_projects)
+        else:
+            return sorted(all_projects)
 
     def list_projects_callback(self, request, response):
         try:
