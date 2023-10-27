@@ -1,6 +1,18 @@
 version: '2'
 
 services:
+  busylight_manager:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/other/busylight_manager/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+    # The container needs to be privileged to access the USB device.
+    #
+    # Note: Just mapping the device /dev/hidraw4 inside the container does not work properly.
+    privileged: true
+
   front:
     build:
       context: .
