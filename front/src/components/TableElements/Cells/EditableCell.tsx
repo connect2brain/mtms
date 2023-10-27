@@ -1,12 +1,13 @@
 import React, { ReactNode, useEffect, useState } from 'react'
-import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import styled from 'styled-components'
+
+import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
 import Rectangle from '../../Rectangle'
 import { CellProps } from 'types/table'
 import { useAppSelector } from 'providers/reduxHooks'
-import { updateTargetInRos } from 'services/target'
-import { updatePulseSequenceInRos } from 'services/pulseSequence'
-import { updatePulseInRos } from 'services/pulse'
+import { updateTargetInRos } from 'ros/services/target'
+import { updatePulseSequenceInRos } from 'ros/services/pulseSequence'
+import { updatePulseInRos } from 'ros/services/pulse'
 
 interface EditableCellProps extends CellProps {
   expandElement?: ReactNode
