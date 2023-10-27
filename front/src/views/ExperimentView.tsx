@@ -361,12 +361,14 @@ export const ExperimentView = () => {
 
   const perform = () => {
     const experiment: Experiment = formExperiment()
+
     const done_callback = (trial_results: any, success: boolean) => {
       setTrialNumber(null)
       setAttemptNumber(null)
       setExperimentState(ExperimentState.NotRunning)
       setCancelButtonState(CancelButtonState.Cancel)
     }
+
     const feedback_callback = (feedback: any) => {
       setTrialNumber(feedback.trial_number)
       setAttemptNumber(feedback.attempt_number)
@@ -1085,7 +1087,9 @@ export const ExperimentView = () => {
               onClick={() => runStartButtonAction(startButtonState)}
               disabled={
                 startButtonState === StartButtonState.Updating ||
-                startButtonState === StartButtonState.Pausing
+                startButtonState === StartButtonState.Pausing ||
+                selectedPoints.length == 0 ||
+                selectedAngles.length == 0
               }
             >
               {startButtonStateToString(startButtonState)}
