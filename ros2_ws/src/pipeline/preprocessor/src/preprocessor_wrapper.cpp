@@ -89,7 +89,7 @@ void PreprocessorWrapper::set_emg_data_size(size_t emg_data_size) {
   this->emg_data_size = emg_data_size;
 }
 
-eeg_interfaces::msg::PreprocessedEegSample
+std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool>
 PreprocessorWrapper::process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
     double_t current_time) {
@@ -110,18 +110,48 @@ PreprocessorWrapper::process(
   }
 
   /* Call the Python function. */
-  py::object result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data);
+  eeg_interfaces::msg::PreprocessedEegSample cpp_result;
+
+  py::object result;
+  try {
+    result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data);
+
+  } catch(const py::error_already_set& e) {
+    RCLCPP_ERROR(logger, "Python error: %s", e.what());
+    return {cpp_result, false};
+
+  } catch(const std::exception& e) {
+    RCLCPP_ERROR(logger, "C++ error: %s", e.what());
+    return {cpp_result, false};
+  }
+
+  /* Validate the return value of the Python function call. */
+  if (!py::isinstance<py::dict>(result)) {
+    RCLCPP_ERROR(logger, "Python module should return a dictionary.");
+    return {cpp_result, false};
+  }
+
+  py::dict dict_result = result.cast<py::dict>();
+
+  if (!dict_result.contains("eeg_data")) {
+    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: eeg_data.");
+    return {cpp_result, false};
+  }
+  if (!dict_result.contains("emg_data")) {
+    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: emg_data.");
+    return {cpp_result, false};
+  }
+  if (!dict_result.contains("valid")) {
+    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: valid.");
+    return {cpp_result, false};
+  }
 
   /* Convert the Python dictionary to a ROS message. */
-  eeg_interfaces::msg::PreprocessedEegSample cpp_result;
+  cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
+  cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
+  cpp_result.valid = dict_result["valid"].cast<bool>();
 
   cpp_result.time = current_time;
 
-  if (py::isinstance<py::dict>(result)) {
-    py::dict dict_result = result.cast<py::dict>();
-    cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
-    cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
-    cpp_result.valid = dict_result["valid"].cast<bool>();
-  }
-  return cpp_result;
+  return {cpp_result, true};
 }

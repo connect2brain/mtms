@@ -277,18 +277,25 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
     return;
   }
 
-  auto preprocessed_sample = this->preprocessor_wrapper->process(
+  auto [preprocessed_sample, success] = this->preprocessor_wrapper->process(
     this->sample_buffer,
     current_time);
 
-  this->eeg_preprocessed_publisher->publish(preprocessed_sample);
+  if (success) {
+    this->eeg_preprocessed_publisher->publish(preprocessed_sample);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(),
-                      *this->get_clock(),
-                      1000,
-
-                      "Published preprocessed EEG data on topic %s",
-                      EEG_PREPROCESSED_TOPIC.c_str());
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                        *this->get_clock(),
+                        1000,
+                        "Published preprocessed EEG data on topic %s",
+                        EEG_PREPROCESSED_TOPIC.c_str());
+  } else {
+    RCLCPP_ERROR_THROTTLE(this->get_logger(),
+                          *this->get_clock(),
+                          1000,
+                          "Python call failed, not publishing data on topic %s",
+                          EEG_PREPROCESSED_TOPIC.c_str());
+  }
 }
 
 int main(int argc, char *argv[]) {
