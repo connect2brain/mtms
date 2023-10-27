@@ -14,7 +14,6 @@ export const LargerTitle = styled.h2`
 export const SmallerTitle = styled.h2`
   font-size: 18px;
   text-align: center;
-  color: #333;
   margin-bottom: 30px;
   margin-right: 30px;
   font-weight: bold;
