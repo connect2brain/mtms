@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { StyledPanel } from 'styles/General'
+import { StyledPanel, StateRow, StateTitle, StateValue } from 'styles/General'
 import { getKeyByValue } from 'utils'
 
 import { SessionControl } from 'components/SessionControl'
@@ -16,25 +16,10 @@ const SessionPanel = styled(StyledPanel)`
   width: 300px;
   height: 150px;
   position: fixed;
-  top: 125px;
+  top: 306px;
   right: 5px;
   z-index: 1000;
 `
-
-const StateRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  margin-right: 15px;
-`
-
-const StateTitle = styled.span`
-  font-weight: bold;
-  color: #333;
-  margin-right: 1rem;
-`
-
-const StateValue = styled.span``
 
 export const SessionDisplay: React.FC = () => {
   const { systemState } = useContext(SystemContext)
