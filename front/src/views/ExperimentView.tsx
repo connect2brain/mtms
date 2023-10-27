@@ -325,7 +325,7 @@ export const ExperimentView = () => {
 
   /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
     component - remove the dependency. */
-  const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 40))
+  const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 10))
   const [maximumIntensity, setMaximumIntensity] = useState<number>(() => getKey('maximumIntensity', 100))
 
   const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', false))
