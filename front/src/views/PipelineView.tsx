@@ -12,6 +12,7 @@ import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnab
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
+import { EegContext } from 'providers/EegProvider'
 
 const InputRow = styled.div`
   display: flex;
@@ -131,6 +132,8 @@ const getKey = (key: string, defaultValue: any): any => {
 export const PipelineView = () => {
   const { activeProject } = useContext(ProjectContext)
 
+  const { eegInfo } = useContext(EegContext)
+
   const { preprocessorList } = useContext(PipelineContext)
   const { preprocessorEnabled } = useContext(PipelineContext)
 
@@ -206,18 +209,18 @@ export const PipelineView = () => {
           <SmallerTitle>EEG device</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Sampling rate:</ConfigLabel>
-            <ConfigLabel>5 kHz</ConfigLabel>
+            <ConfigLabel>{eegInfo !== null && eegInfo.sampling_frequency} Hz</ConfigLabel>
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Channels</ConfigLabel>
           </ConfigRow>
           <CloseConfigRow>
             <IndentedLabel>EEG:</IndentedLabel>
-            <ConfigLabel>0</ConfigLabel>
+            <ConfigLabel>{eegInfo !== null && eegInfo.num_of_eeg_channels}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow>
             <IndentedLabel>EMG:</IndentedLabel>
-            <ConfigLabel>8</ConfigLabel>
+            <ConfigLabel>{eegInfo !== null && eegInfo.num_of_emg_channels}</ConfigLabel>
           </CloseConfigRow>
         </EegPanel>
         <PreprocessorPanel>
