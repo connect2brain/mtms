@@ -1,6 +1,9 @@
 import React from 'react'
 import styled from 'styled-components'
-import { startDevice, startSession, stopDevice, stopSession } from 'services/session'
+
+import { startSession, stopSession } from 'ros/services/session'
+import { startDevice, stopDevice } from 'ros/services/device'
+
 import { DeviceState, DeviceStateMessage, SessionState, SessionStateMessage } from 'types/mtmsDevice'
 
 import { StyledButton } from 'styles/General'

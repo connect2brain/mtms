@@ -8,7 +8,7 @@ import { StyledPanel, ProjectRow, ConfigRow, CloseConfigRow, ConfigLabel, Indent
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnabledRos } from 'services/ros'
+import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnabledRos } from 'ros/ros'
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
