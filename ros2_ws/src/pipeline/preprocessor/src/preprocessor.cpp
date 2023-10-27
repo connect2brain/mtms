@@ -107,14 +107,23 @@ void EegPreprocessor::set_preprocessor_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response) {
 
-  this->preprocessor_enabled = request->enabled;
+  bool enabled = request->enabled;
 
+  /* Update local state variable. */
+  this->preprocessor_enabled = enabled;
+
+  /* Update ROS state variable. */
   auto msg = std_msgs::msg::Bool();
-  msg.data = this->preprocessor_enabled;
+  msg.data = enabled;
 
   this->preprocessor_enabled_publisher->publish(msg);
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", this->preprocessor_enabled ? "enabled" : "disabled");
+  /* Reset sample buffer when enabling preprocessor to avoid using remains of old EEG data. */
+  if (enabled) {
+    reset_sample_buffer();
+  }
+
+  RCLCPP_INFO(this->get_logger(), "%s preprocessor.", enabled ? "Enabling" : "Disabling");
 
   response->success = true;
 }
@@ -246,11 +255,19 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   check_dropped_samples(current_time);
 
+  if (!this->preprocessor_enabled) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Preprocessor not enabled");
+    return;
+  }
+
   if (!this->preprocessor_wrapper->is_initialized()) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
-                          *this->get_clock(),
-                          1000,
-                          "No preprocessor selected");
+                         *this->get_clock(),
+                         1000,
+                         "Preprocessor enabled but preprocessor not selected");
     return;
   }
 
