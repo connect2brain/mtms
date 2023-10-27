@@ -3,10 +3,11 @@ import styled from 'styled-components'
 
 import { TabBar } from 'styles/General'
 
+import { EegDisplay } from 'components/EegDisplay'
 import { SessionDisplay } from 'components/SessionDisplay'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, ProjectRow, ConfigRow, CloseConfigRow, ConfigLabel, IndentedLabel } from 'styles/General'
+import { StyledPanel, ProjectRow, ConfigRow, ConfigLabel } from 'styles/General'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
@@ -14,7 +15,6 @@ import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnab
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
-import { EegContext } from 'providers/EegProvider'
 
 const InputRow = styled.div`
   display: flex;
@@ -41,13 +41,21 @@ const PipelinePanel = styled.div`
   height: 450px;
   gap: 48px;
   position: relative;
+  margin-left: 30px;
 `
 
-const EegPanel = styled(StyledPanel)`
+const EegCircle = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
   grid-row: 1 / 2;
   grid-column: 1 / 2;
-  width: 250px;
-  height: 150px;
+  width: 70px;
+  height: 70px;
+  margin-top: 74px;
+  background-color: #d46c0b;
+  border-radius: 50%;
+  font-weight: bold;
 `
 
 const PreprocessorPanel = styled(StyledPanel)`
@@ -134,8 +142,6 @@ const getKey = (key: string, defaultValue: any): any => {
 export const PipelineView = () => {
   const { activeProject } = useContext(ProjectContext)
 
-  const { eegInfo } = useContext(EegContext)
-
   const { preprocessorList } = useContext(PipelineContext)
   const { preprocessorEnabled } = useContext(PipelineContext)
 
@@ -203,28 +209,11 @@ export const PipelineView = () => {
       </ProjectRow>
 
       <PipelinePanel>
-        <Arrow style={{ left: '290px', top: '110px'}} />
-        <Arrow style={{ left: '624px', top: '110px'}} />
-        <Arrow style={{ left: '957px', top: '110px'}} />
-        <Arrow style={{ left: '950px', top: '234px', width: '44px', transform: 'rotate(45deg)'}} />
-        <EegPanel>
-          <SmallerTitle>EEG device</SmallerTitle>
-          <ConfigRow>
-            <ConfigLabel>Sampling rate:</ConfigLabel>
-            <ConfigLabel>{eegInfo !== null && eegInfo.sampling_frequency} Hz</ConfigLabel>
-          </ConfigRow>
-          <ConfigRow>
-            <ConfigLabel>Channels</ConfigLabel>
-          </ConfigRow>
-          <CloseConfigRow>
-            <IndentedLabel>EEG:</IndentedLabel>
-            <ConfigLabel>{eegInfo !== null && eegInfo.num_of_eeg_channels}</ConfigLabel>
-          </CloseConfigRow>
-          <CloseConfigRow>
-            <IndentedLabel>EMG:</IndentedLabel>
-            <ConfigLabel>{eegInfo !== null && eegInfo.num_of_emg_channels}</ConfigLabel>
-          </CloseConfigRow>
-        </EegPanel>
+        <Arrow style={{ left: '75px', top: '110px'}} />
+        <Arrow style={{ left: '408px', top: '110px'}} />
+        <Arrow style={{ left: '741px', top: '110px'}} />
+        <Arrow style={{ left: '734px', top: '234px', width: '44px', transform: 'rotate(45deg)'}} />
+        <EegCircle>EEG</EegCircle>
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
@@ -283,6 +272,7 @@ export const PipelineView = () => {
         </TmsPanel>
       </PipelinePanel>
       <SessionDisplay />
+      <EegDisplay />
      </>
   )
 }

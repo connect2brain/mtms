@@ -600,7 +600,7 @@ export const ExperimentView = () => {
 
   /* Update MEP healthcheck ok status. */
   useEffect(() => {
-    setMepHealthcheckOk(mepHealthcheck !== null && mepHealthcheck.status.value === HealthcheckStatus.READY)
+    setMepHealthcheckOk(mepHealthcheck?.status.value === HealthcheckStatus.READY)
   }, [mepHealthcheck])
 
   /* Update session storage. */
