@@ -6,7 +6,8 @@ import { ros } from 'ros/ros'
 export const HealthcheckStatus = {
   READY: 0,
   NOT_READY: 1,
-  ERROR: 2,
+  DISABLED: 2,
+  ERROR: 3,
 }
 
 interface HealthcheckStatusMessage {

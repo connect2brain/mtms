@@ -17,6 +17,8 @@ const StatusSquare = styled.div<StatusSquareProps>`
         return 'green'
       case HealthcheckStatus.NOT_READY:
         return 'yellow'
+      case HealthcheckStatus.DISABLED:
+        return 'orange'
       case HealthcheckStatus.ERROR:
         return 'red'
       default:
