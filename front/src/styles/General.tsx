@@ -1,10 +1,17 @@
 import styled from 'styled-components'
 
-export const StyledPanel = `
+export const StyledPanel = styled.div<{ isGrayedOut?: boolean }>`
   padding: 25px 0px 40px 35px;
   border-radius: 5px;
   background-color: #f7f7f7;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
+  ${({ isGrayedOut }) => isGrayedOut && `
+    filter: grayscale(100%);
+    color: #aaa;
+    background-color: #f0f0f0;
+    transition: filter 0.3s ease, opacity 0.3s ease;
+    pointer-events: none;
+  `}
 `
 
 export const StyledButton = styled.button`

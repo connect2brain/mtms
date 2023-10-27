@@ -22,11 +22,13 @@ interface Healthcheck extends ROSLIB.Message {
 interface HealthcheckContextType {
   eegHealthcheck: Healthcheck | null
   mtmsDeviceHealthcheck: Healthcheck | null
+  mepHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
   eegHealthcheck: null,
-  mtmsDeviceHealthcheck: null
+  mtmsDeviceHealthcheck: null,
+  mepHealthcheck: null
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -38,6 +40,7 @@ interface HealthcheckProviderProps {
 export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ children }) => {
   const [eegHealthcheck, setEegHealthcheck] = useState<Healthcheck | null>(null)
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
+  const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
     const eegSubscriber = new Topic<Healthcheck>({
@@ -52,8 +55,15 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'system_interfaces/Healthcheck'
     })
 
+    const mepSubscriber = new Topic<Healthcheck>({
+      ros: ros,
+      name: '/mep/healthcheck',
+      messageType: 'system_interfaces/Healthcheck'
+    })
+
     let eegTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
+    let mepTimeout: NodeJS.Timeout | null = null
 
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
@@ -75,20 +85,34 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }, 1000)
     })
 
+    mepSubscriber.subscribe((message) => {
+      setMepHealthcheck(message)
+      if (mepTimeout) {
+        clearTimeout(mepTimeout)
+      }
+      mepTimeout = setTimeout(() => {
+        setMepHealthcheck(null)
+      }, 1000)
+    })
+
     return () => {
       eegSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
+      mepSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
       }
       if (mtmsTimeout) {
         clearTimeout(mtmsTimeout)
       }
+      if (mepTimeout) {
+        clearTimeout(mepTimeout)
+      }
     }
   }, [])
 
   return (
-    <HealthcheckContext.Provider value={{ eegHealthcheck, mtmsDeviceHealthcheck }}>
+    <HealthcheckContext.Provider value={{ eegHealthcheck, mtmsDeviceHealthcheck, mepHealthcheck }}>
       {children}
     </HealthcheckContext.Provider>
   )

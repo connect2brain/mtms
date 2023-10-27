@@ -40,47 +40,39 @@ const PipelinePanel = styled.div`
   position: relative;
 `
 
-const EegPanel = styled.div`
+const EegPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   width: 250px;
   height: 150px;
-
-  ${StyledPanel}
 `
 
-const PreprocessorPanel = styled.div`
+const PreprocessorPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   width: 250px;
   height: 150px;
-
-  ${StyledPanel}
 `
 
-const DeciderPanel = styled.div`
+const DeciderPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
   width: 250px;
   height: 150px;
-
-  ${StyledPanel}
 `
 
-const PresenterPanel = styled.div`
+const PresenterPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 4 / 5;
   width: 250px;
   height: 150px;
-  ${StyledPanel}
 `
 
-const TmsPanel = styled.div`
+const TmsPanel = styled(StyledPanel)`
   grid-row: 2 / 3;
   grid-column: 4 / 5;
   width: 250px;
   height: 90px;
-  ${StyledPanel}
 `
 
 const Arrow = styled.div`
