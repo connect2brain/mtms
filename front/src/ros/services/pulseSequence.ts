@@ -1,7 +1,8 @@
-import { Pulse, PulseSequence } from '../types/pulseSequence'
-import { isOfPulseSequenceChangeableKey, objectKeysToSnakeCase } from '../utils'
 import ROSLIB from 'roslib'
-import { ros } from './ros'
+
+import { Pulse, PulseSequence } from 'types/pulseSequence'
+import { isOfPulseSequenceChangeableKey, objectKeysToSnakeCase } from 'utils'
+import { ros } from 'ros/ros'
 
 /* Set up set_pulse_sequence_intensity service. */
 const setPulseSequenceIntensityService = new ROSLIB.Service({

@@ -14,7 +14,16 @@ import { SmallerTitle } from 'styles/ExperimentStyles'
 import { StyledPanel, StyledButton, StyledRedButton, ProjectRow, ConfigRow,
   CloseConfigRow, ConfigLabel, IndentedLabel} from 'styles/General'
 
-import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
+import {
+  getMaximumIntensity,
+  countValidTrials,
+  listProjects,
+  performExperiment,
+  pauseExperiment,
+  resumeExperiment,
+  cancelExperiment,
+  setActiveProject
+} from 'ros/ros'
 
 import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'

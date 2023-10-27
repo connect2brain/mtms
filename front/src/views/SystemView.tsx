@@ -9,8 +9,10 @@ import {
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
   systemStateSubscriber,
-} from 'services/session'
+} from 'ros/subscribers/feedback'
+
 import { SystemStateMessage } from 'types/mtmsDevice'
+
 import {
   PulseFeedbackMessage,
   Feedback,

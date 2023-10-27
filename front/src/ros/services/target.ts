@@ -1,7 +1,8 @@
-import { EulerAngles, Position, Target } from '../types/target'
 import ROSLIB from 'roslib'
-import { isOfTargetChangeableKey } from '../utils'
-import { ros } from './ros'
+
+import { EulerAngles, Position, Target } from 'types/target'
+import { isOfTargetChangeableKey } from 'utils'
+import { ros } from 'ros/ros'
 
 /* Set up change_comment service. */
 const changeCommentService = new ROSLIB.Service({

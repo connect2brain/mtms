@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { nodeMessageSubscriber } from 'services/ros'
+import { nodeMessageSubscriber } from 'ros/ros'
 
 type MessageWithTimestamp = {
   message: string
