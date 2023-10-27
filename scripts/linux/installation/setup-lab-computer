@@ -31,6 +31,16 @@ apt install -y net-tools wireshark
 # Tools for customizing GNOME (not required)
 apt install wmctrl
 
+# Configure Kuando Busylight (not required)
+#
+# From: https://github.com/JnyJny/busylight
+#
+pip install busylight-for-humans
+
+busylight udev-rules -o 99-busylights.rules
+mv 99-busylights.rules /etc/udev/rules.d
+udevadm control -R
+
 # Set the site in .bashrc
 if ! grep -q "export SITE=$SITE" ~/.bashrc; then
     echo "export SITE=$SITE" >> ~/.bashrc
