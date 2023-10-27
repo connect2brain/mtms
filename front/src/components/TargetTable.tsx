@@ -1,6 +1,10 @@
 import React, { useMemo } from 'react'
+
 import { MenuItem, SubMenu } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
+
+import { useAppSelector } from 'providers/reduxHooks'
+
 import { Pulse, PulseSequence } from '../types/pulseSequence'
 import Eye from './Eye'
 import { EyeCell } from './TableElements/Cells/EyeCell'
@@ -8,9 +12,8 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
-import { useAppSelector } from 'providers/reduxHooks'
-import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'services/pulseSequence'
-import { openTargetOrientationDialogInNeuronavigation, removeTargetInRos } from 'services/target'
+import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'ros/services/pulseSequence'
+import { openTargetOrientationDialogInNeuronavigation, removeTargetInRos } from 'ros/services/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)

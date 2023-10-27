@@ -109,13 +109,6 @@ export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   messageType: 'ui_interfaces/Trigger',
 })
 
-/* Set up start_session service */
-export const startSessionService = new ROSLIB.Service({
-  ros: ros,
-  name: '/stimulation/start_session',
-  serviceType: 'ui_interfaces/ToggleNavigation',
-})
-
 export const clearRosState = () => {
   const request = new ROSLIB.ServiceRequest({})
   console.log('clearing ros state')
