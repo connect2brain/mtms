@@ -8,10 +8,7 @@ import {
   dischargeFeedbackSubscriber,
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
-  systemStateSubscriber,
 } from 'ros/subscribers/feedback'
-
-import { SystemStateMessage } from 'types/mtmsDevice'
 
 import {
   PulseFeedbackMessage,
@@ -24,7 +21,6 @@ import {
 import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
 import { DeviceControl } from 'components/DeviceControl'
-import { SessionControl } from 'components/SessionControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
@@ -95,12 +91,10 @@ const initialState = {
 export const SystemView = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics'>('overview')
 
-  const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
   const [feedback, setFeedback] = useState<Feedback>()
 
   useEffect(() => {
     console.log('Subscribed')
-    systemStateSubscriber.subscribe(systemStateCallback)
     pulseFeedbackSubscriber.subscribe(pulseFeedbackCallback)
     chargeFeedbackSubscriber.subscribe(chargeFeedbackCallback)
     dischargeFeedbackSubscriber.subscribe(dischargeFeedbackCallback)
@@ -135,10 +129,6 @@ export const SystemView = () => {
     })
   }
 
-  const systemStateCallback = (message: SystemStateMessage) => {
-    setSystemState(message)
-  }
-
   return (
     <>
       <TabBar>
@@ -161,16 +151,14 @@ export const SystemView = () => {
         {activeTab === 'overview' &&
         <>
           <PanelA>
-            <DeviceControl deviceState={systemState.device_state} />
-            <br />
-            <SessionControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
+            <DeviceControl />
           </PanelA>
           <VerticalDividedPanelB>
             <SubPanel>
               <NodeState />
             </SubPanel>
             <SubPanel>
-              <SystemState systemState={systemState} />
+              <SystemState />
             </SubPanel>
           </VerticalDividedPanelB>
           <PanelC>

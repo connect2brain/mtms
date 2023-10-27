@@ -8,14 +8,7 @@ import {
   TriggerOutFeedbackMessage,
 } from '../../types/event'
 
-import { SystemStateMessage } from '../../types/mtmsDevice'
 import { MTMSEventMessage } from '../../types/eeg'
-
-export const systemStateSubscriber = new ROSLIB.Topic<SystemStateMessage>({
-  ros: ros,
-  name: '/mtms_device/system_state',
-  messageType: 'mtms_device_interfaces/SystemState',
-})
 
 export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
   ros: ros,
