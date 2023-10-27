@@ -7,6 +7,7 @@ import './App.css'
 import Providers from './providers/Providers'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
 import { PipelineProvider } from './providers/PipelineProvider'
+import { EegProvider } from './providers/EegProvider'
 
 import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
@@ -19,15 +20,17 @@ const App = () => {
     <Providers>
       <ProjectProvider>
         <PipelineProvider>
-          <HealthcheckProvider>
-            <Header>mTMS control panel</Header>
-            <HealthcheckPanel>
-              <HealthcheckStatusDisplay />
-            </HealthcheckPanel>
-            <Wrapper>
-              <MultipleViews />
-            </Wrapper>
-          </HealthcheckProvider>
+          <EegProvider>
+            <HealthcheckProvider>
+              <Header>mTMS control panel</Header>
+              <HealthcheckPanel>
+                <HealthcheckStatusDisplay />
+              </HealthcheckPanel>
+              <Wrapper>
+                <MultipleViews />
+              </Wrapper>
+            </HealthcheckProvider>
+          </EegProvider>
         </PipelineProvider>
       </ProjectProvider>
     </Providers>
