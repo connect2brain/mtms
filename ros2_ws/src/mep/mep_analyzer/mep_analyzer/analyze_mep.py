@@ -10,7 +10,7 @@ from mep_interfaces.msg import AnalyzeMepErrors, MepError
 from mep_interfaces.action import AnalyzeMep
 from mep_interfaces.srv import AnalyzeMepService
 
-from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from system_interfaces.msg import Healthcheck, HealthcheckStatus
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -95,6 +95,41 @@ class AnalyzeMepNode(Node):
             self.analyze_mep_service_handler,
             callback_group=self.callback_group,
         )
+
+        # Create subscriber for EEG healthcheck
+        self.healthcheck_publisher = self.create_publisher(
+            Healthcheck,
+            '/mep/healthcheck',
+            10,
+            callback_group=self.callback_group,
+        )
+
+        self.eeg_healthcheck_subscriber = self.create_subscription(
+            Healthcheck,
+            '/eeg/healthcheck',
+            self.eeg_healthcheck_handler,
+            10,
+            callback_group=self.callback_group,
+        )
+
+    # Healthcheck
+
+    def publish_healthcheck(self):
+        msg = Healthcheck()
+        if self.eeg_available:
+            msg.status.value = msg.status.READY
+            msg.status_message = ""
+            msg.actionable_message = ""
+        else:
+            msg.status.value = msg.status.DISABLED
+            msg.status_message = "EEG not available"
+            msg.actionable_message = ""
+
+        self.healthcheck_publisher.publish(msg)
+
+    def eeg_healthcheck_handler(self, msg):
+        self.eeg_available = msg.status.value == msg.status.READY
+        self.publish_healthcheck()
 
     # ROS callbacks and callers
 
@@ -252,6 +287,16 @@ class AnalyzeMepNode(Node):
         self.log_mep_configuration(goal_id, mep_configuration)
 
         errors = AnalyzeMepErrors()
+
+        # Check that EEG is available.
+        if not self.eeg_available:
+            self.logger.error('{}: EEG not available, aborting.'.format(goal_id))
+
+            success = False
+            amplitude = None
+            latency = None
+
+            return success, errors, amplitude, latency
 
         gathered_preactivation_buffer = GatheredEegBuffer()
         gathered_mep_buffer = GatheredEegBuffer()
