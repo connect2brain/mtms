@@ -40,14 +40,13 @@ const App = () => {
   )
 }
 
-const HealthcheckPanel = styled.div`
+const HealthcheckPanel = styled(StyledPanel)`
   width: 155px;
   height: 40px;
   position: fixed;
-  top: 0;
-  right: 0;
+  top: 10px;
+  right: 5px;
   z-index: 1000;
-  ${StyledPanel}
 `
 
 const Header = styled(StyledHeader)`
