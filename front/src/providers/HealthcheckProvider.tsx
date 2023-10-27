@@ -40,17 +40,17 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
-    const eegSubscriber = new Topic({
+    const eegSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/eeg/healthcheck',
       messageType: 'system_interfaces/Healthcheck'
-    }) as Topic<Healthcheck>
+    })
 
-    const mtmsSubscriber = new Topic({
+    const mtmsSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/mtms_device/healthcheck',
       messageType: 'system_interfaces/Healthcheck'
-    }) as Topic<Healthcheck>
+    })
 
     let eegTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
