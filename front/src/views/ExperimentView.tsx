@@ -320,8 +320,8 @@ export const ExperimentView = () => {
 
   const [activeTab, setActiveTab] = useState<ExperimentTab>(() => getKey('activeTab', ExperimentTab.SingleLocation))
 
-  const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', []))
-  const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', []))
+  const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', [0]))
+  const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', [{x: 0, y: 0}]))
 
   /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
     component - remove the dependency. */
@@ -525,8 +525,8 @@ export const ExperimentView = () => {
 
     switch (activeTab) {
       case ExperimentTab.SingleLocation:
-        setSelectedAngles([])
-        setSelectedPoints([])
+        setSelectedAngles([0])
+        setSelectedPoints([{x: 0, y: 0}])
 
         setNumOfTrials(0)
         setNumOfValidTrials(null)
