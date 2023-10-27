@@ -1,10 +1,21 @@
 import React, { useContext } from 'react'
 import styled from 'styled-components'
+
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
+import { StyledPanel } from 'styles/General'
 
 interface StatusSquareProps {
   status: number
 }
+
+const HealthcheckPanel = styled(StyledPanel)`
+  width: 155px;
+  height: 40px;
+  position: fixed;
+  top: 10px;
+  right: 5px;
+  z-index: 1000;
+`
 
 const StatusSquare = styled.div<StatusSquareProps>`
   width: 16px;
@@ -39,7 +50,7 @@ export const HealthcheckStatusDisplay: React.FC = () => {
   const { eegHealthcheck, mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
 
   return (
-    <div>
+    <HealthcheckPanel>
       <StatusLine>
         <StatusSquare status={
           (mtmsDeviceHealthcheck?.status.value !== undefined) &&
@@ -54,6 +65,6 @@ export const HealthcheckStatusDisplay: React.FC = () => {
           eegHealthcheck?.status.value : -1} />
         EEG
       </StatusLine>
-    </div>
+    </HealthcheckPanel>
   )
 }
