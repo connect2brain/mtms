@@ -43,7 +43,9 @@ public:
   EegBridge();
 
   void create_publishers();
-  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message);
+
+  void update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
+  void publish_healthcheck();
 
   void subscribe_to_system_state();
   void wait_for_system_state();
@@ -77,7 +79,7 @@ private:
   double_t time_correction;
   bool first_trigger_received;
 
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
   rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr publisher_data_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr publisher_eeg_info_;
@@ -107,6 +109,11 @@ private:
   };
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
   bool send_trigger_as_channel;
+
+  /* Healthcheck */
+  uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+  std::string status_message = "";
+  std::string actionable_message = "";
 };
 
 #endif //EEG_BRIDGE_EEG_BRIDGE_H
