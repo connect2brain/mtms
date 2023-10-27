@@ -10,10 +10,10 @@ import { PipelineProvider } from './providers/PipelineProvider'
 import { EegProvider } from './providers/EegProvider'
 import { SystemProvider } from './providers/SystemProvider'
 
+import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
 import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 import { Header as StyledHeader } from 'styles/StyledTypography'
-import { StyledPanel } from 'styles/General'
 import { ProjectProvider } from 'providers/ProjectProvider'
 
 const App = () => {
@@ -25,9 +25,8 @@ const App = () => {
             <EegProvider>
               <HealthcheckProvider>
                 <Header>mTMS control panel</Header>
-                <HealthcheckPanel>
-                  <HealthcheckStatusDisplay />
-                </HealthcheckPanel>
+                <HealthcheckStatusDisplay />
+                <HealthcheckMessageDisplay />
                 <Wrapper>
                   <MultipleViews />
                 </Wrapper>
@@ -39,15 +38,6 @@ const App = () => {
     </Providers>
   )
 }
-
-const HealthcheckPanel = styled(StyledPanel)`
-  width: 155px;
-  height: 40px;
-  position: fixed;
-  top: 10px;
-  right: 5px;
-  z-index: 1000;
-`
 
 const Header = styled(StyledHeader)`
   font-size: 1.8rem;

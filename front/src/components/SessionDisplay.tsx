@@ -16,7 +16,7 @@ const SessionPanel = styled(StyledPanel)`
   width: 300px;
   height: 150px;
   position: fixed;
-  top: 306px;
+  top: 420px;
   right: 5px;
   z-index: 1000;
 `
