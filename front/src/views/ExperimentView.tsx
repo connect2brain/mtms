@@ -11,7 +11,8 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, StyledButton, StyledRedButton, ProjectRow } from 'styles/General'
+import { StyledPanel, StyledButton, StyledRedButton, ProjectRow, ConfigRow,
+  CloseConfigRow, ConfigLabel, IndentedLabel} from 'styles/General'
 
 import { getMaximumIntensity, countValidTrials, listProjects, performExperiment, pauseExperiment, resumeExperiment, cancelExperiment, setActiveProject } from 'services/ros'
 
@@ -157,30 +158,7 @@ const StatusPanel = styled.div`
   ${StyledPanel}
 `
 
-/* General config-related */
-const ConfigRow = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding-right: 0px;
-`
-
-const ConfigLabel = styled.label`
-  width: 300px;
-  font-size: 14px;
-`
-
 /* Trials-related */
-const IndentedLabel = styled(ConfigLabel)`
-  padding-left: 15px;
-`
-
-const CloseConfigRow = styled(ConfigRow)`
-  margin-bottom: 8px;
-`
-
 const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
   filter: ${props => props.isGrayedOut ? 'grayscale(100%)' : 'none'};
   opacity: ${props => props.isGrayedOut ? '0.5' : '1'};
