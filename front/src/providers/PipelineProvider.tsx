@@ -33,22 +33,22 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
   useEffect(() => {
     /* Subscriber for preprocessor list. */
-    const preprocessorListSubscriber = new Topic({
+    const preprocessorListSubscriber = new Topic<PreprocessorList>({
       ros: ros,
       name: '/pipeline/preprocessor/list',
       messageType: 'project_interfaces/PreprocessorList'
-    }) as Topic<PreprocessorList>
+    })
 
     preprocessorListSubscriber.subscribe((message) => {
       setPreprocessorList(message.scripts)
     })
 
     /* Subscriber for preprocessor enabled. */
-    const preprocessorEnabledSubscriber = new Topic({
+    const preprocessorEnabledSubscriber = new Topic<RosBoolean>({
       ros: ros,
       name: '/pipeline/preprocessor/enabled',
       messageType: 'std_msgs/Bool'
-    }) as Topic<RosBoolean>
+    })
 
     preprocessorEnabledSubscriber.subscribe((message) => {
       setPreprocessorEnabled(message.data)
