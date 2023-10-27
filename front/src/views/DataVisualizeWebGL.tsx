@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { eegDataSubscriber } from 'services/ros'
+import styled from 'styled-components'
+
 import { EegBatchMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
 import { Datapoint } from 'components/EegChartStreaming'
 import { WebGLPlot } from 'components/WebGLPlot'
-import styled from 'styled-components'
-import { eventSubscriber } from 'services/session'
+
+import { eegDataSubscriber } from 'ros/ros'
+import { eventSubscriber } from 'ros/subscribers/feedback'
+
 import { objectKeysToCamelCase } from 'utils'
 
 const DataVisualizeWebGL = () => {

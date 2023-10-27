@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 
 import { MenuItem } from '@szhsin/react-menu'
 import '@szhsin/react-menu/dist/index.css'
+
 import Eye from './Eye'
 import { EyeCell } from './TableElements/Cells/EyeCell'
 import { EditableSequenceTableCell } from './TableElements/Cells/EditableCell'
@@ -11,13 +12,12 @@ import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableR
 import { useAppSelector } from 'providers/reduxHooks'
 import { PulseSequence } from 'types/pulseSequence'
 import styled from 'styled-components'
-import { removePulseInRos } from 'services/pulse'
-import {addPulseToPulseSequenceInRos, removePulseSequenceInRos} from 'services/pulseSequence'
+import { removePulseInRos } from 'ros/services/pulse'
+import {addPulseToPulseSequenceInRos, removePulseSequenceInRos} from 'ros/services/pulseSequence'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
   const { targets } = useAppSelector((state) => state.targets)
-
 
   const columns = useMemo(
     () => [

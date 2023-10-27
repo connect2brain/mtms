@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ReactNode } from 'react'
 import { Topic, Message } from 'roslib'
 
-import { ros } from 'services/ros'
+import { ros } from 'ros/ros'
 
 interface RosString extends ROSLIB.Message {
   data: string
