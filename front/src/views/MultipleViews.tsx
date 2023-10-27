@@ -76,47 +76,30 @@ export const MultipleViews = () => {
         </a>
       </OptionWrapper>
       <ViewContainer>
-        {currentView === 'SystemView' && (
-          <Wrapper>
-            <SmallHeader>System</SmallHeader>
-            <SystemView />
-          </Wrapper>
-        )}
-
-        {currentView === 'experiment' && (
-          <Wrapper>
-            <SmallHeader>Experiment</SmallHeader>
-            <ExperimentView />
-          </Wrapper>
-        )}
-
-        {currentView === 'pipeline' && (
-          <Wrapper>
-            <SmallHeader>Pipeline</SmallHeader>
-            <PipelineView />
-          </Wrapper>
-        )}
-
-        {currentView === 'plot' && (
-          <Wrapper>
-            <SmallHeader>EEG</SmallHeader>
-            <DataVisualize />
-          </Wrapper>
-        )}
-
-        {currentView === 'webGLPlot' && (
-          <Wrapper>
-            <SmallHeader>EEG (WebGL)</SmallHeader>
-            <DataVisualizeWebGL />
-          </Wrapper>
-        )}
-
-        {currentView === 'targets' && (
-          <Wrapper>
-            <SmallHeader>Targeting</SmallHeader>
-            <Targets />
-          </Wrapper>
-        )}
+        <Wrapper style={{ display: currentView === 'SystemView' ? 'block' : 'none' }}>
+          <SmallHeader>System</SmallHeader>
+          <SystemView />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'experiment' ? 'block' : 'none' }}>
+          <SmallHeader>Experiment</SmallHeader>
+          <ExperimentView />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'pipeline' ? 'block' : 'none' }}>
+          <SmallHeader>Pipeline</SmallHeader>
+          <PipelineView />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'plot' ? 'block' : 'none' }}>
+          <SmallHeader>EEG</SmallHeader>
+          <DataVisualize />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'webGLPlot' ? 'block' : 'none' }}>
+          <SmallHeader>EEG (WebGL)</SmallHeader>
+          <DataVisualizeWebGL />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
+          <SmallHeader>Targeting</SmallHeader>
+          <Targets />
+        </Wrapper>
       </ViewContainer>
     </div>
   )
