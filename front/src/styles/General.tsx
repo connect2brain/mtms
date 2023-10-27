@@ -67,3 +67,26 @@ export const ProjectRow = styled.div`
   gap: 10px;
   margin-bottom: 20px;
 `
+
+/* General config-related */
+export const ConfigRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-right: 0px;
+`
+
+export const CloseConfigRow = styled(ConfigRow)`
+  margin-bottom: 8px;
+`
+
+export const ConfigLabel = styled.label`
+  width: 300px;
+  font-size: 14px;
+`
+
+export const IndentedLabel = styled(ConfigLabel)`
+  padding-left: 15px;
+`
