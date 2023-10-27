@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { TabBar } from 'styles/General'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, ProjectRow } from 'styles/General'
+import { StyledPanel, ProjectRow, ConfigRow, CloseConfigRow, ConfigLabel, IndentedLabel } from 'styles/General'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
@@ -35,8 +35,8 @@ const PipelinePanel = styled.div`
   grid-template-rows: repeat(2, 1fr);
   grid-template-columns: repeat(4, 1fr);
   width: 600px;
-  height: 500px;
-  gap: 15px;
+  height: 450px;
+  gap: 48px;
   position: relative;
 `
 
@@ -45,9 +45,6 @@ const EegPanel = styled.div`
   grid-column: 1 / 2;
   width: 250px;
   height: 150px;
-
-  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
-  margin-right: 30px;
 
   ${StyledPanel}
 `
@@ -58,9 +55,6 @@ const PreprocessorPanel = styled.div`
   width: 250px;
   height: 150px;
 
-  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
-  margin-right: 30px;
-
   ${StyledPanel}
 `
 
@@ -69,9 +63,6 @@ const DeciderPanel = styled.div`
   grid-column: 3 / 4;
   width: 250px;
   height: 150px;
-
-  /* Have enough horizontal space to fit an arrow between the pipeline stages. */
-  margin-right: 30px;
 
   ${StyledPanel}
 `
@@ -95,7 +86,7 @@ const TmsPanel = styled.div`
 const Arrow = styled.div`
   width: 30px;       /* Arrow width */
   height: 8px;       /* Arrow thickness */
-  background: #000;
+  background: #888;
   position: absolute;
   transform: translateY(-50%);
 
@@ -107,23 +98,8 @@ const Arrow = styled.div`
     transform: translateY(-50%);
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
-    border-left: 10px solid #000;
+    border-left: 10px solid #888;
   }
-`
-
-/* General config-related */
-const ConfigRow = styled.div`
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding-right: 0px;
-`
-
-const ConfigLabel = styled.label`
-  width: 300px;
-  font-size: 14px;
 `
 
 const Select = styled.select`
@@ -230,24 +206,27 @@ export const PipelineView = () => {
       </ProjectRow>
 
       <PipelinePanel>
-        <Arrow style={{ left: '289px', top: '110px'}} />
-        <Arrow style={{ left: '618px', top: '110px'}} />
-        <Arrow style={{ left: '948px', top: '110px'}} />
-        <Arrow style={{ left: '942px', top: '230px', width: '44px', transform: 'rotate(45deg)'}} />
+        <Arrow style={{ left: '290px', top: '110px'}} />
+        <Arrow style={{ left: '624px', top: '110px'}} />
+        <Arrow style={{ left: '957px', top: '110px'}} />
+        <Arrow style={{ left: '950px', top: '234px', width: '44px', transform: 'rotate(45deg)'}} />
         <EegPanel>
-          <SmallerTitle>EEG/EMG</SmallerTitle>
+          <SmallerTitle>EEG device</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Sampling rate:</ConfigLabel>
             <ConfigLabel>5 kHz</ConfigLabel>
           </ConfigRow>
           <ConfigRow>
-            <ConfigLabel># of EEG channels:</ConfigLabel>
+            <ConfigLabel>Channels</ConfigLabel>
+          </ConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>EEG:</IndentedLabel>
             <ConfigLabel>0</ConfigLabel>
-          </ConfigRow>
-          <ConfigRow>
-            <ConfigLabel># of EMG channels:</ConfigLabel>
+          </CloseConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>EMG:</IndentedLabel>
             <ConfigLabel>8</ConfigLabel>
-          </ConfigRow>
+          </CloseConfigRow>
         </EegPanel>
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
@@ -299,7 +278,7 @@ export const PipelineView = () => {
           </ConfigRow>
         </PresenterPanel>
         <TmsPanel>
-          <SmallerTitle>TMS</SmallerTitle>
+          <SmallerTitle>TMS device</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Type:</ConfigLabel>
             <ConfigLabel>Multi-locus</ConfigLabel>
