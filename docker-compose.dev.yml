@@ -21,7 +21,7 @@ services:
     volumes:
       - './data/neuronavigation:/app/data/neuronavigation/'
     network_mode: host
-    tty: true 
+    tty: true
     deploy:
       resources:
         reservations:
@@ -86,10 +86,10 @@ services:
       - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
     network_mode: host
 
-  topic_frequency:
+  eeg_monitor:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/topic_frequency/Dockerfile
+      dockerfile: ros2_ws/src/eeg/eeg_monitor/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     privileged: true
