@@ -235,7 +235,7 @@ void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg:
 }
 
 /* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
-void EegPreprocessor::check_dropped_samples(double_t current_time) {
+void EegPreprocessor::check_dropped_samples(double_t sample_time) {
   if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
     RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
   }
@@ -243,7 +243,7 @@ void EegPreprocessor::check_dropped_samples(double_t current_time) {
   if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
       this->previous_time) {
 
-    auto time_diff = current_time - this->previous_time;
+    auto time_diff = sample_time - this->previous_time;
     auto threshold = this->sampling_period + this->TOLERANCE_S;
 
     if (time_diff > threshold) {
@@ -257,13 +257,15 @@ void EegPreprocessor::check_dropped_samples(double_t current_time) {
         "Time difference between consecutive samples: %.5f", time_diff);
     }
   }
-  this->previous_time = current_time;
+  this->previous_time = sample_time;
 }
 
 void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
-  auto current_time = msg->time;
+  auto start_time = std::chrono::high_resolution_clock::now();
 
-  check_dropped_samples(current_time);
+  auto sample_time = msg->time;
+
+  check_dropped_samples(sample_time);
 
   if (!this->preprocessor_enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -289,9 +291,16 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   auto [preprocessed_sample, success] = this->preprocessor_wrapper->process(
     this->sample_buffer,
-    current_time);
+    sample_time);
 
   if (success) {
+    /* Measure and store the processing time for the sample. */
+    auto end_time = std::chrono::high_resolution_clock::now();
+    double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
+
+    preprocessed_sample.processing_time = processing_time;
+
+    /* Publish the preprocessed sample. */
     this->eeg_preprocessed_publisher->publish(preprocessed_sample);
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
