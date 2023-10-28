@@ -51,7 +51,7 @@ private:
   void reset_sample_buffer();
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
-  void check_dropped_samples(double_t current_time);
+  void check_dropped_samples(double_t sample_time);
   void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
   void publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegSample> &events);
