@@ -5,8 +5,8 @@
 //
 
 
-#ifndef TOPIC_FREQUENCY_MEMORY_UTILS_H
-#define TOPIC_FREQUENCY_MEMORY_UTILS_H
+#ifndef eeg_monitor_MEMORY_UTILS_H
+#define eeg_monitor_MEMORY_UTILS_H
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -23,4 +23,4 @@ void preallocate_memory(size_t memory_size);
 void lock_memory();
 void set_default_thread_stacksize(size_t stacksize);
 
-#endif //TOPIC_FREQUENCY_MEMORY_UTILS_H
+#endif //eeg_monitor_MEMORY_UTILS_H

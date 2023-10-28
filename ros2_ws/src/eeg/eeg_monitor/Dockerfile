@@ -23,14 +23,14 @@ COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/other/topic_frequency src/other/topic_frequency
-RUN source /opt/ros/iron/setup.bash && colcon build --packages-select topic_frequency
+COPY ros2_ws/src/eeg/eeg_monitor src/eeg/eeg_monitor
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select eeg_monitor
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/other/topic_frequency/ros_entrypoint.sh .
+COPY ros2_ws/src/eeg/eeg_monitor/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
