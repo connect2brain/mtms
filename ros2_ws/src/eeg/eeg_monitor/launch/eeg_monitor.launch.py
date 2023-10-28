@@ -15,9 +15,9 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="topic_frequency",
-        executable="topic_frequency",
-        name="topic_frequency",
+        package="eeg_monitor",
+        executable="eeg_monitor",
+        name="eeg_monitor",
         arguments=['--ros-args', '--log-level', logger]
     )
 
