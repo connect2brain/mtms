@@ -17,15 +17,16 @@
 
 namespace py = pybind11;
 
-const size_t UNSET_SIZE = 0;
-
 class PreprocessorWrapper {
 public:
   PreprocessorWrapper(rclcpp::Logger& logger);
   ~PreprocessorWrapper();
 
-  void reset_module(const std::string& directory, const std::string& module_name);
-  void initialize_arrays();
+  void reset_module(
+      const std::string& directory,
+      const std::string& module_name,
+      const size_t eeg_data_size,
+      const size_t emg_data_size);
 
   std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
@@ -33,9 +34,6 @@ public:
 
   bool is_initialized() const;
   std::size_t get_buffer_size() const;
-
-  void set_eeg_data_size(size_t eeg_data_size);
-  void set_emg_data_size(size_t emg_data_size);
 
   /* Exposed to Python, defined in preprocessor_bindings.cpp. */
   static void log(const std::string& message);
@@ -58,9 +56,9 @@ private:
   int earliest_sample;
   int latest_sample;
 
-  std::size_t buffer_size = UNSET_SIZE;
-  std::size_t eeg_data_size = UNSET_SIZE;
-  std::size_t emg_data_size = UNSET_SIZE;
+  std::size_t buffer_size = 0;
+  std::size_t eeg_data_size;
+  std::size_t emg_data_size;
 };
 
 #endif

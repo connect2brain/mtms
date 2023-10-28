@@ -129,18 +129,29 @@ void EegPreprocessor::set_preprocessor_enabled(
   response->success = true;
 }
 
+void EegPreprocessor::reset_preprocessor_module() {
+  if (this->script_directory == UNSET_STRING ||
+      this->module_name == UNSET_STRING ||
+      this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
+      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS) {
+
+    return;
+  }
+  this->preprocessor_wrapper->reset_module(
+    this->script_directory,
+    this->module_name,
+    this->num_of_eeg_channels,
+    this->num_of_emg_channels);
+}
+
 void EegPreprocessor::set_preprocessor(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response) {
 
   this->module_name = request->preprocessor;
 
+  reset_preprocessor_module();
   /* Reset the wrapper to use the changed preprocessor module. */
-  this->preprocessor_wrapper->reset_module(this->script_directory, this->module_name);
-
-  /* When preprocessor changes, its buffer size potentially changes, hence
-     re-initialize arrays in the wrapper. */
-  this->preprocessor_wrapper->initialize_arrays();
 
   /* We don't want left-over samples from the previous preprocessor, hence
      reset the sample buffer. */
@@ -213,12 +224,8 @@ void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg:
   RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
   RCLCPP_INFO(this->get_logger(), " ");
 
-  this->preprocessor_wrapper->set_eeg_data_size(this->num_of_eeg_channels);
-  this->preprocessor_wrapper->set_emg_data_size(this->num_of_emg_channels);
-
-  /* The number of EEG and EMG channels may have changed, therefore
-     re-initialize arrays in the wrapper. */
-  this->preprocessor_wrapper->initialize_arrays();
+  /* The number of EEG and EMG channels may have changed, therefore reset preprocessor Python module. */
+  reset_preprocessor_module();
 
   /* EEG info is updated if streaming is restarted on the EEG device. We don't want
      left-over samples from the previous run, therefore reset the sample buffer. */
