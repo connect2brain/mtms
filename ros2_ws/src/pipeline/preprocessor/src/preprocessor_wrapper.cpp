@@ -18,7 +18,8 @@ void PreprocessorWrapper::reset_module(
     const std::string& directory,
     const std::string& module_name,
     const size_t eeg_data_size,
-    const size_t emg_data_size) {
+    const size_t emg_data_size,
+    const uint16_t sampling_frequency) {
 
   preprocessor_module.release();
   preprocessor_instance.release();
@@ -38,7 +39,7 @@ void PreprocessorWrapper::reset_module(
 
   try {
     preprocessor_module = py::module::import(module_name.c_str());
-    preprocessor_instance = preprocessor_module.attr("Preprocessor")();
+    preprocessor_instance = preprocessor_module.attr("Preprocessor")(eeg_data_size, emg_data_size, sampling_frequency);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
