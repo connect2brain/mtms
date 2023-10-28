@@ -23,7 +23,9 @@
 #include "ring_buffer.h"
 
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
+const uint8_t UNSET_NUM_OF_CHANNELS = 255;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
+const std::string UNSET_STRING = "";
 
 class PreprocessorWrapper;
 
@@ -39,6 +41,8 @@ private:
   void set_preprocessor_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response);
+
+  void reset_preprocessor_module();
 
   void set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   std::vector<std::string> list_python_scripts(const std::string& path);
@@ -68,13 +72,15 @@ private:
   bool preprocessor_enabled;
 
   std::string active_project;
-  std::string script_directory;
-  std::string module_name;
 
-  uint16_t sampling_frequency;
+  std::string script_directory  = UNSET_STRING;
+  std::string module_name = UNSET_STRING;
+
+  uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
+  uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
+  uint8_t num_of_emg_channels = UNSET_NUM_OF_CHANNELS;
+
   double_t sampling_period;
-  uint8_t num_of_eeg_channels;
-  uint8_t num_of_emg_channels;
 
   double_t previous_time;
 

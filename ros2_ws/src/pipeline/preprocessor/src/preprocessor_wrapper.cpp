@@ -12,7 +12,12 @@ PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger& logger) {
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
-void PreprocessorWrapper::reset_module(const std::string& directory, const std::string& module_name) {
+void PreprocessorWrapper::reset_module(
+    const std::string& directory,
+    const std::string& module_name,
+    const size_t eeg_data_size,
+    const size_t emg_data_size) {
+
   preprocessor_module.release();
   preprocessor_instance.release();
 
@@ -38,7 +43,7 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
       this->earliest_sample = sample_window[0].cast<int>();
       this->latest_sample = sample_window[1].cast<int>();
 
-      this->buffer_size = latest_sample - earliest_sample + 1;
+      this->buffer_size = this->latest_sample - this->earliest_sample + 1;
     } else {
       RCLCPP_WARN(*logger_ptr, "sample_window class attribute is of incorrect length (should be two elements).");
     }
@@ -53,24 +58,19 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
   RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
   RCLCPP_INFO(*logger_ptr, " ");
 
-  _is_initialized = true;
-}
+  /* Initialize numpy arrays. */
+  py_time = std::make_unique<py::array_t<double>>(buffer_size);
 
-void PreprocessorWrapper::initialize_arrays() {
-  if (this->buffer_size != UNSET_SIZE &&
-      this->eeg_data_size != UNSET_SIZE &&
-      this->emg_data_size != UNSET_SIZE) {
+  std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
+  py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
 
-    py_time = std::make_unique<py::array_t<double>>(buffer_size);
+  std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
+  py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
 
-    std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
-    py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
+  this->eeg_data_size = eeg_data_size;
+  this->emg_data_size = emg_data_size;
 
-    std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
-    py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
-
-    RCLCPP_DEBUG(*logger_ptr, "Arrays initialized for time, EEG data, and EMG data.");
-  }
+  this->_is_initialized = true;
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {
@@ -85,14 +85,6 @@ bool PreprocessorWrapper::is_initialized() const {
 
 std::size_t PreprocessorWrapper::get_buffer_size() const {
   return this->buffer_size;
-}
-
-void PreprocessorWrapper::set_eeg_data_size(size_t eeg_data_size) {
-  this->eeg_data_size = eeg_data_size;
-}
-
-void PreprocessorWrapper::set_emg_data_size(size_t emg_data_size) {
-  this->emg_data_size = emg_data_size;
 }
 
 std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool>
