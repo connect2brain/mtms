@@ -6,6 +6,8 @@
 #include "preprocessor_wrapper.h"
 #include <eeg_interfaces/msg/eeg_sample.hpp>
 
+namespace py = pybind11;
+
 PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger& logger) {
   logger_ptr = &logger;
   _is_initialized = false;
@@ -33,8 +35,19 @@ void PreprocessorWrapper::reset_module(
   }
 
   /* Import the module and initialize the Preprocessor instance. */
-  preprocessor_module = py::module::import(module_name.c_str());
-  preprocessor_instance = preprocessor_module.attr("Preprocessor")();
+
+  try {
+    preprocessor_module = py::module::import(module_name.c_str());
+    preprocessor_instance = preprocessor_module.attr("Preprocessor")();
+
+  } catch(const py::error_already_set& e) {
+    RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    return;
+
+  } catch(const std::exception& e) {
+    RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    return;
+  }
 
   /* Extract the sample_window from preprocessor_instance. */
   if (py::hasattr(preprocessor_instance, "sample_window")) {
