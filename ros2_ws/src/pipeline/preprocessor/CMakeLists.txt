@@ -5,8 +5,8 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif ()
 
-find_package(PythonLibs 3 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+include_directories(${Python3_INCLUDE_DIRS})
 
 find_package(ament_cmake REQUIRED)
 find_package(pybind11_vendor REQUIRED)
@@ -30,9 +30,6 @@ target_include_directories(preprocessor
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
-
-target_link_libraries(preprocessor ${pybind11_LIBRARIES})
-target_include_directories(preprocessor PUBLIC ${pybind11_INCLUDE_DIRS})
 
 ament_target_dependencies(
   preprocessor
@@ -60,3 +57,31 @@ endif ()
 
 ament_package()
 message(STATUS "TARGET: ${CMAKE_BUILD_TYPE}")
+
+# PyBind11 modules
+
+add_library(preprocessor_bindings MODULE src/preprocessor_bindings.cpp src/preprocessor_wrapper.cpp)
+
+# XXX: The value of PREFIX should be "${PYTHON_MODULE_PREFIX}" and SUFFIX should be "${PYTHON_MODULE_EXTENSION}".
+#   However, they seem to be undefined, resulting in empty strings, hence hardcode the suffix to .so.
+set_target_properties(preprocessor_bindings PROPERTIES PREFIX "" SUFFIX ".so")
+
+ament_target_dependencies(
+  preprocessor_bindings
+  pybind11_vendor
+  rclcpp
+  rclcpp_action
+  std_msgs
+  eeg_interfaces
+  project_interfaces
+)
+
+# Find the user's local site-packages directory
+execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(site.USER_SITE)"
+                OUTPUT_VARIABLE PYTHON_LOCAL_SITE_PACKAGES
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+message(STATUS "Installing Python bindings to: ${PYTHON_LOCAL_SITE_PACKAGES}")
+
+install(TARGETS preprocessor_bindings
+        DESTINATION ${PYTHON_LOCAL_SITE_PACKAGES})
