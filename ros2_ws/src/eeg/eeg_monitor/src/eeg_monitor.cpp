@@ -51,8 +51,11 @@ public:
 
   void timer_callback() {
     RCLCPP_INFO(this->get_logger(), " ");
-    RCLCPP_INFO(this->get_logger(), "EEG raw messages received during the last second: %d", eeg_raw_messages);
-    RCLCPP_INFO(this->get_logger(), "EEG preprocessed messages received during the last second: %d", eeg_preprocessed_messages);
+    RCLCPP_INFO(this->get_logger(), "Raw EEG:");
+    RCLCPP_INFO(this->get_logger(), "  - Messages received during the last second: %d", eeg_raw_messages);
+    RCLCPP_INFO(this->get_logger(), " ");
+    RCLCPP_INFO(this->get_logger(), "Preprocessed EEG:");
+    RCLCPP_INFO(this->get_logger(), "  - Messages received during the last second: %d", eeg_preprocessed_messages);
 
     if (!processing_times.empty()) {
       /* Maximum */
@@ -75,10 +78,9 @@ public:
         median_time = (median_time + processing_times[middle_index - 1]) / 2;
       }
 
-      RCLCPP_INFO(this->get_logger(), " ");
-      RCLCPP_INFO(this->get_logger(), "Max processing time during the last second: %.1f us", 1000000 * max_time);
-      RCLCPP_INFO(this->get_logger(), "95%% percentile processing time during the last second: %.1f us", 1000000 * percentile_95_time);
-      RCLCPP_INFO(this->get_logger(), "Median processing time during the last second: %.1f us", 1000000 * median_time);
+      RCLCPP_INFO(this->get_logger(), "  - Max processing time during the last second: %.1f us", 1000000 * max_time);
+      RCLCPP_INFO(this->get_logger(), "  - 95%% percentile processing time during the last second: %.1f us", 1000000 * percentile_95_time);
+      RCLCPP_INFO(this->get_logger(), "  - Median processing time during the last second: %.1f us", 1000000 * median_time);
       RCLCPP_INFO(this->get_logger(), " ");
     }
 
