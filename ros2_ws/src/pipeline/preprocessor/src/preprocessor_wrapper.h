@@ -21,7 +21,7 @@ const size_t UNSET_SIZE = 0;
 
 class PreprocessorWrapper {
 public:
-  PreprocessorWrapper(rclcpp::Logger logger);
+  PreprocessorWrapper(rclcpp::Logger& logger);
   ~PreprocessorWrapper();
 
   void reset_module(const std::string& directory, const std::string& module_name);
@@ -37,8 +37,12 @@ public:
   void set_eeg_data_size(size_t eeg_data_size);
   void set_emg_data_size(size_t emg_data_size);
 
+  /* Exposed to Python, defined in preprocessor_bindings.cpp. */
+  static void log(const std::string& message);
+
 private:
-  rclcpp::Logger logger;
+  /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see preprocessor_bindings.cpp). */
+  static rclcpp::Logger* logger_ptr;
 
   bool _is_initialized;
 
