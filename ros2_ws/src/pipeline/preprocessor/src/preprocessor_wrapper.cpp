@@ -21,6 +21,12 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
   py::list sys_path = sys_module.attr("path");
   sys_path.append(directory);
 
+  /* Remove the module from sys.modules if it exists, to ensure it is reloaded. */
+  py::dict sys_modules = sys_module.attr("modules");
+  if (sys_modules.contains(module_name.c_str())) {
+    sys_modules.attr("__delitem__")(module_name.c_str());
+  }
+
   /* Import the module and initialize the Preprocessor instance. */
   preprocessor_module = py::module::import(module_name.c_str());
   preprocessor_instance = preprocessor_module.attr("Preprocessor")();
