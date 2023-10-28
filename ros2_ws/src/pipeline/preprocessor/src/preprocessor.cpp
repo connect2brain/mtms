@@ -133,7 +133,8 @@ void EegPreprocessor::reset_preprocessor_module() {
   if (this->script_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING ||
       this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
-      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS) {
+      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS ||
+      this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
 
     return;
   }
@@ -141,7 +142,8 @@ void EegPreprocessor::reset_preprocessor_module() {
     this->script_directory,
     this->module_name,
     this->num_of_eeg_channels,
-    this->num_of_emg_channels);
+    this->num_of_emg_channels,
+    this->sampling_frequency);
 }
 
 void EegPreprocessor::set_preprocessor(
