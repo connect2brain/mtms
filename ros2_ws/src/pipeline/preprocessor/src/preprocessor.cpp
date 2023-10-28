@@ -18,6 +18,7 @@ const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string PROJECTS_DIRECTORY = "projects/";
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
+  /* Create publisher for preprocessed EEG data. */
   this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
   /* Create subscriber for EEG info. */
@@ -32,7 +33,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
     std::bind(&EegPreprocessor::update_eeg_info, this, _1));
 
   /* Create subscriber for EEG data. */
-
   auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -96,7 +96,8 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
   this->previous_time = UNSET_PREVIOUS_TIME;
   this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
 
-  this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(this->get_logger());
+  rclcpp::Logger logger = rclcpp::get_logger("preprocessor_wrapper");
+  this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
 }
@@ -227,7 +228,7 @@ void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg:
 /* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
 void EegPreprocessor::check_dropped_samples(double_t current_time) {
   if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
-    RCLCPP_WARN(rclcpp::get_logger("preprocessor"), "Sampling frequency not received, cannot check for dropped samples.");
+    RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
   }
 
   if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
@@ -238,12 +239,12 @@ void EegPreprocessor::check_dropped_samples(double_t current_time) {
 
     if (time_diff > threshold) {
       /* Err if sample(s) were dropped. */
-      RCLCPP_ERROR(rclcpp::get_logger("preprocessor"),
+      RCLCPP_ERROR(this->get_logger(),
           "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
 
     } else {
       /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
-      RCLCPP_DEBUG(rclcpp::get_logger("preprocessor"),
+      RCLCPP_DEBUG(this->get_logger(),
         "Time difference between consecutive samples: %.5f", time_diff);
     }
   }

@@ -6,9 +6,9 @@
 #include "preprocessor_wrapper.h"
 #include <eeg_interfaces/msg/eeg_sample.hpp>
 
-namespace py = pybind11;
-
-PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger logger) : logger(logger), _is_initialized(false) {
+PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger& logger) {
+  logger_ptr = &logger;
+  _is_initialized = false;
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
@@ -34,18 +34,18 @@ void PreprocessorWrapper::reset_module(const std::string& directory, const std::
 
       this->buffer_size = latest_sample - earliest_sample + 1;
     } else {
-      RCLCPP_WARN(logger, "sample_window class attribute is of incorrect length (should be two elements).");
+      RCLCPP_WARN(*logger_ptr, "sample_window class attribute is of incorrect length (should be two elements).");
     }
   } else {
-    RCLCPP_WARN(logger, "sample_window class attribute not defined by the preprocessor.");
+    RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the preprocessor.");
   }
 
-  RCLCPP_INFO(logger, "Preprocessor set to: %s.", module_name.c_str());
-  RCLCPP_INFO(logger, " ");
-  RCLCPP_INFO(logger, "Preprocessor configuration");
-  RCLCPP_INFO(logger, " ");
-  RCLCPP_INFO(logger, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
-  RCLCPP_INFO(logger, " ");
+  RCLCPP_INFO(*logger_ptr, "Preprocessor set to: %s.", module_name.c_str());
+  RCLCPP_INFO(*logger_ptr, " ");
+  RCLCPP_INFO(*logger_ptr, "Preprocessor configuration");
+  RCLCPP_INFO(*logger_ptr, " ");
+  RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
+  RCLCPP_INFO(*logger_ptr, " ");
 
   _is_initialized = true;
 }
@@ -63,7 +63,7 @@ void PreprocessorWrapper::initialize_arrays() {
     std::vector<size_t> emg_data_shape = {buffer_size, emg_data_size};
     py_emg_data = std::make_unique<py::array_t<double>>(emg_data_shape);
 
-    RCLCPP_DEBUG(logger, "Arrays initialized for time, EEG data, and EMG data.");
+    RCLCPP_DEBUG(*logger_ptr, "Arrays initialized for time, EEG data, and EMG data.");
   }
 }
 
@@ -117,32 +117,32 @@ PreprocessorWrapper::process(
     result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data);
 
   } catch(const py::error_already_set& e) {
-    RCLCPP_ERROR(logger, "Python error: %s", e.what());
+    RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
     return {cpp_result, false};
 
   } catch(const std::exception& e) {
-    RCLCPP_ERROR(logger, "C++ error: %s", e.what());
+    RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     return {cpp_result, false};
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
-    RCLCPP_ERROR(logger, "Python module should return a dictionary.");
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
     return {cpp_result, false};
   }
 
   py::dict dict_result = result.cast<py::dict>();
 
   if (!dict_result.contains("eeg_data")) {
-    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: eeg_data.");
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_data.");
     return {cpp_result, false};
   }
   if (!dict_result.contains("emg_data")) {
-    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: emg_data.");
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_data.");
     return {cpp_result, false};
   }
   if (!dict_result.contains("valid")) {
-    RCLCPP_ERROR(logger, "Python module should return a dictionary with the field: valid.");
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: valid.");
     return {cpp_result, false};
   }
 
@@ -155,3 +155,5 @@ PreprocessorWrapper::process(
 
   return {cpp_result, true};
 }
+
+rclcpp::Logger* PreprocessorWrapper::logger_ptr = nullptr;
