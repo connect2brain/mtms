@@ -120,15 +120,23 @@ class TrialPerformerNode(Node):
 
     # Logging
 
-    def log_trial(self, goal_id, trial, trial_time, allow_late, wait_for_trigger):
+    def log_trial(self, goal_id, trial):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: Trial:'.format(goal_id))
+        self.logger.info('{}:'.format(goal_id))
+        self.logger.info('{}:   Stimuli:'.format(goal_id))
+        self.logger.info('{}:     Count: {}'.format(goal_id, len(trial.stimuli)))
+
+        timing = trial.timing
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}:   Number of stimuli: {}'.format(goal_id, len(trial.stimuli)))
-        self.logger.info('{}:   Execution time: {:.3f} s'.format(goal_id, trial_time))
-        self.logger.info('{}:   Allow trial to be late: {}'.format(goal_id, allow_late))
-        self.logger.info('{}:   Wait for trigger: {}'.format(goal_id, wait_for_trigger))
+        self.logger.info('{}:   Timing:'.format(goal_id))
+        if not timing.wait_for_trigger:
+            self.logger.info('{}:     Execution time: {:.3f} s'.format(goal_id, timing.time))
+            self.logger.info('{}:     Allow trial to be late: {}'.format(goal_id, timing.allow_late))
+        else:
+            self.logger.info('{}:     Waiting for trigger'.format(goal_id))
+
         self.logger.info('{}:'.format(goal_id))
 
         config = trial.config
@@ -273,9 +281,6 @@ class TrialPerformerNode(Node):
         request = goal_handle.request
 
         trial = request.trial
-        trial_time = request.trial_time
-        allow_late = request.allow_late
-        wait_for_trigger = request.wait_for_trigger
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -288,9 +293,6 @@ class TrialPerformerNode(Node):
         success, trial_result = self.perform_trial(
             goal_id=goal_id,
             trial=trial,
-            trial_time=trial_time,
-            allow_late=allow_late,
-            wait_for_trigger=wait_for_trigger,
         )
 
         # Create and return a Result object.
@@ -319,8 +321,16 @@ class TrialPerformerNode(Node):
 
         return True
 
-    def attempt_trial(self, goal_id, voltages, trial_time, allow_late, wait_for_trigger, stimulus, config):
-        self.sync_set_voltages(voltages)
+    def attempt_trial(self, goal_id, target_voltages, trial):
+        config = trial.config
+        timing = trial.timing
+        stimulus = trial.stimuli[0]
+
+        trial_time = timing.time
+        allow_late = timing.allow_late
+        wait_for_trigger = timing.wait_for_trigger
+
+        self.sync_set_voltages(target_voltages)
 
         # Earliest feasible trial time cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
@@ -346,6 +356,7 @@ class TrialPerformerNode(Node):
         if not analyze_mep:
             mep = Mep()
             mep_success = True
+
         else:
             mep_event, mep_result_container = self.async_analyze_mep(
                 mep_config=mep_config,
@@ -381,21 +392,13 @@ class TrialPerformerNode(Node):
 
         return success, mep
 
-    def perform_trial(self, goal_id, trial, trial_time, allow_late, wait_for_trigger):
-        config = trial.config
-        stimuli = trial.stimuli
-
+    def perform_trial(self, goal_id, trial):
         # Unused at the moment; take into use once a trial supports more than one stimuli.
         stimulus_times_since_trial_start = trial.stimulus_times_since_trial_start
-
-        analyze_mep = config.analyze_mep
 
         self.log_trial(
             goal_id=goal_id,
             trial=trial,
-            trial_time=trial_time,
-            allow_late=allow_late,
-            wait_for_trigger=wait_for_trigger,
         )
 
         feasible = self.check_goal_feasible(goal_id)
@@ -405,6 +408,8 @@ class TrialPerformerNode(Node):
 
             return success, trial_result
 
+        stimuli = trial.stimuli
+
         num_of_stimuli = len(stimuli)
         assert num_of_stimuli == 1, "Only one stimulus per trial currently supported!"
 
@@ -413,18 +418,14 @@ class TrialPerformerNode(Node):
         target = stimulus.target
         intensity = stimulus.intensity
 
-        voltages, _ = self.get_channel_voltages(target, intensity)
+        target_voltages, _ = self.get_channel_voltages(target, intensity)
 
         self.logger.info('{}: Performing trial...'.format(goal_id))
 
         success, mep = self.attempt_trial(
             goal_id=goal_id,
-            voltages=voltages,
-            trial_time=trial_time,
-            allow_late=allow_late,
-            wait_for_trigger=wait_for_trigger,
-            stimulus=stimulus,
-            config=config,
+            target_voltages=target_voltages,
+            trial=trial,
         )
 
         trial_finish_time = self.get_current_time()
