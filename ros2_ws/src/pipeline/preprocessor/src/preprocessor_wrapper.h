@@ -31,7 +31,7 @@ public:
 
   std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
-    double_t current_time,
+    double_t sample_time,
     bool pulse_given);
 
   bool is_initialized() const;
@@ -51,12 +51,13 @@ private:
 
   std::unique_ptr<py::scoped_interpreter> guard;
 
-  std::unique_ptr<py::array_t<double>> py_time;
+  std::unique_ptr<py::array_t<double>> py_timestamps;
   std::unique_ptr<py::array_t<double>> py_eeg_data;
   std::unique_ptr<py::array_t<double>> py_emg_data;
 
   int earliest_sample;
   int latest_sample;
+  uint16_t sampling_frequency;
 
   std::size_t buffer_size = 0;
   std::size_t eeg_data_size;
