@@ -16,6 +16,8 @@
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
 
+#include "event_interfaces/msg/pulse_feedback.hpp"
+
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor.hpp"
 #include "project_interfaces/srv/set_preprocessor_enabled.hpp"
@@ -52,9 +54,11 @@ private:
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
-  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
-  void publish_cleaned_eeg(double_t time, const std::vector<eeg_interfaces::msg::EegSample> &events);
+  void handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg);
+  bool was_pulse_given(double_t sample_time);
+
+  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
@@ -68,6 +72,8 @@ private:
 
   rclcpp::Service<project_interfaces::srv::SetPreprocessorEnabled>::SharedPtr set_preprocessor_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr preprocessor_enabled_publisher;
+
+  rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
 
   bool preprocessor_enabled;
 
@@ -83,6 +89,8 @@ private:
   double_t sampling_period;
 
   double_t previous_time;
+
+  std::queue<double_t> pulse_execution_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
 
