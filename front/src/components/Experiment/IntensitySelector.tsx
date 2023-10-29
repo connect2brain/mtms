@@ -99,7 +99,6 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
         <ValidatedInput
           type='number'
           value={selectedIntensity}
-          defaultValue={40}
           min={min}
           max={max}
           onChange={handleChange}
