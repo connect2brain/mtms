@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.5
+- ADD: Send event time as feedback.
+
 ### 0.5.4
 - ADD: 'Delay (ticks)' field to event info.
 - ADD: Charging time to charge feedback.
