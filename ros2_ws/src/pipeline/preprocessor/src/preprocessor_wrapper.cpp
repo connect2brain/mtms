@@ -104,7 +104,8 @@ std::size_t PreprocessorWrapper::get_buffer_size() const {
 std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool>
 PreprocessorWrapper::process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
-    double_t current_time) {
+    double_t current_time,
+    bool pulse_given) {
 
   /* Fill the numpy arrays. */
   auto time_ptr = py_time->mutable_data();
@@ -126,7 +127,7 @@ PreprocessorWrapper::process(
 
   py::object result;
   try {
-    result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data);
+    result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data, pulse_given);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
