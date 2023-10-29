@@ -3,7 +3,7 @@ from threading import Event, Lock
 
 import numpy as np
 
-from experiment_interfaces.msg import ExperimentState
+from experiment_interfaces.msg import ExperimentState, TrialTiming
 from experiment_interfaces.action import PerformExperiment, PerformTrial
 from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
@@ -253,25 +253,19 @@ class ExperimentPerformerNode(Node):
 
     # Action callers
 
-    def async_perform_trial_action(self, trial, trial_time, allow_late, wait_for_trigger):
+    def async_perform_trial_action(self, trial):
         client = self.perform_trial_client
         goal = PerformTrial.Goal()
 
         goal.trial = trial
-        goal.trial_time = trial_time
-        goal.allow_late = allow_late
-        goal.wait_for_trigger = wait_for_trigger
 
         event, result_container = self.async_action_call(client, goal)
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial, trial_time, allow_late, wait_for_trigger):
+    def sync_perform_trial_action(self, trial):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
-            trial_time=trial_time,
-            allow_late=allow_late,
-            wait_for_trigger=wait_for_trigger,
         )
         event.wait()
 
@@ -623,10 +617,18 @@ class ExperimentPerformerNode(Node):
                 is_first_trial=is_first_trial,
                 intertrial_interval=intertrial_interval,
             )
+
+            # Determine the time of the next trial.
             trial_time = self.get_current_time() + time_to_next_trial
 
             # When performing an (rTMS style) experiment, always allow late trials, as the exact timing of the pulse is unimportant.
             allow_late = True
+
+            trial.timing = TrialTiming(
+                time=trial_time,
+                allow_late=allow_late,
+                wait_for_trigger=wait_for_trigger,
+            )
 
             self.logger.info('{}: Performing trial {} / {}, attempt number {}'.format(
                 goal_id,
@@ -637,9 +639,6 @@ class ExperimentPerformerNode(Node):
 
             result = self.sync_perform_trial_action(
                 trial=trial,
-                trial_time=trial_time,
-                allow_late=allow_late,
-                wait_for_trigger=wait_for_trigger,
             )
             trial_result = result.trial_result
             success = result.success

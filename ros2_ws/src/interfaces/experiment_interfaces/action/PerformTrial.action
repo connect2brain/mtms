@@ -1,13 +1,4 @@
 Trial trial
-float64 trial_time
-
-# If true, allow performing the trial at any time after 'trial_time'. If false and 'trial_time' has passed, fail the trial.
-bool allow_late
-
-# If true, wait for trigger (a pedal press or an electric trigger signal) before performing the trial.
-#
-# Note: If true, 'trial_time' and 'allow_late' fields are ignored.
-bool wait_for_trigger
 ---
 bool success
 TrialResult trial_result
