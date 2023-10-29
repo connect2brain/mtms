@@ -14,7 +14,6 @@ const StyledInput = styled.input<{ valid?: boolean }>`
 interface ValidatedInputProps {
   value: number
   onChange: (newValue: number) => void
-  defaultValue: number // Added a default value prop
   type?: string
   min?: number
   max?: number
@@ -28,10 +27,9 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
   type = 'number',
   min,
   max,
-  defaultValue,
   ...props
 }) => {
-  const [localValue, setLocalValue] = useState<string>(defaultValue.toString())
+  const [localValue, setLocalValue] = useState<string>(value.toString())
 
   const isValueValid = (value: string): boolean => {
     const newValue = parseFloat(value)
@@ -53,6 +51,10 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
       onChange(parseFloat(localValue))
     }
   }
+
+  useEffect(() => {
+    setLocalValue(value.toString())
+  }, [value])
 
   return (
     <StyledInput
