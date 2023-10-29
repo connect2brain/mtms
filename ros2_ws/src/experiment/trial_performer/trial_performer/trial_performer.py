@@ -226,12 +226,13 @@ class TrialPerformerNode(Node):
 
         assert result.success, "Setting voltages failed."
 
-    def async_perform_stimulus(self, stimulus, time):
+    def async_perform_stimulus(self, stimulus, time, wait_for_trigger):
         client = self.perform_stimulus_client
         goal = PerformStimulus.Goal()
 
         goal.stimulus = stimulus
         goal.time = time
+        goal.wait_for_trigger = wait_for_trigger
 
         event, result_container = self.async_action_call(client, goal)
 
@@ -318,7 +319,7 @@ class TrialPerformerNode(Node):
 
         return True
 
-    def attempt_trial(self, goal_id, voltages, trial_time, allow_late, stimulus, config):
+    def attempt_trial(self, goal_id, voltages, trial_time, allow_late, wait_for_trigger, stimulus, config):
         self.sync_set_voltages(voltages)
 
         # Earliest feasible trial time cannot be less than the current time. Also, take
@@ -335,7 +336,8 @@ class TrialPerformerNode(Node):
 
         stimulus_event, stimulus_result_container = self.async_perform_stimulus(
             stimulus=stimulus,
-            time=trial_time
+            time=trial_time,
+            wait_for_trigger=wait_for_trigger,
         )
 
         analyze_mep = config.analyze_mep
@@ -420,6 +422,7 @@ class TrialPerformerNode(Node):
             voltages=voltages,
             trial_time=trial_time,
             allow_late=allow_late,
+            wait_for_trigger=wait_for_trigger,
             stimulus=stimulus,
             config=config,
         )
