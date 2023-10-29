@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
 const StyledInput = styled.input<{ valid?: boolean }>`
-  marginTop: 0px;
+  margintop: 0px;
   width: 43px;
   margin-right: 40px;
-  border: 2px solid ${props => (props.valid ? 'black' : 'red')};
-  outline-color: ${props => (props.valid ? 'black' : 'red')};
+  border: 2px solid ${(props) => (props.valid ? 'black' : 'red')};
+  outline-color: ${(props) => (props.valid ? 'black' : 'red')};
   background-color: 'white';
   color: 'black';
 `
@@ -60,7 +60,7 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
       {...props}
       value={localValue}
       valid={isValueValid(localValue)}
-      onChange={e => handleChange(e.target.value)}
+      onChange={(e) => handleChange(e.target.value)}
       onBlur={handleBlur}
     />
   )

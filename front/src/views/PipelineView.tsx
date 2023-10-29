@@ -87,14 +87,14 @@ const TmsPanel = styled(StyledPanel)`
 `
 
 const Arrow = styled.div`
-  width: 30px;       /* Arrow width */
-  height: 8px;       /* Arrow thickness */
+  width: 30px; /* Arrow width */
+  height: 8px; /* Arrow thickness */
   background: #888;
   position: absolute;
   transform: translateY(-50%);
 
   &:after {
-    content: "";
+    content: '';
     position: absolute;
     top: 50%;
     right: -9px;
@@ -200,38 +200,34 @@ export const PipelineView = () => {
       <ProjectRow>
         <Label>Project:</Label>
         <Select onChange={handleProjectChange} value={activeProject}>
-        {projects.map((project, index) => (
-          <option key={index} value={project}>
-            {project}
-          </option>
-        ))}
+          {projects.map((project, index) => (
+            <option key={index} value={project}>
+              {project}
+            </option>
+          ))}
         </Select>
       </ProjectRow>
 
       <PipelinePanel>
-        <Arrow style={{ left: '75px', top: '110px'}} />
-        <Arrow style={{ left: '408px', top: '110px'}} />
-        <Arrow style={{ left: '741px', top: '110px'}} />
-        <Arrow style={{ left: '734px', top: '234px', width: '44px', transform: 'rotate(45deg)'}} />
+        <Arrow style={{ left: '75px', top: '110px' }} />
+        <Arrow style={{ left: '408px', top: '110px' }} />
+        <Arrow style={{ left: '741px', top: '110px' }} />
+        <Arrow style={{ left: '734px', top: '234px', width: '44px', transform: 'rotate(45deg)' }} />
         <EegCircle>EEG</EegCircle>
         <PreprocessorPanel>
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch
-              type="flat"
-              checked={preprocessorEnabled}
-              onChange={handlePreprocessorEnabled}
-            />
+            <ToggleSwitch type='flat' checked={preprocessorEnabled} onChange={handlePreprocessorEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
             <Select onChange={handlePreprocessorChange} value={preprocessor}>
-            {preprocessorList.map((preprocessor, index) => (
-              <option key={index} value={preprocessor}>
-                {preprocessor}
-              </option>
-            ))}
+              {preprocessorList.map((preprocessor, index) => (
+                <option key={index} value={preprocessor}>
+                  {preprocessor}
+                </option>
+              ))}
             </Select>
           </ConfigRow>
         </PreprocessorPanel>
@@ -239,11 +235,7 @@ export const PipelineView = () => {
           <SmallerTitle>Decider</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch
-              type="flat"
-              checked={deciderEnabled}
-              onChange={setDeciderEnabled}
-            />
+            <ToggleSwitch type='flat' checked={deciderEnabled} onChange={setDeciderEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
@@ -253,11 +245,7 @@ export const PipelineView = () => {
           <SmallerTitle>Presenter</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch
-              type="flat"
-              checked={presenterEnabled}
-              onChange={setPresenterEnabled}
-            />
+            <ToggleSwitch type='flat' checked={presenterEnabled} onChange={setPresenterEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
@@ -273,6 +261,6 @@ export const PipelineView = () => {
       </PipelinePanel>
       <SessionDisplay />
       <EegDisplay />
-     </>
+    </>
   )
 }

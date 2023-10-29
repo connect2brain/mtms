@@ -25,11 +25,11 @@ export const EegDisplay: React.FC = () => {
     if (frequency === undefined) {
       return ''
     }
-  
+
     if (frequency < 1000) {
       return `${frequency} Hz`
     }
-  
+
     const frequencyInKHz = frequency / 1000
     return `${frequencyInKHz} kHz`
   }
@@ -38,9 +38,9 @@ export const EegDisplay: React.FC = () => {
   useEffect(() => {
     setEegHealthcheckOk(eegHealthcheck?.status.value === HealthcheckStatus.READY)
   }, [eegHealthcheck])
-  
+
   return (
-    <EegPanel isGrayedOut={ !eegHealthcheckOk }>
+    <EegPanel isGrayedOut={!eegHealthcheckOk}>
       <StateRow>
         <StateTitle>Sampling rate</StateTitle>
         <StateValue>{formatFrequency(eegInfo?.sampling_frequency)}</StateValue>

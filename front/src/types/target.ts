@@ -33,8 +33,7 @@ export interface Target {
 
 //type ChangeableKeys = keyof Target
 export const targetChangeableKeys = ['name', 'comment', 'visible', 'selected'] as const
-export type TargetChangeableKey = typeof targetChangeableKeys[number]
-
+export type TargetChangeableKey = (typeof targetChangeableKeys)[number]
 
 export interface StateMessage extends ROSLIB.Message {
   targets: Target[]
