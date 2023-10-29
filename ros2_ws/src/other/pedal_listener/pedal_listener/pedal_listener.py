@@ -6,6 +6,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from std_msgs.msg import Bool
+from event_interfaces.msg import EventTrigger
 
 class PedalListenerNode(Node):
 
@@ -15,8 +16,8 @@ class PedalListenerNode(Node):
     def __init__(self):
         super().__init__('pedal_listener')
 
-        self._port = os.getenv("PEDAL_PORT")
-        self._baud_rate = int(os.getenv("PEDAL_BAUD_RATE"))
+        self.port = os.getenv("PEDAL_PORT")
+        self.baud_rate = int(os.getenv("PEDAL_BAUD_RATE"))
 
         # Persist the latest sample.
         qos = QoSProfile(
@@ -25,80 +26,98 @@ class PedalListenerNode(Node):
             history=HistoryPolicy.KEEP_LAST,
         )
 
-        self._pedal_connected_publisher = self.create_publisher(
+        self.pedal_connected_publisher = self.create_publisher(
             Bool,
             "/pedal/connected",
             qos
         )
-        self._pedal_pressed_publisher = self.create_publisher(
+        self.left_button_pressed_pressed_publisher = self.create_publisher(
             Bool,
-            "/pedal/pressed",
+            "/pedal/left_button/pressed",
             qos
         )
 
-        self._serial = None
-        self._reconnect_timer = self.create_timer(self.RECONNECT_PERIOD_IN_SECONDS, self._reconnect)
-        self._reader_timer = self.create_timer(self.READER_PERIOD_IN_SECONDS, self._reader)
+        self.event_trigger_publisher = self.create_publisher(
+            EventTrigger,
+            "/event/send/event_trigger",
+            10
+        )
 
-    def _handle_pedal_pressed(self):
+        self.serial = None
+        self.reconnect_timer = self.create_timer(self.RECONNECT_PERIOD_IN_SECONDS, self.reconnect)
+        self.reader_timer = self.create_timer(self.READER_PERIOD_IN_SECONDS, self.reader)
+
+    def handle_left_button_pressed(self):
         msg = Bool()
         msg.data = True
-        self._pedal_pressed_publisher.publish(msg)
-        self.get_logger().info("Pedal pressed.")
+        self.left_button_pressed_pressed_publisher.publish(msg)
+        self.get_logger().info("Left button pressed.")
 
-    def _handle_pedal_released(self):
+    def handle_left_button_released(self):
         msg = Bool()
         msg.data = False
-        self._pedal_pressed_publisher.publish(msg)
-        self.get_logger().info("Pedal released.")
+        self.left_button_pressed_pressed_publisher.publish(msg)
+        self.get_logger().info("Left button released.")
 
-    def _handle_disconnected(self):
-        self._serial = None
+    def handle_right_button_pressed(self):
+        msg = EventTrigger()
+        self.event_trigger_publisher.publish(msg)
+        self.get_logger().info("Right button pressed, sent a trigger.")
+
+    def handle_right_button_released(self):
+        self.get_logger().info("Right button released.")
+
+    def handle_disconnected(self):
+        self.serial = None
 
         msg = Bool()
         msg.data = False
-        self._pedal_connected_publisher.publish(msg)
+        self.pedal_connected_publisher.publish(msg)
 
         self.get_logger().info("Pedal disconnected.")
 
-    def _handle_connected(self):
+    def handle_connected(self):
         msg = Bool()
         msg.data = True
-        self._pedal_connected_publisher.publish(msg)
+        self.pedal_connected_publisher.publish(msg)
 
         self.get_logger().info("Pedal connected.")
 
-    def _reader(self):
+    def reader(self):
         try:
-            if self._serial is None:
+            if self.serial is None:
                 return
 
-            value = self._serial.read()
+            value = self.serial.read()
 
             if len(value) == 0:
                 return
 
             if value[0] == 0x00:
-                self._handle_pedal_pressed()
+                self.handle_left_button_pressed()
             elif value[0] == 0x01:
-                self._handle_pedal_released()
+                self.handle_left_button_released()
+            elif value[0] == 0x02:
+                self.handle_right_button_pressed()
+            elif value[0] == 0x03:
+                self.handle_right_button_released()
             else:
                 self.get_logger().error("Unknown message received from the pedal.")
 
         except serial.serialutil.SerialException:
-            self._handle_disconnected()
+            self.handle_disconnected()
 
-    def _reconnect(self):
-        if self._serial is not None:
+    def reconnect(self):
+        if self.serial is not None:
             return
 
         try:
-            self.get_logger().info("Connecting to pedal in port {} using baud rate {}.".format(self._port, self._baud_rate))
-            self._serial = serial.Serial(self._port, self._baud_rate)
-            self._handle_connected()
+            self.get_logger().info("Connecting to pedal in port {} using baud rate {}.".format(self.port, self.baud_rate))
+            self.serial = serial.Serial(self.port, self.baud_rate)
+            self.handle_connected()
 
         except serial.serialutil.SerialException:
-            self._handle_disconnected()
+            self.handle_disconnected()
 
 
 def main():
