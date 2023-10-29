@@ -18,10 +18,10 @@ const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string PROJECTS_DIRECTORY = "projects/";
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
-  /* Create publisher for preprocessed EEG data. */
+  /* Publisher for preprocessed EEG data. */
   this->eeg_preprocessed_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
-  /* Create subscriber for EEG info. */
+  /* Subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
         .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
@@ -32,7 +32,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
     qos_persist_latest,
     std::bind(&EegPreprocessor::update_eeg_info, this, _1));
 
-  /* Create subscriber for EEG data. */
+  /* Subscriber for EEG data. */
   auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -63,30 +63,34 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 
-  /* Create a subscriber for active project. */
+  /* Subscriber for pulse feedback. */
+  this->pulse_feedback_subscriber = create_subscription<event_interfaces::msg::PulseFeedback>(
+    "/event/pulse_feedback",
+    10,
+    std::bind(&EegPreprocessor::handle_pulse_feedback, this, _1));
 
+  /* Subscriber for active project. */
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
     qos_persist_latest,
     std::bind(&EegPreprocessor::set_active_project, this, _1));
 
-  /* Create a publisher for listing preprocessors. */
-
+  /* Publisher for listing preprocessors. */
   this->preprocessor_list_publisher = this->create_publisher<project_interfaces::msg::PreprocessorList>(
     "/pipeline/preprocessor/list",
     qos_persist_latest);
 
-  /* Create service for changing preprocessor. */
+  /* Service for changing preprocessor. */
   this->set_preprocessor_service = this->create_service<project_interfaces::srv::SetPreprocessor>(
     "/pipeline/preprocessor/set",
     std::bind(&EegPreprocessor::set_preprocessor, this, _1, _2));
 
-  /* Create service for enabling and disabling preprocessor. */
+  /* Service for enabling and disabling preprocessor. */
   this->set_preprocessor_enabled_service = this->create_service<project_interfaces::srv::SetPreprocessorEnabled>(
     "/pipeline/preprocessor/enabled/set",
     std::bind(&EegPreprocessor::set_preprocessor_enabled, this, _1, _2));
 
-  /* Create publisher for preprocessor enabled. */
+  /* Publisher for preprocessor enabled message. */
   this->preprocessor_enabled_publisher = this->create_publisher<std_msgs::msg::Bool>(
     "/pipeline/preprocessor/enabled",
     qos_persist_latest);
@@ -152,6 +156,8 @@ void EegPreprocessor::set_preprocessor(
 
   this->module_name = request->preprocessor;
 
+  RCLCPP_INFO(this->get_logger(), "Setting preprocessor to: %s.", this->module_name.c_str());
+
   reset_preprocessor_module();
   /* Reset the wrapper to use the changed preprocessor module. */
 
@@ -177,7 +183,7 @@ void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::St
   oss << PROJECTS_DIRECTORY << this->active_project << "/preprocessor";
   this->script_directory = oss.str();
 
-  RCLCPP_INFO(this->get_logger(), "Active project set to to %s.", this->active_project.c_str());
+  RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
   update_preprocessor_list();
 }
@@ -260,12 +266,32 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
+/* Handle pulses */
+void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg) {
+  double_t execution_time = msg->execution_time;
+  this->pulse_execution_times.push(execution_time);
+
+  RCLCPP_INFO(this->get_logger(), "Registered a pulse at: %.1f (s).", execution_time);
+}
+
+bool EegPreprocessor::was_pulse_given(double_t sample_time) {
+  bool pulse_given = false;
+
+  /* Remove all execution times from the queue that have happened before the current sample time. */
+  while (!pulse_execution_times.empty() && sample_time >= pulse_execution_times.front()) {
+    pulse_execution_times.pop();
+    pulse_given = true;
+  }
+  return pulse_given;
+}
+
 void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
-  auto sample_time = msg->time;
+  double_t sample_time = msg->time;
 
   check_dropped_samples(sample_time);
+  bool pulse_given = was_pulse_given(sample_time);
 
   if (!this->preprocessor_enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -291,7 +317,8 @@ void EegPreprocessor::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::ms
 
   auto [preprocessed_sample, success] = this->preprocessor_wrapper->process(
     this->sample_buffer,
-    sample_time);
+    sample_time,
+    pulse_given);
 
   if (success) {
     /* Measure and store the processing time for the sample. */
