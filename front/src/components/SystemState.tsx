@@ -8,7 +8,7 @@ import {
   SystemContext,
   DeviceState,
   HumanReadableDeviceState,
-  ChannelState as ChannelStateType
+  ChannelState as ChannelStateType,
 } from 'providers/SystemProvider'
 
 export const SystemState = () => {
@@ -18,10 +18,10 @@ export const SystemState = () => {
     return (
       <ChannelTable>
         <colgroup>
-          <ColStyle className="indexCol" />
-          <ColStyle className="voltageCol" />
-          <ColStyle className="pulseCol" />
-          <ColStyle className="errorCol" />
+          <ColStyle className='indexCol' />
+          <ColStyle className='voltageCol' />
+          <ColStyle className='pulseCol' />
+          <ColStyle className='errorCol' />
         </colgroup>
         <Thead>
           <tr>
@@ -78,8 +78,7 @@ export const SystemState = () => {
         <ErrorItem>Cumulative: {getListValue(systemState?.system_error_cumulative)}</ErrorItem>
         <ErrorItem>Emergency: {getListValue(systemState?.system_error_emergency)}</ErrorItem>
         <ErrorItem>
-          Startup: {' '}
-          {getKeyByValueExcluding(systemState?.startup_error, 'value', systemState?.startup_error.value) || ''}
+          Startup: {getKeyByValueExcluding(systemState?.startup_error, 'value', systemState?.startup_error.value) || ''}
         </ErrorItem>
       </ErrorsContainer>
       <ChannelTitle>Channels</ChannelTitle>

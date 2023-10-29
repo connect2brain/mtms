@@ -13,7 +13,7 @@ import { useAppSelector } from 'providers/reduxHooks'
 import { PulseSequence } from 'types/pulseSequence'
 import styled from 'styled-components'
 import { removePulseInRos } from 'ros/services/pulse'
-import {addPulseToPulseSequenceInRos, removePulseSequenceInRos} from 'ros/services/pulseSequence'
+import { addPulseToPulseSequenceInRos, removePulseSequenceInRos } from 'ros/services/pulseSequence'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -85,7 +85,7 @@ const SequenceTable = () => {
     sequences.forEach((seq: PulseSequence, index: number) => {
       const selectedPulses = seq.pulses.filter((pulse) => pulse.selected)
 
-      selectedPulses.forEach(pulse => {
+      selectedPulses.forEach((pulse) => {
         addPulseToPulseSequenceInRos(seq, pulse)
       })
     })

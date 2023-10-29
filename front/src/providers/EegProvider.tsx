@@ -15,7 +15,7 @@ interface EegContextType {
 }
 
 const defaultEegState: EegContextType = {
-  eegInfo: null
+  eegInfo: null,
 }
 
 export const EegContext = React.createContext<EegContextType>(defaultEegState)
@@ -33,7 +33,7 @@ export const EegProvider: React.FC<EegProviderProps> = ({ children }) => {
       name: '/eeg/info',
       messageType: 'eeg_interfaces/EegInfo',
     })
-    
+
     eegInfoSubscriber.subscribe((message) => {
       setEegInfo(message)
       console.log(message)
@@ -44,9 +44,5 @@ export const EegProvider: React.FC<EegProviderProps> = ({ children }) => {
     }
   }, [])
 
-  return (
-    <EegContext.Provider value={{ eegInfo }}>
-      {children}
-    </EegContext.Provider>
-  )
+  return <EegContext.Provider value={{ eegInfo }}>{children}</EegContext.Provider>
 }

@@ -11,8 +11,16 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, StyledButton, StyledRedButton, ProjectRow, ConfigRow,
-  CloseConfigRow, ConfigLabel, IndentedLabel} from 'styles/General'
+import {
+  StyledPanel,
+  StyledButton,
+  StyledRedButton,
+  ProjectRow,
+  ConfigRow,
+  CloseConfigRow,
+  ConfigLabel,
+  IndentedLabel,
+} from 'styles/General'
 
 import {
   getMaximumIntensity,
@@ -22,7 +30,7 @@ import {
   pauseExperiment,
   resumeExperiment,
   cancelExperiment,
-  setActiveProject
+  setActiveProject,
 } from 'ros/ros'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -162,8 +170,8 @@ const StatusPanel = styled(StyledPanel)`
 
 /* Trials-related */
 const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
-  filter: ${props => props.isGrayedOut ? 'grayscale(100%)' : 'none'};
-  opacity: ${props => props.isGrayedOut ? '0.3' : '1'};
+  filter: ${(props) => (props.isGrayedOut ? 'grayscale(100%)' : 'none')};
+  opacity: ${(props) => (props.isGrayedOut ? '0.3' : '1')};
   transition: filter 0.3s ease, opacity 0.3s ease;
 `
 
@@ -251,7 +259,7 @@ type MepConfiguration = {
   preactivation_check: PreactivationCheck
 }
 
-type TrialConfig =  {
+type TrialConfig = {
   analyze_mep: boolean
   mep_config: MepConfiguration
 }
@@ -279,12 +287,12 @@ enum ExperimentState {
   NotRunning,
   Running,
   Paused,
-  Canceled
+  Canceled,
 }
 
 enum ExperimentTab {
   SingleLocation,
-  MultipleLocations
+  MultipleLocations,
 }
 
 /* Session storage utilities. */
@@ -321,7 +329,7 @@ export const ExperimentView = () => {
   const [activeTab, setActiveTab] = useState<ExperimentTab>(() => getKey('activeTab', ExperimentTab.SingleLocation))
 
   const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', [0]))
-  const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', [{x: 0, y: 0}]))
+  const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', [{ x: 0, y: 0 }]))
 
   /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
     component - remove the dependency. */
@@ -344,7 +352,9 @@ export const ExperimentView = () => {
   const [itiMax, setItiMax] = useState<number>(() => getKey('itiMax', 4.5))
 
   const [autopause, setAutopause] = useState<boolean>(() => getKey('autopause', true))
-  const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(() => getKey('autopauseIntervalMinutes', 10))
+  const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(() =>
+    getKey('autopauseIntervalMinutes', 10),
+  )
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
   const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
@@ -398,42 +408,42 @@ export const ExperimentView = () => {
           {
             enabled: trigger1Enabled,
             /* Delay is presented as milliseconds in the UI, transform to seconds. */
-            delay: trigger1Delay / 1000
+            delay: trigger1Delay / 1000,
           },
           {
             enabled: trigger2Enabled,
             /* Delay is presented as milliseconds in the UI, transform to seconds. */
-            delay: trigger2Delay / 1000
-          }
+            delay: trigger2Delay / 1000,
+          },
         ]
 
         const stimulus: Stimulus = {
           target: {
             displacement_x: point.x,
             displacement_y: point.y,
-            rotation_angle: angle
+            rotation_angle: angle,
           },
           intensity: intensity,
-          triggers: triggers
+          triggers: triggers,
         }
 
         /* TODO: Hard-coded for now - make configurable. */
         const mep_config_time_window: TimeWindow = {
           start: 0.01,
-          end: 0.04
+          end: 0.04,
         }
 
         /* TODO: Hard-coded for now - make configurable. */
         const preactivation_check_time_window: TimeWindow = {
           start: -0.05,
-          end: -0.01
+          end: -0.01,
         }
 
         /* TODO: Hard-coded for now - make configurable. */
         const preactivation_check: PreactivationCheck = {
           enabled: false,
           time_window: preactivation_check_time_window,
-          voltage_range_limit: 90
+          voltage_range_limit: 90,
         }
 
         const mep_config: MepConfiguration = {
@@ -441,19 +451,19 @@ export const ExperimentView = () => {
             the user to use 1-based indexing. */
           emg_channel: emgChannel - 1,
           time_window: mep_config_time_window,
-          preactivation_check: preactivation_check
+          preactivation_check: preactivation_check,
         }
 
         const trial_config: TrialConfig = {
           /* Override mepEnabled if MEP healthcheck is not ok. */
           analyze_mep: mepHealthcheckOk ? mepEnabled : false,
-          mep_config: mep_config
+          mep_config: mep_config,
         }
 
         const trial: Trial = {
           stimuli: [stimulus],
           stimulus_times_since_trial_start: [0],
-          config: trial_config
+          config: trial_config,
         }
         trials.push(trial)
       })
@@ -468,21 +478,21 @@ export const ExperimentView = () => {
     const experiment: Experiment = {
       metadata: {
         experiment_name: experimentName,
-        subject_name: subjectName
+        subject_name: subjectName,
       },
 
       trials: repeatedTrials,
       intertrial_interval: {
         min: itiMin,
         max: itiMax,
-        tolerance: 0.0
+        tolerance: 0.0,
       },
 
       randomize_trials: true,
       wait_for_trigger: waitForTrigger,
 
       autopause: autopause,
-      autopause_interval: autopauseIntervalMinutes * 60
+      autopause_interval: autopauseIntervalMinutes * 60,
     }
     return experiment
   }
@@ -526,7 +536,7 @@ export const ExperimentView = () => {
     switch (activeTab) {
       case ExperimentTab.SingleLocation:
         setSelectedAngles([0])
-        setSelectedPoints([{x: 0, y: 0}])
+        setSelectedPoints([{ x: 0, y: 0 }])
 
         setNumOfTrials(0)
         setNumOfValidTrials(null)
@@ -582,7 +592,7 @@ export const ExperimentView = () => {
     if (numOfValidTrials === null) {
       return
     }
-    const duration = numOfValidTrials * (itiMin + itiMax) / 2
+    const duration = (numOfValidTrials * (itiMin + itiMax)) / 2
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
 
@@ -782,38 +792,37 @@ export const ExperimentView = () => {
     })
   }
 
-
   return (
     <>
       <ExperimentMetadata>
         <ProjectRow>
           <Label>Project:</Label>
           <Select onChange={handleProjectChange} value={activeProject}>
-          {projects.map((project, index) => (
-            <option key={index} value={project}>
-              {project}
-            </option>
-          ))}
+            {projects.map((project, index) => (
+              <option key={index} value={project}>
+                {project}
+              </option>
+            ))}
           </Select>
         </ProjectRow>
 
         <InputRow>
           <Label>Experiment:</Label>
           <Input
-            type="text"
-            placeholder="E.g., Resting motor threshold experiment 1"
+            type='text'
+            placeholder='E.g., Resting motor threshold experiment 1'
             value={experimentName}
-            onChange={e => setExperimentName(e.target.value)}
+            onChange={(e) => setExperimentName(e.target.value)}
             style={{ backgroundColor: experimentName ? 'transparent' : 'lightgray' }}
           />
         </InputRow>
         <InputRow>
           <Label>Subject:</Label>
           <Input
-            type="text"
-            placeholder="E.g., Subject 1"
+            type='text'
+            placeholder='E.g., Subject 1'
             value={subjectName}
-            onChange={e => setSubjectName(e.target.value)}
+            onChange={(e) => setSubjectName(e.target.value)}
             style={{ backgroundColor: subjectName ? 'transparent' : 'lightgray' }}
           />
         </InputRow>
@@ -821,14 +830,14 @@ export const ExperimentView = () => {
 
       <TabBar>
         <a
-          href="#"
+          href='#'
           onClick={() => changeActiveTab(ExperimentTab.SingleLocation)}
           className={activeTab === ExperimentTab.SingleLocation ? 'active' : ''}
         >
           Single Location
         </a>
         <a
-          href="#"
+          href='#'
           onClick={() => changeActiveTab(ExperimentTab.MultipleLocations)}
           className={activeTab === ExperimentTab.MultipleLocations ? 'active' : ''}
         >
@@ -838,34 +847,31 @@ export const ExperimentView = () => {
 
       <StimulationParametersPanel>
         <GridPanel>
-          {activeTab === ExperimentTab.SingleLocation &&
-          <LocationSelector
-            selectedPoints={selectedPoints}
-            setSelectedPoints={setSelectedPoints}
-          />}
-          {activeTab === ExperimentTab.MultipleLocations && <LocationSelector
-            selectedPoints={selectedPoints}
-            setSelectedPoints={setSelectedPoints}
-            multiSelectMode={true}
-          />}
+          {activeTab === ExperimentTab.SingleLocation && (
+            <LocationSelector selectedPoints={selectedPoints} setSelectedPoints={setSelectedPoints} />
+          )}
+          {activeTab === ExperimentTab.MultipleLocations && (
+            <LocationSelector
+              selectedPoints={selectedPoints}
+              setSelectedPoints={setSelectedPoints}
+              multiSelectMode={true}
+            />
+          )}
         </GridPanel>
         <AnglePanel>
-        {activeTab === ExperimentTab.SingleLocation &&
-          <AngleSelector
-            selectedAngles={selectedAngles}
-            setSelectedAngles={setSelectedAngles}
-          />
-        }
-        {activeTab === ExperimentTab.MultipleLocations &&
-          <AngleSelector
-            selectedAngles={selectedAngles}
-            setSelectedAngles={setSelectedAngles}
-            multiSelectMode={true}
-          />
-        }
+          {activeTab === ExperimentTab.SingleLocation && (
+            <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
+          )}
+          {activeTab === ExperimentTab.MultipleLocations && (
+            <AngleSelector
+              selectedAngles={selectedAngles}
+              setSelectedAngles={setSelectedAngles}
+              multiSelectMode={true}
+            />
+          )}
         </AnglePanel>
         <IntensityPanel>
-          {activeTab === ExperimentTab.SingleLocation &&
+          {activeTab === ExperimentTab.SingleLocation && (
             <IntensitySelector
               min={0}
               max={150}
@@ -873,8 +879,8 @@ export const ExperimentView = () => {
               maximumIntensity={maximumIntensity}
               onValueChange={handleIntensityChange}
             />
-          }
-          {activeTab === ExperimentTab.MultipleLocations &&
+          )}
+          {activeTab === ExperimentTab.MultipleLocations && (
             <IntensitySelector
               min={0}
               max={150}
@@ -882,229 +888,208 @@ export const ExperimentView = () => {
               maximumIntensity={0}
               onValueChange={handleIntensityChange}
             />
-          }
+          )}
         </IntensityPanel>
       </StimulationParametersPanel>
       <ConfigPanel>
-          <TriggerPanel>
-            <SmallerTitle>Triggers</SmallerTitle>
-            <TriggerRow>
-              <TriggerLabel>1</TriggerLabel>
-              <ToggleSwitch
-                type="flat"
-                checked={trigger1Enabled}
-                onChange={setTrigger1Enabled}
+        <TriggerPanel>
+          <SmallerTitle>Triggers</SmallerTitle>
+          <TriggerRow>
+            <TriggerLabel>1</TriggerLabel>
+            <ToggleSwitch type='flat' checked={trigger1Enabled} onChange={setTrigger1Enabled} />
+            <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
+              <DelayLabel>Delay (ms)</DelayLabel>
+            </GrayedOutPanel>
+            <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
+              <ValidatedInput
+                value={trigger1Delay}
+                min={-99}
+                max={99}
+                defaultValue={0}
+                onChange={setTrigger1Delay}
+                disabled={!trigger1Enabled}
               />
-              <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
-                <DelayLabel>Delay (ms)</DelayLabel>
-              </GrayedOutPanel>
-              <GrayedOutPanel isGrayedOut={!trigger1Enabled}>
-                <ValidatedInput
-                  value={trigger1Delay}
-                  min={-99}
-                  max={99}
-                  defaultValue={0}
-                  onChange={setTrigger1Delay}
-                  disabled={!trigger1Enabled}
-                />
-              </GrayedOutPanel>
-            </TriggerRow>
-            <TriggerRow>
+            </GrayedOutPanel>
+          </TriggerRow>
+          <TriggerRow>
             <TriggerLabel>2</TriggerLabel>
-              <ToggleSwitch
-                type="flat"
-                checked={trigger2Enabled}
-                onChange={setTrigger2Enabled}
+            <ToggleSwitch type='flat' checked={trigger2Enabled} onChange={setTrigger2Enabled} />
+            <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
+              <DelayLabel>Delay (ms)</DelayLabel>
+            </GrayedOutPanel>
+            <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
+              <ValidatedInput
+                value={trigger2Delay}
+                min={-99}
+                max={99}
+                defaultValue={0}
+                onChange={setTrigger2Delay}
+                disabled={!trigger2Enabled}
               />
-              <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
-                <DelayLabel>Delay (ms)</DelayLabel>
-              </GrayedOutPanel>
-              <GrayedOutPanel isGrayedOut={!trigger2Enabled}>
-                <ValidatedInput
-                  value={trigger2Delay}
-                  min={-99}
-                  max={99}
-                  defaultValue={0}
-                  onChange={setTrigger2Delay}
-                  disabled={!trigger2Enabled}
-                />
-              </GrayedOutPanel>
-            </TriggerRow>
-          </TriggerPanel>
-          <MepPanel isGrayedOut={ !mepHealthcheckOk }>
-            <SmallerTitle>MEP analysis</SmallerTitle>
+            </GrayedOutPanel>
+          </TriggerRow>
+        </TriggerPanel>
+        <MepPanel isGrayedOut={!mepHealthcheckOk}>
+          <SmallerTitle>MEP analysis</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Enabled:</ConfigLabel>
+            <ToggleSwitch type='flat' checked={mepEnabled} onChange={setMepEnabled} disabled={!mepHealthcheckOk} />
+          </ConfigRow>
+          <GrayedOutPanel isGrayedOut={!mepEnabled || !mepHealthcheckOk}>
             <ConfigRow>
-              <ConfigLabel>Enabled:</ConfigLabel>
-              <ToggleSwitch
-                type="flat"
-                checked={mepEnabled}
-                onChange={setMepEnabled}
-                disabled={!mepHealthcheckOk}
-              />
-            </ConfigRow>
-            <GrayedOutPanel isGrayedOut={!mepEnabled || !mepHealthcheckOk}>
-              <ConfigRow>
-                <IndentedLabel>EMG channel:</IndentedLabel>
-                {/*
+              <IndentedLabel>EMG channel:</IndentedLabel>
+              {/*
                   TODO: Validate EMG channel by passing a prop to ValidatedInput, based on the
                   number of available EMG channels, published in EegInfo topic by EEG bridge.
                 */}
-                <ValidatedInput
-                  type="text"
-                  value={emgChannel}
-                  defaultValue={1}
-                  min={1}
-                  max={16}
-                  onChange={setEmgChannel}
-                  disabled={!mepEnabled}
-                  />
-              </ConfigRow>
-            </GrayedOutPanel>
-          </MepPanel>
-          <TrialsPanel>
-            <SmallerTitle>{activeTab === ExperimentTab.SingleLocation ? 'Trials' : 'Repetitions'}</SmallerTitle>
-            <ConfigRow>
-              <ConfigLabel># of {activeTab === ExperimentTab.SingleLocation ? 'trials' : 'repetitions'}:</ConfigLabel>
               <ValidatedInput
-                type="text"
-                value={numOfRepetitions}
+                type='text'
+                value={emgChannel}
                 defaultValue={1}
                 min={1}
-                max={999}
-                onChange={setNumOfRepetitions}
+                max={16}
+                onChange={setEmgChannel}
+                disabled={!mepEnabled}
               />
             </ConfigRow>
+          </GrayedOutPanel>
+        </MepPanel>
+        <TrialsPanel>
+          <SmallerTitle>{activeTab === ExperimentTab.SingleLocation ? 'Trials' : 'Repetitions'}</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel># of {activeTab === ExperimentTab.SingleLocation ? 'trials' : 'repetitions'}:</ConfigLabel>
+            <ValidatedInput
+              type='text'
+              value={numOfRepetitions}
+              defaultValue={1}
+              min={1}
+              max={999}
+              onChange={setNumOfRepetitions}
+            />
+          </ConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Wait for trigger:</ConfigLabel>
+            <ToggleSwitch type='flat' checked={waitForTrigger} onChange={setWaitForTrigger} />
+          </ConfigRow>
+          <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
             <ConfigRow>
-              <ConfigLabel>Wait for trigger:</ConfigLabel>
-              <ToggleSwitch
-                type="flat"
-                checked={waitForTrigger}
-                onChange={setWaitForTrigger}
+              <ConfigLabel>Interval (s)</ConfigLabel>
+            </ConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Min:</IndentedLabel>
+              <ValidatedInput
+                type='number'
+                value={itiMin}
+                defaultValue={3.0}
+                min={0.1}
+                max={100}
+                step={0.1}
+                onChange={setItiMin}
+                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+              />
+            </CloseConfigRow>
+            <CloseConfigRow>
+              <IndentedLabel>Max:</IndentedLabel>
+              <ValidatedInput
+                type='number'
+                value={itiMax}
+                defaultValue={4.0}
+                min={0.1}
+                max={100}
+                step={0.1}
+                onChange={setItiMax}
+                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+              />
+            </CloseConfigRow>
+          </GrayedOutPanel>
+        </TrialsPanel>
+        <PausePanel>
+          <SmallerTitle>Pause</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Automatic:</ConfigLabel>
+            <ToggleSwitch type='flat' checked={autopause} onChange={setAutopause} />
+          </ConfigRow>
+          <GrayedOutPanel isGrayedOut={!autopause}>
+            <ConfigRow>
+              <IndentedLabel>Interval (min):</IndentedLabel>
+              <ValidatedInput
+                type='number'
+                value={autopauseIntervalMinutes}
+                defaultValue={10}
+                min={1}
+                max={99}
+                onChange={setAutopauseIntervalMinutes}
+                disabled={!autopause}
               />
             </ConfigRow>
-            <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
-              <ConfigRow>
-                <ConfigLabel>Interval (s)</ConfigLabel>
-              </ConfigRow>
-              <CloseConfigRow>
-                <IndentedLabel>Min:</IndentedLabel>
-                <ValidatedInput
-                  type="number"
-                  value={itiMin}
-                  defaultValue={3.0}
-                  min={0.1}
-                  max={100}
-                  step={0.1}
-                  onChange={setItiMin}
-                  disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
-                />
-              </CloseConfigRow>
-              <CloseConfigRow>
-                <IndentedLabel>Max:</IndentedLabel>
-                  <ValidatedInput
-                    type="number"
-                    value={itiMax}
-                    defaultValue={4.0}
-                    min={0.1}
-                    max={100}
-                    step={0.1}
-                    onChange={setItiMax}
-                    disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
-                />
-              </CloseConfigRow>
-            </GrayedOutPanel>
-          </TrialsPanel>
-          <PausePanel>
-            <SmallerTitle>Pause</SmallerTitle>
-            <ConfigRow>
-              <ConfigLabel>Automatic:</ConfigLabel>
-              <ToggleSwitch
-                type="flat"
-                checked={autopause}
-                onChange={setAutopause}
-              />
-            </ConfigRow>
-            <GrayedOutPanel isGrayedOut={!autopause}>
-              <ConfigRow>
-                <IndentedLabel>Interval (min):</IndentedLabel>
-                <ValidatedInput
-                  type="number"
-                  value={autopauseIntervalMinutes}
-                  defaultValue={10}
-                  min={1}
-                  max={99}
-                  onChange={setAutopauseIntervalMinutes}
-                  disabled={!autopause}
-                />
-              </ConfigRow>
-            </GrayedOutPanel>
-          </PausePanel>
-          <ExperimentPanel>
-            <SmallerTitle>Experiment</SmallerTitle>
-            <ConfigRow>
-              <ConfigLabel>Trials</ConfigLabel>
-            </ConfigRow>
-            <CloseConfigRow>
-              <IndentedLabel>Total:</IndentedLabel>
-              <ConfigLabel>{numOfTrials !== null ? numOfTrials : '\u2013'}</ConfigLabel>
-            </CloseConfigRow>
-            <CloseConfigRow>
-              <IndentedLabel>Valid:</IndentedLabel>
-              <ConfigLabel>{numOfValidTrials !== null ? numOfValidTrials : '\u2013'}</ConfigLabel>
-            </CloseConfigRow>
-            <ConfigRow>
-              <ConfigLabel>Experiment</ConfigLabel>
-            </ConfigRow>
-            <CloseConfigRow>
-              <IndentedLabel>Duration:</IndentedLabel>
-              <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
-            </CloseConfigRow>
-          </ExperimentPanel>
-          <StatusPanel>
-            <SmallerTitle>Status</SmallerTitle>
-            <ConfigRow>
-              <ConfigLabel>Experiment</ConfigLabel>
-              <ConfigLabel>{formatExperimentState()} </ConfigLabel>
-            </ConfigRow>
-            <ConfigRow>
-              <IndentedLabel>Trial:</IndentedLabel>
-              <ConfigLabel>{formatTrialNumber()} </ConfigLabel>
-            </ConfigRow>
-            <CloseConfigRow>
-              <IndentedLabel>Attempt:</IndentedLabel>
-              <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
-            </CloseConfigRow>
-            <CloseConfigRow></CloseConfigRow>
-            <ConfigRow>
-              <ConfigLabel>Time:</ConfigLabel>
-              <ConfigLabel>{
-                experimentState === ExperimentState.Running || experimentState === ExperimentState.Paused ?
-                formatTime(systemState?.time) : '\u2013'}
-              </ConfigLabel>
-            </ConfigRow>
-            <CloseConfigRow></CloseConfigRow>
-            <StyledButton
-              onClick={() => runStartButtonAction(startButtonState)}
-              disabled={
-                startButtonState === StartButtonState.Updating ||
-                startButtonState === StartButtonState.Pausing ||
-                selectedPoints.length == 0 ||
-                selectedAngles.length == 0
-              }
-            >
-              {startButtonStateToString(startButtonState)}
-            </StyledButton>
-            <StyledRedButton
-              onClick={() => runCancelButtonAction()}
-              disabled={
-                experimentState === ExperimentState.NotRunning ||
-                cancelButtonState == CancelButtonState.Canceling
-              }
-            >
-              {cancelButtonStateToString(cancelButtonState)}
-            </StyledRedButton>
-          </StatusPanel>
-        </ConfigPanel>
+          </GrayedOutPanel>
+        </PausePanel>
+        <ExperimentPanel>
+          <SmallerTitle>Experiment</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Trials</ConfigLabel>
+          </ConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>Total:</IndentedLabel>
+            <ConfigLabel>{numOfTrials !== null ? numOfTrials : '\u2013'}</ConfigLabel>
+          </CloseConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>Valid:</IndentedLabel>
+            <ConfigLabel>{numOfValidTrials !== null ? numOfValidTrials : '\u2013'}</ConfigLabel>
+          </CloseConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Experiment</ConfigLabel>
+          </ConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>Duration:</IndentedLabel>
+            <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
+          </CloseConfigRow>
+        </ExperimentPanel>
+        <StatusPanel>
+          <SmallerTitle>Status</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Experiment</ConfigLabel>
+            <ConfigLabel>{formatExperimentState()} </ConfigLabel>
+          </ConfigRow>
+          <ConfigRow>
+            <IndentedLabel>Trial:</IndentedLabel>
+            <ConfigLabel>{formatTrialNumber()} </ConfigLabel>
+          </ConfigRow>
+          <CloseConfigRow>
+            <IndentedLabel>Attempt:</IndentedLabel>
+            <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
+          </CloseConfigRow>
+          <CloseConfigRow></CloseConfigRow>
+          <ConfigRow>
+            <ConfigLabel>Time:</ConfigLabel>
+            <ConfigLabel>
+              {experimentState === ExperimentState.Running || experimentState === ExperimentState.Paused
+                ? formatTime(systemState?.time)
+                : '\u2013'}
+            </ConfigLabel>
+          </ConfigRow>
+          <CloseConfigRow></CloseConfigRow>
+          <StyledButton
+            onClick={() => runStartButtonAction(startButtonState)}
+            disabled={
+              startButtonState === StartButtonState.Updating ||
+              startButtonState === StartButtonState.Pausing ||
+              selectedPoints.length == 0 ||
+              selectedAngles.length == 0
+            }
+          >
+            {startButtonStateToString(startButtonState)}
+          </StyledButton>
+          <StyledRedButton
+            onClick={() => runCancelButtonAction()}
+            disabled={
+              experimentState === ExperimentState.NotRunning || cancelButtonState == CancelButtonState.Canceling
+            }
+          >
+            {cancelButtonStateToString(cancelButtonState)}
+          </StyledRedButton>
+        </StatusPanel>
+      </ConfigPanel>
     </>
   )
 }

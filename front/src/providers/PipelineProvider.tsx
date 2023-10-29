@@ -4,11 +4,11 @@ import { Topic, Message } from 'roslib'
 import { ros } from 'ros/ros'
 
 interface PreprocessorList extends ROSLIB.Message {
-  scripts: string[],
+  scripts: string[]
 }
 
 interface RosBoolean extends ROSLIB.Message {
-  data: boolean,
+  data: boolean
 }
 
 interface PipelineContextType {
@@ -18,7 +18,7 @@ interface PipelineContextType {
 
 const defaultPipelineState: PipelineContextType = {
   preprocessorList: [],
-  preprocessorEnabled: false
+  preprocessorEnabled: false,
 }
 
 export const PipelineContext = React.createContext<PipelineContextType>(defaultPipelineState)
@@ -36,7 +36,7 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
     const preprocessorListSubscriber = new Topic<PreprocessorList>({
       ros: ros,
       name: '/pipeline/preprocessor/list',
-      messageType: 'project_interfaces/PreprocessorList'
+      messageType: 'project_interfaces/PreprocessorList',
     })
 
     preprocessorListSubscriber.subscribe((message) => {
@@ -47,7 +47,7 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
     const preprocessorEnabledSubscriber = new Topic<RosBoolean>({
       ros: ros,
       name: '/pipeline/preprocessor/enabled',
-      messageType: 'std_msgs/Bool'
+      messageType: 'std_msgs/Bool',
     })
 
     preprocessorEnabledSubscriber.subscribe((message) => {
@@ -62,8 +62,6 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
   }, [])
 
   return (
-    <PipelineContext.Provider value={{ preprocessorList, preprocessorEnabled }}>
-      {children}
-    </PipelineContext.Provider>
+    <PipelineContext.Provider value={{ preprocessorList, preprocessorEnabled }}>{children}</PipelineContext.Provider>
   )
 }

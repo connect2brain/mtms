@@ -37,5 +37,5 @@ export const SessionControl = () => {
         {sessionText()} session
       </StyledButton>
     </>
-)
+  )
 }
