@@ -133,28 +133,30 @@ class StimulusPerformerNode(Node):
 
     # Logging
 
-    def log_stimulus_parameters(self, goal_id, time, stimulus):
+    def log_stimulus(self, goal_id, stimulus, time, wait_for_trigger):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: Stimulus parameters:'.format(goal_id))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Time: {:.3f}'.format(goal_id, time))
+        self.logger.info('{}:   Time: {:.3f}'.format(goal_id, time))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Target:'.format(goal_id))
-        self.logger.info('{}:   - (x, y, angle) = ({}, {}, {})'.format(
+        self.logger.info('{}:   Wait for trigger: {}'.format(goal_id, wait_for_trigger))
+        self.logger.info('{}:'.format(goal_id))
+        self.logger.info('{}:   Target:'.format(goal_id))
+        self.logger.info('{}:     - (x, y, angle) = ({}, {}, {})'.format(
             goal_id,
             stimulus.target.displacement_x,
             stimulus.target.displacement_y,
             stimulus.target.rotation_angle,
         ))
-        self.logger.info('{}:   - Intensity: {} V/m'.format(goal_id, stimulus.intensity))
+        self.logger.info('{}:     - Intensity: {} V/m'.format(goal_id, stimulus.intensity))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trigger 1:'.format(goal_id))
-        self.logger.info('{}:   - Enabled: {}'.format(goal_id, stimulus.triggers[0].enabled))
-        self.logger.info('{}:   - Delay: {}'.format(goal_id, stimulus.triggers[0].delay))
+        self.logger.info('{}:   Trigger 1:'.format(goal_id))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, stimulus.triggers[0].enabled))
+        self.logger.info('{}:     - Delay: {}'.format(goal_id, stimulus.triggers[0].delay))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trigger 2:'.format(goal_id))
-        self.logger.info('{}:   - Enabled: {}'.format(goal_id, stimulus.triggers[1].enabled))
-        self.logger.info('{}:   - Delay: {}'.format(goal_id, stimulus.triggers[1].delay))
+        self.logger.info('{}:   Trigger 2:'.format(goal_id))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, stimulus.triggers[1].enabled))
+        self.logger.info('{}:     - Delay: {}'.format(goal_id, stimulus.triggers[1].delay))
         self.logger.info('{}:'.format(goal_id))
 
     # Performing stimulus
@@ -164,6 +166,7 @@ class StimulusPerformerNode(Node):
 
         stimulus = request.stimulus
         time = request.time
+        wait_for_trigger = request.wait_for_trigger
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -175,8 +178,9 @@ class StimulusPerformerNode(Node):
 
         success = self.perform_stimulus(
             goal_id=goal_id,
-            time=time,
             stimulus=stimulus,
+            time=time,
+            wait_for_trigger=wait_for_trigger,
         )
 
         # Create and return a Result object.
@@ -254,14 +258,14 @@ class StimulusPerformerNode(Node):
 
     # Pulse and trigger out services
 
-    def timed_trigger_out(self, id, time, port):
+    def trigger_out(self, id, time, delay, execution_condition, port):
         message = TriggerOut()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.TIMED
+        event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = 0.0
+        event_info.delay = float(delay)
 
         message.event_info = event_info
         message.port = port
@@ -270,12 +274,12 @@ class StimulusPerformerNode(Node):
         self.send_trigger_out_publisher.publish(message)
         self.event_feedback[id] = None
 
-    def timed_pulse(self, id, time, channel, waveform):
+    def pulse(self, id, time, execution_condition, channel, waveform):
         message = Pulse()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.TIMED
+        event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
         event_info.delay = 0.0
 
@@ -286,7 +290,7 @@ class StimulusPerformerNode(Node):
         self.send_pulse_publisher.publish(message)
         self.event_feedback[id] = None
 
-    def timed_targeted_pulse(self, time, target, intensity):
+    def targeted_pulse(self, target, intensity, time, execution_condition):
         _, reversed_polarities = self.get_channel_voltages(target, intensity)
 
         ids = [None] * self.NUM_OF_CHANNELS
@@ -303,11 +307,12 @@ class StimulusPerformerNode(Node):
                     waveform=waveform,
                 )
 
-            self.timed_pulse(
+            self.pulse(
                 id=id,
                 time=time,
                 channel=channel,
                 waveform=waveform,
+                execution_condition=execution_condition,
             )
             ids[channel] = id
 
@@ -351,19 +356,22 @@ class StimulusPerformerNode(Node):
 
         return True
 
-    def perform_stimulus(self, goal_id, time, stimulus):
-        self.log_stimulus_parameters(goal_id, time, stimulus)
+    def perform_stimulus(self, goal_id, stimulus, time, wait_for_trigger):
+        self.log_stimulus(goal_id, stimulus, time, wait_for_trigger)
 
         success = self.check_goal_feasible(goal_id, time)
         if not success:
             return False
 
+        execution_condition = ExecutionCondition.WAIT_FOR_TRIGGER if wait_for_trigger else ExecutionCondition.TIMED
+
         # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
         #   to hide the logic.
-        pulse_ids = self.timed_targeted_pulse(
-            time=time,
+        pulse_ids = self.targeted_pulse(
             target=stimulus.target,
             intensity=stimulus.intensity,
+            time=time,
+            execution_condition=execution_condition,
         )
 
         num_of_trigger_ports = len(stimulus.triggers)
@@ -371,13 +379,15 @@ class StimulusPerformerNode(Node):
         for i in range(num_of_trigger_ports):
             if stimulus.triggers[i].enabled:
                 id = self.get_next_id()
-                delayed_time = time + stimulus.triggers[i].delay
+                delay = stimulus.triggers[i].delay
                 port = i + 1
 
-                self.timed_trigger_out(
+                self.trigger_out(
                     id=id,
-                    time=delayed_time,
                     port=port,
+                    time=time,
+                    delay=delay,
+                    execution_condition=execution_condition,
                 )
                 trigger_ids += [id]
 
