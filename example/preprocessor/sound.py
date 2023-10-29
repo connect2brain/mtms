@@ -1,11 +1,11 @@
-from concurrent.futures import ThreadPoolExecutor
+import multiprocessing
 import time
 
 import numpy as np
 
 import preprocessor_bindings
 
-def log(x):
+def print(x):
     preprocessor_bindings.log(str(x))
 
 
@@ -24,7 +24,7 @@ class Preprocessor:
         self.lambda0 = 0.1
         self.lambda_learning_rate = 0.01
         self.conv_bound = 0.0001
-        self.update_interval = self.sampling_frequency
+        self.update_interval = self.sampling_frequency * 4
 
         # Initialize state
         self.sound_filter = np.identity(self.num_of_eeg_channels)
@@ -33,7 +33,7 @@ class Preprocessor:
         self.ongoing_tms_artifact = False
         self.updating = False
 
-        self.executor = ThreadPoolExecutor()  # Initialize the executor
+        self.result_queue = multiprocessing.Queue()
 
         # Configure the length of sample window.
         self.sample_window = [-499, 0]
@@ -69,21 +69,26 @@ class Preprocessor:
         if not self.updating and self.samples_collected % self.update_interval == 0 and not self.ongoing_tms_artifact:
             self.updating = True
 
-            self.sound(eeg_data)
-            self.updating = False
-            # future = self.executor.submit(self.SOUND, eeg_data)
+            p = multiprocessing.Process(target=self.worker_process, args=(eeg_data, self.result_queue))
+            p.start()
 
-            # def callback(future):
-            #     self.sound_filter = future.result()
-            #     self.updating = False
+        if self.updating:
+            if not self.result_queue.empty():
+                self.sound_filter = self.result_queue.get()
+                self.updating = False
 
-            # future.add_done_callback(callback)
+        eeg_data_preprocessed = eeg_data[-1,:] @ self.sound_filter.T
+        emg_data_preprocessed = emg_data[-1,:]
 
         return {
-            'eeg_data': [],
-            'emg_data': [],
-            'valid': True,
+            'eeg_data': eeg_data_preprocessed,
+            'emg_data': emg_data_preprocessed,
+            'valid': not self.ongoing_tms_artifact,
         }
+
+    def worker_process(self, eeg_data, result_queue):
+#        result = self.sound(eeg_data)
+        result_queue.put(self.sound_filter)
 
     def sound(self, eeg_data):
         # Performs the SOUND algorithm for a given data.
@@ -91,7 +96,7 @@ class Preprocessor:
         data = eeg_data.T
 
         start = time.time()
-        log("Starting SOUND update")
+        print("Starting SOUND update")
 
         n0, _ = data.shape
         data = np.reshape(data, (n0, -1))
@@ -178,7 +183,7 @@ class Preprocessor:
     #     print("Adjusting lambda value to ", self.lambda0, "Relative error in clenest channel ", rel_err)
 
         end = time.time()
-        log("Finished SOUND update")
-        log(end-start)
+        print("Finished SOUND update")
+        print(end-start)
 
         return SOUND_Wiener_filter
