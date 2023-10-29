@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
-const StyledInput = styled.input`
+const StyledInput = styled.input<{ valid?: boolean }>`
   marginTop: 0px;
   width: 43px;
   margin-right: 40px;
-  border: 2px solid black;
+  border: 2px solid ${props => (props.valid ? 'black' : 'red')};
+  outline-color: ${props => (props.valid ? 'black' : 'red')};
   background-color: 'white';
   color: 'black';
 `
@@ -30,44 +31,37 @@ export const ValidatedInput: React.FC<ValidatedInputProps> = ({
   defaultValue,
   ...props
 }) => {
-  const [tempValue, setTempValue] = useState<string>(value.toString())
+  const [localValue, setLocalValue] = useState<string>(defaultValue.toString())
 
-  useEffect(() => {
-    setTempValue(value.toString())
-  }, [value])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTempValue(e.target.value)
+  const isValueValid = (value: string): boolean => {
+    const newValue = parseFloat(value)
+    if (isNaN(newValue)) return false
+    return (min === undefined || newValue >= min) && (max === undefined || newValue <= max)
   }
 
-  const handleInputBlur = () => {
-    let numericValue = Number(tempValue)
-
-    // If value is non-numeric or invalid, revert to default value
-    if (isNaN(numericValue)) {
-      numericValue = defaultValue
+  const handleChange = (inputValue: string) => {
+    setLocalValue(inputValue)
+    if (isValueValid(inputValue)) {
+      onChange(parseFloat(inputValue))
     }
+  }
 
-    // Boundary checks
-    if (min !== undefined && numericValue < min) {
-      numericValue = min
+  const handleBlur = () => {
+    if (!isValueValid(localValue) && value !== undefined) {
+      setLocalValue(value.toString())
+    } else if (isValueValid(localValue)) {
+      onChange(parseFloat(localValue))
     }
-
-    if (max !== undefined && numericValue > max) {
-      numericValue = max
-    }
-
-    onChange(numericValue)
-    setTempValue(numericValue.toString()) // Update the temporary value with the clipped or default value
   }
 
   return (
     <StyledInput
       type={type}
       {...props}
-      value={tempValue}
-      onChange={handleInputChange}
-      onBlur={handleInputBlur}
+      value={localValue}
+      valid={isValueValid(localValue)}
+      onChange={e => handleChange(e.target.value)}
+      onBlur={handleBlur}
     />
   )
 }
