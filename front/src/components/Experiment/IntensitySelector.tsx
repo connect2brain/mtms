@@ -5,6 +5,7 @@ import { SmallerTitle } from 'styles/ExperimentStyles'
 import { ValidatedInput } from 'components/ValidatedInput'
 
 interface IntensitySelectorProps {
+  value: number
   min: number
   max: number
   showMaximumIntensity: boolean
@@ -46,22 +47,20 @@ const IntensityLabel = styled.span`
 `
 
 export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
+  value,
   min,
   max,
   showMaximumIntensity,
   maximumIntensity,
   onValueChange,
 }) => {
-  const [selectedIntensity, setSelectedIntensity] = useState<number>(10)
-
-  const handleChange = (value: number) => {
-    setSelectedIntensity(value)
-    onValueChange(value)
+  const handleChange = (newValue: number) => {
+    onValueChange(newValue)
   }
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value)
-    handleChange(value)
+    const newValue = Number(event.target.value)
+    handleChange(newValue)
   }
 
   const sliderHeight = 350
@@ -85,7 +84,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
           type='range'
           min={min}
           max={max}
-          value={selectedIntensity}
+          value={value}
           onChange={handleSliderChange}
           style={{
             writingMode: 'vertical-lr',
@@ -98,7 +97,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
         <ValidatedInput
           type='number'
-          value={selectedIntensity}
+          value={value}
           min={min}
           max={max}
           onChange={handleChange}
