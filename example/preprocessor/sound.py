@@ -5,6 +5,7 @@ import numpy as np
 
 import preprocessor_bindings
 
+# Override Python's native print() function.
 def print(x):
     preprocessor_bindings.log(str(x))
 
@@ -15,25 +16,26 @@ class Preprocessor:
         self.num_of_emg_channels = num_of_emg_channels
         self.sampling_frequency = sampling_frequency
 
-        # Loads a generic average-head lead field tailored for the NeurOne data:
-        self.LFM = np.identity(self.num_of_eeg_channels)
-        #self.LFM = np.genfromtxt('leadfield.txt',delimiter='\t')
+        # Load a generic average-head lead field tailored for the NeurOne data:
+        self.lfm = np.identity(self.num_of_eeg_channels)
+        #self.lfm = np.genfromtxt('leadfield.txt',delimiter='\t')
 
         # SOUND parameters
-        self.num_of_sound_iterations = 10
+        self.iterations = 10
         self.lambda0 = 0.1
-        self.lambda_learning_rate = 0.01
-        self.conv_bound = 0.0001
-        self.update_interval = self.sampling_frequency * 4
+        self.learning_rate = 0.01
+        self.convergence_boundary = 0.0001
+        self.update_interval_in_samples = self.sampling_frequency
 
         # Initialize state
-        self.sound_filter = np.identity(self.num_of_eeg_channels)
-
+        self.filter = np.identity(self.num_of_eeg_channels)
         self.samples_collected = 0
         self.ongoing_tms_artifact = False
-        self.updating = False
+        self.updating_filter = False
 
-        self.result_queue = multiprocessing.Queue()
+        # Initialize multiprocessing
+        self.pool = multiprocessing.Pool(processes=4)
+        self.result = None
 
         # Configure the length of sample window.
         self.sample_window = [-499, 0]
@@ -61,23 +63,44 @@ class Preprocessor:
             if self.samples_after_tms == 1000:
                 self.ongoing_tms_artifact = False
 
-        # Every 2 samples, try to identify a TMS pulse if not already identified.
-        if self.samples_collected % 2 == 0 and not self.ongoing_tms_artifact and self.identify_tms(eeg_data):
+        # Every two samples, try to identify a TMS pulse if not already identified.
+        if self.samples_collected % 2 == 0 and \
+             not self.ongoing_tms_artifact and \
+             self.identify_tms(eeg_data):
+
             self.ongoing_tms_artifact = True
             self.samples_after_tms = 0
 
-        if not self.updating and self.samples_collected % self.update_interval == 0 and not self.ongoing_tms_artifact:
-            self.updating = True
+        if self.result is None and \
+           self.samples_collected % self.update_interval_in_samples == 0 and \
+           not self.ongoing_tms_artifact:
 
-            p = multiprocessing.Process(target=self.worker_process, args=(eeg_data, self.result_queue))
-            p.start()
+            self.result = self.pool.apply_async(sound, (
+                eeg_data,
+                self.num_of_eeg_channels,
+                self.lfm,
+                self.iterations,
+                self.lambda0,
+                self.convergence_boundary,
+                self.learning_rate,
+            ))
 
-        if self.updating:
-            if not self.result_queue.empty():
-                self.sound_filter = self.result_queue.get()
-                self.updating = False
+        if self.result is not None:
+            try:
+                new_filter, new_lambda0 = self.result.get(timeout=0)
 
-        eeg_data_preprocessed = eeg_data[-1,:] @ self.sound_filter.T
+                self.filter = new_filter
+                self.lambda0 = new_lambda0
+
+                self.result = None
+
+                print("SOUND filter successfully updated.")
+                print("New lambda value: {}".format(self.lambda0))
+
+            except multiprocessing.TimeoutError as e:
+                pass
+
+        eeg_data_preprocessed = eeg_data[-1,:] @ self.filter.T
         emg_data_preprocessed = emg_data[-1,:]
 
         return {
@@ -86,104 +109,102 @@ class Preprocessor:
             'valid': not self.ongoing_tms_artifact,
         }
 
-    def worker_process(self, eeg_data, result_queue):
-#        result = self.sound(eeg_data)
-        result_queue.put(self.sound_filter)
 
-    def sound(self, eeg_data):
-        # Performs the SOUND algorithm for a given data.
+def sound(eeg_data, num_of_channels, lfm, iterations, lambda0, convergence_boundary, learning_rate):
+    # Performs the SOUND algorithm for a given data.
 
-        data = eeg_data.T
+    data = eeg_data.T
 
-        start = time.time()
-        print("Starting SOUND update")
+    start = time.time()
+    print("Updating SOUND filter...")
 
-        n0, _ = data.shape
-        data = np.reshape(data, (n0, -1))
-        chanN = data.shape[0]
-        sigmas = np.ones((self.num_of_eeg_channels, 1))
+    n0, _ = data.shape
+    data = np.reshape(data, (n0, -1))
+    num_of_channels = data.shape[0]
+    sigmas = np.ones((num_of_channels, 1))
 
-        LL = self.LFM @ self.LFM.T
-        dn = np.empty((self.num_of_sound_iterations, 1)) # Empty vector for convergences
+    LL = lfm @ lfm.T
+    dn = np.empty((iterations, 1)) # Empty vector for convergences
 
-        chanPerms = np.zeros((self.num_of_eeg_channels, self.num_of_eeg_channels - 1),dtype=np.int32)
+    chanPerms = np.zeros((num_of_channels, num_of_channels - 1),dtype=np.int32)
 
-        for i in range(data.shape[0]):
-            chanPerms[i, :] = np.setdiff1d(np.arange(1, self.num_of_eeg_channels + 1), i+1) -1
+    for i in range(data.shape[0]):
+        chanPerms[i, :] = np.setdiff1d(np.arange(1, num_of_channels + 1), i+1) -1
 
-        # Going through all the channels as many times as requested
-        dataCov = np.matmul(data, data.T) / data.shape[1]
+    # Going through all the channels as many times as requested
+    dataCov = np.matmul(data, data.T) / data.shape[1]
 
-        # ULTRA_SOUND
+    # ULTRA_SOUND
 
-        # Johanna's fast Sound
+    # Johanna's fast Sound
 
-        for k in range(self.num_of_sound_iterations):
-            sigmas_old = sigmas
+    for k in range(iterations):
+        sigmas_old = sigmas
 
-            #print('Performing SOUND. Iteration round:', k+1)
+        #print('Performing SOUND. Iteration round:', k+1)
 
-            #Evaluating each channel in a random order
-            for i in np.random.permutation(chanN):
-                chan = chanPerms[i, :]
-                # Defining the whitening operator with the latest noise
-                # estimates
-                W = np.diagflat(1.0 / sigmas)
-                WL =  (1.0 / sigmas[chan]) * self.LFM[chan, :]
-                WLLW =  WL@(WL.T)
+        #Evaluating each channel in a random order
+        for i in np.random.permutation(num_of_channels):
+            chan = chanPerms[i, :]
+            # Defining the whitening operator with the latest noise
+            # estimates
+            W = np.diagflat(1.0 / sigmas)
+            WL =  (1.0 / sigmas[chan]) * lfm[chan, :]
+            WLLW =  WL@(WL.T)
 
-                wM = np.zeros(chanN)
-                # Calculate the intermediate values for readability
-                WL_transpose = np.transpose(WL)
-                trace_term = np.trace(WLLW)
-                denominator = WLLW + self.lambda0 * trace_term / (chanN - 1) * np.eye(chanN - 1)
-                inv_sigmas = np.diagflat(1.0 / sigmas[chan])
+            wM = np.zeros(num_of_channels)
+            # Calculate the intermediate values for readability
+            WL_transpose = np.transpose(WL)
+            trace_term = np.trace(WLLW)
+            denominator = WLLW + lambda0 * trace_term / (num_of_channels - 1) * np.eye(num_of_channels - 1)
+            inv_sigmas = np.diagflat(1.0 / sigmas[chan])
 
-                # Perform the matrix operations step by step
-                tmp1 = np.linalg.solve(denominator, inv_sigmas)
-                tmp2 = np.matmul(WL_transpose, tmp1)
-                wM_chan = np.matmul(self.LFM[i, :], tmp2)
+            # Perform the matrix operations step by step
+            tmp1 = np.linalg.solve(denominator, inv_sigmas)
+            tmp2 = np.matmul(WL_transpose, tmp1)
+            wM_chan = np.matmul(lfm[i, :], tmp2)
 
-                # Assign the result to wM[chan]
-                wM[chan] = wM_chan
+            # Assign the result to wM[chan]
+            wM[chan] = wM_chan
 
-                #wM[chan] = np.matmul(self.LFM[i, :], np.matmul(WL.T, np.linalg.solve(WLLW + self.lambda0 * np.trace(WLLW) / (chanN-1) * np.eye(chanN-1), np.diag(1.0 / sigmas[chan]))))
-                wM[i] = -1
-                sigmas[i] = np.sqrt(np.matmul(np.matmul(wM, dataCov), wM))
+            #wM[chan] = np.matmul(lfm[i, :], np.matmul(WL.T, np.linalg.solve(WLLW + lambda0 * np.trace(WLLW) / (num_of_channels-1) * np.eye(num_of_channels-1), np.diag(1.0 / sigmas[chan]))))
+            wM[i] = -1
+            sigmas[i] = np.sqrt(np.matmul(np.matmul(wM, dataCov), wM))
 
-            # Following and storing the convergence of the algorithm
-            dn[k] = np.max(np.abs(sigmas_old - sigmas) / sigmas_old)
-            #print(dn[k])
-            if dn[k] < self.conv_bound: # terminates the iteration if the convergence boundary is reached
-                break
+        # Following and storing the convergence of the algorithm
+        dn[k] = np.max(np.abs(sigmas_old - sigmas) / sigmas_old)
+        #print(dn[k])
+        if dn[k] < convergence_boundary: # terminates the iteration if the convergence boundary is reached
+            break
 
-        # Final data correction based on the final noise-covariance estimate.
-        # Calculates matrices needed for SOUND spatial filter (for other functions)
-        W = np.diag(1.0 / np.squeeze(sigmas))
-        WL = np.matmul(W, self.LFM)
-        WLLW = np.matmul(WL, WL.T)
-        C = (WLLW + self.lambda0 * np.trace(WLLW) / chanN * np.eye(chanN))
-        SOUND_Wiener_filter = np.matmul(self.LFM, np.matmul(WL.T, np.linalg.solve(C, W)))
+    # Final data correction based on the final noise-covariance estimate.
+    # Calculates matrices needed for SOUND spatial filter (for other functions)
+    W = np.diag(1.0 / np.squeeze(sigmas))
+    WL = np.matmul(W, lfm)
+    WLLW = np.matmul(WL, WL.T)
+    C = (WLLW + lambda0 * np.trace(WLLW) / num_of_channels * np.eye(num_of_channels))
+    SOUND_Wiener_filter = np.matmul(lfm, np.matmul(WL.T, np.linalg.solve(C, W)))
 
-        #SOUND_Wiener_filter = np.random.rand(62,62) # just for testing that anything is happening
+    #SOUND_Wiener_filter = np.random.rand(62,62) # just for testing that anything is happening
 
-        # Check whether the regularization level is optimal and adjust with the
-        # learning rate, when appropriate:
+    # Check whether the regularization level is optimal and adjust with the
+    # learning rate, when appropriate:
 
-        # find the best-quality channel
-        best_ch = np.argmin(sigmas)
-        # Calculate the relative error in the best channel caused by SOUND overcorrection:
-        rel_err = np.linalg.norm(SOUND_Wiener_filter[best_ch,:]@data - data[best_ch,:])/np.linalg.norm(data[best_ch,:])
+    # find the best-quality channel
+    best_ch = np.argmin(sigmas)
+    # Calculate the relative error in the best channel caused by SOUND overcorrection:
+    rel_err = np.linalg.norm(SOUND_Wiener_filter[best_ch,:]@data - data[best_ch,:])/np.linalg.norm(data[best_ch,:])
 
-        if rel_err > 0.1:
-            self.lambda0 -= self.lambda_learning_rate
-    #     print("Adjusting lambda value to ", self.lambda0, "Relative error in clenest channel ", rel_err)
-        if rel_err < 0.05:
-            self.lambda0 += self.lambda_learning_rate
-    #     print("Adjusting lambda value to ", self.lambda0, "Relative error in clenest channel ", rel_err)
+    if rel_err > 0.1:
+        lambda0 -= learning_rate
+#     print("Adjusting lambda value to ", lambda0, "Relative error in clenest channel ", rel_err)
+    if rel_err < 0.05:
+        lambda0 += learning_rate
+#     print("Adjusting lambda value to ", lambda0, "Relative error in clenest channel ", rel_err)
 
-        end = time.time()
-        print("Finished SOUND update")
-        print(end-start)
+    # TODO: Update lambda0
 
-        return SOUND_Wiener_filter
+    end = time.time()
+    print("Updating SOUND filter took: {:.1f} ms".format(10 ** 3 * (end-start)))
+
+    return SOUND_Wiener_filter, lambda0
