@@ -264,7 +264,8 @@ class TrialPerformerNode(Node):
         request = goal_handle.request
 
         trial = request.trial
-        earliest_trial_time = request.earliest_trial_time
+        trial_time = request.trial_time
+        allow_late = request.allow_late
         wait_for_trigger = request.wait_for_trigger
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
@@ -278,7 +279,8 @@ class TrialPerformerNode(Node):
         success, trial_result = self.perform_trial(
             goal_id=goal_id,
             trial=trial,
-            earliest_trial_time=earliest_trial_time,
+            trial_time=trial_time,
+            allow_late=allow_late,
             wait_for_trigger=wait_for_trigger,
         )
 
@@ -308,14 +310,20 @@ class TrialPerformerNode(Node):
 
         return True
 
-    def attempt_trial(self, goal_id, voltages, earliest_trial_time, stimulus, config):
+    def attempt_trial(self, goal_id, voltages, trial_time, allow_late, stimulus, config):
         self.sync_set_voltages(voltages)
 
         # Earliest feasible trial time cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
         earliest_feasible_trial_time = self.get_current_time() + self.TRIAL_TIME_MARGINAL_S
 
-        trial_time = max(earliest_trial_time, earliest_feasible_trial_time)
+        if not allow_late and earliest_feasible_trial_time > trial_time:
+            mep = Mep()
+            success = False
+
+            return success, mep
+
+        trial_time = max(trial_time, earliest_feasible_trial_time)
 
         stimulus_event, stimulus_result_container = self.async_perform_stimulus(
             stimulus=stimulus,
@@ -363,7 +371,7 @@ class TrialPerformerNode(Node):
 
         return success, mep
 
-    def perform_trial(self, goal_id, trial, earliest_trial_time, wait_for_trigger):
+    def perform_trial(self, goal_id, trial, trial_time, allow_late, wait_for_trigger):
         config = trial.config
         stimuli = trial.stimuli
 
@@ -396,7 +404,8 @@ class TrialPerformerNode(Node):
         success, mep = self.attempt_trial(
             goal_id=goal_id,
             voltages=voltages,
-            earliest_trial_time=earliest_trial_time,
+            trial_time=trial_time,
+            allow_late=allow_late,
             stimulus=stimulus,
             config=config,
         )
