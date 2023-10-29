@@ -131,36 +131,29 @@ export const SystemView = () => {
   return (
     <>
       <TabBar>
-        <a
-          href="#"
-          onClick={() => setActiveTab('overview')}
-          className={activeTab === 'overview' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setActiveTab('overview')} className={activeTab === 'overview' ? 'active' : ''}>
           Overview
         </a>
-        <a
-          href="#"
-          onClick={() => setActiveTab('diagnostics')}
-          className={activeTab === 'diagnostics' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setActiveTab('diagnostics')} className={activeTab === 'diagnostics' ? 'active' : ''}>
           Diagnostics
         </a>
       </TabBar>
       <Wrapper>
-        {activeTab === 'overview' &&
-        <>
-          <PanelA>
-            <DeviceControl />
-          </PanelA>
-          <VerticalDividedPanelB>
-            <SubPanel>
-              <SystemState />
-            </SubPanel>
-          </VerticalDividedPanelB>
-          <PanelC>
-            <EventFeedbacks feedback={feedback} />
-          </PanelC>
-        </>}
+        {activeTab === 'overview' && (
+          <>
+            <PanelA>
+              <DeviceControl />
+            </PanelA>
+            <VerticalDividedPanelB>
+              <SubPanel>
+                <SystemState />
+              </SubPanel>
+            </VerticalDividedPanelB>
+            <PanelC>
+              <EventFeedbacks feedback={feedback} />
+            </PanelC>
+          </>
+        )}
       </Wrapper>
     </>
   )

@@ -12,7 +12,7 @@ interface ProjectContextType {
 }
 
 const defaultProjectState: ProjectContextType = {
-  activeProject: ''
+  activeProject: '',
 }
 
 export const ProjectContext = React.createContext<ProjectContextType>(defaultProjectState)
@@ -28,7 +28,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     const activeProjectSubscriber = new Topic<RosString>({
       ros: ros,
       name: '/projects/active',
-      messageType: 'std_msgs/String'
+      messageType: 'std_msgs/String',
     })
 
     activeProjectSubscriber.subscribe((message) => {
@@ -40,9 +40,5 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     }
   }, [])
 
-  return (
-    <ProjectContext.Provider value={{ activeProject }}>
-      {children}
-    </ProjectContext.Provider>
-  )
+  return <ProjectContext.Provider value={{ activeProject }}>{children}</ProjectContext.Provider>
 }

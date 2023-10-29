@@ -33,45 +33,29 @@ export const MultipleViews = () => {
     <div>
       <OptionWrapper>
         <a
-          href="#"
+          href='#'
           onClick={() => setCurrentView('SystemView')}
           className={currentView === 'SystemView' ? 'active' : ''}
         >
           System
         </a>
         <a
-          href="#"
+          href='#'
           onClick={() => setCurrentView('experiment')}
           className={currentView === 'experiment' ? 'active' : ''}
         >
           Experiment
         </a>
-        <a
-          href="#"
-          onClick={() => setCurrentView('pipeline')}
-          className={currentView === 'pipeline' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setCurrentView('pipeline')} className={currentView === 'pipeline' ? 'active' : ''}>
           Pipeline
         </a>
-        <a
-          href="#"
-          onClick={() => setCurrentView('plot')}
-          className={currentView === 'plot' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setCurrentView('plot')} className={currentView === 'plot' ? 'active' : ''}>
           EEG
         </a>
-        <a
-          href="#"
-          onClick={() => setCurrentView('webGLPlot')}
-          className={currentView === 'webGLPlot' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setCurrentView('webGLPlot')} className={currentView === 'webGLPlot' ? 'active' : ''}>
           EEG (WebGL)
         </a>
-        <a
-          href="#"
-          onClick={() => setCurrentView('targets')}
-          className={currentView === 'targets' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
           Targeting
         </a>
       </OptionWrapper>
@@ -115,17 +99,17 @@ const OptionWrapper = styled.div`
 
   a {
     text-decoration: none;
-    color: #505050;   // Darker gray for regular links
+    color: #505050; // Darker gray for regular links
     padding: 0.5rem;
     display: inline-block;
     transition: color 0.3s ease;
 
     &:hover {
-      color: #303030;  // Even darker gray for hover
+      color: #303030; // Even darker gray for hover
     }
 
     &.active {
-      color: #222222;  // Almost black for active link
+      color: #222222; // Almost black for active link
       font-weight: bold;
     }
   }

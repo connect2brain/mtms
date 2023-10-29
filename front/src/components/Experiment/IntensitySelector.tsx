@@ -25,7 +25,7 @@ const MaximumIntensityLine = styled.div<{ top: string }>`
   width: 25%;
   height: 2px;
   background-color: red;
-  top: ${props => props.top};
+  top: ${(props) => props.top};
   right: 50%;
   z-index: 1;
 `
@@ -46,8 +46,12 @@ const IntensityLabel = styled.span`
 `
 
 export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
-    min, max, showMaximumIntensity, maximumIntensity, onValueChange }) => {
-
+  min,
+  max,
+  showMaximumIntensity,
+  maximumIntensity,
+  onValueChange,
+}) => {
   const [selectedIntensity, setSelectedIntensity] = useState<number>(10)
 
   const handleChange = (value: number) => {
@@ -68,32 +72,32 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
     <div>
       <SmallerTitle>Intensity</SmallerTitle>
       <IntensitySelectorContainer>
-        {showMaximumIntensity &&
-        <>
-          <MaximumIntensityLine top={maximumIntensityPosition} />
-          <MaximumIntensityLabel style={{ top: maximumIntensityPosition }}>
-            <b>Max:</b> {maximumIntensity}
-          </MaximumIntensityLabel>
-        </>
-        }
+        {showMaximumIntensity && (
+          <>
+            <MaximumIntensityLine top={maximumIntensityPosition} />
+            <MaximumIntensityLabel style={{ top: maximumIntensityPosition }}>
+              <b>Max:</b> {maximumIntensity}
+            </MaximumIntensityLabel>
+          </>
+        )}
         <input
-          className="intensitySlider"
-          type="range"
+          className='intensitySlider'
+          type='range'
           min={min}
           max={max}
           value={selectedIntensity}
           onChange={handleSliderChange}
           style={{
             writingMode: 'vertical-lr',
-            WebkitAppearance: 'slider-vertical', /* WebKit */
+            WebkitAppearance: 'slider-vertical' /* WebKit */,
             width: '8px',
             height: '350px',
-            zIndex: 2
+            zIndex: 2,
           }}
         />
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
         <ValidatedInput
-          type="number"
+          type='number'
           value={selectedIntensity}
           defaultValue={40}
           min={min}

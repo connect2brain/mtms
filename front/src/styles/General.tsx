@@ -5,7 +5,9 @@ export const StyledPanel = styled.div<{ isGrayedOut?: boolean }>`
   border-radius: 5px;
   background-color: #f7f7f7;
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
-  ${({ isGrayedOut }) => isGrayedOut && `
+  ${({ isGrayedOut }) =>
+    isGrayedOut &&
+    `
     filter: grayscale(100%);
     color: #aaa;
     background-color: #f0f0f0;
@@ -18,12 +20,12 @@ export const StyledButton = styled.button`
   width: 200px;
   height: 50px;
 
-  font-size: 1.00rem;
+  font-size: 1rem;
   padding: 0.8rem 0.5rem;
   margin-bottom: 0.8rem;
   border: none;
   border-radius: 5px;
-  background-color: #007BFF;
+  background-color: #007bff;
   color: white;
   cursor: pointer;
 
@@ -31,16 +33,16 @@ export const StyledButton = styled.button`
     background-color: #0056b3;
   }
   &:disabled {
-    background-color: #CCCCCC;
+    background-color: #cccccc;
     color: #888888;
   }
   &:hover:disabled {
-    background-color: #CCCCCC;
+    background-color: #cccccc;
   }
 `
 
 export const StyledRedButton = styled(StyledButton)`
-  background-color: #A00000;
+  background-color: #a00000;
   &:hover {
     background-color: #700000;
   }

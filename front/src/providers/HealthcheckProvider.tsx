@@ -15,8 +15,8 @@ interface HealthcheckStatusMessage {
 }
 
 interface Healthcheck extends ROSLIB.Message {
-  status: HealthcheckStatusMessage,
-  status_message: string,
+  status: HealthcheckStatusMessage
+  status_message: string
   actionable_message: string
 }
 
@@ -29,7 +29,7 @@ interface HealthcheckContextType {
 const defaultHealthcheckState: HealthcheckContextType = {
   eegHealthcheck: null,
   mtmsDeviceHealthcheck: null,
-  mepHealthcheck: null
+  mepHealthcheck: null,
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -47,19 +47,19 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
     const eegSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/eeg/healthcheck',
-      messageType: 'system_interfaces/Healthcheck'
+      messageType: 'system_interfaces/Healthcheck',
     })
 
     const mtmsSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/mtms_device/healthcheck',
-      messageType: 'system_interfaces/Healthcheck'
+      messageType: 'system_interfaces/Healthcheck',
     })
 
     const mepSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/mep/healthcheck',
-      messageType: 'system_interfaces/Healthcheck'
+      messageType: 'system_interfaces/Healthcheck',
     })
 
     let eegTimeout: NodeJS.Timeout | null = null
