@@ -29,9 +29,12 @@ class Preprocessor:
 
         # Initialize state
         self.filter = np.identity(self.num_of_eeg_channels)
-        self.samples_collected = 0
-        self.ongoing_tms_artifact = False
         self.updating_filter = False
+
+        self.samples_collected = 0
+
+        self.ongoing_pulse_artifact = False
+        self.samples_after_pulse = 0
 
         # Initialize multiprocessing
         self.pool = multiprocessing.Pool(processes=4)
@@ -48,32 +51,23 @@ class Preprocessor:
         while now < end:
             now = time.perf_counter()
 
-    def identify_tms(self, eeg_data):
-        mean_abs_diff = np.abs(np.diff(eeg_data[-2:,20]))
-        tms = mean_abs_diff > 1000
-
-        return tms
-
-    def process(self, time, eeg_data, emg_data):
+    def process(self, time, eeg_data, emg_data, pulse_given):
         self.samples_collected += 1
 
+        if pulse_given:
+            self.ongoing_pulse_artifact = True
+            self.samples_after_pulse = 0
+            print("A pulse was given.")
+
         # Assuming that an ongoing artifact lasts for 1000 samples; after that, reset the flag.
-        if self.ongoing_tms_artifact:
-            self.samples_after_tms += 1
-            if self.samples_after_tms == 1000:
-                self.ongoing_tms_artifact = False
-
-        # Every two samples, try to identify a TMS pulse if not already identified.
-        if self.samples_collected % 2 == 0 and \
-             not self.ongoing_tms_artifact and \
-             self.identify_tms(eeg_data):
-
-            self.ongoing_tms_artifact = True
-            self.samples_after_tms = 0
+        if self.ongoing_pulse_artifact:
+            self.samples_after_pulse += 1
+            if self.samples_after_pulse == 1000:
+                self.ongoing_pulse_artifact = False
 
         if self.result is None and \
            self.samples_collected % self.update_interval_in_samples == 0 and \
-           not self.ongoing_tms_artifact:
+           not self.ongoing_pulse_artifact:
 
             self.result = self.pool.apply_async(sound, (
                 eeg_data,
@@ -106,7 +100,7 @@ class Preprocessor:
         return {
             'eeg_data': eeg_data_preprocessed,
             'emg_data': emg_data_preprocessed,
-            'valid': not self.ongoing_tms_artifact,
+            'valid': not self.ongoing_pulse_artifact,
         }
 
 
