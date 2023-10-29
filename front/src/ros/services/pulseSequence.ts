@@ -49,7 +49,6 @@ const addPulseToPulseSequenceService = new ROSLIB.Service({
   serviceType: 'ui_interfaces/AddPulseToPulseSequence',
 })
 
-
 export const pulseSequenceServicesByKey = {
   name: renamePulseSequenceService,
   selected: togglePulseSequenceSelectService,
@@ -85,20 +84,20 @@ export const addPulseToPulseSequenceInRos = (sequence: PulseSequence, pulse: Pul
 
   const request = new ROSLIB.ServiceRequest({
     pulse: snakeCasePulse,
-    name: sequence.name
+    name: sequence.name,
   })
 
   addPulseToPulseSequenceService.callService(
-      request,
-      (response) => {
-        if (!response.success) {
-          console.log('ERROR: Failed to add pulse sequence')
-        }
-      },
-      (error) => {
-        console.log('ERROR: Failed to add pulse sequence, error:')
-        console.error(error)
-      },
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to add pulse sequence')
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to add pulse sequence, error:')
+      console.error(error)
+    },
   )
 }
 

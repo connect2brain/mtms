@@ -34,7 +34,7 @@ const defaultOptions: ChartOptions<'line' | 'bar'> = {
     },
     streaming: {
       frameRate: 60,
-    }
+    },
   },
   scales: {
     y: {

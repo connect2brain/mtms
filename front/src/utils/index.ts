@@ -112,7 +112,9 @@ export const getKeyByValueExcluding = (object: any, key: string, value: any) => 
   if (!object) {
     return null
   }
-  return Object.keys(object).filter(k => k !== key).find((key) => object[key] === value)
+  return Object.keys(object)
+    .filter((k) => k !== key)
+    .find((key) => object[key] === value)
 }
 
 export const getTrueKeys = (object: any) => {

@@ -52,17 +52,23 @@ export const HealthcheckStatusDisplay: React.FC = () => {
   return (
     <HealthcheckPanel>
       <StatusLine>
-        <StatusSquare status={
-          (mtmsDeviceHealthcheck?.status.value !== undefined) &&
-          (mtmsDeviceHealthcheck?.status.value !== null) ?
-          mtmsDeviceHealthcheck?.status.value : -1} />
+        <StatusSquare
+          status={
+            mtmsDeviceHealthcheck?.status.value !== undefined && mtmsDeviceHealthcheck?.status.value !== null
+              ? mtmsDeviceHealthcheck?.status.value
+              : -1
+          }
+        />
         mTMS device
       </StatusLine>
       <StatusLine>
-        <StatusSquare status={
-          (eegHealthcheck?.status.value !== undefined) &&
-          (eegHealthcheck?.status.value !== null) ?
-          eegHealthcheck?.status.value : -1} />
+        <StatusSquare
+          status={
+            eegHealthcheck?.status.value !== undefined && eegHealthcheck?.status.value !== null
+              ? eegHealthcheck?.status.value
+              : -1
+          }
+        />
         EEG
       </StatusLine>
     </HealthcheckPanel>

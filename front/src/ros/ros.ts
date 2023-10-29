@@ -34,14 +34,18 @@ const getMaximumIntensityService = new ROSLIB.Service({
   serviceType: 'targeting_interfaces/GetMaximumIntensity',
 })
 
-export const getMaximumIntensity =
-    (x: number, y: number, angle: number, callback: (maximum_intensity: number) => void) => {
+export const getMaximumIntensity = (
+  x: number,
+  y: number,
+  angle: number,
+  callback: (maximum_intensity: number) => void,
+) => {
   const request = new ROSLIB.ServiceRequest({
     target: {
       displacement_x: x,
       displacement_y: y,
-      rotation_angle: angle
-    }
+      rotation_angle: angle,
+    },
   }) as any
 
   getMaximumIntensityService.callService(
@@ -133,10 +137,9 @@ const countValidTrialsService = new ROSLIB.Service({
   serviceType: 'experiment_interfaces/CountValidTrials',
 })
 
-export const countValidTrials =
-    (trials: any, callback: (numOfValidTrials: number) => void) => {
+export const countValidTrials = (trials: any, callback: (numOfValidTrials: number) => void) => {
   const request = new ROSLIB.ServiceRequest({
-    trials: trials
+    trials: trials,
   }) as any
 
   countValidTrialsService.callService(
@@ -165,11 +168,11 @@ const performExperimentAction: any = new (ROSLIB as any).ActionHandle({
   actionType: 'experiment_interfaces/PerformExperiment',
 })
 
-export const performExperiment =
-    (experiment: any,
-     done_callback: (trialResults: any, success: boolean) => void,
-     feedback_callback: (response: any) => void) => {
-
+export const performExperiment = (
+  experiment: any,
+  done_callback: (trialResults: any, success: boolean) => void,
+  feedback_callback: (response: any) => void,
+) => {
   const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
   performExperimentAction.createClient(goal)
@@ -299,7 +302,7 @@ const setActiveProjectService = new ROSLIB.Service({
 
 export const setActiveProject = (project: string, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({
-    project: project
+    project: project,
   }) as any
 
   setActiveProjectService.callService(
@@ -327,7 +330,7 @@ const setPreprocessorService = new ROSLIB.Service({
 
 export const setPreprocessorRos = (preprocessor: string, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({
-    preprocessor: preprocessor
+    preprocessor: preprocessor,
   }) as any
 
   setPreprocessorService.callService(
@@ -355,7 +358,7 @@ const setPreprocessorEnabledService = new ROSLIB.Service({
 
 export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({
-    enabled: enabled
+    enabled: enabled,
   }) as any
 
   setPreprocessorEnabledService.callService(

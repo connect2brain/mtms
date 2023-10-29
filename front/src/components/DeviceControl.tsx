@@ -33,5 +33,5 @@ export const DeviceControl = () => {
         {deviceText()} device
       </StyledButton>
     </>
-)
+  )
 }

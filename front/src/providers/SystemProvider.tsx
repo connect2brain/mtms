@@ -57,10 +57,10 @@ export const DeviceState = {
 }
 
 export const HumanReadableDeviceState = {
-  'NOT_OPERATIONAL': 'Not operational',
-  'STARTUP': 'Starting up...',
-  'OPERATIONAL': 'Operational',
-  'SHUTDOWN': 'Shutting down...'
+  NOT_OPERATIONAL: 'Not operational',
+  STARTUP: 'Starting up...',
+  OPERATIONAL: 'Operational',
+  SHUTDOWN: 'Shutting down...',
 }
 
 export const SessionState = {
@@ -71,10 +71,10 @@ export const SessionState = {
 }
 
 export const HumanReadableSessionState = {
-  'STOPPED': 'Stopped',
-  'STARTING': 'Starting...',
-  'STARTED': 'Started',
-  'STOPPING': 'Stopping...'
+  STOPPED: 'Stopped',
+  STARTING: 'Starting...',
+  STARTED: 'Started',
+  STOPPING: 'Stopping...',
 }
 
 /* System state */
@@ -123,7 +123,7 @@ interface SystemContextType {
 const defaultSystemState: SystemContextType = {
   systemState: null,
   deviceState: null,
-  sessionState: null
+  sessionState: null,
 }
 
 export const SystemContext = React.createContext<SystemContextType>(defaultSystemState)
@@ -142,7 +142,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
       name: '/mtms_device/system_state',
       messageType: 'mtms_device_interfaces/SystemState',
     })
-    
+
     systemStateSubscriber.subscribe((message) => {
       setSystemState(message)
     })
@@ -156,9 +156,5 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
   const sessionState = systemState?.session_state || null
   const deviceState = systemState?.device_state || null
 
-  return (
-    <SystemContext.Provider value={{ systemState, sessionState, deviceState }}>
-      {children}
-    </SystemContext.Provider>
-  )
+  return <SystemContext.Provider value={{ systemState, sessionState, deviceState }}>{children}</SystemContext.Provider>
 }

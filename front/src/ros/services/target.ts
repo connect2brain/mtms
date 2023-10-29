@@ -58,7 +58,7 @@ const toggleVisibleService = new ROSLIB.Service({
 const openTargetOrientationDialogService = new ROSLIB.Service({
   ros,
   name: 'neuronavigation/open_orientation_dialog',
-  serviceType: 'neuronavigation_interfaces/OpenOrientationDialog'
+  serviceType: 'neuronavigation_interfaces/OpenOrientationDialog',
 })
 
 export const targetServicesByKey = {
@@ -70,20 +70,20 @@ export const targetServicesByKey = {
 
 export const openTargetOrientationDialogInNeuronavigation = (targetId: number) => {
   const request = new ROSLIB.ServiceRequest({
-    target_id: targetId
+    target_id: targetId,
   })
 
   openTargetOrientationDialogService.callService(
-      request,
-      (response) => {
-        if (!response.success) {
-          console.log('ERROR: Failed to open orientation dialog for target', targetId)
-        }
-      },
-      (error) => {
-        console.log('ERROR: Failed to open orientation dialog for target', targetId, ', error:')
-        console.error(error)
-      },
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to open orientation dialog for target', targetId)
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to open orientation dialog for target', targetId, ', error:')
+      console.error(error)
+    },
   )
 }
 
