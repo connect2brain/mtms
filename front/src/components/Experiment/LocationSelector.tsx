@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { LocationControls } from './LocationControls'
 import { LargerTitle } from 'styles/ExperimentStyles'
 
-type SetSelectedPoints = React.Dispatch<React.SetStateAction<Point[]>>;
+type SetSelectedPoints = React.Dispatch<React.SetStateAction<Point[]>>
 
 export interface Point {
   x: number
@@ -46,12 +46,10 @@ const GridCell = styled.div<GridCellProps>`
   height: 10px;
   border: 1px solid #ccc;
 
-  background-color: ${props =>
-    props.isSelected ? '#007bff' :
-    props.isOriginLine ? '#ddd' : 'transparent'};
+  background-color: ${(props) => (props.isSelected ? '#007bff' : props.isOriginLine ? '#ddd' : 'transparent')};
 
   &:hover {
-    background-color: ${props => !props.isSelected ? 'rgba(0, 123, 255, 0.4)' : '#007bff'};
+    background-color: ${(props) => (!props.isSelected ? 'rgba(0, 123, 255, 0.4)' : '#007bff')};
   }
 
   cursor: pointer;
@@ -105,7 +103,7 @@ const CoordinateDisplay = styled.div<{ isActive: boolean }>`
   right: -10px;
   background-color: #f8f8f8;
   font-size: 0.8em;
-  color: ${props => props.isActive ? 'black' : 'rgba(0, 0, 0, 0.5)'};
+  color: ${(props) => (props.isActive ? 'black' : 'rgba(0, 0, 0, 0.5)')};
   transition: color 0.3s ease;
   display: flex;
   align-items: center;
@@ -123,202 +121,193 @@ const CoordinateText = styled.div<{ isActive: boolean }>`
   margin-top: 160px;
   font-weight: bold;
   font-size: 18px;
-  color: ${props => props.isActive ? 'black' : 'rgba(0, 0, 0, 0)'};
+  color: ${(props) => (props.isActive ? 'black' : 'rgba(0, 0, 0, 0)')};
   transition: color 0.3s ease;
 `
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
-      selectedPoints, setSelectedPoints, multiSelectMode = false }) => {
-    const [shape, setShape] = useState<'circle' | 'square' | null>(null)
-    const [shapeSize, setShapeSize] = useState<number>(0)
-    const [isMouseDown, setIsMouseDown] = useState<boolean>(false)
-    const [dragAction, setDragAction] = useState<'selecting' | 'deselecting'>('selecting')
-    const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null)
-    const [isHoveringOverGrid, setIsHoveringOverGrid] = useState<boolean>(false)
-    const [selectedSinglePoint, setSelectedSinglePoint] = useState<Point | null>(null)
+  selectedPoints,
+  setSelectedPoints,
+  multiSelectMode = false,
+}) => {
+  const [shape, setShape] = useState<'circle' | 'square' | null>(null)
+  const [shapeSize, setShapeSize] = useState<number>(0)
+  const [isMouseDown, setIsMouseDown] = useState<boolean>(false)
+  const [dragAction, setDragAction] = useState<'selecting' | 'deselecting'>('selecting')
+  const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null)
+  const [isHoveringOverGrid, setIsHoveringOverGrid] = useState<boolean>(false)
+  const [selectedSinglePoint, setSelectedSinglePoint] = useState<Point | null>(null)
 
-    const resetGrid = () => {
+  const resetGrid = () => {
+    setSelectedPoints([])
+  }
+
+  const isPointSelected = (x: number, y: number): boolean =>
+    selectedPoints.some((point) => point.x === x && point.y === y)
+
+  const selectCell = (x: number, y: number) => {
+    if (!isPointSelected(x, y)) {
+      setSelectedPoints((prevPoints) => [...prevPoints, { x, y }])
+    }
+  }
+
+  const deselectCell = (x: number, y: number) => {
+    setSelectedPoints((prevPoints) => prevPoints.filter((point) => !(point.x === x && point.y === y)))
+    setSelectedSinglePoint(null)
+  }
+
+  const handleCellMouseDown = (x: number, y: number) => {
+    setIsMouseDown(true)
+    if (!multiSelectMode) {
       setSelectedPoints([])
+      setSelectedSinglePoint({ x, y })
     }
-
-    const isPointSelected = (x: number, y: number): boolean =>
-      selectedPoints.some(point => point.x === x && point.y === y)
-
-    const selectCell = (x: number, y: number) => {
-      if (!isPointSelected(x, y)) {
-        setSelectedPoints(prevPoints => [...prevPoints, { x, y }])
-      }
+    if (isPointSelected(x, y)) {
+      setDragAction('deselecting')
+      deselectCell(x, y)
+    } else {
+      setDragAction('selecting')
+      selectCell(x, y)
     }
+  }
 
-    const deselectCell = (x: number, y: number) => {
-      setSelectedPoints(prevPoints => prevPoints.filter(point => !(point.x === x && point.y === y)))
-      setSelectedSinglePoint(null)
-    }
-
-    const handleCellMouseDown = (x: number, y: number) => {
-      setIsMouseDown(true)
-      if (!multiSelectMode) {
-          setSelectedPoints([])
-          setSelectedSinglePoint({ x, y })
-      }
-      if (isPointSelected(x, y)) {
-          setDragAction('deselecting')
-          deselectCell(x, y)
-      } else {
-          setDragAction('selecting')
+  const handleCellMouseEnter = (x: number, y: number) => {
+    setHoveredPoint({ x, y })
+    if (isMouseDown) {
+      if (multiSelectMode) {
+        if (dragAction === 'selecting') {
           selectCell(x, y)
-      }
-    }
-
-    const handleCellMouseEnter = (x: number, y: number) => {
-      setHoveredPoint({ x, y })
-      if (isMouseDown) {
-          if (multiSelectMode) {
-              if (dragAction === 'selecting') {
-                  selectCell(x, y)
-              } else {
-                  deselectCell(x, y)
-              }
-          } else {
-              setSelectedPoints([{ x, y }])
-              setSelectedSinglePoint({ x, y })
-          }
-      }
-    }
-
-    const handleMouseUp = () => {
-      setIsMouseDown(false)
-    }
-
-    const handleShapeSelected = (selectedShape: 'circle' | 'square', size: number) => {
-        const newSelectedPoints: Point[] = []
-
-        if (selectedShape === 'circle') {
-            for (let x = -15; x <= 15; x++) {
-                for (let y = -15; y <= 15; y++) {
-                    if (x * x + y * y <= size * size) {
-                        newSelectedPoints.push({ x, y })
-                    }
-                }
-            }
-        } else if (selectedShape === 'square') {
-            for (let x = -size; x <= size; x++) {
-                for (let y = -size; y <= size; y++) {
-                    newSelectedPoints.push({ x, y })
-                }
-            }
+        } else {
+          deselectCell(x, y)
         }
+      } else {
+        setSelectedPoints([{ x, y }])
+        setSelectedSinglePoint({ x, y })
+      }
+    }
+  }
 
-        setSelectedPoints(newSelectedPoints)
+  const handleMouseUp = () => {
+    setIsMouseDown(false)
+  }
+
+  const handleShapeSelected = (selectedShape: 'circle' | 'square', size: number) => {
+    const newSelectedPoints: Point[] = []
+
+    if (selectedShape === 'circle') {
+      for (let x = -15; x <= 15; x++) {
+        for (let y = -15; y <= 15; y++) {
+          if (x * x + y * y <= size * size) {
+            newSelectedPoints.push({ x, y })
+          }
+        }
+      }
+    } else if (selectedShape === 'square') {
+      for (let x = -size; x <= size; x++) {
+        for (let y = -size; y <= size; y++) {
+          newSelectedPoints.push({ x, y })
+        }
+      }
     }
 
-    const handleDecimate = (n: number) => {
-      setSelectedPoints((prevPoints) =>
-        prevPoints.filter(point =>
-          (point.x % n === 0) && (point.y % n === 0)
-        )
-      )
-    }
+    setSelectedPoints(newSelectedPoints)
+  }
 
-    const getXDirection = (x: number) => {
-      if (x > 0) return `${x} mm to the right`
-      if (x < 0) return `${Math.abs(x)} mm to the left`
-      return null
-    }
+  const handleDecimate = (n: number) => {
+    setSelectedPoints((prevPoints) => prevPoints.filter((point) => point.x % n === 0 && point.y % n === 0))
+  }
 
-    const getYDirection = (y: number) => {
-      if (y > 0) return `${y} mm anterior`
-      if (y < 0) return `${Math.abs(y)} mm posterior`
-      return null
-    }
+  const getXDirection = (x: number) => {
+    if (x > 0) return `${x} mm to the right`
+    if (x < 0) return `${Math.abs(x)} mm to the left`
+    return null
+  }
 
-    return (
-        <div>
-          <LargerTitle>Location</LargerTitle>
-          <GridInternalContainer>
-            <GridContainer
-              onMouseUp={handleMouseUp}
-              onMouseEnter={() => setIsHoveringOverGrid(true)}
-              onMouseLeave={() => {
-                setIsHoveringOverGrid(false)
-                setHoveredPoint(null)
-              }}
-            >
-            <Grid>
+  const getYDirection = (y: number) => {
+    if (y > 0) return `${y} mm anterior`
+    if (y < 0) return `${Math.abs(y)} mm posterior`
+    return null
+  }
+
+  return (
+    <div>
+      <LargerTitle>Location</LargerTitle>
+      <GridInternalContainer>
+        <GridContainer
+          onMouseUp={handleMouseUp}
+          onMouseEnter={() => setIsHoveringOverGrid(true)}
+          onMouseLeave={() => {
+            setIsHoveringOverGrid(false)
+            setHoveredPoint(null)
+          }}
+        >
+          <Grid>
             {Array.from({ length: 31 }).map((_, rowIndex) => {
               const invertedRowIndex = 30 - rowIndex
               return (
-              <GridRow key={rowIndex}>
+                <GridRow key={rowIndex}>
                   {Array.from({ length: 31 }).map((_, colIndex) => (
-                      <GridCell
-                        key={colIndex}
-                        isSelected={isPointSelected(colIndex - 15, invertedRowIndex - 15)}
-                        isOriginLine={colIndex === 15 || invertedRowIndex === 15}
-                        onMouseDown={() => handleCellMouseDown(colIndex - 15, invertedRowIndex - 15)}
-                        onMouseEnter={() => {
-                          handleCellMouseEnter(colIndex - 15, invertedRowIndex - 15)
-                          setHoveredPoint({ x: colIndex - 15, y: invertedRowIndex - 15 })
-                        }}
-                      />
+                    <GridCell
+                      key={colIndex}
+                      isSelected={isPointSelected(colIndex - 15, invertedRowIndex - 15)}
+                      isOriginLine={colIndex === 15 || invertedRowIndex === 15}
+                      onMouseDown={() => handleCellMouseDown(colIndex - 15, invertedRowIndex - 15)}
+                      onMouseEnter={() => {
+                        handleCellMouseEnter(colIndex - 15, invertedRowIndex - 15)
+                        setHoveredPoint({ x: colIndex - 15, y: invertedRowIndex - 15 })
+                      }}
+                    />
                   ))}
-              </GridRow>
+                </GridRow>
               )
             })}
-            </Grid>
-        <XAxisCenterLabel>x (mm)</XAxisCenterLabel>
-        <LeftLabel>Left</LeftLabel>
-        <RightLabel>Right</RightLabel>
-        <YAxisCenterLabel>y (mm)</YAxisCenterLabel>
-        <AnteriorLabel>Anterior</AnteriorLabel>
-        <PosteriorLabel>Posterior</PosteriorLabel>
-        <CoordinateDisplay isActive={isHoveringOverGrid}>
-          x: <CoordinateValue>{hoveredPoint ? hoveredPoint.x : '–'}</CoordinateValue>
-          y: <CoordinateValue>{hoveredPoint ? hoveredPoint.y : '–'}</CoordinateValue>
-        </CoordinateDisplay>
+          </Grid>
+          <XAxisCenterLabel>x (mm)</XAxisCenterLabel>
+          <LeftLabel>Left</LeftLabel>
+          <RightLabel>Right</RightLabel>
+          <YAxisCenterLabel>y (mm)</YAxisCenterLabel>
+          <AnteriorLabel>Anterior</AnteriorLabel>
+          <PosteriorLabel>Posterior</PosteriorLabel>
+          <CoordinateDisplay isActive={isHoveringOverGrid}>
+            x: <CoordinateValue>{hoveredPoint ? hoveredPoint.x : '–'}</CoordinateValue>
+            y: <CoordinateValue>{hoveredPoint ? hoveredPoint.y : '–'}</CoordinateValue>
+          </CoordinateDisplay>
         </GridContainer>
-        { multiSelectMode &&
-          <LocationControls
-            onShapeSelected={handleShapeSelected}
-            onReset={resetGrid}
-            onDecimate={handleDecimate}
-          />
-        }
-        { !multiSelectMode && (
+        {multiSelectMode && (
+          <LocationControls onShapeSelected={handleShapeSelected} onReset={resetGrid} onDecimate={handleDecimate} />
+        )}
+        {!multiSelectMode && (
           <div>
-              <CoordinateText isActive={selectedSinglePoint !== null}>
-                  {selectedSinglePoint ? (
-                      <>
-                          {selectedSinglePoint.x === 0 && selectedSinglePoint.y === 0 ? (
-                              <div>Center</div>
-                          ) : (
-                              <>
-                                  {getXDirection(selectedSinglePoint.x) &&
-                                    <div>{getXDirection(selectedSinglePoint.x)}</div>}
-                                  {getYDirection(selectedSinglePoint.y) &&
-                                    <div>{getYDirection(selectedSinglePoint.y)}</div>}
-                              </>
-                          )}
-                      </>
+            <CoordinateText isActive={selectedSinglePoint !== null}>
+              {selectedSinglePoint ? (
+                <>
+                  {selectedSinglePoint.x === 0 && selectedSinglePoint.y === 0 ? (
+                    <div>Center</div>
                   ) : (
-                      hoveredPoint && (
-                          <>
-                              {hoveredPoint.x === 0 && hoveredPoint.y === 0 ? (
-                                  <div>Center</div>
-                              ) : (
-                                  <>
-                                      {getXDirection(hoveredPoint.x) &&
-                                        <div>{getXDirection(hoveredPoint.x)}</div>}
-                                      {getYDirection(hoveredPoint.y) &&
-                                        <div>{getYDirection(hoveredPoint.y)}</div>}
-                                  </>
-                              )}
-                          </>
-                      )
+                    <>
+                      {getXDirection(selectedSinglePoint.x) && <div>{getXDirection(selectedSinglePoint.x)}</div>}
+                      {getYDirection(selectedSinglePoint.y) && <div>{getYDirection(selectedSinglePoint.y)}</div>}
+                    </>
                   )}
-              </CoordinateText>
+                </>
+              ) : (
+                hoveredPoint && (
+                  <>
+                    {hoveredPoint.x === 0 && hoveredPoint.y === 0 ? (
+                      <div>Center</div>
+                    ) : (
+                      <>
+                        {getXDirection(hoveredPoint.x) && <div>{getXDirection(hoveredPoint.x)}</div>}
+                        {getYDirection(hoveredPoint.y) && <div>{getYDirection(hoveredPoint.y)}</div>}
+                      </>
+                    )}
+                  </>
+                )
+              )}
+            </CoordinateText>
           </div>
         )}
-        </GridInternalContainer>
+      </GridInternalContainer>
     </div>
   )
 }

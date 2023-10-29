@@ -6,11 +6,7 @@ import { getKeyByValue } from 'utils'
 
 import { SessionControl } from 'components/SessionControl'
 
-import {
-  SystemContext,
-  SessionState,
-  HumanReadableSessionState,
-} from 'providers/SystemProvider'
+import { SystemContext, SessionState, HumanReadableSessionState } from 'providers/SystemProvider'
 
 const SessionPanel = styled(StyledPanel)`
   width: 300px;

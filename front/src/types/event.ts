@@ -1,10 +1,5 @@
 import ROSLIB from 'roslib'
-import {
-  ChargeError,
-  DischargeError,
-  PulseError,
-  TriggerOutError,
-} from './eventErrors'
+import { ChargeError, DischargeError, PulseError, TriggerOutError } from './eventErrors'
 
 interface Error {
   value: number

@@ -10,9 +10,7 @@ import { setDescription } from 'reducers/sessionReducer'
 import { startSessionService } from 'ros/services/session'
 
 const Session = () => {
-  const { description, channels, iti, ibi, nofBurstsInTrains, nofTrains } = useAppSelector(
-    (state) => state.session,
-  )
+  const { description, channels, iti, ibi, nofBurstsInTrains, nofTrains } = useAppSelector((state) => state.session)
 
   const { sequences } = useAppSelector((state) => state.sequences)
   const dispatch = useAppDispatch()
