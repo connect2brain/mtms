@@ -120,15 +120,23 @@ class TrialPerformerNode(Node):
 
     # Logging
 
-    def log_trial_config(self, goal_id, config):
+    def log_trial(self, goal_id, trial, trial_time, allow_late, wait_for_trigger):
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trial configuration:'.format(goal_id))
+        self.logger.info('{}: Trial:'.format(goal_id))
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: MEP analysis:'.format(goal_id))
-        self.logger.info('{}:   - Enabled: {}'.format(goal_id, config.analyze_mep))
+        self.logger.info('{}:   Number of stimuli: {}'.format(goal_id, len(trial.stimuli)))
+        self.logger.info('{}:   Execution time: {:.3f} s'.format(goal_id, trial_time))
+        self.logger.info('{}:   Allow trial to be late: {}'.format(goal_id, allow_late))
+        self.logger.info('{}:   Wait for trigger: {}'.format(goal_id, wait_for_trigger))
+        self.logger.info('{}:'.format(goal_id))
+
+        config = trial.config
+
+        self.logger.info('{}:   MEP analysis:'.format(goal_id))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, config.analyze_mep))
         if config.analyze_mep:
-            self.logger.info('{}:   - EMG channel: {}'.format(goal_id, config.mep_config.emg_channel))
+            self.logger.info('{}:     - EMG channel: {}'.format(goal_id, config.mep_config.emg_channel))
             # TODO: Potentially log the rest of the MEP config, although it will be logged by the EMG analyzer, as well.
 
         self.logger.info('{}:'.format(goal_id))
@@ -380,7 +388,13 @@ class TrialPerformerNode(Node):
 
         analyze_mep = config.analyze_mep
 
-        self.log_trial_config(goal_id, trial.config)
+        self.log_trial(
+            goal_id=goal_id,
+            trial=trial,
+            trial_time=trial_time,
+            allow_late=allow_late,
+            wait_for_trigger=wait_for_trigger,
+        )
 
         feasible = self.check_goal_feasible(goal_id)
         if not feasible:
