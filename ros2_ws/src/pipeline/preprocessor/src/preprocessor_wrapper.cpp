@@ -21,6 +21,8 @@ void PreprocessorWrapper::reset_module(
     const size_t emg_data_size,
     const uint16_t sampling_frequency) {
 
+  this->sampling_frequency = sampling_frequency;
+
   preprocessor_module.release();
   preprocessor_instance.release();
 
@@ -73,7 +75,7 @@ void PreprocessorWrapper::reset_module(
   RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
-  py_time = std::make_unique<py::array_t<double>>(buffer_size);
+  py_timestamps = std::make_unique<py::array_t<double>>(buffer_size);
 
   std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
   py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
@@ -88,7 +90,7 @@ void PreprocessorWrapper::reset_module(
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {
-  py_time.reset();
+  py_timestamps.reset();
   py_eeg_data.reset();
   py_emg_data.reset();
 }
@@ -104,18 +106,30 @@ std::size_t PreprocessorWrapper::get_buffer_size() const {
 std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool>
 PreprocessorWrapper::process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
-    double_t current_time,
+    double_t sample_time,
     bool pulse_given) {
 
+  /* TODO: The logic below, as well as the difference in semantics between "sample time" and "current time", needs to
+     be documented somewhere more thoroughly. */
+
+  /* An example: If the sample window is set to [-2, 2], the earliest sample will be -2, and the current sample,
+     i.e., the sample corresponding to 0, will have the index 2, hence the calculation below. */
+  int current_sample_index = -this->earliest_sample;
+
+  /* An example: If sample time is 5.0 and the sampling frequency is 5 kHz, and we have a sample window [-2, 2]
+     (the latest sample being 2), the sample 2 in the sample window corresponds to the time 5.0. Hence, sample 0
+     corresponds to the time 5.0 s - 2 / (5000 Hz) = 4.9996 s. */
+  double_t current_time = sample_time - (double)this->latest_sample / this->sampling_frequency;
+
   /* Fill the numpy arrays. */
-  auto time_ptr = py_time->mutable_data();
+  auto timestamps_ptr = py_timestamps->mutable_data();
   auto eeg_data_ptr = py_eeg_data->mutable_data();
   auto emg_data_ptr = py_emg_data->mutable_data();
 
   for (const auto& sample_ptr : buffer.get_buffer()) {
     const auto& sample = *sample_ptr;
 
-    *time_ptr++ = sample.time;
+    *timestamps_ptr++ = sample.time - current_time;
     std::memcpy(eeg_data_ptr, sample.eeg_data.data(), eeg_data_size * sizeof(double));
     eeg_data_ptr += eeg_data_size;
     std::memcpy(emg_data_ptr, sample.emg_data.data(), emg_data_size * sizeof(double));
@@ -127,7 +141,7 @@ PreprocessorWrapper::process(
 
   py::object result;
   try {
-    result = preprocessor_instance.attr("process")(*py_time, *py_eeg_data, *py_emg_data, pulse_given);
+    result = preprocessor_instance.attr("process")(*py_timestamps, *py_eeg_data, *py_emg_data, current_sample_index, pulse_given);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
