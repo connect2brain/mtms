@@ -54,7 +54,7 @@ public:
     std::this_thread::sleep_for(std::chrono::seconds(3));
 
     file_.open(data_path_, std::ios::in);
-    publish_data_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period_), std::bind(&EegSimulator::publish_data, this));
+    publish_sample_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period_), std::bind(&EegSimulator::publish_sample, this));
     publish_trigger_timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&EegSimulator::publish_trigger, this));
 
     eeg_interfaces::msg::EegInfo eeg_info;
@@ -68,7 +68,7 @@ public:
   }
 
 private:
-  void publish_data() {
+  void publish_sample() {
     std::string line;
     std::getline(file_, line);
 
@@ -143,7 +143,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher_;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher_;
 
-  rclcpp::TimerBase::SharedPtr publish_data_timer_;
+  rclcpp::TimerBase::SharedPtr publish_sample_timer_;
   rclcpp::TimerBase::SharedPtr publish_trigger_timer_;
 };
 
