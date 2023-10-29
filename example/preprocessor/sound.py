@@ -51,7 +51,7 @@ class Preprocessor:
         while now < end:
             now = time.perf_counter()
 
-    def process(self, time, eeg_data, emg_data, pulse_given):
+    def process(self, timestamps, eeg_data, emg_data, current_sample_index, pulse_given):
         self.samples_collected += 1
 
         if pulse_given:
@@ -94,8 +94,8 @@ class Preprocessor:
             except multiprocessing.TimeoutError as e:
                 pass
 
-        eeg_data_preprocessed = eeg_data[-1,:] @ self.filter.T
-        emg_data_preprocessed = emg_data[-1,:]
+        eeg_data_preprocessed = eeg_data[current_sample_index, :] @ self.filter.T
+        emg_data_preprocessed = emg_data[current_sample_index, :]
 
         return {
             'eeg_data': eeg_data_preprocessed,
