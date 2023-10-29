@@ -58,12 +58,12 @@ private:
   void handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg);
   bool was_pulse_given(double_t sample_time);
 
-  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
+  void process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
-  rclcpp::Publisher<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_publisher;
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr raw_eeg_subscriber;
+  rclcpp::Publisher<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr preprocessed_eeg_publisher;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
@@ -88,7 +88,7 @@ private:
 
   double_t sampling_period;
 
-  double_t previous_time;
+  double_t previous_time = UNSET_PREVIOUS_TIME;
 
   std::queue<double_t> pulse_execution_times;
 
