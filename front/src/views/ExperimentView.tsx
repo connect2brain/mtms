@@ -873,6 +873,7 @@ export const ExperimentView = () => {
         <IntensityPanel>
           {activeTab === ExperimentTab.SingleLocation && (
             <IntensitySelector
+              value={intensity}
               min={0}
               max={150}
               showMaximumIntensity={true}
@@ -882,6 +883,7 @@ export const ExperimentView = () => {
           )}
           {activeTab === ExperimentTab.MultipleLocations && (
             <IntensitySelector
+              value={intensity}
               min={0}
               max={150}
               showMaximumIntensity={false}
