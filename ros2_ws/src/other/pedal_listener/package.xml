@@ -9,6 +9,8 @@
 
   <depend>rclpy</depend>
 
+  <depend>event_interfaces</depend>
+
   <exec_depend>ros2launch</exec_depend>
 
   <export>
