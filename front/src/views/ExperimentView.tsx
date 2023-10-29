@@ -905,7 +905,6 @@ export const ExperimentView = () => {
                 value={trigger1Delay}
                 min={-99}
                 max={99}
-                defaultValue={0}
                 onChange={setTrigger1Delay}
                 disabled={!trigger1Enabled}
               />
@@ -922,7 +921,6 @@ export const ExperimentView = () => {
                 value={trigger2Delay}
                 min={-99}
                 max={99}
-                defaultValue={0}
                 onChange={setTrigger2Delay}
                 disabled={!trigger2Enabled}
               />
@@ -945,7 +943,6 @@ export const ExperimentView = () => {
               <ValidatedInput
                 type='text'
                 value={emgChannel}
-                defaultValue={1}
                 min={1}
                 max={16}
                 onChange={setEmgChannel}
@@ -958,14 +955,7 @@ export const ExperimentView = () => {
           <SmallerTitle>{activeTab === ExperimentTab.SingleLocation ? 'Trials' : 'Repetitions'}</SmallerTitle>
           <ConfigRow>
             <ConfigLabel># of {activeTab === ExperimentTab.SingleLocation ? 'trials' : 'repetitions'}:</ConfigLabel>
-            <ValidatedInput
-              type='text'
-              value={numOfRepetitions}
-              defaultValue={1}
-              min={1}
-              max={999}
-              onChange={setNumOfRepetitions}
-            />
+            <ValidatedInput type='text' value={numOfRepetitions} min={1} max={999} onChange={setNumOfRepetitions} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Wait for trigger:</ConfigLabel>
@@ -980,7 +970,6 @@ export const ExperimentView = () => {
               <ValidatedInput
                 type='number'
                 value={itiMin}
-                defaultValue={3.0}
                 min={0.1}
                 max={100}
                 step={0.1}
@@ -993,7 +982,6 @@ export const ExperimentView = () => {
               <ValidatedInput
                 type='number'
                 value={itiMax}
-                defaultValue={4.0}
                 min={0.1}
                 max={100}
                 step={0.1}
@@ -1015,7 +1003,6 @@ export const ExperimentView = () => {
               <ValidatedInput
                 type='number'
                 value={autopauseIntervalMinutes}
-                defaultValue={10}
                 min={1}
                 max={99}
                 onChange={setAutopauseIntervalMinutes}
