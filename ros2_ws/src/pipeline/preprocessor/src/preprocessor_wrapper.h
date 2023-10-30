@@ -37,11 +37,11 @@ public:
   bool is_initialized() const;
   std::size_t get_buffer_size() const;
 
-  /* Exposed to Python, defined in preprocessor_bindings.cpp. */
+  /* Exposed to Python, defined in cpp_bindings.cpp. */
   static void log(const std::string& message);
 
 private:
-  /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see preprocessor_bindings.cpp). */
+  /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see cpp_bindings.cpp). */
   static rclcpp::Logger* logger_ptr;
 
   bool _is_initialized;
