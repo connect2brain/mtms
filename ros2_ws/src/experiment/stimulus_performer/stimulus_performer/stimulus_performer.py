@@ -5,10 +5,9 @@ import numpy as np
 
 from rclpy.executors import MultiThreadedExecutor
 
-from experiment_interfaces.msg import Stimulus, StimulusResult, TriggerConfig
 from experiment_interfaces.action import PerformStimulus
 from event_interfaces.msg import ExecutionCondition, Pulse, TriggerOut, \
-    TriggerOutFeedback, PulseFeedback, EventInfo
+    TriggerOutFeedback, PulseFeedback, EventInfo, ReadyForEventTrigger
 
 from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
 from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
@@ -36,7 +35,7 @@ class StimulusPerformerNode(Node):
 
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create action server for performing stimulus.
+        # Action server for performing stimulus.
 
         self.action_server = ActionServer(
             self,
@@ -46,38 +45,42 @@ class StimulusPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create service client for getting next ID.
+        # Service client for getting next ID.
         self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
         while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
-        # Create service client for targeting.
+        # Service client for targeting.
         self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages', callback_group=self.callback_group)
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /targeting/get_channel_voltages not available, waiting...')
 
-        # Create service client for waveforms.
+        # Service client for waveforms.
         self.waveform_client = self.create_client(GetDefaultWaveform, '/waveforms/get_default', callback_group=self.callback_group)
         while not self.waveform_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /waveforms/get_default not available, waiting...')
 
-        # Create service client for reversing polarity.
+        # Service client for reversing polarity.
         self.reverse_polarity_client = self.create_client(ReversePolarity, '/waveforms/reverse_polarity', callback_group=self.callback_group)
         while not self.reverse_polarity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /waveforms/reverse_polarity not available, waiting...')
 
-        # Create subscriber for system state.
+        # Subscriber for system state.
 
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1, callback_group=self.callback_group)
         self.system_state = None
 
-        # Create publishers for charging, discharging, pulse, and trigger out.
+        # Publishers for pulse and trigger out.
         self.send_pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse', 10, callback_group=self.callback_group)
         self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10, callback_group=self.callback_group)
 
+        # Subscribers for feedback for pulse and trigger out.
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
+
+        # Publisher for event trigger readiness.
+        self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
 
         self.event_id = 0
 
@@ -393,10 +396,13 @@ class StimulusPerformerNode(Node):
 
         all_ids = pulse_ids + trigger_ids
 
-        self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
-
         if wait_for_trigger:
+            msg = ReadyForEventTrigger()
+            self.event_trigger_readiness_publisher.publish(msg)
 
+            self.logger.info('{}: Waiting for trigger...'.format(goal_id))
+        else:
+            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
         feedbacks = self.wait_for_events_to_finish(all_ids)
 

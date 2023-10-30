@@ -31,7 +31,8 @@ public:
 
   std::pair<bool, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
-    double_t sample_time);
+    double_t sample_time,
+    bool ready_for_event_trigger);
 
   bool is_initialized() const;
   std::size_t get_buffer_size() const;

@@ -108,7 +108,8 @@ std::size_t DeciderWrapper::get_buffer_size() const {
 
 std::pair<bool, bool>DeciderWrapper::process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
-    double_t sample_time) {
+    double_t sample_time,
+    bool ready_for_event_trigger) {
 
   /* TODO: The logic below, as well as the difference in semantics between "sample time" and "current time", needs to
      be documented somewhere more thoroughly. */
@@ -143,7 +144,7 @@ std::pair<bool, bool>DeciderWrapper::process(
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance.attr("process")(*py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index);
+    result = decider_instance.attr("process")(*py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_event_trigger);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
