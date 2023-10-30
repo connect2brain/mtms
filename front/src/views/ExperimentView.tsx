@@ -322,6 +322,9 @@ export const ExperimentView = () => {
   const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', [0]))
   const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', [{ x: 0, y: 0 }]))
 
+  const [highlightedPoints, setHighlightedPoints] = useState<Point[]>([])
+  const [highlightedAngles, setHighlightedAngles] = useState<number[]>([])
+
   /* TODO: Currently, the initial value set here needs to match the initial value in IntensitySelector
     component - remove the dependency. */
   const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 10))
@@ -360,6 +363,16 @@ export const ExperimentView = () => {
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
   const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
 
+  const visualizeFeedback = (feedback: any) => {
+    const target = feedback.trial.stimuli[0].target
+    const x: number = target.displacement_x
+    const y: number = target.displacement_y
+    const angle: number = target.rotation_angle
+
+    setHighlightedPoints([{ x: x, y: y }])
+    setHighlightedAngles([angle])
+  }
+
   const perform = () => {
     const experiment: Experiment = formExperiment()
 
@@ -368,9 +381,12 @@ export const ExperimentView = () => {
       setAttemptNumber(null)
       setExperimentState(ExperimentState.NotRunning)
       setCancelButtonState(CancelButtonState.Cancel)
+      setHighlightedPoints([])
+      setHighlightedAngles([])
     }
 
     const feedback_callback = (feedback: any) => {
+      visualizeFeedback(feedback)
       setTrialNumber(feedback.trial_number)
       setAttemptNumber(feedback.attempt_number)
       setExperimentState(feedback.experiment_state.value)
@@ -842,24 +858,34 @@ export const ExperimentView = () => {
       <StimulationParametersPanel>
         <GridPanel>
           {activeTab === ExperimentTab.SingleLocation && (
-            <LocationSelector selectedPoints={selectedPoints} setSelectedPoints={setSelectedPoints} />
+            <LocationSelector
+              selectedPoints={selectedPoints}
+              setSelectedPoints={setSelectedPoints}
+              highlightedPoints={highlightedPoints}
+            />
           )}
           {activeTab === ExperimentTab.MultipleLocations && (
             <LocationSelector
               selectedPoints={selectedPoints}
               setSelectedPoints={setSelectedPoints}
+              highlightedPoints={highlightedPoints}
               multiSelectMode={true}
             />
           )}
         </GridPanel>
         <AnglePanel>
           {activeTab === ExperimentTab.SingleLocation && (
-            <AngleSelector selectedAngles={selectedAngles} setSelectedAngles={setSelectedAngles} />
+            <AngleSelector
+              selectedAngles={selectedAngles}
+              setSelectedAngles={setSelectedAngles}
+              highlightedAngles={highlightedAngles}
+            />
           )}
           {activeTab === ExperimentTab.MultipleLocations && (
             <AngleSelector
               selectedAngles={selectedAngles}
               setSelectedAngles={setSelectedAngles}
+              highlightedAngles={highlightedAngles}
               multiSelectMode={true}
             />
           )}
