@@ -90,6 +90,12 @@ EegDecider::EegDecider() : Node("decider") {
     "/event/trigger",
     10);
 
+  /* Subscriber for event trigger readiness. */
+  this->ready_for_event_trigger_subscriber = this->create_subscription<event_interfaces::msg::ReadyForEventTrigger>(
+    "/event/trigger/ready",
+    10,
+    std::bind(&EegDecider::update_ready_for_event_trigger, this, _1));
+
   /* Initialize variables. */
   rclcpp::Logger logger = rclcpp::get_logger("decider_wrapper");
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
@@ -257,6 +263,12 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
+void EegDecider::update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
+  this->ready_for_event_trigger = true;
+
+  RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
+}
+
 void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -286,9 +298,10 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
     return;
   }
 
-  auto [send_trigger, success] = this->decider_wrapper->process(
+  auto [send_event_trigger, success] = this->decider_wrapper->process(
     this->sample_buffer,
-    sample_time);
+    sample_time,
+    ready_for_event_trigger);
 
   if (success) {
     /* Measure the decision time for the buffer. */
@@ -297,11 +310,14 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
     /* TODO: Unused at the moment. */
     double_t decision_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-    /* Send trigger if desired. */
-    if (send_trigger) {
-      RCLCPP_INFO(this->get_logger(), "Sending trigger at time %.3f (s).", sample_time);
+    /* Send event trigger if desired. */
+    if (send_event_trigger) {
+      RCLCPP_INFO(this->get_logger(), "Sending event trigger at time %.3f (s).", sample_time);
+
       auto msg = event_interfaces::msg::EventTrigger();
       this->event_trigger_publisher->publish(msg);
+
+      ready_for_event_trigger = false;
     }
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
