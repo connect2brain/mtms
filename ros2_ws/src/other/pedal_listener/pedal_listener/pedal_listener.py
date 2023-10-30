@@ -39,7 +39,7 @@ class PedalListenerNode(Node):
 
         self.event_trigger_publisher = self.create_publisher(
             EventTrigger,
-            "/event/send/event_trigger",
+            "/event/trigger",
             10
         )
 

@@ -20,7 +20,7 @@ classdef MTMSApiNode < handle
         send_trigger_out_publisher
         send_pulse_publisher
 
-        send_event_trigger_publisher
+        event_trigger_publisher
 
         system_state_subscriber
 
@@ -73,7 +73,7 @@ classdef MTMSApiNode < handle
             obj.send_trigger_out_publisher = ros2publisher(obj.node, "/event/send/trigger_out", "event_interfaces/TriggerOut");
             obj.send_pulse_publisher = ros2publisher(obj.node, "/event/send/pulse", "event_interfaces/Pulse");
 
-            obj.send_event_trigger_publisher = ros2publisher(obj.node, "/event/send/event_trigger", "event_interfaces/EventTrigger");
+            obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/EventTrigger");
 
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
@@ -146,12 +146,12 @@ classdef MTMSApiNode < handle
 
         % Events
 
-        function send_event_trigger(obj)
-            %send_event_trigger Send event trigger
+        function trigger_events(obj)
+            %trigger_events Trigger events
             %
-            %   Send event trigger to mTMS device.
+            %   Send event trigger to the mTMS device.
 
-            publisher = obj.send_event_trigger_publisher;
+            publisher = obj.event_trigger_publisher;
 
             event_trigger = ros2message(publisher);
 

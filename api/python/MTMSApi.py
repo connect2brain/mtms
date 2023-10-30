@@ -540,13 +540,13 @@ class MTMSApi:
 
         return id
 
-    def send_event_trigger(self):
+    def trigger_events(self):
         """
         Executes the events which have execution_condition set to ExecutionCondition.WAIT_FOR_TRIGGER.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.send_event_trigger()
+        self.node.trigger_events()
 
     # Testing and debugging (undocumented)
 

@@ -26,7 +26,7 @@ class MTMSApiNode(Node):
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
 
-    ROS_MESSAGE_SEND_EVENT_TRIGGER = ('/event/send/event_trigger', EventTrigger)
+    ROS_MESSAGE_EVENT_TRIGGER = ('/event/trigger', EventTrigger)
     ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
     ROS_MESSAGE_SEND_CHARGE = ('/event/send/charge', Charge)
     ROS_MESSAGE_SEND_DISCHARGE = ('/event/send/discharge', Discharge)
@@ -43,7 +43,7 @@ class MTMSApiNode(Node):
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
     ROS_MESSAGES = (
-        ROS_MESSAGE_SEND_EVENT_TRIGGER,
+        ROS_MESSAGE_EVENT_TRIGGER,
         ROS_MESSAGE_SEND_PULSE,
         ROS_MESSAGE_SEND_CHARGE,
         ROS_MESSAGE_SEND_DISCHARGE,
@@ -165,8 +165,8 @@ class MTMSApiNode(Node):
 
         return self.call_service(client, request)
 
-    def send_event_trigger(self):
-        topic, message_type = self.ROS_MESSAGE_SEND_EVENT_TRIGGER
+    def trigger_events(self):
+        topic, message_type = self.ROS_MESSAGE_EVENT_TRIGGER
 
         publisher = self.ros_message_publishers[topic]
         message = message_type()
