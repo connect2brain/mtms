@@ -62,14 +62,14 @@ message(STATUS "TARGET: ${CMAKE_BUILD_TYPE}")
 
 # PyBind11 modules
 
-add_library(preprocessor_bindings MODULE src/preprocessor_bindings.cpp src/preprocessor_wrapper.cpp)
+add_library(cpp_bindings MODULE src/cpp_bindings.cpp src/preprocessor_wrapper.cpp)
 
 # XXX: The value of PREFIX should be "${PYTHON_MODULE_PREFIX}" and SUFFIX should be "${PYTHON_MODULE_EXTENSION}".
 #   However, they seem to be undefined, resulting in empty strings, hence hardcode the suffix to .so.
-set_target_properties(preprocessor_bindings PROPERTIES PREFIX "" SUFFIX ".so")
+set_target_properties(cpp_bindings PROPERTIES PREFIX "" SUFFIX ".so")
 
 ament_target_dependencies(
-  preprocessor_bindings
+  cpp_bindings
   pybind11_vendor
   rclcpp
   rclcpp_action
@@ -85,5 +85,5 @@ execute_process(COMMAND ${Python3_EXECUTABLE} -c "import site; print(site.USER_S
 
 message(STATUS "Installing Python bindings to: ${PYTHON_LOCAL_SITE_PACKAGES}")
 
-install(TARGETS preprocessor_bindings
+install(TARGETS cpp_bindings
         DESTINATION ${PYTHON_LOCAL_SITE_PACKAGES})
