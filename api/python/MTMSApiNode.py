@@ -311,7 +311,7 @@ class MTMSApiNode(Node):
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
+    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
         topic, service_type = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
 
         client = self.ros_service_clients[topic]
@@ -320,14 +320,15 @@ class MTMSApiNode(Node):
         request.target.displacement_x = displacement_x
         request.target.displacement_y = displacement_y
         request.target.rotation_angle = rotation_angle
+        request.target.algorithm.value = algorithm
         request.intensity = intensity
 
         value = self.call_service(client, request)
-        assert value.success, "Invalid displacement, rotation angle, or intensity."
+        assert value.success, "Invalid displacement, rotation angle, intensity, or algorithm."
 
         return value.voltages, value.reversed_polarities
 
-    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle):
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         topic, service_type = self.ROS_SERVICE_GET_MAXIMUM_INTENSITY
 
         client = self.ros_service_clients[topic]
@@ -336,9 +337,10 @@ class MTMSApiNode(Node):
         request.target.displacement_x = displacement_x
         request.target.displacement_y = displacement_y
         request.target.rotation_angle = rotation_angle
+        request.target.algorithm.value = algorithm
 
         value = self.call_service(client, request)
-        assert value.success, "Invalid displacement or rotation angle."
+        assert value.success, "Invalid displacement, rotation angle, or algorithm."
 
         return value.maximum_intensity
 
