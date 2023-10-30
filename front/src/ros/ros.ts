@@ -38,6 +38,7 @@ export const getMaximumIntensity = (
   x: number,
   y: number,
   angle: number,
+  algorithm: number,
   callback: (maximum_intensity: number) => void,
 ) => {
   const request = new ROSLIB.ServiceRequest({
@@ -45,6 +46,9 @@ export const getMaximumIntensity = (
       displacement_x: x,
       displacement_y: y,
       rotation_angle: angle,
+      algorithm: {
+        value: algorithm,
+      },
     },
   }) as any
 

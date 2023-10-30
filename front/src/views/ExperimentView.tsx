@@ -224,7 +224,9 @@ type Stimulus = {
     displacement_x: number
     displacement_y: number
     rotation_angle: number
-    algorithm: number
+    algorithm: {
+      value: number
+    }
   }
   intensity: number
   triggers: TriggerConfig[]
@@ -411,7 +413,9 @@ export const ExperimentView = () => {
             displacement_x: point.x,
             displacement_y: point.y,
             rotation_angle: angle,
-            algorithm: targetingAlgorithm,
+            algorithm: {
+              value: targetingAlgorithm,
+            },
           },
           intensity: intensity,
           triggers: triggers,
@@ -554,11 +558,11 @@ export const ExperimentView = () => {
       const x: number = selectedPoints[0].x
       const y: number = selectedPoints[0].y
       const angle: number = selectedAngles[0]
-      getMaximumIntensity(x, y, angle, (maximum_intensity) => {
+      getMaximumIntensity(x, y, angle, targetingAlgorithm, (maximum_intensity) => {
         setMaximumIntensity(maximum_intensity)
       })
     }
-  }, [selectedAngles, selectedPoints])
+  }, [selectedAngles, selectedPoints, targetingAlgorithm])
 
   /* Update the number of valid trials. */
   useEffect(() => {

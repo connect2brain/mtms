@@ -580,7 +580,7 @@ class MTMSApi:
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
+    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
         """
         Return the channel voltages (V) given the displacements, rotation angle and intensity.
 
@@ -594,6 +594,10 @@ class MTMSApi:
             Rotation angle in degrees.
         intensity : float
             Intensity value.
+        algorithm : int
+            One of the following:
+                TargetingAlgorithm.LEAST_SQUARES
+                TargetingAlgorithm.GENETIC
 
         Returns
         -------
@@ -605,9 +609,10 @@ class MTMSApi:
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
             intensity=intensity,
+            algorithm=algorithm,
         )
 
-    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle):
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         """
         Return the maximum intensity given the displacements and rotation angle.
 
@@ -619,6 +624,10 @@ class MTMSApi:
             Displacement in the y direction.
         rotation_angle : float
             Rotation angle in degrees.
+        algorithm : int
+            One of the following:
+                TargetingAlgorithm.LEAST_SQUARES
+                TargetingAlgorithm.GENETIC
 
         Returns
         -------
@@ -630,6 +639,7 @@ class MTMSApi:
             displacement_x=displacement_x,
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
+            algorithm=algorithm,
         )
 
     # Stimulation
