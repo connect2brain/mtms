@@ -1,5 +1,20 @@
 import styled from 'styled-components'
 
+export const Select = styled.select`
+  width: 318px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: background-color 0.2s;
+  appearance: none;
+  margin-right: 30px;
+
+  &:focus {
+    background-color: transparent;
+  }
+`
+
 export const StyledPanel = styled.div<{ isGrayedOut?: boolean }>`
   padding: 25px 0px 40px 35px;
   border-radius: 5px;
