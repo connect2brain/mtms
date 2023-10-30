@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
-import { TabBar } from 'styles/General'
+import { TabBar, Select } from 'styles/General'
 
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
@@ -36,6 +36,7 @@ import {
 import { SystemContext } from 'providers/SystemProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
+import { ConfigContext } from 'providers/ConfigProvider'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -56,20 +57,6 @@ const Label = styled.label`
   margin-right: 10px;
   margin-left: 30px;
   display: inline-block;
-`
-
-const Select = styled.select`
-  width: 318px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  transition: background-color 0.2s;
-  appearance: none;
-
-  &:focus {
-    background-color: transparent;
-  }
 `
 
 const Input = styled.input`
@@ -237,6 +224,7 @@ type Stimulus = {
     displacement_x: number
     displacement_y: number
     rotation_angle: number
+    algorithm: number
   }
   intensity: number
   triggers: TriggerConfig[]
@@ -320,6 +308,7 @@ export const ExperimentView = () => {
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
   const { systemState } = useContext(SystemContext)
+  const { targetingAlgorithm } = useContext(ConfigContext)
 
   const [projects, setProjects] = useState<string[]>([])
 
@@ -422,6 +411,7 @@ export const ExperimentView = () => {
             displacement_x: point.x,
             displacement_y: point.y,
             rotation_angle: angle,
+            algorithm: targetingAlgorithm,
           },
           intensity: intensity,
           triggers: triggers,

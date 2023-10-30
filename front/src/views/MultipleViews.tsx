@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCog } from '@fortawesome/free-solid-svg-icons'
+
 import DataVisualize from './DataVisualize'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
 
 import Targets from './Targets'
 import { SmallHeader } from '../styles/StyledTypography'
 
+import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
 import { PipelineView } from './PipelineView'
@@ -58,6 +62,9 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
           Targeting
         </a>
+        <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
+          <FontAwesomeIcon icon={faCog} />
+        </ConfigIcon>
       </OptionWrapper>
       <ViewContainer>
         <Wrapper style={{ display: currentView === 'SystemView' ? 'block' : 'none' }}>
@@ -83,6 +90,10 @@ export const MultipleViews = () => {
         <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
           <SmallHeader>Targeting</SmallHeader>
           <Targets />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'config' ? 'block' : 'none' }}>
+          <SmallHeader>Config</SmallHeader>
+          <ConfigView />
         </Wrapper>
       </ViewContainer>
     </div>
@@ -120,4 +131,12 @@ const Wrapper = styled.div`
   padding: 0.5rem;
   margin: 0.5rem;
   border: 3px solid ${(p) => p.theme.colors.darkgray};
+`
+
+const ConfigIcon = styled.a`
+  position: absolute;
+  top: 105px;
+  right: 500px;
+  font-size: 28px;
+  cursor: pointer;
 `

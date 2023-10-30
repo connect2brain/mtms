@@ -8,6 +8,7 @@ import Providers from './providers/Providers'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
 import { PipelineProvider } from './providers/PipelineProvider'
 import { EegProvider } from './providers/EegProvider'
+import { ConfigProvider } from './providers/ConfigProvider'
 import { SystemProvider } from './providers/SystemProvider'
 
 import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
@@ -22,16 +23,18 @@ const App = () => {
       <ProjectProvider>
         <SystemProvider>
           <PipelineProvider>
-            <EegProvider>
-              <HealthcheckProvider>
-                <Header>mTMS control panel</Header>
-                <HealthcheckStatusDisplay />
-                <HealthcheckMessageDisplay />
-                <Wrapper>
-                  <MultipleViews />
-                </Wrapper>
-              </HealthcheckProvider>
-            </EegProvider>
+            <ConfigProvider>
+              <EegProvider>
+                <HealthcheckProvider>
+                  <Header>mTMS control panel</Header>
+                  <HealthcheckStatusDisplay />
+                  <HealthcheckMessageDisplay />
+                  <Wrapper>
+                    <MultipleViews />
+                  </Wrapper>
+                </HealthcheckProvider>
+              </EegProvider>
+            </ConfigProvider>
           </PipelineProvider>
         </SystemProvider>
       </ProjectProvider>
