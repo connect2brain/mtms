@@ -579,7 +579,7 @@ export const ExperimentView = () => {
     setNumOfTrials(numOfTrials)
 
     updateValidTrialsWithDebounce(experiment)
-  }, [selectedAngles, selectedPoints, intensity, numOfRepetitions])
+  }, [selectedAngles, selectedPoints, intensity, numOfRepetitions, targetingAlgorithm])
 
   /* Update the experiment duration. */
   useEffect(() => {
