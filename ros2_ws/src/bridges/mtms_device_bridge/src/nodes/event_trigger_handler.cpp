@@ -9,7 +9,7 @@
 
 void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::EventTrigger> event_trigger) {
   if (!is_fpga_ok()) {
-    RCLCPP_WARN(rclcpp::get_logger("event_trigger_handler"), "FPGA not in OK state while attempting to send event trigger");
+    RCLCPP_WARN(rclcpp::get_logger("event_trigger_handler"), "FPGA not in OK state while attempting to trigger events.");
     return;
   }
 
@@ -18,20 +18,19 @@ void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::Even
                                       NiFpga_mTMS_ControlBool_Eventtrigger,
                                       true));
 
-  RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Sent event trigger");
+  RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Events triggered.");
 }
 
-class SendEventTriggerHandler : public rclcpp::Node {
+class EventTriggerHandler : public rclcpp::Node {
 public:
-  SendEventTriggerHandler()
-      : Node("event_trigger_handler") {
+  EventTriggerHandler() : Node("event_trigger_handler") {
 
-    send_event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::EventTrigger>(
-        "/event/send/event_trigger", 10, callback);
+    event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::EventTrigger>(
+        "/event/trigger", 10, callback);
   }
 
 private:
-  rclcpp::Subscription<event_interfaces::msg::EventTrigger>::SharedPtr send_event_trigger_subscriber_;
+  rclcpp::Subscription<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_subscriber_;
 };
 
 int main(int argc, char **argv) {
@@ -42,7 +41,7 @@ int main(int argc, char **argv) {
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<SendEventTriggerHandler>();
+  auto node = std::make_shared<EventTriggerHandler>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Locking memory");

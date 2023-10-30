@@ -446,12 +446,12 @@ classdef MTMSApi < handle
             end
         end
 
-        function send_event_trigger(obj)
-        % Executes the events which have execution_condition set to ExecutionCondition.TRIGGERED.
+        function trigger_events(obj)
+        % Execute the events which have execution_condition set to ExecutionCondition.TRIGGERED.
         %
         % Does not require any parameters. Does not return any value.
 
-            obj.node.send_event_trigger();
+            obj.node.trigger_events();
         end
 
         % Waveforms and targeting
