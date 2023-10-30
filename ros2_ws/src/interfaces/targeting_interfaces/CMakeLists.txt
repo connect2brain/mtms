@@ -25,6 +25,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ElectricTarget.msg"
+  "msg/TargetingAlgorithm.msg"
 
   "srv/GetChannelVoltages.srv"
   "srv/GetMaximumIntensity.srv"
