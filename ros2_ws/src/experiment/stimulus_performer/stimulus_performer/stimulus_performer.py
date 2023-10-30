@@ -395,6 +395,9 @@ class StimulusPerformerNode(Node):
 
         self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
+        if wait_for_trigger:
+
+
         feedbacks = self.wait_for_events_to_finish(all_ids)
 
         # XXX: Should check pulse feedbacks separately from trigger out feedbacks, as the error codes

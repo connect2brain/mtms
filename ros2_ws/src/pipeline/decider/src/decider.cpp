@@ -87,7 +87,7 @@ EegDecider::EegDecider() : Node("decider") {
 
   /* Publisher for event trigger. */
   this->event_trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
-    "/event/send/event_trigger",
+    "/event/trigger",
     10);
 
   /* Initialize variables. */
