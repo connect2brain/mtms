@@ -11,7 +11,14 @@ import { StyledPanel, ProjectRow, ConfigRow, ConfigLabel, Select } from 'styles/
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
-import { listProjects, setActiveProject, setPreprocessorRos, setPreprocessorEnabledRos } from 'ros/ros'
+import {
+  listProjects,
+  setActiveProject,
+  setPreprocessorRos,
+  setPreprocessorEnabledRos,
+  setDeciderRos,
+  setDeciderEnabledRos,
+} from 'ros/ros'
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
@@ -126,14 +133,12 @@ const getKey = (key: string, defaultValue: any): any => {
 export const PipelineView = () => {
   const { activeProject } = useContext(ProjectContext)
 
-  const { preprocessorList } = useContext(PipelineContext)
-  const { preprocessorEnabled } = useContext(PipelineContext)
+  const { preprocessorList, preprocessorEnabled, deciderList, deciderEnabled } = useContext(PipelineContext)
 
   const [projects, setProjects] = useState<string[]>([])
 
   const [preprocessor, setPreprocessor] = useState<string>('')
-
-  const [deciderEnabled, setDeciderEnabled] = useState<boolean>(() => getKey('deciderEnabled', false))
+  const [decider, setDecider] = useState<string>('')
 
   const [presenterEnabled, setPresenterEnabled] = useState<boolean>(() => getKey('presenterEnabled', false))
 
@@ -144,6 +149,7 @@ export const PipelineView = () => {
     })
   }
 
+  /* Preprocessor */
   const handlePreprocessorEnabled = (enabled: boolean) => {
     setPreprocessorEnabledRos(enabled, () => {
       console.log('Preprocessor ' + (enabled ? 'enabled' : 'disabled'))
@@ -156,6 +162,22 @@ export const PipelineView = () => {
 
     setPreprocessorRos(preprocessor, () => {
       console.log('Preprocessor set to ' + preprocessor)
+    })
+  }
+
+  /* Decider */
+  const handleDeciderEnabled = (enabled: boolean) => {
+    setDeciderEnabledRos(enabled, () => {
+      console.log('Decider ' + (enabled ? 'enabled' : 'disabled'))
+    })
+  }
+
+  const handleDeciderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const decider = event.target.value
+    setDecider(decider)
+
+    setDeciderRos(decider, () => {
+      console.log('Decider set to ' + decider)
     })
   }
 
@@ -219,10 +241,17 @@ export const PipelineView = () => {
           <SmallerTitle>Decider</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={deciderEnabled} onChange={setDeciderEnabled} />
+            <ToggleSwitch type='flat' checked={deciderEnabled} onChange={handleDeciderEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
+            <Select onChange={handleDeciderChange} value={decider}>
+              {deciderList.map((decider, index) => (
+                <option key={index} value={decider}>
+                  {decider}
+                </option>
+              ))}
+            </Select>
           </ConfigRow>
         </DeciderPanel>
         <PresenterPanel>

@@ -380,3 +380,59 @@ export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void
     },
   )
 }
+
+/* Set up set decider service. */
+const setDeciderService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/decider/set',
+  serviceType: 'project_interfaces/SetDecider',
+})
+
+export const setDeciderRos = (decider: string, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    decider: decider,
+  }) as any
+
+  setDeciderService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set decider: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set decider, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set up set decider enabled service. */
+const setDeciderEnabledService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/decider/enabled/set',
+  serviceType: 'project_interfaces/SetDeciderEnabled',
+})
+
+export const setDeciderEnabledRos = (enabled: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    enabled: enabled,
+  }) as any
+
+  setDeciderEnabledService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set decider enabled: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set decider enabled, error:')
+      console.log(error)
+    },
+  )
+}
