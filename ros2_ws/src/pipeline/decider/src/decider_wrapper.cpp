@@ -77,6 +77,8 @@ void DeciderWrapper::reset_module(
   /* Initialize numpy arrays. */
   py_timestamps = std::make_unique<py::array_t<double>>(buffer_size);
 
+  py_valid = std::make_unique<py::array_t<bool>>(buffer_size);
+
   std::vector<size_t> eeg_data_shape = {buffer_size, eeg_data_size};
   py_eeg_data = std::make_unique<py::array_t<double>>(eeg_data_shape);
 
@@ -91,6 +93,7 @@ void DeciderWrapper::reset_module(
 
 DeciderWrapper::~DeciderWrapper() {
   py_timestamps.reset();
+  py_valid.reset();
   py_eeg_data.reset();
   py_emg_data.reset();
 }
@@ -121,6 +124,7 @@ std::pair<bool, bool>DeciderWrapper::process(
 
   /* Fill the numpy arrays. */
   auto timestamps_ptr = py_timestamps->mutable_data();
+  auto valid_ptr = py_valid->mutable_data();
   auto eeg_data_ptr = py_eeg_data->mutable_data();
   auto emg_data_ptr = py_emg_data->mutable_data();
 
@@ -128,6 +132,8 @@ std::pair<bool, bool>DeciderWrapper::process(
     const auto& sample = *sample_ptr;
 
     *timestamps_ptr++ = sample.time - current_time;
+    *valid_ptr++ = sample.valid;
+
     std::memcpy(eeg_data_ptr, sample.eeg_data.data(), eeg_data_size * sizeof(double));
     eeg_data_ptr += eeg_data_size;
     std::memcpy(emg_data_ptr, sample.emg_data.data(), emg_data_size * sizeof(double));
@@ -137,7 +143,7 @@ std::pair<bool, bool>DeciderWrapper::process(
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance.attr("process")(*py_timestamps, *py_eeg_data, *py_emg_data, current_sample_index);
+    result = decider_instance.attr("process")(*py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
