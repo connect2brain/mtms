@@ -9,7 +9,13 @@ type SetSelectedAngles = React.Dispatch<React.SetStateAction<number[]>>
 interface AngleSelectorProps {
   selectedAngles: number[]
   setSelectedAngles: SetSelectedAngles
+  highlightedAngles: number[]
   multiSelectMode?: boolean
+}
+
+interface SectorProps {
+  isSelected: boolean
+  isHighlighted: boolean
 }
 
 const SelectorInternalContainer = styled.div`
@@ -24,20 +30,22 @@ const SelectorContainer = styled.div`
 
 const SVGContainer = styled.svg``
 
-const Sector = styled.path`
+const Sector = styled.path<SectorProps>`
   fill: transparent;
   stroke: #ccc;
   stroke-width: 2;
   cursor: pointer;
   transition: fill 0.2s;
 
-  &[fill='blue'] {
-    fill: #007bff;
-  }
+  fill: ${(props) => {
+    if (props.isHighlighted) return '#00f'
+    if (props.isSelected) return '#007bff'
+    return 'transparent'
+  }};
 
   // Hover effect only when the sector is not selected
-  &:not([fill='blue']):hover {
-    fill: rgba(0, 123, 255, 0.4);
+  &:hover {
+    fill: ${(props) => (props.fill !== 'blue' ? 'rgba(0, 123, 255, 0.4)' : '#007bff')};
   }
 `
 
@@ -63,7 +71,12 @@ const LargeAngleText = styled.div`
   }
 `
 
-export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, setSelectedAngles, multiSelectMode }) => {
+export const AngleSelector: React.FC<AngleSelectorProps> = ({
+  selectedAngles,
+  setSelectedAngles,
+  highlightedAngles,
+  multiSelectMode,
+}) => {
   const [isDragging, setIsDragging] = useState<boolean>(false)
   const [dragMode, setDragMode] = useState<'selecting' | 'deselecting' | null>(null)
   const [hoveredAngle, setHoveredAngle] = useState<number | null>(null)
@@ -125,6 +138,7 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
   }
 
   const isAngleSelected = (angle: number) => selectedAngles.includes(angle)
+  const isAngleHighlighted = (angle: number) => highlightedAngles.includes(angle)
 
   return (
     <div>
@@ -136,6 +150,7 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
             {Array.from({ length: 36 }).map((_, index) => {
               const angle = index * 10
               const isSelected = isAngleSelected(angle)
+              const isHighlighted = isAngleHighlighted(angle)
               const labelX = 200 + 170 * Math.cos((angle * Math.PI) / 180)
               const labelY = 200 + 170 * Math.sin((angle * Math.PI) / 180)
 
@@ -150,7 +165,8 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({ selectedAngles, se
                     } A 150 150 0 0 1 ${200 + 150 * Math.cos(((angle + 5) * Math.PI) / 180)} ${
                       200 + 150 * Math.sin(((angle + 5) * Math.PI) / 180)
                     } Z`}
-                    fill={isSelected ? 'blue' : 'transparent'}
+                    isSelected={isSelected}
+                    isHighlighted={isHighlighted}
                     onMouseDown={() => handleSectorMouseDown(angle)}
                     onMouseEnter={() => handleSectorMouseEnter(angle)}
                   />
