@@ -14,11 +14,13 @@ export interface Point {
 interface LocationSelectorProps {
   selectedPoints: Point[]
   setSelectedPoints: SetSelectedPoints
+  highlightedPoints: Point[]
   multiSelectMode?: boolean
 }
 
 interface GridCellProps {
   isSelected: boolean
+  isHighlighted: boolean
   isOriginLine?: boolean
 }
 
@@ -46,7 +48,12 @@ const GridCell = styled.div<GridCellProps>`
   height: 10px;
   border: 1px solid #ccc;
 
-  background-color: ${(props) => (props.isSelected ? '#007bff' : props.isOriginLine ? '#ddd' : 'transparent')};
+  background-color: ${(props) => {
+    if (props.isHighlighted) return '#00f'
+    if (props.isSelected) return '#007bff'
+    if (props.isOriginLine) return '#ddd'
+    return 'transparent'
+  }};
 
   &:hover {
     background-color: ${(props) => (!props.isSelected ? 'rgba(0, 123, 255, 0.4)' : '#007bff')};
@@ -128,6 +135,7 @@ const CoordinateText = styled.div<{ isActive: boolean }>`
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
   selectedPoints,
   setSelectedPoints,
+  highlightedPoints,
   multiSelectMode = false,
 }) => {
   const [shape, setShape] = useState<'circle' | 'square' | null>(null)
@@ -144,6 +152,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   const isPointSelected = (x: number, y: number): boolean =>
     selectedPoints.some((point) => point.x === x && point.y === y)
+
+  const isPointHighlighted = (x: number, y: number): boolean =>
+    highlightedPoints.some((point) => point.x === x && point.y === y)
 
   const selectCell = (x: number, y: number) => {
     if (!isPointSelected(x, y)) {
@@ -250,6 +261,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
                     <GridCell
                       key={colIndex}
                       isSelected={isPointSelected(colIndex - 15, invertedRowIndex - 15)}
+                      isHighlighted={isPointHighlighted(colIndex - 15, invertedRowIndex - 15)}
                       isOriginLine={colIndex === 15 || invertedRowIndex === 15}
                       onMouseDown={() => handleCellMouseDown(colIndex - 15, invertedRowIndex - 15)}
                       onMouseEnter={() => {
