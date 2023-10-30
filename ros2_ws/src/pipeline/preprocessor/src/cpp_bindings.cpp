@@ -11,6 +11,6 @@ void PreprocessorWrapper::log(const std::string& message) {
   RCLCPP_INFO(*logger_ptr, "From Python: %s", message.c_str());
 }
 
-PYBIND11_MODULE(preprocessor_bindings, m) {
+PYBIND11_MODULE(cpp_bindings, m) {
     m.def("log", &PreprocessorWrapper::log);
 }
