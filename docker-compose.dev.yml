@@ -10,6 +10,18 @@ services:
     privileged: true
     network_mode: host
 
+  decider:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
   efield:
     build:
       context: .
