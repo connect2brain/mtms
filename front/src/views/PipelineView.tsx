@@ -7,7 +7,7 @@ import { EegDisplay } from 'components/EegDisplay'
 import { SessionDisplay } from 'components/SessionDisplay'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { StyledPanel, ProjectRow, ConfigRow, ConfigLabel } from 'styles/General'
+import { StyledPanel, ProjectRow, ConfigRow, ConfigLabel, Select } from 'styles/General'
 
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
@@ -102,22 +102,6 @@ const Arrow = styled.div`
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
     border-left: 10px solid #888;
-  }
-`
-
-const Select = styled.select`
-  width: 318px;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  transition: background-color 0.2s;
-  appearance: none;
-
-  margin-right: 35px;
-
-  &:focus {
-    background-color: transparent;
   }
 `
 
