@@ -3,11 +3,11 @@ import time
 
 import numpy as np
 
-import preprocessor_bindings
+import cpp_bindings
 
 # Override Python's native print() function.
 def print(x):
-    preprocessor_bindings.log(str(x))
+    cpp_bindings.log(str(x))
 
 
 class Preprocessor:
