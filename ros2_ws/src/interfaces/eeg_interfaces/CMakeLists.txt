@@ -26,6 +26,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EegSample.msg"
   "msg/PreprocessedEegSample.msg"
 
+  "msg/EegStatistics.msg"
+
   "msg/EegBatch.msg"
 
   "msg/Trigger.msg"
