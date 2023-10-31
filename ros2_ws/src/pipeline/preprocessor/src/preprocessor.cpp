@@ -63,6 +63,12 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 
+  /* Subscriber for EEG trigger. */
+  this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
+    "/eeg/trigger",
+    10,
+    std::bind(&EegPreprocessor::handle_eeg_trigger, this, _1));
+
   /* Subscriber for pulse feedback. */
   this->pulse_feedback_subscriber = create_subscription<event_interfaces::msg::PulseFeedback>(
     "/event/pulse_feedback",
@@ -262,12 +268,32 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle pulses */
+/* Handle EEG trigger, indicating a pulse, as well as direct pulse feedback from the mTMS device.
+
+   Note: The mTMS device sends a pulse feedback message when a pulse is given, but this does not apply to
+   TMS devices in general. Hence, we also handle EEG triggers as pulses, allowing other TMS devices to work
+   with the EEG preprocessor.
+
+   The downside to this logic is that when using a mTMS device with concurrent pulse and trigger out, connected to
+   the EEG device, we will get an indication of a pulse twice. This is not a problem, as the direct feedback and the
+   EEG trigger should arrive approximately at the same time, hence both will usually be cleared from the queue during the same sample -
+   if not, we will have two consecutive samples marked as having a pulse, which is not a problem in the current use cases.
+
+   TODO: However, we should probably have a more robust logic here in the long term; most likely, we would need to know explicitly
+   which one to use.
+*/
+void EegPreprocessor::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
+  double_t trigger_time = msg->time;
+  this->pulse_execution_times.push(trigger_time);
+
+  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", trigger_time);
+}
+
 void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg) {
   double_t execution_time = msg->execution_time;
   this->pulse_execution_times.push(execution_time);
 
-  RCLCPP_INFO(this->get_logger(), "Registered a pulse at: %.1f (s).", execution_time);
+  RCLCPP_INFO(this->get_logger(), "Registered pulse feedback from the mTMS device at: %.5f (s).", execution_time);
 }
 
 bool EegPreprocessor::was_pulse_given(double_t sample_time) {
