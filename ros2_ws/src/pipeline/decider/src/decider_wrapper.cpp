@@ -45,10 +45,12 @@ void DeciderWrapper::reset_module(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    this->_is_initialized = false;
     return;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    this->_is_initialized = false;
     return;
   }
 

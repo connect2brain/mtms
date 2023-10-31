@@ -296,12 +296,18 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
                          "Preprocessor not enabled");
     return;
   }
-
-  if (!this->preprocessor_wrapper->is_initialized()) {
+  if (this->module_name == UNSET_STRING) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
                          "Preprocessor enabled but not selected");
+    return;
+  }
+  if (!this->preprocessor_wrapper->is_initialized()) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Preprocessor enabled and selected but not initialized");
     return;
   }
 
