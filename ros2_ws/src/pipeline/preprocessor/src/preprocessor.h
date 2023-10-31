@@ -15,6 +15,7 @@
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "event_interfaces/msg/pulse_feedback.hpp"
 
@@ -55,6 +56,7 @@ private:
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
 
+  void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
   void handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg);
   bool was_pulse_given(double_t sample_time);
 
@@ -74,6 +76,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr preprocessor_enabled_publisher;
 
   rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   bool preprocessor_enabled;
 
