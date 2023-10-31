@@ -80,12 +80,12 @@ private:
   bool first_trigger_received;
 
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
-  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr publisher_data_;
-  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr publisher_trigger_;
-  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr publisher_eeg_info_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_sample_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;
 
-  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr subscription_system_state;
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
 
   double_t first_trigger_timestamp_;
 
