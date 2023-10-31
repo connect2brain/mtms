@@ -355,26 +355,32 @@ void EegBridge::handle_trigger_packet() {
 
   uint8_t trigger_port = buffer[TRIGGER_PORT_INDEX] >> 4;
 
-  auto trigger_msg = eeg_interfaces::msg::Trigger();
-
+  /* Trigger port 1 corresponds to the sync trigger between the mTMS device and the EEG device. */
   if (trigger_port == 1) {
     if (!this->first_trigger_received) {
+
       /* Upon receiving the first trigger, reset time. */
       this->first_trigger_timestamp_ = new_trigger_timestamp;
       this->first_trigger_received = true;
       this->first_sample_of_session_ = true;
 
-      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.2f s.", this->first_trigger_timestamp_);
+      RCLCPP_DEBUG(this->get_logger(), "'Session start' trigger received at time %.2f s.", this->first_trigger_timestamp_);
     } else {
       this->handle_sync_trigger(new_trigger_timestamp);
     }
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Trigger received in port: %u", trigger_port);
-  }
-  trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
-  trigger_msg.index = trigger_port;
 
-  this->publisher_trigger_->publish(trigger_msg);
+  /* Trigger port 2 corresponds to the other trigger port between the mTMS device and the EEG device. */
+  } else if (trigger_port == 2) {
+    auto trigger_msg = eeg_interfaces::msg::Trigger();
+    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
+
+    this->publisher_trigger_->publish(trigger_msg);
+
+    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Unknown trigger port: %u", trigger_port);
+  }
 }
 
 void EegBridge::handle_sample_packet() {
@@ -608,12 +614,10 @@ int EegBridge::get_trigger_package_from_buffer() {
 void EegBridge::publish_trigger_from_buffer(double_t time) {
   int trigger_channel_package = get_trigger_package_from_buffer();
 
-  auto trigger_msg = eeg_interfaces::msg::Trigger();
+  /* TODO: Duplicates the logic in handle_trigger_packet function, deduplicate. */
 
+  /* Trigger A is the sync trigger between the mTMS device and the EEG device. */
   if (trigger_channel_package == TRIGGER_A_IN) {
-    trigger_msg.index = 1;
-    trigger_msg.time = time - this->first_trigger_timestamp_;
-
     if (!first_trigger_received) {
       this->first_trigger_timestamp_ = time;
       this->first_trigger_received = true;
@@ -623,12 +627,18 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
       this->handle_sync_trigger(time);
     }
 
+  /* Trigger B is the other trigger between the mTMS device and the EEG device. */
   } else if (trigger_channel_package == TRIGGER_B_IN) {
-    trigger_msg.index = 2;
-  }
-  trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+    auto trigger_msg = eeg_interfaces::msg::Trigger();
 
-  this->publisher_trigger_->publish(trigger_msg);
+    trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+    this->publisher_trigger_->publish(trigger_msg);
+
+    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Unknown trigger port");
+  }
 }
 
 void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
