@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { TabBar } from 'styles/General'
 
 import { EegDisplay } from 'components/EegDisplay'
+import { EegStatisticsDisplay } from 'components/EegStatisticsDisplay'
 import { LatencyDisplay } from 'components/LatencyDisplay'
 import { SessionDisplay } from 'components/SessionDisplay'
 
@@ -275,6 +276,7 @@ export const PipelineView = () => {
       </PipelinePanel>
       <SessionDisplay />
       <EegDisplay />
+      <EegStatisticsDisplay />
       <LatencyDisplay />
     </>
   )
