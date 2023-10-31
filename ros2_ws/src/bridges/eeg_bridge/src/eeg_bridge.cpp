@@ -87,9 +87,9 @@ void EegBridge::create_publishers() {
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
-  this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
-  this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
+  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
+  this->trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
+  this->eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
   this->publisher_healthcheck_ = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
   this->healthcheck_publisher_timer = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&EegBridge::publish_healthcheck, this));
@@ -146,7 +146,7 @@ void EegBridge::subscribe_to_system_state() {
       RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
   };
 
-  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
+  this->system_state_subscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
                                                                                                         system_state_callback, subscription_options);
 }
 
@@ -354,7 +354,7 @@ void EegBridge::handle_trigger_packet() {
     auto trigger_msg = eeg_interfaces::msg::Trigger();
     trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
 
-    this->publisher_trigger_->publish(trigger_msg);
+    this->trigger_publisher->publish(trigger_msg);
 
     RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
 
@@ -469,7 +469,7 @@ void EegBridge::handle_measurement_start_packet() {
   eeg_info_msg.num_of_emg_channels = num_of_emg_channels;
   eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
 
-  this->publisher_eeg_info_->publish(eeg_info_msg);
+  this->eeg_info_publisher->publish(eeg_info_msg);
 
   /* Reset number of sample packets received. */
   this->sample_packets_received_ = 0;
@@ -612,7 +612,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
     auto trigger_msg = eeg_interfaces::msg::Trigger();
 
     trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
-    this->publisher_trigger_->publish(trigger_msg);
+    this->trigger_publisher->publish(trigger_msg);
 
     RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
 
@@ -651,7 +651,7 @@ void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
   }
   message.first_sample_of_session = this->first_sample_of_session_;
 
-  this->publisher_data_->publish(message);
+  this->eeg_sample_publisher->publish(message);
 
   RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data into the topic: %s", EEG_RAW_TOPIC.c_str());
   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data...");
