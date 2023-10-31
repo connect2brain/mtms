@@ -19,6 +19,8 @@
 
 #include "event_interfaces/msg/pulse_feedback.hpp"
 
+#include "mtms_device_interfaces/msg/system_state.hpp"
+
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor.hpp"
 #include "project_interfaces/srv/set_preprocessor_enabled.hpp"
@@ -37,6 +39,11 @@ public:
   EegPreprocessor();
 
 private:
+  void reset_preprocessor_module();
+  void reset_sample_buffer();
+
+  void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
+
   void set_preprocessor(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response);
@@ -45,13 +52,9 @@ private:
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response);
 
-  void reset_preprocessor_module();
-
   void set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   std::vector<std::string> list_python_scripts(const std::string& path);
   void update_preprocessor_list();
-
-  void reset_sample_buffer();
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
@@ -61,6 +64,8 @@ private:
   bool was_pulse_given(double_t sample_time);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
+
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
@@ -98,6 +103,10 @@ private:
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
 
   std::unique_ptr<PreprocessorWrapper> preprocessor_wrapper;
+
+  /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
+     just once when the session is stopped. */
+  mtms_device_interfaces::msg::SessionState session_state;
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */
