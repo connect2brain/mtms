@@ -76,23 +76,13 @@ public:
   SystemStateBridge()
       : Node("system_state_bridge") {
 
-    auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
-    const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
-    const rmw_time_t rmw_deadline = {0, deadline_ns};
-    const rmw_time_t rmw_lifespan = rmw_deadline;
+    const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
 
-    const rmw_qos_profile_t qos_profile = {
-        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-        1,
-        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-        rmw_deadline,
-        rmw_lifespan,
-        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-        false
-    };
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        .deadline(DEADLINE_NS)
+        .lifespan(DEADLINE_NS);
 
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
         "/mtms_device/system_state", qos);
