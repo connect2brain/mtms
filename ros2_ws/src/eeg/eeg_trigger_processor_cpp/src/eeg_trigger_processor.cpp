@@ -53,7 +53,7 @@ EEGTriggerProcessor::EEGTriggerProcessor() : Node("eeg_trigger_processor") {
     }
   };
 
-  trigger_subscription = this->create_subscription<eeg_interfaces::msg::Trigger>("/eeg/trigger_received",
+  trigger_subscription = this->create_subscription<eeg_interfaces::msg::Trigger>("/eeg/trigger",
                                                                                   10,
                                                                                   trigger_subscription_callback);
 
