@@ -261,14 +261,14 @@ class StimulusPerformerNode(Node):
 
     # Pulse and trigger out services
 
-    def trigger_out(self, id, time, delay, execution_condition, port):
+    def trigger_out(self, id, time, execution_condition, port):
         message = TriggerOut()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = float(delay)
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.port = port
@@ -385,11 +385,14 @@ class StimulusPerformerNode(Node):
                 delay = stimulus.triggers[i].delay
                 port = i + 1
 
+                # Note that the field 'delay' of TriggerOut ROS message cannot be used here, as it cannot have a
+                # negative value.
+                delayed_time = time + delay
+
                 self.trigger_out(
                     id=id,
                     port=port,
-                    time=time,
-                    delay=delay,
+                    time=delayed_time,
                     execution_condition=execution_condition,
                 )
                 trigger_ids += [id]
