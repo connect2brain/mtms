@@ -24,8 +24,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
   /* Subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
-        .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
   this->eeg_info_subscriber = this->create_subscription<eeg_interfaces::msg::EegInfo>(
     EEG_INFO_TOPIC,
