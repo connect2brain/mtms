@@ -59,6 +59,12 @@ EegDecider::EegDecider() : Node("decider") {
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
 
+  /* Subscriber for EEG trigger. */
+  this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
+    "/eeg/trigger",
+    10,
+    std::bind(&EegDecider::handle_eeg_trigger, this, _1));
+
   /* Subscriber for active project. */
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
@@ -79,6 +85,11 @@ EegDecider::EegDecider() : Node("decider") {
   this->set_decider_enabled_service = this->create_service<project_interfaces::srv::SetDeciderEnabled>(
     "/pipeline/decider/enabled/set",
     std::bind(&EegDecider::set_decider_enabled, this, _1, _2));
+
+  /* Publisher for latency message. */
+  this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
+    "/pipeline/latency",
+    10);
 
   /* Publisher for decider enabled message. */
   this->decider_enabled_publisher = this->create_publisher<std_msgs::msg::Bool>(
@@ -263,6 +274,35 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
+/* Handle EEG trigger, indicating a pulse.
+
+   TODO: See the similar logic in preprocessor.cpp and the disclaimer there; we should rely explicitly either on the pulse feedback
+     or the EEG trigger.
+*/
+void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
+  double_t trigger_time = msg->time;
+
+  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", trigger_time);
+
+  if (!this->decision_times.empty()) {
+    double_t sample_time = this->decision_times.front();
+    this->decision_times.pop();
+
+    double_t time_difference = trigger_time - sample_time;
+
+    RCLCPP_INFO(this->get_logger(), "Time difference between the decision time and the pulse: %.5f (s)", time_difference);
+
+    auto msg = pipeline_interfaces::msg::Latency();
+    msg.latency = time_difference;
+    msg.sample_time = sample_time;
+
+    this->latency_publisher->publish(msg);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "No previous pulse times found in the queue.");
+  }
+}
+
 void EegDecider::update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
   this->ready_for_event_trigger = true;
 
@@ -310,14 +350,14 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
     ready_for_event_trigger);
 
   if (success) {
-    /* Measure the decision time for the buffer. */
+    /* Measure the processing time of the sample.  TODO: Unused at the moment. */
     auto end_time = std::chrono::high_resolution_clock::now();
-
-    /* TODO: Unused at the moment. */
-    double_t decision_time = std::chrono::duration<double_t>(end_time - start_time).count();
+    double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
     /* Send event trigger if desired. */
     if (send_event_trigger) {
+      this->decision_times.push(sample_time);
+
       RCLCPP_INFO(this->get_logger(), "Sending event trigger at time %.3f (s).", sample_time);
 
       auto msg = event_interfaces::msg::EventTrigger();
