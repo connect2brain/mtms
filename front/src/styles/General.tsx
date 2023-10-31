@@ -131,6 +131,7 @@ export const StateTitle = styled.span`
 
 export const IndentedStateTitle = styled(StateTitle)`
   margin-left: 20px;
+  font-weight: normal;
 `
 
 export const StateValue = styled.span``
