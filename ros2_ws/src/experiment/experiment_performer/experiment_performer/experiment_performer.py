@@ -477,7 +477,11 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval):
+    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval, wait_for_trigger):
+        # If waiting for trigger, don't wait between trials.
+        if wait_for_trigger:
+            return 0.0
+
         if num_of_attempts > 1:
             return self.TRIAL_REDO_INTERVAL_S
 
@@ -616,6 +620,7 @@ class ExperimentPerformerNode(Node):
                 num_of_attempts=num_of_attempts,
                 is_first_trial=is_first_trial,
                 intertrial_interval=intertrial_interval,
+                wait_for_trigger=wait_for_trigger,
             )
 
             # Determine the time of the next trial.
