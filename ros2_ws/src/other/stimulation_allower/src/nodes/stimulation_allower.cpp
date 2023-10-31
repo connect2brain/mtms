@@ -33,15 +33,13 @@ public:
     /* Create QoS to persist the latest sample. */
     auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
-        .history(RMW_QOS_POLICY_HISTORY_KEEP_LAST);
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
     /* Create QoS profile for 'coil at target' subscriber. */
     auto qos_deadline = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
         .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
-        .deadline(std::chrono::nanoseconds(COIL_AT_TARGET_PUBLISHING_INTERVAL))
-        .liveliness(RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT);
+        .deadline(std::chrono::nanoseconds(COIL_AT_TARGET_PUBLISHING_INTERVAL));
 
     rclcpp::SubscriptionOptions subscription_options;
     subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) -> void {
