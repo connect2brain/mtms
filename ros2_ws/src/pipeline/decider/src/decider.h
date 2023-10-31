@@ -15,9 +15,12 @@
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "event_interfaces/msg/event_trigger.hpp"
 #include "event_interfaces/msg/ready_for_event_trigger.hpp"
+
+#include "pipeline_interfaces/msg/latency.hpp"
 
 #include "project_interfaces/msg/decider_list.hpp"
 #include "project_interfaces/srv/set_decider.hpp"
@@ -55,6 +58,7 @@ private:
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
+  void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
 
   void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
@@ -75,6 +79,10 @@ private:
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_publisher;
   rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_event_trigger_subscriber;
 
+  rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
+
+  rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
+
   bool decider_enabled;
 
   std::string active_project;
@@ -89,6 +97,8 @@ private:
   double_t sampling_period;
 
   double_t previous_time = UNSET_PREVIOUS_TIME;
+
+  std::queue<double_t> decision_times;
 
   bool ready_for_event_trigger = false;
 
