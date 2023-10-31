@@ -1,0 +1,55 @@
+import React, { useContext, useEffect, useState } from 'react'
+import styled from 'styled-components'
+
+import { StyledPanel, StateRow, StateTitle, IndentedStateTitle, StateValue } from 'styles/General'
+
+import { EegContext } from 'providers/EegProvider'
+
+const EegStatisticsPanel = styled(StyledPanel)`
+  width: 300px;
+  height: 150px;
+  position: fixed;
+  top: 646px;
+  right: 5px;
+  z-index: 1000;
+`
+
+export const EegStatisticsDisplay: React.FC = () => {
+  const { eegStatistics } = useContext(EegContext)
+
+  const formatTimeToMicroseconds = (timeInSeconds?: number): string | undefined => {
+    if (typeof timeInSeconds === 'undefined' || timeInSeconds === null) {
+      return undefined
+    }
+    return `${(timeInSeconds * 1_000_000).toFixed(0)}`
+  }
+
+  return (
+    <EegStatisticsPanel>
+      <StateRow>
+        <StateTitle>Raw</StateTitle>
+        <StateValue>{eegStatistics?.num_of_raw_samples}</StateValue>
+      </StateRow>
+      <StateRow>
+        <StateTitle>Preprocessed</StateTitle>
+        <StateValue>{eegStatistics?.num_of_preprocessed_samples}</StateValue>
+      </StateRow>
+      <br />
+      <StateRow>
+        <StateTitle>Time (µs)</StateTitle>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Median</IndentedStateTitle>
+        <StateValue>{formatTimeToMicroseconds(eegStatistics?.preprocessing_time_median)}</StateValue>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Q95</IndentedStateTitle>
+        <StateValue>{formatTimeToMicroseconds(eegStatistics?.preprocessing_time_q95)}</StateValue>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Max</IndentedStateTitle>
+        <StateValue>{formatTimeToMicroseconds(eegStatistics?.preprocessing_time_max)}</StateValue>
+      </StateRow>
+    </EegStatisticsPanel>
+  )
+}
