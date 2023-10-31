@@ -3,6 +3,11 @@ import { Topic, Message } from 'roslib'
 
 import { ros } from 'ros/ros'
 
+interface Latency extends ROSLIB.Message {
+  latency: number
+  sample_time: number
+}
+
 interface PreprocessorList extends ROSLIB.Message {
   scripts: string[]
 }
@@ -21,6 +26,9 @@ interface PipelineContextType {
 
   deciderList: string[]
   deciderEnabled: boolean
+
+  latency: Latency | null
+  setLatency: React.Dispatch<React.SetStateAction<Latency | null>>
 }
 
 const defaultPipelineState: PipelineContextType = {
@@ -29,6 +37,11 @@ const defaultPipelineState: PipelineContextType = {
 
   deciderList: [],
   deciderEnabled: false,
+
+  latency: null,
+  setLatency: () => {
+    console.warn('setLatency is not yet initialized.')
+  },
 }
 
 export const PipelineContext = React.createContext<PipelineContextType>(defaultPipelineState)
@@ -43,6 +56,8 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
   const [deciderList, setDeciderList] = useState<string[]>([])
   const [deciderEnabled, setDeciderEnabled] = useState<boolean>(false)
+
+  const [latency, setLatency] = useState<Latency | null>(null)
 
   useEffect(() => {
     /* Subscriber for preprocessor list. */
@@ -89,6 +104,19 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
       setDeciderEnabled(message.data)
     })
 
+    /* Subscriber for latency. */
+    const latencySubscriber = new Topic<Latency>({
+      ros: ros,
+      name: '/pipeline/latency',
+      messageType: 'pipeline_interfaces/Latency',
+    })
+
+    latencySubscriber.subscribe((message) => {
+      console.log(message)
+      console.log('somo')
+      setLatency(message)
+    })
+
     /* Unsubscribers */
     return () => {
       preprocessorListSubscriber.unsubscribe()
@@ -96,11 +124,15 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
       deciderListSubscriber.unsubscribe()
       deciderEnabledSubscriber.unsubscribe()
+
+      latencySubscriber.unsubscribe()
     }
   }, [])
 
   return (
-    <PipelineContext.Provider value={{ preprocessorList, preprocessorEnabled, deciderList, deciderEnabled }}>
+    <PipelineContext.Provider
+      value={{ preprocessorList, preprocessorEnabled, deciderList, deciderEnabled, latency, setLatency }}
+    >
       {children}
     </PipelineContext.Provider>
   )
