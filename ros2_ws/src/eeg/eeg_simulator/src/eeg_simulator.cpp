@@ -21,7 +21,7 @@ class EegSimulator : public rclcpp::Node {
 public:
   EegSimulator() : Node("eeg_simulator") {
     eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
-    trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_RECEIVED_TOPIC, 10);
+    trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
     eeg_info_publisher_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, rclcpp::QoS(1).transient_local());
 
     this->declare_parameter<std::string>("data_file", "");
@@ -122,7 +122,7 @@ private:
 
   const std::string EEG_RAW_TOPIC = "/eeg/raw";
   const std::string EEG_INFO_TOPIC = "/eeg/info";
-  const std::string EEG_TRIGGER_RECEIVED_TOPIC = "/eeg/trigger_received";
+  const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
   const std::string DATA_DIRECTORY = "data/eeg/";
 
   double current_time_ = 0.0;

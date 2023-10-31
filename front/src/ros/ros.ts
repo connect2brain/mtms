@@ -113,7 +113,7 @@ export const nodeMessageSubscriber = new ROSLIB.Topic({
 /* Set up listener for planner state. */
 export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   ros: ros,
-  name: '/eeg/trigger_received',
+  name: '/eeg/trigger',
   messageType: 'ui_interfaces/Trigger',
 })
 

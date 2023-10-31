@@ -52,7 +52,7 @@ const uint8_t TRIGGER_B_IN = 8;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
-const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
+const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
 const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
 
 const uint8_t VERBOSE = 0;
