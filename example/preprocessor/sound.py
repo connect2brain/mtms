@@ -105,6 +105,10 @@ class Preprocessor:
 
 
 def sound(eeg_data, num_of_channels, lfm, iterations, lambda0, convergence_boundary, learning_rate):
+    # If there are no channels, return an empty filter.
+    if num_of_channels == 0:
+        return np.identity(0), lambda0
+
     # Performs the SOUND algorithm for a given data.
 
     data = eeg_data.T
