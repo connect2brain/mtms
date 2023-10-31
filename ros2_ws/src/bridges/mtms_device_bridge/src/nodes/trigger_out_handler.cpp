@@ -31,8 +31,19 @@ public:
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
-      uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
       double_t delay = event_info.delay;
+
+      /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
+      if (execution_time < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing trigger out event.");
+        return;
+      }
+      if (delay < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing trigger out event.");
+        return;
+      }
+
+      uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
       uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(port);
