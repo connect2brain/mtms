@@ -57,7 +57,7 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
 
 const uint8_t VERBOSE = 0;
 
-/* HACK: Needs to match the values in system_state_bridge.cpp. */
+/* XXX: Needs to match the values in system_state_bridge.cpp. */
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
