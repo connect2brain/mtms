@@ -283,12 +283,18 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
                          "Decider not enabled");
     return;
   }
-
-  if (!this->decider_wrapper->is_initialized()) {
+  if (this->module_name == UNSET_STRING) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
                          "Decider enabled but not selected");
+    return;
+  }
+  if (!this->decider_wrapper->is_initialized()) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Decider enabled and selected but not initialized");
     return;
   }
 
