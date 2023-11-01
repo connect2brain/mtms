@@ -20,6 +20,8 @@
 #include "event_interfaces/msg/event_trigger.hpp"
 #include "event_interfaces/msg/ready_for_event_trigger.hpp"
 
+#include "mtms_device_interfaces/msg/system_state.hpp"
+
 #include "pipeline_interfaces/msg/latency.hpp"
 
 #include "project_interfaces/msg/decider_list.hpp"
@@ -40,6 +42,11 @@ public:
   EegDecider();
 
 private:
+  void reset_decider_module();
+  void reset_sample_buffer();
+
+  void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
+
   void set_decider(
       const std::shared_ptr<project_interfaces::srv::SetDecider::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDecider::Response> response);
@@ -48,13 +55,9 @@ private:
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response);
 
-  void reset_decider_module();
-
   void set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   std::vector<std::string> list_python_scripts(const std::string& path);
   void update_decider_list();
-
-  void reset_sample_buffer();
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
@@ -63,6 +66,8 @@ private:
   void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
   void process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
@@ -105,6 +110,10 @@ private:
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>> sample_buffer;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
+
+  /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
+     just once when the session is stopped. */
+  mtms_device_interfaces::msg::SessionState session_state;
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */
