@@ -9,12 +9,18 @@
 
 #include "std_msgs/msg/string.hpp"
 
+using namespace std::chrono;
 using namespace std::placeholders;
 
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
+
+/* XXX: Needs to match the values in system_state_bridge.cpp. */
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+
 
 EegDecider::EegDecider() : Node("decider") {
   /* Subscriber for EEG info. */
@@ -26,6 +32,26 @@ EegDecider::EegDecider() : Node("decider") {
     EEG_INFO_TOPIC,
     qos_persist_latest,
     std::bind(&EegDecider::update_eeg_info, this, _1));
+
+  /* Subscriber for system state. */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
+
+  auto qos_system_state = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+      .deadline(DEADLINE_NS)
+      .lifespan(DEADLINE_NS);
+
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+  };
+
+  this->system_state_subscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
+    "/mtms_device/system_state",
+    qos_system_state,
+    std::bind(&EegDecider::handle_system_state, this, _1),
+    subscription_options);
 
   /* Subscriber for preprocessed EEG data. */
   auto preprocessed_eeg_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) -> void {
@@ -113,6 +139,55 @@ EegDecider::EegDecider() : Node("decider") {
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>();
 }
 
+/* Functions to reset the decider state. */
+void EegDecider::reset_decider_module() {
+  if (this->script_directory == UNSET_STRING ||
+      this->module_name == UNSET_STRING ||
+      this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
+      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS ||
+      this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+
+    return;
+  }
+  this->decider_wrapper->reset_module(
+    this->script_directory,
+    this->module_name,
+    this->num_of_eeg_channels,
+    this->num_of_emg_channels,
+    this->sampling_frequency);
+}
+
+/* Note that this function can be called even if decider wrapper hasn't been initialized yet, it will just reset
+   the sample buffer to 0 elements. */
+void EegDecider::reset_sample_buffer() {
+  size_t buffer_size = this->decider_wrapper->get_buffer_size();
+  this->sample_buffer.reset(buffer_size);
+
+  RCLCPP_DEBUG(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
+}
+
+/* System state handler. */
+void EegDecider::handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg) {
+  auto new_session_state = msg->session_state;
+
+  if (this->session_state.value != new_session_state.value) {
+    RCLCPP_INFO(this->get_logger(), "Session state changed from %d to %d.",
+                this->session_state.value, new_session_state.value);
+  }
+
+  /* Stopping a session takes several seconds, whereas if another session is started immediately after the previous
+      one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+      to ensure that we notice if the session is stopped. */
+  if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+      (new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
+       new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED)) {
+
+    this->reset_decider_module();
+    this->reset_sample_buffer();
+  }
+  this->session_state = new_session_state;
+}
+
 /* Listing and setting EEG deciders. */
 
 void EegDecider::set_decider_enabled(
@@ -140,23 +215,6 @@ void EegDecider::set_decider_enabled(
   response->success = true;
 }
 
-void EegDecider::reset_decider_module() {
-  if (this->script_directory == UNSET_STRING ||
-      this->module_name == UNSET_STRING ||
-      this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
-      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS ||
-      this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
-
-    return;
-  }
-  this->decider_wrapper->reset_module(
-    this->script_directory,
-    this->module_name,
-    this->num_of_eeg_channels,
-    this->num_of_emg_channels,
-    this->sampling_frequency);
-}
-
 void EegDecider::set_decider(
       const std::shared_ptr<project_interfaces::srv::SetDecider::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDecider::Response> response) {
@@ -173,14 +231,6 @@ void EegDecider::set_decider(
   reset_sample_buffer();
 
   response->success = true;
-}
-
-/* Reset sample buffer to the size determined by the Python module. */
-void EegDecider::reset_sample_buffer() {
-  size_t buffer_size = this->decider_wrapper->get_buffer_size();
-  this->sample_buffer.reset(buffer_size);
-
-  RCLCPP_DEBUG(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
 }
 
 void EegDecider::set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
