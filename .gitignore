@@ -1,9 +1,9 @@
 ros2_ws/build
 ros2_ws/install
 ros2_ws/log
-build
-log
-install
+build/
+log/
+install/
 
 __pycache__
 cmake-build-debug
