@@ -202,7 +202,9 @@ void EegBridge::spin() {
       if (this->read_eeg_data_from_socket()) {
         this->handle_eeg_data_packet();
       } else {
-        /* Timeout when reading EEG data indicates that the EEG measurement has stopped,
+        RCLCPP_DEBUG(this->get_logger(), "Timeout while reading EEG data");
+
+        /* Timeout while reading EEG data indicates that the EEG measurement has stopped,
            change the state accordingly. */
         this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
       }
@@ -257,6 +259,7 @@ void EegBridge::spin() {
 }
 
 void EegBridge::init_socket() {
+  RCLCPP_INFO(this->get_logger(), "Binding to port: %d", this->port_);
 
   /* Init socket variable. */
   this->socket_length = sizeof(this->socket_other);
