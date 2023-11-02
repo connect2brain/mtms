@@ -325,19 +325,19 @@ export const setActiveProject = (project: string, callback: () => void) => {
   )
 }
 
-/* Set up set preprocessor service. */
-const setPreprocessorService = new ROSLIB.Service({
+/* Set up set preprocessor module service. */
+const setPreprocessorModuleService = new ROSLIB.Service({
   ros: ros,
-  name: '/pipeline/preprocessor/set',
-  serviceType: 'project_interfaces/SetPreprocessor',
+  name: '/pipeline/preprocessor/module/set',
+  serviceType: 'project_interfaces/SetPreprocessorModule',
 })
 
-export const setPreprocessorRos = (preprocessor: string, callback: () => void) => {
+export const setPreprocessorModuleRos = (module: string, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({
-    preprocessor: preprocessor,
+    module: module,
   }) as any
 
-  setPreprocessorService.callService(
+  setPreprocessorModuleService.callService(
     request,
     (response) => {
       if (!response.success) {
@@ -381,19 +381,19 @@ export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void
   )
 }
 
-/* Set up set decider service. */
-const setDeciderService = new ROSLIB.Service({
+/* Set up set decider module service. */
+const setDeciderModuleService = new ROSLIB.Service({
   ros: ros,
-  name: '/pipeline/decider/set',
-  serviceType: 'project_interfaces/SetDecider',
+  name: '/pipeline/decider/module/set',
+  serviceType: 'project_interfaces/SetDeciderModule',
 })
 
-export const setDeciderRos = (decider: string, callback: () => void) => {
+export const setDeciderModuleRos = (module: string, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({
-    decider: decider,
+    module: module,
   }) as any
 
-  setDeciderService.callService(
+  setDeciderModuleService.callService(
     request,
     (response) => {
       if (!response.success) {
