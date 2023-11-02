@@ -41,7 +41,8 @@ busylight udev-rules -o 99-busylights.rules
 mv 99-busylights.rules /etc/udev/rules.d
 udevadm control -R
 
-# Enabling the user to run the log script without sudo
+
+## Enabling the user to run the log script without sudo
 
 # Get the path to the script
 SCRIPT_PATH="/home/mtms/mtms/scripts/linux/usage/log"
@@ -52,10 +53,20 @@ echo "mtms ALL=(ALL) NOPASSWD: $SCRIPT_PATH" | sudo tee /etc/sudoers.d/container
 # Set the correct permissions
 chmod 0440 /etc/sudoers.d/container_logs
 
+
+## Enabling the user to restart the containers without sudo
+echo "mtms ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-core-containers" | sudo tee /etc/sudoers.d/restart_mtms_core > /dev/null
+
+# Set the correct permissions
+chmod 0440 /etc/sudoers.d/container_logs
+
 # Set the site in .bashrc
 if ! grep -q "export SITE=$SITE" ~/.bashrc; then
     echo "export SITE=$SITE" >> ~/.bashrc
 fi
+
+
+## Environment variables
 
 # Add environment variable to .bashrc, pointing to repository root
 if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
