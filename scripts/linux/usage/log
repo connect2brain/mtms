@@ -4,7 +4,7 @@ CONTAINER_NAME=$1
 
 # If container name is provided, filter the logs, otherwise show all logs
 if [ -z "$CONTAINER_NAME" ]; then
-    sudo journalctl -u mtms-core-containers.service -f -n 1000
+    journalctl -u mtms-core-containers.service -f -n 1000
 else
-    sudo journalctl -u mtms-core-containers.service -f -n 1000 | grep "$CONTAINER_NAME"
+    journalctl -u mtms-core-containers.service -f -n 1000 | grep "$CONTAINER_NAME"
 fi
