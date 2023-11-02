@@ -22,7 +22,7 @@ const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
-EegDecider::EegDecider() : Node("decider") {
+EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")) {
   /* Subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -133,7 +133,6 @@ EegDecider::EegDecider() : Node("decider") {
     std::bind(&EegDecider::update_ready_for_event_trigger, this, _1));
 
   /* Initialize variables. */
-  rclcpp::Logger logger = rclcpp::get_logger("decider_wrapper");
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>();

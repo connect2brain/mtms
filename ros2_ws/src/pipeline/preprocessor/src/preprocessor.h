@@ -65,6 +65,8 @@ private:
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
 
+  rclcpp::Logger logger;
+
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
