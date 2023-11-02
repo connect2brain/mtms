@@ -46,12 +46,33 @@ services:
     privileged: true
     network_mode: host
 
+  eeg_monitor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_monitor/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    privileged: true
+    network_mode: host
+
   experiment_performer:
     build:
       context: .
       dockerfile: ros2_ws/src/experiment/experiment_performer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  decider:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
