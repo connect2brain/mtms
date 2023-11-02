@@ -41,6 +41,17 @@ busylight udev-rules -o 99-busylights.rules
 mv 99-busylights.rules /etc/udev/rules.d
 udevadm control -R
 
+# Enabling the user to run the log script without sudo
+
+# Get the path to the script
+SCRIPT_PATH="/home/mtms/mtms/scripts/linux/usage/log"
+
+# Append the required line to a new file in sudoers.d
+echo "mtms ALL=(ALL) NOPASSWD: $SCRIPT_PATH" | sudo tee /etc/sudoers.d/container_logs > /dev/null
+
+# Set the correct permissions
+chmod 0440 /etc/sudoers.d/container_logs
+
 # Set the site in .bashrc
 if ! grep -q "export SITE=$SITE" ~/.bashrc; then
     echo "export SITE=$SITE" >> ~/.bashrc
