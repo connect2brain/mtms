@@ -10,18 +10,6 @@ services:
     privileged: true
     network_mode: host
 
-  decider:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-    volumes:
-      - '$PROJECTS_ROOT:/app/projects'
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
-    network_mode: host
-
   efield:
     build:
       context: .
@@ -96,15 +84,6 @@ services:
       - ${SITE_ENV_FILE}
     volumes:
       - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
-    network_mode: host
-
-  eeg_monitor:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/eeg/eeg_monitor/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-    privileged: true
     network_mode: host
 
   trigger_controller:
