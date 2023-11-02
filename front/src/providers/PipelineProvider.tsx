@@ -20,11 +20,17 @@ interface RosBoolean extends ROSLIB.Message {
   data: boolean
 }
 
+interface RosString extends ROSLIB.Message {
+  data: string
+}
+
 interface PipelineContextType {
   preprocessorList: string[]
+  preprocessorModule: string
   preprocessorEnabled: boolean
 
   deciderList: string[]
+  deciderModule: string
   deciderEnabled: boolean
 
   latency: Latency | null
@@ -33,9 +39,11 @@ interface PipelineContextType {
 
 const defaultPipelineState: PipelineContextType = {
   preprocessorList: [],
+  preprocessorModule: '',
   preprocessorEnabled: false,
 
   deciderList: [],
+  deciderModule: '',
   deciderEnabled: false,
 
   latency: null,
@@ -52,9 +60,11 @@ interface PipelineProviderProps {
 
 export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) => {
   const [preprocessorList, setPreprocessorList] = useState<string[]>([])
+  const [preprocessorModule, setPreprocessorModule] = useState<string>('')
   const [preprocessorEnabled, setPreprocessorEnabled] = useState<boolean>(false)
 
   const [deciderList, setDeciderList] = useState<string[]>([])
+  const [deciderModule, setDeciderModule] = useState<string>('')
   const [deciderEnabled, setDeciderEnabled] = useState<boolean>(false)
 
   const [latency, setLatency] = useState<Latency | null>(null)
@@ -69,6 +79,17 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
     preprocessorListSubscriber.subscribe((message) => {
       setPreprocessorList(message.scripts)
+    })
+
+    /* Subscriber for preprocessor module. */
+    const preprocessorModuleSubscriber = new Topic<RosString>({
+      ros: ros,
+      name: '/pipeline/preprocessor/module',
+      messageType: 'std_msgs/String',
+    })
+
+    preprocessorModuleSubscriber.subscribe((message) => {
+      setPreprocessorModule(message.data)
     })
 
     /* Subscriber for preprocessor enabled. */
@@ -91,6 +112,17 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
     deciderListSubscriber.subscribe((message) => {
       setDeciderList(message.scripts)
+    })
+
+    /* Subscriber for decider module. */
+    const deciderModuleSubscriber = new Topic<RosString>({
+      ros: ros,
+      name: '/pipeline/decider/module',
+      messageType: 'std_msgs/String',
+    })
+
+    deciderModuleSubscriber.subscribe((message) => {
+      setDeciderModule(message.data)
     })
 
     /* Subscriber for decider enabled. */
@@ -120,9 +152,11 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
     /* Unsubscribers */
     return () => {
       preprocessorListSubscriber.unsubscribe()
+      preprocessorModuleSubscriber.unsubscribe()
       preprocessorEnabledSubscriber.unsubscribe()
 
       deciderListSubscriber.unsubscribe()
+      deciderModuleSubscriber.unsubscribe()
       deciderEnabledSubscriber.unsubscribe()
 
       latencySubscriber.unsubscribe()
@@ -131,7 +165,16 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
 
   return (
     <PipelineContext.Provider
-      value={{ preprocessorList, preprocessorEnabled, deciderList, deciderEnabled, latency, setLatency }}
+      value={{
+        preprocessorList,
+        preprocessorModule,
+        preprocessorEnabled,
+        deciderList,
+        deciderModule,
+        deciderEnabled,
+        latency,
+        setLatency,
+      }}
     >
       {children}
     </PipelineContext.Provider>
