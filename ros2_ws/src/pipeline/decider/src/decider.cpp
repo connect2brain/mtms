@@ -101,10 +101,15 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/list",
     qos_persist_latest);
 
-  /* Service for changing decider. */
-  this->set_decider_service = this->create_service<project_interfaces::srv::SetDecider>(
-    "/pipeline/decider/set",
-    std::bind(&EegDecider::set_decider, this, _1, _2));
+  /* Service for changing decider module. */
+  this->set_decider_module_service = this->create_service<project_interfaces::srv::SetDeciderModule>(
+    "/pipeline/decider/module/set",
+    std::bind(&EegDecider::set_decider_module, this, _1, _2));
+
+  /* Publisher for decider module. */
+  this->decider_module_publisher = this->create_publisher<std_msgs::msg::String>(
+    "/pipeline/decider/module",
+    qos_persist_latest);
 
   /* Service for enabling and disabling decider. */
   this->set_decider_enabled_service = this->create_service<project_interfaces::srv::SetDeciderEnabled>(
@@ -214,13 +219,19 @@ void EegDecider::set_decider_enabled(
   response->success = true;
 }
 
-void EegDecider::set_decider(
-      const std::shared_ptr<project_interfaces::srv::SetDecider::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetDecider::Response> response) {
+void EegDecider::set_decider_module(
+      const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response) {
 
-  this->module_name = request->decider;
+  this->module_name = request->module;
 
   RCLCPP_INFO(this->get_logger(), "Setting decider to: %s.", this->module_name.c_str());
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::String();
+  msg.data = this->module_name;
+
+  this->decider_module_publisher->publish(msg);
 
   /* Reset the wrapper to use the changed decider module. */
   reset_decider_module();

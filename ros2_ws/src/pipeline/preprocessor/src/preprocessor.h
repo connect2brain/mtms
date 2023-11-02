@@ -22,7 +22,7 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 
 #include "project_interfaces/msg/preprocessor_list.hpp"
-#include "project_interfaces/srv/set_preprocessor.hpp"
+#include "project_interfaces/srv/set_preprocessor_module.hpp"
 #include "project_interfaces/srv/set_preprocessor_enabled.hpp"
 
 #include "ring_buffer.h"
@@ -44,9 +44,9 @@ private:
 
   void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
 
-  void set_preprocessor(
-      const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response);
+  void set_preprocessor_module(
+      const std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Response> response);
 
   void set_preprocessor_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
@@ -77,7 +77,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
 
-  rclcpp::Service<project_interfaces::srv::SetPreprocessor>::SharedPtr set_preprocessor_service;
+  rclcpp::Service<project_interfaces::srv::SetPreprocessorModule>::SharedPtr set_preprocessor_module_service;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr preprocessor_module_publisher;
 
   rclcpp::Service<project_interfaces::srv::SetPreprocessorEnabled>::SharedPtr set_preprocessor_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr preprocessor_enabled_publisher;
