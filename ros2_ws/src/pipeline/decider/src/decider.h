@@ -25,7 +25,7 @@
 #include "pipeline_interfaces/msg/latency.hpp"
 
 #include "project_interfaces/msg/decider_list.hpp"
-#include "project_interfaces/srv/set_decider.hpp"
+#include "project_interfaces/srv/set_decider_module.hpp"
 #include "project_interfaces/srv/set_decider_enabled.hpp"
 
 #include "ring_buffer.h"
@@ -47,9 +47,9 @@ private:
 
   void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
 
-  void set_decider(
-      const std::shared_ptr<project_interfaces::srv::SetDecider::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetDecider::Response> response);
+  void set_decider_module(
+      const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response);
 
   void set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
@@ -78,7 +78,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DeciderList>::SharedPtr decider_list_publisher;
 
-  rclcpp::Service<project_interfaces::srv::SetDecider>::SharedPtr set_decider_service;
+  rclcpp::Service<project_interfaces::srv::SetDeciderModule>::SharedPtr set_decider_module_service;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decider_module_publisher;
 
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;

@@ -16,9 +16,9 @@ import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 import {
   listProjects,
   setActiveProject,
-  setPreprocessorRos,
+  setPreprocessorModuleRos,
   setPreprocessorEnabledRos,
-  setDeciderRos,
+  setDeciderModuleRos,
   setDeciderEnabledRos,
 } from 'ros/ros'
 
@@ -135,12 +135,16 @@ const getKey = (key: string, defaultValue: any): any => {
 export const PipelineView = () => {
   const { activeProject } = useContext(ProjectContext)
 
-  const { preprocessorList, preprocessorEnabled, deciderList, deciderEnabled } = useContext(PipelineContext)
+  const {
+    preprocessorList,
+    preprocessorModule,
+    preprocessorEnabled,
+    deciderList,
+    deciderModule,
+    deciderEnabled,
+  } = useContext(PipelineContext)
 
   const [projects, setProjects] = useState<string[]>([])
-
-  const [preprocessor, setPreprocessor] = useState<string>('')
-  const [decider, setDecider] = useState<string>('')
 
   const [presenterEnabled, setPresenterEnabled] = useState<boolean>(() => getKey('presenterEnabled', false))
 
@@ -158,12 +162,10 @@ export const PipelineView = () => {
     })
   }
 
-  const handlePreprocessorChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const preprocessor = event.target.value
-    setPreprocessor(preprocessor)
-
-    setPreprocessorRos(preprocessor, () => {
-      console.log('Preprocessor set to ' + preprocessor)
+  const handlePreprocessorModuleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const module = event.target.value
+    setPreprocessorModuleRos(module, () => {
+      console.log('Preprocessor set to ' + module)
     })
   }
 
@@ -174,12 +176,10 @@ export const PipelineView = () => {
     })
   }
 
-  const handleDeciderChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const decider = event.target.value
-    setDecider(decider)
-
-    setDeciderRos(decider, () => {
-      console.log('Decider set to ' + decider)
+  const handleDeciderModuleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const module = event.target.value
+    setDeciderModuleRos(module, () => {
+      console.log('Decider set to ' + module)
     })
   }
 
@@ -230,10 +230,10 @@ export const PipelineView = () => {
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
-            <Select onChange={handlePreprocessorChange} value={preprocessor}>
-              {preprocessorList.map((preprocessor, index) => (
-                <option key={index} value={preprocessor}>
-                  {preprocessor}
+            <Select onChange={handlePreprocessorModuleChange} value={preprocessorModule}>
+              {preprocessorList.map((module, index) => (
+                <option key={index} value={module}>
+                  {module}
                 </option>
               ))}
             </Select>
@@ -247,10 +247,10 @@ export const PipelineView = () => {
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
-            <Select onChange={handleDeciderChange} value={decider}>
-              {deciderList.map((decider, index) => (
-                <option key={index} value={decider}>
-                  {decider}
+            <Select onChange={handleDeciderModuleChange} value={deciderModule}>
+              {deciderList.map((module, index) => (
+                <option key={index} value={module}>
+                  {module}
                 </option>
               ))}
             </Select>

@@ -26,11 +26,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetActiveProject.srv"
 
   "msg/PreprocessorList.msg"
-  "srv/SetPreprocessor.srv"
+  "srv/SetPreprocessorModule.srv"
   "srv/SetPreprocessorEnabled.srv"
 
   "msg/DeciderList.msg"
-  "srv/SetDecider.srv"
+  "srv/SetDeciderModule.srv"
   "srv/SetDeciderEnabled.srv"
 )
 

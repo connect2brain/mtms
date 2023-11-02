@@ -111,10 +111,15 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     "/pipeline/preprocessor/list",
     qos_persist_latest);
 
-  /* Service for changing preprocessor. */
-  this->set_preprocessor_service = this->create_service<project_interfaces::srv::SetPreprocessor>(
-    "/pipeline/preprocessor/set",
-    std::bind(&EegPreprocessor::set_preprocessor, this, _1, _2));
+  /* Service for changing preprocessor module. */
+  this->set_preprocessor_module_service = this->create_service<project_interfaces::srv::SetPreprocessorModule>(
+    "/pipeline/preprocessor/module/set",
+    std::bind(&EegPreprocessor::set_preprocessor_module, this, _1, _2));
+
+  /* Publisher for preprocessor module. */
+  this->preprocessor_module_publisher = this->create_publisher<std_msgs::msg::String>(
+    "/pipeline/preprocessor/module",
+    qos_persist_latest);
 
   /* Service for enabling and disabling preprocessor. */
   this->set_preprocessor_enabled_service = this->create_service<project_interfaces::srv::SetPreprocessorEnabled>(
@@ -208,13 +213,19 @@ void EegPreprocessor::set_preprocessor_enabled(
   response->success = true;
 }
 
-void EegPreprocessor::set_preprocessor(
-      const std::shared_ptr<project_interfaces::srv::SetPreprocessor::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetPreprocessor::Response> response) {
+void EegPreprocessor::set_preprocessor_module(
+      const std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Response> response) {
 
-  this->module_name = request->preprocessor;
+  this->module_name = request->module;
 
   RCLCPP_INFO(this->get_logger(), "Setting preprocessor to: %s.", this->module_name.c_str());
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::String();
+  msg.data = this->module_name;
+
+  this->preprocessor_module_publisher->publish(msg);
 
   /* Reset the wrapper to use the changed preprocessor module. */
   reset_preprocessor_module();
