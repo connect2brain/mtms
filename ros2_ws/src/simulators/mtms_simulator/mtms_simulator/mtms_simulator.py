@@ -1,3 +1,4 @@
+import math
 import time
 
 import rclpy
@@ -36,7 +37,8 @@ from event_interfaces.msg import (
     Charge,
     ChargeError,
     Discharge,
-    EventTrigger,
+    DischargeError,
+    EventInfo,
     ExecutionCondition,
     Pulse,
     TriggerOut,
@@ -45,8 +47,6 @@ from event_interfaces.msg import (
     DischargeFeedback,
     TriggerOutFeedback,
 )
-
-from .channel import Channel
 
 
 class MTMSSimulator(Node):
@@ -63,7 +63,7 @@ class MTMSSimulator(Node):
     CHARGE_RATE = 1500  # in J/s
     TIME_CONSTANT = 1  # in seconds, tau = RC
 
-    MAX_VOLTAGE = 20000
+    MAX_VOLTAGE = 1500  # Volts
     NUM_OF_CHANNELS = 5
 
     def __init__(self):
@@ -146,7 +146,7 @@ class MTMSSimulator(Node):
         # Internal state variables
         self.system_state: SystemState = SystemState()
         self.system_state.channel_states = [
-            ChannelState(channel_index=i) for i in range(num_of_channels)
+            ChannelState(channel_index=i) for i in range(self.NUM_OF_CHANNELS)
         ]
 
         self.session_start_time = 0.0
@@ -199,7 +199,7 @@ class MTMSSimulator(Node):
         response.success = True
         return response
 
-    def charge_handler(self, message: Charge):
+    def charge_handler(self, message: Charge) -> None:
         """
         Charges the given channel to desired voltage.
 
@@ -207,15 +207,75 @@ class MTMSSimulator(Node):
         capacitor to change the voltage. Charging is done with constant power and the
         required energy to charge to certain voltage increases quadratically.
 
-        The
-
         Args:
             message: contains the charge information.
         """
-        event_info = message.event_info
+        event_info: EventInfo = message.event_info
+        charge_error = ChargeError()
 
-        charge_error = ChargeError(value=ChargeError.NO_ERROR)
+        error = self._validate_voltage_update_input(message, charge_error)
+        self._wait_for_execution_execution_condition(
+            event_info.execution_condition, event_info.execution_time
+        )
 
+        channel_state: ChannelState = self.system_state.channel_states[message.channel]
+
+        current_voltage = channel_state.voltage
+        target_voltage = message.target_voltage
+
+        t = self.CHARGE_RATE * (target_voltage**2 - current_voltage**2)
+        time.sleep(t)
+
+        channel_state.voltage = target_voltage
+
+        feedback_msg = ChargeFeedback(id=message.event_info.id, error=error)
+        self.charge_feedback_publisher.publish(feedback_msg)
+
+    def discharge_handler(self, message) -> None:
+        """
+        Charges or discharges the given channel to given voltage.
+
+        New voltage is not set immediately, and rather models the behaviour of a
+        capacitor to change the voltage. Discharge
+        follows exponential decay.
+
+        Args:
+            message: contains the discharge information.
+
+        Returns:
+        """
+        event_info: EventInfo = message.event_info
+        discharge_error = DischargeError()
+
+        error = self._validate_voltage_update_input(message, discharge_error)
+        self._wait_for_execution_execution_condition(
+            event_info.execution_condition, event_info.execution_time
+        )
+
+        channel_state: ChannelState = self.system_state.channel_states[message.channel]
+
+        current_voltage = channel_state.voltage
+        target_voltage = message.target_voltage
+
+        t = self.TIME_CONSTANT * math.log(current_voltage / target_voltage)
+        time.sleep(t)
+        channel_state.voltage = target_voltage
+
+        feedback_msg = DischargeFeedback(id=message.event_info.id, error=error)
+
+        self.discharge_feedback_publisher.publish(feedback_msg)
+
+    def _validate_voltage_update_input(
+        self, message: Charge | Discharge, error: ChargeError | DischargeError
+    ) -> ChargeError | DischargeError:
+        """Validate charge and discharge message input parameters
+
+        Args:
+            message: topic message containing charge or discharge information.
+            error: object containing the error value.
+        Returns:
+            Given error object containing the first encountered error.
+        """
         # TODO: Implement rest of the checks.
         if message.channel >= len(self.system_state.channel_states):
             self.get_logger().error(
@@ -223,47 +283,40 @@ class MTMSSimulator(Node):
                 % message.channel,
                 self.NUM_OF_CHANNELS,
             )
-            charge_error.value = ChargeError.INVALID_CHANNEL
+            error.value = ChargeError.INVALID_CHANNEL
+            return error
         if message.target_voltage >= self.MAX_VOLTAGE:
             self.get_logger().error(
                 "Too high voltage. Trying to set voltage to %d, max supported voltage is %d"
                 % message.target_voltage,
                 self.MAX_VOLTAGE,
             )
-            charge_error.value = ChargeError.INVALID_VOLTAGE
+            error.value = ChargeError.INVALID_VOLTAGE
+            return error
+        return error
+
+    def _wait_for_execution_execution_condition(
+        self, execution_condition: ExecutionCondition, execution_time: float
+    ) -> None:
+        """
+        Checks the execution condition and waits for the execution condition to be fulfilled.
+
+        Args:
+            execution_condition: will the execution be immediate or timed.
+            execution_time: time when the event will be executed, relative to session start time.
+        Returns:
+            when execution condition is met.
+        """
 
         # wait for execution condition.
-        match event_info.execution_condition:
+        match execution_condition:
             case ExecutionCondition.TIMED:
-                wait = event_info.execution_time - self.session_start_time
+                wait = execution_time - self.session_start_time
                 time.sleep(wait)
             case ExecutionCondition.WAIT_FOR_TRIGGER:
                 self.get_logger().warn(
                     "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing."
                 )
-                return
-
-        channel_state: ChannelState = self.system_state.channel_states[message.channel]
-
-        current_voltage = channel_state.voltage
-        target_voltage = message.target_voltage
-
-        # TODO: Check formula for the charge time
-        # TODO: Implement gradual voltage increase for system state.
-        # t = 1/2 * C * P^-1 * (V_2^2 - V_1^2)
-        t = self.CHARGE_RATE * (target_voltage**2 - current_voltage**2)
-        time.sleep(t)
-        channel_state.voltage = target_voltage
-
-        feedback_msg = ChargeFeedback(id=event_info.id, error=charge_error)
-
-        self.charge_feedback_publisher(feedback_msg)
-
-    def discharge_handler(self, message):
-        pass
-
-    def event_trigger_handler(self, message):
-        self.get_logger().info("Event trigger: %r" % message)
 
     def pulse_handler(self, message):
         self.get_logger().info("Pulse: %r" % message)
