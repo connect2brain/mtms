@@ -23,7 +23,7 @@ const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
-EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
+EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_logger("preprocessor")) {
   /* Publisher for preprocessed EEG data. */
   this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
@@ -127,7 +127,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor") {
     qos_persist_latest);
 
   /* Initialize variables. */
-  rclcpp::Logger logger = rclcpp::get_logger("preprocessor_wrapper");
   this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
