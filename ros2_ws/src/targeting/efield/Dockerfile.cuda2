@@ -1,0 +1,109 @@
+FROM osrf/ros:iron-desktop as base
+FROM base as base-amd64
+
+ENV NVARCH x86_64
+
+ENV NVIDIA_REQUIRE_CUDA "cuda>=11.7 brand=tesla,driver>=450,driver<451 brand=tesla,driver>=470,driver<471 brand=unknown,driver>=470,driver<471 brand=nvidia,driver>=470,driver<471 brand=nvidiartx,driver>=470,driver<471 brand=geforce,driver>=470,driver<471 brand=geforcertx,driver>=470,driver<471 brand=quadro,driver>=470,driver<471 brand=quadrortx,driver>=470,driver<471 brand=titan,driver>=470,driver<471 brand=titanrtx,driver>=470,driver<471 brand=tesla,driver>=510,driver<511 brand=unknown,driver>=510,driver<511 brand=nvidia,driver>=510,driver<511 brand=nvidiartx,driver>=510,driver<511 brand=quadro,driver>=510,driver<511 brand=quadrortx,driver>=510,driver<511 brand=titan,driver>=510,driver<511 brand=titanrtx,driver>=510,driver<511 brand=geforce,driver>=510,driver<511 brand=geforcertx,driver>=510,driver<511"
+ENV NV_CUDA_CUDART_VERSION 11.7.60-1
+ENV NV_CUDA_COMPAT_PACKAGE cuda-compat-11-7
+
+FROM base as base-arm64
+
+ENV NVARCH sbsa
+ENV NVIDIA_REQUIRE_CUDA "cuda>=11.7"
+ENV NV_CUDA_CUDART_VERSION 11.7.60-1
+
+FROM base-${TARGETARCH}
+
+ARG TARGETARCH
+
+LABEL maintainer "NVIDIA CORPORATION <cudatools@nvidia.com>"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg2 curl ca-certificates && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH}/3bf863cc.pub | apt-key add - && \
+    echo "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/${NVARCH} /" > /etc/apt/sources.list.d/cuda.list && \
+    apt-get purge --autoremove -y curl \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CUDA_VERSION 11.7.0
+
+# For libraries in the cuda-compat-* package: https://docs.nvidia.com/cuda/eula/index.html#attachment-a
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cuda-cudart-11-7=${NV_CUDA_CUDART_VERSION} \
+    ${NV_CUDA_COMPAT_PACKAGE} \
+    && rm -rf /var/lib/apt/lists/*
+
+# Required for nvidia-docker v1
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf \
+    && echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+
+# Add NVIDIA package repositories
+RUN apt-get update && apt-get install -y curl
+RUN curl -sL https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+RUN curl -sL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | \
+    tee /etc/apt/sources.list.d/nvidia-docker.list
+    
+# Install CUDA toolkit
+RUN apt-get update
+RUN apt-get install -y --no-install-recommends cuda-toolkit-11-7
+
+SHELL ["/bin/bash", "-c"]
+
+# Install dependencies
+
+RUN apt-get update
+
+RUN apt-get install -y \
+    dos2unix \
+    wget \
+    ros-iron-rmw-cyclonedds-cpp
+    
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
+
+RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
+WORKDIR /app/ros2_ws
+
+
+# Build interfaces
+COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+
+# Copy efield packages
+COPY ros2_ws/src/targeting/efield src/targeting/efield/
+
+# Required so efield and efield_library can find their dependencies
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/ros2_ws/src/targeting/efield/efield_libraries/lib"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/cuda-11.7/lib64:usr/local/cuda-11.7/targets/x86_64-linux/include/"
+ENV CPATH="/usr/local/cuda-11.7/targets/x86_64-linux/include/:${CPATH}"
+ENV PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/cuda-11.7/bin/nvcc/:/usr/local/cuda-11.7/lib64/:/usr/local/cuda-11.7/bin/:${PATH}"
+ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
+
+# Build efield library
+RUN cd src/targeting/efield/efield_libraries && cmake . && make
+
+# Build efield packages
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select efield
+
+
+COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .
+RUN dos2unix ros_entrypoint.sh
+RUN chmod +x ros_entrypoint.sh
+
+ENTRYPOINT ["./ros_entrypoint.sh"]
+
