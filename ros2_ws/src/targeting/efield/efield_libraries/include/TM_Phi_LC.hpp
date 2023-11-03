@@ -1,18 +1,20 @@
-//
-// Created by Kalle Jyrkinen on 16.11.2021.
-//
+#pragma once
 
-#ifndef TMS_CPP_TM_PHI_LC_HPP
-#define TMS_CPP_TM_PHI_LC_HPP
+#include "eigen_defines.hpp"
 
-#include <linalg>
 
-// Build the transfer matrix for potential.
-
-Matrix<float> TM_Phi_LC(const std::vector<Matrix<float> > &D, // D-matrices, col-major ordering
-                        const std::vector<float> &ci, // conductivities inside
-                        const std::vector<float> &co, // conductivities outside
-                        int32_t zerolevel = -1 // index of the mesh on which the mean potential over the vertices is set to zero - by default the last mesh
+/**
+ * @brief Builds the transfer matrix of potential using Linear Collocation (LC), inverts the result
+ * @note Use together with the LFM_Phi_LC function
+ * @param D D operator from BEMOperatorsPhi_LC.hpp
+ * @param ci conductivities inside the meshes 
+ * @param co conductivities outside the meshes 
+ * @param zerolevel Index of the mesh on which the mean potential over the vertices is set to zero - by default the last mesh
+ * @return inverted Transfer matrix 
+ * @ingroup tm_group
+ */
+Eigen::MatrixXf TM_Phi_LC(const std::vector<Eigen::MatrixXf> &D, // D-matrices, col-major ordering
+                          const std::vector<float> &ci, // conductivities inside
+                          const std::vector<float> &co, // conductivities outside
+                          int32_t zerolevel = -1 // index of the mesh on which the mean potential over the vertices is set to zero - by default the last mesh
 );
-
-#endif //TMS_CPP_TM_PHI_LC_HPP

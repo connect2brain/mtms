@@ -7,5 +7,7 @@ string[] mesh_models_paths
 float32[] conductivities_inside
 float32[] conductivities_outside
 string coil_model_path
+bool coil_set
+float32[] set_di_per_dt
 ---
 bool success

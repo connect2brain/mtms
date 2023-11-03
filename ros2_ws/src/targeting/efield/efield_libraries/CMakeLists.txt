@@ -1,30 +1,34 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.26)
 project(efield_estimation VERSION 0.1.0)
 
 include_directories(include)
 include_directories(lib)
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2 -mfma")
 
-set(linalg_LIBRARY ${PROJECT_SOURCE_DIR}/lib/liblinalg.so)
-set(phi_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libphi.so)
-set(tms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms.so)
-set(tms_cuda_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms_cuda.so)
+include_directories(include)
+include_directories(lib)
 
-add_library(linalg SHARED IMPORTED GLOBAL)
-add_library(phi SHARED IMPORTED GLOBAL)
-add_library(tms SHARED IMPORTED GLOBAL)
-add_library(tms_cuda SHARED IMPORTED GLOBAL)
+find_package(Eigen3 REQUIRED)
+find_package(CUDAToolkit)
 
-set_target_properties(linalg PROPERTIES IMPORTED_LOCATION ${linalg_LIBRARY})
-set_target_properties(phi PROPERTIES IMPORTED_LOCATION ${phi_LIBRARY})
-set_target_properties(tms PROPERTIES IMPORTED_LOCATION ${tms_LIBRARY})
-set_target_properties(tms_cuda PROPERTIES IMPORTED_LOCATION ${tms_cuda_LIBRARY})
+include_directories(${EIGEN3_INCLUDE_DIR})
+
+set(libtms_LIBRARY ${PROJECT_SOURCE_DIR}/lib/libtms_cpp.so)
+
+add_library(libtms SHARED IMPORTED GLOBAL)
+add_library(libtms_static STATIC IMPORTED GLOBAL)
+set_property(TARGET libtms_static PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/lib/libtms_cpp_static.a)
+
+
+set_target_properties(libtms PROPERTIES IMPORTED_LOCATION ${libtms_LIBRARY})
+
 
 add_library(efield_estimation SHARED
         src/efield_estimation.cpp
-        include/efield_estimation.h)
+        )
 
-target_link_libraries(efield_estimation PUBLIC linalg phi tms tms_cuda)
+target_link_libraries(efield_estimation PUBLIC libtms libtms_static Eigen3::Eigen CUDA::cudart)
 
 list(APPEND PACKAGE_LIBRARIES ${PROJECT_NAME})
 
@@ -53,3 +57,5 @@ install(FILES
         DESTINATION lib/cmake/${PROJECT_NAME})
 
 export(EXPORT ${PROJECT_NAME}-targets FILE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake)
+
+
