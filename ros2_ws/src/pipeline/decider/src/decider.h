@@ -40,6 +40,7 @@ class DeciderWrapper;
 class EegDecider : public rclcpp::Node {
 public:
   EegDecider();
+  ~EegDecider();
 
 private:
   void initialize_decider_module();
@@ -69,6 +70,10 @@ private:
   void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
   void process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+
+  /* Inotify functions */
+  void update_inotify_watch();
+  void inotify_timer_callback();
 
   rclcpp::Logger logger;
 
@@ -122,6 +127,12 @@ private:
   /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
      just once when the session is stopped. */
   mtms_device_interfaces::msg::SessionState session_state;
+
+  /* Inotify variables */
+  rclcpp::TimerBase::SharedPtr inotify_timer;
+  int inotify_descriptor;
+  int watch_descriptor;
+  char inotify_buffer[1024];
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */
