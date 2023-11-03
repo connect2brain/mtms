@@ -22,12 +22,14 @@ public:
   DeciderWrapper(rclcpp::Logger& logger);
   ~DeciderWrapper();
 
-  void reset_module(
+  void initialize_module(
       const std::string& directory,
       const std::string& module_name,
       const size_t eeg_data_size,
       const size_t emg_data_size,
       const uint16_t sampling_frequency);
+
+  void reset_module();
 
   std::pair<bool, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
