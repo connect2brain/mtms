@@ -42,21 +42,24 @@ public:
   EegDecider();
 
 private:
-  void reset_decider_module();
-  void reset_sample_buffer();
+  void initialize_decider_module();
+  void initialize_sample_buffer();
 
   void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
 
-  void set_decider_module(
+  void reset_decider_module();
+
+  void set_decider_module(const std::string module);
+  void handle_set_decider_module(
       const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response);
 
-  void set_decider_enabled(
+  void handle_set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response);
 
-  void set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
-  std::vector<std::string> list_python_scripts(const std::string& path);
+  void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
+  std::vector<std::string> list_python_modules(const std::string& path);
   void update_decider_list();
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
@@ -97,6 +100,8 @@ private:
 
   std::string script_directory  = UNSET_STRING;
   std::string module_name = UNSET_STRING;
+
+  std::vector<std::string> modules;
 
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
   uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
