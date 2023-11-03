@@ -14,7 +14,7 @@ PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger& logger) {
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
-void PreprocessorWrapper::reset_module(
+void PreprocessorWrapper::initialize_module(
     const std::string& directory,
     const std::string& module_name,
     const size_t eeg_data_size,
@@ -89,6 +89,17 @@ void PreprocessorWrapper::reset_module(
   this->emg_data_size = emg_data_size;
 
   this->_is_initialized = true;
+}
+
+void PreprocessorWrapper::reset_module() {
+  preprocessor_module.release();
+  preprocessor_instance.release();
+
+  py_timestamps.reset();
+  py_eeg_data.reset();
+  py_emg_data.reset();
+
+  this->_is_initialized = false;
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {

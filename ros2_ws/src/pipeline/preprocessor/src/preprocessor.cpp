@@ -104,7 +104,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
     qos_persist_latest,
-    std::bind(&EegPreprocessor::set_active_project, this, _1));
+    std::bind(&EegPreprocessor::handle_set_active_project, this, _1));
 
   /* Publisher for listing preprocessors. */
   this->preprocessor_list_publisher = this->create_publisher<project_interfaces::msg::PreprocessorList>(
@@ -114,7 +114,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   /* Service for changing preprocessor module. */
   this->set_preprocessor_module_service = this->create_service<project_interfaces::srv::SetPreprocessorModule>(
     "/pipeline/preprocessor/module/set",
-    std::bind(&EegPreprocessor::set_preprocessor_module, this, _1, _2));
+    std::bind(&EegPreprocessor::handle_set_preprocessor_module, this, _1, _2));
 
   /* Publisher for preprocessor module. */
   this->preprocessor_module_publisher = this->create_publisher<std_msgs::msg::String>(
@@ -124,7 +124,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   /* Service for enabling and disabling preprocessor. */
   this->set_preprocessor_enabled_service = this->create_service<project_interfaces::srv::SetPreprocessorEnabled>(
     "/pipeline/preprocessor/enabled/set",
-    std::bind(&EegPreprocessor::set_preprocessor_enabled, this, _1, _2));
+    std::bind(&EegPreprocessor::handle_set_preprocessor_enabled, this, _1, _2));
 
   /* Publisher for preprocessor enabled message. */
   this->preprocessor_enabled_publisher = this->create_publisher<std_msgs::msg::Bool>(
@@ -137,8 +137,8 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
 }
 
-/* Functions to reset the preprocessor state. */
-void EegPreprocessor::reset_preprocessor_module() {
+/* Functions to re-initialize the preprocessor state. */
+void EegPreprocessor::initialize_preprocessor_module() {
   if (this->script_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING ||
       this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
@@ -147,7 +147,7 @@ void EegPreprocessor::reset_preprocessor_module() {
 
     return;
   }
-  this->preprocessor_wrapper->reset_module(
+  this->preprocessor_wrapper->initialize_module(
     this->script_directory,
     this->module_name,
     this->num_of_eeg_channels,
@@ -157,11 +157,11 @@ void EegPreprocessor::reset_preprocessor_module() {
 
 /* Note that this function can be called even if preprocessor wrapper hasn't been initialized yet, it will just reset
    the sample buffer to 0 elements. */
-void EegPreprocessor::reset_sample_buffer() {
+void EegPreprocessor::initialize_sample_buffer() {
   size_t buffer_size = this->preprocessor_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
-  RCLCPP_DEBUG(this->get_logger(), "Sample buffer reset to %lu elements.", buffer_size);
+  RCLCPP_DEBUG(this->get_logger(), "Sample buffer initialized to %lu elements and reset.", buffer_size);
 }
 
 /* System state handler. */
@@ -180,15 +180,15 @@ void EegPreprocessor::handle_system_state(const std::shared_ptr<mtms_device_inte
       (new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
        new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED)) {
 
-    this->reset_preprocessor_module();
-    this->reset_sample_buffer();
+    this->initialize_preprocessor_module();
+    this->initialize_sample_buffer();
   }
   this->session_state = new_session_state;
 }
 
 /* Listing and setting EEG preprocessors. */
 
-void EegPreprocessor::set_preprocessor_enabled(
+void EegPreprocessor::handle_set_preprocessor_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response) {
 
@@ -203,9 +203,9 @@ void EegPreprocessor::set_preprocessor_enabled(
 
   this->preprocessor_enabled_publisher->publish(msg);
 
-  /* Reset sample buffer when enabling preprocessor to avoid using remains of old EEG data. */
+  /* Re-initialize sample buffer when enabling preprocessor to avoid using remains of old EEG data. */
   if (enabled) {
-    reset_sample_buffer();
+    initialize_sample_buffer();
   }
 
   RCLCPP_INFO(this->get_logger(), "%s preprocessor.", enabled ? "Enabling" : "Disabling");
@@ -213,13 +213,10 @@ void EegPreprocessor::set_preprocessor_enabled(
   response->success = true;
 }
 
-void EegPreprocessor::set_preprocessor_module(
-      const std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Response> response) {
+void EegPreprocessor::reset_preprocessor_module() {
+  this->module_name = UNSET_STRING;
 
-  this->module_name = request->module;
-
-  RCLCPP_INFO(this->get_logger(), "Setting preprocessor to: %s.", this->module_name.c_str());
+  RCLCPP_INFO(this->get_logger(), "Preprocessor module reset.");
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
@@ -227,17 +224,38 @@ void EegPreprocessor::set_preprocessor_module(
 
   this->preprocessor_module_publisher->publish(msg);
 
-  /* Reset the wrapper to use the changed preprocessor module. */
-  reset_preprocessor_module();
+  /* Reset the wrapper so that any new samples are not processed. */
+  this->preprocessor_wrapper->reset_module();
+}
+
+void EegPreprocessor::set_preprocessor_module(const std::string module) {
+  this->module_name = module;
+
+  RCLCPP_INFO(this->get_logger(), "Preprocessor set to: %s.", this->module_name.c_str());
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::String();
+  msg.data = this->module_name;
+
+  this->preprocessor_module_publisher->publish(msg);
+
+  /* Initialize the wrapper to use the changed preprocessor module. */
+  initialize_preprocessor_module();
 
   /* We don't want left-over samples from the previous preprocessor, hence
-     reset the sample buffer. */
-  reset_sample_buffer();
+     re-initialize the sample buffer. */
+  initialize_sample_buffer();
+}
 
+void EegPreprocessor::handle_set_preprocessor_module(
+      const std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPreprocessorModule::Response> response) {
+
+  set_preprocessor_module(request->module);
   response->success = true;
 }
 
-void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
+void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
   std::ostringstream oss;
@@ -247,31 +265,38 @@ void EegPreprocessor::set_active_project(const std::shared_ptr<std_msgs::msg::St
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
   update_preprocessor_list();
+
+  if (this->modules.size() > 0) {
+    this->set_preprocessor_module(this->modules[0]);
+  } else {
+    RCLCPP_WARN(this->get_logger(), "No preprocessors found in project: %s.", this->active_project.c_str());
+    this->reset_preprocessor_module();
+  }
 }
 
-std::vector<std::string> EegPreprocessor::list_python_scripts(const std::string& path) {
-  std::vector<std::string> scripts;
+std::vector<std::string> EegPreprocessor::list_python_modules(const std::string& path) {
+  std::vector<std::string> modules;
 
   /* Check that the directory exists. */
   if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-    std::cerr << "Warning: Directory does not exist: " << path << std::endl;
-    return scripts;
+    RCLCPP_WARN(this->get_logger(), "Warning: Directory does not exist: %s.", path.c_str());
+    return modules;
   }
 
   /* List all .py files in the directory. */
   for (const auto &entry : std::filesystem::directory_iterator(path)) {
     if (entry.is_regular_file() && entry.path().extension() == ".py") {
-      scripts.push_back(entry.path().stem().string());
+      modules.push_back(entry.path().stem().string());
     }
   }
-  return scripts;
+  return modules;
 }
 
 void EegPreprocessor::update_preprocessor_list() {
-  auto scripts = this->list_python_scripts(this->script_directory);
+  this->modules = this->list_python_modules(this->script_directory);
 
   auto msg = project_interfaces::msg::PreprocessorList();
-  msg.scripts = scripts;
+  msg.scripts = this->modules;
 
   this->preprocessor_list_publisher->publish(msg);
 }
@@ -293,12 +318,12 @@ void EegPreprocessor::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg:
   RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
   RCLCPP_INFO(this->get_logger(), " ");
 
-  /* The number of EEG and EMG channels may have changed, therefore reset preprocessor Python module. */
-  reset_preprocessor_module();
+  /* The number of EEG and EMG channels may have changed, therefore re-initialize preprocessor Python module. */
+  initialize_preprocessor_module();
 
   /* EEG info is updated if streaming is restarted on the EEG device. We don't want
-     left-over samples from the previous run, therefore reset the sample buffer. */
-  reset_sample_buffer();
+     left-over samples from the previous run, therefore re-initialize the sample buffer. */
+  initialize_sample_buffer();
 }
 
 /* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
