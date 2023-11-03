@@ -10,6 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
+find_package(project_interfaces REQUIRED)
 
 add_executable(
         eeg_simulator
@@ -33,6 +34,7 @@ ament_target_dependencies(
   rclcpp_action
   std_msgs
   eeg_interfaces
+  project_interfaces
 )
 
 install(TARGETS
