@@ -37,6 +37,7 @@ class PreprocessorWrapper;
 class EegPreprocessor : public rclcpp::Node {
 public:
   EegPreprocessor();
+  ~EegPreprocessor();
 
 private:
   void initialize_preprocessor_module();
@@ -67,6 +68,10 @@ private:
   bool was_pulse_given(double_t sample_time);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
+
+  /* Inotify functions */
+  void update_inotify_watch();
+  void inotify_timer_callback();
 
   rclcpp::Logger logger;
 
@@ -115,6 +120,12 @@ private:
   /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
      just once when the session is stopped. */
   mtms_device_interfaces::msg::SessionState session_state;
+
+  /* Inotify variables */
+  rclcpp::TimerBase::SharedPtr inotify_timer;
+  int inotify_descriptor;
+  int watch_descriptor;
+  char inotify_buffer[1024];
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */

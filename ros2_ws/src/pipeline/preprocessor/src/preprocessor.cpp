@@ -1,6 +1,11 @@
 #include <chrono>
 #include <filesystem>
 
+#include <sys/inotify.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
 #include "preprocessor_wrapper.h"
 #include "preprocessor.h"
 
@@ -135,6 +140,26 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
+
+  /* Initialize inotify. */
+  this->inotify_descriptor = inotify_init();
+  if (this->inotify_descriptor == -1) {
+      RCLCPP_ERROR(this->get_logger(), "Error initializing inotify");
+      exit(1);
+  }
+
+  /* Set the inotify descriptor to non-blocking. */
+  int flags = fcntl(inotify_descriptor, F_GETFL, 0);
+  fcntl(inotify_descriptor, F_SETFL, flags | O_NONBLOCK);
+
+  /* Create a timer callback to poll inotify. */
+  this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
+                                                std::bind(&EegPreprocessor::inotify_timer_callback, this));
+}
+
+EegPreprocessor::~EegPreprocessor() {
+  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+  close(inotify_descriptor);
 }
 
 /* Functions to re-initialize the preprocessor state. */
@@ -271,6 +296,55 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
   } else {
     RCLCPP_WARN(this->get_logger(), "No preprocessors found in project: %s.", this->active_project.c_str());
     this->reset_preprocessor_module();
+  }
+
+  update_inotify_watch();
+}
+
+/* Inotify functions */
+
+void EegPreprocessor::update_inotify_watch() {
+  /* Remove the old watch. */
+  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+
+  /* Add a new watch. */
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->script_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  if (watch_descriptor == -1) {
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->script_directory.c_str());
+      return;
+  }
+}
+
+void EegPreprocessor::inotify_timer_callback() {
+  int length = read(inotify_descriptor, inotify_buffer, 1024);
+
+  if (length < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      /* No events, return early. */
+      return;
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Error reading inotify");
+      return;
+    }
+  }
+
+  int i = 0;
+  while (i < length) {
+    struct inotify_event *event = (struct inotify_event *)&inotify_buffer[i];
+    if (event->len) {
+      std::string event_name = event->name;
+      if ((event->mask & IN_MODIFY) &&
+          (event_name == this->module_name + ".py")) {
+
+        RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
+        this->initialize_preprocessor_module();
+      }
+      if (event->mask & (IN_CREATE | IN_DELETE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating preprocessor list.", event_name.c_str());
+        this->update_preprocessor_list();
+      }
+    }
+    i += sizeof(struct inotify_event) + event->len;
   }
 }
 
