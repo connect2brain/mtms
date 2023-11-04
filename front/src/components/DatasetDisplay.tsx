@@ -1,14 +1,24 @@
 import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { IndentedStateTitle, StyledPanel, StateRow, StateTitle, StateValue, Select } from 'styles/General'
+import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
+
+import {
+  IndentedStateTitle,
+  StyledPanel,
+  StateRow,
+  StateTitle,
+  StateValue,
+  Select,
+  GrayedOutPanel,
+} from 'styles/General'
 import { DatasetContext } from 'providers/DatasetProvider'
 import { setDatasetRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
-  height: 180px;
+  height: 260px;
   position: fixed;
   top: 982px;
   right: 5px;
@@ -19,8 +29,15 @@ const DatasetSelect = styled(Select)`
   width: 150px;
 `
 
+const SwitchWrapper = styled.span`
+  width: 95px;
+`
+
 export const DatasetDisplay: React.FC = () => {
   const { datasetList, dataset } = useContext(DatasetContext)
+
+  const [playbackDataset, setPlaybackDataset] = useState<boolean>(false)
+  const [loopDataset, setLoopDataset] = useState<boolean>(false)
 
   const handleDatasetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newDataset = event.target.value
@@ -65,6 +82,21 @@ export const DatasetDisplay: React.FC = () => {
         <IndentedStateTitle>Duration</IndentedStateTitle>
         <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
       </StateRow>
+      <br />
+      <StateRow>
+        <StateTitle>Playback:</StateTitle>
+        <SwitchWrapper>
+          <ToggleSwitch type='flat' checked={playbackDataset} onChange={setPlaybackDataset} disabled={false} />
+        </SwitchWrapper>
+      </StateRow>
+      <GrayedOutPanel isGrayedOut={!playbackDataset}>
+        <StateRow>
+          <IndentedStateTitle>Loop:</IndentedStateTitle>
+          <SwitchWrapper>
+            <ToggleSwitch type='flat' checked={loopDataset} onChange={setLoopDataset} disabled={!playbackDataset} />
+          </SwitchWrapper>
+        </StateRow>
+      </GrayedOutPanel>
     </DatasetPanel>
   )
 }
