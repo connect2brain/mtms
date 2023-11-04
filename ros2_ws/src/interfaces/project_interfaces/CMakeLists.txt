@@ -32,6 +32,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DeciderList.msg"
   "srv/SetDeciderModule.srv"
   "srv/SetDeciderEnabled.srv"
+
+  "msg/Dataset.msg"
+  "msg/DatasetList.msg"
 )
 
 ament_package()
