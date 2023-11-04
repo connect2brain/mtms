@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { StyledPanel, StateRow, StateTitle, StateValue, Select } from 'styles/General'
+import { IndentedStateTitle, StyledPanel, StateRow, StateTitle, StateValue, Select } from 'styles/General'
 import { DatasetContext } from 'providers/DatasetProvider'
 import { setDatasetRos } from 'ros/ros'
+import { formatTime, formatFrequency } from 'utils/utils'
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
-  height: 150px;
+  height: 180px;
   position: fixed;
   top: 982px;
   right: 5px;
@@ -28,6 +29,7 @@ export const DatasetDisplay: React.FC = () => {
       console.log('Dataset set to ' + newDataset)
     })
   }
+  const selectedDataset = datasetList.find((d) => d.filename === dataset)
 
   return (
     <DatasetPanel>
@@ -44,6 +46,25 @@ export const DatasetDisplay: React.FC = () => {
         </StateValue>
       </StateRow>
       <br />
+      <StateRow>
+        <StateTitle>Sampling rate:</StateTitle>
+        <StateValue>{formatFrequency(selectedDataset?.sampling_frequency)}</StateValue>
+      </StateRow>
+      <StateRow>
+        <StateTitle>Channels</StateTitle>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>EEG</IndentedStateTitle>
+        <StateValue>{selectedDataset?.num_of_eeg_channels}</StateValue>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>EMG</IndentedStateTitle>
+        <StateValue>{selectedDataset?.num_of_emg_channels}</StateValue>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Duration</IndentedStateTitle>
+        <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
+      </StateRow>
     </DatasetPanel>
   )
 }
