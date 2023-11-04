@@ -45,6 +45,16 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     DATASET_LIST_TOPIC,
     qos_persist_latest);
 
+  /* Service for changing dataset. */
+  this->set_dataset_service = this->create_service<project_interfaces::srv::SetDataset>(
+    "/eeg_simulator/dataset/set",
+    std::bind(&EegSimulator::handle_set_dataset, this, _1, _2));
+
+  /* Publisher for dataset. */
+  this->dataset_publisher = this->create_publisher<std_msgs::msg::String>(
+    "/eeg_simulator/dataset",
+    qos_persist_latest);
+
   /* Publisher for EEG samples. */
   eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
   trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
@@ -174,6 +184,23 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   update_dataset_list();
 
   update_inotify_watch();
+}
+
+void EegSimulator::handle_set_dataset(
+      const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDataset::Response> response) {
+
+  this->dataset_filename = request->filename;
+
+  RCLCPP_INFO(this->get_logger(), "Dataset set to: %s.", this->dataset_filename.c_str());
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::String();
+  msg.data = this->dataset_filename;
+
+  this->dataset_publisher->publish(msg);
+
+  response->success = true;
 }
 
 void EegSimulator::publish_sample() {

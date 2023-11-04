@@ -453,13 +453,13 @@ export const setDatasetRos = (filename: string, callback: () => void) => {
     request,
     (response) => {
       if (!response.success) {
-        console.log('ERROR: Failed to set decider enabled: success field was false.')
+        console.log('ERROR: Failed to set dataset: success field was false.')
       } else {
         callback()
       }
     },
     (error) => {
-      console.log('ERROR: Failed to set decider enabled, error:')
+      console.log('ERROR: Failed to set dataset, error:')
       console.log(error)
     },
   )

@@ -15,6 +15,7 @@
 
 #include "project_interfaces/msg/dataset.hpp"
 #include "project_interfaces/msg/dataset_list.hpp"
+#include "project_interfaces/srv/set_dataset.hpp"
 
 
 class EegSimulator : public rclcpp::Node {
@@ -27,11 +28,17 @@ private:
   void update_dataset_list();
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
 
+  void handle_set_dataset(
+      const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDataset::Response> response);
+
   void publish_sample();
   void publish_trigger();
 
   void update_inotify_watch();
   void inotify_timer_callback();
+
+  std::string dataset_filename;
 
   double current_time = 0.0;
   double sampling_period = 0.0;
@@ -52,6 +59,9 @@ private:
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DatasetList>::SharedPtr dataset_list_publisher;
+
+  rclcpp::Service<project_interfaces::srv::SetDataset>::SharedPtr set_dataset_service;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr dataset_publisher;
 
   rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_publisher_;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher_;
