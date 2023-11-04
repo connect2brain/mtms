@@ -7,7 +7,6 @@
 #include "mtms_device_interfaces/msg/channel_state.hpp"
 #include "mtms_device_interfaces/msg/channel_error.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
-#include "mtms_device_interfaces/msg/session_state.hpp"
 #include "mtms_device_interfaces/msg/startup_error.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
@@ -21,7 +20,6 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 
 const uint8_t CHANNEL_COUNT = 5;
-const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
@@ -67,7 +65,6 @@ NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_Em
 NiFpga_mTMS_IndicatorU8 startup_error_indicator = NiFpga_mTMS_IndicatorU8_Startuperror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
-NiFpga_mTMS_IndicatorU8 session_state_indicator = NiFpga_mTMS_IndicatorU8_Sessionstate;
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
@@ -213,23 +210,6 @@ private:
                             device_state_indicator,
                             &state.device_state.value
                         ));
-
-    NiFpga_MergeStatus(&status,
-                        NiFpga_ReadU8(
-                            session,
-                            session_state_indicator,
-                            &state.session_state.value
-                        ));
-
-    uint64_t time;
-    NiFpga_MergeStatus(&status,
-                        NiFpga_ReadU64(
-                            session,
-                            time_indicator,
-                            &time
-                        ));
-
-    state.time = (double)time / CLOCK_FREQUENCY_HZ;
 
     system_state_publisher_->publish(state);
   }
