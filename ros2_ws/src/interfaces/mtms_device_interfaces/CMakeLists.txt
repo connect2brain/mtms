@@ -25,7 +25,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/ChannelState.msg"
         "msg/ChannelError.msg"
         "msg/DeviceState.msg"
-        "msg/SessionState.msg"
         "msg/StartupError.msg"
         "msg/SystemState.msg"
         "msg/SystemError.msg"
