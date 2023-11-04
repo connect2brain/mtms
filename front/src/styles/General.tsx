@@ -119,6 +119,7 @@ export const IndentedLabel = styled(ConfigLabel)`
 export const StateRow = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 0.5rem;
   margin-right: 15px;
 `
