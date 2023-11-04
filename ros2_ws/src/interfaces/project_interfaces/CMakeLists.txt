@@ -36,6 +36,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Dataset.msg"
   "msg/DatasetList.msg"
   "srv/SetDataset.srv"
+  "srv/SetPlayback.srv"
+  "srv/SetLoop.srv"
 )
 
 ament_package()

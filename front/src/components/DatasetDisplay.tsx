@@ -12,8 +12,9 @@ import {
   Select,
   GrayedOutPanel,
 } from 'styles/General'
+
 import { DatasetContext } from 'providers/DatasetProvider'
-import { setDatasetRos } from 'ros/ros'
+import { setDatasetRos, setPlaybackRos, setLoopRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
 
 const DatasetPanel = styled(StyledPanel)`
@@ -34,10 +35,7 @@ const SwitchWrapper = styled.span`
 `
 
 export const DatasetDisplay: React.FC = () => {
-  const { datasetList, dataset } = useContext(DatasetContext)
-
-  const [playbackDataset, setPlaybackDataset] = useState<boolean>(false)
-  const [loopDataset, setLoopDataset] = useState<boolean>(false)
+  const { datasetList, dataset, playback, loop } = useContext(DatasetContext)
 
   const handleDatasetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newDataset = event.target.value
@@ -46,6 +44,19 @@ export const DatasetDisplay: React.FC = () => {
       console.log('Dataset set to ' + newDataset)
     })
   }
+
+  const handlePlaybackChange = (playback: boolean) => {
+    setPlaybackRos(playback, () => {
+      console.log('Playback set to ' + playback)
+    })
+  }
+
+  const handleLoopChange = (loop: boolean) => {
+    setLoopRos(loop, () => {
+      console.log('Loop set to ' + loop)
+    })
+  }
+
   const selectedDataset = datasetList.find((d) => d.filename === dataset)
 
   return (
@@ -86,14 +97,14 @@ export const DatasetDisplay: React.FC = () => {
       <StateRow>
         <StateTitle>Playback:</StateTitle>
         <SwitchWrapper>
-          <ToggleSwitch type='flat' checked={playbackDataset} onChange={setPlaybackDataset} disabled={false} />
+          <ToggleSwitch type='flat' checked={playback} onChange={handlePlaybackChange} disabled={false} />
         </SwitchWrapper>
       </StateRow>
-      <GrayedOutPanel isGrayedOut={!playbackDataset}>
+      <GrayedOutPanel isGrayedOut={!playback}>
         <StateRow>
           <IndentedStateTitle>Loop:</IndentedStateTitle>
           <SwitchWrapper>
-            <ToggleSwitch type='flat' checked={loopDataset} onChange={setLoopDataset} disabled={!playbackDataset} />
+            <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
           </SwitchWrapper>
         </StateRow>
       </GrayedOutPanel>

@@ -50,9 +50,29 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     "/eeg_simulator/dataset/set",
     std::bind(&EegSimulator::handle_set_dataset, this, _1, _2));
 
+  /* Service for changing playback. */
+  this->set_playback_service = this->create_service<project_interfaces::srv::SetPlayback>(
+    "/eeg_simulator/playback/set",
+    std::bind(&EegSimulator::handle_set_playback, this, _1, _2));
+
+  /* Service for changing loop. */
+  this->set_loop_service = this->create_service<project_interfaces::srv::SetLoop>(
+    "/eeg_simulator/loop/set",
+    std::bind(&EegSimulator::handle_set_loop, this, _1, _2));
+
   /* Publisher for dataset. */
   this->dataset_publisher = this->create_publisher<std_msgs::msg::String>(
     "/eeg_simulator/dataset",
+    qos_persist_latest);
+
+  /* Publisher for playback. */
+  this->playback_publisher = this->create_publisher<std_msgs::msg::Bool>(
+    "/eeg_simulator/playback",
+    qos_persist_latest);
+
+  /* Publisher for loop. */
+  this->loop_publisher = this->create_publisher<std_msgs::msg::Bool>(
+    "/eeg_simulator/loop",
     qos_persist_latest);
 
   /* Publisher for EEG samples. */
@@ -193,6 +213,40 @@ void EegSimulator::handle_set_dataset(
   msg.data = this->dataset_filename;
 
   this->dataset_publisher->publish(msg);
+
+  response->success = true;
+}
+
+void EegSimulator::handle_set_playback(
+      const std::shared_ptr<project_interfaces::srv::SetPlayback::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPlayback::Response> response) {
+
+  this->playback= request->playback;
+
+  RCLCPP_INFO(this->get_logger(), "Playback %s.", this->playback ? "enabled" : "disabled");
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::Bool();
+  msg.data = this->playback;
+
+  this->playback_publisher->publish(msg);
+
+  response->success = true;
+}
+
+void EegSimulator::handle_set_loop(
+      const std::shared_ptr<project_interfaces::srv::SetLoop::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetLoop::Response> response) {
+
+  this->loop= request->loop;
+
+  RCLCPP_INFO(this->get_logger(), "Loop %s.", this->loop ? "enabled" : "disabled");
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::Bool();
+  msg.data = this->loop;
+
+  this->loop_publisher->publish(msg);
 
   response->success = true;
 }
