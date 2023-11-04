@@ -5,21 +5,46 @@
 #include <memory>
 #include <thread>
 #include <string>
+#include <filesystem>
+
+#include <sys/inotify.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include <nlohmann/json.hpp>
 
 #include "eeg_simulator.h"
 
+using namespace std::placeholders;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
-const std::string DATA_DIRECTORY = "data/eeg/";
 const std::string DATASET_LIST_TOPIC = "/eeg_simulator/dataset/list";
 
+const std::string DATA_DIRECTORY = "data/eeg/";
 const std::string PROJECTS_DIRECTORY = "projects/";
+
 
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
      side yet. For a previous Python reference implementation, see commit c0afb515b. */
 EegSimulator::EegSimulator() : Node("eeg_simulator") {
+  /* Subscriber for active project. */
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+  this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
+    "/projects/active",
+    qos_persist_latest,
+    std::bind(&EegSimulator::handle_set_active_project, this, _1));
+
+  /* Publisher for EEG datasets. */
+  dataset_list_publisher = this->create_publisher<project_interfaces::msg::DatasetList>(
+    DATASET_LIST_TOPIC,
+    qos_persist_latest);
+
   /* Publisher for EEG samples. */
   eeg_publisher_ = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
   trigger_publisher_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
@@ -55,8 +80,10 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   std::this_thread::sleep_for(std::chrono::seconds(3));
 
   file.open(data_path, std::ios::in);
-  publish_sample_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period), std::bind(&EegSimulator::publish_sample, this));
-  publish_trigger_timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&EegSimulator::publish_trigger, this));
+
+  /* TODO: Comment out for now. */
+  //publish_sample_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period), std::bind(&EegSimulator::publish_sample, this));
+  //publish_trigger_timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&EegSimulator::publish_trigger, this));
 
   eeg_interfaces::msg::EegInfo eeg_info;
 
@@ -66,6 +93,87 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   eeg_info.send_trigger_as_channel = false;
 
   eeg_info_publisher_->publish(eeg_info);
+
+  /* Initialize inotify. */
+  this->inotify_descriptor = inotify_init();
+  if (this->inotify_descriptor == -1) {
+      RCLCPP_ERROR(this->get_logger(), "Error initializing inotify");
+      exit(1);
+  }
+
+  /* Set the inotify descriptor to non-blocking. */
+  int flags = fcntl(inotify_descriptor, F_GETFL, 0);
+  fcntl(inotify_descriptor, F_SETFL, flags | O_NONBLOCK);
+
+  /* Create a timer callback to poll inotify. */
+  this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
+                                                std::bind(&EegSimulator::inotify_timer_callback, this));
+}
+
+EegSimulator::~EegSimulator() {
+  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+  close(inotify_descriptor);
+}
+
+std::vector<std::pair<std::string, std::string>> EegSimulator::list_datasets(const std::string& path) {
+  std::vector<std::pair<std::string, std::string>> datasets;
+
+  /* Check that the directory exists. */
+  if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
+    RCLCPP_WARN(this->get_logger(), "Warning: Directory does not exist: %s.", path.c_str());
+    return datasets;
+  }
+
+  /* List all .json files in the directory and fetch their names. */
+for (const auto &entry : std::filesystem::directory_iterator(path)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".json") {
+      std::string filename = entry.path().stem().string();
+      RCLCPP_INFO(this->get_logger(), "Found the dataset: %s.", filename.c_str());
+
+      std::ifstream file(entry.path());
+      nlohmann::json json_data;
+      file >> json_data;
+
+      std::string dataset_name;
+      if (json_data.contains("name") && json_data["name"].is_string()) {
+        dataset_name = json_data["name"].get<std::string>();
+      } else {
+        dataset_name = "Unknown";
+      }
+
+      datasets.push_back({filename, dataset_name});
+    }
+}  return datasets;
+}
+
+void EegSimulator::update_dataset_list() {
+  auto datasets_with_names = this->list_datasets(this->dataset_directory);
+
+  auto msg = project_interfaces::msg::DatasetList();
+
+  for (const auto& [filename, name] : datasets_with_names) {
+    project_interfaces::msg::Dataset dataset_msg;
+    dataset_msg.filename = filename;
+    dataset_msg.name = name;
+
+    msg.datasets.push_back(dataset_msg);
+  }
+
+  this->dataset_list_publisher->publish(msg);
+}
+
+void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
+  this->active_project = msg->data;
+
+  std::ostringstream oss;
+  oss << PROJECTS_DIRECTORY << this->active_project << "/eeg/raw";
+  this->dataset_directory = oss.str();
+
+  RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
+
+  update_dataset_list();
+
+  update_inotify_watch();
 }
 
 void EegSimulator::publish_sample() {
@@ -117,6 +225,47 @@ void EegSimulator::publish_trigger() {
   msg.time = current_time;
 
   trigger_publisher_->publish(msg);
+}
+
+/* Inotify functions */
+
+void EegSimulator::update_inotify_watch() {
+  /* Remove the old watch. */
+  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+
+  /* Add a new watch. */
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->dataset_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  if (watch_descriptor == -1) {
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->dataset_directory.c_str());
+      return;
+  }
+}
+
+void EegSimulator::inotify_timer_callback() {
+  int length = read(inotify_descriptor, inotify_buffer, 1024);
+
+  if (length < 0) {
+    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      /* No events, return early. */
+      return;
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Error reading inotify");
+      return;
+    }
+  }
+
+  int i = 0;
+  while (i < length) {
+    struct inotify_event *event = (struct inotify_event *)&inotify_buffer[i];
+    if (event->len) {
+      std::string event_name = event->name;
+      if (event->mask & (IN_CREATE | IN_DELETE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating dataset list.", event_name.c_str());
+        this->update_dataset_list();
+      }
+    }
+    i += sizeof(struct inotify_event) + event->len;
+  }
 }
 
 
