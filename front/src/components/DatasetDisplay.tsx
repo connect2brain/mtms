@@ -2,9 +2,8 @@ import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 import { StyledPanel, StateRow, StateTitle, StateValue, Select } from 'styles/General'
-import { getKeyByValue } from 'utils'
-
 import { DatasetContext } from 'providers/DatasetProvider'
+import { setDatasetRos } from 'ros/ros'
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
@@ -20,15 +19,14 @@ const DatasetSelect = styled(Select)`
 `
 
 export const DatasetDisplay: React.FC = () => {
-  const { datasetList } = useContext(DatasetContext)
+  const { datasetList, dataset } = useContext(DatasetContext)
 
   const handleDatasetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newDataset = event.target.value
-    /*
+
     setDatasetRos(newDataset, () => {
       console.log('Dataset set to ' + newDataset)
     })
-    */
   }
 
   return (
@@ -36,9 +34,9 @@ export const DatasetDisplay: React.FC = () => {
       <StateRow>
         <StateTitle>Dataset:</StateTitle>
         <StateValue>
-          <DatasetSelect onChange={handleDatasetChange} value={''}>
+          <DatasetSelect onChange={handleDatasetChange} value={dataset}>
             {datasetList.map((dataset, index) => (
-              <option key={index} value={dataset.name}>
+              <option key={index} value={dataset.filename}>
                 {dataset.name}
               </option>
             ))}
