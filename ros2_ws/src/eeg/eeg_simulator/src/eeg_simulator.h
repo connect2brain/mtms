@@ -24,7 +24,7 @@ public:
   ~EegSimulator();
 
 private:
-  std::vector<std::pair<std::string, std::string>> list_datasets(const std::string& path);
+  std::vector<project_interfaces::msg::Dataset> list_datasets(const std::string& path);
   void update_dataset_list();
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
 

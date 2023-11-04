@@ -125,8 +125,8 @@ EegSimulator::~EegSimulator() {
   close(inotify_descriptor);
 }
 
-std::vector<std::pair<std::string, std::string>> EegSimulator::list_datasets(const std::string& path) {
-  std::vector<std::pair<std::string, std::string>> datasets;
+std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const std::string& path) {
+  std::vector<project_interfaces::msg::Dataset> datasets;
 
   /* Check that the directory exists. */
   if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
@@ -134,40 +134,34 @@ std::vector<std::pair<std::string, std::string>> EegSimulator::list_datasets(con
     return datasets;
   }
 
-  /* List all .json files in the directory and fetch their names. */
-for (const auto &entry : std::filesystem::directory_iterator(path)) {
+  /* List all .json files in the directory and fetch their attributes. */
+  for (const auto &entry : std::filesystem::directory_iterator(path)) {
     if (entry.is_regular_file() && entry.path().extension() == ".json") {
-      std::string filename = entry.path().stem().string();
-      RCLCPP_INFO(this->get_logger(), "Found the dataset: %s.", filename.c_str());
-
       std::ifstream file(entry.path());
       nlohmann::json json_data;
       file >> json_data;
 
-      std::string dataset_name;
-      if (json_data.contains("name") && json_data["name"].is_string()) {
-        dataset_name = json_data["name"].get<std::string>();
-      } else {
-        dataset_name = "Unknown";
-      }
+      project_interfaces::msg::Dataset dataset_msg;
+      dataset_msg.filename = entry.path().stem().string();
+      RCLCPP_INFO(this->get_logger(), "Found the dataset: %s.", dataset_msg.filename.c_str());
 
-      datasets.push_back({filename, dataset_name});
+      dataset_msg.name = json_data.value("name", "Unknown");
+      dataset_msg.num_of_eeg_channels = json_data.value("num_of_eeg_channels", 0);
+      dataset_msg.num_of_emg_channels = json_data.value("num_of_emg_channels", 0);
+      dataset_msg.sampling_frequency = json_data.value("sampling_frequency", 0);
+      dataset_msg.duration = json_data.value("duration", 0);
+
+      datasets.push_back(dataset_msg);
     }
-}  return datasets;
+  }
+  return datasets;
 }
 
 void EegSimulator::update_dataset_list() {
-  auto datasets_with_names = this->list_datasets(this->dataset_directory);
+  auto datasets = this->list_datasets(this->dataset_directory);
 
-  auto msg = project_interfaces::msg::DatasetList();
-
-  for (const auto& [filename, name] : datasets_with_names) {
-    project_interfaces::msg::Dataset dataset_msg;
-    dataset_msg.filename = filename;
-    dataset_msg.name = name;
-
-    msg.datasets.push_back(dataset_msg);
-  }
+  project_interfaces::msg::DatasetList msg;
+  msg.datasets = datasets;
 
   this->dataset_list_publisher->publish(msg);
 }

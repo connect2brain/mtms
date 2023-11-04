@@ -38,6 +38,8 @@ import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 
+import { formatTime } from 'utils/utils'
+
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
   margin-bottom: 40px;
@@ -706,31 +708,6 @@ export const ExperimentView = () => {
   }, [autopauseIntervalMinutes])
 
   /* Utilities */
-  const formatTime = (time: number | undefined): string => {
-    if (time == undefined) {
-      return ''
-    }
-    time = Math.round(time)
-
-    const hours = Math.floor(time / 3600)
-    const minutes = Math.floor((time % 3600) / 60)
-    const seconds = time % 60
-
-    let result = ''
-
-    if (hours > 0) {
-      result += `${hours} h `
-    }
-    if (minutes > 0) {
-      result += `${minutes} min `
-    }
-    if (seconds > 0 || result === '') {
-      result += `${seconds} s`
-    }
-
-    return result.trim()
-  }
-
   const formatExperimentState = (): string => {
     switch (experimentState) {
       case ExperimentState.NotRunning:
