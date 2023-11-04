@@ -3,16 +3,13 @@ import { Topic, Message } from 'roslib'
 
 import { ros } from 'ros/ros'
 
-interface DatasetChannels {
-  eeg: number
-  emg: number
-}
-
 interface Dataset extends ROSLIB.Message {
   name: string
   filename: string
   sampling_frequency: number
-  channels: DatasetChannels
+  num_of_eeg_channels: number
+  num_of_emg_channels: number
+  duration: number
 }
 
 interface DatasetList extends ROSLIB.Message {
