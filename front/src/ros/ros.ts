@@ -436,3 +436,31 @@ export const setDeciderEnabledRos = (enabled: boolean, callback: () => void) => 
     },
   )
 }
+
+/* Set up set dataset service. */
+const setDatasetService = new ROSLIB.Service({
+  ros: ros,
+  name: '/eeg_simulator/dataset/set',
+  serviceType: 'project_interfaces/SetDataset',
+})
+
+export const setDatasetRos = (filename: string, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    filename: filename,
+  }) as any
+
+  setDatasetService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set decider enabled: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set decider enabled, error:')
+      console.log(error)
+    },
+  )
+}
