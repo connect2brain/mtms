@@ -68,8 +68,7 @@ services:
     security_opt:
       - seccomp:unconfined
     volumes:
-      - './ros2_ws/src/eeg/eeg_simulator:/app/ros2_ws/src/eeg/eeg_simulator/'
-      - './data/eeg:/app/data/eeg/'
+      - '$PROJECTS_ROOT:/app/projects'
     network_mode: host
 
   stimulus_presenter:
