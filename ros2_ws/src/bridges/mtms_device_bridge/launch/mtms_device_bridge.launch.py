@@ -38,8 +38,11 @@ def generate_launch_description():
         "discharge_handler",
 
         "event_trigger_handler",
+
         "feedback_monitor_bridge",
         "system_state_bridge",
+        "session_bridge",
+
         "settings_handler"
     ]
 

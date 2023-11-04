@@ -17,7 +17,7 @@ find_package(mtms_device_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
-# Install run_fpga executable.
+# Run_fpga executable
 
 add_executable(run_fpga
   src/nodes/run_fpga.cpp
@@ -32,7 +32,7 @@ target_include_directories(run_fpga
 
 ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces system_interfaces)
 
-# Install system state bridge.
+# System state bridge
 
 add_executable(system_state_bridge
         src/nodes/system_state_bridge.cpp
@@ -47,7 +47,22 @@ target_include_directories(system_state_bridge
 
 ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces)
 
-# Install start device handler.
+# Session bridge
+
+add_executable(session_bridge
+        src/nodes/session_bridge.cpp
+        src/lib/fpga.cpp
+        src/lib/NiFpga.c
+        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+
+target_include_directories(session_bridge
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
+
+ament_target_dependencies(session_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces)
+
+# Start device handler
 
 add_executable(start_device_handler
   src/nodes/start_device_handler.cpp
@@ -63,7 +78,7 @@ target_include_directories(start_device_handler
 
 ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install start session handler.
+# Start session handler
 
 add_executable(start_session_handler
         src/nodes/start_session_handler.cpp
@@ -79,7 +94,7 @@ target_include_directories(start_session_handler
 
 ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install stop session handler.
+# Stop session handler
 
 add_executable(stop_session_handler
         src/nodes/stop_session_handler.cpp
@@ -95,7 +110,7 @@ target_include_directories(stop_session_handler
 
 ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install stop device handler.
+# Stop device handler
 
 add_executable(stop_device_handler
         src/nodes/stop_device_handler.cpp
@@ -111,7 +126,7 @@ target_include_directories(stop_device_handler
 
 ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install allow stimulation handler.
+# Allow stimulation handler
 
 add_executable(allow_stimulation_handler
   src/nodes/allow_stimulation_handler.cpp
@@ -127,7 +142,7 @@ target_include_directories(allow_stimulation_handler
 
 ament_target_dependencies(allow_stimulation_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install allow trigger out handler.
+# Allow trigger out handler
 
 add_executable(allow_trigger_out_handler
   src/nodes/allow_trigger_out_handler.cpp
@@ -143,7 +158,7 @@ target_include_directories(allow_trigger_out_handler
 
 ament_target_dependencies(allow_trigger_out_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Install pulse handler.
+# Pulse handler
 
 add_executable(pulse_handler
   src/nodes/pulse_handler.cpp
@@ -159,7 +174,7 @@ target_include_directories(pulse_handler
 
 ament_target_dependencies(pulse_handler rclcpp std_msgs event_interfaces)
 
-# Install trigger out handler.
+# Trigger out handler
 
 add_executable(trigger_out_handler
   src/nodes/trigger_out_handler.cpp
@@ -175,7 +190,7 @@ target_include_directories(trigger_out_handler
 
 ament_target_dependencies(trigger_out_handler rclcpp std_msgs event_interfaces)
 
-# Install charge handler.
+# Charge handler
 
 add_executable(charge_handler
   src/nodes/charge_handler.cpp
@@ -191,7 +206,7 @@ target_include_directories(charge_handler
 
 ament_target_dependencies(charge_handler rclcpp std_msgs event_interfaces)
 
-# Install discharge handler.
+# Discharge handler
 
 add_executable(discharge_handler
   src/nodes/discharge_handler.cpp
@@ -207,7 +222,7 @@ target_include_directories(discharge_handler
 
 ament_target_dependencies(discharge_handler rclcpp std_msgs event_interfaces)
 
-# Install send event trigger handler.
+# Event trigger handler
 
 add_executable(event_trigger_handler
   src/nodes/event_trigger_handler.cpp
@@ -222,7 +237,7 @@ target_include_directories(event_trigger_handler
 
 ament_target_dependencies(event_trigger_handler rclcpp std_msgs event_interfaces)
 
-# Install feedback monitor bridge.
+# Feedback monitor bridge
 
 add_executable(feedback_monitor_bridge
   src/nodes/feedback_monitor_bridge.cpp
@@ -237,7 +252,7 @@ target_include_directories(feedback_monitor_bridge
 
 ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_interfaces)
 
-# Install settings handler.
+# Settings handler
 
 add_executable(settings_handler
         src/nodes/settings_handler.cpp
@@ -255,7 +270,9 @@ ament_target_dependencies(settings_handler rclcpp std_msgs mtms_device_interface
 
 install(TARGETS
   run_fpga
+
   system_state_bridge
+  session_bridge
 
   start_device_handler
   stop_device_handler
