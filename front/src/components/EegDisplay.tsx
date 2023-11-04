@@ -6,6 +6,8 @@ import { StyledPanel, StateRow, StateTitle, IndentedStateTitle, StateValue } fro
 import { EegContext } from 'providers/EegProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
+import { formatFrequency } from 'utils/utils'
+
 const EegPanel = styled(StyledPanel)`
   width: 300px;
   height: 105px;
@@ -20,19 +22,6 @@ export const EegDisplay: React.FC = () => {
   const { eegHealthcheck } = useContext(HealthcheckContext)
 
   const [eegHealthcheckOk, setEegHealthcheckOk] = useState(false)
-
-  function formatFrequency(frequency: number | undefined): string {
-    if (frequency === undefined) {
-      return ''
-    }
-
-    if (frequency < 1000) {
-      return `${frequency} Hz`
-    }
-
-    const frequencyInKHz = frequency / 1000
-    return `${frequencyInKHz} kHz`
-  }
 
   /* Update EEG healthcheck ok status. */
   useEffect(() => {
