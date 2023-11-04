@@ -20,14 +20,22 @@ interface RosString extends ROSLIB.Message {
   data: string
 }
 
+interface RosBoolean extends ROSLIB.Message {
+  data: boolean
+}
+
 interface DatasetContextType {
   datasetList: Dataset[]
   dataset: string
+  playback: boolean
+  loop: boolean
 }
 
 const defaultDatasetState: DatasetContextType = {
   datasetList: [],
   dataset: '',
+  playback: false,
+  loop: false,
 }
 
 export const DatasetContext = React.createContext<DatasetContextType>(defaultDatasetState)
@@ -39,6 +47,9 @@ interface DatasetProviderProps {
 export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) => {
   const [datasetList, setDatasetList] = useState<Dataset[]>([])
   const [dataset, setDataset] = useState<string>('')
+
+  const [playback, setPlayback] = useState<boolean>(false)
+  const [loop, setLoop] = useState<boolean>(false)
 
   useEffect(() => {
     /* Subscriber for dataset list. */
@@ -63,10 +74,35 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
       setDataset(message.data)
     })
 
+    /* Subscriber for playback. */
+    const playbackSubscriber = new Topic<RosBoolean>({
+      ros: ros,
+      name: '/eeg_simulator/playback',
+      messageType: 'std_msgs/Bool',
+    })
+
+    playbackSubscriber.subscribe((message) => {
+      setPlayback(message.data)
+    })
+
+    /* Subscriber for loop. */
+    const loopSubscriber = new Topic<RosBoolean>({
+      ros: ros,
+      name: '/eeg_simulator/loop',
+      messageType: 'std_msgs/Bool',
+    })
+
+    loopSubscriber.subscribe((message) => {
+      setLoop(message.data)
+    })
+
     /* Unsubscribers */
     return () => {
       datasetListSubscriber.unsubscribe()
       datasetSubscriber.unsubscribe()
+
+      playbackSubscriber.unsubscribe()
+      loopSubscriber.unsubscribe()
     }
   }, [])
 
@@ -75,6 +111,8 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
       value={{
         datasetList,
         dataset,
+        playback,
+        loop,
       }}
     >
       {children}
