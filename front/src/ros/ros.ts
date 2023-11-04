@@ -437,7 +437,7 @@ export const setDeciderEnabledRos = (enabled: boolean, callback: () => void) => 
   )
 }
 
-/* Set up set dataset service. */
+/* Set dataset service. */
 const setDatasetService = new ROSLIB.Service({
   ros: ros,
   name: '/eeg_simulator/dataset/set',
@@ -460,6 +460,62 @@ export const setDatasetRos = (filename: string, callback: () => void) => {
     },
     (error) => {
       console.log('ERROR: Failed to set dataset, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set playback service. */
+const setPlaybackService = new ROSLIB.Service({
+  ros: ros,
+  name: '/eeg_simulator/playback/set',
+  serviceType: 'project_interfaces/SetPlayback',
+})
+
+export const setPlaybackRos = (playback: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    playback: playback,
+  }) as any
+
+  setPlaybackService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set playback: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set playback, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set loop service. */
+const setLoopService = new ROSLIB.Service({
+  ros: ros,
+  name: '/eeg_simulator/loop/set',
+  serviceType: 'project_interfaces/SetLoop',
+})
+
+export const setLoopRos = (loop: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    loop: loop,
+  }) as any
+
+  setLoopService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set loop: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set loop, error:')
       console.log(error)
     },
   )
