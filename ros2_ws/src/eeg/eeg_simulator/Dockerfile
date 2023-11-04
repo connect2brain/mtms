@@ -8,6 +8,7 @@ RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
+    nlohmann-json3-dev \
     ros-iron-rmw-cyclonedds-cpp
 
 # Set the Cyclone DDS configuration
