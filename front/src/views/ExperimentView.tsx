@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
-import { TabBar, Select } from 'styles/General'
+import { TabBar, Select, GrayedOutPanel } from 'styles/General'
 
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
@@ -155,13 +155,6 @@ const StatusPanel = styled(StyledPanel)`
   grid-column: 6 / 7;
   width: 240px;
   height: 300px;
-`
-
-/* Trials-related */
-const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
-  filter: ${(props) => (props.isGrayedOut ? 'grayscale(100%)' : 'none')};
-  opacity: ${(props) => (props.isGrayedOut ? '0.3' : '1')};
-  transition: filter 0.3s ease, opacity 0.3s ease;
 `
 
 /* Triggers */
