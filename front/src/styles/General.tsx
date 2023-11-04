@@ -136,3 +136,10 @@ export const IndentedStateTitle = styled(StateTitle)`
 `
 
 export const StateValue = styled.span``
+
+/* If enabled, grays out all elements inside the panel. */
+export const GrayedOutPanel = styled.div<{ isGrayedOut: boolean }>`
+  filter: ${(props) => (props.isGrayedOut ? 'grayscale(100%)' : 'none')};
+  opacity: ${(props) => (props.isGrayedOut ? '0.3' : '1')};
+  transition: filter 0.3s ease, opacity 0.3s ease;
+`
