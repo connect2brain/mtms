@@ -43,13 +43,18 @@ private:
       const std::shared_ptr<project_interfaces::srv::SetLoop::Request> request,
       std::shared_ptr<project_interfaces::srv::SetLoop::Response> response);
 
+  void initialize_streaming();
+
   void publish_sample();
   void publish_trigger();
 
   void update_inotify_watch();
   void inotify_timer_callback();
 
+  std::unordered_map<std::string, project_interfaces::msg::Dataset> dataset_map;
+
   std::string dataset_filename;
+  project_interfaces::msg::Dataset dataset;
 
   bool playback;
   bool loop;
@@ -59,12 +64,12 @@ private:
 
   double last_log_time = -1.0;
 
-  std::string data_file_name;
-  std::string data_path;
-  int sampling_frequency = 0;
-  int num_of_eeg_channels = 0;
-  int num_of_emg_channels = 0;
-  int total_channels = 0;
+  uint16_t sampling_frequency = 0;
+  uint8_t num_of_eeg_channels = 0;
+  uint8_t num_of_emg_channels = 0;
+  uint8_t total_channels = 0;
+  std::string csv_filename;
+
   std::ifstream file;
 
   std::string active_project;
@@ -82,9 +87,9 @@ private:
   rclcpp::Service<project_interfaces::srv::SetLoop>::SharedPtr set_loop_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr loop_publisher;
 
-  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_publisher_;
-  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher_;
-  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher_;
+  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
 
   rclcpp::TimerBase::SharedPtr publish_sample_timer_;
   rclcpp::TimerBase::SharedPtr publish_trigger_timer_;
