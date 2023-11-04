@@ -5,6 +5,7 @@ import styled from 'styled-components'
 import './App.css'
 
 import Providers from './providers/Providers'
+import { DatasetProvider } from './providers/DatasetProvider'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
 import { PipelineProvider } from './providers/PipelineProvider'
 import { EegProvider } from './providers/EegProvider'
@@ -25,14 +26,16 @@ const App = () => {
           <PipelineProvider>
             <ConfigProvider>
               <EegProvider>
-                <HealthcheckProvider>
-                  <Header>mTMS control panel</Header>
-                  <HealthcheckStatusDisplay />
-                  <HealthcheckMessageDisplay />
-                  <Wrapper>
-                    <MultipleViews />
-                  </Wrapper>
-                </HealthcheckProvider>
+                <DatasetProvider>
+                  <HealthcheckProvider>
+                    <Header>mTMS control panel</Header>
+                    <HealthcheckStatusDisplay />
+                    <HealthcheckMessageDisplay />
+                    <Wrapper>
+                      <MultipleViews />
+                    </Wrapper>
+                  </HealthcheckProvider>
+                </DatasetProvider>
               </EegProvider>
             </ConfigProvider>
           </PipelineProvider>
