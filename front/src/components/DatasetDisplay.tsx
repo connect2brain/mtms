@@ -16,6 +16,7 @@ import {
 import { DatasetContext } from 'providers/DatasetProvider'
 import { setDatasetRos, setPlaybackRos, setLoopRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
+import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
@@ -35,7 +36,10 @@ const SwitchWrapper = styled.span`
 `
 
 export const DatasetDisplay: React.FC = () => {
+  const { eegSimulatorHealthcheck } = useContext(HealthcheckContext)
   const { datasetList, dataset, playback, loop } = useContext(DatasetContext)
+
+  const eegSimulatorHealthcheckOk = eegSimulatorHealthcheck?.status.value === HealthcheckStatus.READY
 
   const handleDatasetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newDataset = event.target.value
@@ -60,7 +64,7 @@ export const DatasetDisplay: React.FC = () => {
   const selectedDataset = datasetList.find((d) => d.json_filename === dataset)
 
   return (
-    <DatasetPanel>
+    <DatasetPanel isGrayedOut={!eegSimulatorHealthcheckOk}>
       <StateRow>
         <StateTitle>Dataset:</StateTitle>
         <StateValue>
