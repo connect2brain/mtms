@@ -9,6 +9,9 @@
 
   <depend>rclpy</depend>
 
+  <depend>mtms_device_interfaces</depend>
+  <depend>system_interfaces</depend>
+
   <exec_depend>ros2launch</exec_depend>
 
   <export>
