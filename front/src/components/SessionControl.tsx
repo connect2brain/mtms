@@ -6,9 +6,8 @@ import { StyledButton } from 'styles/General'
 import { SystemContext, SessionState, DeviceState } from 'providers/SystemProvider'
 
 export const SessionControl = () => {
-  const { systemState, session } = useContext(SystemContext)
+  const { session } = useContext(SystemContext)
 
-  const deviceState = systemState?.device_state
   const sessionState = session?.state
 
   const sessionText = () => {
@@ -31,11 +30,7 @@ export const SessionControl = () => {
     <>
       <StyledButton
         onClick={toggleSession}
-        disabled={
-          deviceState?.value !== DeviceState.OPERATIONAL ||
-          sessionState?.value === SessionState.STARTING ||
-          sessionState?.value === SessionState.STOPPING
-        }
+        disabled={sessionState?.value === SessionState.STARTING || sessionState?.value === SessionState.STOPPING}
       >
         {sessionText()} session
       </StyledButton>
