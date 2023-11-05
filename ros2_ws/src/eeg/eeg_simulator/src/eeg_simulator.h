@@ -20,6 +20,9 @@
 #include "project_interfaces/srv/set_playback.hpp"
 #include "project_interfaces/srv/set_loop.hpp"
 
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
+
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
 
@@ -30,6 +33,9 @@ public:
   ~EegSimulator();
 
 private:
+  void publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
+  void handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
+
   std::vector<project_interfaces::msg::Dataset> list_datasets(const std::string& path);
   void update_dataset_list();
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
@@ -80,6 +86,9 @@ private:
 
   std::string active_project;
   std::string data_directory;
+
+  rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr eeg_bridge_healthcheck_subscriber;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DatasetList>::SharedPtr dataset_list_publisher;
