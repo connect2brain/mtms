@@ -25,7 +25,7 @@ class StartSession : public rclcpp::Node {
 public:
   StartSession()
       : Node("start_session") {
-    start_session_service_ = this->create_service<mtms_device_interfaces::srv::StartSession>("/mtms_device/start_session",
+    start_session_service_ = this->create_service<mtms_device_interfaces::srv::StartSession>("/mtms_device/session/start",
                                                                                             start_session);
   }
 
