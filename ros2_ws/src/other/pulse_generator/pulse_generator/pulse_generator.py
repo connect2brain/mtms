@@ -20,8 +20,8 @@ class PulseGenerator(Node):
         self.charge_publisher = self.create_publisher(Charge, '/event/send/charge')
 
         self.start_device_client = self.create_client(StartDevice, '/mtms_device/start_device')
-        self.start_session_client = self.create_client(StartSession, '/mtms_device/start_session')
-        self.stop_session_client = self.create_client(StopSession, '/mtms_device/stop_session')
+        self.start_session_client = self.create_client(StartSession, '/mtms_device/session/start')
+        self.stop_session_client = self.create_client(StopSession, '/mtms_device/session/stop')
 
         self.client_futures = []
 
@@ -35,7 +35,7 @@ class PulseGenerator(Node):
 
         self.timed_pulses = generate_timed_pulses(100)
         self.timed_charges = generate_timed_charges(100, 1200)
-        
+
         self.send_charges()
 
         time.sleep(3)
@@ -52,7 +52,7 @@ class PulseGenerator(Node):
         for charge in self.timed_charges:
             self.charge_publisher(charge)
             self.get_logger().info(f"Sent timed charge request for channel {charge.channel} {charge.target_voltage}V")
-   
+
     def send_timed_pulse_commands(self):
         for pulse in self.timed_pulses:
             self.pulse_publisher(pulse)
@@ -67,7 +67,7 @@ class PulseGenerator(Node):
             self.get_logger().info(f"Sent pulse request for channel {pulse.channel}")
             self.get_logger().info(f"Pulse count {self.pulses_sent}")
             self.pulses_sent += 1
-        
+
         time.sleep(0.1)
 
         for charge in self.charges:

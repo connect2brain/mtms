@@ -25,7 +25,7 @@ class StopSession : public rclcpp::Node {
 public:
   StopSession()
       : Node("stop_session") {
-    stop_session_service_ = this->create_service<mtms_device_interfaces::srv::StopSession>("/mtms_device/stop_session",
+    stop_session_service_ = this->create_service<mtms_device_interfaces::srv::StopSession>("/mtms_device/session/stop",
                                                                                           stop_session);
   }
 
