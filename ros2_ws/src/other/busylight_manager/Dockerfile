@@ -21,6 +21,7 @@ WORKDIR /app/ros2_ws
 
 # ROS interfaces
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 
 RUN source /opt/ros/iron/setup.bash && colcon build
 
