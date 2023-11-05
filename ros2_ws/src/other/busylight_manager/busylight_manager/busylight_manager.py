@@ -10,7 +10,7 @@ from system_interfaces.msg import Session, SessionState
 from busylight.lights import Light
 from busylight.lights.exceptions import NoLightsFound
 
-class PedalListenerNode(Node):
+class BusylightManagerNode(Node):
 
     RECONNECT_PERIOD_IN_SECONDS = 1.0
     READER_PERIOD_IN_SECONDS = 0.02
@@ -45,6 +45,8 @@ class PedalListenerNode(Node):
         self._reconnect_timer = self.create_timer(self.REFRESH_PERIOD_IN_SECONDS, self.refresh_light)
 
         self.session_state = None
+        self.device_state = None
+
         self.light = None
 
         self.current_color = None
@@ -138,7 +140,7 @@ class PedalListenerNode(Node):
 
 def main():
     rclpy.init()
-    busylight_manager_node = PedalListenerNode()
+    busylight_manager_node = BusylightManagerNode()
     rclpy.spin(busylight_manager_node)
     rclpy.shutdown()
 
