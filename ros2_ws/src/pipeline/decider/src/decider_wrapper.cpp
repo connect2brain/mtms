@@ -119,7 +119,7 @@ std::size_t DeciderWrapper::get_buffer_size() const {
   return this->buffer_size;
 }
 
-std::pair<bool, bool>DeciderWrapper::process(
+std::tuple<bool, bool, std::shared_ptr<pipeline_interfaces::msg::SensoryStimulus>> DeciderWrapper::process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
     double_t sample_time,
     bool ready_for_event_trigger) {
@@ -157,34 +157,74 @@ std::pair<bool, bool>DeciderWrapper::process(
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance.attr("process")(*py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_event_trigger);
+    result = decider_instance.attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_event_trigger);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
-    return {false, false};
+    return {false, false, nullptr};
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
-    return {false, false};
+    return {false, false, nullptr};
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
-    return {false, false};
+    return {false, false, nullptr};
   }
 
   py::dict dict_result = result.cast<py::dict>();
 
   if (!dict_result.contains("send_trigger")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: send_trigger.");
-    return {false, false};
+    return {false, false, nullptr};
+  }
+
+  if (!dict_result.contains("sensory_stimulus")) {
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: sensory_stimulus.");
+    return {false, false, nullptr};
   }
 
   /* Convert the Python dictionary to a ROS message. */
   bool send_trigger = dict_result["send_trigger"].cast<bool>();
 
-  return {send_trigger, true};
+  if (dict_result["sensory_stimulus"].is_none()) {
+    return {true, send_trigger, nullptr};
+  }
+
+  py::dict py_sensory_stimulus = dict_result["sensory_stimulus"].cast<py::dict>();
+
+  /* Checks for each field in the sensory_stimulus dictionary */
+  if (!py_sensory_stimulus.contains("time")) {
+    RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: time.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py_sensory_stimulus.contains("state")) {
+    RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: state.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py_sensory_stimulus.contains("parameter")) {
+    RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: parameter.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py_sensory_stimulus.contains("duration")) {
+    RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: duration.");
+    return {false, send_trigger, nullptr};
+  }
+
+  /* Convert each field from the dictionary to the ROS message. */
+  auto sensory_stimulus = std::make_shared<pipeline_interfaces::msg::SensoryStimulus>();
+
+  sensory_stimulus->time = py_sensory_stimulus["time"].cast<double_t>();
+  sensory_stimulus->state = py_sensory_stimulus["state"].cast<uint16_t>();
+  sensory_stimulus->parameter = py_sensory_stimulus["parameter"].cast<uint16_t>();
+  sensory_stimulus->duration = py_sensory_stimulus["duration"].cast<double_t>();
+
+  return {true, send_trigger, sensory_stimulus};
 }
 
 rclcpp::Logger* DeciderWrapper::logger_ptr = nullptr;
