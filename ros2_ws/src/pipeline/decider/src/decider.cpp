@@ -38,7 +38,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     qos_persist_latest,
     std::bind(&EegDecider::update_eeg_info, this, _1));
 
-  /* Subscriber for system state. */
+  /* Subscriber for session. */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
   auto qos_session = rclcpp::QoS(rclcpp::KeepLast(1))
