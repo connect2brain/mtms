@@ -57,13 +57,6 @@ public:
   }
 
   void timer_callback() {
-    RCLCPP_INFO(this->get_logger(), " ");
-    RCLCPP_INFO(this->get_logger(), "Raw EEG:");
-    RCLCPP_INFO(this->get_logger(), "  - Messages received during the last second: %d", num_of_raw_eeg_samples);
-    RCLCPP_INFO(this->get_logger(), " ");
-    RCLCPP_INFO(this->get_logger(), "Preprocessed EEG:");
-    RCLCPP_INFO(this->get_logger(), "  - Messages received during the last second: %d", num_of_preprocessed_eeg_samples);
-
     double max_time = 0.0;
     double q95_time = 0.0;
     double median_time = 0.0;
@@ -88,11 +81,6 @@ public:
         std::nth_element(processing_times.begin(), processing_times.begin() + middle_index - 1, processing_times.end());
         median_time = (median_time + processing_times[middle_index - 1]) / 2;
       }
-
-      RCLCPP_INFO(this->get_logger(), "  - Max processing time during the last second: %.1f us", 1000000 * max_time);
-      RCLCPP_INFO(this->get_logger(), "  - 95%% percentile processing time during the last second: %.1f us", 1000000 * q95_time);
-      RCLCPP_INFO(this->get_logger(), "  - Median processing time during the last second: %.1f us", 1000000 * median_time);
-      RCLCPP_INFO(this->get_logger(), " ");
     }
 
     /* Publish the statistics. */
