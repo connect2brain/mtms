@@ -86,16 +86,6 @@ services:
       - './ros2_ws/src/ui/pulse_sequence_controller:/app/ros2_ws/src/ui/pulse_sequence_controller/'
     network_mode: host
 
-  session_manager:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/system/session_manager/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
-    network_mode: host
-
   trigger_controller:
     build:
       context: .
