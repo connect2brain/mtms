@@ -14,6 +14,12 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 SessionManager::SessionManager() : Node("session_manager") {
   callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
+  /* Subscriber for mTMS device healthcheck. */
+  this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
+    "/mtms_device/healthcheck",
+    10,
+    std::bind(&SessionManager::handle_mtms_device_healthcheck, this, _1));
+
   /* QOS for session */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
@@ -59,9 +65,19 @@ SessionManager::SessionManager() : Node("session_manager") {
     "/mtms_device/session/stop",
     rclcpp::QoS(10),
     callback_group);
+
+  /* Timer for keeping track of internal time and publishing session. */
+  timer = this->create_wall_timer(SESSION_PUBLISHING_INTERVAL, std::bind(&SessionManager::publish_session, this));
+}
+
+void SessionManager::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+  this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
 }
 
 void SessionManager::handle_mtms_device_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  if (!this->mtms_device_available) {
+    return;
+  }
   system_interfaces::msg::Session msg_ = *msg;
   this->session_publisher->publish(msg_);
 }
@@ -70,10 +86,16 @@ void SessionManager::handle_start_session(
       [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StartSession::Request> request,
       std::shared_ptr<system_interfaces::srv::StartSession::Response> response) {
 
-  RCLCPP_INFO(this->get_logger(), "Session started.");
+  bool success = false;
+  if (this->mtms_device_available) {
+    success = start_mtms_session();
+  } else {
+    success = start_session();
+  }
 
-  bool success = call_start_mtms_session();
-
+  if (success) {
+    RCLCPP_INFO(this->get_logger(), "Session started.");
+  }
   response->success = success;
 }
 
@@ -81,14 +103,22 @@ void SessionManager::handle_stop_session(
       [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StopSession::Request> request,
       std::shared_ptr<system_interfaces::srv::StopSession::Response> response) {
 
-  RCLCPP_INFO(this->get_logger(), "Session stopped.");
+  bool success = false;
+  if (this->mtms_device_available) {
+    success = stop_mtms_session();
+  } else {
+    success = stop_session();
+  }
 
-  bool success = call_stop_mtms_session();
-
+  if (success) {
+    RCLCPP_INFO(this->get_logger(), "Session stopped.");
+  }
   response->success = success;
 }
 
-bool SessionManager::call_start_mtms_session() {
+/* mTMS device session */
+
+bool SessionManager::start_mtms_session() {
   auto request = std::make_shared<system_interfaces::srv::StartSession::Request>();
 
   auto future_result = start_mtms_session_client->async_send_request(request);
@@ -102,7 +132,7 @@ bool SessionManager::call_start_mtms_session() {
   }
 }
 
-bool SessionManager::call_stop_mtms_session() {
+bool SessionManager::stop_mtms_session() {
   auto request = std::make_shared<system_interfaces::srv::StopSession::Request>();
 
   auto future_result = stop_mtms_session_client->async_send_request(request);
@@ -113,6 +143,36 @@ bool SessionManager::call_stop_mtms_session() {
     RCLCPP_ERROR(this->get_logger(), "Failed to call /mtms_device/session/stop or response timed out");
     return false;
   }
+}
+
+/* Internal session */
+
+bool SessionManager::start_session() {
+  session_state = system_interfaces::msg::SessionState::STARTED;
+  time = 0.0;
+
+  return true;
+}
+
+bool SessionManager::stop_session() {
+  session_state = system_interfaces::msg::SessionState::STOPPED;
+  time = 0.0;
+
+  return true;
+}
+
+void SessionManager::publish_session() {
+  if (this->mtms_device_available) {
+    return;
+  }
+  auto msg = system_interfaces::msg::Session();
+  msg.state.value = session_state;
+  msg.time = time;
+
+  if (session_state == system_interfaces::msg::SessionState::STARTED) {
+    time += SESSION_PUBLISHING_INTERVAL.count() / 1000.0;
+  }
+  this->session_publisher->publish(msg);
 }
 
 
