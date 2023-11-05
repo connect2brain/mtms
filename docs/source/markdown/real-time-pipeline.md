@@ -1,6 +1,8 @@
 # Real-time pipeline
 ![real-time pipeline](pipeline_nodes.svg)
 
+TODO: This document is very much outdated by Nov 2023, please update!
+
 The real-time pipeline consists of 3 main nodes: EEG bridge, EEG processor, and mTMS device bridge.
 1. EEG bridge receives data from the EEG device and serializes it into a format other ROS nodes understand. The data includes EEG samples and triggers.
 2. EEG processor receives the EEG samples, passes them to a hot-swappable component which outputs mTMS events, and forwards the events to either stimulus presenter (stimuli events) or mTMS device bridge (mTMS device events).
@@ -13,7 +15,7 @@ In addition, the pipeline supports two additional nodes: EEG preprocessor and St
 So, in total, the real-time pipeline can consist of 3 stages + 2 bridges. It is not necessary to use all 3 stages, only EEG processor is necessary. If not using EEG preprocessor, be sure to set the value of `preprocess` to false when starting EEG processor. Otherwise it subscribes to cleaned EEG data and won't receive the raw EEG data.
 
 
-If only simulating, the situation becomes simpler. EEG bridge is replaced with EEG simulator, and mTMS device bridge is removed altogether. EEG simulator is a ROS node which takes as an input a CSV file, which contains an EEG sample on each row. 
+If only simulating, the situation becomes simpler. EEG bridge is replaced with EEG simulator, and mTMS device bridge is removed altogether. EEG simulator is a ROS node which takes as an input a CSV file, which contains an EEG sample on each row.
 
 
 ## Installation for simulation environment
@@ -57,7 +59,7 @@ In the real environment, follow these steps.
 
 ## Launching nodes
 ### With Docker
-With docker, running the nodes is simple. All except mTMS device bridge can be launched with Docker. 
+With docker, running the nodes is simple. All except mTMS device bridge can be launched with Docker.
 
 Simply run `docker-compose up <list of nodes>`, e.g. `docker-compose up eeg_bridge eeg_processor`.
 
