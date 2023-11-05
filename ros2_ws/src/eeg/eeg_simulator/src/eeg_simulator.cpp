@@ -34,6 +34,18 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
      side yet. For a previous Python reference implementation, see commit c0afb515b. */
 EegSimulator::EegSimulator() : Node("eeg_simulator") {
+
+  /* Subscriber for EEG bridge healthcheck. */
+  this->eeg_bridge_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
+    "/eeg/healthcheck",
+    10,
+    std::bind(&EegSimulator::handle_eeg_bridge_healthcheck, this, _1));
+
+  /* Publisher for EEG simulator healthcheck. */
+  this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(
+    "/eeg_simulator/healthcheck",
+    10);
+
   /* Subscriber for active project. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -118,6 +130,30 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
 EegSimulator::~EegSimulator() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
   close(inotify_descriptor);
+}
+
+void EegSimulator::publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message) {
+  auto healthcheck = system_interfaces::msg::Healthcheck();
+
+  healthcheck.status.value = status;
+  healthcheck.status_message = status_message;
+  healthcheck.actionable_message = actionable_message;
+
+  this->healthcheck_publisher->publish(healthcheck);
+}
+
+void EegSimulator::handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+  bool eeg_bridge_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
+
+  if (eeg_bridge_available) {
+    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                             "EEG bridge is available, which is mutually exclusive with the EEG simulator.",
+                             "Turn off the EEG bridge to use the EEG simulator.");
+  } else {
+    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
+                             "Ready",
+                             "");
+  }
 }
 
 std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const std::string& path) {
