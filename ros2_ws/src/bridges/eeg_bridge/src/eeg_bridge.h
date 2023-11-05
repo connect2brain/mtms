@@ -19,6 +19,7 @@
 
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
+
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
@@ -48,7 +49,10 @@ public:
   void update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
   void publish_healthcheck();
 
+  void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
+
   void subscribe_to_session();
+  void reset_session();
   void wait_for_session();
 
   void spin();
@@ -64,10 +68,9 @@ public:
 
   int get_trigger_package_from_buffer();
   void publish_trigger_from_buffer(double_t time);
-  void publish_eeg_sample(double_t time_since_trigger);
+  void publish_eeg_sample(double_t time);
 
   void handle_sync_trigger(double_t sync_time);
-  void reset_session();
 
 private:
   EegBridgeState eeg_bridge_state;
@@ -76,11 +79,14 @@ private:
   bool session_been_stopped;
   bool session_received;
 
-  uint16_t sync_index;
+  uint16_t num_of_sync_triggers_received;
   double_t time_correction;
-  bool first_trigger_received;
+  bool sync_trigger_received;
+
+  rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr mtms_device_healthcheck_subscriber;
 
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
+
   rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
@@ -88,7 +94,7 @@ private:
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
-  double_t first_trigger_timestamp_;
+  double_t first_sync_trigger_timestamp;
 
   bool measurement_start_packet_received_;
   uint16_t num_of_channels_;
@@ -103,7 +109,7 @@ private:
   sockaddr_in socket_other;
   socklen_t socket_length;
   uint8_t buffer[BUFFER_LENGTH];
-  bool first_sample_of_session_;
+  bool first_sample_of_session;
 
   enum ChannelType {
     EEG, EMG
@@ -115,6 +121,9 @@ private:
   uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
   std::string status_message = "";
   std::string actionable_message = "";
+
+  /* mTMS device healthcheck */
+  bool mtms_device_available = false;
 };
 
 #endif //EEG_BRIDGE_EEG_BRIDGE_H
