@@ -56,21 +56,6 @@ services:
     privileged: true
     network_mode: host
 
-  eeg_simulator:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-      - ${PROJECT_ENV_FILE}
-    # this option is needed for the container to achieve the same performance as without docker. Optionally, also
-    # privileged: true can be used
-    security_opt:
-      - seccomp:unconfined
-    volumes:
-      - '$PROJECTS_ROOT:/app/projects'
-    network_mode: host
-
   stimulus_presenter:
     build:
       context: .
