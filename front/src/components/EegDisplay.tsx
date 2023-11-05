@@ -21,12 +21,7 @@ export const EegDisplay: React.FC = () => {
   const { eegInfo } = useContext(EegContext)
   const { eegHealthcheck } = useContext(HealthcheckContext)
 
-  const [eegHealthcheckOk, setEegHealthcheckOk] = useState(false)
-
-  /* Update EEG healthcheck ok status. */
-  useEffect(() => {
-    setEegHealthcheckOk(eegHealthcheck?.status.value === HealthcheckStatus.READY)
-  }, [eegHealthcheck])
+  const eegHealthcheckOk = eegHealthcheck?.status.value === HealthcheckStatus.READY
 
   return (
     <EegPanel isGrayedOut={!eegHealthcheckOk}>
