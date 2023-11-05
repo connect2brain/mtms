@@ -22,12 +22,14 @@ interface Healthcheck extends ROSLIB.Message {
 
 interface HealthcheckContextType {
   eegHealthcheck: Healthcheck | null
+  eegSimulatorHealthcheck: Healthcheck | null
   mtmsDeviceHealthcheck: Healthcheck | null
   mepHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
   eegHealthcheck: null,
+  eegSimulatorHealthcheck: null,
   mtmsDeviceHealthcheck: null,
   mepHealthcheck: null,
 }
@@ -40,6 +42,7 @@ interface HealthcheckProviderProps {
 
 export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ children }) => {
   const [eegHealthcheck, setEegHealthcheck] = useState<Healthcheck | null>(null)
+  const [eegSimulatorHealthcheck, setEegSimulatorHealthcheck] = useState<Healthcheck | null>(null)
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
 
@@ -47,6 +50,12 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
     const eegSubscriber = new Topic<Healthcheck>({
       ros: ros,
       name: '/eeg/healthcheck',
+      messageType: 'system_interfaces/Healthcheck',
+    })
+
+    const eegSimulatorSubscriber = new Topic<Healthcheck>({
+      ros: ros,
+      name: '/eeg_simulator/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 
@@ -63,6 +72,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
     })
 
     let eegTimeout: NodeJS.Timeout | null = null
+    let eegSimulatorTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
     let mepTimeout: NodeJS.Timeout | null = null
 
@@ -73,6 +83,16 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       eegTimeout = setTimeout(() => {
         setEegHealthcheck(null)
+      }, 1000)
+    })
+
+    eegSimulatorSubscriber.subscribe((message) => {
+      setEegSimulatorHealthcheck(message)
+      if (eegSimulatorTimeout) {
+        clearTimeout(eegSimulatorTimeout)
+      }
+      eegSimulatorTimeout = setTimeout(() => {
+        setEegSimulatorHealthcheck(null)
       }, 1000)
     })
 
@@ -98,10 +118,14 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
 
     return () => {
       eegSubscriber.unsubscribe()
+      eegSimulatorSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
       mepSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
+      }
+      if (eegSimulatorTimeout) {
+        clearTimeout(eegSimulatorTimeout)
       }
       if (mtmsTimeout) {
         clearTimeout(mtmsTimeout)
@@ -113,7 +137,9 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   }, [])
 
   return (
-    <HealthcheckContext.Provider value={{ eegHealthcheck, mtmsDeviceHealthcheck, mepHealthcheck }}>
+    <HealthcheckContext.Provider
+      value={{ eegHealthcheck, eegSimulatorHealthcheck, mtmsDeviceHealthcheck, mepHealthcheck }}
+    >
       {children}
     </HealthcheckContext.Provider>
   )

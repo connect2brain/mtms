@@ -126,7 +126,6 @@ export const StateRow = styled.div`
 
 export const StateTitle = styled.span`
   font-weight: bold;
-  color: #333;
   margin-right: 1rem;
 `
 
