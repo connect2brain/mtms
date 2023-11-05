@@ -121,11 +121,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled/set",
     std::bind(&EegDecider::handle_set_decider_enabled, this, _1, _2));
 
-  /* Publisher for latency message. */
-  this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
-    "/pipeline/latency",
-    10);
-
   /* Publisher for decider enabled message. */
   this->decider_enabled_publisher = this->create_publisher<std_msgs::msg::Bool>(
     "/pipeline/decider/enabled",
@@ -141,6 +136,16 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/event/trigger/ready",
     10,
     std::bind(&EegDecider::update_ready_for_event_trigger, this, _1));
+
+  /* Publisher for latency. */
+  this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
+    "/pipeline/latency",
+    10);
+
+  /* Publisher for sensory stimulus. */
+  this->sensory_stimulus_publisher = this->create_publisher<pipeline_interfaces::msg::SensoryStimulus>(
+    "/pipeline/sensory_stimulus",
+    10);
 
   /* Initialize variables. */
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
@@ -461,7 +466,7 @@ void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::T
   }
 }
 
-void EegDecider::update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
+void EegDecider::update_ready_for_event_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
   this->ready_for_event_trigger = true;
 
   RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
@@ -502,7 +507,7 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
     return;
   }
 
-  auto [send_event_trigger, success] = this->decider_wrapper->process(
+  auto [success, send_event_trigger, sensory_stimulus_ptr] = this->decider_wrapper->process(
     this->sample_buffer,
     sample_time,
     ready_for_event_trigger);
@@ -522,6 +527,13 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
       this->event_trigger_publisher->publish(msg);
 
       ready_for_event_trigger = false;
+    }
+
+    if (sensory_stimulus_ptr) {
+      RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
+
+      auto msg = *sensory_stimulus_ptr;
+      this->sensory_stimulus_publisher->publish(msg);
     }
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
