@@ -204,8 +204,7 @@ classdef MTMSApi < handle
         %   * SessionState.STOPPING : Session is stopping.
         % :rtype: int
 
-            obj.node.wait_for_new_state();
-            state = obj.node.system_state.session_state.value;
+            state = obj.node.session.state.value;
         end
 
         function voltage = get_voltage(obj, channel)
@@ -251,7 +250,7 @@ classdef MTMSApi < handle
         % :rtype: float
 
             obj.node.wait_for_new_state();
-            time = obj.node.system_state.time;
+            time = obj.node.session.time;
         end
 
         function feedback = get_event_feedback(obj, id)
@@ -536,7 +535,7 @@ classdef MTMSApi < handle
 
             [mep, errors] = obj.node.analyze_mep(time, mep_configuration);
 
-            % HACK: ROS2 doesn't support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
+            % HACK: ROS2 does not support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
             if mep.amplitude == 0.0
                 mep.amplitude = NaN;
             end
@@ -717,7 +716,7 @@ classdef MTMSApi < handle
 
         % Other
 
-        function print_system_state(obj)
+        function print_state(obj)
             obj.node.wait_for_new_state()
         end
 

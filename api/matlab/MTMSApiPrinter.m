@@ -11,12 +11,12 @@ classdef MTMSApiPrinter < handle
         support_temperature
         support_pulse_count
 
-        print_every_nth_system_state
-        system_state_counter
+        print_every_nth_state
+        state_counter
 
         mtmsapi_enums
     end
-    
+
     methods
         function obj = MTMSApiPrinter()
             % TODO: Hard-coded channel count and temperature and pulse
@@ -25,8 +25,8 @@ classdef MTMSApiPrinter < handle
             obj.support_temperature = true;
             obj.support_pulse_count = true;
 
-            obj.print_every_nth_system_state = 5;
-            obj.system_state_counter = 0;
+            obj.print_every_nth_state = 5;
+            obj.state_counter = 0;
 
             obj.mtmsapi_enums = MTMSApiEnums();
         end
@@ -36,7 +36,7 @@ classdef MTMSApiPrinter < handle
             % colored text in MATLAB.
             str = sprintf("%s", text);
         end
-       
+
         function str = enum_to_str(obj, value, enums)
             str = "";
             for i = 1:numel(enums)
@@ -49,14 +49,14 @@ classdef MTMSApiPrinter < handle
             assert(str ~= "", "Invalid value")
         end
 
-        function print_system_state(obj, state)
-            obj.system_state_counter = obj.system_state_counter + 1;
-            
-            if obj.system_state_counter ~= obj.print_every_nth_system_state
+        function print_state(obj, state, session)
+            obj.state_counter = obj.state_counter + 1;
+
+            if obj.state_counter ~= obj.print_every_nth_state
                 return
             end
 
-            obj.system_state_counter = 0;
+            obj.state_counter = 0;
 
             voltages_str = "V: ";
             temperatures_str = "T: ";
@@ -70,17 +70,18 @@ classdef MTMSApiPrinter < handle
 
                 temperature = sprintf("%d ", channel_state.temperature);
                 temperatures_str = strcat(temperatures_str, temperature);
-                
+
                 pulse_count = sprintf("%d ", channel_state.pulse_count);
                 pulse_counts_str = strcat(pulse_counts_str, pulse_count);
             end
 
             startup_error = state.startup_error;
             device_state = state.device_state;
-            session_state = state.session_state;
+
+            session_state = session.state;
 
             % TODO: TIME_COLOR could be used here; colors unused at the moment.
-            time_str = sprintf("Time (s): %.2f", state.time);
+            time_str = sprintf("Time (s): %.2f", session.time);
 
             state_str = sprintf("Device state: %s", obj.enum_to_str(device_state.value, obj.mtmsapi_enums.DEVICE_STATES));
             session_str = sprintf("Session: %s", obj.enum_to_str(session_state.value, obj.mtmsapi_enums.SESSION_STATES));
@@ -162,5 +163,5 @@ classdef MTMSApiPrinter < handle
             % TODO: Could be bold-faced.
             fprintf("%s", text);
         end
-    end 
+    end
 end

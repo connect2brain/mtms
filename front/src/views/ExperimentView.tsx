@@ -304,7 +304,7 @@ export const ExperimentView = () => {
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
-  const { systemState } = useContext(SystemContext)
+  const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
 
   const [projects, setProjects] = useState<string[]>([])
@@ -1043,7 +1043,7 @@ export const ExperimentView = () => {
             <ConfigLabel>Time:</ConfigLabel>
             <ConfigLabel>
               {experimentState === ExperimentState.Running || experimentState === ExperimentState.Paused
-                ? formatTime(systemState?.time)
+                ? formatTime(session?.time)
                 : '\u2013'}
             </ConfigLabel>
           </ConfigRow>

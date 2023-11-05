@@ -14,9 +14,9 @@
 
   <depend>eeg_interfaces</depend>
   <depend>event_interfaces</depend>
-  <depend>mtms_device_interfaces</depend>
   <depend>pipeline_interfaces</depend>
   <depend>project_interfaces</depend>
+  <depend>system_interfaces</depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
