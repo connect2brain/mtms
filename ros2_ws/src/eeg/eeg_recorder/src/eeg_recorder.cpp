@@ -19,6 +19,8 @@ const std::string PROJECTS_DIRECTORY = "projects/";
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 
+/* Have a queue size of 5000 to avoid dropping messages - corresponds to 1 s of data with 5 kHz sampling frequency. */
+const uint16_t QUEUE_SIZE = 5000;
 
 EegRecorder::EegRecorder() : Node("eeg_recorder") {
   /* Subscriber for active project. */
@@ -49,13 +51,13 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
   /* Subscriber for raw EEG. */
   eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::EegSample>(
     EEG_RAW_TOPIC,
-    10,
+    QUEUE_SIZE,
     std::bind(&EegRecorder::handle_raw_eeg_sample, this, _1));
 
   /* Subscriber for preprocessed EEG. */
   eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
     EEG_PREPROCESSED_TOPIC,
-    10,
+    QUEUE_SIZE,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
 }
 
