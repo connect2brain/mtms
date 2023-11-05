@@ -6,7 +6,10 @@ import { StyledButton } from 'styles/General'
 import { SystemContext, SessionState, DeviceState } from 'providers/SystemProvider'
 
 export const SessionControl = () => {
-  const { deviceState, sessionState } = useContext(SystemContext)
+  const { systemState, session } = useContext(SystemContext)
+
+  const deviceState = systemState?.device_state
+  const sessionState = session?.state
 
   const sessionText = () => {
     if (sessionState?.value === SessionState.STOPPED) return 'Start'

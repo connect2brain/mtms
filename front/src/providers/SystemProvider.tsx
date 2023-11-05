@@ -48,21 +48,7 @@ export interface ChannelError {
   maximum_safe_voltage_exceeded_startup_error: boolean
 }
 
-/* Device and session states */
-export const DeviceState = {
-  NOT_OPERATIONAL: 0,
-  STARTUP: 1,
-  OPERATIONAL: 2,
-  SHUTDOWN: 3,
-}
-
-export const HumanReadableDeviceState = {
-  NOT_OPERATIONAL: 'Not operational',
-  STARTUP: 'Starting up...',
-  OPERATIONAL: 'Operational',
-  SHUTDOWN: 'Shutting down...',
-}
-
+/* Session */
 export const SessionState = {
   STOPPED: 0,
   STARTING: 1,
@@ -77,7 +63,26 @@ export const HumanReadableSessionState = {
   STOPPING: 'Stopping...',
 }
 
+export interface Session extends Message {
+  state: SessionState
+  time: number
+}
+
 /* System state */
+export const DeviceState = {
+  NOT_OPERATIONAL: 0,
+  STARTUP: 1,
+  OPERATIONAL: 2,
+  SHUTDOWN: 3,
+}
+
+export const HumanReadableDeviceState = {
+  NOT_OPERATIONAL: 'Not operational',
+  STARTUP: 'Starting up...',
+  OPERATIONAL: 'Operational',
+  SHUTDOWN: 'Shutting down...',
+}
+
 export interface SystemState extends Message {
   channel_states: ChannelState[]
 
@@ -88,9 +93,6 @@ export interface SystemState extends Message {
   startup_error: Error
 
   device_state: DeviceState
-  session_state: SessionState
-
-  time: number
 }
 
 interface Error {
@@ -116,14 +118,12 @@ export interface ChannelState {
 /* Context */
 interface SystemContextType {
   systemState: SystemState | null
-  deviceState: DeviceState | null
-  sessionState: SessionState | null
+  session: Session | null
 }
 
 const defaultSystemState: SystemContextType = {
   systemState: null,
-  deviceState: null,
-  sessionState: null,
+  session: null,
 }
 
 export const SystemContext = React.createContext<SystemContextType>(defaultSystemState)
@@ -134,6 +134,7 @@ interface SystemProviderProps {
 
 export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
   const [systemState, setSystemState] = useState<SystemState | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
     /* Subscriber for system state. */
@@ -147,14 +148,23 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
       setSystemState(message)
     })
 
+    /* Subscriber for session. */
+    const sessionSubscriber = new Topic<Session>({
+      ros: ros,
+      name: '/system/session',
+      messageType: 'system_interfaces/Session',
+    })
+
+    sessionSubscriber.subscribe((message) => {
+      setSession(message)
+    })
+
     /* Unsubscribers */
     return () => {
       systemStateSubscriber.unsubscribe()
+      sessionSubscriber.unsubscribe()
     }
   }, [])
 
-  const sessionState = systemState?.session_state || null
-  const deviceState = systemState?.device_state || null
-
-  return <SystemContext.Provider value={{ systemState, sessionState, deviceState }}>{children}</SystemContext.Provider>
+  return <SystemContext.Provider value={{ systemState, session }}>{children}</SystemContext.Provider>
 }

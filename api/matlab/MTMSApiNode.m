@@ -5,6 +5,7 @@ classdef MTMSApiNode < handle
         node
         printer
         system_state
+        session
 
         event_feedback
 
@@ -23,6 +24,7 @@ classdef MTMSApiNode < handle
         event_trigger_publisher
 
         system_state_subscriber
+        session_subscriber
 
         pulse_feedback_subscriber
         trigger_out_feedback_subscriber
@@ -52,9 +54,10 @@ classdef MTMSApiNode < handle
             obj.printer = MTMSApiPrinter();
 
             obj.system_state = NaN;
+            obj.session = NaN;
             obj.event_feedback = dictionary();
 
-            % To mTMS device.
+            % To mTMS device
 
             obj.start_device_client = ros2svcclient(obj.node, "/mtms_device/start_device", "mtms_device_interfaces/StartDevice");
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
@@ -65,6 +68,10 @@ classdef MTMSApiNode < handle
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
+
+            % System-related
+
+            obj.session_subscriber = ros2subscriber(obj.node, "/system/session", "system_interfaces/Session", @obj.handle_session);
 
             % Event-related.
 
@@ -400,7 +407,13 @@ classdef MTMSApiNode < handle
                 pause(0.1)
             end
 
-            obj.printer.print_system_state(obj.system_state);
+            obj.printer.print_state(obj.system_state, obj.session);
+        end
+
+        % Session
+
+        function handle_session(obj, session)
+            obj.session = session;
         end
     end
 end
