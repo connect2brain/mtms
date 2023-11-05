@@ -5,7 +5,8 @@ import { ros } from 'ros/ros'
 
 interface Dataset extends ROSLIB.Message {
   name: string
-  filename: string
+  json_filename: string
+  data_filename: string
   sampling_frequency: number
   num_of_eeg_channels: number
   num_of_emg_channels: number

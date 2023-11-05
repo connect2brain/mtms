@@ -20,6 +20,9 @@
 #include "project_interfaces/srv/set_playback.hpp"
 #include "project_interfaces/srv/set_loop.hpp"
 
+#include "system_interfaces/msg/session.hpp"
+#include "system_interfaces/msg/session_state.hpp"
+
 
 class EegSimulator : public rclcpp::Node {
 public:
@@ -35,6 +38,7 @@ private:
       const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDataset::Response> response);
 
+  void set_playback(bool playback);
   void handle_set_playback(
       const std::shared_ptr<project_interfaces::srv::SetPlayback::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPlayback::Response> response);
@@ -43,9 +47,11 @@ private:
       const std::shared_ptr<project_interfaces::srv::SetLoop::Request> request,
       std::shared_ptr<project_interfaces::srv::SetLoop::Response> response);
 
+  void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
   void initialize_streaming();
 
-  void publish_sample();
+  bool publish_sample();
   void publish_trigger();
 
   void update_inotify_watch();
@@ -59,21 +65,21 @@ private:
   bool playback;
   bool loop;
 
+  double latest_session_time = 0.0;
+
   double current_time = 0.0;
   double sampling_period = 0.0;
-
-  double last_log_time = -1.0;
 
   uint16_t sampling_frequency = 0;
   uint8_t num_of_eeg_channels = 0;
   uint8_t num_of_emg_channels = 0;
   uint8_t total_channels = 0;
-  std::string csv_filename;
+  std::string data_filename;
 
   std::ifstream file;
 
   std::string active_project;
-  std::string dataset_directory;
+  std::string data_directory;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DatasetList>::SharedPtr dataset_list_publisher;
@@ -91,8 +97,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
 
-  rclcpp::TimerBase::SharedPtr publish_sample_timer_;
-  rclcpp::TimerBase::SharedPtr publish_trigger_timer_;
+  rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;
