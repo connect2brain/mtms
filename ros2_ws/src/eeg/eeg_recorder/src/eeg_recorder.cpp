@@ -1,0 +1,169 @@
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <ctime>
+#include <sstream>
+
+#include "eeg_recorder.h"
+
+using namespace std::chrono;
+using namespace std::chrono_literals;
+using namespace std::placeholders;
+
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
+const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
+
+const std::string PROJECTS_DIRECTORY = "projects/";
+
+const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
+
+
+EegRecorder::EegRecorder() : Node("eeg_recorder") {
+  /* Subscriber for active project. */
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+  this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
+    "/projects/active",
+    qos_persist_latest,
+    std::bind(&EegRecorder::handle_set_active_project, this, _1));
+
+  /* QOS for session */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
+
+  auto qos_session = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+      .deadline(DEADLINE_NS)
+      .lifespan(DEADLINE_NS);
+
+  /* Subscriber for session. */
+  this->session_subscriber = create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos_session,
+    std::bind(&EegRecorder::handle_session, this, _1));
+
+  /* Subscriber for raw EEG. */
+  eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::EegSample>(
+    EEG_RAW_TOPIC,
+    10,
+    std::bind(&EegRecorder::handle_raw_eeg_sample, this, _1));
+
+  /* Subscriber for preprocessed EEG. */
+  eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
+    EEG_PREPROCESSED_TOPIC,
+    10,
+    std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
+}
+
+void EegRecorder::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
+  this->active_project = msg->data;
+
+  std::ostringstream oss;
+  oss << PROJECTS_DIRECTORY << this->active_project << "/eeg/preprocessed";
+  this->data_directory = oss.str();
+
+  RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
+}
+
+void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  if (this->active_project.empty()) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(),
+                         *this->get_clock(), 5000,
+                         "No active project set.");
+    return;
+  }
+
+  auto session_state = msg->state.value;
+
+  if (session_state == system_interfaces::msg::SessionState::STARTED &&
+      current_session_state != system_interfaces::msg::SessionState::STARTED) {
+
+    auto now = std::chrono::system_clock::now();
+    auto now_time = std::chrono::system_clock::to_time_t(now);
+
+    std::ostringstream timestamp_stream;
+    timestamp_stream << std::put_time(std::localtime(&now_time), "%Y-%m-%d-%H-%M-%S");
+
+    /* TODO: Experiment name and subject name are empty strings for now, make them configurable via UI. */
+    filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + ".csv";
+    file_path = data_directory + "/" + filename;
+
+    if (file.is_open()) {
+        file.close();
+    }
+    file.open(file_path);
+
+    if (!file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", file_path.c_str());
+      return;
+    }
+
+    RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", file_path.c_str());
+  }
+
+  current_session_state = session_state;
+}
+
+void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
+  /* Not storing the raw data for now. */
+}
+
+void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
+  if (!file.is_open()) {
+    return;
+  }
+
+  std::ostringstream data;
+  data << std::fixed << std::setprecision(4) << msg->time;
+
+  /* Helper function to concatenate with comma. */
+  auto comma_join = [](const std::string &accum, double_t value) {
+      return accum.empty() ? std::to_string(value) : accum + "," + std::to_string(value);
+  };
+
+  /* Add eeg_data if available. */
+  if (!msg->eeg_data.empty()) {
+      data << ",";
+      std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
+      data << eeg_str;
+  }
+
+  /* Add emg_data if available. */
+  if (!msg->emg_data.empty()) {
+      data << ",";
+      std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
+      data << emg_str;
+  }
+
+  data << "\n";
+
+  file << data.str();
+}
+
+int main(int argc, char *argv[]) {
+  rclcpp::init(argc, argv);
+
+#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_recorder"), "Setting thread scheduling");
+  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
+#endif
+
+  auto node = std::make_shared<EegRecorder>();
+
+#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
+  RCLCPP_INFO(rclcpp::get_logger("eeg_recorder"), "Locking memory");
+  lock_memory();
+  preallocate_memory(1024 * 1024 * 10); //10 MB
+#endif
+
+  rclcpp::executors::StaticSingleThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin();
+
+  rclcpp::shutdown();
+  return 0;
+}
