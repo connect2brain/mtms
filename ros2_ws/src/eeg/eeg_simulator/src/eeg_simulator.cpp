@@ -216,6 +216,9 @@ void EegSimulator::update_dataset_list() {
   for (const auto& dataset : datasets) {
     dataset_map[dataset.json_filename] = dataset;
   }
+
+  /* XXX: Maybe not the cleanest way to pass on the default dataset to the caller or whoever needs it. */
+  this->default_dataset = datasets.size() > 0 ? datasets[0].json_filename : "";
 }
 
 void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
@@ -229,38 +232,45 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
 
   update_dataset_list();
 
+  /* When the project changes, first set the default dataset. */
+  bool success = set_dataset(this->default_dataset);
+
   update_inotify_watch();
 }
 
-void EegSimulator::handle_set_dataset(
-      const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetDataset::Response> response) {
+bool EegSimulator::set_dataset(std::string filename) {
+  if (dataset_map.find(filename) == dataset_map.end()) {
+    RCLCPP_ERROR(this->get_logger(), "Dataset not found: %s.", filename.c_str());
 
-  if (dataset_map.find(request->filename) == dataset_map.end()) {
-    RCLCPP_ERROR(this->get_logger(), "Dataset not found: %s.", request->filename.c_str());
-
-    response->success = false;
-    return;
+    return false;
   }
-  this->dataset_filename = request->filename;
-
-  RCLCPP_INFO(this->get_logger(), "Dataset set to: %s.", this->dataset_filename.c_str());
-
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
-  msg.data = this->dataset_filename;
+  msg.data = filename;
 
   this->dataset_publisher->publish(msg);
 
   /* Update dataset internally. */
-  this->dataset = dataset_map[dataset_filename];
+  this->dataset_filename = filename;
+  this->dataset = dataset_map[filename];
 
   /* If playback is set to true, re-initialize streaming. */
   if (this->playback) {
     initialize_streaming();
   }
 
-  response->success = true;
+  RCLCPP_INFO(this->get_logger(), "Dataset set to: %s.", filename.c_str());
+
+  return true;
+}
+
+void EegSimulator::handle_set_dataset(
+      const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDataset::Response> response) {
+
+  bool success = set_dataset(request->filename);
+
+  response->success = success;
 }
 
 void EegSimulator::set_playback(bool playback) {
