@@ -40,6 +40,7 @@ private:
   void update_dataset_list();
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
 
+  bool set_dataset(std::string filename);
   void handle_set_dataset(
       const std::shared_ptr<project_interfaces::srv::SetDataset::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDataset::Response> response);
@@ -64,6 +65,7 @@ private:
   void inotify_timer_callback();
 
   std::unordered_map<std::string, project_interfaces::msg::Dataset> dataset_map;
+  std::string default_dataset;
 
   std::string dataset_filename;
   project_interfaces::msg::Dataset dataset;
