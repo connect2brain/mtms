@@ -27,6 +27,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "msg/SessionState.msg"
   "msg/Session.msg"
+
+  "srv/StartSession.srv"
+  "srv/StopSession.srv"
 )
 
 ament_package()
