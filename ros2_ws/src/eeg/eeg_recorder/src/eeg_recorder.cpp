@@ -147,18 +147,7 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_recorder"), "Setting thread scheduling");
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
-#endif
-
   auto node = std::make_shared<EegRecorder>();
-
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_recorder"), "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
 
   rclcpp::executors::StaticSingleThreadedExecutor executor;
   executor.add_node(node);

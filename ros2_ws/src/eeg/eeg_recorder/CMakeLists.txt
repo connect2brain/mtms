@@ -15,8 +15,6 @@ add_executable(
   eeg_recorder
 
   src/eeg_recorder.cpp
-  src/memory_utils.cpp
-  src/scheduling_utils.cpp
 )
 
 ament_target_dependencies(
