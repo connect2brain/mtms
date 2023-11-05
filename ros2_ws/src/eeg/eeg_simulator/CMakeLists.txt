@@ -8,12 +8,14 @@ endif ()
 set(CMAKE_CXX_STANDARD 17)
 
 find_package(ament_cmake REQUIRED)
+find_package(nlohmann_json REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
+
 find_package(eeg_interfaces REQUIRED)
 find_package(project_interfaces REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(system_interfaces REQUIRED)
 
 add_executable(
         eeg_simulator
@@ -33,12 +35,13 @@ target_include_directories(eeg_simulator
 
 ament_target_dependencies(
   eeg_simulator
+  nlohmann_json
   rclcpp
   rclcpp_action
   std_msgs
   eeg_interfaces
   project_interfaces
-  nlohmann_json
+  system_interfaces
 )
 
 install(TARGETS
