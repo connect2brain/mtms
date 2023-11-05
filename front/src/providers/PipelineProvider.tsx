@@ -16,6 +16,10 @@ interface DeciderList extends ROSLIB.Message {
   scripts: string[]
 }
 
+interface PresenterList extends ROSLIB.Message {
+  scripts: string[]
+}
+
 interface RosBoolean extends ROSLIB.Message {
   data: boolean
 }
@@ -33,6 +37,10 @@ interface PipelineContextType {
   deciderModule: string
   deciderEnabled: boolean
 
+  presenterList: string[]
+  presenterModule: string
+  presenterEnabled: boolean
+
   latency: Latency | null
   setLatency: React.Dispatch<React.SetStateAction<Latency | null>>
 }
@@ -45,6 +53,10 @@ const defaultPipelineState: PipelineContextType = {
   deciderList: [],
   deciderModule: '',
   deciderEnabled: false,
+
+  presenterList: [],
+  presenterModule: '',
+  presenterEnabled: false,
 
   latency: null,
   setLatency: () => {
@@ -66,6 +78,10 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
   const [deciderList, setDeciderList] = useState<string[]>([])
   const [deciderModule, setDeciderModule] = useState<string>('')
   const [deciderEnabled, setDeciderEnabled] = useState<boolean>(false)
+
+  const [presenterList, setPresenterList] = useState<string[]>([])
+  const [presenterModule, setPresenterModule] = useState<string>('')
+  const [presenterEnabled, setPresenterEnabled] = useState<boolean>(false)
 
   const [latency, setLatency] = useState<Latency | null>(null)
 
@@ -136,6 +152,39 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
       setDeciderEnabled(message.data)
     })
 
+    /* Subscriber for presenter list. */
+    const presenterListSubscriber = new Topic<PresenterList>({
+      ros: ros,
+      name: '/pipeline/presenter/list',
+      messageType: 'project_interfaces/PresenterList',
+    })
+
+    presenterListSubscriber.subscribe((message) => {
+      setPresenterList(message.scripts)
+    })
+
+    /* Subscriber for presenter module. */
+    const presenterModuleSubscriber = new Topic<RosString>({
+      ros: ros,
+      name: '/pipeline/presenter/module',
+      messageType: 'std_msgs/String',
+    })
+
+    presenterModuleSubscriber.subscribe((message) => {
+      setPresenterModule(message.data)
+    })
+
+    /* Subscriber for presenter enabled. */
+    const presenterEnabledSubscriber = new Topic<RosBoolean>({
+      ros: ros,
+      name: '/pipeline/presenter/enabled',
+      messageType: 'std_msgs/Bool',
+    })
+
+    presenterEnabledSubscriber.subscribe((message) => {
+      setPresenterEnabled(message.data)
+    })
+
     /* Subscriber for latency. */
     const latencySubscriber = new Topic<Latency>({
       ros: ros,
@@ -159,6 +208,10 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
       deciderModuleSubscriber.unsubscribe()
       deciderEnabledSubscriber.unsubscribe()
 
+      presenterListSubscriber.unsubscribe()
+      presenterModuleSubscriber.unsubscribe()
+      presenterEnabledSubscriber.unsubscribe()
+
       latencySubscriber.unsubscribe()
     }
   }, [])
@@ -172,6 +225,9 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
         deciderList,
         deciderModule,
         deciderEnabled,
+        presenterList,
+        presenterModule,
+        presenterEnabled,
         latency,
         setLatency,
       }}
