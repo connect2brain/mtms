@@ -21,6 +21,8 @@ import {
   setPreprocessorEnabledRos,
   setDeciderModuleRos,
   setDeciderEnabledRos,
+  setPresenterModuleRos,
+  setPresenterEnabledRos,
 } from 'ros/ros'
 
 import { PipelineContext } from 'providers/PipelineProvider'
@@ -143,11 +145,12 @@ export const PipelineView = () => {
     deciderList,
     deciderModule,
     deciderEnabled,
+    presenterList,
+    presenterModule,
+    presenterEnabled,
   } = useContext(PipelineContext)
 
   const [projects, setProjects] = useState<string[]>([])
-
-  const [presenterEnabled, setPresenterEnabled] = useState<boolean>(() => getKey('presenterEnabled', false))
 
   const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newActiveProject = event.target.value
@@ -181,6 +184,20 @@ export const PipelineView = () => {
     const module = event.target.value
     setDeciderModuleRos(module, () => {
       console.log('Decider set to ' + module)
+    })
+  }
+
+  /* Presenter */
+  const handlePresenterEnabled = (enabled: boolean) => {
+    setPresenterEnabledRos(enabled, () => {
+      console.log('Presenter ' + (enabled ? 'enabled' : 'disabled'))
+    })
+  }
+
+  const handlePresenterModuleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const module = event.target.value
+    setPresenterModuleRos(module, () => {
+      console.log('Presenter set to ' + module)
     })
   }
 
@@ -261,10 +278,17 @@ export const PipelineView = () => {
           <SmallerTitle>Presenter</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={presenterEnabled} onChange={setPresenterEnabled} />
+            <ToggleSwitch type='flat' checked={presenterEnabled} onChange={handlePresenterEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>
+            <Select onChange={handlePresenterModuleChange} value={presenterModule}>
+              {presenterList.map((module, index) => (
+                <option key={index} value={module}>
+                  {module}
+                </option>
+              ))}
+            </Select>
           </ConfigRow>
         </PresenterPanel>
         <TmsPanel>
