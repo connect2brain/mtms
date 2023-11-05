@@ -57,7 +57,7 @@ export const DatasetDisplay: React.FC = () => {
     })
   }
 
-  const selectedDataset = datasetList.find((d) => d.filename === dataset)
+  const selectedDataset = datasetList.find((d) => d.json_filename === dataset)
 
   return (
     <DatasetPanel>
@@ -66,7 +66,7 @@ export const DatasetDisplay: React.FC = () => {
         <StateValue>
           <DatasetSelect onChange={handleDatasetChange} value={dataset}>
             {datasetList.map((dataset, index) => (
-              <option key={index} value={dataset.filename}>
+              <option key={index} value={dataset.json_filename}>
                 {dataset.name}
               </option>
             ))}
