@@ -31,11 +31,19 @@ const Message = styled.div`
 export const HealthcheckMessageDisplay: React.FC = () => {
   const { eegHealthcheck, mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
 
+  let displayMessage
+
+  /* Prioritize mTMS device healthcheck message over EEG healthcheck message. */
+  if (mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY) {
+    displayMessage = mtmsDeviceHealthcheck?.status_message
+  } else {
+    displayMessage = eegHealthcheck?.status_message
+  }
+
   return (
     <HealthcheckMessagePanel>
       <Header>Status</Header>
-      {eegHealthcheck?.status_message && <Message>{eegHealthcheck.status_message}</Message>}
-      {mtmsDeviceHealthcheck?.status_message && <Message>{mtmsDeviceHealthcheck.status_message}</Message>}
+      {displayMessage && <Message>{displayMessage}</Message>}
     </HealthcheckMessagePanel>
   )
 }
