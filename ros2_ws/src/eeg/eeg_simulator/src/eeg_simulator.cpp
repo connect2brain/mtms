@@ -16,6 +16,8 @@
 
 #include "eeg_simulator.h"
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
 using namespace std::placeholders;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
@@ -23,8 +25,10 @@ const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
 const std::string DATASET_LIST_TOPIC = "/eeg_simulator/dataset/list";
 
-const std::string DATA_DIRECTORY = "data/eeg/";
 const std::string PROJECTS_DIRECTORY = "projects/";
+
+const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 
 
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
@@ -75,14 +79,25 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     "/eeg_simulator/loop",
     qos_persist_latest);
 
+  /* QOS for session */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
+
+  auto qos_session = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+      .deadline(DEADLINE_NS)
+      .lifespan(DEADLINE_NS);
+
+  /* Subscriber for session. */
+  this->session_subscriber = create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos_session,
+    std::bind(&EegSimulator::handle_session, this, _1));
+
   /* Publisher for EEG samples. */
   eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
   trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
   eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
-
-  /* TODO: Comment out for now. */
-  //publish_sample_timer_ = this->create_wall_timer(std::chrono::duration<double>(sampling_period), std::bind(&EegSimulator::publish_sample, this));
-  //publish_trigger_timer_ = this->create_wall_timer(std::chrono::seconds(5), std::bind(&EegSimulator::publish_trigger, this));
 
   /* Initialize inotify. */
   this->inotify_descriptor = inotify_init();
@@ -127,8 +142,9 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         project_interfaces::msg::Dataset dataset_msg;
         file >> json_data;
 
-        dataset_msg.filename = filename;
+        dataset_msg.json_filename = filename;
         dataset_msg.name = json_data.value("name", "Unknown");
+        dataset_msg.data_filename = json_data.value("data_file", "");
 
         if (json_data.contains("channels") && json_data["channels"].is_object()) {
             dataset_msg.num_of_eeg_channels = json_data["channels"].value("eeg", 0);
@@ -152,7 +168,7 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
 }
 
 void EegSimulator::update_dataset_list() {
-  auto datasets = this->list_datasets(this->dataset_directory);
+  auto datasets = this->list_datasets(this->data_directory);
 
   /* Publish datasets. */
   project_interfaces::msg::DatasetList msg;
@@ -162,7 +178,7 @@ void EegSimulator::update_dataset_list() {
 
   /* Store datasets internally. */
   for (const auto& dataset : datasets) {
-    dataset_map[dataset.filename] = dataset;
+    dataset_map[dataset.json_filename] = dataset;
   }
 }
 
@@ -171,7 +187,7 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
 
   std::ostringstream oss;
   oss << PROJECTS_DIRECTORY << this->active_project << "/eeg/raw";
-  this->dataset_directory = oss.str();
+  this->data_directory = oss.str();
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
@@ -211,11 +227,8 @@ void EegSimulator::handle_set_dataset(
   response->success = true;
 }
 
-void EegSimulator::handle_set_playback(
-      const std::shared_ptr<project_interfaces::srv::SetPlayback::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetPlayback::Response> response) {
-
-  this->playback= request->playback;
+void EegSimulator::set_playback(bool playback) {
+  this->playback = playback;
 
   RCLCPP_INFO(this->get_logger(), "Playback %s.", this->playback ? "enabled" : "disabled");
 
@@ -229,7 +242,13 @@ void EegSimulator::handle_set_playback(
   if (this->playback) {
     initialize_streaming();
   }
+}
 
+void EegSimulator::handle_set_playback(
+      const std::shared_ptr<project_interfaces::srv::SetPlayback::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetPlayback::Response> response) {
+
+  set_playback(request->playback);
   response->success = true;
 }
 
@@ -254,14 +273,31 @@ void EegSimulator::initialize_streaming() {
   sampling_frequency = this->dataset.sampling_frequency;
   num_of_eeg_channels = this->dataset.num_of_eeg_channels;
   num_of_emg_channels = this->dataset.num_of_emg_channels;
-  csv_filename = this->dataset.filename + ".csv";
+  data_filename = this->dataset.data_filename;
 
-  std::string dataset_path = dataset_directory + "/" + csv_filename;
+  std::string dataset_path = data_directory + "/" + data_filename;
 
-  this->sampling_period = 1.0 / this->dataset.sampling_frequency;
+  /* Initialize variables. */
   this->total_channels = this->dataset.num_of_eeg_channels + this->dataset.num_of_emg_channels;
 
+  /* Initialize time with the latest session time. This ensures that EEG streaming starts at the
+     right time relative to the ongoing session. However, whether this is what we want to do, or
+     if it should rather enforce to restart session (as EEG bridge does with real EEG data to be
+     able to synchronize properly) is not clear yet. */
+  this->current_time = this->latest_session_time;
+
+  this->sampling_period = 1.0 / this->dataset.sampling_frequency;
+
+  /* Open data file. */
+  if (file.is_open()) {
+      file.close();
+  }
   file.open(dataset_path, std::ios::in);
+
+  if (!file.is_open()) {
+    RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", dataset_path.c_str());
+    return;
+  }
 
   RCLCPP_INFO(this->get_logger(), "Reading data from file: %s", dataset_path.c_str());
 
@@ -276,17 +312,53 @@ void EegSimulator::initialize_streaming() {
   eeg_info_publisher->publish(eeg_info);
 }
 
-void EegSimulator::publish_sample() {
-  std::string line;
-  std::getline(file, line);
+void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  auto time = msg->time;
 
-  if (line.empty() && loop) {
-    file.clear();
-    file.seekg(0, std::ios::beg);
-    std::getline(file, line);
-  } else if (line.empty() && !loop) {
-    RCLCPP_INFO(this->get_logger(), "Published all samples from file");
+  this->latest_session_time = time;
+
+  /* Return if session is not ongoing. */
+  if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
     return;
+  }
+
+  /* Return if the simulator is not set to playback dataset. */
+  if (!playback) {
+    return;
+  }
+
+  bool success = true;
+
+  /* Loop until our internal time reaches the session time OR streaming is not successful (e.g., the dataset is finished). */
+  while (current_time <= time && success) {
+    success = publish_sample();
+    current_time += sampling_period;
+  }
+
+  /* If dataset is finished OR there is an error, automatically disable playback. */
+  if (!success) {
+    this->set_playback(false);
+  }
+}
+
+bool EegSimulator::publish_sample() {
+  std::string line;
+
+  if (!std::getline(file, line)) {
+    if (file.eof()) {
+      if (loop) {
+        RCLCPP_INFO(this->get_logger(), "Reached the end of file, looping back to beginning.");
+
+        file.clear();
+        file.seekg(0, std::ios::beg);
+        std::getline(file, line);
+
+      } else {
+        RCLCPP_INFO(this->get_logger(), "Reached the end of file.");
+
+        return false;
+      }
+    }
   }
 
   std::stringstream ss(line);
@@ -299,7 +371,7 @@ void EegSimulator::publish_sample() {
 
   if (total_channels > static_cast<int>(data.size())) {
     RCLCPP_ERROR(this->get_logger(), "Total # of EEG and EMG channels (%d) exceeds # of channels in data (%zu)", total_channels, data.size());
-    return;
+    return false;
   }
 
   eeg_interfaces::msg::EegSample msg;
@@ -310,12 +382,15 @@ void EegSimulator::publish_sample() {
   msg.time = current_time;
 
   eeg_publisher->publish(msg);
-  if (static_cast<int>(current_time) > static_cast<int>(last_log_time)) {
-    RCLCPP_INFO(this->get_logger(), "Published EEG datapoint in topic %s with timestamp %.4f s.", EEG_RAW_TOPIC.c_str(), current_time);
-    last_log_time = current_time;
-  }
 
-  current_time += sampling_period;
+  RCLCPP_INFO_THROTTLE(this->get_logger(),
+                       *this->get_clock(),
+                       1000,
+                       "Published EEG datapoint in topic %s with timestamp %.4f s.",
+                       EEG_RAW_TOPIC.c_str(),
+                       current_time);
+
+  return true;
 }
 
 void EegSimulator::publish_trigger() {
@@ -334,9 +409,9 @@ void EegSimulator::update_inotify_watch() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->dataset_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->data_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
   if (watch_descriptor == -1) {
-      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->dataset_directory.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->data_directory.c_str());
       return;
   }
 }
