@@ -5,9 +5,11 @@ from rclpy.node import Node
 from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession, AllowStimulation
 
+from system_interfaces.msg import Session
+
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
-    WaveformPiece, PulseFeedback, EventInfo, ChargeError, PulseError, DischargeError, TriggerOutError
+    PulseFeedback, EventInfo
 
 from mep_interfaces.action import AnalyzeMep
 
@@ -73,6 +75,7 @@ class MTMSApiNode(Node):
         self.printer = MTMSApiPrinter()
 
         self.system_state = None
+        self.session = None
 
         # Message publishers
 
@@ -106,6 +109,9 @@ class MTMSApiNode(Node):
 
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
+
+        # Similarly with session.
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
 
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
@@ -432,4 +438,9 @@ class MTMSApiNode(Node):
         while self.system_state is None:
             rclpy.spin_once(self)
 
-        self.printer.print_system_state(self.system_state)
+        self.printer.print_state(self.system_state, self.session)
+
+    # Session
+
+    def handle_session(self, session):
+        self.session = session

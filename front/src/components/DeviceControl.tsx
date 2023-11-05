@@ -6,7 +6,9 @@ import { StyledButton } from 'styles/General'
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
 
 export const DeviceControl = () => {
-  const { deviceState } = useContext(SystemContext)
+  const { systemState } = useContext(SystemContext)
+
+  const deviceState = systemState?.device_state
 
   const deviceText = () => {
     if (deviceState?.value === DeviceState.NOT_OPERATIONAL) return 'Start'

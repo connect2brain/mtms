@@ -57,14 +57,14 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
 
 const uint8_t VERBOSE = 0;
 
-/* XXX: Needs to match the values in system_state_bridge.cpp. */
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+/* XXX: Needs to match the values in session_bridge.cpp. */
+const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
   this->create_publishers();
 
-  this->subscribe_to_system_state();
+  this->subscribe_to_session();
 
   /* Read ROS parameters. */
 
@@ -79,7 +79,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->reset_session();
 
-  this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
+  this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
 }
 
 void EegBridge::create_publishers() {
@@ -111,29 +111,28 @@ void EegBridge::publish_healthcheck() {
   this->publisher_healthcheck_->publish(healthcheck);
 }
 
-void EegBridge::subscribe_to_system_state() {
+void EegBridge::subscribe_to_session() {
   this->session_been_stopped = false;
-  this->system_state_received = false;
+  this->session_received = false;
 
-  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    this->system_state_received = true;
+  auto session_callback = [this](const std::shared_ptr<system_interfaces::msg::Session> message) -> void {
+    this->session_received = true;
 
-    session_state = message->session_state;
-    device_state = message->device_state;
+    session_state = message->state;
 
     /* Stopping a session takes several seconds, whereas if another session is started immediately after the previous
        one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
        to ensure that we notice if the session is stopped. */
-    if (session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
-        session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED) {
+    if (session_state.value == system_interfaces::msg::SessionState::STOPPING ||
+        session_state.value == system_interfaces::msg::SessionState::STOPPED) {
 
       this->reset_session();
       this->session_been_stopped = true;
     }
   };
 
-  /* HACK: Duplicates code from system_state_bridge.cpp. */
-  const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
+  /* HACK: Duplicates code from session_bridge.cpp. */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
   auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -143,11 +142,14 @@ void EegBridge::subscribe_to_system_state() {
 
   rclcpp::SubscriptionOptions subscription_options;
   subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Session not received within deadline.");
   };
 
-  this->system_state_subscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
-                                                                                                        system_state_callback, subscription_options);
+  this->session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos,
+    session_callback,
+    subscription_options);
 }
 
 void EegBridge::reset_session() {
@@ -156,13 +158,8 @@ void EegBridge::reset_session() {
   sync_index = 1;
 }
 
-void EegBridge::wait_for_system_state() {
-  RCLCPP_INFO(this->get_logger(), "Waiting for system state...");
-
-  update_healthcheck(
-    system_interfaces::msg::HealthcheckStatus::NOT_READY,
-    "mTMS device not operational",
-    "Please start the mTMS device.");
+void EegBridge::wait_for_session() {
+  RCLCPP_INFO(this->get_logger(), "Waiting for session...");
 
   auto base_interface = this->get_node_base_interface();
 
@@ -178,7 +175,7 @@ void EegBridge::wait_for_system_state() {
      https://github.com/ros2/system_tests/pull/459
   */
   try {
-    while (rclcpp::ok() && !this->system_state_received) {
+    while (rclcpp::ok() && !this->session_received) {
       rclcpp::spin_some(base_interface);
     }
   } catch (const rclcpp::exceptions::RCLError & exception) {
@@ -187,15 +184,15 @@ void EegBridge::wait_for_system_state() {
 }
 
 void EegBridge::spin() {
-  /* System state has a deadline of 25 ms, but it will only start affecting once the first system state
-     is received. Hence, wait here until the system state is received. */
-  wait_for_system_state();
+  /* Session has a deadline of 25 ms, but it will only start affecting once the first session
+     is received. Hence, wait here until the session is received. */
+  wait_for_session();
 
   RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet...");
 
   auto base_interface = this->get_node_base_interface();
 
-  /* HACK: See comment in wait_for_system_state function. */
+  /* HACK: See comment in wait_for_session function. */
   try {
     while (rclcpp::ok()) {
       rclcpp::spin_some(base_interface);
@@ -212,12 +209,6 @@ void EegBridge::spin() {
       uint8_t status_value;
 
       switch (this->eeg_bridge_state) {
-        case WAITING_FOR_MTMS_DEVICE_START:
-          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
-                                   "mTMS device is not operational",
-                                   "Please start the mTMS device.");
-          break;
-
         case WAITING_FOR_MEASUREMENT_START:
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                                    "Waiting for EEG measurement to start",
@@ -508,7 +499,7 @@ void EegBridge::handle_eeg_data_packet() {
         break;
       }
 
-      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+      if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
           this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
 
         this->eeg_bridge_state = STREAMING;
@@ -516,7 +507,7 @@ void EegBridge::handle_eeg_data_packet() {
 
 
       /* If session is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
-      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+      if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
          !this->first_trigger_received) {
 
         RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
@@ -531,7 +522,7 @@ void EegBridge::handle_eeg_data_packet() {
 
         /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
         if (this->first_trigger_received &&
-            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
+            this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
@@ -542,20 +533,13 @@ void EegBridge::handle_eeg_data_packet() {
            sent as a part of a sample packet. When the first trigger is received, we also expect the session to be
            started. */
         if (!this->first_trigger_received ||
-            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
+            this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
       }
 
-      if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for mTMS device to start...");
-
-        this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
-        break;
-      }
-
-      if (this->session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
+      if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
 
         this->eeg_bridge_state = WAITING_FOR_SESSION_START;
