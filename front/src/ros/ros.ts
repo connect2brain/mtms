@@ -27,7 +27,7 @@ export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
   messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
 })
 
-/* Set up get maximum intensity service.*/
+/* Get maximum intensity service */
 const getMaximumIntensityService = new ROSLIB.Service({
   ros: ros,
   name: '/targeting/get_maximum_intensity',
@@ -68,7 +68,7 @@ export const getMaximumIntensity = (
   )
 }
 
-/* Set up toggle_navigation service.*/
+/* Toggle navigation service */
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
   name: '/planner/toggle_navigation',
@@ -81,7 +81,7 @@ const clearStateService = new ROSLIB.Service({
   serviceType: 'ui_interfaces/ClearState',
 })
 
-/* Set up listener for coil at target. */
+/* Listener for coil at target */
 const coilAtTargetListener = new ROSLIB.Topic({
   ros: ros,
   name: '/neuronavigation/coil_at_target',
@@ -89,28 +89,28 @@ const coilAtTargetListener = new ROSLIB.Topic({
 })
 //coilAtTargetListener.subscribe(updateCoilAtTarget);
 
-/* Set up listener for planner state. */
+/* Listener for planner state */
 export const plannerStateSubscriber = new ROSLIB.Topic<StateMessage>({
   ros: ros,
   name: '/planner/state',
   messageType: 'ui_interfaces/PlannerState',
 })
 
-/* Set up listener for eeg data. */
+/* Listener for eeg data */
 export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
   ros: ros,
   name: '/eeg/batch_data',
   messageType: 'ui_interfaces/EegBatch',
 })
 
-/* Set up listener for node messages. */
+/* Listener for node messages */
 export const nodeMessageSubscriber = new ROSLIB.Topic({
   ros: ros,
   name: '/node/message',
   messageType: 'std_msgs/String',
 })
 
-/* Set up listener for planner state. */
+/* Listener for planner state */
 export const triggerSubscriber = new ROSLIB.Topic<EegTriggerMessage>({
   ros: ros,
   name: '/eeg/trigger',
@@ -134,7 +134,7 @@ export const clearRosState = () => {
   )
 }
 
-/* Set up count valid trials service. */
+/* Count valid trials service */
 const countValidTrialsService = new ROSLIB.Service({
   ros: ros,
   name: '/experiment/count_valid_trials',
@@ -162,7 +162,7 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
   )
 }
 
-/* Set up perform experiment action.
+/* Perform experiment action
 
    TODO: After ROSLIB types are updated with the action support, bypassing
      the type checks (that is, ROSLIB as any) can be removed everywhere. */
@@ -193,7 +193,7 @@ export const performExperiment = (
   })
 }
 
-/* Set up pause experiment service. */
+/* Pause experiment service */
 const pauseExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/experiment/pause',
@@ -219,7 +219,7 @@ export const pauseExperiment = (callback: () => void) => {
   )
 }
 
-/* Set up resume experiment service. */
+/* Resume experiment service */
 const resumeExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/experiment/resume',
@@ -245,7 +245,7 @@ export const resumeExperiment = (callback: () => void) => {
   )
 }
 
-/* Set up cancel experiment service. */
+/* Cancel experiment service */
 const cancelExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/experiment/cancel',
@@ -271,7 +271,7 @@ export const cancelExperiment = (callback: () => void) => {
   )
 }
 
-/* Set up list projects service. */
+/* List projects service */
 const listProjectsService = new ROSLIB.Service({
   ros: ros,
   name: '/projects/list',
@@ -297,7 +297,7 @@ export const listProjects = (callback: (projects: string[]) => void) => {
   )
 }
 
-/* Set up set active project service. */
+/* Set active project service */
 const setActiveProjectService = new ROSLIB.Service({
   ros: ros,
   name: '/projects/active/set',
@@ -325,7 +325,7 @@ export const setActiveProject = (project: string, callback: () => void) => {
   )
 }
 
-/* Set up set preprocessor module service. */
+/* Set preprocessor module service */
 const setPreprocessorModuleService = new ROSLIB.Service({
   ros: ros,
   name: '/pipeline/preprocessor/module/set',
@@ -353,7 +353,7 @@ export const setPreprocessorModuleRos = (module: string, callback: () => void) =
   )
 }
 
-/* Set up set preprocessor enabled service. */
+/* Set preprocessor enabled service */
 const setPreprocessorEnabledService = new ROSLIB.Service({
   ros: ros,
   name: '/pipeline/preprocessor/enabled/set',
@@ -381,7 +381,7 @@ export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void
   )
 }
 
-/* Set up set decider module service. */
+/* Set decider module service */
 const setDeciderModuleService = new ROSLIB.Service({
   ros: ros,
   name: '/pipeline/decider/module/set',
@@ -409,7 +409,7 @@ export const setDeciderModuleRos = (module: string, callback: () => void) => {
   )
 }
 
-/* Set up set decider enabled service. */
+/* Set decider enabled service */
 const setDeciderEnabledService = new ROSLIB.Service({
   ros: ros,
   name: '/pipeline/decider/enabled/set',
@@ -437,7 +437,63 @@ export const setDeciderEnabledRos = (enabled: boolean, callback: () => void) => 
   )
 }
 
-/* Set dataset service. */
+/* Set presenter module service */
+const setPresenterModuleService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/presenter/module/set',
+  serviceType: 'project_interfaces/SetPresenterModule',
+})
+
+export const setPresenterModuleRos = (module: string, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    module: module,
+  }) as any
+
+  setPresenterModuleService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set presenter: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set presenter, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set presenter enabled service */
+const setPresenterEnabledService = new ROSLIB.Service({
+  ros: ros,
+  name: '/pipeline/presenter/enabled/set',
+  serviceType: 'project_interfaces/SetPresenterEnabled',
+})
+
+export const setPresenterEnabledRos = (enabled: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    enabled: enabled,
+  }) as any
+
+  setPresenterEnabledService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set presenter enabled: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set presenter enabled, error:')
+      console.log(error)
+    },
+  )
+}
+
+/* Set dataset service */
 const setDatasetService = new ROSLIB.Service({
   ros: ros,
   name: '/eeg_simulator/dataset/set',
@@ -465,7 +521,7 @@ export const setDatasetRos = (filename: string, callback: () => void) => {
   )
 }
 
-/* Set playback service. */
+/* Set playback service */
 const setPlaybackService = new ROSLIB.Service({
   ros: ros,
   name: '/eeg_simulator/playback/set',
@@ -493,7 +549,7 @@ export const setPlaybackRos = (playback: boolean, callback: () => void) => {
   )
 }
 
-/* Set loop service. */
+/* Set loop service */
 const setLoopService = new ROSLIB.Service({
   ros: ros,
   name: '/eeg_simulator/loop/set',

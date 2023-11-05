@@ -33,6 +33,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetDeciderModule.srv"
   "srv/SetDeciderEnabled.srv"
 
+  "msg/PresenterList.msg"
+  "srv/SetPresenterModule.srv"
+  "srv/SetPresenterEnabled.srv"
+
   "msg/Dataset.msg"
   "msg/DatasetList.msg"
   "srv/SetDataset.srv"
