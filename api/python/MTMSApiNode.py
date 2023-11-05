@@ -23,8 +23,8 @@ class MTMSApiNode(Node):
     # To mTMS device
     ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
-    ROS_SERVICE_START_SESSION = ('/mtms_device/start_session', StartSession)
-    ROS_SERVICE_STOP_SESSION = ('/mtms_device/stop_session', StopSession)
+    ROS_SERVICE_START_SESSION = ('/mtms_device/session/start', StartSession)
+    ROS_SERVICE_STOP_SESSION = ('/mtms_device/session/stop', StopSession)
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
 
