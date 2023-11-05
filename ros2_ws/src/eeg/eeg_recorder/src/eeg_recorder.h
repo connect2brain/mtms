@@ -1,0 +1,52 @@
+#ifndef EEG_RECORDER_H
+#define EEG_RECORDER_H
+
+#include <cmath>
+
+#include "rclcpp/rclcpp.hpp"
+
+#include "std_msgs/msg/string.hpp"
+
+#include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/eeg_info.hpp"
+
+#include "system_interfaces/msg/session.hpp"
+#include "system_interfaces/msg/session_state.hpp"
+
+
+class EegRecorder : public rclcpp::Node {
+public:
+  EegRecorder();
+
+private:
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
+
+  rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
+
+  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_subscriber;
+
+  void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
+  void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
+  void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
+  void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+
+  void append_to_file(const std::string &data);
+
+  std::string active_project;
+  std::string data_directory;
+
+  std::string experiment_name;
+  std::string subject_name;
+
+  std::string filename;
+  std::string file_path;
+
+  std::ofstream file;
+
+  uint8_t current_session_state;
+};
+
+#endif //EEG_RECORDER_H
