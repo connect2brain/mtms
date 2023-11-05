@@ -55,6 +55,17 @@ services:
     privileged: true
     network_mode: host
 
+  eeg_recorder:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_recorder/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    privileged: true
+    network_mode: host
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+
   eeg_simulator:
     build:
       context: .
