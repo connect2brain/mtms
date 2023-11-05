@@ -17,7 +17,9 @@ const LatencyPanel = styled(StyledPanel)`
 
 export const LatencyDisplay: React.FC = () => {
   const { latency, setLatency } = useContext(PipelineContext)
-  const { sessionState } = useContext(SystemContext)
+  const { session } = useContext(SystemContext)
+
+  const sessionState = session?.state
 
   const formattedLatency = (latency && (latency.latency * 1000).toFixed(1) + ' ms') || '\u2013'
   const formattedSampleTime = (latency && latency.sample_time.toFixed(1) + ' s') || '\u2013'

@@ -19,7 +19,8 @@
 
 #include "event_interfaces/msg/pulse_feedback.hpp"
 
-#include "mtms_device_interfaces/msg/system_state.hpp"
+#include "system_interfaces/msg/session.hpp"
+#include "system_interfaces/msg/session_state.hpp"
 
 #include "project_interfaces/msg/preprocessor_list.hpp"
 #include "project_interfaces/srv/set_preprocessor_module.hpp"
@@ -43,7 +44,7 @@ private:
   void initialize_preprocessor_module();
   void initialize_sample_buffer();
 
-  void handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg);
+  void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
   void reset_preprocessor_module();
 
@@ -75,7 +76,7 @@ private:
 
   rclcpp::Logger logger;
 
-  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
+  rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
@@ -119,7 +120,7 @@ private:
 
   /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
      just once when the session is stopped. */
-  mtms_device_interfaces::msg::SessionState session_state;
+  system_interfaces::msg::SessionState session_state;
 
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;

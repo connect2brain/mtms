@@ -9,8 +9,10 @@ from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExpe
 
 from mep_interfaces.msg import Mep
 
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
+from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import StartSession, StopSession
+
+from system_interfaces.msg import Session, SessionState
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -117,6 +119,10 @@ class ExperimentPerformerNode(Node):
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
         self.system_state = None
 
+        # Create subscriber for session.
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
+
         # Create a lock so that service and action calls can modify the experiment state concurrently.
         self.experiment_state_lock = Lock()
         self.experiment_state = ExperimentState.NOT_RUNNING
@@ -147,11 +153,16 @@ class ExperimentPerformerNode(Node):
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.session_state.value
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
@@ -160,10 +171,10 @@ class ExperimentPerformerNode(Node):
         return self.get_session_state() == SessionState.STOPPED
 
     def get_current_time(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.time
+        return self.session.time
 
     # Logging
 

@@ -1,24 +1,27 @@
 import time
 from threading import Event
 
-import numpy as np
-
-from rclpy.executors import MultiThreadedExecutor
-
-from experiment_interfaces.action import PerformStimulus
-from event_interfaces.msg import ExecutionCondition, Pulse, TriggerOut, \
-    TriggerOutFeedback, PulseFeedback, EventInfo, ReadyForEventTrigger
-
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
-from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
-from utility_interfaces.srv import GetNextId
-
 import rclpy
 from rclpy.action import ActionServer
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
+from experiment_interfaces.action import PerformStimulus
+from event_interfaces.msg import (
+    ExecutionCondition,
+    Pulse,
+    PulseFeedback,
+    TriggerOut,
+    TriggerOutFeedback,
+    EventInfo,
+    ReadyForEventTrigger
+)
+
+from mtms_device_interfaces.msg import SystemState, DeviceState
+from system_interfaces.msg import Session, SessionState
+from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
+from utility_interfaces.srv import GetNextId
 
 
 class StimulusPerformerNode(Node):
@@ -71,6 +74,10 @@ class StimulusPerformerNode(Node):
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1, callback_group=self.callback_group)
         self.system_state = None
 
+        # Subscriber for session
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
+
         # Publishers for pulse and trigger out.
         self.send_pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse', 10, callback_group=self.callback_group)
         self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10, callback_group=self.callback_group)
@@ -102,20 +109,28 @@ class StimulusPerformerNode(Node):
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.session_state.value
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
+    def is_session_stopped(self):
+        return self.get_session_state() == SessionState.STOPPED
+
     def get_current_time(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.time
+        return self.session.time
 
     # Feedback
 

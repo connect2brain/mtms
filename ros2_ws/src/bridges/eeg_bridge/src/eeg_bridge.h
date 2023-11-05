@@ -9,14 +9,16 @@
 #include <cstdlib>
 
 #include "rclcpp/rclcpp.hpp"
+
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
+
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
-#include "mtms_device_interfaces/msg/system_state.hpp"
-#include "mtms_device_interfaces/msg/device_state.hpp"
-#include "mtms_device_interfaces/msg/session_state.hpp"
+
+#include "system_interfaces/msg/session.hpp"
+#include "system_interfaces/msg/session_state.hpp"
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
@@ -28,7 +30,6 @@ using namespace std::chrono_literals;
 
 
 enum EegBridgeState {
-  WAITING_FOR_MTMS_DEVICE_START,
   WAITING_FOR_MEASUREMENT_START,
   WAITING_FOR_MEASUREMENT_STOP,
   WAITING_FOR_SESSION_STOP,
@@ -47,8 +48,9 @@ public:
   void update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
   void publish_healthcheck();
 
-  void subscribe_to_system_state();
-  void wait_for_system_state();
+  void subscribe_to_session();
+  void wait_for_session();
+
   void spin();
   void init_socket();
   void err(const char *message);
@@ -70,10 +72,9 @@ public:
 private:
   EegBridgeState eeg_bridge_state;
 
-  mtms_device_interfaces::msg::DeviceState device_state;
-  mtms_device_interfaces::msg::SessionState session_state;
+  system_interfaces::msg::SessionState session_state;
   bool session_been_stopped;
-  bool system_state_received;
+  bool session_received;
 
   uint16_t sync_index;
   double_t time_correction;
@@ -85,7 +86,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;
 
-  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
+  rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
   double_t first_trigger_timestamp_;
 
