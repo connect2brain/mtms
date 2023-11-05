@@ -16,6 +16,7 @@
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
+using namespace std::placeholders;
 
 const int32_t SIGNED_MAX = pow(2,23);
 const int32_t UNSIGNED_MAX = pow(2,24);
@@ -66,6 +67,12 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->subscribe_to_session();
 
+  /* Subscriber for mTMS device healthcheck. */
+  this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
+    "/mtms_device/healthcheck",
+    10,
+    std::bind(&EegBridge::handle_mtms_device_healthcheck, this, _1));
+
   /* Read ROS parameters. */
 
   auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
@@ -111,6 +118,10 @@ void EegBridge::publish_healthcheck() {
   this->publisher_healthcheck_->publish(healthcheck);
 }
 
+void EegBridge::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+  this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
+}
+
 void EegBridge::subscribe_to_session() {
   this->session_been_stopped = false;
   this->session_received = false;
@@ -153,9 +164,11 @@ void EegBridge::subscribe_to_session() {
 }
 
 void EegBridge::reset_session() {
-  first_trigger_received = false;
+  first_sample_of_session = true;
+
+  sync_trigger_received = false;
   time_correction = 0;
-  sync_index = 1;
+  num_of_sync_triggers_received = 0;
 }
 
 void EegBridge::wait_for_session() {
@@ -308,7 +321,8 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  double_t new_time_correction = (sync_time - this->first_trigger_timestamp_) - this->sync_index * SYNC_INTERVAL;
+  num_of_sync_triggers_received++;
+  double_t new_time_correction = (sync_time - first_sync_trigger_timestamp) - num_of_sync_triggers_received * SYNC_INTERVAL;
 
   /* NOTE: Bittium's EEG device can be configured to send double triggers whenever an incoming trigger is received by the device. This happens when "Enabled"
      checkbox is ticked in Trigger A configuration in Settings menu. There seems to be no way to distinguish between the two triggers by the UDP packet contents,
@@ -320,33 +334,31 @@ void EegBridge::handle_sync_trigger(double_t sync_time) {
   }
 
   this->time_correction = new_time_correction;
-  this->sync_index++;
   RCLCPP_DEBUG(this->get_logger(), "Sync trigger received. Updated time correction to %f s.", this->time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
-  double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
+  double_t trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_port = buffer[TRIGGER_PORT_INDEX] >> 4;
 
   /* Trigger port 1 corresponds to the sync trigger between the mTMS device and the EEG device. */
   if (trigger_port == 1) {
-    if (!this->first_trigger_received) {
+    if (!this->sync_trigger_received) {
 
-      /* Upon receiving the first trigger, reset time. */
-      this->first_trigger_timestamp_ = new_trigger_timestamp;
-      this->first_trigger_received = true;
-      this->first_sample_of_session_ = true;
+      /* Upon receiving the first sync trigger, reset time. */
+      this->first_sync_trigger_timestamp = trigger_timestamp;
+      this->sync_trigger_received = true;
 
-      RCLCPP_DEBUG(this->get_logger(), "'Session start' trigger received at time %.2f s.", this->first_trigger_timestamp_);
+      RCLCPP_DEBUG(this->get_logger(), "'Session start' trigger received at time %.2f s.", this->first_sync_trigger_timestamp);
     } else {
-      this->handle_sync_trigger(new_trigger_timestamp);
+      this->handle_sync_trigger(trigger_timestamp);
     }
 
   /* Trigger port 2 corresponds to the other trigger port between the mTMS device and the EEG device. */
   } else if (trigger_port == 2) {
     auto trigger_msg = eeg_interfaces::msg::Trigger();
-    trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
+    trigger_msg.time = trigger_timestamp - this->first_sync_trigger_timestamp - this->time_correction;
 
     this->trigger_publisher->publish(trigger_msg);
 
@@ -368,32 +380,47 @@ void EegBridge::handle_sample_packet() {
 
   double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
 
-  /* If sending trigger as channel, this will also initialize first_trigger_timestamp and first_trigger_received
+  /* If sending trigger as channel, this will also initialize first_trigger_timestamp and sync_trigger_received
      so also the next if statement will be executed. */
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
     this->publish_trigger_from_buffer(time);
-    this->first_sample_of_session_ = true;
   }
 
-  /* If first trigger has not been received yet, ignore the sample packet. */
-  if (this->first_trigger_received) {
+  /* If mTMS device is available to send triggers AND first trigger has not been received yet, ignore the sample packet. */
+  if (!this->sync_trigger_received && this->mtms_device_available) {
+    return;
+  }
 
-    if (time >= this->first_trigger_timestamp_) {
-      double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
+  if (this->mtms_device_available) {
+    /* If mTMS device is available, publish samples with corrected time. */
+    if (time >= this->first_sync_trigger_timestamp) {
+      double_t corrected_time = time - this->first_sync_trigger_timestamp - time_correction;
 
-      this->publish_eeg_sample(time_diff);
-      this->first_sample_of_session_ = false;
+      this->publish_eeg_sample(corrected_time);
+      this->first_sample_of_session = false;
 
     } else {
       RCLCPP_WARN_THROTTLE(this->get_logger(),
                           *this->get_clock(),
                           1000,
-                          "Sample packet arrived %.4f s before session start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
-                          this->first_trigger_timestamp_ - time,
-                          this->first_trigger_timestamp_,
+                          "Sample packet arrived %.4f s before first sync trigger. First sync trigger timestamp: %.4f, sample timestamp: %.4f.",
+                          this->first_sync_trigger_timestamp - time,
+                          this->first_sync_trigger_timestamp,
                           time
       );
     }
+  } else {
+    /* If mTMS device is not available, adjust all sample timestamps based on the timestamp of the first sample
+       in the session, so that the first sample in the session will get the timestamp 0.0, etc. */
+    if (this->first_sample_of_session) {
+
+      /* XXX: It is slightly incorrect to use 'time_correction' variable for this, as if the mTMS device is available, the
+        same variable is used for sync-trigger-based time correction, which is semantically different from this use. */
+      this->time_correction = time;
+      this->first_sample_of_session = false;
+    }
+    double_t corrected_time = time - this->time_correction;
+    this->publish_eeg_sample(corrected_time);
   }
 }
 
@@ -505,10 +532,11 @@ void EegBridge::handle_eeg_data_packet() {
         this->eeg_bridge_state = STREAMING;
       }
 
-
-      /* If session is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
-      if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
-         !this->first_trigger_received) {
+      /* If session is started AND mTMS device is available, but sync triggers are not received, print a warning to check the
+         connection between mTMS device and EEG device. */
+      if (this->mtms_device_available &&
+          this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+          !this->sync_trigger_received) {
 
         RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
 
@@ -518,32 +546,39 @@ void EegBridge::handle_eeg_data_packet() {
         }
       }
 
+      if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
+
+        this->eeg_bridge_state = WAITING_FOR_SESSION_START;
+        break;
+      }
+
+      /* If mTMS device is not available, always handle sample packets; do not worry about sync triggers. */
+      if (!this->mtms_device_available) {
+        this->handle_sample_packet();
+        break;
+      }
+
+      /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
       if (!this->send_trigger_as_channel) {
 
-        /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
-        if (this->first_trigger_received &&
+        if (this->sync_trigger_received &&
             this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
 
       } else {
-
         /* If sending trigger as channel, we need to handle packets before the first trigger is received as it will be
            sent as a part of a sample packet. When the first trigger is received, we also expect the session to be
            started. */
-        if (!this->first_trigger_received ||
+
+        /* XXX: It seems that this logic could be cleaned up. */
+        if (!this->sync_trigger_received ||
             this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
-      }
-
-      if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
-        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
-
-        this->eeg_bridge_state = WAITING_FOR_SESSION_START;
-        break;
       }
 
       break;
@@ -585,11 +620,11 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
   /* Trigger A is the sync trigger between the mTMS device and the EEG device. */
   if (trigger_channel_package == TRIGGER_A_IN) {
-    if (!first_trigger_received) {
-      this->first_trigger_timestamp_ = time;
-      this->first_trigger_received = true;
+    if (!sync_trigger_received) {
+      this->first_sync_trigger_timestamp = time;
+      this->sync_trigger_received = true;
 
-      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.4f", this->first_sync_trigger_timestamp);
     } else {
       this->handle_sync_trigger(time);
     }
@@ -598,7 +633,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
   } else if (trigger_channel_package == TRIGGER_B_IN) {
     auto trigger_msg = eeg_interfaces::msg::Trigger();
 
-    trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+    trigger_msg.time = time - this->first_sync_trigger_timestamp - this->time_correction;
     this->trigger_publisher->publish(trigger_msg);
 
     RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
@@ -608,10 +643,10 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
   }
 }
 
-void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
+void EegBridge::publish_eeg_sample(double_t time) {
 
   auto message = eeg_interfaces::msg::EegSample();
-  message.time = time_since_trigger;
+  message.time = time;
 
   int i = FIRST_CHANNEL_INDEX;
   for (int channel = 0; channel < this->num_of_channels_excluding_trigger_; channel++) {
@@ -636,7 +671,7 @@ void EegBridge::publish_eeg_sample(double_t time_since_trigger) {
 
     i += 3;
   }
-  message.first_sample_of_session = this->first_sample_of_session_;
+  message.first_sample_of_session = this->first_sample_of_session;
 
   this->eeg_sample_publisher->publish(message);
 
