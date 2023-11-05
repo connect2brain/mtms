@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.6
+- MOD: Remove 20 ms update interval from session time.
+
 ### 0.5.5
 - ADD: Send event time as feedback.
 
