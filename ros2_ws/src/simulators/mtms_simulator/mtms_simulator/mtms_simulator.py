@@ -74,10 +74,10 @@ class MTMSSimulator(Node):
             StopDevice, "/mtms_device/stop_device", self.stop_device_handler
         )
         self.start_session_service = self.create_service(
-            StartSession, "/mtms_device/start_session", self.start_session_handler
+            StartSession, "/mtms_device/session/start", self.start_session_handler
         )
         self.stop_session_service = self.create_service(
-            StopSession, "/mtms_device/stop_session", self.stop_session_handler
+            StopSession, "/mtms_device/session/stop", self.stop_session_handler
         )
 
         # Subscribers

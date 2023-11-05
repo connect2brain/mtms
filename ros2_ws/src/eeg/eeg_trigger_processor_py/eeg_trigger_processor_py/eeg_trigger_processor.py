@@ -21,8 +21,8 @@ class EegProcessor(Node):
         self.data_subscriber = self.create_subscription(EegSample, '/eeg/raw', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger', self.trigger_reader_callback, 10)
 
-        self.start_session_client = self.create_client(StartSession, '/mtms_device/start_session')
-        self.stop_session_client = self.create_client(StopSession, '/mtms_device/stop_session')
+        self.start_session_client = self.create_client(StartSession, '/mtms_device/session/start')
+        self.stop_session_client = self.create_client(StopSession, '/mtms_device/session/stop')
 
         self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10)
 
