@@ -45,7 +45,7 @@ target_include_directories(system_state_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces)
 
 # Session bridge
 

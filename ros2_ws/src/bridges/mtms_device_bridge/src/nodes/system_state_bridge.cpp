@@ -11,6 +11,9 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
 
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
+
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
 #include "memory_utils.h"
@@ -68,6 +71,9 @@ NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devices
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
+const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
+
+
 class SystemStateBridge : public rclcpp::Node {
 public:
   SystemStateBridge()
@@ -84,9 +90,21 @@ public:
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
         "/mtms_device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
+
+    healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
   }
 
 private:
+  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
+    auto healthcheck = system_interfaces::msg::Healthcheck();
+
+    healthcheck.status.value = status_value;
+    healthcheck.status_message = status_message;
+    healthcheck.actionable_message = actionable_message;
+
+    this->healthcheck_publisher->publish(healthcheck);
+  }
+
   mtms_device_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
     auto msg = mtms_device_interfaces::msg::SystemError();
 
@@ -212,10 +230,24 @@ private:
                         ));
 
     system_state_publisher_->publish(state);
+
+    uint8_t status_value;
+    if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
+      status_value = system_interfaces::msg::HealthcheckStatus::READY;
+      publish_healthcheck(status_value,
+                          "Ready",
+                          "");
+    } else {
+      status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      publish_healthcheck(status_value,
+                          "mTMS device is not operational",
+                          "Please start the mTMS device.");
+    }
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };
 
 int main(int argc, char **argv) {

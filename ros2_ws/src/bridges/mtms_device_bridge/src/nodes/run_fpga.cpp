@@ -14,7 +14,7 @@ const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
 class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
-    this->publisher_healthcheck_ = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+    this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
   }
 
   void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
@@ -24,11 +24,11 @@ public:
     healthcheck.status_message = status_message;
     healthcheck.actionable_message = actionable_message;
 
-    this->publisher_healthcheck_->publish(healthcheck);
+    this->healthcheck_publisher->publish(healthcheck);
   }
 
 private:
-  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };
 
 /* Otherwise similar to the shared init_fpga() function, used by the other ROS nodes in the
@@ -61,8 +61,6 @@ void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first
     rclcpp::spin_some(node);
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  status_value = system_interfaces::msg::HealthcheckStatus::READY;
-  node->publish_healthcheck(status_value, "Ready", "");
 }
 
 void run_fpga() {
