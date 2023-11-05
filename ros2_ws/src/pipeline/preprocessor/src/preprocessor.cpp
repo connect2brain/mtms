@@ -23,19 +23,19 @@ const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
-/* XXX: Needs to match the values in system_state_bridge.cpp. */
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+/* XXX: Needs to match the values in session_bridge.cpp. */
+const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_logger("preprocessor")) {
   /* Publisher for preprocessed EEG data. */
   this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
-  /* Subscriber for system state. */
-  const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
+  /* Subscriber for session. */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
-  auto qos_system_state = rclcpp::QoS(rclcpp::KeepLast(1))
+  auto qos_session = rclcpp::QoS(rclcpp::KeepLast(1))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
       .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
       .deadline(DEADLINE_NS)
@@ -43,13 +43,13 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
 
   rclcpp::SubscriptionOptions subscription_options;
   subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) {
-      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Session not received within deadline.");
   };
 
-  this->system_state_subscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
-    "/mtms_device/system_state",
-    qos_system_state,
-    std::bind(&EegPreprocessor::handle_system_state, this, _1),
+  this->session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos_session,
+    std::bind(&EegPreprocessor::handle_session, this, _1),
     subscription_options);
 
   /* Subscriber for EEG info. */
@@ -189,21 +189,21 @@ void EegPreprocessor::initialize_sample_buffer() {
   RCLCPP_DEBUG(this->get_logger(), "Sample buffer initialized to %lu elements and reset.", buffer_size);
 }
 
-/* System state handler. */
-void EegPreprocessor::handle_system_state(const std::shared_ptr<mtms_device_interfaces::msg::SystemState> msg) {
-  auto new_session_state = msg->session_state;
+/* Session handler. */
+void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  auto new_session_state = msg->state;
 
   if (this->session_state.value != new_session_state.value) {
     RCLCPP_INFO(this->get_logger(), "Session state changed from %d to %d.",
                 this->session_state.value, new_session_state.value);
   }
 
-  /* Stopping a session takes several seconds, whereas if another session is started immediately after the previous
-      one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
+  /* Stopping a session can take several seconds, whereas if another session is started immediately after the previous
+      one is stopped, the system remains in "stopped" state only for a very short period of time. Hence, check both conditions
       to ensure that we notice if the session is stopped. */
-  if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
-      (new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
-       new_session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED)) {
+  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+      (new_session_state.value == system_interfaces::msg::SessionState::STOPPING ||
+       new_session_state.value == system_interfaces::msg::SessionState::STOPPED)) {
 
     this->initialize_preprocessor_module();
     this->initialize_sample_buffer();

@@ -15,9 +15,9 @@ find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
-find_package(mtms_device_interfaces REQUIRED)
 find_package(pipeline_interfaces REQUIRED)
 find_package(project_interfaces REQUIRED)
+find_package(system_interfaces REQUIRED)
 
 add_executable(
         decider
@@ -41,9 +41,9 @@ ament_target_dependencies(
   std_msgs
   eeg_interfaces
   event_interfaces
-  mtms_device_interfaces
   pipeline_interfaces
   project_interfaces
+  system_interfaces
 )
 
 install(TARGETS
@@ -79,9 +79,9 @@ ament_target_dependencies(
   rclcpp_action
   std_msgs
   eeg_interfaces
-  mtms_device_interfaces
   pipeline_interfaces
   project_interfaces
+  system_interfaces
 )
 
 # Find the user's local site-packages directory

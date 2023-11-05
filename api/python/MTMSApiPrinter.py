@@ -1,6 +1,7 @@
 from util.bcolors import bcolors
 
-from mtms_device_interfaces.msg import DeviceState, SessionState, StartupError
+from mtms_device_interfaces.msg import DeviceState, StartupError
+from system_interfaces.msg import SessionState
 from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
 
 class MTMSApiEnums():
@@ -92,8 +93,8 @@ class MTMSApiPrinter():
         self.support_temperature = True
         self.support_pulse_count = True
 
-        self.print_every_nth_system_state = 5
-        self.system_state_counter = 0
+        self.print_every_nth_state = 5
+        self.state_counter = 0
 
     def colored_text(self, text, color):
         return "{}{}{}".format(color, text, bcolors.ENDC)
@@ -105,12 +106,12 @@ class MTMSApiPrinter():
 
         assert False, "Invalid value"
 
-    def print_system_state(self, state):
-        self.system_state_counter += 1
-        if self.system_state_counter != self.print_every_nth_system_state:
+    def print_state(self, state, session):
+        self.state_counter += 1
+        if self.state_counter != self.print_every_nth_state:
             return
 
-        self.system_state_counter = 0
+        self.state_counter = 0
 
         voltages_str = 'V: '
         temperatures_str = 'T: '
@@ -130,9 +131,10 @@ class MTMSApiPrinter():
 
         startup_error = state.startup_error
         device_state = state.device_state
-        session_state = state.session_state
 
-        time_str = '{}Time (s){}: {:.2f}'.format(self.TIME_COLOR, bcolors.ENDC, state.time)
+        session_state = session.state
+
+        time_str = '{}Time (s){}: {:.2f}'.format(self.TIME_COLOR, bcolors.ENDC, session.time)
         state_str = 'Device state: {}'.format(self.enum_to_str(device_state.value, MTMSApiEnums.DEVICE_STATES))
         session_str = 'Session: {}'.format(self.enum_to_str(session_state.value, MTMSApiEnums.SESSION_STATES))
         startup_error_str = 'Startup error: {}'.format(self.enum_to_str(startup_error.value, MTMSApiEnums.STARTUP_ERRORS))

@@ -1,18 +1,4 @@
-import time
 from threading import Event
-
-import numpy as np
-
-from experiment_interfaces.msg import Trial, TrialConfig, TrialResult, TriggerConfig
-from experiment_interfaces.action import PerformTrial, PerformStimulus
-
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
-from mtms_device_interfaces.action import SetVoltages
-
-from mep_interfaces.msg import Mep
-from mep_interfaces.action import AnalyzeMep
-
-from targeting_interfaces.srv import GetChannelVoltages
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -20,6 +6,18 @@ from rclpy.node import Node
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+
+from experiment_interfaces.msg import TrialResult
+from experiment_interfaces.action import PerformTrial, PerformStimulus
+
+from mep_interfaces.msg import Mep
+from mep_interfaces.action import AnalyzeMep
+
+from mtms_device_interfaces.msg import SystemState, DeviceState
+from mtms_device_interfaces.action import SetVoltages
+
+from system_interfaces.msg import Session, SessionState
+from targeting_interfaces.srv import GetChannelVoltages
 
 
 class TrialPerformerNode(Node):
@@ -41,7 +39,7 @@ class TrialPerformerNode(Node):
         self.logger = self.get_logger()
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create action server for performing trial.
+        # Action server for performing trial.
 
         self.action_server = ActionServer(
             self,
@@ -51,7 +49,7 @@ class TrialPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create action client for performing stimulus.
+        # Action client for performing stimulus.
 
         topic, action_type = self.ROS_ACTION_PERFORM_STIMULUS
 
@@ -59,7 +57,7 @@ class TrialPerformerNode(Node):
         while not self.perform_stimulus_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
-        # Create action client for setting voltages.
+        # Action client for setting voltages.
 
         topic, action_type = self.ROS_ACTION_SET_VOLTAGES
 
@@ -67,7 +65,7 @@ class TrialPerformerNode(Node):
         while not self.set_voltages_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
-        # Create action client for analyzing MEP.
+        # Action client for analyzing MEP.
 
         topic, action_type = self.ROS_ACTION_ANALYZE_MEP
 
@@ -75,17 +73,21 @@ class TrialPerformerNode(Node):
         while not self.analyze_mep_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
-        # Create service client for targeting.
+        # Service client for targeting.
 
         self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages')
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /targeting/get_channel_voltages not available, waiting...')
 
-        # Create subscriber for system state.
+        # Subscriber for system state.
 
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
         self.system_state = None
+
+        # Subscriber for session
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
 
     ## ROS callbacks and callers
 
@@ -103,20 +105,28 @@ class TrialPerformerNode(Node):
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.session_state.value
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
+    def is_session_stopped(self):
+        return self.get_session_state() == SessionState.STOPPED
+
     def get_current_time(self):
-        if self.system_state is None:
+        if self.session is None:
             return None
 
-        return self.system_state.time
+        return self.session.time
 
     # Logging
 

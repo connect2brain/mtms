@@ -1,5 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
+import throttle from 'throttleit'
 
 import { StyledPanel, StateRow, StateTitle, StateValue } from 'styles/General'
 import { getKeyByValue } from 'utils'
@@ -18,13 +19,24 @@ const SessionPanel = styled(StyledPanel)`
 `
 
 export const SessionDisplay: React.FC = () => {
-  const { systemState } = useContext(SystemContext)
+  const { session } = useContext(SystemContext)
 
   const [latestUpdate, setLatestUpdate] = useState<Date>()
 
+  const throttledUpdate = useCallback(
+    throttle(() => {
+      setLatestUpdate(new Date())
+    }, 1000),
+    /* Empty dependency array ensures the function is retained across renders. */
+    [],
+  )
+
+  /* Session is updated once every 1 ms, hence the throttling.
+
+    TODO: Consider having a version of session that is updated less frequently to avoid having to throttle here. */
   useEffect(() => {
-    setLatestUpdate(new Date())
-  }, [systemState])
+    throttledUpdate()
+  }, [session, throttledUpdate])
 
   const formatDate = (isoString: any) => {
     const date = new Date(isoString)
@@ -58,11 +70,11 @@ export const SessionDisplay: React.FC = () => {
       <br />
       <StateRow>
         <StateTitle>Session</StateTitle>
-        <StateValue>{getHumanReadableSessionState(SessionState, systemState?.session_state.value)}</StateValue>
+        <StateValue>{getHumanReadableSessionState(SessionState, session?.state.value)}</StateValue>
       </StateRow>
       <StateRow>
         <StateTitle>Session time</StateTitle>
-        <StateValue>{systemState?.time.toFixed(1)} s</StateValue>
+        <StateValue>{session?.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />
       <SessionControl />

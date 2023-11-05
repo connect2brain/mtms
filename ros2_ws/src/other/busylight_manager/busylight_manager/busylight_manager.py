@@ -4,8 +4,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
-from std_msgs.msg import Bool
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
+from mtms_device_interfaces.msg import SystemState, DeviceState
+from system_interfaces.msg import Session, SessionState
 
 from busylight.lights import Light
 from busylight.lights.exceptions import NoLightsFound
@@ -34,8 +34,12 @@ class PedalListenerNode(Node):
             history=HistoryPolicy.KEEP_LAST,
         )
 
-        # Create subscriber for system state.
+        # Subscriber for system state
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
+
+        # Subscriber for session
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
 
         # XXX: Kuando Omega busylight seems to turn itself off automatically after 30 seconds. To work around that, refresh the state periodically.
         self._reconnect_timer = self.create_timer(self.REFRESH_PERIOD_IN_SECONDS, self.refresh_light)
@@ -44,6 +48,34 @@ class PedalListenerNode(Node):
         self.light = None
 
         self.current_color = None
+
+    # State change handlers
+
+    def handle_system_state(self, msg):
+        device_state = msg.device_state.value
+
+        state_changed = self.device_state != device_state
+
+        self.device_state = device_state
+
+        # Only update the light if device state has changed.
+        if not state_changed:
+            return
+
+        self.update_light()
+
+    def handle_session(self, msg):
+        session_state = msg.state.value
+
+        state_changed = self.session_state != session_state
+
+        self.session_state = session_state
+
+        # Only update the light if session state has changed.
+        if not state_changed:
+            return
+
+        self.update_light()
 
     def refresh_light(self):
         if self.light is None:
@@ -54,20 +86,8 @@ class PedalListenerNode(Node):
         else:
             self.light.on(self.current_color)
 
-    def handle_system_state(self, msg):
-        session_state = msg.session_state.value
-        device_state = msg.device_state.value
-
-        state_changed = self.session_state != session_state or self.device_state != device_state
-
-        self.session_state = session_state
-        self.device_state = device_state
-
-        # Only modify the light if either session or device state has changed.
-        if not state_changed:
-            return
-
-        # Try to reconnect each time state changes in case the light has been disconnected and reconnected meanwhile.
+    def update_light(self):
+        # Try to reconnect each time light is updated in case it has been disconnected and reconnected meanwhile.
         self.reconnect()
 
         # If no busylight is found, do not do anything.

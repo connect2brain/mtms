@@ -27,7 +27,7 @@ QoS: ROS2 Default
 QoS: ROS2 Default
 
 Start device. Response: Boolean indicating if starting was successful.
-    
+
 
     ---
     bool success
@@ -58,7 +58,7 @@ QoS: ROS2 Default
 
 Stop session. Response: Boolean indicating if stopping was successful.
 
-    
+
     ---
     bool success
 
@@ -149,24 +149,20 @@ Standard message string
 
 ### Topic: `/mtms_device/system_state`
 #### Message: `mtms_device_interfaces.msg.SystemState
-QoS: 
-- History: KEEP_LAST with depth 1. 
-- Reliability: RELIABLE, 
+QoS:
+- History: KEEP_LAST with depth 1.
+- Reliability: RELIABLE,
 - Durability: TRANSIENT_LOCAL
 - Deadline: 25ms,
 - Lifespan: 25ms
 
- 
+
     ChannelState[] channel_states
 
     SystemError system_error_cumulative
     SystemError system_error_current
     SystemError system_error_emergency
-    
-    StartupError startup_error
-    
-    DeviceState device_state
-    SessionState session_state
-    
-    float64 time
 
+    StartupError startup_error
+
+    DeviceState device_state
