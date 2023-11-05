@@ -1,16 +1,21 @@
 #ifndef DECIDER_WRAPPER_H
 #define DECIDER_WRAPPER_H
 
+#include <memory>
+#include <string>
+#include <tuple>
+
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 #include <pybind11/numpy.h>
-#include <memory>
-#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "eeg_interfaces/msg/eeg_sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+
+#include "pipeline_interfaces/msg/sensory_stimulus.hpp"
+
 #include "std_msgs/msg/string.hpp"
 
 #include "ring_buffer.h"
@@ -31,7 +36,7 @@ public:
 
   void reset_module();
 
-  std::pair<bool, bool> process(
+  std::tuple<bool, bool, std::shared_ptr<pipeline_interfaces::msg::SensoryStimulus>> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
     double_t sample_time,
     bool ready_for_event_trigger);

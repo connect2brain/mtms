@@ -24,6 +24,7 @@
 #include "system_interfaces/msg/session_state.hpp"
 
 #include "pipeline_interfaces/msg/latency.hpp"
+#include "pipeline_interfaces/msg/sensory_stimulus.hpp"
 
 #include "project_interfaces/msg/decider_list.hpp"
 #include "project_interfaces/srv/set_decider_module.hpp"
@@ -99,6 +100,7 @@ private:
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
+  rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
 
   bool decider_enabled;
 

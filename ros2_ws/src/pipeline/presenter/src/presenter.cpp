@@ -321,7 +321,19 @@ void EegPresenter::update_time(double_t time) {
   /* Remove the stimulus from the queue. */
   this->sensory_stimuli.pop();
 
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Presenting stimulus with timestamp %.4f.", stimulus_time);
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Parameters:");
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "  - State: %d", stimulus->state);
+  RCLCPP_INFO(this->get_logger(), "  - Parameter: %d", stimulus->parameter);
+  RCLCPP_INFO(this->get_logger(), "  - Duration (s): %.1f", stimulus->duration);
+  RCLCPP_INFO(this->get_logger(), " ");
+
   auto success = this->presenter_wrapper->process(*stimulus);
+
+  RCLCPP_INFO(this->get_logger(), " ");
 
   if (!success) {
     RCLCPP_ERROR(this->get_logger(), "Error presenting stimulus");
