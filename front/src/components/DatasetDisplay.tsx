@@ -18,12 +18,23 @@ import { setDatasetRos, setPlaybackRos, setLoopRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
+const DatasetPanelTitle = styled.div`
+  width: 340px;
+  position: fixed;
+  top: 896px;
+  right: 380px;
+  z-index: 1001;
+  text-align: left;
+  font-size: 20px;
+  font-weight: bold;
+`
+
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
   height: 260px;
   position: fixed;
-  top: 982px;
-  left: 5px;
+  top: 928px;
+  right: 380px;
   z-index: 1000;
 `
 
@@ -64,54 +75,57 @@ export const DatasetDisplay: React.FC = () => {
   const selectedDataset = datasetList.find((d) => d.json_filename === dataset)
 
   return (
-    <DatasetPanel isGrayedOut={!eegSimulatorHealthcheckOk}>
-      <StateRow>
-        <StateTitle>Dataset:</StateTitle>
-        <StateValue>
-          <DatasetSelect onChange={handleDatasetChange} value={dataset}>
-            {datasetList.map((dataset, index) => (
-              <option key={index} value={dataset.json_filename}>
-                {dataset.name}
-              </option>
-            ))}
-          </DatasetSelect>
-        </StateValue>
-      </StateRow>
-      <br />
-      <StateRow>
-        <StateTitle>Sampling rate:</StateTitle>
-        <StateValue>{formatFrequency(selectedDataset?.sampling_frequency)}</StateValue>
-      </StateRow>
-      <StateRow>
-        <StateTitle>Channels</StateTitle>
-      </StateRow>
-      <StateRow>
-        <IndentedStateTitle>EEG</IndentedStateTitle>
-        <StateValue>{selectedDataset?.num_of_eeg_channels}</StateValue>
-      </StateRow>
-      <StateRow>
-        <IndentedStateTitle>EMG</IndentedStateTitle>
-        <StateValue>{selectedDataset?.num_of_emg_channels}</StateValue>
-      </StateRow>
-      <StateRow>
-        <IndentedStateTitle>Duration</IndentedStateTitle>
-        <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
-      </StateRow>
-      <br />
-      <StateRow>
-        <StateTitle>Playback:</StateTitle>
-        <SwitchWrapper>
-          <ToggleSwitch type='flat' checked={playback} onChange={handlePlaybackChange} disabled={false} />
-        </SwitchWrapper>
-      </StateRow>
-      <GrayedOutPanel isGrayedOut={!playback}>
+    <>
+      <DatasetPanelTitle>Simulator</DatasetPanelTitle>
+      <DatasetPanel isGrayedOut={!eegSimulatorHealthcheckOk}>
         <StateRow>
-          <IndentedStateTitle>Loop:</IndentedStateTitle>
+          <StateTitle>Dataset:</StateTitle>
+          <StateValue>
+            <DatasetSelect onChange={handleDatasetChange} value={dataset}>
+              {datasetList.map((dataset, index) => (
+                <option key={index} value={dataset.json_filename}>
+                  {dataset.name}
+                </option>
+              ))}
+            </DatasetSelect>
+          </StateValue>
+        </StateRow>
+        <br />
+        <StateRow>
+          <StateTitle>Sampling rate:</StateTitle>
+          <StateValue>{formatFrequency(selectedDataset?.sampling_frequency)}</StateValue>
+        </StateRow>
+        <StateRow>
+          <StateTitle>Channels</StateTitle>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>EEG</IndentedStateTitle>
+          <StateValue>{selectedDataset?.num_of_eeg_channels}</StateValue>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>EMG</IndentedStateTitle>
+          <StateValue>{selectedDataset?.num_of_emg_channels}</StateValue>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>Duration</IndentedStateTitle>
+          <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
+        </StateRow>
+        <br />
+        <StateRow>
+          <StateTitle>Playback:</StateTitle>
           <SwitchWrapper>
-            <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
+            <ToggleSwitch type='flat' checked={playback} onChange={handlePlaybackChange} disabled={false} />
           </SwitchWrapper>
         </StateRow>
-      </GrayedOutPanel>
-    </DatasetPanel>
+        <GrayedOutPanel isGrayedOut={!playback}>
+          <StateRow>
+            <IndentedStateTitle>Loop:</IndentedStateTitle>
+            <SwitchWrapper>
+              <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
+            </SwitchWrapper>
+          </StateRow>
+        </GrayedOutPanel>
+      </DatasetPanel>
+    </>
   )
 }
