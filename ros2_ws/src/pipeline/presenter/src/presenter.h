@@ -28,7 +28,7 @@ public:
 
 private:
   void initialize_presenter_module();
-  void reset_presenter_module();
+  void unset_presenter_module();
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 

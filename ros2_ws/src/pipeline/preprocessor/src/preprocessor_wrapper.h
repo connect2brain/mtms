@@ -29,7 +29,7 @@ public:
       const size_t emg_data_size,
       const uint16_t sampling_frequency);
 
-  void reset_module();
+  void reset_module_state();
 
   std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool> process(
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,

@@ -94,7 +94,7 @@ void PreprocessorWrapper::initialize_module(
   this->_is_initialized = true;
 }
 
-void PreprocessorWrapper::reset_module() {
+void PreprocessorWrapper::reset_module_state() {
   preprocessor_module = nullptr;
   preprocessor_instance = nullptr;
 
