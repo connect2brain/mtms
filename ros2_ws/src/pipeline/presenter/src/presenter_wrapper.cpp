@@ -17,8 +17,9 @@ void PresenterWrapper::initialize_module(
     const std::string& directory,
     const std::string& module_name) {
 
-  presenter_module.release();
-  presenter_instance.release();
+  /* If we have an existing presenter instance, release it which will call the destructor */
+  presenter_instance = nullptr;
+  presenter_module = nullptr;
 
   /* Set the sys.path to include the directory of the module. */
   py::module sys_module = py::module::import("sys");
@@ -33,8 +34,10 @@ void PresenterWrapper::initialize_module(
 
   /* Import the module and initialize the presenter instance. */
   try {
-    presenter_module = py::module::import(module_name.c_str());
-    presenter_instance = presenter_module.attr("Presenter")();
+    auto imported_module = py::module::import(module_name.c_str());
+    presenter_module = std::make_unique<py::module>(imported_module);
+    auto instance = presenter_module->attr("Presenter")();
+    presenter_instance = std::make_unique<py::object>(instance);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
@@ -53,8 +56,8 @@ void PresenterWrapper::initialize_module(
 }
 
 void PresenterWrapper::reset_module() {
-  presenter_module.release();
-  presenter_instance.release();
+  presenter_module = nullptr;
+  presenter_instance = nullptr;
 
   this->_is_initialized = false;
 }
@@ -71,7 +74,7 @@ bool PresenterWrapper::process(pipeline_interfaces::msg::SensoryStimulus& msg) {
   /* Call the Python function. */
   py::object py_result;
   try {
-    py_result = presenter_instance.attr("process")(state, parameter, duration);
+    py_result = presenter_instance->attr("process")(state, parameter, duration);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
