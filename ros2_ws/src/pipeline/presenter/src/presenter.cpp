@@ -167,13 +167,22 @@ void EegPresenter::handle_set_presenter_enabled(
 
   RCLCPP_INFO(this->get_logger(), "%s presenter.", this->enabled ? "Enabling" : "Disabling");
 
+  /* Initialize the presenter module if it was enabled, otherwise reset it. */
+  if (this->enabled) {
+    this->initialize_presenter_module();
+  } else {
+    /* Reset the state of the existing module so that any windows etc. created by the Python module are closed,
+       but do not unset the module. */
+    this->presenter_wrapper->reset_module_state();
+  }
+
   response->success = true;
 }
 
-void EegPresenter::reset_presenter_module() {
+void EegPresenter::unset_presenter_module() {
   this->module_name = UNSET_STRING;
 
-  RCLCPP_INFO(this->get_logger(), "Presenter module reset.");
+  RCLCPP_INFO(this->get_logger(), "Presenter module unset.");
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
@@ -181,8 +190,8 @@ void EegPresenter::reset_presenter_module() {
 
   this->presenter_module_publisher->publish(msg);
 
-  /* Reset the wrapper so that any new sensory stimuli won't be processed. */
-  this->presenter_wrapper->reset_module();
+  /* Reset the state of the existing module. */
+  this->presenter_wrapper->reset_module_state();
 }
 
 void EegPresenter::set_presenter_module(const std::string module) {
@@ -221,7 +230,7 @@ void EegPresenter::handle_set_active_project(const std::shared_ptr<std_msgs::msg
     this->set_presenter_module(this->modules[0]);
   } else {
     RCLCPP_WARN(this->get_logger(), "No presenters found in project: %s.", this->active_project.c_str());
-    this->reset_presenter_module();
+    this->unset_presenter_module();
   }
 
   update_inotify_watch();

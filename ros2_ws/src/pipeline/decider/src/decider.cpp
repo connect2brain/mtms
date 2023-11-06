@@ -248,10 +248,10 @@ void EegDecider::handle_set_decider_enabled(
   response->success = true;
 }
 
-void EegDecider::reset_decider_module() {
+void EegDecider::unset_decider_module() {
   this->module_name = UNSET_STRING;
 
-  RCLCPP_INFO(this->get_logger(), "Decider module reset.");
+  RCLCPP_INFO(this->get_logger(), "Decider module unset.");
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
@@ -259,8 +259,8 @@ void EegDecider::reset_decider_module() {
 
   this->decider_module_publisher->publish(msg);
 
-  /* Reset the wrapper so that any new samples are not processed. */
-  this->decider_wrapper->reset_module();
+  /* Reset the Python module state. */
+  this->decider_wrapper->reset_module_state();
 }
 
 void EegDecider::set_decider_module(const std::string module) {
@@ -303,7 +303,7 @@ void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::
     this->set_decider_module(this->modules[0]);
   } else {
     RCLCPP_WARN(this->get_logger(), "No deciders found in project: %s.", this->active_project.c_str());
-    this->reset_decider_module();
+    this->unset_decider_module();
   }
 
   update_inotify_watch();
