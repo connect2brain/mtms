@@ -5,5 +5,5 @@
     "emg": 10
   },
   "data_file": "random_data.csv",
-  "trigger_times": []
+  "trigger_file": "triggers.csv"
 }
