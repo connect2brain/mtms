@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -156,6 +157,63 @@ void EegSimulator::handle_eeg_bridge_healthcheck(const std::shared_ptr<system_in
   }
 }
 
+std::tuple<int, double, bool> EegSimulator::get_dataset_info(const std::string& data_file_path) {
+  std::ifstream data_file(data_file_path);
+  int sampling_frequency = 0;
+  double duration = 0.0;
+  bool samples_dropped = false;
+
+  if (data_file.is_open()) {
+    std::string line;
+    double first_timestamp, second_timestamp;
+
+    /* Read the first timestamp. */
+    if (std::getline(data_file, line)) {
+      std::stringstream ss(line);
+      ss >> first_timestamp;
+    }
+
+    /* Read the second timestamp to determine sampling frequency. */
+    if (std::getline(data_file, line)) {
+      std::stringstream ss(line);
+      ss >> second_timestamp;
+
+      /* Calculate and round the sampling frequency to the nearest integer. */
+      sampling_frequency = static_cast<int>(std::round(1.0 / (second_timestamp - first_timestamp)));
+    }
+
+    double_t previous_timestamp = second_timestamp;
+    double_t expected_difference = second_timestamp - first_timestamp;
+
+    double_t current_timestamp;
+
+    /* Read until the last line to get the last timestamp and check for dropped samples. */
+    while (std::getline(data_file, line)) {
+      std::stringstream ss(line);
+      ss >> current_timestamp;
+
+      /* Check if the current sample interval is equal to the expected interval (second - first). */
+      if (std::abs((current_timestamp - previous_timestamp) - expected_difference) > TOLERANCE_S) {
+        RCLCPP_WARN(this->get_logger(), "Warning: Dropped samples found in dataset %s.", data_file_path.c_str());
+        RCLCPP_WARN(this->get_logger(), "Previous timestamp: %.4f, current timestamp: %.4f, expected difference: %.4f",
+          previous_timestamp,
+          current_timestamp,
+          expected_difference);
+
+        samples_dropped = true;
+      }
+      previous_timestamp = current_timestamp;
+    }
+
+    /* Calculate the duration using the first and last timestamp. */
+    duration = current_timestamp - first_timestamp;
+  } else {
+    throw std::runtime_error("Failed to open data file: " + data_file_path);
+  }
+
+  return std::make_tuple(sampling_frequency, duration, samples_dropped);
+}
+
 std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const std::string& path) {
   std::vector<project_interfaces::msg::Dataset> datasets;
 
@@ -190,8 +248,17 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
             dataset_msg.num_of_emg_channels = 0;
         }
 
-        dataset_msg.sampling_frequency = json_data.value("sampling_frequency", 0);
-        dataset_msg.duration = json_data.value("duration", 0);
+        /* Get the sampling frequency and duration from the data file. */
+        std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
+        auto [sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
+
+        if (samples_dropped) {
+          /* TODO: Should this fail harder? */
+          RCLCPP_WARN(this->get_logger(), "Warning: Dropped samples found in dataset %s.", filename.c_str());
+        }
+
+        dataset_msg.sampling_frequency = sampling_frequency;
+        dataset_msg.duration = duration;
 
         datasets.push_back(dataset_msg);
 
@@ -233,7 +300,7 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   update_dataset_list();
 
   /* When the project changes, first set the default dataset. */
-  bool success = set_dataset(this->default_dataset);
+  [[maybe_unused]] bool success = set_dataset(this->default_dataset);
 
   update_inotify_watch();
 }
