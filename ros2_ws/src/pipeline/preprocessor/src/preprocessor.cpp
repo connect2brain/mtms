@@ -164,7 +164,8 @@ EegPreprocessor::~EegPreprocessor() {
 
 /* Functions to re-initialize the preprocessor state. */
 void EegPreprocessor::initialize_preprocessor_module() {
-  if (this->script_directory == UNSET_STRING ||
+  if (!this->enabled ||
+      this->script_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING ||
       this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
       this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS ||
