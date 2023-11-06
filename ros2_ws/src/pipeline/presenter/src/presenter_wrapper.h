@@ -36,8 +36,8 @@ private:
 
   bool _is_initialized;
 
-  py::module presenter_module;
-  py::object presenter_instance;
+  std::unique_ptr<py::module> presenter_module;
+  std::unique_ptr<py::object> presenter_instance;
 
   std::unique_ptr<py::scoped_interpreter> guard;
 };
