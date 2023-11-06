@@ -15,6 +15,9 @@ class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
     this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
+    this->declare_parameter<bool>("enabled", false);
+    this->get_parameter("enabled", enabled);
   }
 
   void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
@@ -27,8 +30,13 @@ public:
     this->healthcheck_publisher->publish(healthcheck);
   }
 
+  bool is_enabled() const {
+    return enabled;
+  }
+
 private:
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  bool enabled;
 };
 
 /* Otherwise similar to the shared init_fpga() function, used by the other ROS nodes in the
@@ -74,11 +82,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   bool first_time = true;
   while (rclcpp::ok()) {
-    init_fpga_with_healthcheck(node, first_time);
-    first_time = false;
+    if (node->is_enabled()) {
+      init_fpga_with_healthcheck(node, first_time);
+      first_time = false;
 
-    run_fpga();
-    close_fpga();
+      run_fpga();
+      close_fpga();
+    } else {
+      uint8_t status_value = system_interfaces::msg::HealthcheckStatus::DISABLED;
+      node->publish_healthcheck(status_value, "mTMS device not enabled", "Please enable the mTMS device.");
+
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
 
   close_fpga();
