@@ -151,6 +151,9 @@ void EegSimulator::handle_eeg_bridge_healthcheck(const std::shared_ptr<system_in
     this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                              "EEG bridge is available, which is mutually exclusive with the EEG simulator.",
                              "Turn off the EEG bridge to use the EEG simulator.");
+    this->set_playback(false);
+
+    RCLCPP_INFO(this->get_logger(), "EEG simulator disabled because EEG bridge is available.");
   } else {
     this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
                              "Ready",
