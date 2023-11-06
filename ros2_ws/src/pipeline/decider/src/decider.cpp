@@ -228,23 +228,21 @@ void EegDecider::handle_set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response) {
 
-  bool enabled = request->enabled;
-
   /* Update local state variable. */
-  this->decider_enabled = enabled;
+  this->enabled = request->enabled;
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::Bool();
-  msg.data = enabled;
+  msg.data = this->enabled;
 
   this->decider_enabled_publisher->publish(msg);
 
   /* Re-initialize sample buffer when enabling decider to avoid using remains of old EEG data. */
-  if (enabled) {
+  if (this->enabled) {
     initialize_sample_buffer();
   }
 
-  RCLCPP_INFO(this->get_logger(), "%s decider.", enabled ? "Enabling" : "Disabling");
+  RCLCPP_INFO(this->get_logger(), "%s decider.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
 }
@@ -477,7 +475,7 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
 
   check_dropped_samples(sample_time);
 
-  if (!this->decider_enabled) {
+  if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,

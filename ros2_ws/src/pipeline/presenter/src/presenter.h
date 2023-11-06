@@ -67,7 +67,7 @@ private:
   rclcpp::Service<project_interfaces::srv::SetPresenterEnabled>::SharedPtr set_presenter_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr presenter_enabled_publisher;
 
-  bool presenter_enabled;
+  bool enabled;
 
   std::string active_project;
 

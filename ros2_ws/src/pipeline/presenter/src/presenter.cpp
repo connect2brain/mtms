@@ -155,10 +155,8 @@ void EegPresenter::handle_set_presenter_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPresenterEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPresenterEnabled::Response> response) {
 
-  bool enabled = request->enabled;
-
   /* Update local state variable. */
-  this->presenter_enabled = enabled;
+  this->enabled = request->enabled;
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::Bool();
@@ -166,7 +164,7 @@ void EegPresenter::handle_set_presenter_enabled(
 
   this->presenter_enabled_publisher->publish(msg);
 
-  RCLCPP_INFO(this->get_logger(), "%s presenter.", enabled ? "Enabling" : "Disabling");
+  RCLCPP_INFO(this->get_logger(), "%s presenter.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
 }
@@ -349,7 +347,7 @@ void EegPresenter::handle_sensory_stimulus(const std::shared_ptr<pipeline_interf
                        SENSORY_STIMULUS_TOPIC.c_str(),
                        msg->time);
 
-  if (!this->presenter_enabled) {
+  if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
