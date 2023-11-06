@@ -33,8 +33,12 @@ export const HealthcheckMessageDisplay: React.FC = () => {
 
   let displayMessage
 
-  /* Prioritize mTMS device healthcheck message over EEG healthcheck message. */
-  if (mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY) {
+  /* Prioritize mTMS device healthcheck message over EEG healthcheck message IF
+     the device is not disabled. If it is, do not show any mTMS device related messages.*/
+  if (
+    mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY &&
+    mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED
+  ) {
     displayMessage = mtmsDeviceHealthcheck?.status_message
   } else {
     displayMessage = eegHealthcheck?.status_message
