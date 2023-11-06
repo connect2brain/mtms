@@ -27,6 +27,9 @@
 #include "system_interfaces/msg/session_state.hpp"
 
 
+const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
+const std::string UNSET_FILENAME = "";
+
 class EegSimulator : public rclcpp::Node {
 public:
   EegSimulator();
@@ -59,33 +62,40 @@ private:
 
   void initialize_streaming();
 
-  bool publish_sample();
-  void publish_trigger();
+  std::tuple<bool, bool, double_t> publish_sample();
+
+  void read_next_trigger_time();
+  void publish_triggers_up_to(double_t time);
 
   void update_inotify_watch();
   void inotify_timer_callback();
 
   std::unordered_map<std::string, project_interfaces::msg::Dataset> dataset_map;
-  std::string default_dataset;
+  std::string default_dataset_json;
 
-  std::string dataset_filename;
   project_interfaces::msg::Dataset dataset;
 
   bool playback;
   bool loop;
 
-  double latest_session_time = 0.0;
+  bool session_started = false;
+  bool triggers_left = false;
 
-  double current_time = 0.0;
-  double sampling_period = 0.0;
+  double_t latest_session_time;
+  double_t time_offset;
 
-  uint16_t sampling_frequency = 0;
-  uint8_t num_of_eeg_channels = 0;
-  uint8_t num_of_emg_channels = 0;
-  uint8_t total_channels = 0;
-  std::string data_filename;
+  double_t dataset_time;
+  double_t sampling_period;
 
-  std::ifstream file;
+  double_t next_trigger_time;
+
+  uint16_t sampling_frequency;
+  uint8_t num_of_eeg_channels;
+  uint8_t num_of_emg_channels;
+  uint8_t total_channels;
+
+  std::ifstream data_file;
+  std::ifstream trigger_file;
 
   std::string active_project;
   std::string data_directory;
