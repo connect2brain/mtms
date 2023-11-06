@@ -95,7 +95,7 @@ private:
   rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
-  bool preprocessor_enabled;
+  bool enabled;
 
   std::string active_project;
 
