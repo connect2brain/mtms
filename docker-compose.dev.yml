@@ -92,6 +92,9 @@ services:
       - ${SITE_ENV_FILE}
     volumes:
       - '$PROJECTS_ROOT:/app/projects'
+    # Needed for X11 forwarding.
+    environment:
+      - DISPLAY
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host

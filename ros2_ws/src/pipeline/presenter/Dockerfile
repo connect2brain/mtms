@@ -11,15 +11,13 @@ RUN apt-get install -y \
     python3-pip \
     ros-iron-rmw-cyclonedds-cpp
 
-# Note: Tensorflow is needed for mneflow, which is used for machine learning.
-RUN pip3 install tensorflow
+# PsychoPy and its dependencies
 
-# HACK: Currently needed for mneflow to install successfully. Remove once the corresponding problem
-#   in mneflow has been fixed.
-ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
+# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN pip3 install git+https://github.com/zubara/mneflow.git@38dcee430
-RUN apt-get install -y python3-tk
+RUN apt-get install -y libgtk-3-dev
+RUN pip3 install attrdict3 psychopy
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
