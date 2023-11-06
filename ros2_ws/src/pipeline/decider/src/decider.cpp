@@ -294,9 +294,7 @@ void EegDecider::handle_set_decider_module(
 void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
-  std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << this->active_project << "/decider";
-  this->script_directory = oss.str();
+  this->script_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/decider";
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
