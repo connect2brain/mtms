@@ -252,7 +252,7 @@ class MTMSSimulator(Node):
         feedback_msg = ChargeFeedback(id=message.event_info.id, error=error)
         self.charge_feedback_publisher.publish(feedback_msg)
 
-    def discharge_handler(self, message) -> None:
+    def discharge_handler(self, message: Discharge) -> None:
         """
         Discharges the given channel to given voltage.
 
@@ -364,7 +364,17 @@ class MTMSSimulator(Node):
                     "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing."
                 )
 
-    def pulse_handler(self, message):
+    def pulse_handler(self, message: Pulse) -> None:
+        """
+        Simulates the behaviour of giving a pulse.
+
+        Validates the pulse input and simulates the giving of a pulse by dropping
+        the channel voltage by percentage value of PULSE_DISCHARGE_PERCENTAGE. Send
+        pulse feedback message after execution.
+
+        Args:
+            message: the pulse information
+        """
         self.get_logger().info("Pulse: %r" % message)
 
         # Validate input
