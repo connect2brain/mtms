@@ -3,10 +3,7 @@
   "channels": {
     "eeg": 63,
     "emg": 10
-
   },
-  "sampling_frequency": 5000,
-  "duration": 0.1,
   "data_file": "random_data.csv",
   "trigger_times": []
 }
