@@ -15,8 +15,8 @@ const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 
 const std::string PROJECTS_DIRECTORY = "projects";
-const std::string PREPROCESSED_EEG_DATA_SUBDIRECTORY = "/eeg/preprocessed";
-const std::string RAW_EEG_DATA_SUBDIRECTORY = "/eeg/raw";
+const std::string PREPROCESSED_EEG_DATA_SUBDIRECTORY = "/eeg_recorder/preprocessed";
+const std::string RAW_EEG_DATA_SUBDIRECTORY = "/eeg_recorder/raw";
 
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
