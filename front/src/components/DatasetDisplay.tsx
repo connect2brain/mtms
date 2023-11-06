@@ -23,7 +23,7 @@ const DatasetPanel = styled(StyledPanel)`
   height: 260px;
   position: fixed;
   top: 982px;
-  right: 5px;
+  left: 5px;
   z-index: 1000;
 `
 

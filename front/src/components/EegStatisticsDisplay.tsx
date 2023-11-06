@@ -7,7 +7,7 @@ import { EegContext } from 'providers/EegProvider'
 
 const EegStatisticsPanel = styled(StyledPanel)`
   width: 300px;
-  height: 150px;
+  height: 250px;
   position: fixed;
   top: 646px;
   right: 5px;
@@ -36,7 +36,7 @@ export const EegStatisticsDisplay: React.FC = () => {
       </StateRow>
       <br />
       <StateRow>
-        <StateTitle>Time (µs)</StateTitle>
+        <StateTitle>Processing time (µs)</StateTitle>
       </StateRow>
       <StateRow>
         <IndentedStateTitle>Median</IndentedStateTitle>
@@ -49,6 +49,18 @@ export const EegStatisticsDisplay: React.FC = () => {
       <StateRow>
         <IndentedStateTitle>Max</IndentedStateTitle>
         <StateValue>{formatTimeToMicroseconds(eegStatistics?.preprocessing_time_max)}</StateValue>
+      </StateRow>
+      <br />
+      <StateRow>
+        <StateTitle>Max time (µs)</StateTitle>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Raw</IndentedStateTitle>
+        <StateValue>{formatTimeToMicroseconds(eegStatistics?.max_time_between_raw_samples)}</StateValue>
+      </StateRow>
+      <StateRow>
+        <IndentedStateTitle>Preprocessed</IndentedStateTitle>
+        <StateValue>{formatTimeToMicroseconds(eegStatistics?.max_time_between_preprocessed_samples)}</StateValue>
       </StateRow>
     </EegStatisticsPanel>
   )
