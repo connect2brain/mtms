@@ -48,8 +48,8 @@ private:
 
   bool _is_initialized;
 
-  py::module preprocessor_module;
-  py::object preprocessor_instance;
+  std::unique_ptr<py::module> preprocessor_module;
+  std::unique_ptr<py::object> preprocessor_instance;
 
   std::unique_ptr<py::scoped_interpreter> guard;
 

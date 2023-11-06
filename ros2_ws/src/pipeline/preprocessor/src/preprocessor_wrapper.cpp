@@ -23,8 +23,9 @@ void PreprocessorWrapper::initialize_module(
 
   this->sampling_frequency = sampling_frequency;
 
-  preprocessor_module.release();
-  preprocessor_instance.release();
+  /* If we have an existing preprocessor instance, release it which will call the destructor. */
+  preprocessor_instance = nullptr;
+  preprocessor_module = nullptr;
 
   /* Set the sys.path to include the directory of the module. */
   py::module sys_module = py::module::import("sys");
@@ -40,8 +41,10 @@ void PreprocessorWrapper::initialize_module(
   /* Import the module and initialize the Preprocessor instance. */
 
   try {
-    preprocessor_module = py::module::import(module_name.c_str());
-    preprocessor_instance = preprocessor_module.attr("Preprocessor")(eeg_data_size, emg_data_size, sampling_frequency);
+    auto imported_module = py::module::import(module_name.c_str());
+    preprocessor_module = std::make_unique<py::module>(imported_module);
+    auto instance = preprocessor_module->attr("Preprocessor")(eeg_data_size, emg_data_size, sampling_frequency);
+    preprocessor_instance = std::make_unique<py::object>(instance);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
@@ -55,8 +58,8 @@ void PreprocessorWrapper::initialize_module(
   }
 
   /* Extract the sample_window from preprocessor_instance. */
-  if (py::hasattr(preprocessor_instance, "sample_window")) {
-    py::list sample_window = preprocessor_instance.attr("sample_window").cast<py::list>();
+  if (py::hasattr(*preprocessor_instance, "sample_window")) {
+    py::list sample_window = preprocessor_instance->attr("sample_window").cast<py::list>();
     if (sample_window.size() == 2) {
       this->earliest_sample = sample_window[0].cast<int>();
       this->latest_sample = sample_window[1].cast<int>();
@@ -92,8 +95,8 @@ void PreprocessorWrapper::initialize_module(
 }
 
 void PreprocessorWrapper::reset_module() {
-  preprocessor_module.release();
-  preprocessor_instance.release();
+  preprocessor_module = nullptr;
+  preprocessor_instance = nullptr;
 
   py_timestamps.reset();
   py_eeg_data.reset();
@@ -154,7 +157,7 @@ PreprocessorWrapper::process(
 
   py::object result;
   try {
-    result = preprocessor_instance.attr("process")(*py_timestamps, *py_eeg_data, *py_emg_data, current_sample_index, pulse_given);
+    result = preprocessor_instance->attr("process")(*py_timestamps, *py_eeg_data, *py_emg_data, current_sample_index, pulse_given);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
