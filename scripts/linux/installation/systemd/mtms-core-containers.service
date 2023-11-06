@@ -7,6 +7,7 @@ Requires=docker.service
 Environment=MTMS_ROOT=/home/mtms/mtms
 Environment=SITE=Tubingen
 Environment=CYCLONEDDS_URI=/home/mtms/mtms/config/cyclonedds.xml
+Environment=DISPLAY=:1
 
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
