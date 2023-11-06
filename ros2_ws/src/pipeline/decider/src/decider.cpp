@@ -238,11 +238,16 @@ void EegDecider::handle_set_decider_enabled(
 
   this->decider_enabled_publisher->publish(msg);
 
-  /* Re-initialize sample buffer when enabling decider to avoid using remains of old EEG data. */
   if (this->enabled) {
-    initialize_sample_buffer();
-  }
+    initialize_decider_module();
 
+    /* Re-initialize sample buffer to avoid using remains of old EEG data. */
+    initialize_sample_buffer();
+  } else {
+    /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
+       but do not unset the module. */
+    this->decider_wrapper->reset_module_state();
+  }
   RCLCPP_INFO(this->get_logger(), "%s decider.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
