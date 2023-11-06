@@ -36,15 +36,19 @@ private:
   void append_to_file(const std::string &data);
 
   std::string active_project;
-  std::string data_directory;
 
   std::string experiment_name;
   std::string subject_name;
 
   std::string filename;
-  std::string file_path;
 
-  std::ofstream file;
+  std::string raw_data_directory;
+  std::string raw_file_path;
+  std::ofstream raw_file;
+
+  std::string preprocessed_data_directory;
+  std::string preprocessed_file_path;
+  std::ofstream preprocessed_file;
 
   uint8_t current_session_state;
 };
