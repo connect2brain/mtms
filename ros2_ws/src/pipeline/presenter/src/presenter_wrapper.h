@@ -21,7 +21,7 @@ public:
       const std::string& directory,
       const std::string& module_name);
 
-  void reset_module();
+  void reset_module_state();
 
   bool process(pipeline_interfaces::msg::SensoryStimulus& msg);
 

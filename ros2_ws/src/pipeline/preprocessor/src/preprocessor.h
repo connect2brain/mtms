@@ -46,7 +46,7 @@ private:
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
-  void reset_preprocessor_module();
+  void unset_preprocessor_module();
 
   void set_preprocessor_module(const std::string module);
   void handle_set_preprocessor_module(
