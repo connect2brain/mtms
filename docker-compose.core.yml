@@ -147,6 +147,21 @@ services:
       - ${SITE_ENV_FILE}
     network_mode: host
 
+  presenter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/presenter/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    # Needed for X11 forwarding.
+    environment:
+      - DISPLAY
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
   project_manager:
     build:
       context: .
