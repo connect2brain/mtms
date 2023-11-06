@@ -94,17 +94,14 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
     filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + ".csv";
     file_path = data_directory + "/" + filename;
 
-    if (file.is_open()) {
-        file.close();
-    }
-    file.open(file_path);
-
-    if (!file.is_open()) {
-      RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", file_path.c_str());
-      return;
-    }
-
     RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", file_path.c_str());
+  }
+
+  if (session_state != system_interfaces::msg::SessionState::STARTED &&
+      current_session_state == system_interfaces::msg::SessionState::STARTED &&
+      file.is_open()) {
+
+    file.close();
   }
 
   current_session_state = session_state;
@@ -116,7 +113,13 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
 
 void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
   if (!file.is_open()) {
-    return;
+    file.open(file_path);
+
+    /* Check if file was opened successfully. */
+    if (!file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", file_path.c_str());
+      return;
+    }
   }
 
   std::ostringstream data;
