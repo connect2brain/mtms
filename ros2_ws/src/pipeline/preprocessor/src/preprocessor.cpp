@@ -217,23 +217,21 @@ void EegPreprocessor::handle_set_preprocessor_enabled(
       const std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetPreprocessorEnabled::Response> response) {
 
-  bool enabled = request->enabled;
-
   /* Update local state variable. */
-  this->preprocessor_enabled = enabled;
+  this->enabled = request->enabled;
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::Bool();
-  msg.data = enabled;
+  msg.data = this->enabled;
 
   this->preprocessor_enabled_publisher->publish(msg);
 
   /* Re-initialize sample buffer when enabling preprocessor to avoid using remains of old EEG data. */
-  if (enabled) {
+  if (this->enabled) {
     initialize_sample_buffer();
   }
 
-  RCLCPP_INFO(this->get_logger(), "%s preprocessor.", enabled ? "Enabling" : "Disabling");
+  RCLCPP_INFO(this->get_logger(), "%s preprocessor.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
 }
@@ -471,7 +469,7 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
   check_dropped_samples(sample_time);
   bool pulse_given = was_pulse_given(sample_time);
 
-  if (!this->preprocessor_enabled) {
+  if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
