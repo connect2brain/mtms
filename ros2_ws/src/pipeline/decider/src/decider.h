@@ -102,7 +102,7 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
 
-  bool decider_enabled;
+  bool enabled;
 
   std::string active_project;
 
