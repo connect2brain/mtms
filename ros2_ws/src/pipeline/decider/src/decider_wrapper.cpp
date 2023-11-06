@@ -219,6 +219,26 @@ std::tuple<bool, bool, std::shared_ptr<pipeline_interfaces::msg::SensoryStimulus
     return {false, send_trigger, nullptr};
   }
 
+  if (!py::isinstance<py::float_>(py_sensory_stimulus["time"])) {
+    RCLCPP_ERROR(*logger_ptr, "'time' field of 'sensory_stimulus' dictionary should be of type float.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py::isinstance<py::int_>(py_sensory_stimulus["state"])) {
+    RCLCPP_ERROR(*logger_ptr, "'state' field of 'sensory_stimulus' dictionary should be of type int.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py::isinstance<py::int_>(py_sensory_stimulus["parameter"])) {
+    RCLCPP_ERROR(*logger_ptr, "'parameter' field of 'sensory_stimulus' dictionary should be of type int.");
+    return {false, send_trigger, nullptr};
+  }
+
+  if (!py::isinstance<py::float_>(py_sensory_stimulus["duration"])) {
+    RCLCPP_ERROR(*logger_ptr, "'duration' field of 'sensory_stimulus' dictionary should be of type float.");
+    return {false, send_trigger, nullptr};
+  }
+
   /* Convert each field from the dictionary to the ROS message. */
   auto sensory_stimulus = std::make_shared<pipeline_interfaces::msg::SensoryStimulus>();
 
