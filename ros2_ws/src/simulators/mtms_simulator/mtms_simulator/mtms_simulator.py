@@ -41,11 +41,13 @@ from event_interfaces.msg import (
     EventInfo,
     ExecutionCondition,
     Pulse,
+    PulseError,
     TriggerOut,
     PulseFeedback,
     ChargeFeedback,
     DischargeFeedback,
     TriggerOutFeedback,
+    WaveformPhase,
 )
 
 
@@ -62,6 +64,7 @@ class MTMSSimulator(Node):
     # TODO: Make these values configurable
     CHARGE_RATE = 1 / 1500  # in J/s
     TIME_CONSTANT = 1  # in seconds, tau = RC
+    PULSE_DISCHARGE_PERCENTAGE = 0.05
 
     MAX_VOLTAGE = 1500  # Volts
     NUM_OF_CHANNELS = 5
@@ -363,6 +366,61 @@ class MTMSSimulator(Node):
 
     def pulse_handler(self, message):
         self.get_logger().info("Pulse: %r" % message)
+
+        # Validate input
+        error = PulseError()
+        if not self.allow_stimulation:
+            self.get_logger().warn("Stimulation not allowed, skipping pulse.")
+            return
+        if message.channel >= len(self.system_state.channel_states):
+            self.get_logger().warn("Invalid channel index: %d" % message.channel)
+            error.value = PulseError.INVALID_CHANNEL
+            return
+
+        total_waveform_duration_in_ticks = 0
+        rising_duration_in_ticks = 0
+        falling_duration_in_ticks = 0
+        for waveform_piece in message.waveform:
+            # TODO: Check waveform phase type requirements.
+            duration = waveform_piece.duration_in_ticks
+            total_waveform_duration_in_ticks += duration
+            match waveform_piece.waveform_phase:
+                case WaveformPhase.RISING:
+                    rising_duration_in_ticks += duration
+                case WaveformPhase.FALLING:
+                    falling_duration_in_ticks += duration
+
+        if total_waveform_duration_in_ticks > self.settings.maximum_pulse_duration_ticks:
+            error.value = PulseError.INVALID_DURATIONS
+
+        rise_fall_diff = abs(rising_duration_in_ticks - falling_duration_in_ticks)
+        if rise_fall_diff > self.settings.maximum_rising_falling_difference_ticks:
+            error.value = PulseError.INVALID_DURATIONS
+
+        # TODO: Implement pulse count limit checks.
+
+        if error.value != PulseError.NO_ERROR:
+            feedback_msg = PulseFeedback(id=message.event_info.id, error=error)
+            self.pulse_feedback_publisher.publish(feedback_msg)
+            return
+
+        # Wait for execution condition
+        event_info = EventInfo()
+        self._wait_for_execution_execution_condition(
+            event_info.execution_condition, event_info.execution_time
+        )
+
+        # Give pulse
+        channel_state: ChannelState = self.system_state.channel_states[message.channel]
+
+        channel_state.pulse_count += 1
+        channel_state.voltage = (
+            1 - self.PULSE_DISCHARGE_PERCENTAGE
+        ) * channel_state.voltage
+
+        # Send feedback
+        feedback_msg = PulseFeedback(id=message.event_info.id, error=error)
+        self.pulse_feedback_publisher.publish(feedback_msg)
 
     def trigger_out_handler(self, trigger_out):
         self.get_logger().info("Trigger out activate")
