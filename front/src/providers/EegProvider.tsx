@@ -12,7 +12,11 @@ interface EegInfo extends Message {
 
 interface EegStatistics extends Message {
   num_of_raw_samples: number
+  max_time_between_raw_samples: number
+
   num_of_preprocessed_samples: number
+  max_time_between_preprocessed_samples: number
+
   preprocessing_time_max: number
   preprocessing_time_q95: number
   preprocessing_time_median: number
