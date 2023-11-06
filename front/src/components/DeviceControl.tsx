@@ -4,9 +4,11 @@ import { startDevice, stopDevice } from 'ros/services/device'
 import { StyledButton } from 'styles/General'
 
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
+import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
 export const DeviceControl = () => {
   const { systemState } = useContext(SystemContext)
+  const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
 
   const deviceState = systemState?.device_state
 
@@ -26,14 +28,12 @@ export const DeviceControl = () => {
     }
   }
 
-  return (
-    <>
-      <StyledButton
-        onClick={toggleDevice}
-        disabled={deviceState?.value === DeviceState.STARTUP || deviceState?.value === DeviceState.SHUTDOWN}
-      >
-        {deviceText()} device
-      </StyledButton>
-    </>
-  )
+  return mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED ? (
+    <StyledButton
+      onClick={toggleDevice}
+      disabled={deviceState?.value === DeviceState.STARTUP || deviceState?.value === DeviceState.SHUTDOWN}
+    >
+      {deviceText()} device
+    </StyledButton>
+  ) : null
 }
