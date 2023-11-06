@@ -237,10 +237,10 @@ void EegPreprocessor::handle_set_preprocessor_enabled(
   response->success = true;
 }
 
-void EegPreprocessor::reset_preprocessor_module() {
+void EegPreprocessor::unset_preprocessor_module() {
   this->module_name = UNSET_STRING;
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor module reset.");
+  RCLCPP_INFO(this->get_logger(), "Preprocessor module unset.");
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
@@ -248,8 +248,8 @@ void EegPreprocessor::reset_preprocessor_module() {
 
   this->preprocessor_module_publisher->publish(msg);
 
-  /* Reset the wrapper so that any new samples are not processed. */
-  this->preprocessor_wrapper->reset_module();
+  /* Reset the Python module state. */
+  this->preprocessor_wrapper->reset_module_state();
 }
 
 void EegPreprocessor::set_preprocessor_module(const std::string module) {
@@ -292,7 +292,7 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
     this->set_preprocessor_module(this->modules[0]);
   } else {
     RCLCPP_WARN(this->get_logger(), "No preprocessors found in project: %s.", this->active_project.c_str());
-    this->reset_preprocessor_module();
+    this->unset_preprocessor_module();
   }
 
   update_inotify_watch();

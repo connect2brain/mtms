@@ -50,7 +50,7 @@ private:
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
-  void reset_decider_module();
+  void unset_decider_module();
 
   void set_decider_module(const std::string module);
   void handle_set_decider_module(

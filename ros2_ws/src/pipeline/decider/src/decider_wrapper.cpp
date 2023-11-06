@@ -96,7 +96,7 @@ void DeciderWrapper::initialize_module(
   this->_is_initialized = true;
 }
 
-void DeciderWrapper::reset_module() {
+void DeciderWrapper::reset_module_state() {
   decider_instance = nullptr;
   decider_module = nullptr;
 

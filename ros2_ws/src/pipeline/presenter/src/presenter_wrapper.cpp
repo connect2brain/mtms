@@ -55,7 +55,7 @@ void PresenterWrapper::initialize_module(
   this->_is_initialized = true;
 }
 
-void PresenterWrapper::reset_module() {
+void PresenterWrapper::reset_module_state() {
   presenter_module = nullptr;
   presenter_instance = nullptr;
 
