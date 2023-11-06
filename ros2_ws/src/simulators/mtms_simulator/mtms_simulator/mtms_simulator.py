@@ -60,7 +60,7 @@ class MTMSSimulator(Node):
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
 
     # TODO: Make these values configurable
-    CHARGE_RATE = 1500  # in J/s
+    CHARGE_RATE = 1 / 1500  # in J/s
     TIME_CONSTANT = 1  # in seconds, tau = RC
 
     MAX_VOLTAGE = 1500  # Volts
@@ -186,6 +186,10 @@ class MTMSSimulator(Node):
 
     def start_session_handler(self, request, response):
         # TODO: Check if STARTING phase required
+        if self.system_state.device_state.value != DeviceState.OPERATIONAL:
+            self.get_logger().warn("Device not stated. Can't start session")
+            return
+
         self.system_state.session_state.value = SessionState.STARTED
         self.session_start_time = time.time()
         self.get_logger().info("Session started")
@@ -210,72 +214,111 @@ class MTMSSimulator(Node):
         Args:
             message: contains the charge information.
         """
-        event_info: EventInfo = message.event_info
-        charge_error = ChargeError()
+        self.get_logger().info("Charge message received: %r" % message)
 
-        error = self._validate_voltage_update_input(message, charge_error)
+        # Session operational
+        if self._check_session_started():
+            self.get_logger().warn("Session not started. Can't charge coil.")
+            return
+
+        # Input validation
+        error = self._validate_voltage_update_input(message)
+        if error.value != ChargeError.NO_ERROR:
+            feedback_msg = ChargeFeedback(id=message.event_info.id, error=error)
+            self.charge_feedback_publisher.publish(feedback_msg)
+            return
+
+        # Wait for execution condition
+        event_info: EventInfo = message.event_info
         self._wait_for_execution_execution_condition(
             event_info.execution_condition, event_info.execution_time
         )
 
+        # Update voltage
         channel_state: ChannelState = self.system_state.channel_states[message.channel]
 
         current_voltage = channel_state.voltage
         target_voltage = message.target_voltage
 
+        # TODO: Check the formula and constants
         t = self.CHARGE_RATE * (target_voltage**2 - current_voltage**2)
         time.sleep(t)
-
         channel_state.voltage = target_voltage
 
+        # Send charge feedback after update ready
         feedback_msg = ChargeFeedback(id=message.event_info.id, error=error)
         self.charge_feedback_publisher.publish(feedback_msg)
 
     def discharge_handler(self, message) -> None:
         """
-        Charges or discharges the given channel to given voltage.
+        Discharges the given channel to given voltage.
 
         New voltage is not set immediately, and rather models the behaviour of a
-        capacitor to change the voltage. Discharge
-        follows exponential decay.
+        capacitor to change the voltage. Discharge follows exponential decay.
 
         Args:
             message: contains the discharge information.
-
-        Returns:
         """
-        event_info: EventInfo = message.event_info
-        discharge_error = DischargeError()
+        self.get_logger().info("Discharge message received: %r" % message)
 
-        error = self._validate_voltage_update_input(message, discharge_error)
+        # Session operational
+        if self._check_session_started():
+            self.get_logger().warn("Session not started. Can't discharge coil.")
+            return
+
+        # Input validation
+        error = self._validate_voltage_update_input(message)
+        if error.value != DischargeError.NO_ERROR:
+            feedback_msg = DischargeFeedback(id=message.event_info.id, error=error)
+            self.discharge_feedback_publisher.publish(feedback_msg)
+            return
+
+        # Wait for execution condition
+        event_info: EventInfo = message.event_info
         self._wait_for_execution_execution_condition(
             event_info.execution_condition, event_info.execution_time
         )
 
+        # Update voltage
         channel_state: ChannelState = self.system_state.channel_states[message.channel]
 
         current_voltage = channel_state.voltage
         target_voltage = message.target_voltage
 
+        # TODO: Check the formula and constants
         t = self.TIME_CONSTANT * math.log(current_voltage / target_voltage)
         time.sleep(t)
         channel_state.voltage = target_voltage
 
+        # Send charge feedback after update ready
         feedback_msg = DischargeFeedback(id=message.event_info.id, error=error)
-
         self.discharge_feedback_publisher.publish(feedback_msg)
 
+    def _check_session_started(self) -> bool:
+        return self.system_state.session_state.value != SessionState.STARTED
+
     def _validate_voltage_update_input(
-        self, message: Charge | Discharge, error: ChargeError | DischargeError
-    ) -> ChargeError | DischargeError:
+        self, message: Charge | Discharge
+    ) -> ChargeError | DischargeError | None:
         """Validate charge and discharge message input parameters
 
         Args:
             message: topic message containing charge or discharge information.
-            error: object containing the error value.
         Returns:
             Given error object containing the first encountered error.
         """
+
+        match message:
+            case Charge():
+                error = ChargeError()
+            case Discharge():
+                error = DischargeError()
+            case _:
+                self.get_logger().error(
+                    "Trying to validate voltage with wrong message type"
+                )
+                return None
+
         # TODO: Implement rest of the checks.
         if message.channel >= len(self.system_state.channel_states):
             self.get_logger().error(
@@ -325,6 +368,8 @@ class MTMSSimulator(Node):
         self.get_logger().info("Trigger out activate")
         self.get_logger().debug("Trigger out: %r" % trigger_out)
 
+    # NOTE: System state is not published fast enough with python. The simulator might
+    # need to be translated to cpp later.
     def system_state_callback(self):
         msg = self.system_state
         msg.time = 0.0
@@ -336,7 +381,7 @@ class MTMSSimulator(Node):
 def main(args=None):
     rclpy.init(args=args)
     mtms_simulator = MTMSSimulator()
-    executor = MultiThreadedExecutor(num_threads=4)
+    executor = MultiThreadedExecutor()
     rclpy.spin(mtms_simulator, executor=executor)
     rclpy.shutdown()
 
