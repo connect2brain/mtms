@@ -31,7 +31,7 @@ const DatasetPanelTitle = styled.div`
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
-  height: 260px;
+  height: 253px;
   position: fixed;
   top: 928px;
   right: 380px;
