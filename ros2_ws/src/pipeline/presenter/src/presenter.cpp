@@ -116,7 +116,8 @@ EegPresenter::~EegPresenter() {
 
 /* Functions to re-initialize the presenter state. */
 void EegPresenter::initialize_presenter_module() {
-  if (this->script_directory == UNSET_STRING ||
+  if (!this->enabled ||
+      this->script_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING) {
 
     return;
