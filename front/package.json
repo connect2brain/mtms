@@ -31,7 +31,7 @@
     "react-table": "^7.8.0",
     "redux": "^4.2.0",
     "redux-thunk": "^2.4.1",
-    "roslib": "git+https://github.com/sathak93/roslibjs.git#ros2actionclient",
+    "roslib": "https://github.com/sathak93/roslibjs.git#ros2actionclient",
     "styled-components": "^5.3.5",
     "typescript": "^4.6.4",
     "web-vitals": "^2.1.4",
