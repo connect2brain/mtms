@@ -14,7 +14,9 @@ using namespace std::placeholders;
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 
-const std::string PROJECTS_DIRECTORY = "projects/";
+const std::string PROJECTS_DIRECTORY = "projects";
+const std::string PREPROCESSED_EEG_DATA_SUBDIRECTORY = "/eeg/preprocessed";
+const std::string RAW_EEG_DATA_SUBDIRECTORY = "/eeg/raw";
 
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
@@ -64,9 +66,8 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
 void EegRecorder::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
-  std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << this->active_project << "/eeg/preprocessed";
-  this->data_directory = oss.str();
+  this->raw_data_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/" + RAW_EEG_DATA_SUBDIRECTORY;
+  this->preprocessed_data_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/" + PREPROCESSED_EEG_DATA_SUBDIRECTORY;
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 }
@@ -91,33 +92,40 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
     timestamp_stream << std::put_time(std::localtime(&now_time), "%Y-%m-%d-%H-%M-%S");
 
     /* TODO: Experiment name and subject name are empty strings for now, make them configurable via UI. */
-    filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + ".csv";
-    file_path = data_directory + "/" + filename;
+    if (experiment_name != "" && subject_name != "") {
+      filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + ".csv";
+    } else {
+      filename = timestamp_stream.str() + ".csv";
+    }
+    raw_file_path = raw_data_directory + "/" + filename;
+    preprocessed_file_path = preprocessed_data_directory + "/" + filename;
 
-    RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", file_path.c_str());
+    RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", filename.c_str());
   }
 
   if (session_state != system_interfaces::msg::SessionState::STARTED &&
-      current_session_state == system_interfaces::msg::SessionState::STARTED &&
-      file.is_open()) {
+      current_session_state == system_interfaces::msg::SessionState::STARTED) {
 
-    file.close();
+    if (raw_file.is_open()) {
+      raw_file.close();
+    }
+    if (preprocessed_file.is_open()) {
+      preprocessed_file.close();
+    }
   }
-
   current_session_state = session_state;
 }
 
 void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
-  /* Not storing the raw data for now. */
-}
+  /* TODO: Duplicating the code from handle_preprocessed_eeg_sample function for now. Later, unify if it turns out that
+       they did not diverge too much. */
 
-void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
-  if (!file.is_open()) {
-    file.open(file_path);
+  if (!raw_file.is_open()) {
+    raw_file.open(raw_file_path);
 
     /* Check if file was opened successfully. */
-    if (!file.is_open()) {
-      RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", file_path.c_str());
+    if (!raw_file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Error opening file in path: %s", raw_file_path.c_str());
       return;
     }
   }
@@ -146,7 +154,45 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
 
   data << "\n";
 
-  file << data.str();
+  raw_file << data.str();
+}
+
+void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
+  if (!preprocessed_file.is_open()) {
+    preprocessed_file.open(preprocessed_file_path);
+
+    /* Check if file was opened successfully. */
+    if (!preprocessed_file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Error opening file in path: %s", preprocessed_file_path.c_str());
+      return;
+    }
+  }
+
+  std::ostringstream data;
+  data << std::fixed << std::setprecision(4) << msg->time;
+
+  /* Helper function to concatenate with comma. */
+  auto comma_join = [](const std::string &accum, double_t value) {
+      return accum.empty() ? std::to_string(value) : accum + "," + std::to_string(value);
+  };
+
+  /* Add eeg_data if available. */
+  if (!msg->eeg_data.empty()) {
+      data << ",";
+      std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
+      data << eeg_str;
+  }
+
+  /* Add emg_data if available. */
+  if (!msg->emg_data.empty()) {
+      data << ",";
+      std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
+      data << emg_str;
+  }
+
+  data << "\n";
+
+  preprocessed_file << data.str();
 }
 
 int main(int argc, char *argv[]) {
