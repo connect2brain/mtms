@@ -27,6 +27,7 @@ const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
 const std::string DATASET_LIST_TOPIC = "/eeg_simulator/dataset/list";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
+const std::string EEG_SIMULATOR_DATA_SUBDIRECTORY = "eeg_simulator/";
 
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
@@ -293,7 +294,7 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   this->active_project = msg->data;
 
   std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << this->active_project << "/eeg/raw";
+  oss << PROJECTS_DIRECTORY << "/" << this->active_project << "/" << EEG_SIMULATOR_DATA_SUBDIRECTORY;
   this->data_directory = oss.str();
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s", this->active_project.c_str());
