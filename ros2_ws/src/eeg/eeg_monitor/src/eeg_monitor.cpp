@@ -19,6 +19,8 @@ const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string EEG_STATISTICS_TOPIC = "/eeg/statistics";
 
+const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
+
 class EegMonitor : public rclcpp::Node {
 
 public:
@@ -26,7 +28,19 @@ public:
     num_of_raw_eeg_samples = 0;
 
     /* Subscriber for raw EEG. */
-    auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
+    auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
+      /* Update the maximum time between two consecutive samples. */
+      auto now = this->now();
+
+      if (last_raw_sample_time.nanoseconds() != 0) {
+        auto time_diff = (now - last_raw_sample_time).seconds();
+        if (num_of_raw_eeg_samples > 0 && time_diff > max_time_between_raw_samples) {
+          max_time_between_raw_samples = time_diff;
+        }
+      }
+      last_raw_sample_time = now;
+
+      /* Update the number of samples. */
       num_of_raw_eeg_samples++;
     };
 
@@ -36,9 +50,23 @@ public:
       eeg_raw_subscriber_callback);
 
     /* Subscriber for preprocessed EEG. */
-    auto eeg_preprocessed_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> message) -> void {
+    auto eeg_preprocessed_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) -> void {
+      /* Update the maximum time between two consecutive samples. */
+      auto now = this->now();
+
+      if (last_preprocessed_sample_time.nanoseconds() != 0) {
+        auto time_diff = (now - last_preprocessed_sample_time).seconds();
+        if (num_of_preprocessed_eeg_samples > 0 && time_diff > max_time_between_preprocessed_samples) {
+          max_time_between_preprocessed_samples = time_diff;
+        }
+      }
+      last_preprocessed_sample_time = now;
+
+      /* Update the number of samples. */
       num_of_preprocessed_eeg_samples++;
-      processing_times.push_back(message->processing_time);
+
+      /* Update the processing times. */
+      processing_times.push_back(msg->processing_time);
     };
 
     eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
@@ -87,7 +115,11 @@ public:
     auto msg = eeg_interfaces::msg::EegStatistics();
 
     msg.num_of_raw_samples = num_of_raw_eeg_samples;
+    msg.max_time_between_raw_samples = max_time_between_raw_samples;
+
     msg.num_of_preprocessed_samples = num_of_preprocessed_eeg_samples;
+    msg.max_time_between_preprocessed_samples = max_time_between_preprocessed_samples;
+
     msg.preprocessing_time_max = max_time;
     msg.preprocessing_time_q95 = q95_time;
     msg.preprocessing_time_median = median_time;
@@ -97,6 +129,9 @@ public:
     /* Reset counters. */
     num_of_raw_eeg_samples = 0;
     num_of_preprocessed_eeg_samples = 0;
+
+    max_time_between_raw_samples = 0;
+    max_time_between_preprocessed_samples = 0;
 
     processing_times.clear();
   }
@@ -109,8 +144,14 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer;
 
-  unsigned int num_of_raw_eeg_samples;
-  unsigned int num_of_preprocessed_eeg_samples;
+  uint16_t num_of_raw_eeg_samples;
+  double_t max_time_between_raw_samples = 0.0;
+  rclcpp::Time last_raw_sample_time;
+
+  uint16_t num_of_preprocessed_eeg_samples;
+  double_t max_time_between_preprocessed_samples = 0.0;
+  rclcpp::Time last_preprocessed_sample_time;
+
   std::vector<double_t> processing_times;
 };
 
