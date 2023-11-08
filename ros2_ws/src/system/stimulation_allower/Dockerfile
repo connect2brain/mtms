@@ -18,7 +18,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/utility/stimulation_allower ros2_ws/src/utility/stimulation_allower/
+COPY ros2_ws/src/system/stimulation_allower ros2_ws/src/system/stimulation_allower/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/stimulation_interfaces ros2_ws/src/interfaces/stimulation_interfaces/
@@ -31,7 +31,7 @@ RUN source /opt/ros/iron/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/utility/stimulation_allower/ros_entrypoint.sh .
+COPY ros2_ws/src/system/stimulation_allower/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
