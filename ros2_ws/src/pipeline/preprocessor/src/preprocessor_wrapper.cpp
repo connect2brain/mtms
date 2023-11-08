@@ -176,12 +176,12 @@ PreprocessorWrapper::process(
 
   py::dict dict_result = result.cast<py::dict>();
 
-  if (!dict_result.contains("eeg_data")) {
-    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_data.");
+  if (!dict_result.contains("eeg_sample")) {
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_sample.");
     return {cpp_result, false};
   }
-  if (!dict_result.contains("emg_data")) {
-    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_data.");
+  if (!dict_result.contains("emg_sample")) {
+    RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_sample.");
     return {cpp_result, false};
   }
   if (!dict_result.contains("valid")) {
@@ -190,8 +190,8 @@ PreprocessorWrapper::process(
   }
 
   /* Convert the Python dictionary to a ROS message. */
-  cpp_result.eeg_data = dict_result["eeg_data"].cast<std::vector<double>>();
-  cpp_result.emg_data = dict_result["emg_data"].cast<std::vector<double>>();
+  cpp_result.eeg_data = dict_result["eeg_sample"].cast<std::vector<double>>();
+  cpp_result.emg_data = dict_result["emg_sample"].cast<std::vector<double>>();
   cpp_result.valid = dict_result["valid"].cast<bool>();
 
   cpp_result.time = current_time;
