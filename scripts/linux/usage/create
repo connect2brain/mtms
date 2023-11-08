@@ -25,9 +25,6 @@ mkdir $PROJECTS_ROOT/$PROJECT_NAME
 # Copy example project to the new project directory.
 cp -r $MTMS_ROOT/example/* $PROJECTS_ROOT/$PROJECT_NAME
 
-# Copy the project .env file to the new project directory.
-cp $MTMS_ROOT/.env $PROJECTS_ROOT/$PROJECT_NAME
-
 echo ""
 echo "Project successfully created: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
