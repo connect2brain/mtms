@@ -42,6 +42,8 @@ public:
     bool ready_for_event_trigger);
 
   bool is_initialized() const;
+  bool error_occurred() const;
+
   std::size_t get_buffer_size() const;
 
   /* Exposed to Python, defined in cpp_bindings.cpp. */
@@ -52,6 +54,7 @@ private:
   static rclcpp::Logger* logger_ptr;
 
   bool _is_initialized;
+  bool _error_occurred;
 
   std::unique_ptr<py::module> decider_module;
   std::unique_ptr<py::object> decider_instance;

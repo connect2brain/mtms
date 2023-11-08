@@ -170,6 +170,7 @@ void EegPresenter::handle_set_presenter_enabled(
   /* Initialize the presenter module if it was enabled, otherwise reset it. */
   if (this->enabled) {
     this->initialize_presenter_module();
+
   } else {
     /* Reset the state of the existing module so that any windows etc. created by the Python module are closed,
        but do not unset the module. */
@@ -376,6 +377,13 @@ void EegPresenter::handle_sensory_stimulus(const std::shared_ptr<pipeline_interf
                          *this->get_clock(),
                          1000,
                          "Presenter enabled and selected but not initialized");
+    return;
+  }
+  if (this->presenter_wrapper->error_occurred()) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "An error occurred in presenter module, please re-initialize.");
     return;
   }
 

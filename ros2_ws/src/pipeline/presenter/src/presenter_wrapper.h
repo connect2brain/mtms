@@ -26,6 +26,7 @@ public:
   bool process(pipeline_interfaces::msg::SensoryStimulus& msg);
 
   bool is_initialized() const;
+  bool error_occurred() const;
 
   /* Exposed to Python, defined in cpp_bindings.cpp. */
   static void log(const std::string& message);
@@ -35,6 +36,7 @@ private:
   static rclcpp::Logger* logger_ptr;
 
   bool _is_initialized;
+  bool _error_occurred;
 
   std::unique_ptr<py::module> presenter_module;
   std::unique_ptr<py::object> presenter_instance;
