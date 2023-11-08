@@ -15,7 +15,7 @@ if [ -z "$BAG_ANALYSIS_TOPIC" ]; then
 fi
 
 if [ -z "$BAG_ANALYSIS_TIMESTAMP" ]; then
-  python3 bag_exporter.py --bag $BAG_ANALYSIS_BAG_NAME --topic $BAG_ANALYSIS_TOPIC
+  python3 bag_exporter.py --project $PROJECT_NAME --bag $BAG_ANALYSIS_BAG_NAME --topic $BAG_ANALYSIS_TOPIC
 else
-  python3 bag_exporter.py --bag $BAG_ANALYSIS_BAG_NAME --timestamp $BAG_ANALYSIS_TIMESTAMP --topic $BAG_ANALYSIS_TOPIC
+  python3 bag_exporter.py --project $PROJECT_NAME --bag $BAG_ANALYSIS_BAG_NAME --timestamp $BAG_ANALYSIS_TIMESTAMP --topic $BAG_ANALYSIS_TOPIC
 fi
