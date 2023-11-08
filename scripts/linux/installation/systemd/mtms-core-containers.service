@@ -4,6 +4,8 @@ After=docker.service
 Requires=docker.service
 
 [Service]
+User=mtms
+
 Environment=MTMS_ROOT=/home/mtms/mtms
 Environment=SITE=Tubingen
 Environment=CYCLONEDDS_URI=/home/mtms/mtms/config/cyclonedds.xml
