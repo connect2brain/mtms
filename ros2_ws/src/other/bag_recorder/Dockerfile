@@ -16,20 +16,19 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
-WORKDIR /app
-COPY ros2_ws/src/interfaces ros2_ws/src/interfaces/
+WORKDIR /app/ros2_ws
+COPY ros2_ws/src/interfaces src/interfaces/
 
 # Build ROS packages
 
-WORKDIR /app/ros2_ws
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/other/bag_recorder/ros_entrypoint.sh .
-RUN dos2unix ros_entrypoint.sh
-RUN chmod +x ros_entrypoint.sh
+COPY ros2_ws/src/other/bag_recorder/bag_recorder.sh .
+RUN dos2unix bag_recorder.sh
+RUN chmod +x bag_recorder.sh
 
-ENTRYPOINT ["./ros_entrypoint.sh"]
+ENTRYPOINT ["./bag_recorder.sh"]
