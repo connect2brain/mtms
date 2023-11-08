@@ -195,7 +195,7 @@ services:
   stimulation_allower:
     build:
       context: .
-      dockerfile: ros2_ws/src/utility/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/system/stimulation_allower/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
