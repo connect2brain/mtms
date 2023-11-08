@@ -92,6 +92,7 @@ void PreprocessorWrapper::initialize_module(
   this->emg_data_size = emg_data_size;
 
   this->_is_initialized = true;
+  this->_error_occurred = false;
 }
 
 void PreprocessorWrapper::reset_module_state() {
@@ -103,6 +104,7 @@ void PreprocessorWrapper::reset_module_state() {
   py_emg_data.reset();
 
   this->_is_initialized = false;
+  this->_error_occurred = false;
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {
@@ -113,6 +115,10 @@ PreprocessorWrapper::~PreprocessorWrapper() {
 
 bool PreprocessorWrapper::is_initialized() const {
   return this->_is_initialized;
+}
+
+bool PreprocessorWrapper::error_occurred() const {
+  return this->_error_occurred;
 }
 
 std::size_t PreprocessorWrapper::get_buffer_size() const {
@@ -161,16 +167,19 @@ PreprocessorWrapper::process(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    this->_error_occurred = true;
     return {cpp_result, false};
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    this->_error_occurred = true;
     return {cpp_result, false};
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
+    this->_error_occurred = true;
     return {cpp_result, false};
   }
 
@@ -178,14 +187,19 @@ PreprocessorWrapper::process(
 
   if (!dict_result.contains("eeg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_sample.");
+    this->_error_occurred = true;
     return {cpp_result, false};
   }
+
   if (!dict_result.contains("emg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_sample.");
+    this->_error_occurred = true;
     return {cpp_result, false};
   }
+
   if (!dict_result.contains("valid")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: valid.");
+    this->_error_occurred = true;
     return {cpp_result, false};
   }
 
