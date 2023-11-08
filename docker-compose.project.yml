@@ -1,27 +1,6 @@
 version: '2'
 
 services:
-  bag_exporter:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
-    env_file:
-      - ${PROJECT_ENV_FILE}
-    volumes:
-      - '$PROJECTS_ROOT/$PROJECT_NAME:/app/project'
-    network_mode: host
-
-  bag_recorder:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
-    env_file:
-      - ${PROJECT_ENV_FILE}
-    environment:
-      - PROJECT_NAME=$PROJECT_NAME
-    volumes:
-      - '$PROJECTS_ROOT:/app/projects'
-    network_mode: host
 
   eeg_preprocessor:
     build:
