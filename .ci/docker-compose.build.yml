@@ -72,7 +72,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/utility/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/system/stimulation_allower/Dockerfile
 
   targeting:
     networks:
