@@ -9,10 +9,9 @@ from rosidl_runtime_py.utilities import get_message
 from rclpy.serialization import deserialize_message
 
 
-BAG_BASE_DIR = 'project/bags/'
-
 def parse_arguments():
     arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--project", type=str, help="Project name")
     arg_parser.add_argument("--bag-name", type=str, help="Bag name")
     arg_parser.add_argument("--timestamp", type=str, required=False, help="Timestamp for the bag file (optional; if not given, use the latest)")
     arg_parser.add_argument("--topic", action="append", type=str, help="Topic to get from bag file")
@@ -31,9 +30,9 @@ def parse_arguments():
     print(f"Looking for topics: {', '.join(args.topic)}")
     if args.prefix is None:
         args.prefix = ""
-    return args.bag_name, args.timestamp, args.topic, args.prefix, args.full
+    return args.project, args.bag_name, args.timestamp, args.topic, args.prefix, args.full
 
-
+# TODO: Bit-rotten, needs to be updated to work with .mcap file format, used nowadays by ROS2.
 class BagFileParser:
     def __init__(self, bag_file):
         self.conn = sqlite3.connect(bag_file)
@@ -98,11 +97,15 @@ class BagFileParser:
         return ",".join(field_values)
 
 
-bag_name, timestamp, topics, prefix, full = parse_arguments()
+project_name, bag_name, timestamp, topics, prefix, full = parse_arguments()
+
+bag_base_dir = 'projects/{}/bags/'.format(project_name)
+
+print("Analyzing bag from directory:", bag_base_dir)
 
 if timestamp is None:
-    # Find all directories ending with bag name
-    dir_pattern = os.path.join(BAG_BASE_DIR, '*_{}'.format(bag_name))
+    # Find all directories with the bag name
+    dir_pattern = os.path.join(bag_base_dir, '{}'.format(bag_name))
     dirs = [d for d in glob.glob(dir_pattern) if os.path.isdir(d)]
 
     # Get the latest directory
@@ -113,7 +116,7 @@ if timestamp is None:
 else:
     bag_dir = "{}_{}".format(timestamp, bag_name)
 
-bag_full_path = os.path.join(BAG_BASE_DIR, bag_dir, '{}_0.db3'.format(bag_dir))
+bag_full_path = os.path.join(bag_base_dir, bag_dir, '{}_0.db3'.format(bag_dir))
 
 print("Exporting from directory:", bag_full_path)
 
@@ -127,7 +130,7 @@ for topic in topics:
     # For instance, with prefix "session1", and topic "/eeg/raw", yields "session1_eeg_raw"
     output_file_name = f"{prefix_formatted}{topic[1:].replace('/', '_')}"
 
-    output_path = os.path.join(BAG_BASE_DIR, bag_dir, output_file_name)
+    output_path = os.path.join(bag_base_dir, bag_dir, output_file_name)
 
     if full:
         parser.save_topic_full(topic, output_path)
