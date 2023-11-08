@@ -26,14 +26,14 @@ COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/other/busylight_manager src/other/busylight_manager/
+COPY ros2_ws/src/utility/busylight_manager src/utility/busylight_manager/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select busylight_manager
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/other/busylight_manager/ros_entrypoint.sh .
+COPY ros2_ws/src/utility/busylight_manager/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

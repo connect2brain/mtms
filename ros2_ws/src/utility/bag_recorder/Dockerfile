@@ -27,7 +27,7 @@ RUN source /opt/ros/iron/setup.bash && colcon build
 
 WORKDIR /app
 
-COPY ros2_ws/src/other/bag_recorder/bag_recorder.sh .
+COPY ros2_ws/src/utility/bag_recorder/bag_recorder.sh .
 RUN dos2unix bag_recorder.sh
 RUN chmod +x bag_recorder.sh
 
