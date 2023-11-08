@@ -37,7 +37,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/other/id_assigner/Dockerfile
+      dockerfile: ros2_ws/src/utility/id_assigner/Dockerfile
 
   mep_analyzer:
     networks:
@@ -51,7 +51,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/utility/pedal_listener/Dockerfile
 
   rosbridge:
     networks:
@@ -72,7 +72,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/utility/stimulation_allower/Dockerfile
 
   targeting:
     networks:
@@ -115,14 +115,14 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
+      dockerfile: ros2_ws/src/utility/bag_exporter/Dockerfile
 
   bag_recorder:
     networks:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
+      dockerfile: ros2_ws/src/utility/bag_recorder/Dockerfile
 
   # Only include EEG processor here, as EEG preprocessor and stimulus presenter use the same Dockerfile as EEG processor.
   eeg_processor:

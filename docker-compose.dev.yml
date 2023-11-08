@@ -4,7 +4,7 @@ services:
   bag_exporter:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/bag_exporter/Dockerfile
+      dockerfile: ros2_ws/src/utility/bag_exporter/Dockerfile
     environment:
       - PROJECT_NAME
       - BAG_ANALYSIS_BAG_NAME
@@ -17,7 +17,7 @@ services:
   bag_recorder:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/bag_recorder/Dockerfile
+      dockerfile: ros2_ws/src/utility/bag_recorder/Dockerfile
     volumes:
       - '$PROJECTS_ROOT:/app/projects'
     network_mode: host
@@ -118,7 +118,7 @@ services:
   trigger_controller:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/trigger_controller/Dockerfile
+      dockerfile: ros2_ws/src/utility/trigger_controller/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the trigger USB device) are created.
     privileged: true
     env_file:

@@ -4,7 +4,7 @@ services:
   busylight_manager:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/busylight_manager/Dockerfile
+      dockerfile: ros2_ws/src/utility/busylight_manager/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -104,7 +104,7 @@ services:
   id_assigner:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/id_assigner/Dockerfile
+      dockerfile: ros2_ws/src/utility/id_assigner/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -120,7 +120,7 @@ services:
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/utility/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
@@ -195,7 +195,7 @@ services:
   stimulation_allower:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/utility/stimulation_allower/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
