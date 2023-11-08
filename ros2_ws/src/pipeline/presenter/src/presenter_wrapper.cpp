@@ -53,6 +53,7 @@ void PresenterWrapper::initialize_module(
   RCLCPP_INFO(*logger_ptr, "Presenter set to: %s.", module_name.c_str());
 
   this->_is_initialized = true;
+  this->_error_occurred = false;
 }
 
 void PresenterWrapper::reset_module_state() {
@@ -60,10 +61,15 @@ void PresenterWrapper::reset_module_state() {
   presenter_instance = nullptr;
 
   this->_is_initialized = false;
+  this->_error_occurred = false;
 }
 
 bool PresenterWrapper::is_initialized() const {
   return this->_is_initialized;
+}
+
+bool PresenterWrapper::error_occurred() const {
+  return this->_error_occurred;
 }
 
 bool PresenterWrapper::process(pipeline_interfaces::msg::SensoryStimulus& msg) {
@@ -78,16 +84,19 @@ bool PresenterWrapper::process(pipeline_interfaces::msg::SensoryStimulus& msg) {
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    this->_error_occurred = true;
     return false;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    this->_error_occurred = true;
     return false;
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::bool_>(py_result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a boolean.");
+    this->_error_occurred = true;
     return false;
   }
 

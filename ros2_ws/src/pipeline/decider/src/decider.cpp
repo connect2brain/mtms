@@ -502,6 +502,13 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
                          "Decider enabled and selected but not initialized");
     return;
   }
+  if (this->decider_wrapper->error_occurred()) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "An error occurred in decider module, please re-initialize.");
+    return;
+  }
 
   this->sample_buffer.append(msg);
 

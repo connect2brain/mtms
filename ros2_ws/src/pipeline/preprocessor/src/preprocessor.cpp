@@ -496,6 +496,13 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
                          "Preprocessor enabled and selected but not initialized");
     return;
   }
+  if (this->preprocessor_wrapper->error_occurred()) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "An error occurred in preprocessor module, please re-initialize.");
+    return;
+  }
 
   this->sample_buffer.append(msg);
 
