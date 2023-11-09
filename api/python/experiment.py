@@ -41,7 +41,7 @@ class Experiment:
         # Enable line buffering by using 'buffering' argument.
         self.output_file = open(self.output_path, "w", buffering=1)
 
-        header = "{};{};{};{};{};{};{};{};{};{};{}\n".format(
+        header = "{};{};{};{};{};{};{};{};{};{};{};{}\n".format(
             "Trial index",
             "Description",
             "Time",
@@ -49,6 +49,7 @@ class Experiment:
             "x (mm)",
             "y (mm)",
             "Angle (deg)",
+            "Intensity (V/m)",
             "Pulse success",
             "MEP success",
             "MEP amplitude (uV)",
@@ -197,6 +198,7 @@ class Experiment:
 
         time_pause_adjusted = time + self.total_duration_of_pauses
 
+        pulse_ids = []
         for action in actions:
             action_type = action['type']
             params = action['params']
@@ -280,6 +282,7 @@ class Experiment:
         x = self.get_param(trial, 'x')
         y = self.get_param(trial, 'y')
         angle = self.get_param(trial, 'angle')
+        intensity = self.get_param(trial, 'intensity')
 
         pulse_success = trial['pulse_success']
 
@@ -287,7 +290,7 @@ class Experiment:
         mep_amplitude = self.get_mep_attribute(trial, 'amplitude')
         mep_latency = self.get_mep_attribute(trial, 'latency')
 
-        s = "{};{};{:.3f};{:.3f};{};{};{};{};{};{:.1f};{:.4f}\n".format(
+        s = "{};{};{:.3f};{:.3f};{};{};{};{};{};{};{:.1f};{:.4f}\n".format(
             i,
             condition,
             time,
@@ -295,6 +298,7 @@ class Experiment:
             x,
             y,
             angle,
+            intensity,
             "true" if pulse_success else "false",
             "true" if mep_success else "false",
             mep_amplitude if mep_success else 0.0,
@@ -351,7 +355,7 @@ class Experiment:
 
                 print("")
                 print("")
-                print("{}{}Trial {}{}".format(Color.BOLD, Color.UNDERLINE, i + 1, Color.END))
+                print("{}{}Trial {} / {}{}".format(Color.BOLD, Color.UNDERLINE, i + 1, self.num_of_trials, Color.END))
                 print("")
 
                 trial_ok = self.validate_trial(trial)
@@ -394,4 +398,7 @@ class Experiment:
         return trial['mep'][attribute] if 'mep' in trial else None
 
     def get_param(self, trial, param):
-        return trial['actions'][0]['params'][param]
+        if param in trial['actions'][0]['params']:
+            return trial['actions'][0]['params'][param]
+        else:
+            return np.nan
