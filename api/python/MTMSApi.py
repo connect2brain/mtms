@@ -487,7 +487,7 @@ class MTMSApi:
 
         return id
 
-    def send_trigger_out(self, port, duration_us=int(1e6), execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
         """
         Sends a trigger output to a specified port.
 
@@ -496,7 +496,7 @@ class MTMSApi:
         port : int
             The port number to send the trigger output to.
         duration_us : int
-            The duration of the trigger in microseconds. Defaults to 1e6 (one millisecond).
+            The duration of the trigger in microseconds. Defaults to 1000 (one millisecond).
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
 
