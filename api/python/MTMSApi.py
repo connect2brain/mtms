@@ -11,7 +11,8 @@ import time
 
 import rclpy
 
-from mtms_device_interfaces.msg import SessionState, DeviceState
+from system_interfaces.msg import SessionState
+from mtms_device_interfaces.msg import DeviceState
 from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from MTMSApiNode import MTMSApiNode
