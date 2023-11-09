@@ -6,6 +6,7 @@ import numpy as np
 from pytimedinput import timedKey
 
 from event_interfaces.msg import ExecutionCondition, PulseError
+from targeting_interfaces.msg import TargetingAlgorithm
 
 
 class Color:
@@ -103,6 +104,7 @@ class Experiment:
             displacement_y=y,
             rotation_angle=angle,
             intensity=intensity,
+            algorithm=TargetingAlgorithm.LEAST_SQUARES,
         )
 
         self.api.send_immediate_charge_or_discharge_to_all_channels(
@@ -152,6 +154,7 @@ class Experiment:
             displacement_x=x,
             displacement_y=y,
             rotation_angle=angle,
+            algorithm=TargetingAlgorithm.LEAST_SQUARES,
         )
 
         if intensity > maximum_intensity:
