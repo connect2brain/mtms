@@ -25,6 +25,8 @@ mkdir $PROJECTS_ROOT/$PROJECT_NAME
 # Copy example project to the new project directory.
 cp -r $MTMS_ROOT/example/* $PROJECTS_ROOT/$PROJECT_NAME
 
+python3 $MTMS_ROOT/scripts/python/generate_random_data.py --output_directory $PROJECTS_ROOT/$PROJECT_NAME/eeg_simulator
+
 echo ""
 echo "Project successfully created: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""

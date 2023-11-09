@@ -1,9 +1,0 @@
-{
-  "name": "Random data",
-  "channels": {
-    "eeg": 63,
-    "emg": 10
-  },
-  "data_file": "random_data.csv",
-  "trigger_file": "triggers.csv"
-}
