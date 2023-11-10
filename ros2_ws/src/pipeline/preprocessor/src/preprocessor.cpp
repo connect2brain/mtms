@@ -340,6 +340,7 @@ void EegPreprocessor::inotify_timer_callback() {
 
         RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
         this->initialize_preprocessor_module();
+        this->initialize_sample_buffer();
       }
       if (event->mask & (IN_CREATE | IN_DELETE)) {
         RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating preprocessor list.", event_name.c_str());
