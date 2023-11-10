@@ -456,14 +456,21 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
 
   /* Return if session is not ongoing. */
   if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+    /* Re-initialize streaming already after stopping the previous session. */
+    if (this->session_started) {
+      RCLCPP_INFO(this->get_logger(), "Session stopped, stopping streaming.");
+      this->initialize_streaming();
+    }
+
     this->session_started = false;
     return;
   }
 
   /* If this is the first time the session is started, set the time offset. */
   if (!this->session_started) {
-    this->session_started = true;
+    RCLCPP_INFO(this->get_logger(), "Session started, starting streaming.");
 
+    this->session_started = true;
     time_offset = current_time;
   }
 
