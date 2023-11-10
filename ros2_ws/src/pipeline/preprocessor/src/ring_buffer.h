@@ -43,16 +43,11 @@ public:
     }
   }
 
-  /* Returns all the messages in the buffer as a vector. */
-  std::vector<T> get_buffer() const {
-    std::vector<T> output;
-    output.reserve(current_size);
-
+  /* Process each element in the buffer using a provided callback function. */
+  void process_elements(std::function<void(const T&)> callback) const {
     for (size_t i = 0; i < current_size; ++i) {
-      output.push_back(buffer[(head + i) % capacity]);
+      callback(buffer[(head + i) % capacity]);
     }
-
-    return output;
   }
 
   /* Queries if the buffer is full. */

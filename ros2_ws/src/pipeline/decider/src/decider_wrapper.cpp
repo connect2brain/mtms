@@ -151,17 +151,16 @@ std::tuple<bool, bool, std::shared_ptr<pipeline_interfaces::msg::SensoryStimulus
   auto eeg_data_ptr = py_eeg_data->mutable_data();
   auto emg_data_ptr = py_emg_data->mutable_data();
 
-  for (const auto& sample_ptr : buffer.get_buffer()) {
+  buffer.process_elements([&](const auto& sample_ptr) {
     const auto& sample = *sample_ptr;
 
     *timestamps_ptr++ = sample.time - current_time;
     *valid_ptr++ = sample.valid;
-
     std::memcpy(eeg_data_ptr, sample.eeg_data.data(), eeg_data_size * sizeof(double));
     eeg_data_ptr += eeg_data_size;
     std::memcpy(emg_data_ptr, sample.emg_data.data(), emg_data_size * sizeof(double));
     emg_data_ptr += emg_data_size;
-  }
+  });
 
   /* Call the Python function. */
   py::object result;
