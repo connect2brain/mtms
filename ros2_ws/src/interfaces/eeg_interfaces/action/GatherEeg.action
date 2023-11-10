@@ -1,5 +1,5 @@
 TimeWindow time_window
 ---
-EegSample[] eeg_buffer
+PreprocessedEegSample[] eeg_buffer
 GatherEegError error
 ---
