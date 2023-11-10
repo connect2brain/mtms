@@ -129,6 +129,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>();
+  this->sensory_stimulus = pipeline_interfaces::msg::SensoryStimulus();
 
   /* Initialize inotify. */
   this->inotify_descriptor = inotify_init();
@@ -495,7 +496,8 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
-  auto [success, send_event_trigger, sensory_stimulus_ptr] = this->decider_wrapper->process(
+  auto [success, send_event_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
+    this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
     ready_for_event_trigger);
@@ -517,11 +519,10 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
       ready_for_event_trigger = false;
     }
 
-    if (sensory_stimulus_ptr) {
+    if (send_sensory_stimulus) {
       RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
 
-      auto msg = *sensory_stimulus_ptr;
-      this->sensory_stimulus_publisher->publish(msg);
+      this->sensory_stimulus_publisher->publish(this->sensory_stimulus);
     }
   } else {
     RCLCPP_ERROR_THROTTLE(this->get_logger(),
