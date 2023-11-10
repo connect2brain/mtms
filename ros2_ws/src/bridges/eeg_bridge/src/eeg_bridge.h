@@ -90,7 +90,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
-  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr publisher_healthcheck_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
