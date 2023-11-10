@@ -79,7 +79,7 @@ classdef MTMSApi < handle
 
             obj.node.start_device();
             while obj.get_device_state() ~= obj.device_states.OPERATIONAL
-
+                pause(0.1)
             end
         end
 
@@ -89,7 +89,7 @@ classdef MTMSApi < handle
 
             obj.node.stop_device();
             while obj.get_device_state() ~= obj.device_states.NOT_OPERATIONAL
-
+                pause(0.1)
             end
         end
 
@@ -99,7 +99,7 @@ classdef MTMSApi < handle
 
             obj.node.start_session();
             while obj.get_session_state() ~= obj.session_states.STARTED
-
+                pause(0.1)
             end
         end
 
@@ -109,7 +109,7 @@ classdef MTMSApi < handle
 
             obj.node.stop_session();
             while obj.get_session_state() ~= obj.session_states.STOPPED
-
+                pause(0.1)
             end
         end
 
@@ -286,7 +286,7 @@ classdef MTMSApi < handle
             success = obj.node.allow_stimulation(allow_stimulation);
         end
 
-        function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion)
+        function id = send_pulse(obj, channel, waveform, execution_condition, time, delay, reverse_polarity, wait_for_completion)
         % Send a pulse event to a specified channel.
         %
         % :param channel: The target channel. Range: 1-5
@@ -330,14 +330,14 @@ classdef MTMSApi < handle
                 waveform_ = obj.reverse_polarity(waveform);
             end
 
-            obj.node.send_pulse(id, execution_condition, time, channel, waveform_);
+            obj.node.send_pulse(id, execution_condition, time, delay, channel, waveform_);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_charge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_charge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
         % Send a charge to a specified channel.
         %
         % :param channel: The channel for charging. Range: 1-5
@@ -366,14 +366,14 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
+            obj.node.send_charge(id, execution_condition, time, delay, channel, target_voltage);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_discharge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
         % Send a discharge to a specified channel.
         %
         % :param channel: The channel for discharging. Range: 0-5
@@ -402,14 +402,14 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
+            obj.node.send_discharge(id, execution_condition, time, delay, channel, target_voltage);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
+        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, delay, wait_for_completion)
         % Sends a trigger output to a specified port.
         %
         % :param port: The port number to send the trigger output to.
@@ -438,7 +438,7 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
+            obj.node.send_trigger_out(id, execution_condition, time, delay, port, duration_us);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
@@ -486,7 +486,27 @@ classdef MTMSApi < handle
             waveform = obj.node.reverse_polarity(waveform);
         end
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
+        function [algorithm] = get_targeting_algorithm(obj, algorithm_str)
+        % Return the targeting algorithm.
+        %
+        % :param algorithm_str: Either 'least_squares' or 'genetic'.
+        % :type algorithm_str: string
+        %
+        % :return: Targeting algorithm.
+        % :rtype: ROS message.
+
+            if strcmp(algorithm_str, 'least_squares')
+                algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+                algorithm.value = algorithm.LEAST_SQUARES;
+            elseif strcmp(algorithm_str, 'genetic')
+                algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+                algorithm.value = algorithm.GENETIC;
+            else
+                error('Unknown targeting algorithm: %s', algorithm_str);
+            end
+        end
+
+        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
         % Return the channel voltages (V) given the displacements, rotation angle and intensity.
         %
         % :param displacement_x: Displacement in the x direction.
@@ -501,10 +521,10 @@ classdef MTMSApi < handle
         % :return: Channel voltages.
         % :rtype: list of floats
 
-            [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
+            [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
         end
 
-        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)
         % Return the maximum intensity given the displacements and rotation angle.
         %
         % :param displacement_x: Displacement in the x direction.
@@ -517,7 +537,7 @@ classdef MTMSApi < handle
         % :return: The maximum intensity.
         % :rtype: float
 
-            maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle);
+            maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
         end
 
         % Other
@@ -586,7 +606,7 @@ classdef MTMSApi < handle
 
         % Compound events
 
-        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
         % Send charge or discharge command to a specified channel based on the current and target voltage.
         %
         % :param channel: Channel number.
@@ -613,9 +633,9 @@ classdef MTMSApi < handle
 
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
-                id = obj.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
+                id = obj.send_charge(channel, target_voltage, execution_condition, time, delay, wait_for_completion);
             else
-                id = obj.send_discharge(channel, target_voltage, execution_condition, time, wait_for_completion);
+                id = obj.send_discharge(channel, target_voltage, execution_condition, time, delay, wait_for_completion);
             end
         end
 
@@ -639,7 +659,7 @@ classdef MTMSApi < handle
             for channel = 1:obj.N_CHANNELS
                 target_voltage = target_voltages(channel);
 
-                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, false);
+                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, 0.0, false);
                 ids = [ids new_id];
             end
 
@@ -685,9 +705,9 @@ classdef MTMSApi < handle
             ids = [];
             for channel = 1:obj.N_CHANNELS
                 reverse_polarity = reverse_polarities(channel);
-                waveform = obj.get_default_waveform(channel);
+                waveform = obj.get_default_waveform(channel - 1);
 
-                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity, false);
+                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, 0.0, reverse_polarity, false);
                 ids = [ids new_id];
             end
 

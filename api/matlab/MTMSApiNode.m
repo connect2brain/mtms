@@ -311,7 +311,7 @@ classdef MTMSApiNode < handle
 
         % Targeting
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
+        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
 
             client = obj.get_channel_voltages_client;
 
@@ -320,6 +320,7 @@ classdef MTMSApiNode < handle
             request.target.displacement_x = int8(displacement_x);
             request.target.displacement_y = int8(displacement_y);
             request.target.rotation_angle = uint16(rotation_angle);
+            request.target.algorithm = algorithm;
             request.intensity = uint8(intensity);
 
             response = call(client, request);
@@ -331,7 +332,7 @@ classdef MTMSApiNode < handle
             reverse_polarities = response.reversed_polarities;
         end
 
-        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)
 
             client = obj.get_maximum_intensity_client;
 
@@ -340,6 +341,7 @@ classdef MTMSApiNode < handle
             request.target.displacement_x = int8(displacement_x);
             request.target.displacement_y = int8(displacement_y);
             request.target.rotation_angle = uint16(rotation_angle);
+            request.target.algorithm = algorithm;
 
             response = call(client, request);
             success = response.success;
@@ -387,7 +389,9 @@ classdef MTMSApiNode < handle
             request = ros2message(client);
 
             request.time = time;
-            request.mep_configuration = mep_configuration;
+            request.mep_configuration.emg_channel = uint8(mep_configuration.emg_channel);
+            request.mep_configuration.time_window = mep_configuration.time_window;
+            request.mep_configuration.preactivation_check = mep_configuration.preactivation_check;
 
             response = call(client, request);
 
