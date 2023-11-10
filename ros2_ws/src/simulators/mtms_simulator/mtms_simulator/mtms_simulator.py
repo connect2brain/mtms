@@ -175,7 +175,7 @@ class MTMSSimulator(Node):
         )
 
     def allow_stimulation_handler(self, request, response):
-        self.get_logger().info("Allow stimulation set to %r" % self.allow_stimulation)
+        self.get_logger().info("Allow stimulation set to %r" % request.allow_stimulation)
 
         self.allow_stimulation = request.allow_stimulation
         for c in self.channels:
@@ -287,7 +287,8 @@ class MTMSSimulator(Node):
         # wait for execution condition.
         match execution_condition:
             case ExecutionCondition.TIMED:
-                wait = execution_time - self.session_start_time
+
+                wait = execution_time - (time.time() - self.session_start_time)
                 time.sleep(wait)
             case ExecutionCondition.WAIT_FOR_TRIGGER:
                 self.get_logger().warn(
