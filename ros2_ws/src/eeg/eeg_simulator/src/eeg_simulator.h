@@ -78,6 +78,8 @@ private:
   bool playback;
   bool loop;
 
+  bool send_triggers;
+
   bool session_started = false;
   bool triggers_left = false;
 
