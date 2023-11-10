@@ -115,6 +115,7 @@ private:
   std::queue<double_t> pulse_execution_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
+  eeg_interfaces::msg::PreprocessedEegSample preprocessed_sample;
 
   std::unique_ptr<PreprocessorWrapper> preprocessor_wrapper;
 

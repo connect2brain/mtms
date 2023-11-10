@@ -31,10 +31,11 @@ public:
 
   void reset_module_state();
 
-  std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool> process(
-    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
-    double_t sample_time,
-    bool pulse_given);
+  bool process(
+      eeg_interfaces::msg::PreprocessedEegSample& output_sample,
+      const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
+      double_t sample_time,
+      bool pulse_given);
 
   bool is_initialized() const;
   bool error_occurred() const;

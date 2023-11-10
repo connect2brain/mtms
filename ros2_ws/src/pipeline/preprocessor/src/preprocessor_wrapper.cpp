@@ -125,8 +125,8 @@ std::size_t PreprocessorWrapper::get_buffer_size() const {
   return this->buffer_size;
 }
 
-std::pair<eeg_interfaces::msg::PreprocessedEegSample, bool>
-PreprocessorWrapper::process(
+bool PreprocessorWrapper::process(
+    eeg_interfaces::msg::PreprocessedEegSample& output_sample,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
     double_t sample_time,
     bool pulse_given) {
@@ -159,8 +159,6 @@ PreprocessorWrapper::process(
   });
 
   /* Call the Python function. */
-  eeg_interfaces::msg::PreprocessedEegSample cpp_result;
-
   py::object result;
   try {
     result = preprocessor_instance->attr("process")(*py_timestamps, *py_eeg_data, *py_emg_data, current_sample_index, pulse_given);
@@ -168,19 +166,19 @@ PreprocessorWrapper::process(
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
   }
 
   py::dict dict_result = result.cast<py::dict>();
@@ -188,29 +186,29 @@ PreprocessorWrapper::process(
   if (!dict_result.contains("eeg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_sample.");
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
   }
 
   if (!dict_result.contains("emg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_sample.");
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
   }
 
   if (!dict_result.contains("valid")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: valid.");
     this->_error_occurred = true;
-    return {cpp_result, false};
+    return false;
   }
 
   /* Convert the Python dictionary to a ROS message. */
-  cpp_result.eeg_data = dict_result["eeg_sample"].cast<std::vector<double>>();
-  cpp_result.emg_data = dict_result["emg_sample"].cast<std::vector<double>>();
-  cpp_result.valid = dict_result["valid"].cast<bool>();
+  output_sample.eeg_data = dict_result["eeg_sample"].cast<std::vector<double>>();
+  output_sample.emg_data = dict_result["emg_sample"].cast<std::vector<double>>();
+  output_sample.valid = dict_result["valid"].cast<bool>();
 
-  cpp_result.time = current_time;
+  output_sample.time = current_time;
 
-  return {cpp_result, true};
+  return true;
 }
 
 rclcpp::Logger* PreprocessorWrapper::logger_ptr = nullptr;

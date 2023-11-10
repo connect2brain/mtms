@@ -118,6 +118,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(logger);
 
   this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
+  this->preprocessed_sample = eeg_interfaces::msg::PreprocessedEegSample();
 
   /* Initialize inotify. */
   this->inotify_descriptor = inotify_init();
@@ -490,8 +491,9 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  auto [preprocessed_sample, success] = this->preprocessor_wrapper->process(
-    this->sample_buffer,
+  bool success = this->preprocessor_wrapper->process(
+    preprocessed_sample,
+    sample_buffer,
     sample_time,
     pulse_given);
 
