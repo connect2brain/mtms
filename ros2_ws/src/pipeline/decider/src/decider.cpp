@@ -59,33 +59,11 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     subscription_options);
 
   /* Subscriber for preprocessed EEG data. */
-  auto preprocessed_eeg_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) -> void {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Received preprocessed EEG datapoint on topic %s with timestamp %.4f.",
-                         EEG_PREPROCESSED_TOPIC.c_str(),
-                         msg->time);
-
-    this->process_eeg_sample(msg);
-
-    /* Print the time taken to preprocess the datapoint. */
-
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-
-    RCLCPP_DEBUG(this->get_logger(),
-                 "Time taken to process EEG datapoint: %.3f ms.",
-                 1000 * elapsed.count());
-  };
-
   this->preprocessed_eeg_subscriber = create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
     EEG_PREPROCESSED_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     5000,
-    preprocessed_eeg_subscriber_callback);
+    std::bind(&EegDecider::process_sample, this, _1));
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
 
@@ -475,7 +453,7 @@ void EegDecider::update_ready_for_event_trigger([[maybe_unused]] const std::shar
   RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
 }
 
-void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
+void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
   double_t sample_time = msg->time;
@@ -545,12 +523,6 @@ void EegDecider::process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::P
       auto msg = *sensory_stimulus_ptr;
       this->sensory_stimulus_publisher->publish(msg);
     }
-
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                          1000,
-                          "Processed EEG sample at time %.3f (s).",
-                          sample_time);
   } else {
     RCLCPP_ERROR_THROTTLE(this->get_logger(),
                           *this->get_clock(),

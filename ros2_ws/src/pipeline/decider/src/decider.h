@@ -71,7 +71,7 @@ private:
 
   void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
-  void process_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+  void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
 
   /* Inotify functions */
   void update_inotify_watch();
