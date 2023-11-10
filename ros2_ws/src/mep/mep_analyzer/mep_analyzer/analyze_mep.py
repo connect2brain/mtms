@@ -279,7 +279,7 @@ class AnalyzeMepNode(Node):
 
         self.logger.info('{}: Computed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).'.format(goal_id, amplitude, 1000 * latency))
 
-        return amplitude, latency
+        return channel_data, amplitude, latency
 
     def analyze_mep(self, goal_id, time, mep_configuration):
         self.logger.info('{}: Analyzing MEP at time: {:.3f} (s)'.format(goal_id, time))
@@ -295,8 +295,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         gathered_preactivation_buffer = GatheredEegBuffer()
         gathered_mep_buffer = GatheredEegBuffer()
@@ -339,8 +340,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         # Collect errors from gatherers.
 
@@ -358,8 +360,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         self.logger.info('{}: Successfully gathered data.'.format(goal_id))
 
@@ -378,8 +381,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         # Check preactivation
 
@@ -396,12 +400,13 @@ class AnalyzeMepNode(Node):
                 success = False
                 amplitude = None
                 latency = None
+                channel_data = None
 
-                return success, errors, amplitude, latency
+                return success, errors, amplitude, latency, channel_data
 
         # Compute MEP based on gathered data.
 
-        amplitude, latency = self.compute_mep_amplitude_and_latency(
+        channel_data, amplitude, latency = self.compute_mep_amplitude_and_latency(
             goal_id=goal_id,
             time=time,
             emg_channel=emg_channel,
@@ -414,7 +419,7 @@ class AnalyzeMepNode(Node):
             errors.gather_preactivation_error.value == GatherEegError.NO_ERROR and \
             errors.mep_error.value == MepError.NO_ERROR
 
-        return success, errors, amplitude, latency
+        return success, errors, amplitude, latency, channel_data
 
     def analyze_mep_action_handler(self, goal_handle):
         request = goal_handle.request
@@ -430,7 +435,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        success, errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency, mep_buffer = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -445,6 +450,7 @@ class AnalyzeMepNode(Node):
         # HACK: ROS doesn't seem to support NaNs in floats, work around it by encoding None as 0.0.
         result.mep.amplitude = amplitude if amplitude is not None else 0.0
         result.mep.latency = latency if latency is not None else 0.0
+        result.mep.buffer = mep_buffer if mep_buffer is not None else []
         result.errors = errors
         result.success = success
 
@@ -464,7 +470,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}: '.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        success, errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency, mep_buffer = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -473,6 +479,7 @@ class AnalyzeMepNode(Node):
         # HACK: ROS doesn't seem to support NaNs in floats, work around it by encoding None as 0.0.
         response.mep.amplitude = amplitude if amplitude is not None else 0.0
         response.mep.latency = latency if latency is not None else 0.0
+        response.mep.buffer = mep_buffer if mep_buffer is not None else []
         response.errors = errors
         response.success = success
 
