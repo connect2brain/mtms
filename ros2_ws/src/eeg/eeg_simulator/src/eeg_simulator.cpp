@@ -418,6 +418,7 @@ void EegSimulator::initialize_streaming() {
   std::string trigger_filename = this->dataset.trigger_filename;
   std::string trigger_file_path = data_directory + "/" + trigger_filename;
 
+  this->send_triggers = false;
   if (trigger_filename != UNSET_FILENAME) {
     if (trigger_file.is_open()) {
         trigger_file.close();
@@ -431,6 +432,8 @@ void EegSimulator::initialize_streaming() {
 
     /* Read the next trigger time from the file already here so the session handler loop doesn't have to worry about it. */
     read_next_trigger_time();
+
+    this->send_triggers = true;
   } else {
     RCLCPP_INFO(this->get_logger(), "No trigger file defined.");
   }
@@ -483,12 +486,16 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
       time_offset = current_time;
 
       /* Also reset the trigger file. */
-      trigger_file.clear();
-      trigger_file.seekg(0, std::ios::beg);
+      if (this->send_triggers) {
+        trigger_file.clear();
+        trigger_file.seekg(0, std::ios::beg);
 
-      read_next_trigger_time();
+        read_next_trigger_time();
+      }
     }
-    publish_triggers_up_to(sample_time);
+    if (this->send_triggers) {
+      publish_triggers_up_to(sample_time);
+    }
 
     /* TODO: The problem with current design is that it publishes the next sample too early; the dataset time is updated only
          after the sample is published. Doing this properly would require a "look-ahead" mechanism, where the time to publish
