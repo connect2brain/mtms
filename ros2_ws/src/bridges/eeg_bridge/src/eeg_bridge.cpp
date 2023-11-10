@@ -97,7 +97,7 @@ void EegBridge::create_publishers() {
   this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
   this->trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
   this->eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
-  this->publisher_healthcheck_ = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+  this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
   this->healthcheck_publisher_timer = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&EegBridge::publish_healthcheck, this));
 }
@@ -115,7 +115,7 @@ void EegBridge::publish_healthcheck() {
   healthcheck.status_message = status_message;
   healthcheck.actionable_message = actionable_message;
 
-  this->publisher_healthcheck_->publish(healthcheck);
+  this->healthcheck_publisher->publish(healthcheck);
 }
 
 void EegBridge::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
@@ -237,7 +237,7 @@ void EegBridge::spin() {
         case WAITING_FOR_SESSION_START:
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
                                    "Ready",
-                                   "Ready to start an experiment.");
+                                   "Ready");
           break;
 
         case WAITING_FOR_SESSION_STOP:
