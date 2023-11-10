@@ -25,6 +25,7 @@ interface HealthcheckContextType {
   eegSimulatorHealthcheck: Healthcheck | null
   mtmsDeviceHealthcheck: Healthcheck | null
   mepHealthcheck: Healthcheck | null
+  preprocessorHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
@@ -32,6 +33,7 @@ const defaultHealthcheckState: HealthcheckContextType = {
   eegSimulatorHealthcheck: null,
   mtmsDeviceHealthcheck: null,
   mepHealthcheck: null,
+  preprocessorHealthcheck: null,
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -45,6 +47,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [eegSimulatorHealthcheck, setEegSimulatorHealthcheck] = useState<Healthcheck | null>(null)
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
+  const [preprocessorHealthcheck, setPreprocessorHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
     const eegSubscriber = new Topic<Healthcheck>({
@@ -71,10 +74,17 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'system_interfaces/Healthcheck',
     })
 
+    const preprocessorSubscriber = new Topic<Healthcheck>({
+      ros: ros,
+      name: '/eeg/preprocessor/healthcheck',
+      messageType: 'system_interfaces/Healthcheck',
+    })
+
     let eegTimeout: NodeJS.Timeout | null = null
     let eegSimulatorTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
     let mepTimeout: NodeJS.Timeout | null = null
+    let preprocessorTimeout: NodeJS.Timeout | null = null
 
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
@@ -116,11 +126,22 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }, 1000)
     })
 
+    preprocessorSubscriber.subscribe((message) => {
+      setPreprocessorHealthcheck(message)
+      if (preprocessorTimeout) {
+        clearTimeout(preprocessorTimeout)
+      }
+      preprocessorTimeout = setTimeout(() => {
+        setPreprocessorHealthcheck(null)
+      }, 1000)
+    })
+
     return () => {
       eegSubscriber.unsubscribe()
       eegSimulatorSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
       mepSubscriber.unsubscribe()
+      preprocessorSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
       }
@@ -133,12 +154,21 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       if (mepTimeout) {
         clearTimeout(mepTimeout)
       }
+      if (preprocessorTimeout) {
+        clearTimeout(preprocessorTimeout)
+      }
     }
   }, [])
 
   return (
     <HealthcheckContext.Provider
-      value={{ eegHealthcheck, eegSimulatorHealthcheck, mtmsDeviceHealthcheck, mepHealthcheck }}
+      value={{
+        eegHealthcheck,
+        eegSimulatorHealthcheck,
+        mtmsDeviceHealthcheck,
+        mepHealthcheck,
+        preprocessorHealthcheck,
+      }}
     >
       {children}
     </HealthcheckContext.Provider>
