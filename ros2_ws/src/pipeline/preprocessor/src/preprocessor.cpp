@@ -63,33 +63,11 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     std::bind(&EegPreprocessor::update_eeg_info, this, _1));
 
   /* Subscriber for EEG data. */
-  auto raw_eeg_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Received EEG datapoint on topic %s with timestamp %.4f.",
-                         EEG_RAW_TOPIC.c_str(),
-                         msg->time);
-
-    this->process_sample(msg);
-
-    /* Print the time taken to preprocess the datapoint. */
-
-    auto finish = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = finish - start;
-
-    RCLCPP_DEBUG(this->get_logger(),
-                 "Time taken to preprocess EEG datapoint: %.3f ms.",
-                 1000 * elapsed.count());
-  };
-
   this->raw_eeg_subscriber = create_subscription<eeg_interfaces::msg::EegSample>(
     EEG_RAW_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     5000,
-    raw_eeg_subscriber_callback);
+    std::bind(&EegPreprocessor::process_sample, this, _1));
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 
@@ -474,6 +452,7 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
   double_t sample_time = msg->time;
 
   check_dropped_samples(sample_time);
+
   bool pulse_given = was_pulse_given(sample_time);
 
   if (!this->enabled) {
@@ -525,12 +504,6 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
 
     /* Publish the preprocessed sample. */
     this->preprocessed_eeg_publisher->publish(preprocessed_sample);
-
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                        *this->get_clock(),
-                        1000,
-                        "Published preprocessed EEG data on topic %s",
-                        EEG_PREPROCESSED_TOPIC.c_str());
   } else {
     RCLCPP_ERROR_THROTTLE(this->get_logger(),
                           *this->get_clock(),
