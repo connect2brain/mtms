@@ -19,6 +19,9 @@
 
 #include "event_interfaces/msg/pulse_feedback.hpp"
 
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
+
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
 
@@ -41,6 +44,9 @@ public:
   ~EegPreprocessor();
 
 private:
+  void update_healthcheck();
+  void publish_healthcheck();
+
   void initialize_preprocessor_module();
   void initialize_sample_buffer();
 
@@ -75,6 +81,9 @@ private:
   void inotify_timer_callback();
 
   rclcpp::Logger logger;
+
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
@@ -122,6 +131,11 @@ private:
   /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
      just once when the session is stopped. */
   system_interfaces::msg::SessionState session_state;
+
+  /* Healthcheck */
+  uint8_t status;
+  std::string status_message;
+  std::string actionable_message;
 
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;

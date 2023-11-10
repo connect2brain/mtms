@@ -20,6 +20,7 @@ using namespace std::placeholders;
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
+const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
@@ -29,6 +30,9 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
 EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_logger("preprocessor")) {
+  /* Publisher for healthcheck. */
+  this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
   /* Publisher for preprocessed EEG data. */
   this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
 
@@ -132,13 +136,42 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   fcntl(inotify_descriptor, F_SETFL, flags | O_NONBLOCK);
 
   /* Create a timer callback to poll inotify. */
-  this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
-                                                std::bind(&EegPreprocessor::inotify_timer_callback, this));
+  this->inotify_timer = this->create_wall_timer(
+    std::chrono::milliseconds(100),
+    std::bind(&EegPreprocessor::inotify_timer_callback, this));
+
+  this->healthcheck_publisher_timer = this->create_wall_timer(
+    std::chrono::milliseconds(500),
+    std::bind(&EegPreprocessor::publish_healthcheck, this));
+
+  this->update_healthcheck();
 }
 
 EegPreprocessor::~EegPreprocessor() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
   close(inotify_descriptor);
+}
+
+void EegPreprocessor::update_healthcheck() {
+  if (this->enabled) {
+    this->status = system_interfaces::msg::HealthcheckStatus::READY;
+    this->status_message = "Ready";
+    this->actionable_message = "Ready";
+  } else {
+    this->status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+    this->status_message = "EEG preprocessor not enabled";
+    this->actionable_message = "Please enable the EEG preprocessor.";
+  }
+}
+
+void EegPreprocessor::publish_healthcheck() {
+  auto healthcheck = system_interfaces::msg::Healthcheck();
+
+  healthcheck.status.value = status;
+  healthcheck.status_message = status_message;
+  healthcheck.actionable_message = actionable_message;
+
+  this->healthcheck_publisher->publish(healthcheck);
 }
 
 /* Functions to re-initialize the preprocessor state. */
@@ -216,6 +249,8 @@ void EegPreprocessor::handle_set_preprocessor_enabled(
        but do not unset the module. */
     this->preprocessor_wrapper->reset_module_state();
   }
+  update_healthcheck();
+
   RCLCPP_INFO(this->get_logger(), "%s preprocessor.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
