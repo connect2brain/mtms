@@ -169,7 +169,7 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
   }
 
   std::ostringstream data;
-  data << std::fixed << std::setprecision(4) << msg->time;
+  data << std::fixed << std::setprecision(4) << msg->time << "," << msg->valid << "," << std::setprecision(6) << msg->processing_time << std::setprecision(4);
 
   /* Helper function to concatenate with comma. */
   auto comma_join = [](const std::string &accum, double_t value) {
