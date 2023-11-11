@@ -23,6 +23,9 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
+
 /* XXX: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
@@ -66,7 +69,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->preprocessed_eeg_subscriber = create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
     EEG_PREPROCESSED_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
-    5000,
+    EEG_QUEUE_LENGTH,
     std::bind(&EegDecider::process_sample, this, _1));
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
