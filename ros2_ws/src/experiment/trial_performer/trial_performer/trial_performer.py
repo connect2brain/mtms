@@ -342,6 +342,8 @@ class TrialPerformerNode(Node):
 
         self.sync_set_voltages(target_voltages)
 
+        self.logger.info('{}: Voltages set.'.format(goal_id))
+
         # Earliest feasible trial time cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
         earliest_feasible_trial_time = self.get_current_time() + self.TRIAL_TIME_MARGINAL_S
@@ -379,7 +381,11 @@ class TrialPerformerNode(Node):
             mep = mep_result.mep
             mep_success = mep_result.success
 
+        self.logger.info('{}: Waiting for stimulus to be performed.'.format(goal_id))
+
         stimulus_event.wait()
+
+        self.logger.info('{}: Stimulus finished.'.format(goal_id))
 
         stimulus_result = self.get_result_from_container(stimulus_result_container)
 
