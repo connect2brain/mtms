@@ -24,6 +24,9 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
+
 /* XXX: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
@@ -34,7 +37,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
   /* Publisher for preprocessed EEG data. */
-  this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, 5000);
+  this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, EEG_QUEUE_LENGTH);
 
   /* Subscriber for session. */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
@@ -70,7 +73,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->raw_eeg_subscriber = create_subscription<eeg_interfaces::msg::EegSample>(
     EEG_RAW_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
-    5000,
+    EEG_QUEUE_LENGTH,
     std::bind(&EegPreprocessor::process_sample, this, _1));
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
