@@ -19,6 +19,7 @@ using namespace std::placeholders;
 
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
+const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
@@ -28,6 +29,9 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
 EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")) {
+  /* Publisher for healthcheck. */
+  this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
   /* Subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -143,13 +147,51 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   fcntl(inotify_descriptor, F_SETFL, flags | O_NONBLOCK);
 
   /* Create a timer callback to poll inotify. */
-  this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
-                                                std::bind(&EegDecider::inotify_timer_callback, this));
+  this->inotify_timer = this->create_wall_timer(
+    std::chrono::milliseconds(100),
+    std::bind(&EegDecider::inotify_timer_callback, this));
+
+  this->healthcheck_publisher_timer = this->create_wall_timer(
+    std::chrono::milliseconds(500),
+    std::bind(&EegDecider::publish_healthcheck, this));
+
+  this->decider_state = WAITING_FOR_ENABLED;
 }
 
 EegDecider::~EegDecider() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
   close(inotify_descriptor);
+}
+
+void EegDecider::publish_healthcheck() {
+  auto healthcheck = system_interfaces::msg::Healthcheck();
+
+  switch (this->decider_state) {
+    case WAITING_FOR_ENABLED:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      healthcheck.status_message = "Decider not enabled";
+      healthcheck.actionable_message = "Please enable the decider.";
+      break;
+
+    case READY:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+      healthcheck.status_message = "Ready";
+      healthcheck.actionable_message = "Ready";
+      break;
+
+    case SAMPLES_DROPPED:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
+      healthcheck.status_message = "Samples dropped";
+      healthcheck.actionable_message = "Sample(s) dropped in decider. Please restart the measurement.";
+      break;
+
+    case MODULE_ERROR:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
+      healthcheck.status_message = "Module error";
+      healthcheck.actionable_message = "Decider has encountered an error. Please restart the measurement.";
+      break;
+  }
+  this->healthcheck_publisher->publish(healthcheck);
 }
 
 /* Functions to re-initialize the decider state. */
@@ -218,11 +260,15 @@ void EegDecider::handle_set_decider_enabled(
   this->decider_enabled_publisher->publish(msg);
 
   if (this->enabled) {
+    this->decider_state = READY;
+
     initialize_decider_module();
 
     /* Re-initialize sample buffer to avoid using remains of old EEG data. */
     initialize_sample_buffer();
   } else {
+    this->decider_state = WAITING_FOR_ENABLED;
+
     /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
        but do not unset the module. */
     this->decider_wrapper->reset_module_state();
@@ -407,6 +453,8 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
 
     if (time_diff > threshold) {
       /* Err if sample(s) were dropped. */
+      this->decider_state = SAMPLES_DROPPED;
+
       RCLCPP_ERROR(this->get_logger(),
           "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
 
@@ -483,6 +531,8 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
   if (this->decider_wrapper->error_occurred()) {
+    this->decider_state = MODULE_ERROR;
+
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
