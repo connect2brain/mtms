@@ -24,6 +24,8 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 /* Have a queue size of 5000 to avoid dropping messages - corresponds to 1 s of data with 5 kHz sampling frequency. */
 const uint16_t QUEUE_SIZE = 5000;
 
+const uint16_t BATCH_SIZE_IN_SAMPLES = 5000;
+
 EegRecorder::EegRecorder() : Node("eeg_recorder") {
   /* Subscriber for active project. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -106,14 +108,27 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
   if (session_state != system_interfaces::msg::SessionState::STARTED &&
       current_session_state == system_interfaces::msg::SessionState::STARTED) {
 
+    RCLCPP_INFO(this->get_logger(), "Session stopped.", filename.c_str());
     if (raw_file.is_open()) {
+      write_raw_buffer();
       raw_file.close();
     }
     if (preprocessed_file.is_open()) {
+      write_preprocessed_buffer();
       preprocessed_file.close();
     }
   }
   current_session_state = session_state;
+}
+
+void EegRecorder::write_raw_buffer() {
+  /* Write to file. */
+  raw_file << raw_buffer.str();
+  raw_file.flush();
+
+  /* Clear the buffer. */
+  raw_buffer.str("");
+  raw_buffer.clear();
 }
 
 void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
@@ -130,8 +145,7 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
     }
   }
 
-  std::ostringstream data;
-  data << std::fixed << std::setprecision(4) << msg->time;
+  raw_buffer << std::fixed << std::setprecision(4) << msg->time;
 
   /* Helper function to concatenate with comma. */
   auto comma_join = [](const std::string &accum, double_t value) {
@@ -140,21 +154,36 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
 
   /* Add eeg_data if available. */
   if (!msg->eeg_data.empty()) {
-      data << ",";
+      raw_buffer << ",";
       std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
-      data << eeg_str;
+      raw_buffer << eeg_str;
   }
 
   /* Add emg_data if available. */
   if (!msg->emg_data.empty()) {
-      data << ",";
+      raw_buffer << ",";
       std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
-      data << emg_str;
+      raw_buffer << emg_str;
   }
 
-  data << "\n";
+  raw_buffer << "\n";
 
-  raw_file << data.str();
+  /* Update sample count. */
+  raw_sample_count++;
+
+  if (raw_sample_count % BATCH_SIZE_IN_SAMPLES == 0) {
+    write_raw_buffer();
+  }
+}
+
+void EegRecorder::write_preprocessed_buffer() {
+  /* Write to file. */
+  preprocessed_file << preprocessed_buffer.str();
+  preprocessed_file.flush();
+
+  /* Clear the buffer. */
+  preprocessed_buffer.str("");
+  preprocessed_buffer.clear();
 }
 
 void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
@@ -168,8 +197,7 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
     }
   }
 
-  std::ostringstream data;
-  data << std::fixed << std::setprecision(4) << msg->time << "," << msg->valid << "," << std::setprecision(6) << msg->processing_time << std::setprecision(4);
+  preprocessed_buffer << std::fixed << std::setprecision(4) << msg->time << "," << msg->valid << "," << std::setprecision(6) << msg->processing_time << std::setprecision(4);
 
   /* Helper function to concatenate with comma. */
   auto comma_join = [](const std::string &accum, double_t value) {
@@ -178,21 +206,26 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
 
   /* Add eeg_data if available. */
   if (!msg->eeg_data.empty()) {
-      data << ",";
+      preprocessed_buffer << ",";
       std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
-      data << eeg_str;
+      preprocessed_buffer << eeg_str;
   }
 
   /* Add emg_data if available. */
   if (!msg->emg_data.empty()) {
-      data << ",";
+      preprocessed_buffer << ",";
       std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
-      data << emg_str;
+      preprocessed_buffer << emg_str;
   }
 
-  data << "\n";
+  preprocessed_buffer << "\n";
 
-  preprocessed_file << data.str();
+  /* Update sample count. */
+  preprocessed_sample_count++;
+
+  if (preprocessed_sample_count % BATCH_SIZE_IN_SAMPLES == 0) {
+    write_preprocessed_buffer();
+  }
 }
 
 int main(int argc, char *argv[]) {
