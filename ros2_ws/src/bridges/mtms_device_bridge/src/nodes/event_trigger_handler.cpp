@@ -25,8 +25,9 @@ class EventTriggerHandler : public rclcpp::Node {
 public:
   EventTriggerHandler() : Node("event_trigger_handler") {
 
+    /* XXX: This should probably be called something else than event trigger to distinguish it. */
     event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::EventTrigger>(
-        "/event/trigger", 10, callback);
+        "/mtms_device/trigger", 10, callback);
   }
 
 private:
