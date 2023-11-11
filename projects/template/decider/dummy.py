@@ -26,6 +26,10 @@ class Decider:
     def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trigger):
         self.sample_count += 1
 
+        if self.sample_count % 1000 == 0:
+            # Do every 1000 samples. Useful for debug prints.
+            pass
+
         # Do not proceed if there are invalid samples.
         if not np.all(valid_samples):
             return {
