@@ -19,6 +19,7 @@
 
 #include "event_interfaces/msg/event_trigger.hpp"
 #include "event_interfaces/msg/ready_for_event_trigger.hpp"
+#include "event_interfaces/msg/stimulus_feedback.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -57,6 +58,8 @@ public:
 private:
   void publish_healthcheck();
 
+  void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
+
   void initialize_decider_module();
   void initialize_sample_buffer();
 
@@ -79,7 +82,10 @@ private:
 
   void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
+
+  void calculate_latency(double_t pulse_execution_time);
   void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
+  void handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg);
 
   void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
@@ -90,6 +96,8 @@ private:
   void inotify_timer_callback();
 
   rclcpp::Logger logger;
+
+  rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr mtms_device_healthcheck_subscriber;
 
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
@@ -112,6 +120,7 @@ private:
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_publisher;
   rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_event_trigger_subscriber;
 
+  rclcpp::Subscription<event_interfaces::msg::StimulusFeedback>::SharedPtr stimulus_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
@@ -152,6 +161,9 @@ private:
   uint8_t status;
   std::string status_message;
   std::string actionable_message;
+
+  /* mTMS device healthcheck */
+  bool mtms_device_available = false;
 
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;

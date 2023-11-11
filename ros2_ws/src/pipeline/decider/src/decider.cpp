@@ -35,6 +35,12 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   /* Publisher for healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
+  /* Subscriber for mTMS device healthcheck. */
+  this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
+    "/mtms_device/healthcheck",
+    10,
+    std::bind(&EegDecider::handle_mtms_device_healthcheck, this, _1));
+
   /* Subscriber for EEG info. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -122,6 +128,12 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     10,
     std::bind(&EegDecider::update_ready_for_event_trigger, this, _1));
 
+  /* Subscriber for stimulus feedback. */
+  this->stimulus_feedback_subscriber = create_subscription<event_interfaces::msg::StimulusFeedback>(
+    "/event/stimulus_feedback",
+    10,
+    std::bind(&EegDecider::handle_stimulus_feedback, this, _1));
+
   /* Publisher for latency. */
   this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
     "/pipeline/latency",
@@ -195,6 +207,10 @@ void EegDecider::publish_healthcheck() {
       break;
   }
   this->healthcheck_publisher->publish(healthcheck);
+}
+
+void EegDecider::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+  this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
 }
 
 /* Functions to re-initialize the decider state. */
@@ -474,24 +490,17 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle EEG trigger, indicating a pulse.
-
-   TODO: See the similar logic in preprocessor.cpp and the disclaimer there; we should rely explicitly either on the pulse feedback
-     or the EEG trigger.
-*/
-void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
-  double_t trigger_time = msg->time;
-
-  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", trigger_time);
-
+void EegDecider::calculate_latency(double_t pulse_execution_time) {
   if (!this->decision_times.empty()) {
     double_t sample_time = this->decision_times.front();
     this->decision_times.pop();
 
-    double_t time_difference = trigger_time - sample_time;
+    /* Calculate the time difference between the decision time and the pulse execution time. */
+    double_t time_difference = pulse_execution_time - sample_time;
 
     RCLCPP_INFO(this->get_logger(), "Time difference between the decision time and the pulse: %.5f (s)", time_difference);
 
+    /* Publish latency ROS message. */
     auto msg = pipeline_interfaces::msg::Latency();
     msg.latency = time_difference;
     msg.sample_time = sample_time;
@@ -499,8 +508,26 @@ void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::T
     this->latency_publisher->publish(msg);
 
   } else {
-    RCLCPP_ERROR(this->get_logger(), "No previous pulse times found in the queue.");
+    RCLCPP_ERROR(this->get_logger(), "No previous pulse times found in the queue. Can't calculate latency.");
   }
+}
+
+/* Handle EEG trigger, indicating a pulse IF mTMS device is available. If not, ignore the EEG trigger, as we get direct
+   feedback about the pulse from the mTMS device. */
+void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
+  if (this->mtms_device_available) {
+    RCLCPP_INFO(this->get_logger(), "Received EEG trigger, but mTMS device is available, ignoring.");
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", msg->time);
+  this->calculate_latency(msg->time);
+}
+
+/* Handle stimulus feedback, received directly from the mTMS device. */
+void EegDecider::handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg) {
+
+  RCLCPP_INFO(this->get_logger(), "Registered stimulus feedback at: %.5f (s).", msg->execution_time);
+  this->calculate_latency(msg->execution_time);
 }
 
 void EegDecider::update_ready_for_event_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
