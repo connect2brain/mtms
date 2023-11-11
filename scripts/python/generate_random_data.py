@@ -12,22 +12,24 @@ def generate_random_data(num_eeg_channels, num_emg_channels, sampling_frequency,
 
     return data_with_timestamps
 
-def save_to_csv(output_directory, filename, data):
-    output_path = os.path.join(output_directory, filename)
-    np.savetxt(output_path, data, delimiter=",", fmt='%.4f')
+def save_to_csv(output_directory, base_filename, data):
+    csv_filename = base_filename + ".csv"
+    output_path = os.path.join(output_directory, csv_filename)
+    np.savetxt(output_path, data, delimiter=",", fmt='%.5f')
 
-def save_to_json(output_directory, filename, name, num_eeg_channels, num_emg_channels, data_filename):
+def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_emg_channels, data_filename):
+    json_filename = base_filename + ".json"
     json_data = {
         "name": name,
         "channels": {
             "eeg": num_eeg_channels,
             "emg": num_emg_channels
         },
-        "data_file": data_filename,
+        "data_file": data_filename + ".csv",
         "trigger_file": ""
     }
 
-    output_path = os.path.join(output_directory, filename)
+    output_path = os.path.join(output_directory, json_filename)
     with open(output_path, 'w') as json_file:
         json.dump(json_data, json_file, indent=2)
 
@@ -37,22 +39,22 @@ if __name__ == "__main__":
     parser.add_argument("--eeg_channels", type=int, default=63, help="Number of EEG channels")
     parser.add_argument("--emg_channels", type=int, default=10, help="Number of EMG channels")
     parser.add_argument("--sampling_frequency", type=int, default=5000, help="Sampling frequency in Hz")
-    parser.add_argument("--duration", type=int, default=10, help="Duration in seconds")
+    parser.add_argument("--duration", type=int, default=1, help="Duration in seconds")
     parser.add_argument("--output_directory", type=str, default=".", help="Output directory for files")
-    parser.add_argument("--output_filename", type=str, default="random_data.csv", help="Output CSV filename")
+    parser.add_argument("--output_filename", type=str, default="random_data", help="Output base filename without extension")
+    parser.add_argument("--dataset_name", type=str, default="Random data", help="Name of the dataset")
 
     args = parser.parse_args()
 
     data = generate_random_data(args.eeg_channels, args.emg_channels, args.sampling_frequency, args.duration)
     save_to_csv(args.output_directory, args.output_filename, data)
 
-    json_filename = os.path.splitext(args.output_filename)[0] + ".json"
-    save_to_json(args.output_directory, json_filename, "Random data", args.eeg_channels, args.emg_channels, args.output_filename)
+    save_to_json(args.output_directory, args.output_filename, args.dataset_name, args.eeg_channels, args.emg_channels, args.output_filename)
 
-    print("Random data with {} EEG channels and {} EMG channels saved to {}/{}.".format(
+    print("Random data with {} EEG channels and {} EMG channels saved to {}/{}.csv".format(
         args.eeg_channels,
         args.emg_channels,
         args.output_directory,
         args.output_filename,
     ))
-    print("JSON metadata saved to {}/{}.".format(args.output_directory, json_filename))
+    print("JSON metadata for '{}' saved to {}/{}.json".format(args.dataset_name, args.output_directory, args.output_filename))
