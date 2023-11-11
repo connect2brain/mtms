@@ -34,6 +34,7 @@ class Decider:
         if not np.all(valid_samples):
             return {
                 'send_trigger': False,
+                'send_external_trigger': False,
                 'sensory_stimulus': None,
             }
 
@@ -41,11 +42,13 @@ class Decider:
         if self.sample_count % self.trigger_interval_in_samples != 0:
             return {
                 'send_trigger': False,
+                'send_external_trigger': False,
                 'sensory_stimulus': None,
             }
 
         return {
             'send_trigger': ready_for_trigger,
+            'send_external_trigger': False,
             'sensory_stimulus': {
                 'time': current_time,
                 'state': 0,
