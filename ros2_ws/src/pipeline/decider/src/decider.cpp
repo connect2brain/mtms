@@ -238,6 +238,10 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
       (new_session_state.value == system_interfaces::msg::SessionState::STOPPING ||
        new_session_state.value == system_interfaces::msg::SessionState::STOPPED)) {
 
+    /* XXX: It's not the cleanest way to do it to map 'enabled' to decider state in several places (see similar mapping in
+         handle_set_decider_enabled function). These two variables should probably be combined into one. */
+    this->decider_state = this->enabled ? READY : WAITING_FOR_ENABLED;
+
     this->initialize_decider_module();
     this->initialize_sample_buffer();
   }
@@ -260,19 +264,19 @@ void EegDecider::handle_set_decider_enabled(
   this->decider_enabled_publisher->publish(msg);
 
   if (this->enabled) {
-    this->decider_state = READY;
-
     initialize_decider_module();
 
     /* Re-initialize sample buffer to avoid using remains of old EEG data. */
     initialize_sample_buffer();
-  } else {
-    this->decider_state = WAITING_FOR_ENABLED;
 
+  } else {
     /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
        but do not unset the module. */
     this->decider_wrapper->reset_module_state();
   }
+  /* Update decider state. */
+  this->decider_state = this->enabled ? READY : WAITING_FOR_ENABLED;
+
   RCLCPP_INFO(this->get_logger(), "%s decider.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
