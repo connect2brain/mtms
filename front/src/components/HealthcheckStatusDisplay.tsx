@@ -50,7 +50,8 @@ const StatusLine = styled.div`
 `
 
 export const HealthcheckStatusDisplay: React.FC = () => {
-  const { eegHealthcheck, mtmsDeviceHealthcheck, preprocessorHealthcheck } = useContext(HealthcheckContext)
+  const { eegHealthcheck, mtmsDeviceHealthcheck, preprocessorHealthcheck, deciderHealthcheck } =
+    useContext(HealthcheckContext)
 
   return (
     <HealthcheckPanel>
@@ -85,6 +86,16 @@ export const HealthcheckStatusDisplay: React.FC = () => {
           }
         />
         EEG
+      </StatusLine>
+      <StatusLine>
+        <StatusSquare
+          status={
+            deciderHealthcheck?.status.value !== undefined && deciderHealthcheck?.status.value !== null
+              ? deciderHealthcheck?.status.value
+              : -1
+          }
+        />
+        Decider
       </StatusLine>
     </HealthcheckPanel>
   )

@@ -26,6 +26,7 @@ interface HealthcheckContextType {
   mtmsDeviceHealthcheck: Healthcheck | null
   mepHealthcheck: Healthcheck | null
   preprocessorHealthcheck: Healthcheck | null
+  deciderHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
@@ -34,6 +35,7 @@ const defaultHealthcheckState: HealthcheckContextType = {
   mtmsDeviceHealthcheck: null,
   mepHealthcheck: null,
   preprocessorHealthcheck: null,
+  deciderHealthcheck: null,
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -48,6 +50,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
   const [preprocessorHealthcheck, setPreprocessorHealthcheck] = useState<Healthcheck | null>(null)
+  const [deciderHealthcheck, setDeciderHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
     const eegSubscriber = new Topic<Healthcheck>({
@@ -80,11 +83,18 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'system_interfaces/Healthcheck',
     })
 
+    const deciderSubscriber = new Topic<Healthcheck>({
+      ros: ros,
+      name: '/eeg/decider/healthcheck',
+      messageType: 'system_interfaces/Healthcheck',
+    })
+
     let eegTimeout: NodeJS.Timeout | null = null
     let eegSimulatorTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
     let mepTimeout: NodeJS.Timeout | null = null
     let preprocessorTimeout: NodeJS.Timeout | null = null
+    let deciderTimeout: NodeJS.Timeout | null = null
 
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
@@ -136,12 +146,23 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }, 1000)
     })
 
+    deciderSubscriber.subscribe((message) => {
+      setDeciderHealthcheck(message)
+      if (deciderTimeout) {
+        clearTimeout(deciderTimeout)
+      }
+      deciderTimeout = setTimeout(() => {
+        setDeciderHealthcheck(null)
+      }, 1000)
+    })
+
     return () => {
       eegSubscriber.unsubscribe()
       eegSimulatorSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
       mepSubscriber.unsubscribe()
       preprocessorSubscriber.unsubscribe()
+      deciderSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
       }
@@ -157,6 +178,9 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       if (preprocessorTimeout) {
         clearTimeout(preprocessorTimeout)
       }
+      if (deciderTimeout) {
+        clearTimeout(deciderTimeout)
+      }
     }
   }, [])
 
@@ -168,6 +192,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
         mtmsDeviceHealthcheck,
         mepHealthcheck,
         preprocessorHealthcheck,
+        deciderHealthcheck,
       }}
     >
       {children}
