@@ -14,6 +14,7 @@ from event_interfaces.msg import (
     PulseFeedback,
     TriggerOut,
     TriggerOutFeedback,
+    StimulusFeedback,
     EventInfo,
     ReadyForEventTrigger
 )
@@ -89,6 +90,9 @@ class StimulusPerformerNode(Node):
         # Publisher for event trigger readiness.
         self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
 
+        # Publisher for stimulus feedback.
+        self.stimulus_feedback_publisher = self.create_publisher(StimulusFeedback, '/event/stimulus_feedback', 10, callback_group=self.callback_group)
+
         self.event_id = 0
 
         self.event_feedback = {}
@@ -141,7 +145,7 @@ class StimulusPerformerNode(Node):
         # TODO: Improve feedback logging, preferably by implementing events as ROS actions.
         self.logger.info('Event {} finished with error code: {}'.format(id, error.value))
 
-        self.event_feedback[id] = error
+        self.event_feedback[id] = feedback
 
     def get_event_feedback(self, id):
         if id not in self.event_feedback:
@@ -412,8 +416,6 @@ class StimulusPerformerNode(Node):
                 )
                 trigger_ids += [id]
 
-        all_ids = pulse_ids + trigger_ids
-
         if wait_for_trigger:
             msg = ReadyForEventTrigger()
             self.event_trigger_readiness_publisher.publish(msg)
@@ -422,16 +424,36 @@ class StimulusPerformerNode(Node):
         else:
             self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
-        feedbacks = self.wait_for_events_to_finish(all_ids)
+        pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
+        trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
 
-        # XXX: Should check pulse feedbacks separately from trigger out feedbacks, as the error codes
-        #   may differ. (The 'no error' case does not, hence it can be done like this for now.)
-        success = all([feedback.value == 0 for feedback in feedbacks])
+        # TODO: If there is an error, do something with the error code.
+        pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
+        trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
+
+        # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
+        execution_time = pulse_feedbacks[0].execution_time
+
+        # Check that all pulses were executed concurrently.
+        pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
+
+        if not pulses_executed_concurrently:
+            self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
+
+        success = pulse_success and trigger_out_success and pulses_executed_concurrently
 
         self.logger.info('{}: Done! Stimulus {}.'.format(
             goal_id,
             'was successful' if success else 'failed'
         ))
+
+        # Publish stimulus feedback.
+        feedback = StimulusFeedback()
+
+        feedback.success = success
+        feedback.execution_time = execution_time
+
+        self.stimulus_feedback_publisher.publish(feedback)
 
         return success
 
