@@ -33,7 +33,8 @@ private:
   void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
   void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
 
-  void append_to_file(const std::string &data);
+  void write_raw_buffer();
+  void write_preprocessed_buffer();
 
   std::string active_project;
 
@@ -45,10 +46,14 @@ private:
   std::string raw_data_directory;
   std::string raw_file_path;
   std::ofstream raw_file;
+  uint64_t raw_sample_count = 0;
+  std::ostringstream raw_buffer;
 
   std::string preprocessed_data_directory;
   std::string preprocessed_file_path;
   std::ofstream preprocessed_file;
+  uint64_t preprocessed_sample_count = 0;
+  std::ostringstream preprocessed_buffer;
 
   uint8_t current_session_state;
 };
