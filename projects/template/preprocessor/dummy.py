@@ -26,6 +26,11 @@ class Preprocessor:
 
     def process(self, timestamps, eeg_samples, emg_samples, current_sample_index, pulse_given):
         self.sample_count += 1
+
+        if self.sample_count % 1000 == 0:
+            # Do every 1000 samples. Useful for debug prints.
+            pass
+
         if pulse_given:
             self.ongoing_pulse_artifact = True
             self.samples_after_pulse = 0
@@ -36,10 +41,6 @@ class Preprocessor:
             self.samples_after_pulse += 1
             if self.samples_after_pulse == 1000:
                 self.ongoing_pulse_artifact = False
-
-        if self.sample_count % 100 == 0:
-            # Do every 100 samples. Useful for debug prints.
-            pass
 
         eeg_sample_preprocessed = eeg_samples[current_sample_index,:]
         emg_sample_preprocessed = emg_samples[current_sample_index,:]
