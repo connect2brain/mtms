@@ -87,7 +87,7 @@ private:
   void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
   void handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg);
 
-  void update_ready_for_event_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
+  void update_ready_for_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
 
@@ -117,8 +117,9 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_publisher;
-  rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_event_trigger_subscriber;
+  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr trigger_publisher;
+  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
+  rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_trigger_subscriber;
 
   rclcpp::Subscription<event_interfaces::msg::StimulusFeedback>::SharedPtr stimulus_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
@@ -146,7 +147,7 @@ private:
 
   std::queue<double_t> decision_times;
 
-  bool ready_for_event_trigger = false;
+  bool ready_for_trigger = false;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;

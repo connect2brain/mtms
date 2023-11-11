@@ -36,7 +36,7 @@ public:
 
   void reset_module_state();
 
-  std::tuple<bool, bool, bool> process(
+  std::tuple<bool, bool, bool, bool> process(
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
     double_t sample_time,
