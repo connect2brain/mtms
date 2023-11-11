@@ -6,9 +6,9 @@ import { StyledPanel } from 'styles/General'
 
 const HealthcheckMessagePanel = styled(StyledPanel)`
   width: 400px;
-  height: 40px;
+  height: 45px;
   position: fixed;
-  top: 124px;
+  top: 122px;
   right: 5px;
   z-index: 1000;
 `
@@ -33,16 +33,16 @@ export const HealthcheckMessageDisplay: React.FC = () => {
 
   let displayMessage
 
-  // Prioritize mtmsDeviceHealthcheck > eegHealthcheck > preprocessorHealthcheck
+  // Prioritize mtmsDeviceHealthcheck > preprocessorHealthcheck > eegHealthcheck
   if (
     mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY &&
     mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED
   ) {
     displayMessage = mtmsDeviceHealthcheck?.actionable_message
-  } else if (eegHealthcheck?.status.value !== HealthcheckStatus.READY) {
-    displayMessage = eegHealthcheck?.actionable_message
   } else if (preprocessorHealthcheck?.status.value !== HealthcheckStatus.READY) {
     displayMessage = preprocessorHealthcheck?.actionable_message
+  } else if (eegHealthcheck?.status.value !== HealthcheckStatus.READY) {
+    displayMessage = eegHealthcheck?.actionable_message
   } else {
     displayMessage = 'Ready'
   }
