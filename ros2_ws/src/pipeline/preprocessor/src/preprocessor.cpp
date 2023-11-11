@@ -227,8 +227,13 @@ void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::ms
       (new_session_state.value == system_interfaces::msg::SessionState::STOPPING ||
        new_session_state.value == system_interfaces::msg::SessionState::STOPPED)) {
 
+    /* XXX: It's not the cleanest way to do it to map enabled to preprocessor state in several places (see similar mapping in
+         handle_set_preprocessor_enabled function). These two variables should probably be combined into one. */
+    this->preprocessor_state = this->enabled ? READY : WAITING_FOR_ENABLED;
+
     this->initialize_preprocessor_module();
     this->initialize_sample_buffer();
+
   }
   this->session_state = new_session_state;
 }
@@ -249,19 +254,18 @@ void EegPreprocessor::handle_set_preprocessor_enabled(
   this->preprocessor_enabled_publisher->publish(msg);
 
   if (this->enabled) {
-    this->preprocessor_state = READY;
-
     initialize_preprocessor_module();
 
     /* Re-initialize sample buffer to avoid using remains of old EEG data. */
     initialize_sample_buffer();
   } else {
-    this->preprocessor_state = WAITING_FOR_ENABLED;
-
     /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
        but do not unset the module. */
     this->preprocessor_wrapper->reset_module_state();
   }
+  /* Update preprocessor state. */
+  this->preprocessor_state = this->enabled ? READY : WAITING_FOR_ENABLED;
+
   RCLCPP_INFO(this->get_logger(), "%s preprocessor.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
