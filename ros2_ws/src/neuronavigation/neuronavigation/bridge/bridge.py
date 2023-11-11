@@ -15,6 +15,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
+from event_interfaces.msg import StimulusFeedback
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
@@ -62,6 +63,15 @@ class NeuronavigationNode(Node):
         callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
+
+        # Create subscriber for stimulus feedback.esko
+        self._stimulus_feedback_subscriber = self.create_subscription(
+            StimulusFeedback,
+            "/event/stimulus_feedback",
+            self.stimulus_feedback_callback,
+            10,
+            callback_group=callback_group,
+        )
 
         # Create publisher for neuronavigation started.
         self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started", qos_persist_latest, callback_group=callback_group)
@@ -132,6 +142,9 @@ class NeuronavigationNode(Node):
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
 
+    def set_callback__stimulation_pulse_received(self, callback):
+        self._stimulation_pulse_received = callback
+
     def set_callback__open_orientation_dialog(self, callback):
         self._open_orientation_dialog = callback
 
@@ -142,6 +155,10 @@ class NeuronavigationNode(Node):
 
         response.success = True
         return response
+
+    def stimulus_feedback_callback(self, msg):
+        self.get_logger().info(f'Stimulation pulse received')
+        self._stimulation_pulse_received()
 
     def planner_state_callback(self, msg):
         if not hasattr(self, '_set_markers'):
@@ -486,6 +503,9 @@ class Connection(Thread):
         return self.node.set_dIperdt(
             dIperdt=dIperdt,
         )
+
+    def set_callback__stimulation_pulse_received(self, callback):
+        self.node.set_callback__stimulation_pulse_received(callback)
 
     def set_callback__set_markers(self, callback):
         self.node.set_callback__set_markers(callback)
