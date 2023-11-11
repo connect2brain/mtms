@@ -62,7 +62,7 @@ private:
 
   void initialize_streaming();
 
-  std::tuple<bool, bool, double_t> publish_sample();
+  std::tuple<bool, bool, double_t> publish_sample(double_t current_time);
 
   void read_next_trigger_time();
   void publish_triggers_up_to(double_t time);

@@ -486,13 +486,10 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
   /* Loop until the dataset time adjusted by the offset reaches the current time OR
      streaming needs to stop (e.g., the dataset is finished or there is an error). */
   while (dataset_time + time_offset <= current_time && !stop) {
-    std::tie(stop, looped, sample_time) = publish_sample();
+    std::tie(stop, looped, sample_time) = publish_sample(current_time);
 
     if (looped) {
-      /* If the dataset looped, update the time offset. */
-      time_offset = current_time;
-
-      /* Also reset the trigger file. */
+      /* If dataset looped, reset the trigger file. */
       if (this->send_triggers) {
         trigger_file.clear();
         trigger_file.seekg(0, std::ios::beg);
@@ -519,7 +516,7 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
   }
 }
 
-std::tuple<bool, bool, double_t> EegSimulator::publish_sample() {
+std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_time) {
   bool looped = false;
   std::string line;
 
@@ -531,6 +528,9 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample() {
         data_file.clear();
         data_file.seekg(0, std::ios::beg);
         std::getline(data_file, line);
+
+        /* If the dataset looped, update the time offset. */
+        time_offset = current_time;
 
         looped = true;
       } else {
