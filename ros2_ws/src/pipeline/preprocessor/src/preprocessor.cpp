@@ -144,7 +144,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     std::chrono::milliseconds(500),
     std::bind(&EegPreprocessor::publish_healthcheck, this));
 
-  this->update_healthcheck();
+  this->preprocessor_state = WAITING_FOR_ENABLED;
 }
 
 EegPreprocessor::~EegPreprocessor() {
@@ -152,25 +152,34 @@ EegPreprocessor::~EegPreprocessor() {
   close(inotify_descriptor);
 }
 
-void EegPreprocessor::update_healthcheck() {
-  if (this->enabled) {
-    this->status = system_interfaces::msg::HealthcheckStatus::READY;
-    this->status_message = "Ready";
-    this->actionable_message = "Ready";
-  } else {
-    this->status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-    this->status_message = "EEG preprocessor not enabled";
-    this->actionable_message = "Please enable the EEG preprocessor.";
-  }
-}
-
 void EegPreprocessor::publish_healthcheck() {
   auto healthcheck = system_interfaces::msg::Healthcheck();
 
-  healthcheck.status.value = status;
-  healthcheck.status_message = status_message;
-  healthcheck.actionable_message = actionable_message;
+  switch (this->preprocessor_state) {
+    case WAITING_FOR_ENABLED:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      healthcheck.status_message = "EEG preprocessor not enabled";
+      healthcheck.actionable_message = "Please enable the EEG preprocessor.";
+      break;
 
+    case READY:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+      healthcheck.status_message = "Ready";
+      healthcheck.actionable_message = "Ready";
+      break;
+
+    case SAMPLES_DROPPED:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
+      healthcheck.status_message = "Samples dropped";
+      healthcheck.actionable_message = "Sample(s) dropped in preprocessor. Please restart the measurement.";
+      break;
+
+    case MODULE_ERROR:
+      healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
+      healthcheck.status_message = "Module error";
+      healthcheck.actionable_message = "Preprocessor has encountered an error. Please restart the measurement.";
+      break;
+  }
   this->healthcheck_publisher->publish(healthcheck);
 }
 
@@ -240,17 +249,19 @@ void EegPreprocessor::handle_set_preprocessor_enabled(
   this->preprocessor_enabled_publisher->publish(msg);
 
   if (this->enabled) {
+    this->preprocessor_state = READY;
+
     initialize_preprocessor_module();
 
     /* Re-initialize sample buffer to avoid using remains of old EEG data. */
     initialize_sample_buffer();
   } else {
+    this->preprocessor_state = WAITING_FOR_ENABLED;
+
     /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
        but do not unset the module. */
     this->preprocessor_wrapper->reset_module_state();
   }
-  update_healthcheck();
-
   RCLCPP_INFO(this->get_logger(), "%s preprocessor.", this->enabled ? "Enabling" : "Disabling");
 
   response->success = true;
@@ -431,6 +442,8 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
 
     if (time_diff > threshold) {
       /* Err if sample(s) were dropped. */
+      this->preprocessor_state = SAMPLES_DROPPED;
+
       RCLCPP_ERROR(this->get_logger(),
           "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
 
@@ -513,6 +526,8 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
   if (this->preprocessor_wrapper->error_occurred()) {
+    this->preprocessor_state = MODULE_ERROR;
+
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
