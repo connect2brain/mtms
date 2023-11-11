@@ -20,6 +20,9 @@
 #include "event_interfaces/msg/event_trigger.hpp"
 #include "event_interfaces/msg/ready_for_event_trigger.hpp"
 
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
+
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
 
@@ -37,6 +40,13 @@ const uint8_t UNSET_NUM_OF_CHANNELS = 255;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 const std::string UNSET_STRING = "";
 
+enum DeciderState {
+  WAITING_FOR_ENABLED,
+  READY,
+  SAMPLES_DROPPED,
+  MODULE_ERROR
+};
+
 class DeciderWrapper;
 
 class EegDecider : public rclcpp::Node {
@@ -45,6 +55,8 @@ public:
   ~EegDecider();
 
 private:
+  void publish_healthcheck();
+
   void initialize_decider_module();
   void initialize_sample_buffer();
 
@@ -79,6 +91,9 @@ private:
 
   rclcpp::Logger logger;
 
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
@@ -102,6 +117,7 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
 
+  DeciderState decider_state;
   bool enabled;
 
   std::string active_project;
@@ -131,6 +147,11 @@ private:
   /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
      just once when the session is stopped. */
   system_interfaces::msg::SessionState session_state;
+
+  /* Healthcheck */
+  uint8_t status;
+  std::string status_message;
+  std::string actionable_message;
 
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;
