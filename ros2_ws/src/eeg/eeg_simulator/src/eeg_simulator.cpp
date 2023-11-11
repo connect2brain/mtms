@@ -32,6 +32,9 @@ const std::string EEG_SIMULATOR_DATA_SUBDIRECTORY = "eeg_simulator/";
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
+
 
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
      side yet. For a previous Python reference implementation, see commit c0afb515b. */
@@ -109,7 +112,10 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     std::bind(&EegSimulator::handle_session, this, _1));
 
   /* Publisher for EEG samples. */
-  eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
+  eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(
+    EEG_RAW_TOPIC,
+    EEG_QUEUE_LENGTH);
+
   trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
   eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
 
