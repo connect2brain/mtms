@@ -56,6 +56,9 @@ const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
 const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
 
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
+
 const uint8_t VERBOSE = 0;
 
 /* XXX: Needs to match the values in session_bridge.cpp. */
@@ -94,7 +97,10 @@ void EegBridge::create_publishers() {
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(EEG_RAW_TOPIC, 10);
+  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(
+    EEG_RAW_TOPIC,
+    EEG_QUEUE_LENGTH);
+
   this->trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
   this->eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
