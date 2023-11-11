@@ -36,6 +36,13 @@ const uint8_t UNSET_NUM_OF_CHANNELS = 255;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 const std::string UNSET_STRING = "";
 
+enum PreprocessorState {
+  WAITING_FOR_ENABLED,
+  READY,
+  SAMPLES_DROPPED,
+  MODULE_ERROR
+};
+
 class PreprocessorWrapper;
 
 class EegPreprocessor : public rclcpp::Node {
@@ -44,7 +51,6 @@ public:
   ~EegPreprocessor();
 
 private:
-  void update_healthcheck();
   void publish_healthcheck();
 
   void initialize_preprocessor_module();
@@ -104,6 +110,7 @@ private:
   rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
+  PreprocessorState preprocessor_state;
   bool enabled;
 
   std::string active_project;
