@@ -117,16 +117,21 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled",
     qos_persist_latest);
 
-  /* Publisher for event trigger. */
-  this->event_trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
+  /* Publisher for mTMS device trigger. */
+  this->trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
+    "/mtms_device/trigger",
+    10);
+
+  /* Publisher for external trigger. */
+  this->external_trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
     "/event/trigger",
     10);
 
   /* Subscriber for event trigger readiness. */
-  this->ready_for_event_trigger_subscriber = this->create_subscription<event_interfaces::msg::ReadyForEventTrigger>(
+  this->ready_for_trigger_subscriber = this->create_subscription<event_interfaces::msg::ReadyForEventTrigger>(
     "/event/trigger/ready",
     10,
-    std::bind(&EegDecider::update_ready_for_event_trigger, this, _1));
+    std::bind(&EegDecider::update_ready_for_trigger, this, _1));
 
   /* Subscriber for stimulus feedback. */
   this->stimulus_feedback_subscriber = create_subscription<event_interfaces::msg::StimulusFeedback>(
@@ -530,8 +535,8 @@ void EegDecider::handle_stimulus_feedback(const std::shared_ptr<event_interfaces
   this->calculate_latency(msg->execution_time);
 }
 
-void EegDecider::update_ready_for_event_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
-  this->ready_for_event_trigger = true;
+void EegDecider::update_ready_for_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
+  this->ready_for_trigger = true;
 
   RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
 }
@@ -580,27 +585,38 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
-  auto [success, send_event_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
+  auto [success, send_trigger, send_external_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
-    ready_for_event_trigger);
+    ready_for_trigger);
 
   if (success) {
     /* Measure the processing time of the sample.  TODO: Unused at the moment. */
     auto end_time = std::chrono::high_resolution_clock::now();
     double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-    /* Send event trigger if desired. */
-    if (send_event_trigger) {
+    /* Send trigger if desired. */
+    if (send_trigger) {
       this->decision_times.push(sample_time);
 
-      RCLCPP_INFO(this->get_logger(), "Sending event trigger at time %.3f (s).", sample_time);
+      RCLCPP_INFO(this->get_logger(), "Sending trigger at time %.3f (s).", sample_time);
 
       auto msg = event_interfaces::msg::EventTrigger();
-      this->event_trigger_publisher->publish(msg);
+      this->trigger_publisher->publish(msg);
 
-      ready_for_event_trigger = false;
+      ready_for_trigger = false;
+    }
+
+    if (send_external_trigger) {
+      this->decision_times.push(sample_time);
+
+      RCLCPP_INFO(this->get_logger(), "Sending external trigger at time %.3f (s).", sample_time);
+
+      auto msg = event_interfaces::msg::EventTrigger();
+      this->external_trigger_publisher->publish(msg);
+
+      ready_for_trigger = false;
     }
 
     if (send_sensory_stimulus) {
