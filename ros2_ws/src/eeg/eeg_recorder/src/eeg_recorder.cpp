@@ -21,8 +21,8 @@ const std::string RAW_EEG_DATA_SUBDIRECTORY = "/eeg_recorder/raw";
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 
-/* Have a queue size of 5000 to avoid dropping messages - corresponds to 1 s of data with 5 kHz sampling frequency. */
-const uint16_t QUEUE_SIZE = 5000;
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
 
 const uint16_t BATCH_SIZE_IN_SAMPLES = 5000;
 
@@ -55,13 +55,13 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
   /* Subscriber for raw EEG. */
   eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::EegSample>(
     EEG_RAW_TOPIC,
-    QUEUE_SIZE,
+    EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_raw_eeg_sample, this, _1));
 
   /* Subscriber for preprocessed EEG. */
   eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
     EEG_PREPROCESSED_TOPIC,
-    QUEUE_SIZE,
+    EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
 }
 
