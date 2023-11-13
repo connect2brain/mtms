@@ -23,4 +23,4 @@ curl -SL https://github.com/docker/compose/releases/download/v2.5.0/docker-compo
 chmod +x /usr/local/bin/docker-compose
 
 # Enable using Docker without sudo
-usermod -aG docker $USER
+usermod -aG docker mtms
