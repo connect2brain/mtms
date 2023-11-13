@@ -35,6 +35,8 @@ apt install wmctrl
 #
 # From: https://github.com/JnyJny/busylight
 #
+sudo apt install python3-pip
+
 pip install busylight-for-humans
 
 busylight udev-rules -o 99-busylights.rules
