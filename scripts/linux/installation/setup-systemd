@@ -6,6 +6,9 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
+# TODO: Make the value of the SITE argument automatically show up in
+#   the contents of the service file copied to /etc/systemd/system.
+
 # Copy service starting the mTMS core containers
 cp systemd/mtms-core-containers.service /etc/systemd/system
 
