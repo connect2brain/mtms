@@ -61,3 +61,10 @@ echo "mtms ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-core-containers" | su
 
 # Set the correct permissions
 chmod 0440 /etc/sudoers.d/container_logs
+
+# Create projects directory
+mkdir /home/mtms/projects
+
+# XXX: These wouldn't be needed if this script was not run as sudo.
+chown mtms projects
+chgrp mtms projects
