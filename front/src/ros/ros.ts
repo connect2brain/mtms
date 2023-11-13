@@ -166,7 +166,7 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
 
    TODO: After ROSLIB types are updated with the action support, bypassing
      the type checks (that is, ROSLIB as any) can be removed everywhere. */
-const performExperimentAction: any = new (ROSLIB as any).ActionHandle({
+const performExperimentActionClient: any = new (ROSLIB as any).Action({
   ros: ros,
   name: '/experiment/perform',
   actionType: 'experiment_interfaces/PerformExperiment',
@@ -179,19 +179,19 @@ export const performExperiment = (
 ) => {
   const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
-  performExperimentAction.createClient(goal)
-  performExperimentAction.on('result', (response: any) => {
-    if (!response.success) {
-      console.log('ERROR: Failed to perform experiment: success field was false.')
-      done_callback(response.trial_results, false)
-    } else {
-      done_callback(response.trial_results, true)
-    }
-  })
-  performExperimentAction.on('feedback', (response: any) => {
-    feedback_callback(response.values.feedback)
-  })
-}
+  performExperimentActionClient.sendGoal(goal,
+    (response: any) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to perform experiment: success field was false.')
+        done_callback(response.trial_results, false)
+      } else {
+        done_callback(response.trial_results, true)
+      }
+    },
+    (feedback: any) => {
+      feedback_callback(feedback)
+    })
+  }
 
 /* Pause experiment service */
 const pauseExperimentService = new ROSLIB.Service({
