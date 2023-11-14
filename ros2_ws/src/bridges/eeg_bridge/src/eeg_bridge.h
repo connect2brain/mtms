@@ -23,8 +23,11 @@
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
-#define BUFFER_LENGTH 250
-#define MAX_NUMBER_OF_CHANNELS 80
+/* The maximum length of the UDP packet, as mentioned in the manual of Bittium NeurOne. */
+#define BUFFER_LENGTH 1472
+
+/* The maximum number of channels as supported by four amplifiers (40 channels per amplifier). */
+#define MAX_NUMBER_OF_CHANNELS 160
 
 
 using namespace std::chrono_literals;
