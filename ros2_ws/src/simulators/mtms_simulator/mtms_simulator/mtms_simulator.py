@@ -46,6 +46,7 @@ from event_interfaces.msg import (
     PulseFeedback,
     ChargeFeedback,
     DischargeFeedback,
+    TriggerOutError,
     TriggerOutFeedback,
     WaveformPhase,
     WaveformPiece,
@@ -65,7 +66,8 @@ class MTMSSimulator(Node):
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
 
     # TODO: Make these values configurable
-    CHARGE_RATE = 1 / 1500  # in J/s
+    CHARGE_RATE = 1500  # in J/s
+    CAPACITANCE = 1020e-6
     TIME_CONSTANT = 1  # in seconds, tau = RC
     PULSE_DISCHARGE_PERCENTAGE = 0.05
 
@@ -157,7 +159,7 @@ class MTMSSimulator(Node):
 
         self.channels = [
             Channel(
-                charge_rate=self.CHARGE_RATE,
+                charge_rate=self.CAPACITANCE / self.CHARGE_RATE,
                 time_constant=self.TIME_CONSTANT,
                 pulse_discharge_percentage=self.PULSE_DISCHARGE_PERCENTAGE,
                 max_voltage=self.MAX_VOLTAGE,
@@ -175,7 +177,9 @@ class MTMSSimulator(Node):
         )
 
     def allow_stimulation_handler(self, request, response):
-        self.get_logger().info("Allow stimulation set to %r" % request.allow_stimulation)
+        self.get_logger().info(
+            "Allow stimulation set to %r" % request.allow_stimulation
+        )
 
         self.allow_stimulation = request.allow_stimulation
         for c in self.channels:
@@ -287,7 +291,6 @@ class MTMSSimulator(Node):
         # wait for execution condition.
         match execution_condition:
             case ExecutionCondition.TIMED:
-
                 wait = execution_time - (time.time() - self.session_start_time)
                 time.sleep(wait)
             case ExecutionCondition.WAIT_FOR_TRIGGER:
@@ -476,9 +479,19 @@ class MTMSSimulator(Node):
         feedback_msg = channel.pulse(event_info.id, total_duration)
         self.pulse_feedback_publisher.publish(feedback_msg)
 
-    def trigger_out_handler(self, trigger_out):
-        self.get_logger().info("Trigger out activate")
-        self.get_logger().debug("Trigger out: %r" % trigger_out)
+    def trigger_out_handler(self, message: TriggerOut):
+        self.get_logger().debug("Trigger out: %r" % message)
+
+        event_info = message.event_info
+        self._wait_for_execution_execution_condition(
+            event_info.execution_condition, event_info.execution_time
+        )
+
+        # Wait for the duration
+        time.sleep(message.duration_us / 1e6)
+
+        feedback_msg = TriggerOutFeedback(id=event_info.id)
+        self.trigger_out_feedback_publisher.publish(feedback_msg)
 
     # NOTE: System state is not published fast enough with python. The simulator might
     # need to be translated to cpp later.
