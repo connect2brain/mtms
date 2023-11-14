@@ -225,8 +225,6 @@ void EegBridge::spin() {
         this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
       }
 
-      uint8_t status_value;
-
       switch (this->eeg_bridge_state) {
         case WAITING_FOR_MEASUREMENT_START:
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
@@ -259,7 +257,12 @@ void EegBridge::spin() {
         case ERROR_OUT_OF_SYNC:
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
                                    "Out of sync between EEG and mTMS device",
-                                   "Please stop the session on the mTMS device.");
+                                   /* XXX: Not really an actionable message at this stage; as long as we don't
+                                   actually show the cause of the error in the UI, it is more useful to have the
+                                   error as the 'actionable' message than not to display it at all. Once the causes
+                                   come to the UI, this could be changed to "Please stop the session on the mTMS device"
+                                   or similar. */
+                                   "Out of sync between EEG and mTMS device.");
           break;
       }
     }
