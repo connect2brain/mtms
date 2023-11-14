@@ -13,11 +13,20 @@ export const DeviceControl = () => {
   const deviceState = systemState?.device_state
 
   const deviceText = () => {
-    if (deviceState?.value === DeviceState.NOT_OPERATIONAL) return 'Start'
-    if (deviceState?.value === DeviceState.STARTUP) return 'Starting'
-    if (deviceState?.value === DeviceState.OPERATIONAL) return 'Stop'
-    if (deviceState?.value === DeviceState.SHUTDOWN) return 'Stopping'
-    return '???'
+    switch (deviceState?.value) {
+      case DeviceState.NOT_OPERATIONAL:
+        return 'Start device'
+
+      case DeviceState.STARTUP:
+        return 'Starting...'
+
+      case DeviceState.OPERATIONAL:
+        return 'Stop device'
+
+      case DeviceState.SHUTDOWN:
+        return 'Stopping...'
+    }
+    return 'Start device'
   }
 
   const toggleDevice = () => {
@@ -27,13 +36,15 @@ export const DeviceControl = () => {
       stopDevice()
     }
   }
-
   return mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED ? (
     <StyledButton
       onClick={toggleDevice}
-      disabled={deviceState?.value === DeviceState.STARTUP || deviceState?.value === DeviceState.SHUTDOWN}
+      disabled={
+        deviceState?.value === DeviceState.STARTUP ||
+        deviceState?.value === DeviceState.SHUTDOWN ||
+        deviceState?.value === undefined}
     >
-      {deviceText()} device
+      {deviceText()}
     </StyledButton>
   ) : null
 }
