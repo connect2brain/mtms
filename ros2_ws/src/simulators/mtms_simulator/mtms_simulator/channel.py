@@ -92,9 +92,7 @@ class Channel:
         Returns:
             After charging is ready returns with ChargeFeedback with event id and errors.
         """
-
-        # TODO: Check the formula and constants
-        t = self.charge_rate * (target_voltage**2 - self.current_voltage**2)
+        t = 1/2 * self.charge_rate * (target_voltage**2 - self.current_voltage**2)
         self.is_charging = True
         time.sleep(t)
         self.current_voltage = target_voltage
@@ -118,7 +116,6 @@ class Channel:
         Returns:
             After discharging is ready returns with DischargeFeedback with event id and errors.
         """
-        # TODO: Check the formula and constants
         t = self.time_constant * math.log(self.current_voltage / target_voltage)
         self.is_discharging = True
         time.sleep(t)
@@ -127,7 +124,7 @@ class Channel:
 
         return DischargeFeedback(id=event_info.id, error=DischargeError.NO_ERROR)
 
-    def pulse(self, event_id, duration_ticks) -> PulseFeedback:
+    def pulse(self, event_id: int, duration_ticks: int) -> PulseFeedback:
         """
         Simulates the behaviour of giving a pulse.
 
