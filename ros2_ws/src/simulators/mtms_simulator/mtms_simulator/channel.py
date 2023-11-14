@@ -1,19 +1,16 @@
 import math
 import time
 
-from mtms_device_interfaces.msg import Settings, ChannelError
+from mtms_device_interfaces.msg import ChannelError
 
 from event_interfaces.msg import (
     EventInfo,
-    ExecutionCondition,
     ChargeFeedback,
     ChargeError,
     DischargeFeedback,
     DischargeError,
     PulseError,
     PulseFeedback,
-    WaveformPiece,
-    WaveformPhase,
 )
 
 
