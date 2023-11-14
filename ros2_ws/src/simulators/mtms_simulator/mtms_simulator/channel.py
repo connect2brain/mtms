@@ -92,7 +92,7 @@ class Channel:
         Returns:
             After charging is ready returns with ChargeFeedback with event id and errors.
         """
-        t = 1/2 * self.charge_rate * (target_voltage**2 - self.current_voltage**2)
+        t = 1 / 2 * self.charge_rate * (target_voltage**2 - self.current_voltage**2)
         self.is_charging = True
         time.sleep(t)
         self.current_voltage = target_voltage
