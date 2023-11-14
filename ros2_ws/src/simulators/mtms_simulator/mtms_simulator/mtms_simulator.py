@@ -1,4 +1,3 @@
-import math
 import time
 
 import rclpy
@@ -15,12 +14,9 @@ from rclpy.duration import Duration
 from std_msgs.msg import String
 
 from mtms_device_interfaces.msg import (
-    ChannelError,
     SystemState,
     DeviceState,
     SessionState,
-    SystemError,
-    StartupError,
     ChannelState,
     Settings,
 )
@@ -46,7 +42,6 @@ from event_interfaces.msg import (
     PulseFeedback,
     ChargeFeedback,
     DischargeFeedback,
-    TriggerOutError,
     TriggerOutFeedback,
     WaveformPhase,
     WaveformPiece,
@@ -58,9 +53,9 @@ from .channel import Channel
 class MTMSSimulator(Node):
     """Simulator for mTMS device ros2 nodes.
 
-    Simulates the mTMS device by replacing the mtms_device_bridge. Creates the corresponding nodes of the
-    ros2 node interface described by the mtms_device_bridge packages.
-    """
+    Simulates the mTMS device by replacing the mtms_device_bridge. Creates the
+    corresponding nodes of the ros2 node interface described by the mtms_device_bridge
+    packages."""
 
     SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 400
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
