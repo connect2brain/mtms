@@ -46,13 +46,23 @@ class NeuronavigationNode(Node):
     def __init__(self):
         super().__init__("neuronavigation")
 
-        # ROS parameters
+        ## ROS parameters
+
+        # E-field
         descriptor = ParameterDescriptor(
             name='Enable or disable electric field',
             type=ParameterType.PARAMETER_BOOL,
         )
         self.declare_parameter('electric_field_enable', descriptor=descriptor)
         self.electric_field_enable = self.get_parameter('electric_field_enable').value
+
+        # Robot
+        descriptor = ParameterDescriptor(
+            name='Enable or disable robot',
+            type=ParameterType.PARAMETER_BOOL,
+        )
+        self.declare_parameter('robot_enable', descriptor=descriptor)
+        self.robot_enable = self.get_parameter('robot_enable').value
 
         # Create publishers, subscribers, and services
         qos_persist_latest = QoSProfile(
@@ -533,13 +543,17 @@ def main():
         x11 = ctypes.cdll.LoadLibrary('libX11.so')
         x11.XInitThreads()
 
-    # HACK: The host used for connecting to the robot. However, ideally robot would be another ROS node and,
-    #   therefore, automatically discovered. Settle for this for now.
-    remote_host = 'http://localhost:5000'
 
     # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
     sys.argv = [sys.argv[0]]
-    app.main(connection=connection, remote_host=remote_host)
+    if connection.node.robot_enable:
+        # HACK: The host used for connecting to the robot. However, ideally robot would be another ROS node and,
+        #   therefore, automatically discovered. Settle for this for now.
+        remote_host = 'http://localhost:5000'
+        app.main(connection=connection, remote_host=remote_host)
+
+    else:
+        app.main(connection=connection)
 
 
 if __file__ == 'main':
