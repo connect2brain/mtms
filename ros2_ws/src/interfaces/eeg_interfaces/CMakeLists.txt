@@ -23,8 +23,8 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EegInfo.msg"
-  "msg/EegSample.msg"
-  "msg/PreprocessedEegSample.msg"
+  "msg/Sample.msg"
+  "msg/PreprocessedSample.msg"
 
   "msg/EegStatistics.msg"
 

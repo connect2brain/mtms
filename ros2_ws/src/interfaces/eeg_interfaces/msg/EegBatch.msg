@@ -1,3 +1,3 @@
 # Eeg batch
 
-EegSample[] batch
+Sample[] batch

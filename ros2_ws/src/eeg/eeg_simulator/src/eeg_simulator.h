@@ -7,7 +7,7 @@
 #include "rcl_interfaces/msg/parameter_descriptor.hpp"
 #include "rcl_interfaces/msg/parameter_type.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
@@ -117,7 +117,7 @@ private:
   rclcpp::Service<project_interfaces::srv::SetLoop>::SharedPtr set_loop_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr loop_publisher;
 
-  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
 

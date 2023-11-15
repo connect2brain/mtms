@@ -13,8 +13,8 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "eeg_interfaces/msg/eeg_info.hpp"
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
 #include "event_interfaces/msg/event_trigger.hpp"
@@ -89,7 +89,7 @@ private:
 
   void update_ready_for_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
-  void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+  void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
 
   /* Inotify functions */
   void update_inotify_watch();
@@ -106,7 +106,7 @@ private:
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
-  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr preprocessed_eeg_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr preprocessed_eeg_subscriber;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DeciderList>::SharedPtr decider_list_publisher;
@@ -149,7 +149,7 @@ private:
 
   bool ready_for_trigger = false;
 
-  RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>> sample_buffer;
+  RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
