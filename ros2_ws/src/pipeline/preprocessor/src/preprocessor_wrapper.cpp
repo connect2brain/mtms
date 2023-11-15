@@ -10,7 +10,7 @@ namespace py = pybind11;
 
 PreprocessorWrapper::PreprocessorWrapper(rclcpp::Logger& logger) {
   logger_ptr = &logger;
-  _is_initialized = false;
+  state = WrapperState::UNINITIALIZED;
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
@@ -48,12 +48,12 @@ void PreprocessorWrapper::initialize_module(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
-    this->_is_initialized = false;
+    state = WrapperState::ERROR;
     return;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
-    this->_is_initialized = false;
+    state = WrapperState::ERROR;
     return;
   }
 
@@ -91,8 +91,7 @@ void PreprocessorWrapper::initialize_module(
   this->eeg_data_size = eeg_data_size;
   this->emg_data_size = emg_data_size;
 
-  this->_is_initialized = true;
-  this->_error_occurred = false;
+  state = WrapperState::READY;
 }
 
 void PreprocessorWrapper::reset_module_state() {
@@ -103,8 +102,9 @@ void PreprocessorWrapper::reset_module_state() {
   py_eeg_data.reset();
   py_emg_data.reset();
 
-  this->_is_initialized = false;
-  this->_error_occurred = false;
+  state = WrapperState::UNINITIALIZED;
+
+  RCLCPP_INFO(*logger_ptr, "Preprocessor reset.");
 }
 
 PreprocessorWrapper::~PreprocessorWrapper() {
@@ -113,12 +113,8 @@ PreprocessorWrapper::~PreprocessorWrapper() {
   py_emg_data.reset();
 }
 
-bool PreprocessorWrapper::is_initialized() const {
-  return this->_is_initialized;
-}
-
-bool PreprocessorWrapper::error_occurred() const {
-  return this->_error_occurred;
+WrapperState PreprocessorWrapper::get_state() const {
+  return this->state;
 }
 
 std::size_t PreprocessorWrapper::get_buffer_size() const {
@@ -165,19 +161,19 @@ bool PreprocessorWrapper::process(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
   }
 
@@ -185,19 +181,19 @@ bool PreprocessorWrapper::process(
 
   if (!dict_result.contains("eeg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: eeg_sample.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
   }
 
   if (!dict_result.contains("emg_sample")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: emg_sample.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
   }
 
   if (!dict_result.contains("valid")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: valid.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return false;
   }
 

@@ -17,6 +17,12 @@
 
 namespace py = pybind11;
 
+enum class WrapperState {
+  UNINITIALIZED,
+  READY,
+  ERROR
+};
+
 class PreprocessorWrapper {
 public:
   PreprocessorWrapper(rclcpp::Logger& logger);
@@ -37,9 +43,7 @@ public:
       double_t sample_time,
       bool pulse_given);
 
-  bool is_initialized() const;
-  bool error_occurred() const;
-
+  WrapperState get_state() const;
   std::size_t get_buffer_size() const;
 
   /* Exposed to Python, defined in cpp_bindings.cpp. */
@@ -49,8 +53,7 @@ private:
   /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see cpp_bindings.cpp). */
   static rclcpp::Logger* logger_ptr;
 
-  bool _is_initialized;
-  bool _error_occurred;
+  WrapperState state;
 
   std::unique_ptr<py::module> preprocessor_module;
   std::unique_ptr<py::object> preprocessor_instance;
