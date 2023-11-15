@@ -12,7 +12,6 @@
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-#include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
@@ -41,7 +40,7 @@ const uint8_t UNSET_NUM_OF_CHANNELS = 255;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 const std::string UNSET_STRING = "";
 
-enum DeciderState {
+enum class DeciderState {
   WAITING_FOR_ENABLED,
   READY,
   SAMPLES_DROPPED,
@@ -60,27 +59,29 @@ private:
 
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
-  void initialize_decider_module();
-  void initialize_sample_buffer();
-
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
+  void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
+  void initialize_module();
+
+  void reset_decider_state();
 
   void unset_decider_module();
 
-  void set_decider_module(const std::string module);
-  void handle_set_decider_module(
-      const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
-      std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response);
-
+  bool set_decider_enabled(bool enabled);
   void handle_set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response);
+
+  bool set_decider_module(const std::string module);
+  void handle_set_decider_module(
+      const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response);
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   std::vector<std::string> list_python_modules(const std::string& path);
   void update_decider_list();
 
-  void update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg);
   void check_dropped_samples(double_t sample_time);
 
   void calculate_latency(double_t pulse_execution_time);
@@ -103,8 +104,6 @@ private:
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
-
-  rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr preprocessed_eeg_subscriber;
 
@@ -130,6 +129,9 @@ private:
   DeciderState decider_state;
   bool enabled;
 
+  bool first_sample;
+  bool reinitialize;
+
   std::string active_project;
 
   std::string script_directory  = UNSET_STRING;
@@ -153,10 +155,6 @@ private:
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
-
-  /* Keep track of the session state so that the sample buffer and the Python module can be re-initialized
-     just once when the session is stopped. */
-  system_interfaces::msg::SessionState session_state;
 
   /* Healthcheck */
   uint8_t status;

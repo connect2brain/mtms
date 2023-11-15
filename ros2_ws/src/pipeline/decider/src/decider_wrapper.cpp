@@ -10,7 +10,7 @@ namespace py = pybind11;
 
 DeciderWrapper::DeciderWrapper(rclcpp::Logger& logger) {
   logger_ptr = &logger;
-  _is_initialized = false;
+  state = WrapperState::UNINITIALIZED;
   guard = std::make_unique<py::scoped_interpreter>();
 }
 
@@ -48,12 +48,12 @@ void DeciderWrapper::initialize_module(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
-    this->_is_initialized = false;
+    state = WrapperState::ERROR;
     return;
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
-    this->_is_initialized = false;
+    state = WrapperState::ERROR;
     return;
   }
 
@@ -93,8 +93,7 @@ void DeciderWrapper::initialize_module(
   this->eeg_data_size = eeg_data_size;
   this->emg_data_size = emg_data_size;
 
-  this->_is_initialized = true;
-  this->_error_occurred = false;
+  state = WrapperState::READY;
 }
 
 void DeciderWrapper::reset_module_state() {
@@ -105,8 +104,9 @@ void DeciderWrapper::reset_module_state() {
   py_eeg_data.reset();
   py_emg_data.reset();
 
-  this->_is_initialized = false;
-  this->_error_occurred = false;
+  state = WrapperState::UNINITIALIZED;
+
+  RCLCPP_INFO(*logger_ptr, "Decider reset.");
 }
 
 DeciderWrapper::~DeciderWrapper() {
@@ -116,12 +116,8 @@ DeciderWrapper::~DeciderWrapper() {
   py_emg_data.reset();
 }
 
-bool DeciderWrapper::is_initialized() const {
-  return this->_is_initialized;
-}
-
-bool DeciderWrapper::error_occurred() const {
-  return this->_error_occurred;
+WrapperState DeciderWrapper::get_state() const {
+  return this->state;
 }
 
 std::size_t DeciderWrapper::get_buffer_size() const {
@@ -170,19 +166,19 @@ std::tuple<bool, bool, bool, bool> DeciderWrapper::process(
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
   }
 
   /* Validate the return value of the Python function call. */
   if (!py::isinstance<py::dict>(result)) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
   }
 
@@ -190,19 +186,19 @@ std::tuple<bool, bool, bool, bool> DeciderWrapper::process(
 
   if (!dict_result.contains("send_trigger")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: send_trigger.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
   }
 
   if (!dict_result.contains("send_external_trigger")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: send_external_trigger.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
   }
 
   if (!dict_result.contains("sensory_stimulus")) {
     RCLCPP_ERROR(*logger_ptr, "Python module should return a dictionary with the field: sensory_stimulus.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, false, false, false};
   }
 
@@ -220,49 +216,49 @@ std::tuple<bool, bool, bool, bool> DeciderWrapper::process(
   /* Checks for each field in the sensory_stimulus dictionary */
   if (!py_sensory_stimulus.contains("time")) {
     RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: time.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py_sensory_stimulus.contains("state")) {
     RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: state.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py_sensory_stimulus.contains("parameter")) {
     RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: parameter.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py_sensory_stimulus.contains("duration")) {
     RCLCPP_ERROR(*logger_ptr, "sensory_stimulus does not contain the field: duration.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py::isinstance<py::float_>(py_sensory_stimulus["time"])) {
     RCLCPP_ERROR(*logger_ptr, "'time' field of 'sensory_stimulus' dictionary should be of type float.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py::isinstance<py::int_>(py_sensory_stimulus["state"])) {
     RCLCPP_ERROR(*logger_ptr, "'state' field of 'sensory_stimulus' dictionary should be of type int.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py::isinstance<py::int_>(py_sensory_stimulus["parameter"])) {
     RCLCPP_ERROR(*logger_ptr, "'parameter' field of 'sensory_stimulus' dictionary should be of type int.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
   if (!py::isinstance<py::float_>(py_sensory_stimulus["duration"])) {
     RCLCPP_ERROR(*logger_ptr, "'duration' field of 'sensory_stimulus' dictionary should be of type float.");
-    this->_error_occurred = true;
+    state = WrapperState::ERROR;
     return {false, send_trigger, send_external_trigger, false};
   }
 
