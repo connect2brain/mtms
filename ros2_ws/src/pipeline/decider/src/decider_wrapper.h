@@ -22,6 +22,12 @@
 
 namespace py = pybind11;
 
+enum class WrapperState {
+  UNINITIALIZED,
+  READY,
+  ERROR
+};
+
 class DeciderWrapper {
 public:
   DeciderWrapper(rclcpp::Logger& logger);
@@ -42,8 +48,7 @@ public:
     double_t sample_time,
     bool ready_for_event_trigger);
 
-  bool is_initialized() const;
-  bool error_occurred() const;
+  WrapperState get_state() const;
 
   std::size_t get_buffer_size() const;
 
@@ -54,8 +59,7 @@ private:
   /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see cpp_bindings.cpp). */
   static rclcpp::Logger* logger_ptr;
 
-  bool _is_initialized;
-  bool _error_occurred;
+  WrapperState state;
 
   std::unique_ptr<py::module> decider_module;
   std::unique_ptr<py::object> decider_instance;

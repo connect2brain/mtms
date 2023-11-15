@@ -183,6 +183,8 @@ void EegPreprocessor::publish_healthcheck() {
 
 void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
   if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+    this->reinitialize = true;
+
     /* Reset the preprocessor state when the session is stopped. */
     reset_preprocessor_state();
   }

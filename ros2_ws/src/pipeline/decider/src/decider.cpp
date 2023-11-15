@@ -17,7 +17,6 @@
 using namespace std::chrono;
 using namespace std::placeholders;
 
-const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
@@ -40,16 +39,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/mtms_device/healthcheck",
     10,
     std::bind(&EegDecider::handle_mtms_device_healthcheck, this, _1));
-
-  /* Subscriber for EEG info. */
-  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
-        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-
-  this->eeg_info_subscriber = this->create_subscription<eeg_interfaces::msg::EegInfo>(
-    EEG_INFO_TOPIC,
-    qos_persist_latest,
-    std::bind(&EegDecider::update_eeg_info, this, _1));
 
   /* Subscriber for session. */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
@@ -87,6 +76,10 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     std::bind(&EegDecider::handle_eeg_trigger, this, _1));
 
   /* Subscriber for active project. */
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
     qos_persist_latest,
@@ -175,7 +168,9 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     std::chrono::milliseconds(500),
     std::bind(&EegDecider::publish_healthcheck, this));
 
-  this->decider_state = WAITING_FOR_ENABLED;
+  this->decider_state = DeciderState::WAITING_FOR_ENABLED;
+
+  this->first_sample = true;
 }
 
 EegDecider::~EegDecider() {
@@ -187,123 +182,128 @@ void EegDecider::publish_healthcheck() {
   auto healthcheck = system_interfaces::msg::Healthcheck();
 
   switch (this->decider_state) {
-    case WAITING_FOR_ENABLED:
+    case DeciderState::WAITING_FOR_ENABLED:
       healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
       healthcheck.status_message = "Decider not enabled";
       healthcheck.actionable_message = "Please enable the decider.";
       break;
 
-    case READY:
+    case DeciderState::READY:
       healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
       healthcheck.status_message = "Ready";
       healthcheck.actionable_message = "Ready";
       break;
 
-    case SAMPLES_DROPPED:
+    case DeciderState::SAMPLES_DROPPED:
       healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
       healthcheck.status_message = "Samples dropped";
-      healthcheck.actionable_message = "Sample(s) dropped in decider. Please restart the measurement.";
+      healthcheck.actionable_message = "Sample(s) dropped in decider.";
       break;
 
-    case MODULE_ERROR:
+    case DeciderState::MODULE_ERROR:
       healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
       healthcheck.status_message = "Module error";
-      healthcheck.actionable_message = "Decider has encountered an error. Please restart the measurement.";
+      healthcheck.actionable_message = "Decider has encountered an error.";
       break;
   }
   this->healthcheck_publisher->publish(healthcheck);
+}
+
+void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+    this->reinitialize = true;
+
+    /* Reset the decider state when the session is stopped. */
+    reset_decider_state();
+  }
 }
 
 void EegDecider::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
   this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
 }
 
-/* Functions to re-initialize the decider state. */
-void EegDecider::initialize_decider_module() {
-  if (!this->enabled ||
-      this->script_directory == UNSET_STRING ||
-      this->module_name == UNSET_STRING ||
-      this->num_of_eeg_channels == UNSET_NUM_OF_CHANNELS ||
-      this->num_of_emg_channels == UNSET_NUM_OF_CHANNELS ||
-      this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+void EegDecider::update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg) {
+  this->sampling_frequency = msg.sampling_frequency;
+  this->num_of_eeg_channels = msg.num_of_eeg_channels;
+  this->num_of_emg_channels = msg.num_of_emg_channels;
 
+  this->sampling_period = 1.0 / this->sampling_frequency;
+}
+
+void EegDecider::initialize_module() {
+  if (this->script_directory == UNSET_STRING ||
+      this->module_name == UNSET_STRING) {
+
+    RCLCPP_INFO(this->get_logger(), "Not initializing decider module, module unset.");
     return;
   }
+
   this->decider_wrapper->initialize_module(
     this->script_directory,
     this->module_name,
     this->num_of_eeg_channels,
     this->num_of_emg_channels,
     this->sampling_frequency);
-}
 
-/* Note that this function can be called even if decider wrapper hasn't been initialized yet, it will just reset
-   the sample buffer to 0 elements. */
-void EegDecider::initialize_sample_buffer() {
+  if (this->decider_wrapper->get_state() != WrapperState::READY) {
+    RCLCPP_INFO(this->get_logger(), "Failed to initialize decider.");
+    return;
+  }
+
   size_t buffer_size = this->decider_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
-  RCLCPP_DEBUG(this->get_logger(), "Sample buffer initialized to %lu elements and reset.", buffer_size);
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Initialized decider with the following parameters:");
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %lu", buffer_size);
+  RCLCPP_INFO(this->get_logger(), " ");
 }
 
-/* Session handler. */
-void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
-  auto new_session_state = msg->state;
-
-  if (this->session_state.value != new_session_state.value) {
-    RCLCPP_INFO(this->get_logger(), "Session state changed from %d to %d.",
-                this->session_state.value, new_session_state.value);
-  }
-
-  /* Stopping a session can take several seconds, whereas if another session is started immediately after the previous
-      one is stopped, the system remains in "stopped" state only for a very short period of time. Hence, check both conditions
-      to ensure that we notice if the session is stopped. */
-  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
-      (new_session_state.value == system_interfaces::msg::SessionState::STOPPING ||
-       new_session_state.value == system_interfaces::msg::SessionState::STOPPED)) {
-
-    /* XXX: It's not the cleanest way to do it to map 'enabled' to decider state in several places (see similar mapping in
-         handle_set_decider_enabled function). These two variables should probably be combined into one. */
-    this->decider_state = this->enabled ? READY : WAITING_FOR_ENABLED;
-
-    this->initialize_decider_module();
-    this->initialize_sample_buffer();
-  }
-  this->session_state = new_session_state;
+void EegDecider::reset_decider_state() {
+  this->decider_state = this->enabled ? DeciderState::READY : DeciderState::WAITING_FOR_ENABLED;
 }
 
 /* Listing and setting EEG deciders. */
+bool EegDecider::set_decider_enabled(bool enabled) {
+
+  /* Only allow enabling the decider if a module is set. */
+  if (enabled && this->module_name == UNSET_STRING) {
+    RCLCPP_WARN(this->get_logger(), "Cannot enable decider, no module set.");
+
+    return false;
+  }
+
+  /* Update global state variable. */
+  this->enabled = enabled;
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::Bool();
+  msg.data = enabled;
+
+  this->decider_enabled_publisher->publish(msg);
+
+  /* Re-initialize the module each time the decider is enabled. */
+  if (enabled) {
+    this->reinitialize = true;
+  }
+
+  /* Reset decider state. */
+  reset_decider_state();
+
+  RCLCPP_INFO(this->get_logger(), "Decider %s.", this->enabled ? "enabled" : "disabled");
+
+  return true;
+}
 
 void EegDecider::handle_set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response) {
 
-  /* Update local state variable. */
-  this->enabled = request->enabled;
-
-  /* Update ROS state variable. */
-  auto msg = std_msgs::msg::Bool();
-  msg.data = this->enabled;
-
-  this->decider_enabled_publisher->publish(msg);
-
-  if (this->enabled) {
-    initialize_decider_module();
-
-    /* Re-initialize sample buffer to avoid using remains of old EEG data. */
-    initialize_sample_buffer();
-
-  } else {
-    /* Reset the state of the existing module so that, e.g., memory reserved by the Python module is freed,
-       but do not unset the module. */
-    this->decider_wrapper->reset_module_state();
-  }
-  /* Update decider state. */
-  this->decider_state = this->enabled ? READY : WAITING_FOR_ENABLED;
-
-  RCLCPP_INFO(this->get_logger(), "%s decider.", this->enabled ? "Enabling" : "Disabling");
-
-  response->success = true;
+  response->success = set_decider_enabled(request->enabled);;
 }
 
 void EegDecider::unset_decider_module() {
@@ -319,9 +319,12 @@ void EegDecider::unset_decider_module() {
 
   /* Reset the Python module state. */
   this->decider_wrapper->reset_module_state();
+
+  /* Disable the decider. */
+  set_decider_enabled(false);
 }
 
-void EegDecider::set_decider_module(const std::string module) {
+bool EegDecider::set_decider_module(const std::string module) {
   this->module_name = module;
 
   RCLCPP_INFO(this->get_logger(), "Decider set to: %s.", this->module_name.c_str());
@@ -332,20 +335,17 @@ void EegDecider::set_decider_module(const std::string module) {
 
   this->decider_module_publisher->publish(msg);
 
-  /* Initialize the wrapper to use the changed decider module. */
-  initialize_decider_module();
+  /* Re-initialize the module each time the module is reset. */
+  this->reinitialize = true;
 
-  /* We don't want left-over samples from the previous decider, hence
-     re-initialize the sample buffer. */
-  initialize_sample_buffer();
+  return true;
 }
 
 void EegDecider::handle_set_decider_module(
       const std::shared_ptr<project_interfaces::srv::SetDeciderModule::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response) {
 
-  set_decider_module(request->module);
-  response->success = true;
+  response->success = set_decider_module(request->module);
 }
 
 void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
@@ -403,8 +403,7 @@ void EegDecider::inotify_timer_callback() {
           (event_name == this->module_name + ".py")) {
 
         RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
-        this->initialize_decider_module();
-        this->initialize_sample_buffer();
+        this->reinitialize = true;
       }
       if (event->mask & (IN_CREATE | IN_DELETE)) {
         RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating decider list.", event_name.c_str());
@@ -444,29 +443,6 @@ void EegDecider::update_decider_list() {
 
 /* EEG functions */
 
-void EegDecider::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg) {
-  this->sampling_frequency = msg->sampling_frequency;
-  this->num_of_eeg_channels = msg->num_of_eeg_channels;
-  this->num_of_emg_channels = msg->num_of_emg_channels;
-
-  this->sampling_period = 1.0 / this->sampling_frequency;
-
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Eeg configuration");
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
-  RCLCPP_INFO(this->get_logger(), " ");
-
-  /* The number of EEG and EMG channels may have changed, therefore re-initialize decider Python module. */
-  initialize_decider_module();
-
-  /* EEG info is updated if streaming is restarted on the EEG device. We don't want
-     left-over samples from the previous run, therefore re-initialize the sample buffer. */
-  initialize_sample_buffer();
-}
-
 /* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
 void EegDecider::check_dropped_samples(double_t sample_time) {
   if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
@@ -481,7 +457,7 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
 
     if (time_diff > threshold) {
       /* Err if sample(s) were dropped. */
-      this->decider_state = SAMPLES_DROPPED;
+      this->decider_state = DeciderState::SAMPLES_DROPPED;
 
       RCLCPP_ERROR(this->get_logger(),
           "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
@@ -546,8 +522,24 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   double_t sample_time = msg->time;
 
+  /* Log if this is the first sample of the session. */
+  if (msg->metadata.first_sample_of_session) {
+    RCLCPP_INFO(this->get_logger(), "First sample of session received.");
+  }
+
+  /* Update EEG info with every new session OR if this is the first EEG sample received. */
+  if (msg->metadata.first_sample_of_session || this->first_sample) {
+    update_eeg_info(msg->metadata);
+
+    /* Avoid checking for dropped samples on the first sample. */
+    this->previous_time = UNSET_PREVIOUS_TIME;
+
+    this->first_sample = false;
+  }
+
   check_dropped_samples(sample_time);
 
+  /* Check that the decider is enabled. */
   if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
@@ -555,27 +547,28 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
                          "Decider not enabled");
     return;
   }
-  if (this->module_name == UNSET_STRING) {
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Decider enabled but not selected");
-    return;
+
+  /* Assert that module name is set - we shouldn't otherwise allow to enable the decider. */
+  assert(this->module_name != UNSET_STRING);
+
+  if (this->reinitialize ||
+      this->decider_wrapper->get_state() == WrapperState::UNINITIALIZED ||
+      msg->metadata.first_sample_of_session) {
+
+    initialize_module();
+    reset_decider_state();
+
+    this->reinitialize = false;
   }
-  if (!this->decider_wrapper->is_initialized()) {
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "Decider enabled and selected but not initialized");
-    return;
-  }
-  if (this->decider_wrapper->error_occurred()) {
-    this->decider_state = MODULE_ERROR;
+
+  /* Check that the decider module has not encountered an error. */
+  if (this->decider_wrapper->get_state() == WrapperState::ERROR) {
+    this->decider_state = DeciderState::MODULE_ERROR;
 
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
                          1000,
-                         "An error occurred in decider module, please re-initialize.");
+                         "An error occurred in decider module.");
     return;
   }
 
