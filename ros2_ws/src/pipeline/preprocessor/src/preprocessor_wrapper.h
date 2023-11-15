@@ -9,8 +9,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include "ring_buffer.h"
@@ -32,8 +32,8 @@ public:
   void reset_module_state();
 
   bool process(
-      eeg_interfaces::msg::PreprocessedEegSample& output_sample,
-      const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
+      eeg_interfaces::msg::PreprocessedSample& output_sample,
+      const RingBuffer<std::shared_ptr<eeg_interfaces::msg::Sample>>& buffer,
       double_t sample_time,
       bool pulse_given);
 

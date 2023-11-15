@@ -37,7 +37,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
   /* Publisher for preprocessed EEG data. */
-  this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedEegSample>(EEG_PREPROCESSED_TOPIC, EEG_QUEUE_LENGTH);
+  this->preprocessed_eeg_publisher = this->create_publisher<eeg_interfaces::msg::PreprocessedSample>(EEG_PREPROCESSED_TOPIC, EEG_QUEUE_LENGTH);
 
   /* Subscriber for session. */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
@@ -70,7 +70,7 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     std::bind(&EegPreprocessor::update_eeg_info, this, _1));
 
   /* Subscriber for EEG data. */
-  this->raw_eeg_subscriber = create_subscription<eeg_interfaces::msg::EegSample>(
+  this->raw_eeg_subscriber = create_subscription<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     EEG_QUEUE_LENGTH,
@@ -124,8 +124,8 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   /* Initialize variables. */
   this->preprocessor_wrapper = std::make_unique<PreprocessorWrapper>(logger);
 
-  this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>();
-  this->preprocessed_sample = eeg_interfaces::msg::PreprocessedEegSample();
+  this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::Sample>>();
+  this->preprocessed_sample = eeg_interfaces::msg::PreprocessedSample();
 
   /* Initialize inotify. */
   this->inotify_descriptor = inotify_init();
@@ -502,7 +502,7 @@ bool EegPreprocessor::was_pulse_given(double_t sample_time) {
   return pulse_given;
 }
 
-void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
+void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
   double_t sample_time = msg->time;

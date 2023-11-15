@@ -16,7 +16,7 @@ EegBatcher::EegBatcher() : Node("eeg_batcher") {
   this->get_parameter("downsample_ratio", downsample_ratio);
 
   auto eeg_data_subscription_callback = [this](
-      const std::shared_ptr<eeg_interfaces::msg::EegSample> message) -> void {
+      const std::shared_ptr<eeg_interfaces::msg::Sample> message) -> void {
     if (send_counter % downsample_ratio == 0) {
       batch[batch_index++] = *message;
     }
@@ -34,10 +34,10 @@ EegBatcher::EegBatcher() : Node("eeg_batcher") {
     }
   };
 
-  batch = std::vector<eeg_interfaces::msg::EegSample>(batch_size);
+  batch = std::vector<eeg_interfaces::msg::Sample>(batch_size);
   RCLCPP_INFO(this->get_logger(), "Batch size: %lu", batch.size());
 
-  eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegSample>("/eeg/raw",
+  eeg_subscription = this->create_subscription<eeg_interfaces::msg::Sample>("/eeg/raw",
                                                                                    10,
                                                                                    eeg_data_subscription_callback);
   batch_publisher = this->create_publisher<eeg_interfaces::msg::EegBatch>("/eeg/batch_data", 10);
