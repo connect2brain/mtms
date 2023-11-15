@@ -4,7 +4,7 @@
 #include <pybind11/numpy.h>
 
 #include "preprocessor_wrapper.h"
-#include <eeg_interfaces/msg/eeg_sample.hpp>
+#include <eeg_interfaces/msg/sample.hpp>
 
 namespace py = pybind11;
 
@@ -126,8 +126,8 @@ std::size_t PreprocessorWrapper::get_buffer_size() const {
 }
 
 bool PreprocessorWrapper::process(
-    eeg_interfaces::msg::PreprocessedEegSample& output_sample,
-    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>>& buffer,
+    eeg_interfaces::msg::PreprocessedSample& output_sample,
+    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::Sample>>& buffer,
     double_t sample_time,
     bool pulse_given) {
 

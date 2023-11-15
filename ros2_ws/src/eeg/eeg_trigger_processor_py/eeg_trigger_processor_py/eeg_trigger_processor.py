@@ -6,7 +6,7 @@ from event_interfaces.msg import Pulse, Charge, TriggerOut, EventInfo
 
 from mtms_device_interfaces.srv import StartDevice, StartSession, StopSession
 
-from eeg_interfaces.msg import EegSample, Trigger
+from eeg_interfaces.msg import Sample, Trigger
 
 TRIGGER_OUT_DURATION_US = 10000
 SAMPLING_INTERVAL = 0.0002
@@ -18,7 +18,7 @@ class EegProcessor(Node):
 
     def __init__(self):
         super().__init__('eeg_trigger_processor')
-        self.data_subscriber = self.create_subscription(EegSample, '/eeg/raw', self.data_reader_callback, 10)
+        self.data_subscriber = self.create_subscription(Sample, '/eeg/raw', self.data_reader_callback, 10)
         self.trigger_subscriber = self.create_subscription(Trigger, '/eeg/trigger', self.trigger_reader_callback, 10)
 
         self.start_session_client = self.create_client(StartSession, '/mtms_device/session/start')

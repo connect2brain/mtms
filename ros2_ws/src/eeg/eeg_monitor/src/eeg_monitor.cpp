@@ -9,8 +9,8 @@
 #include "memory_utils.h"
 
 #include "rclcpp/rclcpp.hpp"
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/eeg_statistics.hpp"
 
 using namespace std::chrono_literals;
@@ -28,7 +28,7 @@ public:
     num_of_raw_eeg_samples = 0;
 
     /* Subscriber for raw EEG. */
-    auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) -> void {
+    auto eeg_raw_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::Sample> msg) -> void {
       /* Update the maximum time between two consecutive samples. */
       auto now = this->now();
 
@@ -44,13 +44,13 @@ public:
       num_of_raw_eeg_samples++;
     };
 
-    eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::EegSample>(
+    eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::Sample>(
       EEG_RAW_TOPIC,
       10,
       eeg_raw_subscriber_callback);
 
     /* Subscriber for preprocessed EEG. */
-    auto eeg_preprocessed_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) -> void {
+    auto eeg_preprocessed_subscriber_callback = [this](const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) -> void {
       /* Update the maximum time between two consecutive samples. */
       auto now = this->now();
 
@@ -69,7 +69,7 @@ public:
       processing_times.push_back(msg->processing_time);
     };
 
-    eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
+    eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
       EEG_PREPROCESSED_TOPIC,
       10,
       eeg_preprocessed_subscriber_callback);
@@ -138,8 +138,8 @@ public:
 
 
 private:
-  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
-  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr eeg_preprocessed_subscriber;
   rclcpp::Publisher<eeg_interfaces::msg::EegStatistics>::SharedPtr eeg_statistics_publisher;
 
   rclcpp::TimerBase::SharedPtr timer;

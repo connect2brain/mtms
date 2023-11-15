@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 #include "event_interfaces/msg/trigger_out.hpp"
 

@@ -13,7 +13,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
@@ -90,7 +90,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
 
-  rclcpp::Publisher<eeg_interfaces::msg::EegSample>::SharedPtr eeg_sample_publisher;
+  rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
