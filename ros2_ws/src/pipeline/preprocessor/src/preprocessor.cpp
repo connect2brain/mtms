@@ -555,6 +555,11 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     pulse_given);
 
   if (success) {
+    /* Copy metadata from the raw sample. */
+    preprocessed_sample.metadata.sampling_frequency = msg->metadata.sampling_frequency;
+    preprocessed_sample.metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
+    preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
+
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();
     double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
