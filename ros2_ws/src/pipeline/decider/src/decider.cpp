@@ -72,7 +72,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     subscription_options);
 
   /* Subscriber for preprocessed EEG data. */
-  this->preprocessed_eeg_subscriber = create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
+  this->preprocessed_eeg_subscriber = create_subscription<eeg_interfaces::msg::PreprocessedSample>(
     EEG_PREPROCESSED_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     EEG_QUEUE_LENGTH,
@@ -152,7 +152,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   /* Initialize variables. */
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
 
-  this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>();
+  this->sample_buffer = RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>();
   this->sensory_stimulus = pipeline_interfaces::msg::SensoryStimulus();
 
   /* Initialize inotify. */
@@ -541,7 +541,7 @@ void EegDecider::update_ready_for_trigger([[maybe_unused]] const std::shared_ptr
   RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
 }
 
-void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
+void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
   double_t sample_time = msg->time;

@@ -3,7 +3,7 @@ import ROSLIB from 'roslib'
 
 import { ROS_URL } from '../utils/constants'
 import { PositionMessage, StateMessage } from '../types/target'
-import { EegBatchMessage, EegSampleMessage, EegTriggerMessage } from '../types/eeg'
+import { EegBatchMessage, SampleMessage, EegTriggerMessage } from '../types/eeg'
 
 export const ros = new ROSLIB.Ros({
   url: ROS_URL,

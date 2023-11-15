@@ -7,25 +7,25 @@ export const EventTypes = {
   TRIGGER_OUT: 3,
 }
 
-export interface EegSample {
+export interface Sample {
   eeg_data: number[]
   emg_data: number[]
   time: number
   first_sample_of_session: boolean
 }
 
-export interface EegSampleMessage extends ROSLIB.Message {
+export interface SampleMessage extends ROSLIB.Message {
   eeg_data: number[]
   time: number
   first_sample_of_session: boolean
 }
 
 export interface EegBatch extends ROSLIB.Message {
-  batch: EegSample[]
+  batch: Sample[]
 }
 
 export interface EegBatchMessage extends ROSLIB.Message {
-  batch: EegSample[]
+  batch: Sample[]
 }
 
 export interface EegTrigger {
