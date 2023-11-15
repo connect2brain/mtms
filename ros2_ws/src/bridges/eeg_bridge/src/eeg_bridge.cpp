@@ -442,19 +442,19 @@ void EegBridge::handle_measurement_start_packet() {
 
   /* Parse measurement start packet. */
 
-  this->sampling_frequency_ = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
-  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency_);
+  this->sampling_frequency = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency);
 
   this->num_of_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                            (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
 
   this->send_trigger_as_channel = false;
 
-  uint8_t num_of_eeg_channels = 0;
-  uint8_t num_of_emg_channels = 0;
+  this->num_of_eeg_channels = 0;
+  this->num_of_emg_channels = 0;
   for (uint8_t i = 0; i < this->num_of_channels_; i++) {
     uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
                               buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
@@ -468,10 +468,10 @@ void EegBridge::handle_measurement_start_packet() {
        after the channels of the first amplifier, thus, starting at 41. */
     if ((source_channel >= 33 && source_channel <= 40) || (source_channel >= 73 && source_channel <= 80)) {
       this->channel_types[i] = this->ChannelType::EMG;
-      num_of_emg_channels++;
+      this->num_of_emg_channels++;
     } else {
       this->channel_types[i] = this->ChannelType::EEG;
-      num_of_eeg_channels++;
+      this->num_of_eeg_channels++;
     }
   }
 
@@ -485,8 +485,8 @@ void EegBridge::handle_measurement_start_packet() {
     this->num_of_channels_excluding_trigger_ = this->num_of_channels_;
   }
 
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", this->num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", this->num_of_emg_channels);
 
   RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->num_of_channels_excluding_trigger_);
 
@@ -494,9 +494,9 @@ void EegBridge::handle_measurement_start_packet() {
 
   auto eeg_info_msg = eeg_interfaces::msg::EegInfo();
 
-  eeg_info_msg.sampling_frequency = this->sampling_frequency_;
-  eeg_info_msg.num_of_eeg_channels = num_of_eeg_channels;
-  eeg_info_msg.num_of_emg_channels = num_of_emg_channels;
+  eeg_info_msg.sampling_frequency = this->sampling_frequency;
+  eeg_info_msg.num_of_eeg_channels = this->num_of_eeg_channels;
+  eeg_info_msg.num_of_emg_channels = this->num_of_emg_channels;
   eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
 
   this->eeg_info_publisher->publish(eeg_info_msg);
@@ -550,7 +550,7 @@ void EegBridge::handle_eeg_data_packet() {
         RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
 
         /* Wait for one second to receive the sync trigger before reporting an error. */
-        if (this->sample_packets_received_ > this->sampling_frequency_) {
+        if (this->sample_packets_received_ > this->sampling_frequency) {
           this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
         }
       }
@@ -680,7 +680,10 @@ void EegBridge::publish_eeg_sample(double_t time) {
 
     i += 3;
   }
-  message.first_sample_of_session = this->first_sample_of_session;
+  message.metadata.sampling_frequency = this->sampling_frequency;
+  message.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
+  message.metadata.num_of_emg_channels = this->num_of_emg_channels;
+  message.metadata.first_sample_of_session = this->first_sample_of_session;
 
   this->eeg_sample_publisher->publish(message);
 

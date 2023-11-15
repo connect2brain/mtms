@@ -66,11 +66,11 @@ class MockEegBridge : public rclcpp::Node {
         }
 
         if (this->time_ == 0) {
-          message.first_sample_of_session = true;
+          message.metadata.first_sample_of_session = true;
         }
 
         else {
-          message.first_sample_of_session = false;
+          message.metadata.first_sample_of_session = false;
         }
 
         message.time = this->time_;

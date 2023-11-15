@@ -559,7 +559,7 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     auto end_time = std::chrono::high_resolution_clock::now();
     double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-    preprocessed_sample.processing_time = processing_time;
+    preprocessed_sample.metadata.processing_time = processing_time;
 
     /* Publish the preprocessed sample. */
     this->preprocessed_eeg_publisher->publish(preprocessed_sample);
