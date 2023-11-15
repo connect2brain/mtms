@@ -100,10 +100,14 @@ private:
   double_t first_sync_trigger_timestamp;
 
   bool measurement_start_packet_received_;
+
+  uint8_t num_of_eeg_channels;
+  uint8_t num_of_emg_channels;
+
   uint16_t num_of_channels_;
   uint16_t num_of_channels_excluding_trigger_;
 
-  uint32_t sampling_frequency_;
+  uint32_t sampling_frequency;
   uint32_t sample_packets_received_ = 0;
 
   uint16_t port_;

@@ -393,13 +393,13 @@ void EegSimulator::handle_set_loop(
 }
 
 void EegSimulator::initialize_streaming() {
-  sampling_frequency = this->dataset.sampling_frequency;
-  num_of_eeg_channels = this->dataset.num_of_eeg_channels;
-  num_of_emg_channels = this->dataset.num_of_emg_channels;
+  this->sampling_frequency = this->dataset.sampling_frequency;
+  this->num_of_eeg_channels = this->dataset.num_of_eeg_channels;
+  this->num_of_emg_channels = this->dataset.num_of_emg_channels;
 
   /* Initialize variables. */
-  this->total_channels = this->dataset.num_of_eeg_channels + this->dataset.num_of_emg_channels;
-  this->sampling_period = 1.0 / this->dataset.sampling_frequency;
+  this->total_channels = this->num_of_eeg_channels + this->num_of_emg_channels;
+  this->sampling_period = 1.0 / this->sampling_frequency;
 
   this->dataset_time = 0.0;
   this->time_offset = latest_session_time;
@@ -447,9 +447,9 @@ void EegSimulator::initialize_streaming() {
   /* Publish EEG info. */
   eeg_interfaces::msg::EegInfo eeg_info;
 
-  eeg_info.sampling_frequency = sampling_frequency;
-  eeg_info.num_of_eeg_channels = num_of_eeg_channels;
-  eeg_info.num_of_emg_channels = num_of_emg_channels;
+  eeg_info.sampling_frequency = this->sampling_frequency;
+  eeg_info.num_of_eeg_channels = this->num_of_eeg_channels;
+  eeg_info.num_of_emg_channels = this->num_of_emg_channels;
   eeg_info.send_trigger_as_channel = false;
 
   eeg_info_publisher->publish(eeg_info);
@@ -576,7 +576,12 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   msg.eeg_data.insert(msg.eeg_data.end(), data.begin(), data.begin() + num_of_eeg_channels);
   msg.emg_data.insert(msg.emg_data.end(), data.begin() + num_of_eeg_channels, data.begin() + total_channels);
-  msg.first_sample_of_session = dataset_time > 0 ? false : true;
+
+  msg.metadata.first_sample_of_session = dataset_time > 0 ? false : true;
+  msg.metadata.sampling_frequency = this->sampling_frequency;
+  msg.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
+  msg.metadata.num_of_emg_channels = this->num_of_emg_channels;
+
   msg.time = time;
 
   eeg_publisher->publish(msg);
