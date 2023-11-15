@@ -66,7 +66,7 @@ public:
       num_of_preprocessed_eeg_samples++;
 
       /* Update the processing times. */
-      processing_times.push_back(msg->processing_time);
+      processing_times.push_back(msg->metadata.processing_time);
     };
 
     eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
