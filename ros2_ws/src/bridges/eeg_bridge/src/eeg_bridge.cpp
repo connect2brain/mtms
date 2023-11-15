@@ -97,7 +97,7 @@ void EegBridge::create_publishers() {
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(
+  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH);
 
@@ -654,7 +654,7 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
 
 void EegBridge::publish_eeg_sample(double_t time) {
 
-  auto message = eeg_interfaces::msg::EegSample();
+  auto message = eeg_interfaces::msg::Sample();
   message.time = time;
 
   int i = FIRST_CHANNEL_INDEX;

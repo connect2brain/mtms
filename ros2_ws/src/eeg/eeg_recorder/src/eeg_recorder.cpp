@@ -53,13 +53,13 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
     std::bind(&EegRecorder::handle_session, this, _1));
 
   /* Subscriber for raw EEG. */
-  eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::EegSample>(
+  eeg_raw_subscriber = this->create_subscription<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_raw_eeg_sample, this, _1));
 
   /* Subscriber for preprocessed EEG. */
-  eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedEegSample>(
+  eeg_preprocessed_subscriber = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
     EEG_PREPROCESSED_TOPIC,
     EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
@@ -131,7 +131,7 @@ void EegRecorder::write_raw_buffer() {
   raw_buffer.clear();
 }
 
-void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::EegSample> msg) {
+void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
   /* TODO: Duplicating the code from handle_preprocessed_eeg_sample function for now. Later, unify if it turns out that
        they did not diverge too much. */
 
@@ -186,7 +186,7 @@ void EegRecorder::write_preprocessed_buffer() {
   preprocessed_buffer.clear();
 }
 
-void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg) {
+void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
   if (!preprocessed_file.is_open()) {
     preprocessed_file.open(preprocessed_file_path);
 

@@ -7,8 +7,8 @@
 
 #include "std_msgs/msg/string.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 
 #include "system_interfaces/msg/session.hpp"
@@ -24,14 +24,14 @@ private:
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr eeg_raw_subscriber;
-  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr eeg_preprocessed_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr eeg_preprocessed_subscriber;
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
-  void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
-  void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample> msg);
+  void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
+  void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
 
   void write_raw_buffer();
   void write_preprocessed_buffer();

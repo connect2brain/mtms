@@ -112,7 +112,7 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     std::bind(&EegSimulator::handle_session, this, _1));
 
   /* Publisher for EEG samples. */
-  eeg_publisher = this->create_publisher<eeg_interfaces::msg::EegSample>(
+  eeg_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH);
 
@@ -572,7 +572,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   double_t time = sample_time + time_offset;
 
-  eeg_interfaces::msg::EegSample msg;
+  eeg_interfaces::msg::Sample msg;
 
   msg.eeg_data.insert(msg.eeg_data.end(), data.begin(), data.begin() + num_of_eeg_channels);
   msg.emg_data.insert(msg.emg_data.end(), data.begin() + num_of_eeg_channels, data.begin() + total_channels);

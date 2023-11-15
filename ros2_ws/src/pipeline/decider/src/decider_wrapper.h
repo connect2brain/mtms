@@ -11,8 +11,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 
 #include "pipeline_interfaces/msg/sensory_stimulus.hpp"
 
@@ -38,7 +38,7 @@ public:
 
   std::tuple<bool, bool, bool, bool> process(
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
-    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedEegSample>>& buffer,
+    const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
     bool ready_for_event_trigger);
 

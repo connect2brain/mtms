@@ -13,8 +13,8 @@
 #include "std_msgs/msg/bool.hpp"
 
 #include "eeg_interfaces/msg/eeg_info.hpp"
-#include "eeg_interfaces/msg/eeg_sample.hpp"
-#include "eeg_interfaces/msg/preprocessed_eeg_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
 #include "event_interfaces/msg/pulse_feedback.hpp"
@@ -80,7 +80,7 @@ private:
   void handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg);
   bool was_pulse_given(double_t sample_time);
 
-  void process_sample(const std::shared_ptr<eeg_interfaces::msg::EegSample> msg);
+  void process_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
 
   /* Inotify functions */
   void update_inotify_watch();
@@ -95,8 +95,8 @@ private:
 
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscriber;
 
-  rclcpp::Subscription<eeg_interfaces::msg::EegSample>::SharedPtr raw_eeg_subscriber;
-  rclcpp::Publisher<eeg_interfaces::msg::PreprocessedEegSample>::SharedPtr preprocessed_eeg_publisher;
+  rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr raw_eeg_subscriber;
+  rclcpp::Publisher<eeg_interfaces::msg::PreprocessedSample>::SharedPtr preprocessed_eeg_publisher;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::PreprocessorList>::SharedPtr preprocessor_list_publisher;
@@ -130,8 +130,8 @@ private:
 
   std::queue<double_t> pulse_execution_times;
 
-  RingBuffer<std::shared_ptr<eeg_interfaces::msg::EegSample>> sample_buffer;
-  eeg_interfaces::msg::PreprocessedEegSample preprocessed_sample;
+  RingBuffer<std::shared_ptr<eeg_interfaces::msg::Sample>> sample_buffer;
+  eeg_interfaces::msg::PreprocessedSample preprocessed_sample;
 
   std::unique_ptr<PreprocessorWrapper> preprocessor_wrapper;
 
