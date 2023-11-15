@@ -40,7 +40,7 @@ const DatasetPanel = styled(StyledPanel)`
 
 const DatasetSelect = styled(Select)`
   margin-left: 30px;
-  width: 170px;
+  width: 175px;
 `
 
 const SwitchWrapper = styled.span`
