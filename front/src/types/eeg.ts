@@ -7,17 +7,26 @@ export const EventTypes = {
   TRIGGER_OUT: 3,
 }
 
+/* TODO: Not up-to-date. */
 export interface Sample {
   eeg_data: number[]
   emg_data: number[]
   time: number
+}
+
+export interface SampleMetadata extends ROSLIB.Message {
+  sampling_frequency: number
+  num_of_eeg_channels: number
+  num_of_emg_channels: number
+
   first_sample_of_session: boolean
 }
 
 export interface SampleMessage extends ROSLIB.Message {
   eeg_data: number[]
+  emg_data: number[]
   time: number
-  first_sample_of_session: boolean
+  metadata: SampleMetadata
 }
 
 export interface EegBatch extends ROSLIB.Message {

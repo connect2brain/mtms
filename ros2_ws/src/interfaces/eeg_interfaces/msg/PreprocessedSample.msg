@@ -5,4 +5,5 @@ float64[] emg_data
 float64 time
 
 bool valid
-float64 processing_time
+
+PreprocessedSampleMetadata metadata
