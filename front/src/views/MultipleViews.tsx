@@ -53,15 +53,6 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('pipeline')} className={currentView === 'pipeline' ? 'active' : ''}>
           Pipeline
         </a>
-        <a href='#' onClick={() => setCurrentView('plot')} className={currentView === 'plot' ? 'active' : ''}>
-          EEG
-        </a>
-        <a href='#' onClick={() => setCurrentView('webGLPlot')} className={currentView === 'webGLPlot' ? 'active' : ''}>
-          EEG (WebGL)
-        </a>
-        <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
-          Targeting
-        </a>
         <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
           <FontAwesomeIcon icon={faCog} />
         </ConfigIcon>
@@ -78,18 +69,6 @@ export const MultipleViews = () => {
         <Wrapper style={{ display: currentView === 'pipeline' ? 'block' : 'none' }}>
           <SmallHeader>Pipeline</SmallHeader>
           <PipelineView />
-        </Wrapper>
-        <Wrapper style={{ display: currentView === 'plot' ? 'block' : 'none' }}>
-          <SmallHeader>EEG</SmallHeader>
-          <DataVisualize />
-        </Wrapper>
-        <Wrapper style={{ display: currentView === 'webGLPlot' ? 'block' : 'none' }}>
-          <SmallHeader>EEG (WebGL)</SmallHeader>
-          <DataVisualizeWebGL />
-        </Wrapper>
-        <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
-          <SmallHeader>Targeting</SmallHeader>
-          <Targets />
         </Wrapper>
         <Wrapper style={{ display: currentView === 'config' ? 'block' : 'none' }}>
           <SmallHeader>Config</SmallHeader>
