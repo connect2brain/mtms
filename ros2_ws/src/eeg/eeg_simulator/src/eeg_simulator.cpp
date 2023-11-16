@@ -538,7 +538,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
         std::getline(data_file, line);
 
         /* If the dataset looped, update the time offset. */
-        time_offset = current_time;
+        time_offset = time_offset + latest_sample_time + sampling_period;
 
         looped = true;
       } else {
@@ -590,6 +590,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   /* Update 'first sample of session'. */
   this->first_sample_of_session = false;
+  this->latest_sample_time = sample_time;
 
   RCLCPP_INFO_THROTTLE(this->get_logger(),
                        *this->get_clock(),

@@ -90,6 +90,7 @@ private:
   double_t sampling_period;
 
   double_t next_trigger_time;
+  double_t latest_sample_time;
 
   bool first_sample_of_session;
 
