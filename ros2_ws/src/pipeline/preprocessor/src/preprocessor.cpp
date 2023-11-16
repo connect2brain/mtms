@@ -139,10 +139,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
   this->healthcheck_publisher_timer = this->create_wall_timer(
     std::chrono::milliseconds(500),
     std::bind(&EegPreprocessor::publish_healthcheck, this));
-
-  this->preprocessor_state = PreprocessorState::WAITING_FOR_ENABLED;
-
-  this->first_sample = true;
 }
 
 EegPreprocessor::~EegPreprocessor() {
