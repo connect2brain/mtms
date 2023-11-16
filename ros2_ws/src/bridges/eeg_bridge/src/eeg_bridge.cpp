@@ -216,7 +216,15 @@ void EegBridge::spin() {
     while (rclcpp::ok()) {
       rclcpp::spin_some(base_interface);
       if (this->read_eeg_data_from_socket()) {
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         this->handle_eeg_data_packet();
+
+        /* Measure the processing time for the packet. */
+        auto end_time = std::chrono::high_resolution_clock::now();
+        double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
+
+        RCLCPP_DEBUG(this->get_logger(), "Processing time for packet: %.6f s.", processing_time);
       } else {
         RCLCPP_DEBUG(this->get_logger(), "Timeout while reading EEG data");
 
