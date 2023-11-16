@@ -21,7 +21,8 @@ api.start_session()
 ## Single events
 
 # Charge channel 1 to 20 V.
-channel = 1
+
+channel = 0  # Note that channel indexing starts at 0.
 target_voltage = 20
 execution_condition = ExecutionCondition.IMMEDIATE
 time = 10.0

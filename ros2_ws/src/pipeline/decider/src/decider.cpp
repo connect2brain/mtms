@@ -167,10 +167,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->healthcheck_publisher_timer = this->create_wall_timer(
     std::chrono::milliseconds(500),
     std::bind(&EegDecider::publish_healthcheck, this));
-
-  this->decider_state = DeciderState::WAITING_FOR_ENABLED;
-
-  this->first_sample = true;
 }
 
 EegDecider::~EegDecider() {

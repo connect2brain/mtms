@@ -126,13 +126,14 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
 
-  DeciderState decider_state;
-  bool enabled;
+  bool enabled = false;
 
-  bool first_sample;
-  bool reinitialize;
+  DeciderState decider_state = DeciderState::WAITING_FOR_ENABLED;
+  bool first_sample = true;
 
-  std::string active_project;
+  bool reinitialize = false;
+
+  std::string active_project = UNSET_STRING;
 
   std::string script_directory  = UNSET_STRING;
   std::string module_name = UNSET_STRING;
