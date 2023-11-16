@@ -264,6 +264,12 @@ void EegBridge::spin() {
                                    or similar. */
                                    "Out of sync between EEG and mTMS device.");
           break;
+
+        case ERROR_SAMPLES_DROPPED:
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
+                                   "Samples dropped in EEG device",
+                                   "Samples dropped in EEG device.");
+          break;
       }
     }
   } catch (const rclcpp::exceptions::RCLError & ex) {
@@ -378,6 +384,34 @@ void EegBridge::handle_trigger_packet() {
   }
 }
 
+/* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
+void EegBridge::check_dropped_samples(double_t sample_time) {
+  if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+    RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
+  }
+
+  if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
+      this->previous_time) {
+
+    auto time_diff = sample_time - this->previous_time;
+    auto threshold = this->sampling_period + this->TOLERANCE_S;
+
+    if (time_diff > threshold) {
+      /* Err if sample(s) were dropped. */
+      this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
+
+      RCLCPP_ERROR(this->get_logger(),
+          "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
+
+    } else {
+      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
+      RCLCPP_DEBUG(this->get_logger(),
+        "Time difference between consecutive samples: %.5f", time_diff);
+    }
+  }
+  this->previous_time = sample_time;
+}
+
 void EegBridge::handle_sample_packet() {
   uint16_t bundles = this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX] << 8 |
                      this->buffer[SAMPLE_PACKET_N_BUNDLES_INDEX + 1];
@@ -388,6 +422,8 @@ void EegBridge::handle_sample_packet() {
   }
 
   double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
+
+  check_dropped_samples(time);
 
   /* If sending trigger as channel, this will also initialize first_trigger_timestamp and sync_trigger_received
      so also the next if statement will be executed. */
@@ -447,6 +483,8 @@ void EegBridge::handle_measurement_start_packet() {
                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
   RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency);
+
+  this->sampling_period = 1.0 / this->sampling_frequency;
 
   this->num_of_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
                            (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
@@ -517,7 +555,8 @@ void EegBridge::handle_eeg_data_packet() {
       this->sample_packets_received_ += 1;
 
       /* Ignore sample packets if in an error state, preventing streaming. */
-      if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC) {
+      if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC ||
+          this->eeg_bridge_state == ERROR_SAMPLES_DROPPED) {
         break;
       }
 

@@ -32,6 +32,8 @@
 
 using namespace std::chrono_literals;
 
+const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
+const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
 enum EegBridgeState {
   WAITING_FOR_MEASUREMENT_START,
@@ -39,7 +41,8 @@ enum EegBridgeState {
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
-  ERROR_OUT_OF_SYNC
+  ERROR_OUT_OF_SYNC,
+  ERROR_SAMPLES_DROPPED
 };
 
 class EegBridge : public rclcpp::Node {
@@ -68,6 +71,8 @@ public:
   void handle_sample_packet();
   void handle_measurement_start_packet();
   void handle_eeg_data_packet();
+
+  void check_dropped_samples(double_t sample_time);
 
   int get_trigger_package_from_buffer();
   void publish_trigger_from_buffer(double_t time);
@@ -107,8 +112,12 @@ private:
   uint16_t num_of_channels_;
   uint16_t num_of_channels_excluding_trigger_;
 
-  uint32_t sampling_frequency;
+  uint32_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
   uint32_t sample_packets_received_ = 0;
+
+  double_t sampling_period;
+
+  double_t previous_time = UNSET_PREVIOUS_TIME;
 
   uint16_t port_;
   int socket_;
@@ -131,6 +140,10 @@ private:
 
   /* mTMS device healthcheck */
   bool mtms_device_available = false;
+
+  /* When determining if samples have been dropped by comparing the timestamps of two consecutive
+     samples, allow some tolerance to account for finite precision of floating point numbers. */
+  static constexpr double_t TOLERANCE_S = pow(10, -5);
 };
 
 #endif //EEG_BRIDGE_EEG_BRIDGE_H
