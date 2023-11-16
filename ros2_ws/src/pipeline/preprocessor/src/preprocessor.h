@@ -109,13 +109,14 @@ private:
   rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
-  PreprocessorState preprocessor_state;
-  bool enabled;
+  bool enabled = false;
 
-  bool reinitialize;
-  bool first_sample;
+  PreprocessorState preprocessor_state = PreprocessorState::WAITING_FOR_ENABLED;
+  bool first_sample = true;
 
-  std::string active_project;
+  bool reinitialize = false;
+
+  std::string active_project = UNSET_STRING;
 
   std::string script_directory  = UNSET_STRING;
   std::string module_name = UNSET_STRING;
