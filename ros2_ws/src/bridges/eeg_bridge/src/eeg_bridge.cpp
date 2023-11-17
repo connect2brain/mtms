@@ -309,10 +309,18 @@ void EegBridge::init_socket() {
     EegBridge::err("Failed to bind socket file descriptor to socket.");
   }
 
+  /* Set socket timeout to 200 ms. */
   struct timeval read_timeout;
   read_timeout.tv_sec = 0;
   read_timeout.tv_usec = 200000;
+
   setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+
+  /* Set socket buffer size to 10 MB. */
+  int buffer_size = 1024 * 1024 * 10;
+  if (setsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) == -1) {
+    EegBridge::err("Failed to set socket receive buffer size.");
+  }
 }
 
 void EegBridge::err(const char *message) {
