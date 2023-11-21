@@ -404,13 +404,10 @@ void EegSimulator::initialize_streaming() {
   this->dataset_time = 0.0;
   this->time_offset = latest_session_time;
 
-  /* Open data file. */
+  /* Open and read data file. */
   std::string data_filename = this->dataset.data_filename;
   std::string data_file_path = data_directory + "/" + data_filename;
 
-  if (data_file.is_open()) {
-      data_file.close();
-  }
   data_file.open(data_file_path, std::ios::in);
 
   if (!data_file.is_open()) {
@@ -420,12 +417,34 @@ void EegSimulator::initialize_streaming() {
 
   RCLCPP_INFO(this->get_logger(), "Reading data from file: %s", data_file_path.c_str());
 
+  if (this->current_data_file_path != data_file_path) {
+    dataset_buffer.clear();
+
+    std::string line;
+    while (std::getline(data_file, line)) {
+      std::stringstream ss(line);
+      std::string number;
+      std::vector<double_t> data;
+      while (std::getline(ss, number, ',')) {
+        data.push_back(std::stod(number));
+      }
+      dataset_buffer.push_back(data);
+    }
+  }
+  current_sample_index = 0;
+
+  this->current_data_file_path = data_file_path;
+
+  RCLCPP_INFO(this->get_logger(), "Finished reading data.");
+
+  data_file.close();
+
   /* Open trigger file. */
   std::string trigger_filename = this->dataset.trigger_filename;
   std::string trigger_file_path = data_directory + "/" + trigger_filename;
 
   this->send_triggers = false;
-  if (trigger_filename != UNSET_FILENAME) {
+  if (trigger_filename != UNSET_STRING) {
     if (trigger_file.is_open()) {
         trigger_file.close();
     }
@@ -528,56 +547,39 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   bool looped = false;
   std::string line;
 
-  if (!std::getline(data_file, line)) {
-    if (data_file.eof()) {
-      if (loop) {
-        RCLCPP_INFO(this->get_logger(), "Reached the end of file, looping back to beginning.");
+  if (current_sample_index >= dataset_buffer.size()) {
+    if (loop) {
+      RCLCPP_INFO(this->get_logger(), "Reached the end of data, looping back to beginning.");
 
-        data_file.clear();
-        data_file.seekg(0, std::ios::beg);
-        std::getline(data_file, line);
+      current_sample_index = 0;
 
-        /* If the dataset looped, update the time offset. */
-        time_offset = time_offset + latest_sample_time + sampling_period;
+      /* If the dataset looped, update the time offset. */
+      time_offset = time_offset + latest_sample_time + sampling_period;
 
-        looped = true;
-      } else {
-        RCLCPP_INFO(this->get_logger(), "Reached the end of file.");
+      looped = true;
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Reached the end of data.");
 
-        return {true, looped, 0.0};
-      }
+      return {true, looped, 0.0};
     }
   }
 
-  std::stringstream ss(line);
-  std::string number;
-  std::vector<double_t> data;
-  double_t sample_time;
+  const std::vector<double_t>& data = dataset_buffer[current_sample_index];
+  double_t sample_time = data.front();
 
-  /* First read the time (the first column). */
-  if (std::getline(ss, number, ',')) {
-    sample_time = std::stod(number);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Failed to read time column from data file.");
-    return {true, looped, 0.0};
-  }
-
-  /* Then read the EEG and EMG data (the next columns). */
-  while (std::getline(ss, number, ',')) {
-      data.push_back(std::stod(number));
-  }
-
-  if (total_channels > static_cast<int>(data.size())) {
-    RCLCPP_ERROR(this->get_logger(), "Total # of EEG and EMG channels (%d) exceeds # of channels in data (%zu)", total_channels, data.size());
-    return {true, looped, 0.0};
+  if (total_channels > static_cast<int>(data.size() - 1)) {
+      RCLCPP_ERROR(this->get_logger(), "Total # of EEG and EMG channels (%d) exceeds # of channels in data (%zu)", total_channels, data.size() - 1);
+      return {true, looped, 0.0};
   }
 
   double_t time = sample_time + time_offset;
 
+  /* Create the sample message. */
   eeg_interfaces::msg::Sample msg;
 
-  msg.eeg_data.insert(msg.eeg_data.end(), data.begin(), data.begin() + num_of_eeg_channels);
-  msg.emg_data.insert(msg.emg_data.end(), data.begin() + num_of_eeg_channels, data.begin() + total_channels);
+  /* Note: + 1 below is to skip the time column. */
+  msg.eeg_data.insert(msg.eeg_data.end(), data.begin() + 1, data.begin() + 1 + num_of_eeg_channels);
+  msg.emg_data.insert(msg.emg_data.end(), data.begin() + 1 + num_of_eeg_channels, data.end());
 
   msg.metadata.first_sample_of_session = this->first_sample_of_session;
   msg.metadata.sampling_frequency = this->sampling_frequency;
@@ -591,6 +593,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   /* Update 'first sample of session'. */
   this->first_sample_of_session = false;
   this->latest_sample_time = sample_time;
+  this->current_sample_index++;
 
   RCLCPP_INFO_THROTTLE(this->get_logger(),
                        *this->get_clock(),
