@@ -108,7 +108,7 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
   if (session_state != system_interfaces::msg::SessionState::STARTED &&
       current_session_state == system_interfaces::msg::SessionState::STARTED) {
 
-    RCLCPP_INFO(this->get_logger(), "Session stopped.", filename.c_str());
+    RCLCPP_INFO(this->get_logger(), "Session stopped.");
     if (raw_file.is_open()) {
       write_raw_buffer();
       raw_file.close();
@@ -119,6 +119,38 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
     }
   }
   current_session_state = session_state;
+}
+
+void EegRecorder::update_eeg_info(const eeg_interfaces::msg::SampleMetadata& msg) {
+  this->sampling_frequency = msg.sampling_frequency;
+  this->num_of_eeg_channels = msg.num_of_eeg_channels;
+  this->num_of_emg_channels = msg.num_of_emg_channels;
+
+  this->sampling_period = 1.0 / this->sampling_frequency;
+}
+
+/* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
+void EegRecorder::check_dropped_samples(double_t sample_time, double_t previous_time) {
+  if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+    RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
+  }
+
+  if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY && previous_time) {
+
+    auto time_diff = sample_time - previous_time;
+    auto threshold = this->sampling_period + this->TOLERANCE_S;
+
+    if (time_diff > threshold) {
+      /* Err if sample(s) were dropped. */
+      RCLCPP_ERROR(this->get_logger(),
+          "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
+
+    } else {
+      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
+      RCLCPP_DEBUG(this->get_logger(),
+        "Time difference between consecutive samples: %.5f", time_diff);
+    }
+  }
 }
 
 void EegRecorder::write_raw_buffer() {
@@ -132,6 +164,14 @@ void EegRecorder::write_raw_buffer() {
 }
 
 void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
+  /* XXX: Not sure if EEG info should be updated every sample. */
+  update_eeg_info(msg->metadata);
+
+  double_t sample_time = msg->time;
+
+  this->check_dropped_samples(sample_time, this->previous_time_raw);
+  this->previous_time_raw = sample_time;
+
   /* TODO: Duplicating the code from handle_preprocessed_eeg_sample function for now. Later, unify if it turns out that
        they did not diverge too much. */
 
@@ -187,6 +227,11 @@ void EegRecorder::write_preprocessed_buffer() {
 }
 
 void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
+  double_t sample_time = msg->time;
+
+  this->check_dropped_samples(sample_time, this->previous_time_preprocessed);
+  this->previous_time_preprocessed = sample_time;
+
   if (!preprocessed_file.is_open()) {
     preprocessed_file.open(preprocessed_file_path);
 
