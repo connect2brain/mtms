@@ -58,7 +58,7 @@ private:
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
      samples, allow some tolerance to account for finite precision of floating point numbers. */
-  static constexpr double_t TOLERANCE_S = pow(10, -5);
+  static constexpr double_t TOLERANCE_S = 2 * pow(10, -5);
 };
 
 #endif //EEG_GATHERER_EEG_GATHERER_H
