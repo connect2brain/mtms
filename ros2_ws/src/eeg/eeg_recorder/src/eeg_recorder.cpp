@@ -185,28 +185,28 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
     }
   }
 
-  raw_buffer << std::fixed << std::setprecision(4) << msg->time;
+  std::ostringstream temp_buffer;
+  temp_buffer.str("");
+  temp_buffer.clear();
+  temp_buffer << std::fixed << std::setprecision(4) << msg->time;
 
   /* Helper function to concatenate with comma. */
-  auto comma_join = [](const std::string &accum, double_t value) {
-      return accum.empty() ? std::to_string(value) : accum + "," + std::to_string(value);
+  auto add_value_with_comma = [&temp_buffer](double_t value) {
+      temp_buffer << "," << value;
   };
 
-  /* Add eeg_data if available. */
+  /* Add EEG data if available. */
   if (!msg->eeg_data.empty()) {
-      raw_buffer << ",";
-      std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
-      raw_buffer << eeg_str;
+      std::for_each(msg->eeg_data.begin(), msg->eeg_data.end(), add_value_with_comma);
   }
 
-  /* Add emg_data if available. */
+  /* Add EMG data if available. */
   if (!msg->emg_data.empty()) {
-      raw_buffer << ",";
-      std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
-      raw_buffer << emg_str;
+      std::for_each(msg->emg_data.begin(), msg->emg_data.end(), add_value_with_comma);
   }
 
-  raw_buffer << "\n";
+  temp_buffer << "\n";
+  raw_buffer << temp_buffer.str();
 
   /* Update sample count. */
   raw_sample_count++;
@@ -242,28 +242,31 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
     }
   }
 
-  preprocessed_buffer << std::fixed << std::setprecision(4) << msg->time << "," << std::setprecision(6) << msg->metadata.processing_time << std::setprecision(4) << "," << msg->valid;
+  std::ostringstream temp_buffer;
+  temp_buffer.str("");
+  temp_buffer.clear();
+
+  temp_buffer << std::fixed << std::setprecision(4) << msg->time
+              << "," << std::setprecision(6) << msg->metadata.processing_time
+              << std::setprecision(4) << "," << msg->valid;
 
   /* Helper function to concatenate with comma. */
-  auto comma_join = [](const std::string &accum, double_t value) {
-      return accum.empty() ? std::to_string(value) : accum + "," + std::to_string(value);
+  auto add_value_with_comma = [&temp_buffer](double_t value) {
+      temp_buffer << "," << value;
   };
 
-  /* Add eeg_data if available. */
+  /* Add EEG data if available. */
   if (!msg->eeg_data.empty()) {
-      preprocessed_buffer << ",";
-      std::string eeg_str = std::accumulate(std::begin(msg->eeg_data), std::end(msg->eeg_data), std::string{}, comma_join);
-      preprocessed_buffer << eeg_str;
+      std::for_each(msg->eeg_data.begin(), msg->eeg_data.end(), add_value_with_comma);
   }
 
-  /* Add emg_data if available. */
+  /* Add EMG data if available. */
   if (!msg->emg_data.empty()) {
-      preprocessed_buffer << ",";
-      std::string emg_str = std::accumulate(std::begin(msg->emg_data), std::end(msg->emg_data), std::string{}, comma_join);
-      preprocessed_buffer << emg_str;
+      std::for_each(msg->emg_data.begin(), msg->emg_data.end(), add_value_with_comma);
   }
 
-  preprocessed_buffer << "\n";
+  temp_buffer << "\n";
+  preprocessed_buffer << temp_buffer.str();
 
   /* Update sample count. */
   preprocessed_sample_count++;
