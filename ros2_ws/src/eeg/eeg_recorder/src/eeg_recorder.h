@@ -15,6 +15,10 @@
 #include "system_interfaces/msg/session_state.hpp"
 
 
+const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
+const uint8_t UNSET_NUM_OF_CHANNELS = 255;
+const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
+
 class EegRecorder : public rclcpp::Node {
 public:
   EegRecorder();
@@ -29,6 +33,9 @@ private:
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
+  void update_eeg_info(const eeg_interfaces::msg::SampleMetadata& msg);
+  void check_dropped_samples(double_t sample_time, double_t previous_time);
 
   void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
   void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
@@ -49,13 +56,27 @@ private:
   uint64_t raw_sample_count = 0;
   std::ostringstream raw_buffer;
 
+  double_t previous_time_raw = UNSET_PREVIOUS_TIME;
+
   std::string preprocessed_data_directory;
   std::string preprocessed_file_path;
   std::ofstream preprocessed_file;
   uint64_t preprocessed_sample_count = 0;
   std::ostringstream preprocessed_buffer;
 
+  double_t previous_time_preprocessed = UNSET_PREVIOUS_TIME;
+
   uint8_t current_session_state;
+
+  uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
+  uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
+  uint8_t num_of_emg_channels = UNSET_NUM_OF_CHANNELS;
+
+  double_t sampling_period;
+
+  /* When determining if samples have been dropped by comparing the timestamps of two consecutive
+     samples, allow some tolerance to account for finite precision of floating point numbers. */
+  static constexpr double_t TOLERANCE_S = 2 * pow(10, -5);
 };
 
 #endif //EEG_RECORDER_H
