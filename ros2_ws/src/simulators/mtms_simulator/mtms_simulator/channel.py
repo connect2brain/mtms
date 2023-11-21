@@ -113,7 +113,13 @@ class Channel:
         Returns:
             After discharging is ready returns with DischargeFeedback with event id and errors.
         """
-        t = self.time_constant * math.log(self.current_voltage / target_voltage)
+
+        # To prevent division by zero if discharging the coil back to 0
+        new_target_voltage = target_voltage
+        if target_voltage == 0:
+            new_target_voltage = 1
+
+        t = self.time_constant * math.log(self.current_voltage / new_target_voltage)
         self.is_discharging = True
         time.sleep(t)
         self.current_voltage = target_voltage
