@@ -28,7 +28,7 @@
 
 
 const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
-const std::string UNSET_FILENAME = "";
+const std::string UNSET_STRING = "";
 
 class EegSimulator : public rclcpp::Node {
 public:
@@ -102,8 +102,13 @@ private:
   std::ifstream data_file;
   std::ifstream trigger_file;
 
+  std::vector<std::vector<double_t>> dataset_buffer;
+  size_t current_sample_index = 0;
+
   std::string active_project;
   std::string data_directory;
+
+  std::string current_data_file_path = UNSET_STRING;
 
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr eeg_bridge_healthcheck_subscriber;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
