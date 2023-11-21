@@ -11,6 +11,8 @@ from rclpy.qos import (
 )
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.duration import Duration
+
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from std_msgs.msg import String
 
 from mtms_device_interfaces.msg import (
@@ -57,17 +59,13 @@ class MTMSSimulator(Node):
     corresponding nodes of the ros2 node interface described by the mtms_device_bridge
     packages."""
 
-    SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 400
+    SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 20
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
 
     # TODO: Make these values configurable
-    CHARGE_RATE = 1500  # in J/s
     CAPACITANCE = 1020e-6
     TIME_CONSTANT = 1  # in seconds, tau = RC
     PULSE_DISCHARGE_PERCENTAGE = 0.05
-
-    MAX_VOLTAGE = 1500  # Volts
-    NUM_OF_CHANNELS = 5
 
     def __init__(self):
         """
@@ -75,6 +73,26 @@ class MTMSSimulator(Node):
         """
 
         super().__init__("mtms_simulator")
+
+        descriptor = ParameterDescriptor(
+            name="Number of mTMS channels",
+            type=ParameterType.PARAMETER_INTEGER,
+        )
+        self.declare_parameter("channels", value=5, descriptor=descriptor)
+        self.num_of_channels = self.get_parameter("channels").value
+        self.get_logger().info("Number of channels %d" % self.num_of_channels)
+
+        descriptor = ParameterDescriptor(
+            name="Maximum voltage of the coils in volts", type=ParameterType.PARAMETER_INTEGER
+        )
+        self.declare_parameter("max_voltage", value=1500, descriptor=descriptor)
+        self.max_voltage = self.get_parameter("max_voltage").value
+
+        descriptor = ParameterDescriptor(
+            name="Charge rate of the coils in J/s", type=ParameterType.PARAMETER_INTEGER
+        )
+        self.declare_parameter("charge_rate", value=1500, descriptor=descriptor)
+        self.charge_rate = self.get_parameter("charge_rate").value
 
         # Services
         self.allow_stimulation_service = self.create_service(
@@ -149,17 +167,17 @@ class MTMSSimulator(Node):
         # Internal state variables
         self.system_state: SystemState = SystemState()
         self.system_state.channel_states = [
-            ChannelState(channel_index=i) for i in range(MTMSSimulator.NUM_OF_CHANNELS)
+            ChannelState(channel_index=i) for i in range(self.num_of_channels)
         ]
 
         self.channels = [
             Channel(
-                charge_rate=self.CAPACITANCE / self.CHARGE_RATE,
+                charge_rate=self.CAPACITANCE / self.charge_rate,
                 time_constant=self.TIME_CONSTANT,
                 pulse_discharge_percentage=self.PULSE_DISCHARGE_PERCENTAGE,
-                max_voltage=self.MAX_VOLTAGE,
+                max_voltage=self.max_voltage,
             )
-            for _ in range(self.NUM_OF_CHANNELS)
+            for _ in range(self.num_of_channels)
         ]
 
         self.session_start_time = 0.0
@@ -256,15 +274,15 @@ class MTMSSimulator(Node):
             self.get_logger().error(
                 "Trying to charge invalid channel %d, configured channel count is %d"
                 % message.channel,
-                self.NUM_OF_CHANNELS,
+                self.num_of_channels,
             )
             error.value = ChargeError.INVALID_CHANNEL
             return error
-        if message.target_voltage >= self.MAX_VOLTAGE:
+        if message.target_voltage >= self.max_voltage:
             self.get_logger().error(
                 "Too high voltage. Trying to set voltage to %d, max supported voltage is %d"
                 % message.target_voltage,
-                self.MAX_VOLTAGE,
+                self.max_voltage,
             )
             error.value = ChargeError.INVALID_VOLTAGE
             return error
@@ -497,7 +515,7 @@ class MTMSSimulator(Node):
         if msg.session_state.value == SessionState.STARTED:
             msg.time = time.time() - self.session_start_time  # in seconds
 
-        for i in range(self.NUM_OF_CHANNELS):
+        for i in range(self.num_of_channels):
             channel = self.channels[i]
             channel_state = ChannelState(
                 channel_index=i,
