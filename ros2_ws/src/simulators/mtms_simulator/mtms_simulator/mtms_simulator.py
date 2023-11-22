@@ -1,36 +1,6 @@
 import time
 
 import rclpy
-
-from rclpy.node import Node
-from rclpy.qos import (
-    QoSProfile,
-    DurabilityPolicy,
-    HistoryPolicy,
-    ReliabilityPolicy,
-)
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.duration import Duration
-
-from rcl_interfaces.msg import ParameterDescriptor, ParameterType
-from std_msgs.msg import String
-
-from mtms_device_interfaces.msg import (
-    SystemState,
-    DeviceState,
-    SessionState,
-    ChannelState,
-    Settings,
-)
-from mtms_device_interfaces.srv import (
-    AllowStimulation,
-    SendSettings,
-    StartDevice,
-    StopDevice,
-    StopSession,
-    StartSession,
-)
-
 from event_interfaces.msg import (
     Charge,
     ChargeError,
@@ -48,6 +18,32 @@ from event_interfaces.msg import (
     WaveformPhase,
     WaveformPiece,
 )
+from mtms_device_interfaces.msg import (
+    SystemState,
+    DeviceState,
+    SessionState,
+    ChannelState,
+    Settings,
+)
+from mtms_device_interfaces.srv import (
+    AllowStimulation,
+    SendSettings,
+    StartDevice,
+    StopDevice,
+    StopSession,
+    StartSession,
+)
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from rclpy.duration import Duration
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
+from rclpy.qos import (
+    QoSProfile,
+    DurabilityPolicy,
+    HistoryPolicy,
+    ReliabilityPolicy,
+)
+from std_msgs.msg import String
 
 from .channel import Channel
 
@@ -56,16 +52,21 @@ class MTMSSimulator(Node):
     """Simulator for mTMS device ros2 nodes.
 
     Simulates the mTMS device by replacing the mtms_device_bridge. Creates the
-    corresponding nodes of the ros2 node interface described by the mtms_device_bridge
-    packages."""
+    corresponding topics of the ros2 node interface described by the mtms_device_bridge
+    nodes."""
 
     SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 20
     SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
 
     # TODO: Make these values configurable
     CAPACITANCE = 1020e-6
-    TIME_CONSTANT = 1  # in seconds, tau = RC
-    PULSE_DISCHARGE_PERCENTAGE = 0.05
+    """Capacitance of the coils in farads."""
+
+    TIME_CONSTANT = 1  # tau = RC
+    """Time constant related to coil discharging in seconds"""
+
+    PULSE_VOLTAGE_DROP_PROPORTION = 0.05
+    """The proportion in which the voltage of the channel drops"""
 
     def __init__(self):
         """
@@ -80,10 +81,11 @@ class MTMSSimulator(Node):
         )
         self.declare_parameter("channels", value=5, descriptor=descriptor)
         self.num_of_channels = self.get_parameter("channels").value
-        self.get_logger().info("Number of channels %d" % self.num_of_channels)
+        self.get_logger().info("Number of channels: %d" % self.num_of_channels)
 
         descriptor = ParameterDescriptor(
-            name="Maximum voltage of the coils in volts", type=ParameterType.PARAMETER_INTEGER
+            name="Maximum voltage of the coils in volts",
+            type=ParameterType.PARAMETER_INTEGER,
         )
         self.declare_parameter("max_voltage", value=1500, descriptor=descriptor)
         self.max_voltage = self.get_parameter("max_voltage").value
@@ -166,15 +168,14 @@ class MTMSSimulator(Node):
 
         # Internal state variables
         self.system_state: SystemState = SystemState()
-        self.system_state.channel_states = [
-            ChannelState(channel_index=i) for i in range(self.num_of_channels)
-        ]
+        self.system_state.channel_states = self.num_of_channels * [None]
 
         self.channels = [
             Channel(
-                charge_rate=self.CAPACITANCE / self.charge_rate,
+                charge_rate=self.charge_rate,
+                capacitance=self.CAPACITANCE,
                 time_constant=self.TIME_CONSTANT,
-                pulse_discharge_percentage=self.PULSE_DISCHARGE_PERCENTAGE,
+                pulse_voltage_drop_proportion=self.PULSE_VOLTAGE_DROP_PROPORTION,
                 max_voltage=self.max_voltage,
             )
             for _ in range(self.num_of_channels)
@@ -195,8 +196,8 @@ class MTMSSimulator(Node):
         )
 
         self.allow_stimulation = request.allow_stimulation
-        for c in self.channels:
-            c.allow_stimulation = request.allow_stimulation
+        for channel in self.channels:
+            channel.allow_stimulation = request.allow_stimulation
 
         response.success = True
         return response
@@ -206,14 +207,14 @@ class MTMSSimulator(Node):
         self.get_logger().debug("Settings: %r" % request.settings)
 
         self.settings = request.settings
-        for c in self.channels:
-            c.settings = self.settings
+        for channel in self.channels:
+            channel.settings = self.settings
 
         response.success = True
         return response
 
     def start_device_handler(self, request, response):
-        # TODO: Check if STARTUP phase required
+        # NOTE: skipping STARTUP phase
         self.system_state.device_state.value = DeviceState.OPERATIONAL
         self.get_logger().info("Device started")
         response.success = True
@@ -226,9 +227,9 @@ class MTMSSimulator(Node):
         return response
 
     def start_session_handler(self, request, response):
-        # TODO: Check if STARTING phase required
+        # NOTE: Skipping STARTING phase
         if self.system_state.device_state.value != DeviceState.OPERATIONAL:
-            self.get_logger().warn("Device not stated. Can't start session")
+            self.get_logger().warn("Device not started. Can't start session")
             return
 
         self.system_state.session_state.value = SessionState.STARTED
@@ -238,16 +239,16 @@ class MTMSSimulator(Node):
         return response
 
     def stop_session_handler(self, request, response):
-        # TODO: Check if STOPPING phase required
+        # NOTE: Skipping STOPPING phase
         self.system_state.session_state.value = SessionState.STOPPED
         self.get_logger().info("Session stopped")
         response.success = True
         return response
 
-    def _check_session_started(self) -> bool:
+    def _is_session_started(self) -> bool:
         return self.system_state.session_state.value != SessionState.STARTED
 
-    def _validate_voltage_update_input(
+    def _validate_charge_or_discharge(
         self, message: Charge | Discharge
     ) -> ChargeError | DischargeError | None:
         """Validate charge and discharge message input parameters
@@ -280,7 +281,7 @@ class MTMSSimulator(Node):
             return error
         if message.target_voltage >= self.max_voltage:
             self.get_logger().error(
-                "Too high voltage. Trying to set voltage to %d, max supported voltage is %d"
+                "Too high voltage. Trying to set voltage to %d, maximum supported voltage is %d"
                 % message.target_voltage,
                 self.max_voltage,
             )
@@ -288,7 +289,7 @@ class MTMSSimulator(Node):
             return error
         return error
 
-    def _wait_for_execution_execution_condition(
+    def _wait_for_execution_condition(
         self, execution_condition: ExecutionCondition, execution_time: float
     ) -> None:
         """
@@ -302,13 +303,20 @@ class MTMSSimulator(Node):
         """
 
         # wait for execution condition.
-        match execution_condition:
+        match execution_condition.value:
             case ExecutionCondition.TIMED:
                 wait = execution_time - (time.time() - self.session_start_time)
                 time.sleep(wait)
             case ExecutionCondition.WAIT_FOR_TRIGGER:
                 self.get_logger().warn(
                     "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing."
+                )
+            case ExecutionCondition.IMMEDIATE:
+                pass  # Immediate, do nothing
+            case _:
+                self.get_logger().warn(
+                    "Invalid execution condition: %r, assuming IMMEDIATE"
+                    % ExecutionCondition.value
                 )
 
     def charge_handler(self, message: Charge) -> None:
@@ -324,13 +332,13 @@ class MTMSSimulator(Node):
         """
         self.get_logger().info("Charge message received: %r" % message)
 
-        # Session operational
-        if self._check_session_started():
+        # Check if session operational
+        if self._is_session_started():
             self.get_logger().warn("Session not started. Can't charge coil.")
             return
 
         # Input validation
-        error = self._validate_voltage_update_input(message)
+        error = self._validate_charge_or_discharge(message)
         if error.value != ChargeError.NO_ERROR:
             feedback_msg = ChargeFeedback(id=message.event_info.id, error=error)
             self.charge_feedback_publisher.publish(feedback_msg)
@@ -338,8 +346,9 @@ class MTMSSimulator(Node):
 
         # Wait for execution condition
         event_info: EventInfo = message.event_info
-        self._wait_for_execution_execution_condition(
-            event_info.execution_condition, event_info.execution_time
+        self._wait_for_execution_condition(
+            execution_condition=event_info.execution_condition,
+            execution_time=event_info.execution_time,
         )
 
         # Update voltage
@@ -360,12 +369,12 @@ class MTMSSimulator(Node):
         self.get_logger().info("Discharge message received: %r" % message)
 
         # Session operational
-        if self._check_session_started():
+        if self._is_session_started():
             self.get_logger().warn("Session not started. Can't discharge coil.")
             return
 
         # Input validation
-        error = self._validate_voltage_update_input(message)
+        error = self._validate_charge_or_discharge(message)
         if error.value != DischargeError.NO_ERROR:
             feedback_msg = DischargeFeedback(id=message.event_info.id, error=error)
             self.discharge_feedback_publisher.publish(feedback_msg)
@@ -373,8 +382,9 @@ class MTMSSimulator(Node):
 
         # Wait for execution condition
         event_info: EventInfo = message.event_info
-        self._wait_for_execution_execution_condition(
-            event_info.execution_condition, event_info.execution_time
+        self._wait_for_execution_condition(
+            execution_condition=event_info.execution_condition,
+            execution_time=event_info.execution_time,
         )
 
         # Update voltage
@@ -402,6 +412,7 @@ class MTMSSimulator(Node):
             self.get_logger().warn("Invalid channel index: %d" % message.channel)
             return PulseError(value=PulseError.INVALID_CHANNEL)
 
+        # TODO: Implement execution condition check for other types as well.
         execution_condition = message.event_info.execution_condition
         if execution_condition not in (
             ExecutionCondition.IMMEDIATE,
@@ -464,9 +475,8 @@ class MTMSSimulator(Node):
         """
         Simulates the behaviour of giving a pulse.
 
-        Validates the pulse input and simulates the giving of a pulse by dropping
-        the channel voltage by percentage value of PULSE_DISCHARGE_PERCENTAGE. Send
-        pulse feedback message after execution.
+        Simulates the giving of a pulse by dropping the channel voltage by the amount of
+        self.pulse_drop_proportion.
 
         Args:
             message: the pulse information
@@ -475,8 +485,9 @@ class MTMSSimulator(Node):
 
         # Wait for execution condition
         event_info = message.event_info
-        self._wait_for_execution_execution_condition(
-            event_info.execution_condition, event_info.execution_time
+        self._wait_for_execution_condition(
+            execution_condition=event_info.execution_condition,
+            execution_time=event_info.execution_time,
         )
 
         # Validate pulse
@@ -496,8 +507,9 @@ class MTMSSimulator(Node):
         self.get_logger().debug("Trigger out: %r" % message)
 
         event_info = message.event_info
-        self._wait_for_execution_execution_condition(
-            event_info.execution_condition, event_info.execution_time
+        self._wait_for_execution_condition(
+            execution_condition=event_info.execution_condition,
+            execution_time=event_info.execution_time,
         )
 
         # Wait for the duration
