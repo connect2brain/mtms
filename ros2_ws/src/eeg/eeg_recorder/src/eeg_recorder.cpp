@@ -87,6 +87,11 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
   if (session_state == system_interfaces::msg::SessionState::STARTED &&
       current_session_state != system_interfaces::msg::SessionState::STARTED) {
 
+    /* Re-initialize variables for checking dropped samples. */
+    previous_time_raw = UNSET_PREVIOUS_TIME;
+    previous_time_preprocessed = UNSET_PREVIOUS_TIME;
+
+    /* Create the filenames for recording the data. */
     auto now = std::chrono::system_clock::now();
     auto now_time = std::chrono::system_clock::to_time_t(now);
 
@@ -177,7 +182,6 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
 
   if (!raw_file.is_open()) {
     raw_file.open(raw_file_path);
-
     /* Check if file was opened successfully. */
     if (!raw_file.is_open()) {
       RCLCPP_ERROR(this->get_logger(), "Error opening file in path: %s", raw_file_path.c_str());
