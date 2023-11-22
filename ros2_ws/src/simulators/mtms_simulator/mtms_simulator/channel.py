@@ -1,8 +1,6 @@
 import math
 import time
 
-from mtms_device_interfaces.msg import ChannelError
-
 from event_interfaces.msg import (
     EventInfo,
     ChargeFeedback,
@@ -12,6 +10,7 @@ from event_interfaces.msg import (
     PulseError,
     PulseFeedback,
 )
+from mtms_device_interfaces.msg import ChannelError
 
 
 class Channel:
@@ -25,45 +24,50 @@ class Channel:
     def __init__(
         self,
         charge_rate: float,
+        capacitance: float,
         time_constant: float,
-        pulse_discharge_percentage: float,
+        pulse_voltage_drop_proportion: float,
         max_voltage: int,
     ):
         """
         Initialising of the Channel with channel specific properties.
 
         Args:
-            charge_rate: voltage charging rate in J/s
-            time_constant: discharge rate time constant in seconds tau=RC
-            pulse_discharge_percentage: the percentage amount which the voltage drops per pulse
-            max_voltage: the max voltage of this channel.
+            charge_rate: voltage charging rate scaled by capacitance in watts.
+            capacitance: capacitance of the coil in farads.
+            time_constant: time constant for discharge rate in seconds, tau=RC.
+            pulse_voltage_drop_proportion: the proportion which the voltage drops per pulse.
+            max_voltage: the maximum voltage of this channel.
         """
 
         self.charge_rate = charge_rate
-        """Charge rate of the voltage in volts."""
+        """Charge rate of the voltage in watts."""
+
+        self.capacitance = capacitance
+        """Coil capacitance in farads."""
 
         self.time_constant = time_constant
-        """Unit less constant related to voltage discharge."""
+        """Constant related to voltage discharge in seconds."""
 
-        self.pulse_discharge_percentage = pulse_discharge_percentage
-        """Voltage drop in percentages when pulse is given."""
+        self.pulse_voltage_drop_proportion = pulse_voltage_drop_proportion
+        """Voltage drop proportion when pulse is given."""
 
         self.max_voltage = max_voltage
-        """max voltage of the coil."""
+        """Maximum voltage of the coil."""
 
         # Internal state
 
         self.current_voltage = 0
-        """Current voltage in volts"""
+        """Current voltage in volts."""
 
         self.temperature = 24
-        """Current temperature in C"""
+        """Current temperature in C."""
 
         self.pulse_count = 0
-        """Session pulse count total"""
+        """Total pulse count of the coil"""
 
         self.errors = ChannelError()
-        """Channel error states"""
+        """Channel error states."""
 
         self.is_charging = False
         """True when charging."""
@@ -72,7 +76,7 @@ class Channel:
         """True when discharging."""
 
         self.is_pulse_in_progress = False
-        """True when giving a pulse"""
+        """True when giving a pulse."""
 
     def charge(self, target_voltage: int, event_info: EventInfo) -> ChargeFeedback:
         """
@@ -87,13 +91,19 @@ class Channel:
             event_info: the received charge event info.
 
         Returns:
-            After charging is ready returns with ChargeFeedback with event id and errors.
+            When charging is ready return ChargeFeedback with event id and errors.
         """
-        t = 1 / 2 * self.charge_rate * (target_voltage**2 - self.current_voltage**2)
+
+        # Calculate wait time
+        charge_rate_constant = self.capacitance / (2 * self.charge_rate)
+        t = charge_rate_constant * (target_voltage**2 - self.current_voltage**2)
+
         self.is_charging = True
         time.sleep(t)
-        self.current_voltage = target_voltage
         self.is_charging = False
+
+        # Set new voltage
+        self.current_voltage = target_voltage
 
         return ChargeFeedback(id=event_info.id, error=ChargeError.NO_ERROR)
 
@@ -111,19 +121,21 @@ class Channel:
             event_info: the received charge event info.
 
         Returns:
-            After discharging is ready returns with DischargeFeedback with event id and errors.
+            When discharging is ready return DischargeFeedback with event id and errors.
         """
 
         # To prevent division by zero if discharging the coil back to 0
-        new_target_voltage = target_voltage
-        if target_voltage == 0:
-            new_target_voltage = 1
+        target_voltage = max(target_voltage, 3)
 
-        t = self.time_constant * math.log(self.current_voltage / new_target_voltage)
+        # Calculate wait time
+        t = self.time_constant * math.log(self.current_voltage / target_voltage)
+
         self.is_discharging = True
         time.sleep(t)
-        self.current_voltage = target_voltage
         self.is_discharging = False
+
+        # Set new voltage
+        self.current_voltage = target_voltage
 
         return DischargeFeedback(id=event_info.id, error=DischargeError.NO_ERROR)
 
@@ -131,21 +143,23 @@ class Channel:
         """
         Simulates the behaviour of giving a pulse.
 
-        Validates the pulse input and simulates the giving of a pulse by dropping
-        the channel voltage by percentage value of PULSE_DISCHARGE_PERCENTAGE. Send
-        pulse feedback message after execution.
+        Simulates the giving of a pulse by dropping the channel voltage by the amount of
+        self.pulse_drop_proportion.
 
         Args:
             event_id: id of the event.
             duration_ticks: pulse duration in ticks.
+        Returns:
+            When pulse given return PulseFeedback with event id and errors.
         """
         self.pulse_count += 1
-        duration_seconds = duration_ticks / Channel.CLOCK_FREQUENCY_HZ
+        duration = duration_ticks / Channel.CLOCK_FREQUENCY_HZ
 
         self.is_pulse_in_progress = True
-        new_voltage_percentage = 1 - self.pulse_discharge_percentage
-        time.sleep(duration_seconds)
-        self.current_voltage = new_voltage_percentage * self.current_voltage
+        time.sleep(duration)
         self.is_pulse_in_progress = False
+
+        after_pulse_voltage_proportion = 1 - self.pulse_voltage_drop_proportion
+        self.current_voltage = after_pulse_voltage_proportion * self.current_voltage
 
         return PulseFeedback(id=event_id, error=PulseError.NO_ERROR)
