@@ -230,7 +230,8 @@ class MTMSSimulator(Node):
         # NOTE: Skipping STARTING phase
         if self.system_state.device_state.value != DeviceState.OPERATIONAL:
             self.get_logger().warn("Device not started. Can't start session")
-            return
+            response.success = False
+            return response
 
         self.system_state.session_state.value = SessionState.STARTED
         self.session_start_time = time.time()
@@ -350,6 +351,8 @@ class MTMSSimulator(Node):
             execution_condition=event_info.execution_condition,
             execution_time=event_info.execution_time,
         )
+
+        self.get_logger().debug("Start charging for channel: %d" % message.channel)
 
         # Update voltage
         channel = self.channels[message.channel]
