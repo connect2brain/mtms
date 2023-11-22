@@ -21,10 +21,10 @@ const std::string RAW_EEG_DATA_SUBDIRECTORY = "/eeg_recorder/raw";
 const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
 
+const milliseconds MAX_TIME_SINCE_LAST_SAMPLE = 1000ms;
+
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
-
-const uint16_t BATCH_SIZE_IN_SAMPLES = 5000;
 
 EegRecorder::EegRecorder() : Node("eeg_recorder") {
   /* Subscriber for active project. */
@@ -63,6 +63,9 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
     EEG_PREPROCESSED_TOPIC,
     EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
+
+  /* Timer for writing the buffers periodically. */
+  this->timer = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&EegRecorder::write_buffers, this));
 }
 
 void EegRecorder::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
@@ -88,8 +91,8 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
       current_session_state != system_interfaces::msg::SessionState::STARTED) {
 
     /* Re-initialize variables for checking dropped samples. */
-    previous_time_raw = UNSET_PREVIOUS_TIME;
-    previous_time_preprocessed = UNSET_PREVIOUS_TIME;
+    previous_sample_time_raw = UNSET_PREVIOUS_TIME;
+    previous_sample_time_preprocessed = UNSET_PREVIOUS_TIME;
 
     /* Create the filenames for recording the data. */
     auto now = std::chrono::system_clock::now();
@@ -109,21 +112,50 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
 
     RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", filename.c_str());
   }
+  current_session_state = session_state;
+}
 
-  if (session_state != system_interfaces::msg::SessionState::STARTED &&
-      current_session_state == system_interfaces::msg::SessionState::STARTED) {
+void EegRecorder::write_preprocessed_buffer() {
+  preprocessed_file << preprocessed_buffer.str();
+  preprocessed_file.flush();
 
-    RCLCPP_INFO(this->get_logger(), "Session stopped.");
-    if (raw_file.is_open()) {
-      write_raw_buffer();
-      raw_file.close();
-    }
-    if (preprocessed_file.is_open()) {
-      write_preprocessed_buffer();
-      preprocessed_file.close();
+  /* Clear the buffer. */
+  preprocessed_buffer.str("");
+  preprocessed_buffer.clear();
+}
+
+void EegRecorder::write_raw_buffer() {
+  raw_file << raw_buffer.str();
+  raw_file.flush();
+
+  /* Clear the buffer. */
+  raw_buffer.str("");
+  raw_buffer.clear();
+}
+
+void EegRecorder::write_buffers() {
+  auto now = std::chrono::system_clock::now();
+
+  if (this->raw_file.is_open()) {
+    this->write_raw_buffer();
+
+    /* Close file if samples have not arrived in a while. */
+    auto time_since_last_raw_sample = std::chrono::duration_cast<std::chrono::milliseconds>(now - this->previous_clock_time_raw);
+    if (time_since_last_raw_sample > MAX_TIME_SINCE_LAST_SAMPLE) {
+      RCLCPP_INFO(this->get_logger(), "No raw samples have arrived in a while, closing the output file.");
+      this->raw_file.close();
     }
   }
-  current_session_state = session_state;
+  if (this->preprocessed_file.is_open()) {
+    this->write_preprocessed_buffer();
+
+    /* Close file if samples have not arrived in a while. */
+    auto time_since_last_preprocessed_sample = std::chrono::duration_cast<std::chrono::milliseconds>(now - this->previous_clock_time_preprocessed);
+    if (time_since_last_preprocessed_sample > MAX_TIME_SINCE_LAST_SAMPLE) {
+      RCLCPP_INFO(this->get_logger(), "No preprocessed samples have arrived in a while, closing the output file.");
+      this->preprocessed_file.close();
+    }
+  }
 }
 
 void EegRecorder::update_eeg_info(const eeg_interfaces::msg::SampleMetadata& msg) {
@@ -158,24 +190,16 @@ void EegRecorder::check_dropped_samples(double_t sample_time, double_t previous_
   }
 }
 
-void EegRecorder::write_raw_buffer() {
-  /* Write to file. */
-  raw_file << raw_buffer.str();
-  raw_file.flush();
-
-  /* Clear the buffer. */
-  raw_buffer.str("");
-  raw_buffer.clear();
-}
-
 void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
+  this->previous_clock_time_raw = std::chrono::system_clock::now();
+
   /* XXX: Not sure if EEG info should be updated every sample. */
   update_eeg_info(msg->metadata);
 
   double_t sample_time = msg->time;
 
-  this->check_dropped_samples(sample_time, this->previous_time_raw);
-  this->previous_time_raw = sample_time;
+  this->check_dropped_samples(sample_time, this->previous_sample_time_raw);
+  this->previous_sample_time_raw = sample_time;
 
   /* TODO: Duplicating the code from handle_preprocessed_eeg_sample function for now. Later, unify if it turns out that
        they did not diverge too much. */
@@ -211,30 +235,15 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
 
   temp_buffer << "\n";
   raw_buffer << temp_buffer.str();
-
-  /* Update sample count. */
-  raw_sample_count++;
-
-  if (raw_sample_count % BATCH_SIZE_IN_SAMPLES == 0) {
-    write_raw_buffer();
-  }
-}
-
-void EegRecorder::write_preprocessed_buffer() {
-  /* Write to file. */
-  preprocessed_file << preprocessed_buffer.str();
-  preprocessed_file.flush();
-
-  /* Clear the buffer. */
-  preprocessed_buffer.str("");
-  preprocessed_buffer.clear();
 }
 
 void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
+  this->previous_clock_time_preprocessed = std::chrono::system_clock::now();
+
   double_t sample_time = msg->time;
 
-  this->check_dropped_samples(sample_time, this->previous_time_preprocessed);
-  this->previous_time_preprocessed = sample_time;
+  this->check_dropped_samples(sample_time, this->previous_sample_time_preprocessed);
+  this->previous_sample_time_preprocessed = sample_time;
 
   if (!preprocessed_file.is_open()) {
     preprocessed_file.open(preprocessed_file_path);
@@ -271,13 +280,6 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
 
   temp_buffer << "\n";
   preprocessed_buffer << temp_buffer.str();
-
-  /* Update sample count. */
-  preprocessed_sample_count++;
-
-  if (preprocessed_sample_count % BATCH_SIZE_IN_SAMPLES == 0) {
-    write_preprocessed_buffer();
-  }
 }
 
 int main(int argc, char *argv[]) {

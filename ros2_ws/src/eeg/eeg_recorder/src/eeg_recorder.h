@@ -31,6 +31,8 @@ private:
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr eeg_preprocessed_subscriber;
 
+  rclcpp::TimerBase::SharedPtr timer;
+
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
@@ -43,6 +45,8 @@ private:
   void write_raw_buffer();
   void write_preprocessed_buffer();
 
+  void write_buffers();
+
   std::string active_project;
 
   std::string experiment_name;
@@ -53,18 +57,18 @@ private:
   std::string raw_data_directory;
   std::string raw_file_path;
   std::ofstream raw_file;
-  uint64_t raw_sample_count = 0;
   std::ostringstream raw_buffer;
 
-  double_t previous_time_raw = UNSET_PREVIOUS_TIME;
+  double_t previous_sample_time_raw = UNSET_PREVIOUS_TIME;
+  std::chrono::time_point<std::chrono::high_resolution_clock> previous_clock_time_raw;
 
   std::string preprocessed_data_directory;
   std::string preprocessed_file_path;
   std::ofstream preprocessed_file;
-  uint64_t preprocessed_sample_count = 0;
   std::ostringstream preprocessed_buffer;
 
-  double_t previous_time_preprocessed = UNSET_PREVIOUS_TIME;
+  double_t previous_sample_time_preprocessed = UNSET_PREVIOUS_TIME;
+  std::chrono::time_point<std::chrono::high_resolution_clock> previous_clock_time_preprocessed;
 
   uint8_t current_session_state;
 
