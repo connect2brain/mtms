@@ -352,11 +352,14 @@ class MTMSSimulator(Node):
             execution_time=event_info.execution_time,
         )
 
-        self.get_logger().debug("Start charging for channel: %d" % message.channel)
+        self.get_logger().info("Start charging for channel: %d" % message.channel)
 
         # Update voltage
         channel = self.channels[message.channel]
-        feedback_msg = channel.charge(message.target_voltage, message.event_info)
+        feedback_msg = channel.charge(message.target_voltage, message.event_info.id)
+
+        self.get_logger().info("Charge feedback: %r" % feedback_msg)
+
         self.charge_feedback_publisher.publish(feedback_msg)
 
     def discharge_handler(self, message: Discharge) -> None:
@@ -392,7 +395,7 @@ class MTMSSimulator(Node):
 
         # Update voltage
         channel = self.channels[message.channel]
-        feedback_msg = channel.discharge(message.target_voltage, message.event_info)
+        feedback_msg = channel.discharge(message.target_voltage, message.event_info.id)
         self.discharge_feedback_publisher.publish(feedback_msg)
 
     def _validate_pulse(self, message: Pulse) -> PulseError:
