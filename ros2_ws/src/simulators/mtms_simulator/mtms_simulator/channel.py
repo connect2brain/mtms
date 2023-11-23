@@ -2,7 +2,6 @@ import math
 import time
 
 from event_interfaces.msg import (
-    EventInfo,
     ChargeFeedback,
     ChargeError,
     DischargeFeedback,
@@ -78,7 +77,7 @@ class Channel:
         self.is_pulse_in_progress = False
         """True when giving a pulse."""
 
-    def charge(self, target_voltage: int, event_info: EventInfo) -> ChargeFeedback:
+    def charge(self, target_voltage: int, event_id: int) -> ChargeFeedback:
         """
         Charge the channel to desired voltage.
 
@@ -88,7 +87,7 @@ class Channel:
 
         Args:
             target_voltage: the new voltage to charge to in volts.
-            event_info: the received charge event info.
+            event_id: The event id from the event info.
 
         Returns:
             When charging is ready return ChargeFeedback with event id and errors.
@@ -105,10 +104,10 @@ class Channel:
         # Set new voltage
         self.current_voltage = target_voltage
 
-        return ChargeFeedback(id=event_info.id, error=ChargeError.NO_ERROR)
+        return ChargeFeedback(id=event_id)
 
     def discharge(
-        self, target_voltage: int, event_info: EventInfo
+        self, target_voltage: int, event_id: int
     ) -> DischargeFeedback:
         """
         Discharges the channel to desired voltage.
@@ -117,8 +116,8 @@ class Channel:
         capacitor to change the voltage. Discharge follows exponential decay.
 
         Args:
-            target_voltage: the new voltage to discharge to in volts.
-            event_info: the received charge event info.
+            target_voltage: The new voltage to discharge to in volts.
+            event_id: The event id from the event info.
 
         Returns:
             When discharging is ready return DischargeFeedback with event id and errors.
@@ -137,7 +136,7 @@ class Channel:
         # Set new voltage
         self.current_voltage = target_voltage
 
-        return DischargeFeedback(id=event_info.id, error=DischargeError.NO_ERROR)
+        return DischargeFeedback(id=event_id)
 
     def pulse(self, event_id: int, duration_ticks: int) -> PulseFeedback:
         """
@@ -162,4 +161,4 @@ class Channel:
         after_pulse_voltage_proportion = 1 - self.pulse_voltage_drop_proportion
         self.current_voltage = after_pulse_voltage_proportion * self.current_voltage
 
-        return PulseFeedback(id=event_id, error=PulseError.NO_ERROR)
+        return PulseFeedback(id=event_id)
