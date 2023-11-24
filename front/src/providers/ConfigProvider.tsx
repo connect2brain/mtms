@@ -43,7 +43,7 @@ const getKey = (key: string, defaultValue: any): any => {
 
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
   const [targetingAlgorithm, setTargetingAlgorithm] = useState<number>(
-    getKey('targetingAlgorithm', TargetingAlgorithms.LEAST_SQUARES),
+    getKey('targetingAlgorithm', TargetingAlgorithms.GENETIC),
   )
 
   /* Update session storage. */
