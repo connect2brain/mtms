@@ -40,6 +40,14 @@ services:
       - ${SITE_ENV_FILE}
     network_mode: host
 
+  mtms_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/simulators/mtms_simulator/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+
   neuronavigation:
     build:
       context: .
