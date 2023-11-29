@@ -62,9 +62,6 @@ classdef MTMSApiNode < handle
             obj.start_device_client = ros2svcclient(obj.node, "/mtms_device/start_device", "mtms_device_interfaces/StartDevice");
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
-            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "mtms_device_interfaces/StartSession");
-            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "mtms_device_interfaces/StopSession");
-
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
@@ -72,6 +69,9 @@ classdef MTMSApiNode < handle
             % System-related
 
             obj.session_subscriber = ros2subscriber(obj.node, "/system/session", "system_interfaces/Session", @obj.handle_session);
+
+            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "system_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
 
