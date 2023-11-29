@@ -4,8 +4,11 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
+User=mtms
+
 Environment=MTMS_ROOT=/home/mtms/mtms
 Environment=SITE=Tubingen
+Environment=CYCLONEDDS_URI=/home/mtms/mtms/config/cyclonedds.xml
 
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000

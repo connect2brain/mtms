@@ -12,6 +12,8 @@
 
   <depend>geometry_msgs</depend>
   <depend>shape_msgs</depend>
+
+  <depend>event_interfaces</depend>
   <depend>neuronavigation_interfaces</depend>
   <depend>ui_interfaces</depend>
 

@@ -14,7 +14,6 @@ export const LargerTitle = styled.h2`
 export const SmallerTitle = styled.h2`
   font-size: 18px;
   text-align: center;
-  color: #333;
   margin-bottom: 30px;
   margin-right: 30px;
   font-weight: bold;
@@ -51,14 +50,4 @@ export const StyledRow = styled.div`
   margin-bottom: 8px;
   width: 100%;
   flex-wrap: wrap;
-`
-
-/* A generic input field for changing parameters of an experiment. */
-export const ExperimentInput = styled.input`
-  marginTop: 0px;
-  width: 40px;
-  margin-right: 40px;
-  border: 2px solid black;
-  background-color: 'white';
-  color: 'black';
 `

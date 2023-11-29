@@ -19,6 +19,11 @@ public:
       : Node("trigger_out_handler") {
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out) -> void {
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("trigger_out_handler"), "FPGA not in OK state while attempting to execute trigger out event");
+        return;
+      }
+
       uint8_t port = trigger_out->port;
 
       event_interfaces::msg::EventInfo event_info = trigger_out->event_info;
@@ -26,12 +31,26 @@ public:
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
+      double_t delay = event_info.delay;
+
+      /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
+      if (execution_time < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing trigger out event.");
+        return;
+      }
+      if (delay < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing trigger out event.");
+        return;
+      }
+
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+      uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(port);
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(execution_time_ticks);
+      serialized_message.add_uint32(delay_ticks);
 
       /* Serialize trigger out. */
 
@@ -87,13 +106,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }

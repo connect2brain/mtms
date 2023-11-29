@@ -16,6 +16,7 @@
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
+using namespace std::placeholders;
 
 const int32_t SIGNED_MAX = pow(2,23);
 const int32_t UNSIGNED_MAX = pow(2,24);
@@ -52,19 +53,28 @@ const uint8_t TRIGGER_B_IN = 8;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
-const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger_received";
-const std::string NODE_MESSAGE_TOPIC = "/node/message";
+const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
+const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
+
+/* Have a long queue to avoid dropping messages. */
+const uint16_t EEG_QUEUE_LENGTH = 65535;
 
 const uint8_t VERBOSE = 0;
 
-/* HACK: Needs to match the values in system_state_bridge.cpp. */
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+/* XXX: Needs to match the values in session_bridge.cpp. */
+const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 EegBridge::EegBridge() : Node("eeg_bridge") {
   this->create_publishers();
 
-  this->subscribe_to_system_state();
+  this->subscribe_to_session();
+
+  /* Subscriber for mTMS device healthcheck. */
+  this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
+    "/mtms_device/healthcheck",
+    10,
+    std::bind(&EegBridge::handle_mtms_device_healthcheck, this, _1));
 
   /* Read ROS parameters. */
 
@@ -79,93 +89,96 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->reset_session();
 
-  this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
+  this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
 }
 
 void EegBridge::create_publishers() {
-  const rmw_qos_profile_t qos_profile = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      RMW_QOS_DEADLINE_DEFAULT,
-      RMW_QOS_LIFESPAN_DEFAULT,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+  this->eeg_sample_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
+    EEG_RAW_TOPIC,
+    EEG_QUEUE_LENGTH);
 
-  this->publisher_data_ = this->create_publisher<eeg_interfaces::msg::EegDatapoint>(EEG_RAW_TOPIC, 10);
-  this->publisher_trigger_ = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, qos);
-  this->publisher_eeg_info_ = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos);
-  this->publisher_node_message_ = this->create_publisher<std_msgs::msg::String>(NODE_MESSAGE_TOPIC, 10);
+  this->trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
+  this->eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
+  this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
+  this->healthcheck_publisher_timer = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&EegBridge::publish_healthcheck, this));
 }
 
-void EegBridge::send_node_message(std::string str) {
-  auto msg = std_msgs::msg::String();
-  msg.data = str;
-  this->publisher_node_message_->publish(msg);
+void EegBridge::update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message) {
+  this->status = status;
+  this->status_message = status_message;
+  this->actionable_message = actionable_message;
 }
 
-void EegBridge::subscribe_to_system_state() {
+void EegBridge::publish_healthcheck() {
+  auto healthcheck = system_interfaces::msg::Healthcheck();
+
+  healthcheck.status.value = status;
+  healthcheck.status_message = status_message;
+  healthcheck.actionable_message = actionable_message;
+
+  this->healthcheck_publisher->publish(healthcheck);
+}
+
+void EegBridge::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+  this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
+}
+
+void EegBridge::subscribe_to_session() {
   this->session_been_stopped = false;
-  this->system_state_received = false;
+  this->session_received = false;
 
-  auto system_state_callback = [this](const std::shared_ptr<mtms_device_interfaces::msg::SystemState> message) -> void {
-    this->system_state_received = true;
+  auto session_callback = [this](const std::shared_ptr<system_interfaces::msg::Session> message) -> void {
+    this->session_received = true;
 
-    session_state = message->session_state;
-    device_state = message->device_state;
+    session_state = message->state;
 
     /* Stopping a session takes several seconds, whereas if another session is started immediately after the previous
        one is stopped, the mTMS device remains in "stopped" state only for a very short period of time. Hence, check both conditions
        to ensure that we notice if the session is stopped. */
-    if (session_state.value == mtms_device_interfaces::msg::SessionState::STOPPING ||
-        session_state.value == mtms_device_interfaces::msg::SessionState::STOPPED) {
+    if (session_state.value == system_interfaces::msg::SessionState::STOPPING ||
+        session_state.value == system_interfaces::msg::SessionState::STOPPED) {
 
       this->reset_session();
       this->session_been_stopped = true;
     }
   };
 
-  /* HACK: Duplicates code from system_state_bridge.cpp. */
-  auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
-  const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
-  const rmw_time_t rmw_deadline = {0, deadline_ns};
-  const rmw_time_t rmw_lifespan = rmw_deadline;
+  /* HACK: Duplicates code from session_bridge.cpp. */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
-  const rmw_qos_profile_t qos_profile = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      rmw_deadline,
-      rmw_lifespan,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
-  auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+  auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+      .deadline(DEADLINE_NS)
+      .lifespan(DEADLINE_NS);
 
   rclcpp::SubscriptionOptions subscription_options;
-  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) -> void {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "System state not received within deadline.");
+  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Session not received within deadline.");
   };
 
-  this->subscription_system_state = this->create_subscription<mtms_device_interfaces::msg::SystemState>("/mtms_device/system_state", qos,
-                                                                                                        system_state_callback, subscription_options);
+  this->session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos,
+    session_callback,
+    subscription_options);
 }
 
 void EegBridge::reset_session() {
-  first_trigger_received = false;
+  first_sample_of_session = true;
+
+  sync_trigger_received = false;
   time_correction = 0;
-  sync_index = 1;
+  num_of_sync_triggers_received = 0;
 }
 
-void EegBridge::wait_for_system_state() {
-  RCLCPP_DEBUG(this->get_logger(), "Waiting for system state...");
+void EegBridge::wait_for_session() {
+  RCLCPP_INFO(this->get_logger(), "Waiting for session...");
 
   auto base_interface = this->get_node_base_interface();
 
@@ -181,7 +194,7 @@ void EegBridge::wait_for_system_state() {
      https://github.com/ros2/system_tests/pull/459
   */
   try {
-    while (rclcpp::ok() && !this->system_state_received) {
+    while (rclcpp::ok() && !this->session_received) {
       rclcpp::spin_some(base_interface);
     }
   } catch (const rclcpp::exceptions::RCLError & exception) {
@@ -190,45 +203,59 @@ void EegBridge::wait_for_system_state() {
 }
 
 void EegBridge::spin() {
-  /* System state has a deadline of 25 ms, but it will only start affecting once the first system state
-     is received. Hence, wait here until the system state is received. */
-  wait_for_system_state();
+  /* Session has a deadline of 25 ms, but it will only start affecting once the first session
+     is received. Hence, wait here until the session is received. */
+  wait_for_session();
 
-  RCLCPP_DEBUG(this->get_logger(), "Waiting for measurement start packet...");
+  RCLCPP_INFO(this->get_logger(), "Waiting for measurement start packet...");
 
   auto base_interface = this->get_node_base_interface();
 
-  /* HACK: See comment in wait_for_system_state function. */
+  /* HACK: See comment in wait_for_session function. */
   try {
     while (rclcpp::ok()) {
       rclcpp::spin_some(base_interface);
       if (this->read_eeg_data_from_socket()) {
+        auto start_time = std::chrono::high_resolution_clock::now();
+
         this->handle_eeg_data_packet();
+
+        /* Measure the processing time for the packet. */
+        auto end_time = std::chrono::high_resolution_clock::now();
+        double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
+
+        RCLCPP_DEBUG(this->get_logger(), "Processing time for packet: %.6f s.", processing_time);
       } else {
-        /* Timeout when reading EEG data indicates that the EEG measurement has stopped,
+        RCLCPP_DEBUG(this->get_logger(), "Timeout while reading EEG data");
+
+        /* Timeout while reading EEG data indicates that the EEG measurement has stopped,
            change the state accordingly. */
         this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
       }
 
       switch (this->eeg_bridge_state) {
-        case WAITING_FOR_MTMS_DEVICE_START:
-          this->send_node_message("Please start the mTMS device.");
-          break;
-
         case WAITING_FOR_MEASUREMENT_START:
-          this->send_node_message("Please start the measurement on the EEG device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for EEG measurement to start",
+                                   "Please start the measurement on the EEG device.");
           break;
 
         case WAITING_FOR_MEASUREMENT_STOP:
-          this->send_node_message("Please restart the measurement on the EEG device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for EEG measurement to stop",
+                                   "Please restart the measurement on the EEG device.");
           break;
 
         case WAITING_FOR_SESSION_START:
-          this->send_node_message("Ready to start a session.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
+                                   "Ready",
+                                   "Ready");
           break;
 
         case WAITING_FOR_SESSION_STOP:
-          this->send_node_message("Please stop the session on the mTMS device.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                   "Waiting for session to stop",
+                                   "Please stop the session on the mTMS device.");
           break;
 
         case STREAMING:
@@ -236,7 +263,20 @@ void EegBridge::spin() {
           break;
 
         case ERROR_OUT_OF_SYNC:
-          this->send_node_message("Error: Out of sync between EEG and the mTMS device. Please stop the session.");
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
+                                   "Out of sync between EEG and mTMS device",
+                                   /* XXX: Not really an actionable message at this stage; as long as we don't
+                                   actually show the cause of the error in the UI, it is more useful to have the
+                                   error as the 'actionable' message than not to display it at all. Once the causes
+                                   come to the UI, this could be changed to "Please stop the session on the mTMS device"
+                                   or similar. */
+                                   "Out of sync between EEG and mTMS device.");
+          break;
+
+        case ERROR_SAMPLES_DROPPED:
+          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
+                                   "Samples dropped in EEG device",
+                                   "Samples dropped in EEG device.");
           break;
       }
     }
@@ -246,6 +286,7 @@ void EegBridge::spin() {
 }
 
 void EegBridge::init_socket() {
+  RCLCPP_INFO(this->get_logger(), "Binding to port: %d", this->port_);
 
   /* Init socket variable. */
   this->socket_length = sizeof(this->socket_other);
@@ -268,10 +309,18 @@ void EegBridge::init_socket() {
     EegBridge::err("Failed to bind socket file descriptor to socket.");
   }
 
+  /* Set socket timeout to 200 ms. */
   struct timeval read_timeout;
   read_timeout.tv_sec = 0;
   read_timeout.tv_usec = 200000;
+
   setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+
+  /* Set socket buffer size to 10 MB. */
+  int buffer_size = 1024 * 1024 * 10;
+  if (setsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) == -1) {
+    EegBridge::err("Failed to set socket receive buffer size.");
+  }
 }
 
 void EegBridge::err(const char *message) {
@@ -303,7 +352,8 @@ double_t EegBridge::read_time_from_buffer(uint8_t index) {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  double_t new_time_correction = (sync_time - this->first_trigger_timestamp_) - this->sync_index * SYNC_INTERVAL;
+  num_of_sync_triggers_received++;
+  double_t new_time_correction = (sync_time - first_sync_trigger_timestamp) - num_of_sync_triggers_received * SYNC_INTERVAL;
 
   /* NOTE: Bittium's EEG device can be configured to send double triggers whenever an incoming trigger is received by the device. This happens when "Enabled"
      checkbox is ticked in Trigger A configuration in Settings menu. There seems to be no way to distinguish between the two triggers by the UDP packet contents,
@@ -315,35 +365,67 @@ void EegBridge::handle_sync_trigger(double_t sync_time) {
   }
 
   this->time_correction = new_time_correction;
-  this->sync_index++;
   RCLCPP_DEBUG(this->get_logger(), "Sync trigger received. Updated time correction to %f s.", this->time_correction);
 }
 
 void EegBridge::handle_trigger_packet() {
-  double_t new_trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
+  double_t trigger_timestamp = read_time_from_buffer(TRIGGER_PACKET_FIRST_TIME_INDEX);
 
   uint8_t trigger_port = buffer[TRIGGER_PORT_INDEX] >> 4;
 
-  auto trigger_msg = eeg_interfaces::msg::Trigger();
-
+  /* Trigger port 1 corresponds to the sync trigger between the mTMS device and the EEG device. */
   if (trigger_port == 1) {
-    if (!this->first_trigger_received) {
-      /* Upon receiving the first trigger, reset time. */
-      this->first_trigger_timestamp_ = new_trigger_timestamp;
-      this->first_trigger_received = true;
-      this->first_sample_of_session_ = true;
+    if (!this->sync_trigger_received) {
 
-      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.2f s.", this->first_trigger_timestamp_);
+      /* Upon receiving the first sync trigger, reset time. */
+      this->first_sync_trigger_timestamp = trigger_timestamp;
+      this->sync_trigger_received = true;
+
+      RCLCPP_DEBUG(this->get_logger(), "'Session start' trigger received at time %.2f s.", this->first_sync_trigger_timestamp);
     } else {
-      this->handle_sync_trigger(new_trigger_timestamp);
+      this->handle_sync_trigger(trigger_timestamp);
     }
-  } else {
-    RCLCPP_INFO(this->get_logger(), "Trigger received in port: %u", trigger_port);
-  }
-  trigger_msg.time = new_trigger_timestamp - this->first_trigger_timestamp_ - this->time_correction;
-  trigger_msg.index = trigger_port;
 
-  this->publisher_trigger_->publish(trigger_msg);
+  /* Trigger port 2 corresponds to the other trigger port between the mTMS device and the EEG device. */
+  } else if (trigger_port == 2) {
+    auto trigger_msg = eeg_interfaces::msg::Trigger();
+    trigger_msg.time = trigger_timestamp - this->first_sync_trigger_timestamp - this->time_correction;
+
+    this->trigger_publisher->publish(trigger_msg);
+
+    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Unknown trigger port: %u", trigger_port);
+  }
+}
+
+/* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
+void EegBridge::check_dropped_samples(double_t sample_time) {
+  if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
+    RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
+  }
+
+  if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
+      this->previous_time) {
+
+    auto time_diff = sample_time - this->previous_time;
+    auto threshold = this->sampling_period + this->TOLERANCE_S;
+
+    if (time_diff > threshold) {
+      /* Err if sample(s) were dropped. */
+      this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
+
+      RCLCPP_ERROR(this->get_logger(),
+          "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
+
+    } else {
+      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
+      RCLCPP_DEBUG(this->get_logger(),
+        "Time difference between consecutive samples: %.5f", time_diff);
+    }
+  }
+  this->previous_time = sample_time;
 }
 
 void EegBridge::handle_sample_packet() {
@@ -357,32 +439,49 @@ void EegBridge::handle_sample_packet() {
 
   double_t time = read_time_from_buffer(SAMPLE_PACKET_FIRST_TIME_INDEX);
 
-  /* If sending trigger as channel, this will also initialize first_trigger_timestamp and first_trigger_received
+  check_dropped_samples(time);
+
+  /* If sending trigger as channel, this will also initialize first_trigger_timestamp and sync_trigger_received
      so also the next if statement will be executed. */
   if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
     this->publish_trigger_from_buffer(time);
-    this->first_sample_of_session_ = true;
   }
 
-  /* If first trigger has not been received yet, ignore the sample packet. */
-  if (this->first_trigger_received) {
+  /* If mTMS device is available to send triggers AND first trigger has not been received yet, ignore the sample packet. */
+  if (!this->sync_trigger_received && this->mtms_device_available) {
+    return;
+  }
 
-    if (time >= this->first_trigger_timestamp_) {
-      double_t time_diff = time - this->first_trigger_timestamp_ - time_correction;
+  if (this->mtms_device_available) {
+    /* If mTMS device is available, publish samples with corrected time. */
+    if (time >= this->first_sync_trigger_timestamp) {
+      double_t corrected_time = time - this->first_sync_trigger_timestamp - time_correction;
 
-      this->publish_eeg_datapoint(time_diff);
-      this->first_sample_of_session_ = false;
+      this->publish_eeg_sample(corrected_time);
+      this->first_sample_of_session = false;
 
     } else {
       RCLCPP_WARN_THROTTLE(this->get_logger(),
                           *this->get_clock(),
                           1000,
-                          "Sample packet arrived %.4f s before session start trigger. First trigger timestamp: %.4f, sample timestamp: %.4f.",
-                          this->first_trigger_timestamp_ - time,
-                          this->first_trigger_timestamp_,
+                          "Sample packet arrived %.4f s before first sync trigger. First sync trigger timestamp: %.4f, sample timestamp: %.4f.",
+                          this->first_sync_trigger_timestamp - time,
+                          this->first_sync_trigger_timestamp,
                           time
       );
     }
+  } else {
+    /* If mTMS device is not available, adjust all sample timestamps based on the timestamp of the first sample
+       in the session, so that the first sample in the session will get the timestamp 0.0, etc. */
+    if (this->first_sample_of_session) {
+
+      /* XXX: It is slightly incorrect to use 'time_correction' variable for this, as if the mTMS device is available, the
+        same variable is used for sync-trigger-based time correction, which is semantically different from this use. */
+      this->time_correction = time;
+      this->first_sample_of_session = false;
+    }
+    double_t corrected_time = time - this->time_correction;
+    this->publish_eeg_sample(corrected_time);
   }
 }
 
@@ -395,20 +494,22 @@ void EegBridge::handle_measurement_start_packet() {
 
   /* Parse measurement start packet. */
 
-  this->sampling_frequency_ = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
-                              (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
-  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency_);
+  this->sampling_frequency = (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX] << 24 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 1] << 16 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 2] << 8 |
+                             (uint32_t) buffer[MEASUREMENT_START_PACKET_SAMPLING_FREQUENCY_INDEX + 3];
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency set to %d Hz.", this->sampling_frequency);
 
-  this->n_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
-                      (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
+  this->sampling_period = 1.0 / this->sampling_frequency;
+
+  this->num_of_channels_ = (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX] << 8 |
+                           (uint16_t) buffer[MEASUREMENT_START_PACKET_N_CHANNELS_INDEX + 1];
 
   this->send_trigger_as_channel = false;
 
-  uint8_t num_of_eeg_channels = 0;
-  uint8_t num_of_emg_channels = 0;
-  for (uint8_t i = 0; i < this->n_channels_; i++) {
+  this->num_of_eeg_channels = 0;
+  this->num_of_emg_channels = 0;
+  for (uint8_t i = 0; i < this->num_of_channels_; i++) {
     uint16_t source_channel = buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i] << 8 |
                               buffer[MEASUREMENT_START_PACKET_SOURCE_CHANNELS_INDEX + 2 * i + 1];
     if (source_channel == SOURCE_CHANNEL_FOR_TRIGGER) {
@@ -421,37 +522,41 @@ void EegBridge::handle_measurement_start_packet() {
        after the channels of the first amplifier, thus, starting at 41. */
     if ((source_channel >= 33 && source_channel <= 40) || (source_channel >= 73 && source_channel <= 80)) {
       this->channel_types[i] = this->ChannelType::EMG;
-      num_of_emg_channels++;
+      this->num_of_emg_channels++;
     } else {
       this->channel_types[i] = this->ChannelType::EEG;
-      num_of_eeg_channels++;
+      this->num_of_eeg_channels++;
     }
   }
 
   if (this->send_trigger_as_channel) {
     RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a channel.");
 
-    this->n_channels_excluding_trigger_ = this->n_channels_ - 1;
+    this->num_of_channels_excluding_trigger_ = this->num_of_channels_ - 1;
   } else {
     RCLCPP_INFO(this->get_logger(), "  - Trigger is sent as a packet.");
 
-    this->n_channels_excluding_trigger_ = this->n_channels_;
+    this->num_of_channels_excluding_trigger_ = this->num_of_channels_;
   }
 
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", num_of_emg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d.", this->num_of_eeg_channels);
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d.", this->num_of_emg_channels);
 
-  RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->n_channels_excluding_trigger_);
+  RCLCPP_INFO(this->get_logger(), "  - Total # of EEG and EMG channels: %d.", this->num_of_channels_excluding_trigger_);
 
   /* Publish EEG info. */
 
   auto eeg_info_msg = eeg_interfaces::msg::EegInfo();
 
-  eeg_info_msg.sampling_frequency = this->sampling_frequency_;
-  eeg_info_msg.n_channels = this->n_channels_;
+  eeg_info_msg.sampling_frequency = this->sampling_frequency;
+  eeg_info_msg.num_of_eeg_channels = this->num_of_eeg_channels;
+  eeg_info_msg.num_of_emg_channels = this->num_of_emg_channels;
   eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
 
-  this->publisher_eeg_info_->publish(eeg_info_msg);
+  this->eeg_info_publisher->publish(eeg_info_msg);
+
+  /* Reset number of sample packets received. */
+  this->sample_packets_received_ = 0;
 }
 
 void EegBridge::handle_eeg_data_packet() {
@@ -463,8 +568,11 @@ void EegBridge::handle_eeg_data_packet() {
       break;
 
     case SAMPLE_PACKET_ID:
+      this->sample_packets_received_ += 1;
+
       /* Ignore sample packets if in an error state, preventing streaming. */
-      if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC) {
+      if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC ||
+          this->eeg_bridge_state == ERROR_SAMPLES_DROPPED) {
         break;
       }
 
@@ -482,53 +590,59 @@ void EegBridge::handle_eeg_data_packet() {
         break;
       }
 
-      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
+      if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
           this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
 
         this->eeg_bridge_state = STREAMING;
       }
 
+      /* If session is started AND mTMS device is available, but sync triggers are not received, print a warning to check the
+         connection between mTMS device and EEG device. */
+      if (this->mtms_device_available &&
+          this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+          !this->sync_trigger_received) {
 
-      /* If session is started but sync triggers are not received, print a warning to check the connection between mTMS device and EEG device. */
-      if (this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED &&
-         !this->first_trigger_received) {
+        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
 
-        RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
+        /* Wait for one second to receive the sync trigger before reporting an error. */
+        if (this->sample_packets_received_ > this->sampling_frequency) {
+          this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
+        }
       }
 
+      if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
+
+        this->eeg_bridge_state = WAITING_FOR_SESSION_START;
+        break;
+      }
+
+      /* If mTMS device is not available, always handle sample packets; do not worry about sync triggers. */
+      if (!this->mtms_device_available) {
+        this->handle_sample_packet();
+        break;
+      }
+
+      /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
       if (!this->send_trigger_as_channel) {
 
-        /* If sending trigger as a packet, wait until we receive the first trigger and that the session is started. */
-        if (this->first_trigger_received &&
-            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
+        if (this->sync_trigger_received &&
+            this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
 
       } else {
-
         /* If sending trigger as channel, we need to handle packets before the first trigger is received as it will be
            sent as a part of a sample packet. When the first trigger is received, we also expect the session to be
            started. */
-        if (!this->first_trigger_received ||
-            this->session_state.value == mtms_device_interfaces::msg::SessionState::STARTED) {
+
+        /* XXX: It seems that this logic could be cleaned up. */
+        if (!this->sync_trigger_received ||
+            this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
 
           this->handle_sample_packet();
         }
-      }
-
-      if (this->device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for mTMS device to start...");
-
-        this->eeg_bridge_state = WAITING_FOR_MTMS_DEVICE_START;
-        break;
-      }
-
-      if (this->session_state.value != mtms_device_interfaces::msg::SessionState::STARTED) {
-        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Waiting for session to start...");
-
-        this->eeg_bridge_state = WAITING_FOR_SESSION_START;
-        break;
       }
 
       break;
@@ -556,7 +670,7 @@ void EegBridge::handle_eeg_data_packet() {
 }
 
 int EegBridge::get_trigger_package_from_buffer() {
-  auto index = FIRST_CHANNEL_INDEX + this->n_channels_excluding_trigger_ * 3;
+  auto index = FIRST_CHANNEL_INDEX + this->num_of_channels_excluding_trigger_ * 3;
 
   return (uint8_t) buffer[index] << 16 |
          (uint8_t) buffer[index + 1] << 8 |
@@ -566,36 +680,40 @@ int EegBridge::get_trigger_package_from_buffer() {
 void EegBridge::publish_trigger_from_buffer(double_t time) {
   int trigger_channel_package = get_trigger_package_from_buffer();
 
-  auto trigger_msg = eeg_interfaces::msg::Trigger();
+  /* TODO: Duplicates the logic in handle_trigger_packet function, deduplicate. */
 
+  /* Trigger A is the sync trigger between the mTMS device and the EEG device. */
   if (trigger_channel_package == TRIGGER_A_IN) {
-    trigger_msg.index = 1;
-    trigger_msg.time = time - this->first_trigger_timestamp_;
+    if (!sync_trigger_received) {
+      this->first_sync_trigger_timestamp = time;
+      this->sync_trigger_received = true;
 
-    if (!first_trigger_received) {
-      this->first_trigger_timestamp_ = time;
-      this->first_trigger_received = true;
-
-      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.4f", this->first_trigger_timestamp_);
+      RCLCPP_DEBUG(this->get_logger(), "Session start trigger received, timestamp: %.4f", this->first_sync_trigger_timestamp);
     } else {
       this->handle_sync_trigger(time);
     }
 
+  /* Trigger B is the other trigger between the mTMS device and the EEG device. */
   } else if (trigger_channel_package == TRIGGER_B_IN) {
-    trigger_msg.index = 2;
-  }
-  trigger_msg.time = time - this->first_trigger_timestamp_ - this->time_correction;
+    auto trigger_msg = eeg_interfaces::msg::Trigger();
 
-  this->publisher_trigger_->publish(trigger_msg);
+    trigger_msg.time = time - this->first_sync_trigger_timestamp - this->time_correction;
+    this->trigger_publisher->publish(trigger_msg);
+
+    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Unknown trigger port");
+  }
 }
 
-void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
+void EegBridge::publish_eeg_sample(double_t time) {
 
-  auto message = eeg_interfaces::msg::EegDatapoint();
-  message.time = time_since_trigger;
+  auto message = eeg_interfaces::msg::Sample();
+  message.time = time;
 
   int i = FIRST_CHANNEL_INDEX;
-  for (int channel = 0; channel < this->n_channels_excluding_trigger_; channel++) {
+  for (int channel = 0; channel < this->num_of_channels_excluding_trigger_; channel++) {
 
     int result = (uint8_t) buffer[i] << 16 |
                  (uint8_t) buffer[i + 1] << 8 |
@@ -610,16 +728,19 @@ void EegBridge::publish_eeg_datapoint(double_t time_since_trigger) {
     result_uv /= NANO_TO_MICRO_CONVERSION;
 
     if (channel_types[channel] == ChannelType::EEG) {
-      message.eeg_channels.push_back(result_uv);
+      message.eeg_data.push_back(result_uv);
     } else {
-      message.emg_channels.push_back(result_uv);
+      message.emg_data.push_back(result_uv);
     }
 
     i += 3;
   }
-  message.first_sample_of_session = this->first_sample_of_session_;
+  message.metadata.sampling_frequency = this->sampling_frequency;
+  message.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
+  message.metadata.num_of_emg_channels = this->num_of_emg_channels;
+  message.metadata.first_sample_of_session = this->first_sample_of_session;
 
-  this->publisher_data_->publish(message);
+  this->eeg_sample_publisher->publish(message);
 
   RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data into the topic: %s", EEG_RAW_TOPIC.c_str());
   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data...");

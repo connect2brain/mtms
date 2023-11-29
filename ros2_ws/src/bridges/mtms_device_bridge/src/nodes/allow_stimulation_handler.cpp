@@ -9,10 +9,14 @@
 
 void allow_stimulation([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::AllowStimulation::Request> request,
                         std::shared_ptr<mtms_device_interfaces::srv::AllowStimulation::Response> response) {
+  if (!is_fpga_ok()) {
+    RCLCPP_WARN(rclcpp::get_logger("allow_stimulation_handler"), "FPGA not in OK state during service call");
+    response->success = false;
+    return;
+  }
 
   bool allow_stimulation = request->allow_stimulation;
 
-  /* TODO: Currently, the control in FPGA is called "Ready to stimulate" instead of "Allow stimulation". Unify naming. */
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Allowstimulation, allow_stimulation));
 
   response->success = true;
@@ -46,17 +50,21 @@ int main(int argc, char **argv) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  RCLCPP_INFO(rclcpp::get_logger("allow_stimulation_handler"), "Start device handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("allow_stimulation_handler"), "Allow stimulation handler ready.");
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }

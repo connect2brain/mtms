@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
-import { eegDataSubscriber, triggerSubscriber } from 'services/ros'
+import styled from 'styled-components'
+
+import { eegDataSubscriber, triggerSubscriber } from 'ros/ros'
 import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
 import { Datapoint, DatapointWithEventType, EegChartStreaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
-import styled from 'styled-components'
-import { eventSubscriber } from '../services/session'
+
+import { eventSubscriber } from '../ros/subscribers/feedback'
+
 import { objectKeysToCamelCase } from '../utils'
 
 const DataVisualize = () => {
@@ -36,7 +39,7 @@ const DataVisualize = () => {
   const newEegBatch = (message: EegBatchMessage) => {
     const mappedData = message.batch.map((point) => {
       return {
-        y: c3(point.eeg_channels),
+        y: c3(point.eeg_data),
         x: startTime.getTime() + point.time * 1000,
       }
     })

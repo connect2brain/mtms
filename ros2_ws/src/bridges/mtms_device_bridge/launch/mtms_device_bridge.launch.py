@@ -18,8 +18,14 @@ def generate_launch_description():
         description="Run in safe mode (boolean)",
     )
 
+    enabled_arg = DeclareLaunchArgument(
+        "enabled",
+        description="Is mTMS device enabled (boolean)",
+    )
+
     logger = LaunchConfiguration("log-level")
     safe_mode = LaunchConfiguration("safe-mode")
+    enabled = LaunchConfiguration("enabled")
 
     node_executables = [
         "run_fpga",
@@ -30,6 +36,7 @@ def generate_launch_description():
         "stop_session_handler",
 
         "allow_stimulation_handler",
+        "allow_trigger_out_handler",
 
         "pulse_handler",
         "trigger_out_handler",
@@ -37,8 +44,11 @@ def generate_launch_description():
         "discharge_handler",
 
         "event_trigger_handler",
+
         "feedback_monitor_bridge",
         "system_state_bridge",
+        "session_bridge",
+
         "settings_handler"
     ]
 
@@ -48,7 +58,8 @@ def generate_launch_description():
             executable=node_executable,
             parameters=[
                 {
-                    "safe-mode": safe_mode
+                    "safe-mode": safe_mode,
+                    "enabled": enabled,
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]

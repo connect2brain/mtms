@@ -1,7 +1,7 @@
 metadata:
   experiment_name: testiexperiment
   subject_name: Esko
-trial_index: 4
+trial_number: 4
 trial:
   stimuli:
     - target:

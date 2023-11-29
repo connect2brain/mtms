@@ -21,19 +21,9 @@ GatherEegServer::GatherEegServer() : Node("eeg_gatherer") {
     std::bind(&GatherEegServer::handle_cancel, this, _1),
     std::bind(&GatherEegServer::handle_accepted, this, _1));
 
-  const rmw_qos_profile_t qos_profile_persist_latest = {
-      RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-      1,
-      RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-      RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-      RMW_QOS_DEADLINE_DEFAULT,
-      RMW_QOS_LIFESPAN_DEFAULT,
-      RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-      RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-      false
-  };
-
-  auto qos_persist_latest = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile_persist_latest.history, qos_profile_persist_latest.depth), qos_profile_persist_latest);
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
   this->eeg_info_subscription = this->create_subscription<eeg_interfaces::msg::EegInfo>(
     "/eeg/info",
@@ -73,16 +63,16 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
 
   auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time, sampling_frequency);
 
-  auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::EegDatapoint>(
-    "/eeg/raw",
+  auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
+    "/eeg/preprocessed",
     EEG_DATA_SUBSCRIBER_QUEUE_SIZE,
-    [this, &eeg_gatherer](const eeg_interfaces::msg::EegDatapoint::SharedPtr msg) {
+    [this, &eeg_gatherer](const eeg_interfaces::msg::PreprocessedSample::SharedPtr msg) {
       RCLCPP_INFO_THROTTLE(rclcpp::get_logger("eeg_gatherer"),
                           *this->get_clock(),
                           1000,
-                          "Received EEG datapoint with timestamp %.4f.",
+                          "Received preprocessed EEG datapoint with timestamp %.4f.",
                           msg->time);
-      eeg_gatherer.handle_eeg_datapoint(msg);
+      eeg_gatherer.handle_eeg_sample(msg);
     });
 
   RCLCPP_INFO(this->get_logger(), "Executing goal");

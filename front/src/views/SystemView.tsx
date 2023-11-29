@@ -8,9 +8,8 @@ import {
   dischargeFeedbackSubscriber,
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
-  systemStateSubscriber,
-} from 'services/session'
-import { SystemStateMessage } from 'types/mtmsDevice'
+} from 'ros/subscribers/feedback'
+
 import {
   PulseFeedbackMessage,
   Feedback,
@@ -19,9 +18,8 @@ import {
   TriggerOutFeedbackMessage,
 } from 'types/event'
 
-import { NodeState } from 'components/NodeState'
 import { SystemState } from 'components/SystemState'
-import { SystemControl } from 'components/SystemControl'
+import { DeviceControl } from 'components/DeviceControl'
 import { EventFeedbacks } from 'components/EventFeedbacks'
 
 const initialState = {
@@ -92,12 +90,10 @@ const initialState = {
 export const SystemView = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics'>('overview')
 
-  const [systemState, setSystemState] = useState<SystemStateMessage>(initialState)
   const [feedback, setFeedback] = useState<Feedback>()
 
   useEffect(() => {
     console.log('Subscribed')
-    systemStateSubscriber.subscribe(systemStateCallback)
     pulseFeedbackSubscriber.subscribe(pulseFeedbackCallback)
     chargeFeedbackSubscriber.subscribe(chargeFeedbackCallback)
     dischargeFeedbackSubscriber.subscribe(dischargeFeedbackCallback)
@@ -132,46 +128,32 @@ export const SystemView = () => {
     })
   }
 
-  const systemStateCallback = (message: SystemStateMessage) => {
-    setSystemState(message)
-  }
-
   return (
     <>
       <TabBar>
-        <a
-          href="#"
-          onClick={() => setActiveTab('overview')}
-          className={activeTab === 'overview' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setActiveTab('overview')} className={activeTab === 'overview' ? 'active' : ''}>
           Overview
         </a>
-        <a
-          href="#"
-          onClick={() => setActiveTab('diagnostics')}
-          className={activeTab === 'diagnostics' ? 'active' : ''}
-        >
+        <a href='#' onClick={() => setActiveTab('diagnostics')} className={activeTab === 'diagnostics' ? 'active' : ''}>
           Diagnostics
         </a>
       </TabBar>
       <Wrapper>
-        {activeTab === 'overview' &&
-        <>
-          <PanelA>
-            <SystemControl deviceState={systemState.device_state} sessionState={systemState.session_state} />
-          </PanelA>
-          <VerticalDividedPanelB>
-            <SubPanel>
-              <NodeState />
-            </SubPanel>
-            <SubPanel>
-              <SystemState systemState={systemState} />
-            </SubPanel>
-          </VerticalDividedPanelB>
-          <PanelC>
-            <EventFeedbacks feedback={feedback} />
-          </PanelC>
-        </>}
+        {activeTab === 'overview' && (
+          <>
+            <PanelA>
+              <DeviceControl />
+            </PanelA>
+            <VerticalDividedPanelB>
+              <SubPanel>
+                <SystemState />
+              </SubPanel>
+            </VerticalDividedPanelB>
+            <PanelC>
+              <EventFeedbacks feedback={feedback} />
+            </PanelC>
+          </>
+        )}
       </Wrapper>
     </>
   )

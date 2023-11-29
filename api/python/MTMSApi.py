@@ -11,7 +11,8 @@ import time
 
 import rclpy
 
-from mtms_device_interfaces.msg import SessionState, DeviceState
+from system_interfaces.msg import SessionState
+from mtms_device_interfaces.msg import DeviceState
 from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
 from MTMSApiNode import MTMSApiNode
@@ -213,7 +214,7 @@ class MTMSApi:
             * SessionState.STOPPING : Session is stopping.
         """
         self.node.wait_for_new_state()
-        return self.node.system_state.session_state.value
+        return self.node.session.state.value
 
     def get_voltage(self, channel):
         """
@@ -276,8 +277,7 @@ class MTMSApi:
         float
             The current time as seconds.
         """
-        self.node.wait_for_new_state()
-        return self.node.system_state.time
+        return self.node.session.time
 
     def get_event_feedback(self, id):
         """
@@ -312,7 +312,7 @@ class MTMSApi:
             allow_stimulation=allow_stimulation,
         )
 
-    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
 
@@ -335,11 +335,13 @@ class MTMSApi:
 
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
 
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the pulse is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
+        delay : float, optional
+            The delay for executing the trigger.
         reverse_polarity : bool, optional
             Whether to reverse the polarity of the waveform. Default is False.
         wait_for_completion : bool, optional
@@ -367,6 +369,7 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
+            delay=delay,
             channel=channel,
             waveform=waveform_,
         )
@@ -376,7 +379,7 @@ class MTMSApi:
 
         return id
 
-    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
         """
         Send a charge to a specified channel.
 
@@ -391,11 +394,13 @@ class MTMSApi:
 
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
 
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which charging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
+        delay : float, optional
+            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the charge to complete before returning. Default is True.
 
@@ -418,6 +423,7 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
+            delay=delay,
             channel=channel,
             target_voltage=target_voltage,
         )
@@ -427,7 +433,7 @@ class MTMSApi:
 
         return id
 
-    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
         """
         Send a discharge to a specified channel.
 
@@ -442,11 +448,13 @@ class MTMSApi:
 
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
 
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
+        delay : float, optional
+            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the discharge to complete before returning. Default is True.
 
@@ -469,6 +477,7 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
+            delay=delay,
             channel=channel,
             target_voltage=target_voltage,
         )
@@ -478,7 +487,7 @@ class MTMSApi:
 
         return id
 
-    def send_trigger_out(self, port, duration_us=int(1e6), execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
         """
         Sends a trigger output to a specified port.
 
@@ -487,17 +496,19 @@ class MTMSApi:
         port : int
             The port number to send the trigger output to.
         duration_us : int
-            The duration of the trigger in microseconds. Defaults to 1e6 (one millisecond).
+            The duration of the trigger in microseconds. Defaults to 1000 (one millisecond).
         execution_condition : ExecutionCondition, optional
             The condition under which the event should be executed. One of the following:
 
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
 
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the trigger is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
+        delay : float, optional
+            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the trigger to complete before returning. Default is True.
 
@@ -519,6 +530,7 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
+            delay=delay,
             port=port,
             duration_us=duration_us,
         )
@@ -528,13 +540,13 @@ class MTMSApi:
 
         return id
 
-    def send_event_trigger(self):
+    def trigger_events(self):
         """
-        Executes the events which have execution_condition set to ExecutionCondition.TRIGGERED.
+        Executes the events which have execution_condition set to ExecutionCondition.WAIT_FOR_TRIGGER.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.send_event_trigger()
+        self.node.trigger_events()
 
     # Testing and debugging (undocumented)
 
@@ -568,7 +580,7 @@ class MTMSApi:
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity):
+    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
         """
         Return the channel voltages (V) given the displacements, rotation angle and intensity.
 
@@ -582,6 +594,10 @@ class MTMSApi:
             Rotation angle in degrees.
         intensity : float
             Intensity value.
+        algorithm : int
+            One of the following:
+                TargetingAlgorithm.LEAST_SQUARES
+                TargetingAlgorithm.GENETIC
 
         Returns
         -------
@@ -593,9 +609,10 @@ class MTMSApi:
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
             intensity=intensity,
+            algorithm=algorithm,
         )
 
-    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle):
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         """
         Return the maximum intensity given the displacements and rotation angle.
 
@@ -607,6 +624,10 @@ class MTMSApi:
             Displacement in the y direction.
         rotation_angle : float
             Rotation angle in degrees.
+        algorithm : int
+            One of the following:
+                TargetingAlgorithm.LEAST_SQUARES
+                TargetingAlgorithm.GENETIC
 
         Returns
         -------
@@ -618,6 +639,7 @@ class MTMSApi:
             displacement_x=displacement_x,
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
+            algorithm=algorithm,
         )
 
     # Stimulation
@@ -739,6 +761,56 @@ class MTMSApi:
 
         return ids
 
+    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED, wait_for_completion=True):
+        """
+        Send default pulse commands to all channels.
+
+        Parameters
+        ----------
+        reverse_polarities : list of bools
+            List of boolean values indicating whether to reverse polarities for each channel.
+        execution_condition : ExecutionCondition, optional
+            The condition under which the event should be executed. One of the following:
+
+            * ExecutionCondition.IMMEDIATE : Execute the event immediately.
+            * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
+
+            Default is ExecutionCondition.TIMED
+        time : float
+            The time at which the pulse is executed.
+        wait_for_completion : bool, optional
+            Whether to wait for the completion of all commands, by default True.
+
+        Returns
+        -------
+        list
+            IDs for each sent command.
+        """
+        assert self.is_session_started(), "Session not started."
+        assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
+            len(reverse_polarities), self.N_CHANNELS)
+
+        ids = []
+        for channel in range(self.N_CHANNELS):
+            reverse_polarity = reverse_polarities[channel]
+            waveform = self.get_default_waveform(channel=channel)
+
+            id = self.send_pulse(
+                execution_condition=execution_condition,
+                time=time,
+                channel=channel,
+                waveform=waveform,
+                reverse_polarity=reverse_polarity,
+                wait_for_completion=False,
+            )
+            ids.append(id)
+
+        if wait_for_completion:
+            self._wait_for_completions(ids=ids)
+
+        return ids
+
     def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, wait_for_completion=True):
         """
         Send immediate default pulse commands to all channels.
@@ -781,7 +853,7 @@ class MTMSApi:
 
             * ExecutionCondition.IMMEDIATE : Execute the event immediately.
             * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-            * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+            * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
 
             Default is ExecutionCondition.TIMED
         time : float, optional

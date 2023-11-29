@@ -2,3 +2,4 @@
 
 uint16 id
 PulseError error
+float64 execution_time

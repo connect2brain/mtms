@@ -10,7 +10,7 @@ from mep_interfaces.msg import AnalyzeMepErrors, MepError
 from mep_interfaces.action import AnalyzeMep
 from mep_interfaces.srv import AnalyzeMepService
 
-from rcl_interfaces.msg import ParameterDescriptor, ParameterType
+from system_interfaces.msg import Healthcheck, HealthcheckStatus
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -96,11 +96,46 @@ class AnalyzeMepNode(Node):
             callback_group=self.callback_group,
         )
 
+        # Create subscriber for EEG healthcheck
+        self.healthcheck_publisher = self.create_publisher(
+            Healthcheck,
+            '/mep/healthcheck',
+            10,
+            callback_group=self.callback_group,
+        )
+
+        self.eeg_healthcheck_subscriber = self.create_subscription(
+            Healthcheck,
+            '/eeg/healthcheck',
+            self.eeg_healthcheck_handler,
+            10,
+            callback_group=self.callback_group,
+        )
+
+    # Healthcheck
+
+    def publish_healthcheck(self):
+        msg = Healthcheck()
+        if self.eeg_available:
+            msg.status.value = msg.status.READY
+            msg.status_message = ""
+            msg.actionable_message = ""
+        else:
+            msg.status.value = msg.status.DISABLED
+            msg.status_message = "EEG not available"
+            msg.actionable_message = ""
+
+        self.healthcheck_publisher.publish(msg)
+
+    def eeg_healthcheck_handler(self, msg):
+        self.eeg_available = msg.status.value == msg.status.READY
+        self.publish_healthcheck()
+
     # ROS callbacks and callers
 
     def eeg_info_callback(self, eeg_info):
-        # Update sampling frequency
 
+        # Update sampling frequency
         self.sampling_frequency = eeg_info.sampling_frequency
         self.logger.info('Sampling frequency updated to {} Hz.'.format(self.sampling_frequency))
 
@@ -191,7 +226,7 @@ class AnalyzeMepNode(Node):
     def validate_emg_channel(self, goal_id, emg_channel, eeg_buffer):
 
         # Assuming that all datapoints have the same number of channels.
-        num_of_emg_channels = len(eeg_buffer[0].emg_channels)
+        num_of_emg_channels = len(eeg_buffer[0].emg_data)
 
         # EMG channel indexing starts from 0, hence decrement.
         maximum_channel_index = num_of_emg_channels - 1
@@ -207,7 +242,7 @@ class AnalyzeMepNode(Node):
         return MepError(value=MepError.NO_ERROR)
 
     def get_channel_from_eeg_buffer(self, emg_channel, eeg_buffer):
-        channel_data = np.array([d.emg_channels[emg_channel] for d in eeg_buffer])
+        channel_data = np.array([d.emg_data[emg_channel] for d in eeg_buffer])
         timestamps = np.array([d.time for d in eeg_buffer])
 
         return channel_data, timestamps
@@ -244,7 +279,7 @@ class AnalyzeMepNode(Node):
 
         self.logger.info('{}: Computed MEP with amplitude {:.1f} (\u03BCV) and latency {:.1f} (ms).'.format(goal_id, amplitude, 1000 * latency))
 
-        return amplitude, latency
+        return channel_data, amplitude, latency
 
     def analyze_mep(self, goal_id, time, mep_configuration):
         self.logger.info('{}: Analyzing MEP at time: {:.3f} (s)'.format(goal_id, time))
@@ -252,6 +287,17 @@ class AnalyzeMepNode(Node):
         self.log_mep_configuration(goal_id, mep_configuration)
 
         errors = AnalyzeMepErrors()
+
+        # Check that EEG is available.
+        if not self.eeg_available:
+            self.logger.error('{}: EEG not available, aborting.'.format(goal_id))
+
+            success = False
+            amplitude = None
+            latency = None
+            channel_data = None
+
+            return success, errors, amplitude, latency, channel_data
 
         gathered_preactivation_buffer = GatheredEegBuffer()
         gathered_mep_buffer = GatheredEegBuffer()
@@ -294,8 +340,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         # Collect errors from gatherers.
 
@@ -313,8 +360,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         self.logger.info('{}: Successfully gathered data.'.format(goal_id))
 
@@ -333,8 +381,9 @@ class AnalyzeMepNode(Node):
             success = False
             amplitude = None
             latency = None
+            channel_data = None
 
-            return success, errors, amplitude, latency
+            return success, errors, amplitude, latency, channel_data
 
         # Check preactivation
 
@@ -351,12 +400,13 @@ class AnalyzeMepNode(Node):
                 success = False
                 amplitude = None
                 latency = None
+                channel_data = None
 
-                return success, errors, amplitude, latency
+                return success, errors, amplitude, latency, channel_data
 
         # Compute MEP based on gathered data.
 
-        amplitude, latency = self.compute_mep_amplitude_and_latency(
+        channel_data, amplitude, latency = self.compute_mep_amplitude_and_latency(
             goal_id=goal_id,
             time=time,
             emg_channel=emg_channel,
@@ -369,7 +419,7 @@ class AnalyzeMepNode(Node):
             errors.gather_preactivation_error.value == GatherEegError.NO_ERROR and \
             errors.mep_error.value == MepError.NO_ERROR
 
-        return success, errors, amplitude, latency
+        return success, errors, amplitude, latency, channel_data
 
     def analyze_mep_action_handler(self, goal_handle):
         request = goal_handle.request
@@ -385,7 +435,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        success, errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency, mep_buffer = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -400,6 +450,7 @@ class AnalyzeMepNode(Node):
         # HACK: ROS doesn't seem to support NaNs in floats, work around it by encoding None as 0.0.
         result.mep.amplitude = amplitude if amplitude is not None else 0.0
         result.mep.latency = latency if latency is not None else 0.0
+        result.mep.buffer = mep_buffer if mep_buffer is not None else []
         result.errors = errors
         result.success = success
 
@@ -419,7 +470,7 @@ class AnalyzeMepNode(Node):
         self.logger.info('{}: '.format(goal_id))
         self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
 
-        success, errors, amplitude, latency = self.analyze_mep(
+        success, errors, amplitude, latency, mep_buffer = self.analyze_mep(
             goal_id=goal_id,
             time=time,
             mep_configuration=mep_configuration
@@ -428,6 +479,7 @@ class AnalyzeMepNode(Node):
         # HACK: ROS doesn't seem to support NaNs in floats, work around it by encoding None as 0.0.
         response.mep.amplitude = amplitude if amplitude is not None else 0.0
         response.mep.latency = latency if latency is not None else 0.0
+        response.mep.buffer = mep_buffer if mep_buffer is not None else []
         response.errors = errors
         response.success = success
 

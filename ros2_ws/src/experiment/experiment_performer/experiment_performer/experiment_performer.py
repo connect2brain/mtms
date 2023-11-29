@@ -1,16 +1,18 @@
 import time
-from threading import Event
+from threading import Event, Lock
 
 import numpy as np
 
-from experiment_interfaces.msg import ExperimentMetadata, IntertrialInterval, \
-    Trial, TrialConfig, TrialResult, TriggerConfig
+from experiment_interfaces.msg import ExperimentState, TrialTiming
 from experiment_interfaces.action import PerformExperiment, PerformTrial
-from experiment_interfaces.srv import ValidateTrial, CountValidTrials
+from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
 from mep_interfaces.msg import Mep
 
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
+from mtms_device_interfaces.msg import SystemState, DeviceState
+
+from system_interfaces.msg import Session, SessionState
+from system_interfaces.srv import StartSession, StopSession
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -25,6 +27,7 @@ class ExperimentPerformerNode(Node):
     ROS_ACTION_PERFORM_TRIAL = ('/trial/perform', PerformTrial)
 
     FIRST_TRIAL_TIME_S = 1.0
+    TRIAL_REDO_INTERVAL_S = 3.0
 
     def __init__(self):
         super().__init__('experiment_performer_node')
@@ -46,10 +49,37 @@ class ExperimentPerformerNode(Node):
 
         # Create service for counting valid trials in an experiment.
 
-        self.service = self.create_service(
+        self.count_valid_trials_service = self.create_service(
             CountValidTrials,
             '/experiment/count_valid_trials',
             self.count_valid_trials_callback,
+            callback_group=self.callback_group,
+        )
+
+        # Create service for pausing an ongoing experiment.
+
+        self.pause_experiment_service = self.create_service(
+            PauseExperiment,
+            '/experiment/pause',
+            self.pause_experiment_callback,
+            callback_group=self.callback_group,
+        )
+
+        # Create service for resuming an ongoing experiment.
+
+        self.resume_experiment_service = self.create_service(
+            ResumeExperiment,
+            '/experiment/resume',
+            self.resume_experiment_callback,
+            callback_group=self.callback_group,
+        )
+
+        # Create service for canceling an ongoing experiment.
+
+        self.cancel_experiment_service = self.create_service(
+            CancelExperiment,
+            '/experiment/cancel',
+            self.cancel_experiment_callback,
             callback_group=self.callback_group,
         )
 
@@ -67,9 +97,45 @@ class ExperimentPerformerNode(Node):
         while not self.validate_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /trial/validate not available, waiting...')
 
+        # Create service client for logging a trial.
+
+        self.log_trial_client = self.create_client(LogTrial, '/trial/log', callback_group=self.callback_group)
+        while not self.log_trial_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /trial/log not available, waiting...')
+
+        # Create service client to start a session.
+
+        self.start_session_client = self.create_client(StartSession, '/system/session/start', callback_group=self.callback_group)
+        while not self.start_session_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /system/session/start not available, waiting...')
+
+        # Create service client to stop a session.
+
+        self.stop_session_client = self.create_client(StopSession, '/system/session/stop', callback_group=self.callback_group)
+        while not self.stop_session_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /system/session/stop not available, waiting...')
+
         # Create subscriber for system state.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
         self.system_state = None
+
+        # Create subscriber for session.
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
+
+        # Create a lock so that service and action calls can modify the experiment state concurrently.
+        self.experiment_state_lock = Lock()
+        self.experiment_state = ExperimentState.NOT_RUNNING
+
+    # Experiment state
+
+    def set_experiment_state(self, state):
+        with self.experiment_state_lock:
+            self.experiment_state = state
+
+    def get_experiment_state(self):
+        with self.experiment_state_lock:
+            return self.experiment_state
 
     # ROS callbacks and callers
 
@@ -79,19 +145,36 @@ class ExperimentPerformerNode(Node):
         self.system_state = system_state
 
     def get_device_state(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.device_state.value
 
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        return self.system_state.session_state.value
+        if self.session is None:
+            return None
+
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
+    def is_session_stopped(self):
+        return self.get_session_state() == SessionState.STOPPED
+
     def get_current_time(self):
-        return self.system_state.time
+        if self.session is None:
+            return None
+
+        return self.session.time
 
     # Logging
 
@@ -181,33 +264,41 @@ class ExperimentPerformerNode(Node):
 
     # Action callers
 
-    def async_perform_trial_action(self, trial, earliest_trial_time, wait_for_trigger):
+    def async_perform_trial_action(self, trial):
         client = self.perform_trial_client
         goal = PerformTrial.Goal()
 
         goal.trial = trial
-        goal.earliest_trial_time = earliest_trial_time
-        goal.wait_for_trigger = wait_for_trigger
 
         event, result_container = self.async_action_call(client, goal)
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial, earliest_trial_time, wait_for_trigger):
+    def sync_perform_trial_action(self, trial):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
-            earliest_trial_time=earliest_trial_time,
-            wait_for_trigger=wait_for_trigger,
         )
         event.wait()
 
         result = self.get_result_from_container(result_container)
 
-        assert result.success, "Performing trial was not successful."
-
         return result
 
     # Service callers
+
+    def start_session(self):
+        request = StartSession.Request()
+
+        response = self.async_service_call(self.start_session_client, request)
+
+        assert response.success, "Starting session was not successful."
+
+    def stop_session(self):
+        request = StopSession.Request()
+
+        response = self.async_service_call(self.stop_session_client, request)
+
+        assert response.success, "Stopping session was not successful."
 
     def validate_trial(self, trial):
         request = ValidateTrial.Request()
@@ -219,6 +310,19 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
+    def log_trial(self, metadata, trial, trial_number, trial_result, num_of_attempts):
+        request = LogTrial.Request()
+
+        request.metadata = metadata
+        request.trial = trial
+        request.trial_number = trial_number
+        request.trial_result = trial_result
+        request.num_of_attempts = num_of_attempts
+
+        response = self.async_service_call(self.log_trial_client, request)
+
+        assert response.success, "Logging trial was not successful."
+
     # Performing experiment
 
     def perform_experiment_action_handler(self, goal_handle):
@@ -229,6 +333,8 @@ class ExperimentPerformerNode(Node):
         intertrial_interval = request.intertrial_interval
         wait_for_trigger = request.wait_for_trigger
         randomize_trials = request.randomize_trials
+        autopause = request.autopause
+        autopause_interval = request.autopause_interval
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -250,13 +356,16 @@ class ExperimentPerformerNode(Node):
             trials=trials,
         )
 
-        trial_results = self.perform_experiment(
+        success, trial_results = self.perform_experiment(
+            goal_handle=goal_handle,
             goal_id=goal_id,
             metadata=metadata,
             valid_trials=valid_trials,
             intertrial_interval=intertrial_interval,
             wait_for_trigger=wait_for_trigger,
             randomize_trials=randomize_trials,
+            autopause=autopause,
+            autopause_interval=autopause_interval,
         )
 
         # Create and return a Result object.
@@ -266,10 +375,74 @@ class ExperimentPerformerNode(Node):
         goal_handle.succeed()
 
         result.trial_results = trial_results
+        result.success = success
 
         self.logger.info('{}: Done.'.format(goal_id))
 
         return result
+
+    def pause_experiment_callback(self, request, response):
+        # TODO: This service callback, as well as resuming and canceling an experiment, need to be
+        #   more disciplined about the experiment that they affect. Overall, need to think about
+        #   how to communicate state within the node: is it enough to use node-wide variables for
+        #   the state, as long as only one experiment is going on at a time? Should starting
+        #   several experiments at the same time be prevented? Probably these service calls should
+        #   also check that there is an ongoing experiment in the first place. Before doing any of
+        #   this, it might be worthwhile to wait until rosbridge supports actions, and first modify
+        #   front-end to use PerformExperiment action instead of the equivalent service.
+        #
+        goal_id = "abcd"
+
+        self.logger.info('{}:'.format(goal_id))
+
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to pause while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
+        self.logger.info('{}: Pausing the experiment after the current trial attempt...'.format(goal_id))
+
+        self.set_experiment_state(ExperimentState.PAUSED)
+
+        response.success = True
+        return response
+
+    def resume_experiment_callback(self, request, response):
+        goal_id = "abcd"
+
+        self.logger.info('{}:'.format(goal_id))
+
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to resume while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
+        self.logger.info('{}: Resuming the experiment.'.format(goal_id))
+
+        self.set_experiment_state(ExperimentState.RUNNING)
+
+        response.success = True
+        return response
+
+    def cancel_experiment_callback(self, request, response):
+        goal_id = "abcd"
+
+        self.logger.info('{}:'.format(goal_id))
+
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
+            self.logger.error('{}: Trying to cancel while experiment not running.'.format(goal_id))
+
+            response.success = False
+            return response
+
+        self.logger.info('{}: Canceling the experiment after the current trial attempt...'.format(goal_id))
+
+        self.set_experiment_state(ExperimentState.CANCELED)
+
+        response.success = True
+        return response
 
     def get_valid_trials(self, goal_id, trials):
         valid_trials = []
@@ -277,10 +450,10 @@ class ExperimentPerformerNode(Node):
             if self.validate_trial(trial):
                 valid_trials.append(trial)
 
-        self.logger.info('{}: {} out of {} trials are valid.'.format(
+        self.logger.info('{}: {}/{} of the trials are valid.'.format(
             goal_id,
-            len(trials),
             len(valid_trials),
+            len(trials),
         ))
         return valid_trials
 
@@ -298,6 +471,7 @@ class ExperimentPerformerNode(Node):
         num_of_valid_trials = len(valid_trials)
 
         response.num_of_valid_trials = num_of_valid_trials
+        response.success = True
 
         return response
 
@@ -307,11 +481,6 @@ class ExperimentPerformerNode(Node):
             self.logger.info('{}: mTMS device not started, aborting.'.format(goal_id))
             return False
 
-        # Check that the session is started.
-        if not self.is_session_started():
-            self.logger.info('{}: Session not started on the mTMS device, aborting.'.format(goal_id))
-            return False
-
         # Check that there is at least one valid trial.
         if len(valid_trials) == 0:
             self.logger.info('{}: None of the trials are valid, aborting.'.format(goal_id))
@@ -319,14 +488,75 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials):
-        self.check_goal_feasible(
+    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval, wait_for_trigger):
+        # If waiting for trigger, don't wait between trials.
+        if wait_for_trigger:
+            return 0.0
+
+        if num_of_attempts > 1:
+            return self.TRIAL_REDO_INTERVAL_S
+
+        # Start the first trial at FIRST_TRIAL_TIME_S seconds, otherwise follow intertrial interval.
+        if is_first_trial:
+            return self.FIRST_TRIAL_TIME_S
+        else:
+            return np.random.uniform(
+                low=intertrial_interval.min,
+                high=intertrial_interval.max,
+            )
+
+    def send_feedback(self, goal_handle, experiment_state, trial, num_of_attempts, trial_number, total_trials):
+        feedback_msg = PerformExperiment.Feedback()
+
+        feedback_msg.experiment_state = ExperimentState(value=experiment_state)
+        feedback_msg.trial = trial
+        feedback_msg.attempt_number = num_of_attempts
+        feedback_msg.trial_number = trial_number
+        feedback_msg.total_trials = total_trials
+
+        goal_handle.publish_feedback(feedback_msg)
+
+    def initialize_session(self, goal_id):
+
+        # If session is already started, stop it first.
+        if self.is_session_started():
+            self.logger.info('{}: Session already started on the mTMS device, stopping...'.format(goal_id))
+            self.stop_session()
+
+            while not self.is_session_stopped():
+                time.sleep(0.1)
+
+        self.logger.info('{}: Starting session.'.format(goal_id))
+        self.start_session()
+
+        while not self.is_session_started():
+            time.sleep(0.1)
+
+    def finalize_session(self, goal_id):
+        self.logger.info('{}: Stopping session...'.format(goal_id))
+        self.stop_session()
+
+        while not self.is_session_stopped():
+            time.sleep(0.1)
+
+    def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
+
+        # Initialize experiment state
+        self.set_experiment_state(ExperimentState.RUNNING)
+
+        # Check that the goal is feasible
+        feasible = self.check_goal_feasible(
             goal_id=goal_id,
             valid_trials=valid_trials
         )
+        if not feasible:
+            trial_results = []
+            success = False
+
+            return success, trial_results
 
         num_of_valid_trials = len(valid_trials)
-        trial_results = [None] * num_of_valid_trials
+        trial_results = []
 
         if randomize_trials is True:
             # XXX: Set seed to a constant value for now; think about how to properly make experiments
@@ -335,50 +565,131 @@ class ExperimentPerformerNode(Node):
             np.random.seed(1234)
             valid_trials = np.random.permutation(valid_trials)
 
-        for i in range(num_of_valid_trials):
-            trial = valid_trials[i]
+        self.initialize_session(goal_id)
 
+        # Loop over trials and perform each.
+        success = True
+        last_resume_time = self.get_current_time()
+
+        i = 0
+        num_of_attempts = 0
+        while i < num_of_valid_trials:
+            num_of_attempts += 1
+
+            trial = valid_trials[i]
+            trial_number = i + 1
+
+            # Check if autopause interval has passed.
+            if autopause:
+                current_time = self.get_current_time()
+                if current_time > last_resume_time + autopause_interval:
+                    self.set_experiment_state(ExperimentState.PAUSED)
+
+            experiment_state = self.get_experiment_state()
+
+            # Send feedback at the start of a new trial attempt.
+            self.send_feedback(
+                goal_handle=goal_handle,
+                experiment_state=experiment_state,
+                trial=trial,
+                num_of_attempts=num_of_attempts,
+                trial_number=trial_number,
+                total_trials=num_of_valid_trials,
+            )
+
+            # Check if the experiment was paused, wait until resumed.
+            if experiment_state == ExperimentState.PAUSED:
+                self.logger.info('{}: Experiment paused...'.format(goal_id))
+                while experiment_state == ExperimentState.PAUSED:
+                    time.sleep(0.1)
+                    experiment_state = self.get_experiment_state()
+
+                self.logger.info('{}: Experiment resumed.'.format(goal_id))
+                last_resume_time = self.get_current_time()
+
+            # Check if the experiment was canceled.
+            if experiment_state == ExperimentState.CANCELED:
+                self.logger.info('{}: Experiment canceled.'.format(goal_id))
+
+                success = False
+                break
+
+            # Send feedback again after pausing has been finished.
+            self.send_feedback(
+                goal_handle=goal_handle,
+                experiment_state=experiment_state,
+                trial=trial,
+                num_of_attempts=num_of_attempts,
+                trial_number=trial_number,
+                total_trials=num_of_valid_trials,
+            )
+
+            # The starting time of the first trial is handled differently, hence the check.
             is_first_trial = i == 0
 
-            trial_result = self.perform_trial(
-                goal_id=goal_id,
-                trial=trial,
+            time_to_next_trial = self.get_time_to_next_trial(
+                num_of_attempts=num_of_attempts,
+                is_first_trial=is_first_trial,
                 intertrial_interval=intertrial_interval,
                 wait_for_trigger=wait_for_trigger,
-                is_first_trial=is_first_trial,
             )
 
-            trial_results[i] = trial_result
+            # Determine the time of the next trial.
+            trial_time = self.get_current_time() + time_to_next_trial
 
-            self.logger.info('{}: Successfully performed trial {} / {}.'.format(
+            # When performing an (rTMS style) experiment, always allow late trials, as the exact timing of the pulse is unimportant.
+            allow_late = True
+
+            trial.timing = TrialTiming(
+                time=trial_time,
+                allow_late=allow_late,
+                wait_for_trigger=wait_for_trigger,
+            )
+
+            self.logger.info('{}: Performing trial {} / {}, attempt number {}'.format(
                 goal_id,
                 i + 1,
-                num_of_valid_trials
+                num_of_valid_trials,
+                num_of_attempts,
             ))
 
-        return trial_results
-
-    def perform_trial(self, goal_id, trial, intertrial_interval, wait_for_trigger, is_first_trial):
-        # Start the first trial at FIRST_TRIAL_TIME_S seconds, otherwise follow intertrial interval.
-        if is_first_trial:
-            time_to_next_trial = self.FIRST_TRIAL_TIME_S
-        else:
-            time_to_next_trial = np.random.uniform(
-                low=intertrial_interval.min,
-                high=intertrial_interval.max,
+            result = self.sync_perform_trial_action(
+                trial=trial,
             )
+            trial_result = result.trial_result
+            success = result.success
 
-        earliest_trial_time = self.system_state.time + time_to_next_trial
+            if success:
+                self.logger.info('{}: Successfully performed trial {} / {}.'.format(
+                    goal_id,
+                    i + 1,
+                    num_of_valid_trials
+                ))
+                trial_results.append(trial_result)
 
-        result = self.sync_perform_trial_action(
-            trial=trial,
-            earliest_trial_time=earliest_trial_time,
-            wait_for_trigger=wait_for_trigger,
-        )
+                self.log_trial(
+                    metadata=metadata,
+                    trial=trial,
+                    trial_number=trial_number,
+                    trial_result=trial_result,
+                    num_of_attempts=num_of_attempts,
+                )
 
-        trial_result = result.trial_result
+                i += 1
+                num_of_attempts = 0
+            else:
+                self.logger.info('{}: Trial not successful, redoing in {} seconds.'.format(
+                    goal_id,
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
 
-        return trial_result
+            # Add a delay to allow other ROS service calls to run.
+            time.sleep(0.1)
+
+        self.finalize_session(goal_id)
+
+        success = True
+        return success, trial_results
 
 def main(args=None):
     rclpy.init(args=args)

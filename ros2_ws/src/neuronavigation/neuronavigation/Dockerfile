@@ -69,25 +69,26 @@ RUN rm setup.py
 
 # Copy and build ROS interfaces
 
-WORKDIR /app
-COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
-COPY ros2_ws/src/interfaces/ui_interfaces ros2_ws/src/interfaces/ui_interfaces/
+WORKDIR /app/ros2_ws
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
+COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces/
 
-RUN cd ros2_ws && \
-    source /opt/ros/iron/setup.bash && \
-    colcon build --packages-select neuronavigation_interfaces ui_interfaces
+RUN source /opt/ros/iron/setup.bash && colcon build --base-paths src/interfaces
 
 # Copy rest of InVesalius
 
-COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 ros2_ws/src/neuronavigation/neuronavigation/invesalius3/
+COPY ros2_ws/src/neuronavigation/neuronavigation/invesalius3 src/neuronavigation/neuronavigation/invesalius3/
 
 # Copy and build Neuronavigation ROS package
 
-COPY ros2_ws/src/neuronavigation/neuronavigation ros2_ws/src/neuronavigation/neuronavigation/
+COPY ros2_ws/src/neuronavigation/neuronavigation src/neuronavigation/neuronavigation/
 
-RUN cd ros2_ws && \
-    source /opt/ros/iron/setup.bash && \
-    colcon build --packages-select neuronavigation
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select neuronavigation
+
+# Copy entrypoint
+
+WORKDIR /app
 
 COPY ros2_ws/src/neuronavigation/neuronavigation/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh

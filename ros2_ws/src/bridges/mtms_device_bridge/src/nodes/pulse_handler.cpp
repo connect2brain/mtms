@@ -23,6 +23,11 @@ public:
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Pulse> pulse) -> void {
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "FPGA not in OK state while attempting to execute pulse");
+        return;
+      }
+
       uint8_t channel = pulse->channel;
 
       /* Serialize event info. */
@@ -32,7 +37,20 @@ public:
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
+      double_t delay = event_info.delay;
+
+      /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
+      if (execution_time < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing pulse event.");
+        return;
+      }
+      if (delay < 0.0) {
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing pulse event.");
+        return;
+      }
+
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+      uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
 
       /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
            indexing here. It would rather be the responsibility of FPGA to do the conversion;
@@ -41,6 +59,7 @@ public:
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(execution_time_ticks);
+      serialized_message.add_uint32(delay_ticks);
 
       /* Serialize stimulation pulse. */
 
@@ -108,13 +127,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }
