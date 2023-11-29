@@ -92,7 +92,7 @@ target_include_directories(start_session_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces)
 
 # Stop session handler
 
@@ -108,7 +108,7 @@ target_include_directories(stop_session_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces)
 
 # Stop device handler
 
