@@ -34,8 +34,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
         "srv/StartDevice.srv"
         "srv/StopDevice.srv"
-        "srv/StartSession.srv"
-        "srv/StopSession.srv"
 
         "srv/AllowStimulation.srv"
         "srv/AllowTriggerOut.srv"

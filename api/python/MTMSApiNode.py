@@ -3,9 +3,10 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, StartSession, StopSession, AllowStimulation
+from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation
 
 from system_interfaces.msg import Session
+from system_interfaces.srv import StartSession, StopSession
 
 from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
     ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
@@ -23,8 +24,6 @@ class MTMSApiNode(Node):
     # To mTMS device
     ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
-    ROS_SERVICE_START_SESSION = ('/mtms_device/session/start', StartSession)
-    ROS_SERVICE_STOP_SESSION = ('/mtms_device/session/stop', StopSession)
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
 
@@ -35,6 +34,9 @@ class MTMSApiNode(Node):
     ROS_MESSAGE_SEND_TRIGGER_OUT = ('/event/send/trigger_out', TriggerOut)
 
     # To other parts of the system
+    ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
+    ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
+
     ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)

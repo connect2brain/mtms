@@ -5,14 +5,14 @@ import { ros } from '../ros'
      not duplicate session-starting logic there. */
 export const startSessionService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/session/start',
-  serviceType: 'mtms_device_interfaces/StartSession',
+  name: '/system/session/start',
+  serviceType: 'system_interfaces/StartSession',
 })
 
 const stopSessionService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/session/stop',
-  serviceType: 'mtms_device_interfaces/StopSession',
+  name: '/system/session/stop',
+  serviceType: 'system_interfaces/StopSession',
 })
 
 export const startSession = () => {
