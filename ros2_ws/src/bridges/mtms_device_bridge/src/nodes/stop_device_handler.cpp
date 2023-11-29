@@ -9,6 +9,11 @@
 
 void stop_device([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
                  std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Response> response) {
+  if (!is_fpga_ok()) {
+    RCLCPP_WARN(rclcpp::get_logger("stop_device_handler"), "FPGA not in OK state during service call");
+    response->success = false;
+    return;
+  }
 
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Stopdevice, true));
 
@@ -47,13 +52,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }

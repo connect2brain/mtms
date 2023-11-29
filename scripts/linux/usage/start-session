@@ -3,4 +3,4 @@
 source /opt/ros/iron/setup.bash
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
-ros2 service call /mtms_device/start_session mtms_device_interfaces/StartSession
+ros2 service call /system/session/start system_interfaces/StartSession

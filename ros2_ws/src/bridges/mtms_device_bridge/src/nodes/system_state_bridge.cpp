@@ -7,10 +7,12 @@
 #include "mtms_device_interfaces/msg/channel_state.hpp"
 #include "mtms_device_interfaces/msg/channel_error.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
-#include "mtms_device_interfaces/msg/session_state.hpp"
 #include "mtms_device_interfaces/msg/startup_error.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
+
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -21,7 +23,6 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 
 const uint8_t CHANNEL_COUNT = 5;
-const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
@@ -67,39 +68,43 @@ NiFpga_mTMS_IndicatorU16 emergency_error_indicator = NiFpga_mTMS_IndicatorU16_Em
 NiFpga_mTMS_IndicatorU8 startup_error_indicator = NiFpga_mTMS_IndicatorU8_Startuperror;
 
 NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devicestate;
-NiFpga_mTMS_IndicatorU8 session_state_indicator = NiFpga_mTMS_IndicatorU8_Sessionstate;
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
+
+const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
+
 
 class SystemStateBridge : public rclcpp::Node {
 public:
   SystemStateBridge()
       : Node("system_state_bridge") {
 
-    auto deadline = SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE;
-    const uint64_t deadline_ns = static_cast<uint64_t>(std::chrono::nanoseconds(deadline).count());
-    const rmw_time_t rmw_deadline = {0, deadline_ns};
-    const rmw_time_t rmw_lifespan = rmw_deadline;
+    const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
 
-    const rmw_qos_profile_t qos_profile = {
-        RMW_QOS_POLICY_HISTORY_KEEP_LAST,
-        1,
-        RMW_QOS_POLICY_RELIABILITY_RELIABLE,
-        RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL,
-        rmw_deadline,
-        rmw_lifespan,
-        RMW_QOS_POLICY_LIVELINESS_SYSTEM_DEFAULT,
-        RMW_QOS_LIVELINESS_LEASE_DURATION_DEFAULT,
-        false
-    };
-    auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
+    auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        .deadline(DEADLINE_NS)
+        .lifespan(DEADLINE_NS);
 
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
         "/mtms_device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
+
+    healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
   }
 
 private:
+  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
+    auto healthcheck = system_interfaces::msg::Healthcheck();
+
+    healthcheck.status.value = status_value;
+    healthcheck.status_message = status_message;
+    healthcheck.actionable_message = actionable_message;
+
+    this->healthcheck_publisher->publish(healthcheck);
+  }
+
   mtms_device_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
     auto msg = mtms_device_interfaces::msg::SystemError();
 
@@ -137,6 +142,11 @@ private:
   }
 
   void publish_system_state() {
+    if (!is_fpga_ok()) {
+      RCLCPP_WARN(rclcpp::get_logger("system_state_bridge"), "FPGA not in OK state while attempting to read system state");
+      return;
+    }
+
     mtms_device_interfaces::msg::SystemState state = mtms_device_interfaces::msg::SystemState();
 
     uint16_t error;
@@ -219,28 +229,25 @@ private:
                             &state.device_state.value
                         ));
 
-    NiFpga_MergeStatus(&status,
-                        NiFpga_ReadU8(
-                            session,
-                            session_state_indicator,
-                            &state.session_state.value
-                        ));
-
-    uint64_t time;
-    NiFpga_MergeStatus(&status,
-                        NiFpga_ReadU64(
-                            session,
-                            time_indicator,
-                            &time
-                        ));
-
-    state.time = (double)time / CLOCK_FREQUENCY_HZ;
-
     system_state_publisher_->publish(state);
+
+    uint8_t status_value;
+    if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
+      status_value = system_interfaces::msg::HealthcheckStatus::READY;
+      publish_healthcheck(status_value,
+                          "Ready",
+                          "");
+    } else {
+      status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      publish_healthcheck(status_value,
+                          "mTMS device is not operational",
+                          "Please start the mTMS device.");
+    }
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };
 
 int main(int argc, char **argv) {
@@ -263,13 +270,17 @@ int main(int argc, char **argv) {
 
   init_fpga();
 
-  while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
-      close_fpga();
-      init_fpga();
-    }
-    rclcpp::spin_some(node);
-  }
+  auto timer = node->create_wall_timer(
+      std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
+      [&]() {
+          if (!is_fpga_ok()) {
+              close_fpga();
+              init_fpga();
+          }
+      }
+  );
+  rclcpp::spin(node);
+
   close_fpga();
   rclcpp::shutdown();
 }

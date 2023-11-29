@@ -8,27 +8,31 @@ RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
+    nlohmann-json3-dev \
     ros-iron-rmw-cyclonedds-cpp
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/eeg/eeg_simulator ros2_ws/src/eeg/eeg_simulator/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
-
-# Build ROS packages
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
-    colcon build --symlink-install
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/project_interfaces src/interfaces/project_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/eeg/eeg_simulator src/eeg/eeg_simulator/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select eeg_simulator
 
 # Copy entrypoint
 
 WORKDIR /app
+
 COPY ros2_ws/src/eeg/eeg_simulator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

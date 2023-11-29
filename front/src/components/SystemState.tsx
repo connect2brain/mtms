@@ -1,29 +1,27 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { ChannelState as ChannelStateType, DeviceState, HumanReadableDeviceState, SessionState, HumanReadableSessionState, SystemStateMessage } from 'types/mtmsDevice'
 import { getKeyByValue, getKeyByValueExcluding, getTrueKeys } from 'utils'
 import { ChannelState } from './ChannelState'
 
-type Props = {
-  systemState: SystemStateMessage
-}
+import {
+  SystemContext,
+  DeviceState,
+  HumanReadableDeviceState,
+  ChannelState as ChannelStateType,
+} from 'providers/SystemProvider'
 
-export const SystemState = ({ systemState }: Props) => {
-  const [latestUpdate, setLatestUpdate] = useState<Date>()
-
-  useEffect(() => {
-    setLatestUpdate(new Date())
-  }, [systemState])
+export const SystemState = () => {
+  const { systemState } = useContext(SystemContext)
 
   const channelStatesTable = () => {
     return (
       <ChannelTable>
         <colgroup>
-          <ColStyle className="indexCol" />
-          <ColStyle className="voltageCol" />
-          <ColStyle className="pulseCol" />
-          <ColStyle className="errorCol" />
+          <ColStyle className='indexCol' />
+          <ColStyle className='voltageCol' />
+          <ColStyle className='pulseCol' />
+          <ColStyle className='errorCol' />
         </colgroup>
         <Thead>
           <tr>
@@ -35,7 +33,7 @@ export const SystemState = ({ systemState }: Props) => {
           </tr>
         </Thead>
         <tbody>
-          {systemState.channel_states
+          {systemState?.channel_states
             .sort((a: ChannelStateType, b: ChannelStateType) => a.channel_index - b.channel_index)
             .map((channel: ChannelStateType) => (
               <ChannelState key={`channel-${channel.channel_index}`} {...channel} />
@@ -50,26 +48,12 @@ export const SystemState = ({ systemState }: Props) => {
 
     if (keys.length > 0) {
       return keys.map((key) => {
-        return <span key={key}>{key}</span>
+        return <span key={key}>{key}, </span>
       })
     } else {
       /* No errors, do not display anything. */
       return <span></span>
     }
-  }
-
-  const formatDate = (isoString: any) => {
-    const date = new Date(isoString)
-
-    const year = date.getUTCFullYear()
-    const month = String(date.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(date.getUTCDate()).padStart(2, '0')
-
-    const hours = String(date.getUTCHours()).padStart(2, '0')
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0')
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0')
-
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
   }
 
   const getHumanReadableDeviceState = (deviceState: any, value: any) => {
@@ -81,43 +65,20 @@ export const SystemState = ({ systemState }: Props) => {
     }
   }
 
-  const getHumanReadableSessionState = (sessionState: any, value: any) => {
-    const key = getKeyByValue(SessionState, value)
-    if (key) {
-      return HumanReadableSessionState[key as keyof typeof HumanReadableSessionState] || 'Unknown state'
-    } else {
-      return 'Unknown state'
-    }
-  }
-
   return (
     <div>
       <StateRow>
         <StateTitle>Device</StateTitle>
-        <StateValue>{getHumanReadableDeviceState(DeviceState, systemState.device_state.value)}</StateValue>
-      </StateRow>
-      <StateRow>
-        <StateTitle>Session</StateTitle>
-        <StateValue>{getHumanReadableSessionState(SessionState, systemState.session_state.value)}</StateValue>
-      </StateRow>
-      <br />
-      <StateRow>
-        <StateTitle>Time</StateTitle>
-        <StateValue>{latestUpdate ? formatDate(latestUpdate.toISOString()) : ''}</StateValue>
-      </StateRow>
-      <StateRow>
-        <StateTitle>Session time</StateTitle>
-        <StateValue>{systemState.time.toFixed(1)} s</StateValue>
+        <StateValue>{getHumanReadableDeviceState(DeviceState, systemState?.device_state.value)}</StateValue>
       </StateRow>
       <br />
       <ErrorTitle>Errors</ErrorTitle>
       <ErrorsContainer>
-        <ErrorItem>Current {getListValue(systemState.system_error_current)}</ErrorItem>
-        <ErrorItem>Cumulative {getListValue(systemState.system_error_cumulative)}</ErrorItem>
-        <ErrorItem>Emergency {getListValue(systemState.system_error_emergency)}</ErrorItem>
+        <ErrorItem>Current: {getListValue(systemState?.system_error_current)}</ErrorItem>
+        <ErrorItem>Cumulative: {getListValue(systemState?.system_error_cumulative)}</ErrorItem>
+        <ErrorItem>Emergency: {getListValue(systemState?.system_error_emergency)}</ErrorItem>
         <ErrorItem>
-          Startup {' '}
-          {getKeyByValueExcluding(systemState.startup_error, 'value', systemState.startup_error.value) || ''}
+          Startup: {getKeyByValueExcluding(systemState?.startup_error, 'value', systemState?.startup_error.value) || ''}
         </ErrorItem>
       </ErrorsContainer>
       <ChannelTitle>Channels</ChannelTitle>

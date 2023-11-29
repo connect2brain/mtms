@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# If a parameter is provided, use it as the container name.
+CONTAINER_NAME=$1
+
+# Rebuild the specified core container or all containers if none is specified.
+echo "Building containers..."
+
+if [ -z "$CONTAINER_NAME" ]; then
+    docker-compose -f $MTMS_ROOT/docker-compose.core.yml build
+else
+    docker-compose -f $MTMS_ROOT/docker-compose.core.yml build $CONTAINER_NAME
+fi
+
+# Check the exit status of the last command (docker-compose build).
+if [ $? -ne 0 ]; then
+    echo "Build failed. Not restarting the containers."
+    exit 1
+fi
+
+# Restart core containers.
+echo "Restarting..."
+
+sudo systemctl restart mtms-core-containers
+
+echo "Done."

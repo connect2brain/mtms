@@ -1,22 +1,18 @@
 import time
 from threading import Event
 
-import numpy as np
-
+import rclpy
+from rclpy.action import ActionServer
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.node import Node
 
 from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFeedback, DischargeFeedback, EventInfo
 
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
+from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.action import SetVoltages
+from system_interfaces.msg import Session, SessionState
 from utility_interfaces.srv import GetNextId
-
-import rclpy
-from rclpy.action import ActionServer
-from rclpy.node import Node
-
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
 
 
 class VoltageSetterNode(Node):
@@ -34,7 +30,7 @@ class VoltageSetterNode(Node):
 
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create action server for setting voltages.
+        # Action server for setting voltages.
 
         self.action_server = ActionServer(
             self,
@@ -44,16 +40,22 @@ class VoltageSetterNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create service client for getting next ID.
+        # Service client for getting next ID.
         self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
         while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /utility/get_next_id not available, waiting...')
+
+        # Subscriber for system state
 
         # Have a queue of only one message so that only the latest system state is received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1, callback_group=self.callback_group)
         self.system_state = None
 
-        # Create publishers for charging and discharging.
+        # Subscriber for session
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
+
+        # Publishers for charging and discharging.
         self.send_charge_publisher = self.create_publisher(Charge, '/event/send/charge', 10)
         self.send_discharge_publisher = self.create_publisher(Discharge, '/event/send/discharge', 10)
 
@@ -70,19 +72,36 @@ class VoltageSetterNode(Node):
         self.system_state = system_state
 
     def get_device_state(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.device_state.value
 
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        return self.system_state.session_state.value
+        if self.session is None:
+            return None
+
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
+    def is_session_stopped(self):
+        return self.get_session_state() == SessionState.STOPPED
+
     def get_current_time(self):
-        return self.system_state.time
+        if self.session is None:
+            return None
+
+        return self.session.time
 
     # Feedback
 
@@ -177,6 +196,7 @@ class VoltageSetterNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
         event_info.execution_time = 0.0
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -197,6 +217,7 @@ class VoltageSetterNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
         event_info.execution_time = 0.0
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel

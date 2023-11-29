@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
+
+import { useAppDispatch } from 'providers/reduxHooks'
+
 import { EulerAngles, Position, PositionMessage, StateMessage } from 'types/target'
-import { clearRosState, coilPositionSubscriber, plannerStateSubscriber } from 'services/ros'
 import { expand, objectKeysToCamelCase } from 'utils'
+
 import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
-import { useAppDispatch } from 'providers/reduxHooks'
 import { setTargets } from 'reducers/targetReducer'
 import { setPulseSequences } from 'reducers/sequenceReducer'
-import { addTargetToRos } from 'services/target'
+import { addTargetToRos } from 'ros/services/target'
+
+import { clearRosState, coilPositionSubscriber, plannerStateSubscriber } from 'ros/ros'
 
 const Targets = () => {
   const [position, setPosition] = useState<Position>({

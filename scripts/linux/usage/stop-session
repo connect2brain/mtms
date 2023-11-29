@@ -3,4 +3,4 @@
 source /opt/ros/iron/setup.bash
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
-ros2 service call /mtms_device/stop_session mtms_device_interfaces/StopSession
+ros2 service call /system/session/stop system_interfaces/StopSession

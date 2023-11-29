@@ -21,8 +21,17 @@ if [ -d "$PROJECTS_ROOT/$PROJECT_NAME" ]; then
 fi
 
 mkdir $PROJECTS_ROOT/$PROJECT_NAME
-cp $MTMS_ROOT/.env $PROJECTS_ROOT/$PROJECT_NAME
+
+# Copy project template to the new project directory.
+cp -r $MTMS_ROOT/projects/template/* $PROJECTS_ROOT/$PROJECT_NAME
+
+python3 $MTMS_ROOT/scripts/python/generate_random_data.py --dataset_name "Random data, 5 kHz" --sampling_frequency 5000 --output_filename random_data_5_khz --output_directory $PROJECTS_ROOT/$PROJECT_NAME/eeg_simulator > /dev/null
+python3 $MTMS_ROOT/scripts/python/generate_random_data.py --dataset_name "Random data, 5 kHz, 10 s" --duration 10 --sampling_frequency 5000 --output_filename random_data_5_khz_10_s --output_directory $PROJECTS_ROOT/$PROJECT_NAME/eeg_simulator > /dev/null
+python3 $MTMS_ROOT/scripts/python/generate_random_data.py --dataset_name "Random data, 1 kHz" --sampling_frequency 1000 --output_filename random_data_1_khz --output_directory $PROJECTS_ROOT/$PROJECT_NAME/eeg_simulator > /dev/null
+python3 $MTMS_ROOT/scripts/python/generate_random_data.py --dataset_name "Random data, 4 kHz" --sampling_frequency 4000 --output_filename random_data_4_khz --output_directory $PROJECTS_ROOT/$PROJECT_NAME/eeg_simulator > /dev/null
 
 echo ""
 echo "Project successfully created: ${BOLD}$PROJECT_NAME${RESET}"
+echo ""
+echo "The project now automatically shows up in the web interface."
 echo ""

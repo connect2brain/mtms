@@ -64,13 +64,6 @@ sudo usermod -aG docker $USER
 sudo apt install docker-compose
 ```
 
-- Install C++ tools (for real-time pipeline):
-
-```
-sudo apt install cmake
-sudo apt install g++
-```
-
 - Install ROS by running the following in the repository root:
 
 ```
@@ -131,28 +124,6 @@ Press "Replace".
 
 # Real-time pipeline
 
-## Getting started
-
-### Pipeline with EEG preprocessor
-
-- To start the pipeline using only EEG preprocessor, run:
-
-```
-docker-compose up eeg_preprocessor
-```
-
-- Modify `.env` file in repository root to change the configuration of the EEG preprocessor:
-
-* `EEG_PREPROCESSOR_TYPE`: One of "python", "compiledmatlab", or "cpp".
-* `EEG_PREPROCESSOR_SCRIPT`: Can be used to select custom EEG preprocessors, stored in `pipeline/python/eeg_preprocessors/`
-directory in repository root.
-
-- The changes in `.env` file take place after restarting Docker container by running:
-
-```
-docker-compose restart eeg_preprocessor
-```
-
 ### Simulated EEG data
 
 - To stream simulated EEG data, run:
@@ -204,7 +175,7 @@ docker-compose up bag_exporter
 
 ## Build documentation locally
 
-The documentation source files are located in `docs` and are built using [Sphinx](https://www.sphinx-doc.org/en/master/usage/quickstart.html). 
+The documentation source files are located in `docs` and are built using [Sphinx](https://www.sphinx-doc.org/en/master/usage/quickstart.html).
 
 To build the documentation locally, first make sure your environment has completed the installation steps described [above](#installation). Particularly, make sure you have ROS activated: e.g. in Ubuntu 22.04/bash, use `source /opt/ros/iron/setup.bash`.
 
@@ -393,8 +364,8 @@ Some services utilize Docker in Docker (DiD) as Docker Swarm does not natively s
 - Worker: a host that is controlled by the manager
 - Service: a docker container that is running on some host. Our services all contain a single ros2 node
 
-Note that node means different things in ros2 and docker terminology:  
-Node in docker swarm = a host machine  
+Note that node means different things in ros2 and docker terminology:
+Node in docker swarm = a host machine
 Node in ros2 = a ros2 node
 
 
@@ -422,7 +393,7 @@ check that DISPLAY is set to `:0` or `:0.0` in `.env`.
 
 After the previous steps are done, run the following commands to start the swarm cluster.
 1. Host: Create docker swarm `docker swarm init`
-2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker  
+2. Worker: Copy the docker swarm join command (`docker swarm join --token <token> <ip:port>`) produced by the previous command and run it on the worker
 3. Host: (Optional) Ensure that you can see both nodes in the network `docker node ls`
 4. Host: Deploy docker stack `docker stack deploy -c docker-stack.yml mtms --with-registry-auth`
 5. Host: (Optional) Check service status `docker service ls` and `docker service ps --no-trunc <service(s)>`

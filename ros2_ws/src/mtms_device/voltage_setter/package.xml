@@ -11,6 +11,7 @@
 
   <depend>mtms_device_interfaces</depend>
   <depend>event_interfaces</depend>
+  <depend>system_interfaces</depend>
   <depend>utility_interfaces</depend>
 
   <export>

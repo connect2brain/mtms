@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
-#include "eeg_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/gather_eeg_error.hpp"
 #include "eeg_interfaces/action/gather_eeg.hpp"
@@ -24,7 +24,7 @@ private:
   void handle_accepted(const std::shared_ptr<GoalHandleGatherEeg> goal_handle);
   void execute(const std::shared_ptr<GoalHandleGatherEeg> goal_handle);
 
-  std::vector<eeg_interfaces::msg::EegDatapoint> eeg_buffer;
+  std::vector<eeg_interfaces::msg::PreprocessedSample> eeg_buffer;
 
   rclcpp_action::Server<eeg_interfaces::action::GatherEeg>::SharedPtr gather_eeg_action_server;
   rclcpp::Subscription<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_subscription;
