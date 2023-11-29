@@ -1,14 +1,14 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "mtms_device_interfaces/srv/start_session.hpp"
+#include "system_interfaces/srv/start_session.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void start_session([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StartSession::Request> request,
-                      std::shared_ptr<mtms_device_interfaces::srv::StartSession::Response> response) {
+void start_session([[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StartSession::Request> request,
+                      std::shared_ptr<system_interfaces::srv::StartSession::Response> response) {
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("start_session_handler"), "FPGA not in OK state during service call");
     response->success = false;
@@ -25,12 +25,12 @@ class StartSession : public rclcpp::Node {
 public:
   StartSession()
       : Node("start_session") {
-    start_session_service_ = this->create_service<mtms_device_interfaces::srv::StartSession>("/mtms_device/session/start",
+    start_session_service_ = this->create_service<system_interfaces::srv::StartSession>("/mtms_device/session/start",
                                                                                             start_session);
   }
 
 private:
-  rclcpp::Service<mtms_device_interfaces::srv::StartSession>::SharedPtr start_session_service_;
+  rclcpp::Service<system_interfaces::srv::StartSession>::SharedPtr start_session_service_;
 };
 
 int main(int argc, char **argv) {

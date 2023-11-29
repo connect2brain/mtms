@@ -1,6 +1,6 @@
 # mTMS device interface specification document
 ## Introduction
-This specification document gives overview of the mTMS device control ROS2 interface and 
+This specification document gives overview of the mTMS device control ROS2 interface and
 its functions, and gives the description of the required interfaces to be
 implemented and their expected behaviour for any device to be used.
 
@@ -24,7 +24,7 @@ The table below, lists all the ROS2 topics used by the mTMS device interface, an
 types and packages locations for their message definitions. Quality of Service (QoS)
 policies and other behaviour will be described in their own sections.
 
-| Topic                            | Type         | Message definition                            | 
+| Topic                            | Type         | Message definition                            |
 |----------------------------------|--------------|-----------------------------------------------|
 | `/mtms_device/allow_stimulation` | Service      | `mtms_device_interfaces.srv.AllowStimulation` |
 | `/mtms_device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
@@ -44,7 +44,7 @@ policies and other behaviour will be described in their own sections.
 | `/mtms_device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
 
 ### Interface description
-The mTMS device interface functions can be divided to follow sections, which can 
+The mTMS device interface functions can be divided to follow sections, which can
 contain 1 or more different ROS2 topics:
 - [System state Publishing](#system-state)
 - [Device state management](#device-state-management)
@@ -62,20 +62,20 @@ TODO: Add descriptions for error conditions.
 The mTMS device publishes its system state on a regular intervals to the `/mtms_device/system_state` topic
 
     ChannelState[] channel_states
-    
+
     SystemError system_error_cumulative
     SystemError system_error_current
     SystemError system_error_emergency
-    
+
     StartupError startup_error
-    
+
     DeviceState device_state
     SessionState session_state
-    
+
     float64 time
 
 where each of the coil channels in the mTMS device has its own `ChannelState` object in the
-channel_states object. `DeviceState` and `SessionState` describe the device and session 
+channel_states object. `DeviceState` and `SessionState` describe the device and session
 states, which are described in their own sections.
 
 System state is published with 20ms interval tolerance for message delay is 5ms.
@@ -98,14 +98,14 @@ ROS2 Documentation):
 The device state is management by service topics `/mtms_device/start_device`
 and `/mtms_device/stop_device`.
 
-Current status of device state is published by the system_state in `device_state` 
+Current status of device state is published by the system_state in `device_state`
 session, which is defined by `DeviceState`:
-    
+
     uint8 NOT_OPERATIONAL=0
     uint8 STARTUP=1
     uint8 OPERATIONAL=2
     uint8 SHUTDOWN=3
-    
+
     uint8 value
 
 when the device is started with `/mtms_device/start_device` request the response returns
@@ -113,16 +113,16 @@ when the device is started with `/mtms_device/start_device` request the response
 `device_state.value=DeviceState.OPERATIONAL`
 
 when the device is stopped with `/mtms_device/stop_device` request the response returns
-`true` if shutdown was successful.  Once the shutdown process is finished the system 
+`true` if shutdown was successful.  Once the shutdown process is finished the system
 state property `device_state.value=DeviceState.NOT_OPERATIONAL`
 
 #### Session state management
 Session state management is similar to device state management by having its own topics
-for starting session with `/mtms_device/start_session` and stopping session 
-`/mtms_device/stop_session`. 
+for starting session with `/mtms_device/start_session` and stopping session
+`/mtms_device/stop_session`.
 
 In addition to modifying session state, when session is
-started system state `time` (in seconds) property starts counting up from the moment 
+started system state `time` (in seconds) property starts counting up from the moment
 session was started. When session is stopped `time` is reset back to 0.
 
 Current status of session state is published by the system_state in `session_state`
@@ -132,10 +132,10 @@ session, which is defined by `SessionState`:
     uint8 STARTING=1
     uint8 STARTED=2
     uint8 STOPPING=3
-    
+
     uint8 value
 
-When the session starting is finished the system state property 
+When the session starting is finished the system state property
 `session_state.value=SessionState.STARTED` and the service request will return `true`,
 likewise when session stop request is made and complete, the session state will be
 `session_state.value=SessionState.STOPPED`
@@ -147,19 +147,19 @@ Charging works by sending a topic `/event/send/charge` message:
     uint16 target_voltage # in volts
     EventInfo event_info
 
-This event will start the charging process once the given execution condition in 
+This event will start the charging process once the given execution condition in
 `event_info` is met. EventInfo:
 
     uint16 id  # Contains information about the event.
-    
+
     ExecutionCondition execution_condition  # The condition on which the event will be executed; see ExecutionCondition.msg.
-    
+
     float64 execution_time  # Time in seconds when the event will be executed.
-    
+
     float64 decision_time   # Time in seconds when the decision on the event was made.
 
 
-When the execution condition is met the charging process of a given `channel` to the 
+When the execution condition is met the charging process of a given `channel` to the
 `target_voltage` will start. Once the charging process is finished or disrupted by some
 error a message to the topic `/event/charge_feedback` is sent, containing the event id,
 given in the charge message and possible error raised.
@@ -192,7 +192,7 @@ The pulse is given to certain channel, with given waveform and event_info proper
 works similarly to the charging and discharging properties.
 
 #### Trigger out
-Trigger out messages work also similarly to the charging that the topic 
+Trigger out messages work also similarly to the charging that the topic
 `/event/send/trigger_out` message and once the trigger out message is completed message
 to the topic `/event/trigger_out_feedback` is sent:
 
@@ -200,7 +200,7 @@ to the topic `/event/trigger_out_feedback` is sent:
     uint32 duration_us  # Duration of the pulse in microseconds.
     EventInfo event_info
 
-The trigger out message will send a trigger to physical `port` with given `duration_us` 
+The trigger out message will send a trigger to physical `port` with given `duration_us`
 when the `event_info` condition it met.
 
 #### FPGA status
@@ -244,26 +244,6 @@ Start device. Response: Boolean indicating if starting was successful.
 QoS: ROS2 Default
 
 Stop device. Response: Boolean indicating if stopping was successful.
-
-
-    ---
-    bool success
-
-### Topic: `/mtms_device/session/start`
-#### Service: `mtms_device_interfaces.srv.StartSession`
-QoS: ROS2 Default
-
-Start session. Response: Boolean indicating if starting was successful.
-
-    ---
-    bool success
-
-
-### Topic: `/mtms_device/session/stop`
-#### Service: `mtms_device_interfaces.srv.StopSession`
-QoS: ROS2 Default
-
-Stop session. Response: Boolean indicating if stopping was successful.
 
 
     ---

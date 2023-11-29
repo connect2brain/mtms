@@ -10,9 +10,9 @@ from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExpe
 from mep_interfaces.msg import Mep
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
-from mtms_device_interfaces.srv import StartSession, StopSession
 
 from system_interfaces.msg import Session, SessionState
+from system_interfaces.srv import StartSession, StopSession
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -105,15 +105,15 @@ class ExperimentPerformerNode(Node):
 
         # Create service client to start a session.
 
-        self.start_session_client = self.create_client(StartSession, '/mtms_device/session/start', callback_group=self.callback_group)
+        self.start_session_client = self.create_client(StartSession, '/system/session/start', callback_group=self.callback_group)
         while not self.start_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms_device/session/start not available, waiting...')
+            self.get_logger().info('Service /system/session/start not available, waiting...')
 
         # Create service client to stop a session.
 
-        self.stop_session_client = self.create_client(StopSession, '/mtms_device/session/stop', callback_group=self.callback_group)
+        self.stop_session_client = self.create_client(StopSession, '/system/session/stop', callback_group=self.callback_group)
         while not self.stop_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms_device/session/stop not available, waiting...')
+            self.get_logger().info('Service /system/session/stop not available, waiting...')
 
         # Create subscriber for system state.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
