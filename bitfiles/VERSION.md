@@ -1,5 +1,15 @@
 ## Version history
 
+### 0.5.6
+- MOD: Remove 20 ms update interval from session time.
+
+### 0.5.5
+- ADD: Send event time as feedback.
+
+### 0.5.4
+- ADD: 'Delay (ticks)' field to event info.
+- ADD: Charging time to charge feedback.
+
 ### 0.5.3
 - ADD: 'Allow trigger out' functionality, used to externally prevent trigger outs.
 

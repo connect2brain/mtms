@@ -1,25 +1,27 @@
 ## EEG simulator
 
-### Running
+### Generating data
 
-1. In directory `ros2_ws`, run `colcon build --packages-select eeg_interfaces eeg_simulator`.
-
-2. Run `source install/setup.bash` (on Linux).
-
-3. Go to the repository root.
-
-4. Run `ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=INFO data-file:=random_data.csv sampling-frequency:=500 loop:=true eeg-channels:=64 emg-channels:=10`. If in a different directory, modify the path of data-file accordingly.
-
-The data file is located in eeg/data/ directory in the repository root. To use custom CSV data, copy the CSV file to the directory and modify data-file
-parameter accordingly. The CSV file should consist of one column per channel and one row per sample, with values separated by commas.
-
-5. Check that the data is published by running `ros2 topic echo /eeg/raw` in another terminal.
-
-The file `random_data.csv` contains 100 lines of random values between 0 and 1, 128 values per line (i.e., 0.2 seconds of data with the sampling frequency 500 Hz, configurable EEG and EMG channels).
+The file `random_data.csv` in `example/eeg/raw` directory in repository root contains 0.1 seconds of random values
+between 0 and 1. There are 73 values per line (corresponding to 63 EEG channels and 10 EMG channels) with the sampling
+frequency of 5 kHz. In addition, the first column is the timestamp.
 
 The data has been generated with the following Python invocation; modify as needed.
 
 ```
 import numpy as np
-np.savetxt("random_data.csv", 2 * np.random.rand(100, 128) - 1, delimiter=",")
+
+sampling_frequency = 5000
+duration = 10
+num_of_eeg_channels = 63
+num_of_emg_channels = 10
+
+num_of_samples = int(duration * sampling_frequency)
+
+timestamps = np.linspace(0, duration, num_of_samples, endpoint=False)
+
+data = 2 * np.random.rand(num_of_samples, num_of_eeg_channels + num_of_emg_channels) - 1
+data_with_timestamps = np.column_stack((timestamps, data))
+
+np.savetxt("random_data.csv", data_with_timestamps, delimiter=",", fmt='%.4f')
 ```

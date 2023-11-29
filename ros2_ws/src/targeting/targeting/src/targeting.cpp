@@ -7,6 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "targeting_interfaces/msg/targeting_algorithm.hpp"
 #include "targeting_interfaces/srv/get_channel_voltages.hpp"
 #include "targeting_interfaces/srv/get_maximum_intensity.hpp"
 
@@ -15,9 +16,9 @@
 
 using namespace std;
 
-const uint8_t N_CHANNELS = 5;
+const uint8_t NUM_OF_CHANNELS = 5;
 
-/* Allow targeting inside the area x \in [-15, ..., 15], y \in [-15, ..., 15] (in millimeters) and
+/* Allow targeting inside the area x \in [-18, ..., 18], y \in [-18, ..., 18] (in millimeters) and
  * rotating the e-field within the angles [0, ..., 359].
  *
  * The upper limit for stimulation intensity is 120 V/m - an arbitrary value which can be changed if desired,
@@ -26,7 +27,7 @@ const uint8_t N_CHANNELS = 5;
  * constraint implemented by the targeting.)
  */
 
-const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 15;
+const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 18;
 const uint16_t MAX_ROTATION_ANGLE = 359;
 
 const uint8_t INTENSITY_LIMIT = 120;
@@ -34,8 +35,15 @@ const uint8_t INTENSITY_LIMIT = 120;
 /* HACK: Instead of hard-coding this, it should probably be received from the mTMS device via a ROS message. */
 const uint16_t VOLTAGE_LIMIT = 1490;
 
-const uint8_t N_DISPLACEMENTS = 2 * MAX_ABSOLUTE_DISPLACEMENT + 1;
-const uint16_t N_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
+const uint8_t NUM_OF_DISPLACEMENTS = 2 * MAX_ABSOLUTE_DISPLACEMENT + 1;
+const uint16_t NUM_OF_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
+
+const uint8_t NUM_OF_ALGORITHMS = 2;
+
+std::map<uint8_t, std::string> algorithmMap = {
+    {targeting_interfaces::msg::TargetingAlgorithm::LEAST_SQUARES, "least-squares"},
+    {targeting_interfaces::msg::TargetingAlgorithm::GENETIC, "genetic"}
+};
 
 class Target {
 
@@ -43,7 +51,7 @@ public:
   Target() : initialized(false) {}
 
   void initialize(double voltages[]) {
-    for (int i = 0; i < N_CHANNELS; i++) {
+    for (int i = 0; i < NUM_OF_CHANNELS; i++) {
       this->voltages[i] = abs(voltages[i]);
       this->reversed_polarities[i] = voltages[i] < 0;
     }
@@ -63,8 +71,8 @@ public:
   }
 
 private:
-  double voltages[N_CHANNELS];
-  bool reversed_polarities[N_CHANNELS];
+  double voltages[NUM_OF_CHANNELS];
+  bool reversed_polarities[NUM_OF_CHANNELS];
   bool initialized;
 };
 
@@ -86,13 +94,19 @@ public:
     auto get_channel_voltages_callback = [this](
         const std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Request> request,
         std::shared_ptr<targeting_interfaces::srv::GetChannelVoltages::Response> response) -> void {
+
       int8_t displacement_x = request->target.displacement_x;
       int8_t displacement_y = request->target.displacement_y;
       uint16_t rotation_angle = request->target.rotation_angle;
+      uint8_t algorithm = request->target.algorithm.value;
       uint8_t intensity = request->intensity;
 
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for channel voltages: (x, y, angle, intensity) = (%d, %d, %d, %d)",
-        displacement_x, displacement_y, rotation_angle, intensity);
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for channel voltages: (x, y, angle, intensity) = (%d, %d, %d, %d) with algorithm %s",
+        displacement_x,
+        displacement_y,
+        rotation_angle,
+        intensity,
+        algorithmMap[algorithm].c_str());
 
       response->success = validate_channel_voltages_request(displacement_x, displacement_y, rotation_angle, intensity);
       if (!response->success) {
@@ -100,13 +114,13 @@ public:
         return;
       }
 
-      Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
+      Target target = targets[algorithm][displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
 
       double* voltages = target.get_voltages();
       bool* reversed_polarities = target.get_reversed_polarities();
 
-      double scaled_voltages[N_CHANNELS];
-      for (int i = 0; i < N_CHANNELS; i++) {
+      double scaled_voltages[NUM_OF_CHANNELS];
+      for (int i = 0; i < NUM_OF_CHANNELS; i++) {
         double scaled_voltage = voltages[i] * intensity;
         if (scaled_voltage > VOLTAGE_LIMIT) {
           response->success = false;
@@ -121,7 +135,7 @@ public:
         return;
       }
 
-      for (int i = 0; i < N_CHANNELS; i++) {
+      for (int i = 0; i < NUM_OF_CHANNELS; i++) {
         response->voltages.push_back(scaled_voltages[i]);
         response->reversed_polarities.push_back(reversed_polarities[i]);
       }
@@ -134,9 +148,13 @@ public:
       int8_t displacement_x = request->target.displacement_x;
       int8_t displacement_y = request->target.displacement_y;
       uint16_t rotation_angle = request->target.rotation_angle;
+      uint8_t algorithm = request->target.algorithm.value;
 
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d)",
-        displacement_x, displacement_y, rotation_angle);
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d) with algorithm %s",
+        displacement_x,
+        displacement_y,
+        rotation_angle,
+        algorithmMap[algorithm].c_str());
 
       response->success = validate_maximum_intensity_request(displacement_x, displacement_y, rotation_angle);
       if (!response->success) {
@@ -144,7 +162,7 @@ public:
         return;
       }
 
-      Target target = targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
+      Target target = targets[algorithm][displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle];
 
       double max_intensity = std::numeric_limits<double>::infinity();
 
@@ -152,7 +170,7 @@ public:
 
       double* voltages = target.get_voltages();
 
-      for (int i = 0; i < N_CHANNELS; i++) {
+      for (int i = 0; i < NUM_OF_CHANNELS; i++) {
         double max_intensity_for_channel = VOLTAGE_LIMIT / voltages[i];
         max_intensity = min(max_intensity, max_intensity_for_channel);
       }
@@ -161,7 +179,7 @@ public:
 
       response->maximum_intensity = min(INTENSITY_LIMIT, (uint8_t) max_intensity);
 
-      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request.");
+      RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request with %d V/m", response->maximum_intensity);
     };
 
     get_channel_voltages = this->create_service<targeting_interfaces::srv::GetChannelVoltages>(
@@ -171,7 +189,9 @@ public:
         "/targeting/get_maximum_intensity", get_maximum_intensity_callback);
 
     initialize_lookup_table();
-    validate_lookup_table();
+
+    /* TODO: Disable validation for now, as we don't have yet computed both genetic and least-squares lookup tables. */
+    //validate_lookup_table();
   }
 
 private:
@@ -217,53 +237,62 @@ private:
 
     RCLCPP_INFO(rclcpp::get_logger("targeting"), "Initializing lookup table...");
 
-    std::string filePath = "data/" + coil_array + "/targeting.csv";
-    std::ifstream file(filePath.c_str(), std::ios::in);
+    for (uint8_t i = 0; i < NUM_OF_ALGORITHMS; i++) {
+      std::string algorithm = algorithmMap[i];
 
-    if (!file.is_open()) {
-      RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Could not open file: %s", filePath.c_str());
-      assert(false);
-    }
+      std::string filePath = "data/" + coil_array + "_" + algorithm + ".csv";
+      std::ifstream file(filePath.c_str(), std::ios::in);
 
-    while (getline(file, line)) {
-      stringstream str(line);
-
-      getline(str, value_str, ',');
-      int8_t displacement_x = stoi(value_str);
-
-      getline(str, value_str, ',');
-      int8_t displacement_y = stoi(value_str);
-
-      getline(str, value_str, ',');
-      uint16_t rotation_angle = stoi(value_str);
-
-      double voltages[N_CHANNELS];
-      for (uint8_t i = 0; i < N_CHANNELS; i++) {
-        getline(str, value_str, ',');
-        voltages[i] = stof(value_str);
+      if (!file.is_open()) {
+        RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Could not open file: %s", filePath.c_str());
+        assert(false);
       }
 
-      targets[displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle].initialize(voltages);
+      while (getline(file, line)) {
+        stringstream str(line);
+
+        getline(str, value_str, ',');
+        int8_t displacement_x = stoi(value_str);
+
+        getline(str, value_str, ',');
+        int8_t displacement_y = stoi(value_str);
+
+        getline(str, value_str, ',');
+        uint16_t rotation_angle = stoi(value_str);
+
+        double voltages[NUM_OF_CHANNELS];
+        for (uint8_t j = 0; j < NUM_OF_CHANNELS; j++) {
+          getline(str, value_str, ',');
+          voltages[j] = stof(value_str);
+        }
+
+        targets[i][displacement_x + MAX_ABSOLUTE_DISPLACEMENT][displacement_y + MAX_ABSOLUTE_DISPLACEMENT][rotation_angle].initialize(voltages);
+      }
     }
 
     RCLCPP_INFO(rclcpp::get_logger("targeting"), "Done.");
   }
 
   void validate_lookup_table() {
-    for (uint8_t x = 0; x < N_DISPLACEMENTS; x++) {
-      for (uint8_t y = 0; y < N_DISPLACEMENTS; y++) {
-        for (uint16_t angle = 0; angle < N_ROTATION_ANGLES; angle++) {
-          if (!targets[x][y][angle].is_initialized()) {
-            RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Lookup table does not contain value for (x, y, angle) = (%d, %d, %d).",
-              x - MAX_ABSOLUTE_DISPLACEMENT, y - MAX_ABSOLUTE_DISPLACEMENT, angle);
-            assert(false);
+    for (uint8_t i = 0; i < NUM_OF_ALGORITHMS; i++) {
+      for (uint8_t x = 0; x < NUM_OF_DISPLACEMENTS; x++) {
+        for (uint8_t y = 0; y < NUM_OF_DISPLACEMENTS; y++) {
+          for (uint16_t angle = 0; angle < NUM_OF_ROTATION_ANGLES; angle++) {
+            if (!targets[i][x][y][angle].is_initialized()) {
+              RCLCPP_ERROR(rclcpp::get_logger("targeting"), "Lookup table for algorithm %s does not contain value for (x, y, angle) = (%d, %d, %d).",
+                algorithmMap[i].c_str(),
+                x - MAX_ABSOLUTE_DISPLACEMENT,
+                y - MAX_ABSOLUTE_DISPLACEMENT,
+                angle);
+              assert(false);
+            }
           }
         }
       }
     }
   }
 
-  Target targets[N_DISPLACEMENTS][N_DISPLACEMENTS][N_ROTATION_ANGLES];
+  Target targets[NUM_OF_ALGORITHMS][NUM_OF_DISPLACEMENTS][NUM_OF_DISPLACEMENTS][NUM_OF_ROTATION_ANGLES];
   rclcpp::Service<targeting_interfaces::srv::GetChannelVoltages>::SharedPtr get_channel_voltages;
   rclcpp::Service<targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
 

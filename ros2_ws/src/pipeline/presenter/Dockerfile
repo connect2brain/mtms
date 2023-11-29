@@ -1,0 +1,50 @@
+FROM osrf/ros:iron-desktop
+
+SHELL ["/bin/bash", "-c"]
+
+# Install dependencies
+
+RUN apt-get update
+
+RUN apt-get install -y \
+    dos2unix \
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp
+
+# PsychoPy and its dependencies
+
+# Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get install -y libgtk-3-dev
+RUN pip3 install attrdict3 psychopy
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
+# Copy ROS workspace and build packages
+
+WORKDIR /app/ros2_ws
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/pipeline_interfaces src/interfaces/pipeline_interfaces/
+COPY ros2_ws/src/interfaces/project_interfaces src/interfaces/project_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/pipeline/presenter src/pipeline/presenter/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select presenter
+
+# Copy entrypoint
+
+WORKDIR /app
+
+COPY ros2_ws/src/pipeline/presenter/ros_entrypoint.sh .
+RUN dos2unix ros_entrypoint.sh
+RUN chmod +x ros_entrypoint.sh
+
+ENTRYPOINT ["./ros_entrypoint.sh"]

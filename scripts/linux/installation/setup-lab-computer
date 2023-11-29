@@ -31,52 +31,40 @@ apt install -y net-tools wireshark
 # Tools for customizing GNOME (not required)
 apt install wmctrl
 
-# Set the site in .bashrc
-if ! grep -q "export SITE=$SITE" ~/.bashrc; then
-    echo "export SITE=$SITE" >> ~/.bashrc
-fi
+# Configure Kuando Busylight (not required)
+#
+# From: https://github.com/JnyJny/busylight
+#
+sudo apt install python3-pip
 
-# Add environment variable to .bashrc, pointing to repository root
-if ! grep -q "export MTMS_ROOT=/home/mtms/mtms" ~/.bashrc; then
-    echo "export MTMS_ROOT=/home/mtms/mtms" >> ~/.bashrc
-fi
+pip install busylight-for-humans
 
-# Set the site environment variable in .bashrc
-if ! grep -q 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' ~/.bashrc; then
-    echo 'export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env' >> ~/.bashrc
-fi
+busylight udev-rules -o 99-busylights.rules
+mv 99-busylights.rules /etc/udev/rules.d
+udevadm control -R
 
-# Add environment variable to .bashrc, pointing to projects directory
-if ! grep -q "export PROJECTS_ROOT=/home/mtms/projects" ~/.bashrc; then
-    echo "export PROJECTS_ROOT=/home/mtms/projects" >> ~/.bashrc
-fi
 
-# Add environment variable to .bashrc to configure ROS to use Cyclone DDS
-if ! grep -q "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" ~/.bashrc; then
-    echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
-fi
+## Enabling the user to run the log script without sudo
 
-# Add ROS sourcing to .bashrc unless it is already there
-if ! grep -q "source /opt/ros/iron/setup.bash" ~/.bashrc; then
-    echo "source /opt/ros/iron/setup.bash" >> ~/.bashrc
-fi
+# Get the path to the script
+SCRIPT_PATH="/home/mtms/mtms/scripts/linux/usage/log"
 
-# Add sourcing of ROS packages to .bashrc
-if ! grep -q 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' ~/.bashrc; then
-    echo 'source $MTMS_ROOT/ros2_ws/install/local_setup.bash' >> ~/.bashrc
-fi
+# Append the required line to a new file in sudoers.d
+echo "mtms ALL=(ALL) NOPASSWD: $SCRIPT_PATH" | sudo tee /etc/sudoers.d/container_logs > /dev/null
 
-# Add path to Python API to PYTHONPATH
-if ! grep -q 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH' ~/.bashrc; then
-    echo 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH' >> ~/.bashrc
-fi
+# Set the correct permissions
+chmod 0440 /etc/sudoers.d/container_logs
 
-# Add script directory to path in .bashrc
-if ! grep -q 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' ~/.bashrc; then
-    echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
-fi
 
-# Automatically show instructions when opening a new terminal
-if ! grep -q "instructions" ~/.bashrc; then
-    echo 'instructions' >> ~/.bashrc
-fi
+## Enabling the user to restart the containers without sudo
+echo "mtms ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-core-containers" | sudo tee /etc/sudoers.d/restart_mtms_core > /dev/null
+
+# Set the correct permissions
+chmod 0440 /etc/sudoers.d/container_logs
+
+# Create projects directory
+mkdir /home/mtms/projects
+
+# XXX: These wouldn't be needed if this script was not run as sudo.
+chown mtms projects
+chgrp mtms projects

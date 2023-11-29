@@ -18,10 +18,12 @@ if [ ! -f "$SITE_ENV_FILE" ]; then
 fi
 
 # Load and export the environment variables
+export $(grep "^MTMS_DEVICE_ENABLED=" $SITE_ENV_FILE | xargs)
 export $(grep "^MTMS_DEVICE_GENERATION=" $SITE_ENV_FILE | xargs)
 export $(grep "^BITFILE_VERSION=" $SITE_ENV_FILE | xargs)
 export $(grep "^RESOURCE=" $SITE_ENV_FILE | xargs)
 
+echo "mTMS device enabled: $MTMS_DEVICE_ENABLED"
 echo "mTMS device generation: $MTMS_DEVICE_GENERATION"
 echo "Bitfile version: $BITFILE_VERSION"
 
@@ -40,9 +42,14 @@ source /opt/ros/iron/setup.bash
 
 # Build mTMS bridge
 cd $MTMS_ROOT/ros2_ws
-colcon build --packages-select event_interfaces mtms_device_interfaces mtms_device_bridge
+
+# Build all interfaces to keep native ROS2 environment up to date.
+colcon build --base-paths src/interfaces
+
+# Build mTMS device bridge.
+colcon build --packages-select mtms_device_bridge
 
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
 # Start mTMS bridge
-ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false
+ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false enabled:=$MTMS_DEVICE_ENABLED

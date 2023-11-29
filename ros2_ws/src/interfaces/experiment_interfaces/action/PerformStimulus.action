@@ -1,5 +1,10 @@
 Stimulus stimulus
 float64 time
+
+# If true, wait for trigger (a pedal press or an electric trigger signal) before performing the stimulus.
+#
+# Note: If true, 'time' field is ignored.
+bool wait_for_trigger
 ---
 StimulusResult stimulus_result
 ---

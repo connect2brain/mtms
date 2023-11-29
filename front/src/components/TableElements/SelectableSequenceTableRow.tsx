@@ -1,11 +1,13 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
+
+import { useAppSelector } from 'providers/reduxHooks'
+
 import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
-import { useAppSelector } from 'providers/reduxHooks'
-import { updatePulseSequenceInRos } from 'services/pulseSequence'
-import {updatePulseIndexInRos, updatePulseInRos} from '../../services/pulse'
+import { updatePulseSequenceInRos } from 'ros/services/pulseSequence'
+import { updatePulseIndexInRos, updatePulseInRos } from 'ros/services/pulse'
 
 interface Props {
   index: number

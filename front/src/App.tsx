@@ -1,21 +1,46 @@
 import React, { useState } from 'react'
-import './App.css'
-import Providers from './providers/Providers'
-import styled from 'styled-components'
-import Targets from 'views/Targets'
 import { Route, Routes } from 'react-router-dom'
-import Session from './views/Session'
-import DataVisualize from './views/DataVisualize'
-import { MultipleViews } from './views/MultipleViews'
-import { Header as StyledHeader } from './styles/StyledTypography'
+import styled from 'styled-components'
+
+import './App.css'
+
+import Providers from './providers/Providers'
+import { DatasetProvider } from './providers/DatasetProvider'
+import { HealthcheckProvider } from './providers/HealthcheckProvider'
+import { PipelineProvider } from './providers/PipelineProvider'
+import { EegProvider } from './providers/EegProvider'
+import { ConfigProvider } from './providers/ConfigProvider'
+import { SystemProvider } from './providers/SystemProvider'
+
+import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
+import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
+import { MultipleViews } from 'views/MultipleViews'
+import { Header as StyledHeader } from 'styles/StyledTypography'
+import { ProjectProvider } from 'providers/ProjectProvider'
 
 const App = () => {
   return (
     <Providers>
-      <Header>mTMS control panel</Header>
-      <Wrapper>
-        <MultipleViews />
-      </Wrapper>
+      <ProjectProvider>
+        <SystemProvider>
+          <PipelineProvider>
+            <ConfigProvider>
+              <EegProvider>
+                <DatasetProvider>
+                  <HealthcheckProvider>
+                    <Header>mTMS control panel</Header>
+                    <HealthcheckStatusDisplay />
+                    <HealthcheckMessageDisplay />
+                    <Wrapper>
+                      <MultipleViews />
+                    </Wrapper>
+                  </HealthcheckProvider>
+                </DatasetProvider>
+              </EegProvider>
+            </ConfigProvider>
+          </PipelineProvider>
+        </SystemProvider>
+      </ProjectProvider>
     </Providers>
   )
 }

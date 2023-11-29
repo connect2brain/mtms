@@ -1,25 +1,28 @@
 import time
 from threading import Event
 
-import numpy as np
-
-from rclpy.executors import MultiThreadedExecutor
-
-from experiment_interfaces.msg import Stimulus, StimulusResult, TriggerConfig
-from experiment_interfaces.action import PerformStimulus
-from event_interfaces.msg import ExecutionCondition, Pulse, TriggerOut, \
-    TriggerOutFeedback, PulseFeedback, EventInfo
-
-from mtms_device_interfaces.msg import SystemState, SessionState, DeviceState
-from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
-from utility_interfaces.srv import GetNextId
-
 import rclpy
 from rclpy.action import ActionServer
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import ReentrantCallbackGroup
+from experiment_interfaces.action import PerformStimulus
+from event_interfaces.msg import (
+    ExecutionCondition,
+    Pulse,
+    PulseFeedback,
+    TriggerOut,
+    TriggerOutFeedback,
+    StimulusFeedback,
+    EventInfo,
+    ReadyForEventTrigger
+)
+
+from mtms_device_interfaces.msg import SystemState, DeviceState
+from system_interfaces.msg import Session, SessionState
+from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
+from utility_interfaces.srv import GetNextId
 
 
 class StimulusPerformerNode(Node):
@@ -36,7 +39,7 @@ class StimulusPerformerNode(Node):
 
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create action server for performing stimulus.
+        # Action server for performing stimulus.
 
         self.action_server = ActionServer(
             self,
@@ -46,38 +49,49 @@ class StimulusPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create service client for getting next ID.
+        # Service client for getting next ID.
         self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
         while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
-        # Create service client for targeting.
+        # Service client for targeting.
         self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages', callback_group=self.callback_group)
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /targeting/get_channel_voltages not available, waiting...')
 
-        # Create service client for waveforms.
+        # Service client for waveforms.
         self.waveform_client = self.create_client(GetDefaultWaveform, '/waveforms/get_default', callback_group=self.callback_group)
         while not self.waveform_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /waveforms/get_default not available, waiting...')
 
-        # Create service client for reversing polarity.
+        # Service client for reversing polarity.
         self.reverse_polarity_client = self.create_client(ReversePolarity, '/waveforms/reverse_polarity', callback_group=self.callback_group)
         while not self.reverse_polarity_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /waveforms/reverse_polarity not available, waiting...')
 
-        # Create subscriber for system state.
+        # Subscriber for system state.
 
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1, callback_group=self.callback_group)
         self.system_state = None
 
-        # Create publishers for charging, discharging, pulse, and trigger out.
+        # Subscriber for session
+        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session = None
+
+        # Publishers for pulse and trigger out.
         self.send_pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse', 10, callback_group=self.callback_group)
         self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10, callback_group=self.callback_group)
 
+        # Subscribers for feedback for pulse and trigger out.
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
+
+        # Publisher for event trigger readiness.
+        self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
+
+        # Publisher for stimulus feedback.
+        self.stimulus_feedback_publisher = self.create_publisher(StimulusFeedback, '/event/stimulus_feedback', 10, callback_group=self.callback_group)
 
         self.event_id = 0
 
@@ -91,19 +105,36 @@ class StimulusPerformerNode(Node):
         self.system_state = system_state
 
     def get_device_state(self):
+        if self.system_state is None:
+            return None
+
         return self.system_state.device_state.value
 
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
 
+    # Session
+
+    def handle_session(self, session):
+        self.session = session
+
     def get_session_state(self):
-        return self.system_state.session_state.value
+        if self.session is None:
+            return None
+
+        return self.session.state.value
 
     def is_session_started(self):
         return self.get_session_state() == SessionState.STARTED
 
+    def is_session_stopped(self):
+        return self.get_session_state() == SessionState.STOPPED
+
     def get_current_time(self):
-        return self.system_state.time
+        if self.session is None:
+            return None
+
+        return self.session.time
 
     # Feedback
 
@@ -114,7 +145,7 @@ class StimulusPerformerNode(Node):
         # TODO: Improve feedback logging, preferably by implementing events as ROS actions.
         self.logger.info('Event {} finished with error code: {}'.format(id, error.value))
 
-        self.event_feedback[id] = error
+        self.event_feedback[id] = feedback
 
     def get_event_feedback(self, id):
         if id not in self.event_feedback:
@@ -124,28 +155,30 @@ class StimulusPerformerNode(Node):
 
     # Logging
 
-    def log_stimulus_parameters(self, goal_id, time, stimulus):
+    def log_stimulus(self, goal_id, stimulus, time, wait_for_trigger):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: Stimulus parameters:'.format(goal_id))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Time: {:.3f}'.format(goal_id, time))
+        self.logger.info('{}:   Time: {:.3f}'.format(goal_id, time))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Target:'.format(goal_id))
-        self.logger.info('{}:   - (x, y, angle) = ({}, {}, {})'.format(
+        self.logger.info('{}:   Wait for trigger: {}'.format(goal_id, wait_for_trigger))
+        self.logger.info('{}:'.format(goal_id))
+        self.logger.info('{}:   Target:'.format(goal_id))
+        self.logger.info('{}:     - (x, y, angle) = ({}, {}, {})'.format(
             goal_id,
             stimulus.target.displacement_x,
             stimulus.target.displacement_y,
             stimulus.target.rotation_angle,
         ))
-        self.logger.info('{}:   - Intensity: {} V/m'.format(goal_id, stimulus.intensity))
+        self.logger.info('{}:     - Intensity: {} V/m'.format(goal_id, stimulus.intensity))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trigger 1:'.format(goal_id))
-        self.logger.info('{}:   - Enabled: {}'.format(goal_id, stimulus.triggers[0].enabled))
-        self.logger.info('{}:   - Delay: {}'.format(goal_id, stimulus.triggers[0].delay))
+        self.logger.info('{}:   Trigger 1:'.format(goal_id))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, stimulus.triggers[0].enabled))
+        self.logger.info('{}:     - Delay: {}'.format(goal_id, stimulus.triggers[0].delay))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trigger 2:'.format(goal_id))
-        self.logger.info('{}:   - Enabled: {}'.format(goal_id, stimulus.triggers[1].enabled))
-        self.logger.info('{}:   - Delay: {}'.format(goal_id, stimulus.triggers[1].delay))
+        self.logger.info('{}:   Trigger 2:'.format(goal_id))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, stimulus.triggers[1].enabled))
+        self.logger.info('{}:     - Delay: {}'.format(goal_id, stimulus.triggers[1].delay))
         self.logger.info('{}:'.format(goal_id))
 
     # Performing stimulus
@@ -155,6 +188,7 @@ class StimulusPerformerNode(Node):
 
         stimulus = request.stimulus
         time = request.time
+        wait_for_trigger = request.wait_for_trigger
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -166,8 +200,9 @@ class StimulusPerformerNode(Node):
 
         success = self.perform_stimulus(
             goal_id=goal_id,
-            time=time,
             stimulus=stimulus,
+            time=time,
+            wait_for_trigger=wait_for_trigger,
         )
 
         # Create and return a Result object.
@@ -245,13 +280,14 @@ class StimulusPerformerNode(Node):
 
     # Pulse and trigger out services
 
-    def timed_trigger_out(self, id, time, port):
+    def trigger_out(self, id, time, execution_condition, port):
         message = TriggerOut()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.TIMED
+        event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.port = port
@@ -260,13 +296,14 @@ class StimulusPerformerNode(Node):
         self.send_trigger_out_publisher.publish(message)
         self.event_feedback[id] = None
 
-    def timed_pulse(self, id, time, channel, waveform):
+    def pulse(self, id, time, execution_condition, channel, waveform):
         message = Pulse()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.TIMED
+        event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
+        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -275,7 +312,7 @@ class StimulusPerformerNode(Node):
         self.send_pulse_publisher.publish(message)
         self.event_feedback[id] = None
 
-    def timed_targeted_pulse(self, time, target, intensity):
+    def targeted_pulse(self, target, intensity, time, execution_condition):
         _, reversed_polarities = self.get_channel_voltages(target, intensity)
 
         ids = [None] * self.NUM_OF_CHANNELS
@@ -292,11 +329,12 @@ class StimulusPerformerNode(Node):
                     waveform=waveform,
                 )
 
-            self.timed_pulse(
+            self.pulse(
                 id=id,
                 time=time,
                 channel=channel,
                 waveform=waveform,
+                execution_condition=execution_condition,
             )
             ids[channel] = id
 
@@ -340,19 +378,22 @@ class StimulusPerformerNode(Node):
 
         return True
 
-    def perform_stimulus(self, goal_id, time, stimulus):
-        self.log_stimulus_parameters(goal_id, time, stimulus)
+    def perform_stimulus(self, goal_id, stimulus, time, wait_for_trigger):
+        self.log_stimulus(goal_id, stimulus, time, wait_for_trigger)
 
         success = self.check_goal_feasible(goal_id, time)
         if not success:
             return False
 
+        execution_condition = ExecutionCondition.WAIT_FOR_TRIGGER if wait_for_trigger else ExecutionCondition.TIMED
+
         # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
         #   to hide the logic.
-        pulse_ids = self.timed_targeted_pulse(
-            time=time,
+        pulse_ids = self.targeted_pulse(
             target=stimulus.target,
             intensity=stimulus.intensity,
+            time=time,
+            execution_condition=execution_condition,
         )
 
         num_of_trigger_ports = len(stimulus.triggers)
@@ -360,30 +401,59 @@ class StimulusPerformerNode(Node):
         for i in range(num_of_trigger_ports):
             if stimulus.triggers[i].enabled:
                 id = self.get_next_id()
-                delayed_time = time + stimulus.triggers[i].delay
+                delay = stimulus.triggers[i].delay
                 port = i + 1
 
-                self.timed_trigger_out(
+                # Note that the field 'delay' of TriggerOut ROS message cannot be used here, as it cannot have a
+                # negative value.
+                delayed_time = time + delay
+
+                self.trigger_out(
                     id=id,
-                    time=delayed_time,
                     port=port,
+                    time=delayed_time,
+                    execution_condition=execution_condition,
                 )
                 trigger_ids += [id]
 
-        all_ids = pulse_ids + trigger_ids
+        if wait_for_trigger:
+            msg = ReadyForEventTrigger()
+            self.event_trigger_readiness_publisher.publish(msg)
 
-        self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
+            self.logger.info('{}: Waiting for trigger...'.format(goal_id))
+        else:
+            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
-        feedbacks = self.wait_for_events_to_finish(all_ids)
+        pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
+        trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
 
-        # XXX: Should check pulse feedbacks separately from trigger out feedbacks, as the error codes
-        #   may differ. (The 'no error' case does not, hence it can be done like this for now.)
-        success = all([feedback.value == 0 for feedback in feedbacks])
+        # TODO: If there is an error, do something with the error code.
+        pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
+        trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
+
+        # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
+        execution_time = pulse_feedbacks[0].execution_time
+
+        # Check that all pulses were executed concurrently.
+        pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
+
+        if not pulses_executed_concurrently:
+            self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
+
+        success = pulse_success and trigger_out_success and pulses_executed_concurrently
 
         self.logger.info('{}: Done! Stimulus {}.'.format(
             goal_id,
             'was successful' if success else 'failed'
         ))
+
+        # Publish stimulus feedback.
+        feedback = StimulusFeedback()
+
+        feedback.success = success
+        feedback.execution_time = execution_time
+
+        self.stimulus_feedback_publisher.publish(feedback)
 
         return success
 

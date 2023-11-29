@@ -19,28 +19,26 @@ RUN pip install \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
-COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite
-COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces
-COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces
-COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces
-COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
-COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
-COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces src/interfaces
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge/rosbridge_suite
+
+# Change line endings in files under rosbridge
+RUN find src/bridges/rosbridge -type f -exec dos2unix {} +
+
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-up-to rosbridge_server
+
+# Copy ROS entrypoint
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
-
-# Change line endings in all files in rosbridge
-
-RUN shopt -s globstar && dos2unix **
-
-# Build ROS packages
-
-RUN source /opt/ros/iron/setup.bash && \
-    colcon build
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux
 

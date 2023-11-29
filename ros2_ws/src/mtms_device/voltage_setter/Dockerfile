@@ -21,6 +21,7 @@ COPY ros2_ws/src/mtms_device/voltage_setter ros2_ws/src/mtms_device/voltage_sett
 
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces ros2_ws/src/interfaces/system_interfaces/
 COPY ros2_ws/src/interfaces/utility_interfaces ros2_ws/src/interfaces/utility_interfaces/
 
 # Build ROS packages

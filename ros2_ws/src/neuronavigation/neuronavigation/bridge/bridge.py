@@ -15,6 +15,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
+from event_interfaces.msg import StimulusFeedback
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
@@ -45,13 +46,23 @@ class NeuronavigationNode(Node):
     def __init__(self):
         super().__init__("neuronavigation")
 
-        # ROS parameters
+        ## ROS parameters
+
+        # E-field
         descriptor = ParameterDescriptor(
             name='Enable or disable electric field',
             type=ParameterType.PARAMETER_BOOL,
         )
         self.declare_parameter('electric_field_enable', descriptor=descriptor)
         self.electric_field_enable = self.get_parameter('electric_field_enable').value
+
+        # Robot
+        descriptor = ParameterDescriptor(
+            name='Enable or disable robot',
+            type=ParameterType.PARAMETER_BOOL,
+        )
+        self.declare_parameter('robot_enable', descriptor=descriptor)
+        self.robot_enable = self.get_parameter('robot_enable').value
 
         # Create publishers, subscribers, and services
         qos_persist_latest = QoSProfile(
@@ -62,6 +73,15 @@ class NeuronavigationNode(Node):
         callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
+
+        # Create subscriber for stimulus feedback.esko
+        self._stimulus_feedback_subscriber = self.create_subscription(
+            StimulusFeedback,
+            "/event/stimulus_feedback",
+            self.stimulus_feedback_callback,
+            10,
+            callback_group=callback_group,
+        )
 
         # Create publisher for neuronavigation started.
         self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started", qos_persist_latest, callback_group=callback_group)
@@ -132,6 +152,9 @@ class NeuronavigationNode(Node):
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
 
+    def set_callback__stimulation_pulse_received(self, callback):
+        self._stimulation_pulse_received = callback
+
     def set_callback__open_orientation_dialog(self, callback):
         self._open_orientation_dialog = callback
 
@@ -142,6 +165,10 @@ class NeuronavigationNode(Node):
 
         response.success = True
         return response
+
+    def stimulus_feedback_callback(self, msg):
+        self.get_logger().info(f'Stimulation pulse received')
+        self._stimulation_pulse_received()
 
     def planner_state_callback(self, msg):
         if not hasattr(self, '_set_markers'):
@@ -487,6 +514,9 @@ class Connection(Thread):
             dIperdt=dIperdt,
         )
 
+    def set_callback__stimulation_pulse_received(self, callback):
+        self.node.set_callback__stimulation_pulse_received(callback)
+
     def set_callback__set_markers(self, callback):
         self.node.set_callback__set_markers(callback)
 
@@ -513,13 +543,17 @@ def main():
         x11 = ctypes.cdll.LoadLibrary('libX11.so')
         x11.XInitThreads()
 
-    # HACK: The host used for connecting to the robot. However, ideally robot would be another ROS node and,
-    #   therefore, automatically discovered. Settle for this for now.
-    remote_host = 'http://localhost:5000'
 
     # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
     sys.argv = [sys.argv[0]]
-    app.main(connection=connection, remote_host=remote_host)
+    if connection.node.robot_enable:
+        # HACK: The host used for connecting to the robot. However, ideally robot would be another ROS node and,
+        #   therefore, automatically discovered. Settle for this for now.
+        remote_host = 'http://localhost:5000'
+        app.main(connection=connection, remote_host=remote_host)
+
+    else:
+        app.main(connection=connection)
 
 
 if __file__ == 'main':

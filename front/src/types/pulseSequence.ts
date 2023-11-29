@@ -48,7 +48,7 @@ export interface ChannelInfoWithEnabled {
 }
 
 export const pulseSequenceChangeableKeys = ['name', 'selected', 'isi', 'intensity'] as const
-export type PulseSequenceChangeableKey = typeof pulseSequenceChangeableKeys[number]
+export type PulseSequenceChangeableKey = (typeof pulseSequenceChangeableKeys)[number]
 
 export const pulseChangeableKeys = ['selected', 'isi', 'intensity', 'visible'] as const
-export type PulseChangeableKey = typeof pulseChangeableKeys[number]
+export type PulseChangeableKey = (typeof pulseChangeableKeys)[number]
