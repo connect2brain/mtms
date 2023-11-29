@@ -41,6 +41,7 @@ WORKDIR /app
 COPY ros2_ws/src/bridges/mtms_device_bridge ros2_ws/src/bridges/mtms_device_bridge/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces ros2_ws/src/interfaces/system_interfaces/
 
 # Build ROS packages
 

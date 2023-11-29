@@ -9,6 +9,7 @@ from mep_interfaces.msg import (
     PreactivationCheck
 )
 from eeg_interfaces.msg import TimeWindow
+from targeting_interfaces.msg import TargetingAlgorithm
 
 
 api = MTMSApi()
@@ -20,7 +21,8 @@ api.start_session()
 ## Single events
 
 # Charge channel 1 to 20 V.
-channel = 1
+
+channel = 0  # Note that channel indexing starts at 0.
 target_voltage = 20
 execution_condition = ExecutionCondition.IMMEDIATE
 time = 10.0
@@ -156,6 +158,7 @@ target_voltages, reverse_polarities = api.get_channel_voltages(
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
     intensity=intensity,
+    algorithm=TargetingAlgorithm.GENETIC,
 )
 
 # Get maximum intensity
@@ -163,6 +166,7 @@ maximum_intensity = api.get_maximum_intensity(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
+    algorithm=TargetingAlgorithm.GENETIC
 )
 
 # Charge all channels to target voltages.

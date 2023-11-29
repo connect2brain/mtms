@@ -1,6 +1,18 @@
 version: '2'
 
 services:
+  busylight_manager:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/utility/busylight_manager/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+    # The container needs to be privileged to access the USB device.
+    #
+    # Note: Just mapping the device /dev/hidraw4 inside the container does not work properly.
+    privileged: true
+
   front:
     build:
       context: .
@@ -10,8 +22,8 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
     volumes:
-      - './front:/app'
-      - '/app/node_modules'
+      - './front/src:/app/src'
+      - './front/public:/app/public'
     network_mode: host
 
   eeg_bridge:
@@ -34,6 +46,39 @@ services:
     privileged: true
     network_mode: host
 
+  eeg_monitor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_monitor/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    privileged: true
+    network_mode: host
+
+  eeg_recorder:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_recorder/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+
+  eeg_simulator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/eeg/eeg_simulator/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # this option is needed for the container to achieve the same performance as without docker. Optionally, also
+    # privileged: true can be used
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    network_mode: host
+
   experiment_performer:
     build:
       context: .
@@ -44,10 +89,22 @@ services:
     privileged: true
     network_mode: host
 
+  decider:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
   id_assigner:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/id_assigner/Dockerfile
+      dockerfile: ros2_ws/src/utility/id_assigner/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -63,11 +120,23 @@ services:
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/utility/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
       - ${SITE_ENV_FILE}
+    network_mode: host
+
+  preprocessor:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/preprocessor/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
     network_mode: host
 
   rosbridge:
@@ -76,6 +145,41 @@ services:
       dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
+    network_mode: host
+
+  presenter:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/presenter/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    # Needed for X11 forwarding.
+    environment:
+      - DISPLAY
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  project_manager:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/project/project_manager/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    network_mode: host
+
+  session_manager:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/system/session_manager/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
     network_mode: host
 
   stimulus_performer:
@@ -91,7 +195,7 @@ services:
   stimulation_allower:
     build:
       context: .
-      dockerfile: ros2_ws/src/other/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/system/stimulation_allower/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -108,6 +212,16 @@ services:
     privileged: true
     network_mode: host
 
+  trial_logger:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/experiment/trial_logger/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      - '$PROJECTS_ROOT:/app/projects'
+    network_mode: host
+
   trial_performer:
     build:
       context: .
@@ -122,6 +236,16 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/experiment/trial_validator/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  triggerer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/pipeline/triggerer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.

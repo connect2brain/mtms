@@ -1,40 +1,54 @@
 #include "rclcpp/rclcpp.hpp"
+
 #include "std_msgs/msg/string.hpp"
+#include "system_interfaces/msg/healthcheck.hpp"
+#include "system_interfaces/msg/healthcheck_status.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
 
 #include <sstream>
 
-const std::string NODE_MESSAGE_TOPIC = "/node/message";
+const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
 
 class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
-    this->publisher_node_message_ = this->create_publisher<std_msgs::msg::String>(NODE_MESSAGE_TOPIC, 10);
+    this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
+    this->declare_parameter<bool>("enabled", false);
+    this->get_parameter("enabled", enabled);
   }
 
-  void send_node_message(std::string str) {
-    auto msg = std_msgs::msg::String();
-    msg.data = str;
-    this->publisher_node_message_->publish(msg);
+  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
+    auto healthcheck = system_interfaces::msg::Healthcheck();
+
+    healthcheck.status.value = status_value;
+    healthcheck.status_message = status_message;
+    healthcheck.actionable_message = actionable_message;
+
+    this->healthcheck_publisher->publish(healthcheck);
+  }
+
+  bool is_enabled() const {
+    return enabled;
   }
 
 private:
-  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_node_message_;
+  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  bool enabled;
 };
 
 /* Otherwise similar to the shared init_fpga() function, used by the other ROS nodes in the
    mTMS device bridge, except that:
 
-     - Sends status messages to the UI
-     - Once the initialization is finished, runs the FPGA program (one and only one of the ROS nodes
-       needs to do that - the others can then use the already running program.)
+     - Sends healthcheck messages to the UI
      - If the FPGA has been powered off during the same session, ask the user to wait for one minute
        before powering on again. */
-void init_and_run_fpga(std::shared_ptr<FpgaConnection> node, bool one_minute_wait) {
-  int waiting_time_left = one_minute_wait ? 60 : 0;
+void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first_time) {
+  int waiting_time_left = first_time ? 0 : 60;
 
+  uint8_t status_value;
   while (true) {
     if (try_init_fpga()) {
       break;
@@ -44,15 +58,20 @@ void init_and_run_fpga(std::shared_ptr<FpgaConnection> node, bool one_minute_wai
       oss << "Please wait for " << waiting_time_left << " seconds before powering on the mTMS device";
       std::string str = oss.str();
 
-      node->send_node_message(str);
+      status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      node->publish_healthcheck(status_value, "mTMS device not powered on", str);
 
       waiting_time_left--;
     } else {
-      node->send_node_message("Please power on the mTMS device.");
+      status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      node->publish_healthcheck(status_value, "mTMS device not powered on", "Please power on the mTMS device.");
     }
     rclcpp::spin_some(node);
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
+}
+
+void run_fpga() {
   NiFpga_MergeStatus(&status, NiFpga_Run(session, NiFpga_RunAttribute_WaitUntilDone));
 }
 
@@ -61,15 +80,22 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char **argv) {
 
   auto node = std::make_shared<FpgaConnection>();
 
-  init_and_run_fpga(node, false);
-
+  bool first_time = true;
   while (rclcpp::ok()) {
-    if (!is_fpga_ok()) {
+    if (node->is_enabled()) {
+      init_fpga_with_healthcheck(node, first_time);
+      first_time = false;
+
+      run_fpga();
       close_fpga();
-      init_and_run_fpga(node, true);
+    } else {
+      uint8_t status_value = system_interfaces::msg::HealthcheckStatus::DISABLED;
+      node->publish_healthcheck(status_value, "mTMS device not enabled", "Please enable the mTMS device.");
+
+      std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    rclcpp::spin_some(node);
   }
+
   close_fpga();
   rclcpp::shutdown();
 }

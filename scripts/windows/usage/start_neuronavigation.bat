@@ -16,7 +16,8 @@ REM Note that neuronavigation_interfaces and ui_interfaces are NOT rebuilt to sa
 REM
 REM Before running this for the first time, ensure that you have run manually:
 REM
-REM colcon build --packages-select neuronavigation_interfaces ui_interfaces
+REM colcon build --packages-select neuronavigation_interfaces ui_interfaces event_interfaces
+
 colcon build --packages-select neuronavigation
 call install\local_setup.bat
 

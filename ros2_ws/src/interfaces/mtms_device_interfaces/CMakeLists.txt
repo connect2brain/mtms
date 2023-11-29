@@ -25,7 +25,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/ChannelState.msg"
         "msg/ChannelError.msg"
         "msg/DeviceState.msg"
-        "msg/SessionState.msg"
         "msg/StartupError.msg"
         "msg/SystemState.msg"
         "msg/SystemError.msg"
@@ -35,10 +34,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
         "srv/StartDevice.srv"
         "srv/StopDevice.srv"
-        "srv/StartSession.srv"
-        "srv/StopSession.srv"
 
         "srv/AllowStimulation.srv"
+        "srv/AllowTriggerOut.srv"
 
         "srv/SendSettings.srv"
 

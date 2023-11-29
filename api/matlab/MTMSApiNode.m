@@ -5,6 +5,7 @@ classdef MTMSApiNode < handle
         node
         printer
         system_state
+        session
 
         event_feedback
 
@@ -20,9 +21,10 @@ classdef MTMSApiNode < handle
         send_trigger_out_publisher
         send_pulse_publisher
 
-        send_event_trigger_publisher
+        event_trigger_publisher
 
         system_state_subscriber
+        session_subscriber
 
         pulse_feedback_subscriber
         trigger_out_feedback_subscriber
@@ -52,19 +54,24 @@ classdef MTMSApiNode < handle
             obj.printer = MTMSApiPrinter();
 
             obj.system_state = NaN;
+            obj.session = NaN;
             obj.event_feedback = dictionary();
 
-            % To mTMS device.
+            % To mTMS device
 
             obj.start_device_client = ros2svcclient(obj.node, "/mtms_device/start_device", "mtms_device_interfaces/StartDevice");
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
-            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/start_session", "mtms_device_interfaces/StartSession");
-            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/stop_session", "mtms_device_interfaces/StopSession");
-
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
+
+            % System-related
+
+            obj.session_subscriber = ros2subscriber(obj.node, "/system/session", "system_interfaces/Session", @obj.handle_session);
+
+            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "system_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
 
@@ -73,7 +80,7 @@ classdef MTMSApiNode < handle
             obj.send_trigger_out_publisher = ros2publisher(obj.node, "/event/send/trigger_out", "event_interfaces/TriggerOut");
             obj.send_pulse_publisher = ros2publisher(obj.node, "/event/send/pulse", "event_interfaces/Pulse");
 
-            obj.send_event_trigger_publisher = ros2publisher(obj.node, "/event/send/event_trigger", "event_interfaces/EventTrigger");
+            obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/EventTrigger");
 
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
@@ -146,12 +153,12 @@ classdef MTMSApiNode < handle
 
         % Events
 
-        function send_event_trigger(obj)
-            %send_event_trigger Send event trigger
+        function trigger_events(obj)
+            %trigger_events Trigger events
             %
-            %   Send event trigger to mTMS device.
+            %   Send event trigger to the mTMS device.
 
-            publisher = obj.send_event_trigger_publisher;
+            publisher = obj.event_trigger_publisher;
 
             event_trigger = ros2message(publisher);
 
@@ -172,7 +179,7 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function send_pulse(obj, id, execution_condition, time, channel, waveform)
+        function send_pulse(obj, id, execution_condition, time, delay, channel, waveform)
             %send_pulse Send pulse event
             %
             %   Send pulse event to the mTMS device.
@@ -185,6 +192,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
@@ -193,7 +201,7 @@ classdef MTMSApiNode < handle
             send(publisher, pulse);
         end
 
-        function send_charge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_charge(obj, id, execution_condition, time, delay, channel, target_voltage)
             %send_charge Send charge event
             %
             %   Sends charge event to the mTMS device.
@@ -206,6 +214,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             charge.event_info = event_info;
             charge.channel = uint8(channel);
@@ -214,7 +223,7 @@ classdef MTMSApiNode < handle
             send(publisher, charge);
         end
 
-        function send_discharge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_discharge(obj, id, execution_condition, time, delay, channel, target_voltage)
             %send_discharge Send discharge command to mTMS device
             %
             %   Sends discharge command to the mTMS device.
@@ -227,6 +236,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             discharge.event_info = event_info;
             discharge.channel = uint8(channel);
@@ -235,7 +245,7 @@ classdef MTMSApiNode < handle
             send(publisher, discharge);
         end
 
-        function send_trigger_out(obj, id, execution_condition, time, port, duration_us)
+        function send_trigger_out(obj, id, execution_condition, time, delay, port, duration_us)
             %send_trigger_out Send trigger out event
             %
             %   Send trigger out event to the mTMS device.
@@ -248,6 +258,7 @@ classdef MTMSApiNode < handle
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
+            event_info.delay = double(delay);
 
             trigger_out.event_info = event_info;
             trigger_out.port = uint8(port);
@@ -300,7 +311,7 @@ classdef MTMSApiNode < handle
 
         % Targeting
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity)
+        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
 
             client = obj.get_channel_voltages_client;
 
@@ -309,6 +320,7 @@ classdef MTMSApiNode < handle
             request.target.displacement_x = int8(displacement_x);
             request.target.displacement_y = int8(displacement_y);
             request.target.rotation_angle = uint16(rotation_angle);
+            request.target.algorithm = algorithm;
             request.intensity = uint8(intensity);
 
             response = call(client, request);
@@ -320,7 +332,7 @@ classdef MTMSApiNode < handle
             reverse_polarities = response.reversed_polarities;
         end
 
-        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle)
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)
 
             client = obj.get_maximum_intensity_client;
 
@@ -329,6 +341,7 @@ classdef MTMSApiNode < handle
             request.target.displacement_x = int8(displacement_x);
             request.target.displacement_y = int8(displacement_y);
             request.target.rotation_angle = uint16(rotation_angle);
+            request.target.algorithm = algorithm;
 
             response = call(client, request);
             success = response.success;
@@ -376,7 +389,9 @@ classdef MTMSApiNode < handle
             request = ros2message(client);
 
             request.time = time;
-            request.mep_configuration = mep_configuration;
+            request.mep_configuration.emg_channel = uint8(mep_configuration.emg_channel);
+            request.mep_configuration.time_window = mep_configuration.time_window;
+            request.mep_configuration.preactivation_check = mep_configuration.preactivation_check;
 
             response = call(client, request);
 
@@ -396,7 +411,13 @@ classdef MTMSApiNode < handle
                 pause(0.1)
             end
 
-            obj.printer.print_system_state(obj.system_state);
+            obj.printer.print_state(obj.system_state, obj.session);
+        end
+
+        % Session
+
+        function handle_session(obj, session)
+            obj.session = session;
         end
     end
 end

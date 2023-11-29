@@ -36,7 +36,6 @@ const TabButton = styled.button<{
   :hover {
     background-color: ${(p) => p.theme.colors.gray};
   }
-  
 `
 
 const Nav = styled.nav`
