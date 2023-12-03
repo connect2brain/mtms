@@ -26,7 +26,7 @@ class ExperimentPerformerNode(Node):
 
     ROS_ACTION_PERFORM_TRIAL = ('/trial/perform', PerformTrial)
 
-    FIRST_TRIAL_TIME_S = 1.0
+    FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
 
     def __init__(self):
