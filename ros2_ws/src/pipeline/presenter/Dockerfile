@@ -4,19 +4,19 @@ SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
     python3-pip \
-    ros-iron-rmw-cyclonedds-cpp
+    libgtk-3-dev \
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
 # PsychoPy and its dependencies
 
 # Note: Needed because one of PsychoPy's dependencies asks for keyboard input.
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get install -y libgtk-3-dev
 RUN pip3 install attrdict3 psychopy
 
 # Set the Cyclone DDS configuration
