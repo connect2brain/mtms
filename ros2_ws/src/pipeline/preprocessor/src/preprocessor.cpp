@@ -67,12 +67,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
 
-  /* Subscriber for EEG trigger. */
-  this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
-    "/eeg/trigger",
-    10,
-    std::bind(&EegPreprocessor::handle_eeg_trigger, this, _1));
-
   /* Subscriber for pulse feedback. */
   this->pulse_feedback_subscriber = create_subscription<event_interfaces::msg::PulseFeedback>(
     "/event/pulse_feedback",
@@ -435,7 +429,7 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle EEG trigger, indicating a pulse, as well as direct pulse feedback from the mTMS device.
+/* Handle direct pulse feedback from the mTMS device.
 
    Note: The mTMS device sends a pulse feedback message when a pulse is given, but this does not apply to
    TMS devices in general. Hence, we also handle EEG triggers as pulses, allowing other TMS devices to work
@@ -449,13 +443,6 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
    TODO: However, we should probably have a more robust logic here in the long term; most likely, we would need to know explicitly
    which one to use.
 */
-void EegPreprocessor::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
-  double_t trigger_time = msg->time;
-  this->pulse_execution_times.push(trigger_time);
-
-  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", trigger_time);
-}
-
 void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg) {
   double_t execution_time = msg->execution_time;
   this->pulse_execution_times.push(execution_time);
@@ -463,15 +450,15 @@ void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfac
   RCLCPP_INFO(this->get_logger(), "Registered pulse feedback from the mTMS device at: %.5f (s).", execution_time);
 }
 
-bool EegPreprocessor::was_pulse_given(double_t sample_time) {
-  bool pulse_given = false;
+bool EegPreprocessor::is_pulse_feedback_received(double_t sample_time) {
+  bool pulse_feedback_received = false;
 
   /* Remove all execution times from the queue that have happened before the current sample time. */
   while (!pulse_execution_times.empty() && sample_time >= pulse_execution_times.front()) {
     pulse_execution_times.pop();
-    pulse_given = true;
+    pulse_feedback_received = true;
   }
-  return pulse_given;
+  return pulse_feedback_received;
 }
 
 void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
@@ -529,7 +516,11 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  bool pulse_given = was_pulse_given(sample_time);
+  if (msg->trigger) {
+    RCLCPP_INFO(this->get_logger(), "Registered trigger at: %.5f (s).", sample_time);
+  }
+
+  bool pulse_given = is_pulse_feedback_received(sample_time) || msg->trigger;
 
   this->sample_buffer.append(msg);
 

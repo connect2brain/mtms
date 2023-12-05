@@ -116,7 +116,6 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH);
 
-  trigger_publisher = this->create_publisher<eeg_interfaces::msg::Trigger>(EEG_TRIGGER_TOPIC, 10);
   eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
 
   /* Initialize inotify. */
@@ -469,7 +468,6 @@ void EegSimulator::initialize_streaming() {
   eeg_info.sampling_frequency = this->sampling_frequency;
   eeg_info.num_of_eeg_channels = this->num_of_eeg_channels;
   eeg_info.num_of_emg_channels = this->num_of_emg_channels;
-  eeg_info.send_trigger_as_channel = false;
 
   eeg_info_publisher->publish(eeg_info);
 }
@@ -523,9 +521,6 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
 
         read_next_trigger_time();
       }
-    }
-    if (this->send_triggers) {
-      publish_triggers_up_to(sample_time);
     }
 
     /* TODO: The problem with current design is that it publishes the next sample too early; the dataset time is updated only
@@ -588,6 +583,15 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   msg.time = time;
 
+  if (this->send_triggers && this->triggers_left) {
+    msg.trigger = next_trigger_time <= sample_time;
+    if (msg.trigger) {
+      read_next_trigger_time();
+
+      RCLCPP_INFO(this->get_logger(), "Publishing trigger with timestamp %.4f s.", sample_time);
+    }
+  }
+
   eeg_publisher->publish(msg);
 
   /* Update 'first sample of session'. */
@@ -625,23 +629,6 @@ void EegSimulator::read_next_trigger_time() {
 
   } catch (const std::out_of_range& e) {
     RCLCPP_ERROR(this->get_logger(), "Number out of range in trigger file.");
-  }
-}
-
-void EegSimulator::publish_triggers_up_to(double_t time) {
-  while (triggers_left && next_trigger_time < time) {
-    double_t trigger_time = next_trigger_time + time_offset;
-
-    /* Publish the trigger. */
-    eeg_interfaces::msg::Trigger msg;
-    msg.time = trigger_time;
-
-    trigger_publisher->publish(msg);
-
-    RCLCPP_INFO(this->get_logger(), "Published trigger in topic %s with timestamp %.4f s.", EEG_TRIGGER_TOPIC.c_str(), trigger_time);
-
-    /* Read the next trigger. */
-    read_next_trigger_time();
   }
 }
 
