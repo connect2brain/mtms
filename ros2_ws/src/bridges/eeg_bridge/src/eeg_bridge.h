@@ -74,8 +74,8 @@ public:
 
   void check_dropped_samples(double_t sample_time);
 
-  int get_trigger_package_from_buffer();
-  void publish_trigger_from_buffer(double_t time);
+  int get_trigger_data_from_sample_packet();
+  void handle_trigger_in_sample_packet(double_t time);
   void publish_eeg_sample(double_t time);
 
   void handle_sync_trigger(double_t sync_time);
@@ -132,6 +132,9 @@ private:
   };
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
   bool send_trigger_as_channel;
+
+  bool upcoming_trigger = false;
+  double_t upcoming_trigger_time;
 
   /* Healthcheck */
   uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
