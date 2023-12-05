@@ -388,12 +388,10 @@ void EegBridge::handle_trigger_packet() {
 
   /* Trigger port 2 corresponds to the other trigger port between the mTMS device and the EEG device. */
   } else if (trigger_port == 2) {
-    auto trigger_msg = eeg_interfaces::msg::Trigger();
-    trigger_msg.time = trigger_timestamp - this->first_sync_trigger_timestamp - this->time_correction;
+    this->upcoming_trigger_time = trigger_timestamp - this->first_sync_trigger_timestamp - this->time_correction;
+    this->upcoming_trigger = true;
 
-    this->trigger_publisher->publish(trigger_msg);
-
-    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+    RCLCPP_INFO(this->get_logger(), "Publishing a trigger at time %.2f s.", this->upcoming_trigger_time);
 
   } else {
     RCLCPP_ERROR(this->get_logger(), "Unknown trigger port: %u", trigger_port);
@@ -443,8 +441,8 @@ void EegBridge::handle_sample_packet() {
 
   /* If sending trigger as channel, this will also initialize first_trigger_timestamp and sync_trigger_received
      so also the next if statement will be executed. */
-  if (this->send_trigger_as_channel && get_trigger_package_from_buffer() != 0) {
-    this->publish_trigger_from_buffer(time);
+  if (this->send_trigger_as_channel && get_trigger_data_from_sample_packet() != 0) {
+    this->handle_trigger_in_sample_packet(time);
   }
 
   /* If mTMS device is available to send triggers AND first trigger has not been received yet, ignore the sample packet. */
@@ -551,7 +549,6 @@ void EegBridge::handle_measurement_start_packet() {
   eeg_info_msg.sampling_frequency = this->sampling_frequency;
   eeg_info_msg.num_of_eeg_channels = this->num_of_eeg_channels;
   eeg_info_msg.num_of_emg_channels = this->num_of_emg_channels;
-  eeg_info_msg.send_trigger_as_channel = this->send_trigger_as_channel;
 
   this->eeg_info_publisher->publish(eeg_info_msg);
 
@@ -669,7 +666,7 @@ void EegBridge::handle_eeg_data_packet() {
   }
 }
 
-int EegBridge::get_trigger_package_from_buffer() {
+int EegBridge::get_trigger_data_from_sample_packet() {
   auto index = FIRST_CHANNEL_INDEX + this->num_of_channels_excluding_trigger_ * 3;
 
   return (uint8_t) buffer[index] << 16 |
@@ -677,13 +674,15 @@ int EegBridge::get_trigger_package_from_buffer() {
          (uint8_t) buffer[index + 2];
 }
 
-void EegBridge::publish_trigger_from_buffer(double_t time) {
-  int trigger_channel_package = get_trigger_package_from_buffer();
+void EegBridge::handle_trigger_in_sample_packet(double_t time) {
+  int trigger_data = get_trigger_data_from_sample_packet();
 
   /* TODO: Duplicates the logic in handle_trigger_packet function, deduplicate. */
 
+  /* TODO: This doesn't work seem to work correctly when triggers A and B co-occur on the same sample. */
+
   /* Trigger A is the sync trigger between the mTMS device and the EEG device. */
-  if (trigger_channel_package == TRIGGER_A_IN) {
+  if (trigger_data == TRIGGER_A_IN) {
     if (!sync_trigger_received) {
       this->first_sync_trigger_timestamp = time;
       this->sync_trigger_received = true;
@@ -694,13 +693,11 @@ void EegBridge::publish_trigger_from_buffer(double_t time) {
     }
 
   /* Trigger B is the other trigger between the mTMS device and the EEG device. */
-  } else if (trigger_channel_package == TRIGGER_B_IN) {
-    auto trigger_msg = eeg_interfaces::msg::Trigger();
+  } else if (trigger_data == TRIGGER_B_IN) {
+    this->upcoming_trigger_time = time - this->first_sync_trigger_timestamp - this->time_correction;
+    this->upcoming_trigger = true;
 
-    trigger_msg.time = time - this->first_sync_trigger_timestamp - this->time_correction;
-    this->trigger_publisher->publish(trigger_msg);
-
-    RCLCPP_INFO(this->get_logger(), "Published a trigger at time %.2f s.", trigger_msg.time);
+    RCLCPP_INFO(this->get_logger(), "Publishing a trigger at time %.2f s.", this->upcoming_trigger_time);
 
   } else {
     RCLCPP_ERROR(this->get_logger(), "Unknown trigger port");
@@ -740,9 +737,12 @@ void EegBridge::publish_eeg_sample(double_t time) {
   message.metadata.num_of_emg_channels = this->num_of_emg_channels;
   message.metadata.first_sample_of_session = this->first_sample_of_session;
 
+  if (this->upcoming_trigger && time >= this->upcoming_trigger_time) {
+    message.trigger = true;
+    this->upcoming_trigger = false;
+  }
   this->eeg_sample_publisher->publish(message);
 
-  RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data into the topic: %s", EEG_RAW_TOPIC.c_str());
   RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming EEG data...");
 }
 

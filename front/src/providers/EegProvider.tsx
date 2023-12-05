@@ -7,7 +7,6 @@ interface EegInfo extends Message {
   sampling_frequency: number
   num_of_eeg_channels: number
   num_of_emg_channels: number
-  send_trigger_as_channel: boolean
 }
 
 interface EegStatistics extends Message {
