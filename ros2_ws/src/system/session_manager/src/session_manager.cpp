@@ -149,15 +149,13 @@ bool SessionManager::stop_mtms_session() {
 
 bool SessionManager::start_session() {
   session_state = system_interfaces::msg::SessionState::STARTED;
-  time = 0.0;
+  session_start_time = std::chrono::steady_clock::now();
 
   return true;
 }
 
 bool SessionManager::stop_session() {
   session_state = system_interfaces::msg::SessionState::STOPPED;
-  time = 0.0;
-
   return true;
 }
 
@@ -165,13 +163,20 @@ void SessionManager::publish_session() {
   if (this->mtms_device_available) {
     return;
   }
+
+  /* Update time. */
+  double_t time = 0.0;
+
+  if (session_state == system_interfaces::msg::SessionState::STARTED) {
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - session_start_time);
+    time = elapsed.count() / 1000.0;
+  }
+
+  /* Update session state. */
   auto msg = system_interfaces::msg::Session();
   msg.state.value = session_state;
   msg.time = time;
-
-  if (session_state == system_interfaces::msg::SessionState::STARTED) {
-    time += SESSION_PUBLISHING_INTERVAL.count() / 1000.0;
-  }
   this->session_publisher->publish(msg);
 }
 
