@@ -4,12 +4,12 @@ SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
-    ros-iron-rmw-cyclonedds-cpp \
-    wget
+    wget \
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
 

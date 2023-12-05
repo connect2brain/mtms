@@ -4,10 +4,14 @@ SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
     python3-pip \
-    ros-iron-rmw-cyclonedds-cpp
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python dependencies
 
 RUN pip3 install busylight-for-humans
 

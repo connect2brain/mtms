@@ -2,18 +2,16 @@ FROM osrf/ros:iron-desktop
 
 SHELL ["/bin/bash", "-c"]
 
-# Install general dependencies
-
-RUN apt-get update
-
-RUN apt-get install -y \
-    ros-iron-rmw-cyclonedds-cpp
-
-# Install dependencies for InVesalius
+# Install dependencies
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get install -y \
+
+RUN apt-get update && \
+    apt-get install -y \
+    # General
     dos2unix \
+    ros-iron-rmw-cyclonedds-cpp \
+    # InVesalius
     locales \
     python3-wxgtk4.0 \
     python3-numpy \
@@ -29,7 +27,10 @@ RUN apt-get install -y \
     python3-h5py \
     python3-imageio \
     python3-pubsub \
-    python3-pip
+    python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 
 RUN pip install cython vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.9 pypolaris==0.0.6 python-socketio
 
