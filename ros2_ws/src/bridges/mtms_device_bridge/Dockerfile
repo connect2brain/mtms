@@ -3,13 +3,16 @@ FROM osrf/ros:iron-desktop
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
-WORKDIR /build
 
-RUN apt-get update
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
+    dos2unix \
     wget \
     unzip \
-    ros-iron-rmw-cyclonedds-cpp
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
 
 # FPGA dependencies, instructions from https://www.ni.com/fi-fi/support/documentation/supplemental/18/downloading-and-installing-ni-driver-software-on-linux-desktop.html
 RUN wget https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2022Q2/NILinux2022Q2DeviceDrivers.zip
