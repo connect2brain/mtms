@@ -8,7 +8,7 @@ class NeuronavigationPedalBridge(Node):
     def __init__(self):
         super().__init__("neuronavigation_pedal_bridge")
 
-        self._pedal_pressed_subscription = self.create_subscription(Bool, "/pedal/pressed", self.pedal_pressed, 10)
+        self._pedal_pressed_subscription = self.create_subscription(Bool, "/pedal/left_button/pressed", self.pedal_pressed, 10)
         self._pedal_callbacks = []
 
     def pedal_pressed(self, msg):
