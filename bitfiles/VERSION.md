@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.7
+- MOD: Increase time before checking IGBT feedback to 200 ticks.
+
 ### 0.5.6
 - MOD: Remove 20 ms update interval from session time.
 
