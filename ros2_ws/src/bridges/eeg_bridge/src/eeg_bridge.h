@@ -35,9 +35,12 @@ using namespace std::chrono_literals;
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
+/* TODO: Should probably be configurable via an environment variable. */
+const std::string EEG_DEVICE_IP = "192.168.200.220";
+
 enum EegBridgeState {
-  WAITING_FOR_MEASUREMENT_START,
-  WAITING_FOR_MEASUREMENT_STOP,
+  WAITING_FOR_MEASUREMENT_START_PACKET,
+  WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET,
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
@@ -65,6 +68,7 @@ public:
   void init_socket();
   void err(const char *message);
 
+  void request_measurement_start_packet();
   bool read_eeg_data_from_socket();
   double_t read_time_from_buffer(uint8_t index);
   void handle_trigger_packet();
