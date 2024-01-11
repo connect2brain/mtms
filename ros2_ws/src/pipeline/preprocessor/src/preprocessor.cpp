@@ -23,6 +23,8 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+const std::string DEFAULT_PREPROCESSOR_NAME = "dummy";
+
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
 
@@ -316,7 +318,12 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
   update_preprocessor_list();
 
   if (this->modules.size() > 0) {
-    this->set_preprocessor_module(this->modules[0]);
+    /* Set preprocessor module to the default if available, otherwise use the first listed module. */
+    if (std::find(this->modules.begin(), this->modules.end(), DEFAULT_PREPROCESSOR_NAME) != this->modules.end()) {
+      this->set_preprocessor_module(DEFAULT_PREPROCESSOR_NAME);
+    } else {
+      this->set_preprocessor_module(this->modules[0]);
+    }
 
     /* Enable preprocessor as a default when switching project. */
     set_preprocessor_enabled(true);
