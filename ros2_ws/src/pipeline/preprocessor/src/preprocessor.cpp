@@ -317,6 +317,9 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
 
   if (this->modules.size() > 0) {
     this->set_preprocessor_module(this->modules[0]);
+
+    /* Enable preprocessor as a default when switching project. */
+    set_preprocessor_enabled(true);
   } else {
     RCLCPP_WARN(this->get_logger(), "No preprocessors found in project: %s.", this->active_project.c_str());
     this->unset_preprocessor_module();
