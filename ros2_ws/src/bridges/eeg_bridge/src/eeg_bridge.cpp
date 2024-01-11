@@ -89,7 +89,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   this->reset_session();
 
-  this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
+  this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START_PACKET;
 }
 
 void EegBridge::create_publishers() {
@@ -229,21 +229,22 @@ void EegBridge::spin() {
         RCLCPP_DEBUG(this->get_logger(), "Timeout while reading EEG data");
 
         /* Timeout while reading EEG data indicates that the EEG measurement has stopped,
-           change the state accordingly. */
-        this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START;
+           change the state accordingly. The measurement starts with a start packet, hence switch
+           to the state waiting for such packet. */
+        this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_START_PACKET;
       }
 
       switch (this->eeg_bridge_state) {
-        case WAITING_FOR_MEASUREMENT_START:
+        case WAITING_FOR_MEASUREMENT_START_PACKET:
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                                    "Waiting for EEG measurement to start",
                                    "Please start the measurement on the EEG device.");
           break;
 
-        case WAITING_FOR_MEASUREMENT_STOP:
-          this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
-                                   "Waiting for EEG measurement to stop",
-                                   "Please restart the measurement on the EEG device.");
+        case WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET:
+
+
+          /* Not a user-visible state, do not update healthcheck. */
           break;
 
         case WAITING_FOR_SESSION_START:
@@ -320,6 +321,35 @@ void EegBridge::init_socket() {
   int buffer_size = 1024 * 1024 * 10;
   if (setsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) == -1) {
     EegBridge::err("Failed to set socket receive buffer size.");
+  }
+}
+
+void EegBridge::request_measurement_start_packet() {
+  /* XXX: Hard-coded port. This whole function should be in a lower-level class that communicates with
+       the EEG device. */
+  const int port = 5050;
+
+  /* Create a sockaddr_in structure for the destination address. */
+  struct sockaddr_in dest_addr;
+  memset(&dest_addr, 0, sizeof(dest_addr));
+  dest_addr.sin_family = AF_INET;
+  dest_addr.sin_port = htons(port);
+
+  /* Convert IP address from std::string to binary form. */
+  if (inet_pton(AF_INET, EEG_DEVICE_IP.c_str(), &dest_addr.sin_addr) <= 0) {
+    EegBridge::err("Invalid address.");
+  }
+
+  /* Prepare the data for 'Join' packet: FrameType 128, followed by 3 reserved bytes
+     (from Bittium NeurOne manual). */
+  unsigned char join_packet[4] = {128, 0, 0, 0};
+
+  /* Send the packet. */
+  if (sendto(this->socket_, join_packet, sizeof(join_packet), 0,
+            (struct sockaddr *)&dest_addr, sizeof(dest_addr)) == -1) {
+    EegBridge::err("Failed to request measurement start packet.");
+  } else {
+    RCLCPP_INFO(this->get_logger(), "Measurement start packet requested.");
   }
 }
 
@@ -576,7 +606,13 @@ void EegBridge::handle_eeg_data_packet() {
       if (!this->measurement_start_packet_received_) {
         RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
 
-        this->eeg_bridge_state = WAITING_FOR_MEASUREMENT_STOP;
+        if (this->eeg_bridge_state != WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET) {
+          RCLCPP_INFO(this->get_logger(), "Requesting measurement start packet from the EEG device.");
+          this->request_measurement_start_packet();
+        }
+
+        this->eeg_bridge_state = WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET;
+
         break;
       }
 
