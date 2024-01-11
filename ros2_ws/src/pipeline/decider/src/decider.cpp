@@ -22,6 +22,8 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+const std::string DEFAULT_DECIDER_NAME = "dummy";
+
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
 
@@ -354,7 +356,12 @@ void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::
   update_decider_list();
 
   if (this->modules.size() > 0) {
-    this->set_decider_module(this->modules[0]);
+    /* Set decider module to the default if available, otherwise use the first listed module. */
+    if (std::find(this->modules.begin(), this->modules.end(), DEFAULT_DECIDER_NAME) != this->modules.end()) {
+      this->set_decider_module(DEFAULT_DECIDER_NAME);
+    } else {
+      this->set_decider_module(this->modules[0]);
+    }
   } else {
     RCLCPP_WARN(this->get_logger(), "No deciders found in project: %s.", this->active_project.c_str());
     this->unset_decider_module();

@@ -21,6 +21,8 @@ const std::string SENSORY_STIMULUS_TOPIC = "/pipeline/sensory_stimulus";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+const std::string DEFAULT_PRESENTER_NAME = "dummy";
+
 /* XXX: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
@@ -228,7 +230,12 @@ void EegPresenter::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   update_presenter_list();
 
   if (this->modules.size() > 0) {
-    this->set_presenter_module(this->modules[0]);
+    /* Set presenter module to the default if available, otherwise use the first listed module. */
+    if (std::find(this->modules.begin(), this->modules.end(), DEFAULT_PRESENTER_NAME) != this->modules.end()) {
+      this->set_presenter_module(DEFAULT_PRESENTER_NAME);
+    } else {
+      this->set_presenter_module(this->modules[0]);
+    }
   } else {
     RCLCPP_WARN(this->get_logger(), "No presenters found in project: %s.", this->active_project.c_str());
     this->unset_presenter_module();
