@@ -318,10 +318,28 @@ void EegBridge::init_socket() {
 
   setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
-  /* Set socket buffer size to 10 MB. */
-  int buffer_size = 1024 * 1024 * 10;
-  if (setsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(buffer_size)) == -1) {
-    EegBridge::err("Failed to set socket receive buffer size.");
+  /* Attempt to set socket buffer size to 10 MB (both receive and send buffers separately). */
+  int requested_buffer_size = 1024 * 1024 * 10;
+  if (setsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &requested_buffer_size, sizeof(requested_buffer_size)) == -1) {
+    EegBridge::err("Failed to set socket buffer size.");
+  }
+
+  /* Check the actual buffer size. */
+  int total_buffer_size;
+  socklen_t optlen = sizeof(total_buffer_size);
+  if (getsockopt(this->socket_, SOL_SOCKET, SO_RCVBUF, &total_buffer_size, &optlen) == -1) {
+    EegBridge::err("Failed to get socket buffer size.");
+  }
+
+  int receive_buffer_size = total_buffer_size / 2;
+
+  if (receive_buffer_size < requested_buffer_size) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to set socket receive buffer size to %d bytes, actual size is %d bytes.",
+      requested_buffer_size,
+      receive_buffer_size);
+
+    /* Consider this a fatal error, thus exit. */
+    exit(1);
   }
 }
 
