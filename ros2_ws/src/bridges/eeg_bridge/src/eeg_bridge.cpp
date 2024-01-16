@@ -242,12 +242,13 @@ void EegBridge::spin() {
           break;
 
         case WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET:
-
-
           /* Not a user-visible state, do not update healthcheck. */
           break;
 
         case WAITING_FOR_SESSION_START:
+          /* Reset the previous time to avoid false positive dropped sample errors. */
+          previous_time = UNSET_PREVIOUS_TIME;
+
           this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
                                    "Ready",
                                    "Ready");
