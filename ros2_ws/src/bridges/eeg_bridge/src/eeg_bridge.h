@@ -117,7 +117,7 @@ private:
   uint16_t num_of_channels_excluding_trigger_;
 
   uint32_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
-  uint32_t sample_packets_received_ = 0;
+  uint32_t sample_packets_received_since_session_start = 0;
 
   double_t sampling_period;
 

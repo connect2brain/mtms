@@ -175,6 +175,9 @@ void EegBridge::reset_session() {
   sync_trigger_received = false;
   time_correction = 0;
   num_of_sync_triggers_received = 0;
+
+  /* Reset number of sample packets received. */
+  this->sample_packets_received_since_session_start = 0;
 }
 
 void EegBridge::wait_for_session() {
@@ -600,9 +603,6 @@ void EegBridge::handle_measurement_start_packet() {
   eeg_info_msg.num_of_emg_channels = this->num_of_emg_channels;
 
   this->eeg_info_publisher->publish(eeg_info_msg);
-
-  /* Reset number of sample packets received. */
-  this->sample_packets_received_ = 0;
 }
 
 void EegBridge::handle_eeg_data_packet() {
@@ -614,7 +614,9 @@ void EegBridge::handle_eeg_data_packet() {
       break;
 
     case SAMPLE_PACKET_ID:
-      this->sample_packets_received_ += 1;
+      if (this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
+        this->sample_packets_received_since_session_start++;
+      }
 
       /* Ignore sample packets if in an error state, preventing streaming. */
       if (this->eeg_bridge_state == ERROR_OUT_OF_SYNC ||
@@ -657,7 +659,7 @@ void EegBridge::handle_eeg_data_packet() {
         RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS device is connected to 'Trigger A in' in the EEG device, and 2) sending triggers is enabled in the EEG software.");
 
         /* Wait for one second to receive the sync trigger before reporting an error. */
-        if (this->sample_packets_received_ > this->sampling_frequency) {
+        if (this->sample_packets_received_since_session_start > this->sampling_frequency) {
           this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
         }
       }
