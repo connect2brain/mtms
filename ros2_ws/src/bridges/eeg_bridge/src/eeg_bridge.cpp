@@ -314,10 +314,10 @@ void EegBridge::init_socket() {
     EegBridge::err("Failed to bind socket file descriptor to socket.");
   }
 
-  /* Set socket timeout to 200 ms. */
+  /* Set socket timeout to 1 second. */
   struct timeval read_timeout;
-  read_timeout.tv_sec = 0;
-  read_timeout.tv_usec = 200000;
+  read_timeout.tv_sec = 1;
+  read_timeout.tv_usec = 0;
 
   setsockopt(this->socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
