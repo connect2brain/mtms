@@ -229,7 +229,7 @@ void EegBridge::spin() {
 
         RCLCPP_DEBUG(this->get_logger(), "Processing time for packet: %.6f s.", processing_time);
       } else {
-        RCLCPP_DEBUG(this->get_logger(), "Timeout while reading EEG data");
+        RCLCPP_WARN(this->get_logger(), "Timeout while reading EEG data");
 
         /* Timeout while reading EEG data indicates that the EEG measurement has stopped,
            change the state accordingly. The measurement starts with a start packet, hence switch
@@ -625,7 +625,7 @@ void EegBridge::handle_eeg_data_packet() {
       }
 
       if (!this->measurement_start_packet_received_) {
-        RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Streaming data on the EEG device but no measurement start packet received.");
 
         if (this->eeg_bridge_state != WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET) {
           RCLCPP_INFO(this->get_logger(), "Requesting measurement start packet from the EEG device.");
