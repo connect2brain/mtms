@@ -69,5 +69,5 @@ chmod 0440 /etc/sudoers.d/container_logs
 mkdir /home/mtms/projects
 
 # XXX: These wouldn't be needed if this script was not run as sudo.
-chown mtms projects
-chgrp mtms projects
+chown mtms /home/mtms/projects
+chgrp mtms /home/mtms/projects
