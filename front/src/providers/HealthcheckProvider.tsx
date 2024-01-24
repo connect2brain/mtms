@@ -103,7 +103,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       eegTimeout = setTimeout(() => {
         setEegHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     eegSimulatorSubscriber.subscribe((message) => {
@@ -113,7 +113,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       eegSimulatorTimeout = setTimeout(() => {
         setEegSimulatorHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     mtmsSubscriber.subscribe((message) => {
@@ -123,7 +123,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       mtmsTimeout = setTimeout(() => {
         setMtmsDeviceHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     mepSubscriber.subscribe((message) => {
@@ -133,7 +133,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       mepTimeout = setTimeout(() => {
         setMepHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     preprocessorSubscriber.subscribe((message) => {
@@ -143,7 +143,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       preprocessorTimeout = setTimeout(() => {
         setPreprocessorHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     deciderSubscriber.subscribe((message) => {
@@ -153,7 +153,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       deciderTimeout = setTimeout(() => {
         setDeciderHealthcheck(null)
-      }, 1000)
+      }, 1200)
     })
 
     return () => {
