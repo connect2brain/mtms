@@ -46,6 +46,9 @@ busylight udev-rules -o 99-busylights.rules
 mv 99-busylights.rules /etc/udev/rules.d
 udevadm control -R
 
+# Set up PulseAudio over TCP (used by stimulus presenter)
+
+echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;172.17.0.0/16 auth-anonymous=1" >> /etc/pulse/default.pa
 
 ## Enabling the user to run the log script without sudo
 
