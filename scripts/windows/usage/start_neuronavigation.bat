@@ -22,7 +22,7 @@ colcon build --packages-select neuronavigation
 call install\local_setup.bat
 
 REM E-field is disabled for now, enable when it works in production.
-ros2 run neuronavigation start --ros-args -p electric_field_enable:=false
+ros2 run neuronavigation start --ros-args -p electric_field_enable:=false -p robot_enable:=true
 
 REM Ask for a keypress before closing the terminal window so that potential errors are shown to the user.
 pause

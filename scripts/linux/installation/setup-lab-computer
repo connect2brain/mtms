@@ -22,6 +22,9 @@ source install-ros
 # Setup systemd
 source setup-systemd
 
+# Setup sysctl
+source setup-sysctl
+
 # Install Cyclone DDS for ROS
 apt install -y ros-iron-rmw-cyclonedds-cpp
 
@@ -43,6 +46,9 @@ busylight udev-rules -o 99-busylights.rules
 mv 99-busylights.rules /etc/udev/rules.d
 udevadm control -R
 
+# Set up PulseAudio over TCP (used by stimulus presenter)
+
+echo "load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1;172.17.0.0/16 auth-anonymous=1" >> /etc/pulse/default.pa
 
 ## Enabling the user to run the log script without sudo
 
@@ -66,5 +72,5 @@ chmod 0440 /etc/sudoers.d/container_logs
 mkdir /home/mtms/projects
 
 # XXX: These wouldn't be needed if this script was not run as sudo.
-chown mtms projects
-chgrp mtms projects
+chown mtms /home/mtms/projects
+chgrp mtms /home/mtms/projects
