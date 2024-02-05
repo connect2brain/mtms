@@ -1,9 +1,9 @@
 version: '3.5'
 
-# Includes a service for every service listed in docker-compose.core.yml and docker-compose.project.yml
+# Includes a service for every service listed in docker-compose.yml and docker-compose.project.yml
 #   in repository root; we do not want to include development-level services (defined in docker-compose.dev.yml) in tests.
 services:
-  ## Core services (docker-compose.core.yml):
+  ## Core services (docker-compose.yml):
   front:
     networks:
       - cinetwork
