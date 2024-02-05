@@ -4,12 +4,12 @@ SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
     nlohmann-json3-dev \
-    ros-iron-rmw-cyclonedds-cpp
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/

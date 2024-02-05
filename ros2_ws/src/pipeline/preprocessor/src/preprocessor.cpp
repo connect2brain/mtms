@@ -23,6 +23,8 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
 
+const std::string DEFAULT_PREPROCESSOR_NAME = "dummy";
+
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
 
@@ -66,12 +68,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     std::bind(&EegPreprocessor::process_sample, this, _1));
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
-
-  /* Subscriber for EEG trigger. */
-  this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
-    "/eeg/trigger",
-    10,
-    std::bind(&EegPreprocessor::handle_eeg_trigger, this, _1));
 
   /* Subscriber for pulse feedback. */
   this->pulse_feedback_subscriber = create_subscription<event_interfaces::msg::PulseFeedback>(
@@ -322,7 +318,15 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
   update_preprocessor_list();
 
   if (this->modules.size() > 0) {
-    this->set_preprocessor_module(this->modules[0]);
+    /* Set preprocessor module to the default if available, otherwise use the first listed module. */
+    if (std::find(this->modules.begin(), this->modules.end(), DEFAULT_PREPROCESSOR_NAME) != this->modules.end()) {
+      this->set_preprocessor_module(DEFAULT_PREPROCESSOR_NAME);
+    } else {
+      this->set_preprocessor_module(this->modules[0]);
+    }
+
+    /* Enable preprocessor as a default when switching project. */
+    set_preprocessor_enabled(true);
   } else {
     RCLCPP_WARN(this->get_logger(), "No preprocessors found in project: %s.", this->active_project.c_str());
     this->unset_preprocessor_module();
@@ -435,7 +439,7 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle EEG trigger, indicating a pulse, as well as direct pulse feedback from the mTMS device.
+/* Handle direct pulse feedback from the mTMS device.
 
    Note: The mTMS device sends a pulse feedback message when a pulse is given, but this does not apply to
    TMS devices in general. Hence, we also handle EEG triggers as pulses, allowing other TMS devices to work
@@ -449,13 +453,6 @@ void EegPreprocessor::check_dropped_samples(double_t sample_time) {
    TODO: However, we should probably have a more robust logic here in the long term; most likely, we would need to know explicitly
    which one to use.
 */
-void EegPreprocessor::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
-  double_t trigger_time = msg->time;
-  this->pulse_execution_times.push(trigger_time);
-
-  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", trigger_time);
-}
-
 void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfaces::msg::PulseFeedback> msg) {
   double_t execution_time = msg->execution_time;
   this->pulse_execution_times.push(execution_time);
@@ -463,15 +460,15 @@ void EegPreprocessor::handle_pulse_feedback(const std::shared_ptr<event_interfac
   RCLCPP_INFO(this->get_logger(), "Registered pulse feedback from the mTMS device at: %.5f (s).", execution_time);
 }
 
-bool EegPreprocessor::was_pulse_given(double_t sample_time) {
-  bool pulse_given = false;
+bool EegPreprocessor::is_pulse_feedback_received(double_t sample_time) {
+  bool pulse_feedback_received = false;
 
   /* Remove all execution times from the queue that have happened before the current sample time. */
   while (!pulse_execution_times.empty() && sample_time >= pulse_execution_times.front()) {
     pulse_execution_times.pop();
-    pulse_given = true;
+    pulse_feedback_received = true;
   }
-  return pulse_given;
+  return pulse_feedback_received;
 }
 
 void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
@@ -529,7 +526,11 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  bool pulse_given = was_pulse_given(sample_time);
+  if (msg->trigger) {
+    RCLCPP_INFO(this->get_logger(), "Registered trigger at: %.5f (s).", sample_time);
+  }
+
+  bool pulse_given = is_pulse_feedback_received(sample_time) || msg->trigger;
 
   this->sample_buffer.append(msg);
 
