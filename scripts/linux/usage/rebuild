@@ -7,9 +7,9 @@ CONTAINER_NAME=$1
 echo "Building containers..."
 
 if [ -z "$CONTAINER_NAME" ]; then
-    docker-compose -f $MTMS_ROOT/docker-compose.core.yml build
+    docker-compose -f $MTMS_ROOT/docker-compose.yml build
 else
-    docker-compose -f $MTMS_ROOT/docker-compose.core.yml build $CONTAINER_NAME
+    docker-compose -f $MTMS_ROOT/docker-compose.yml build $CONTAINER_NAME
 fi
 
 # Check the exit status of the last command (docker-compose build).
