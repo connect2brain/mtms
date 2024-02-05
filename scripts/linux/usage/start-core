@@ -13,5 +13,5 @@ set +a
 # Allow docker to connect to the X server
 xhost +local:docker
 
-# Start the containers defined in docker-compose.core.yml
-docker-compose -f docker-compose.core.yml up
+# Start the containers defined in docker-compose.yml
+docker-compose -f docker-compose.yml up
