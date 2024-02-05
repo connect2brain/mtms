@@ -1,4 +1,3 @@
 uint32 sampling_frequency
 uint8 num_of_eeg_channels
 uint8 num_of_emg_channels
-bool send_trigger_as_channel

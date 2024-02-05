@@ -35,9 +35,12 @@ using namespace std::chrono_literals;
 const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
+/* TODO: Should probably be configurable via an environment variable. */
+const std::string EEG_DEVICE_IP = "192.168.200.220";
+
 enum EegBridgeState {
-  WAITING_FOR_MEASUREMENT_START,
-  WAITING_FOR_MEASUREMENT_STOP,
+  WAITING_FOR_MEASUREMENT_START_PACKET,
+  WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET,
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
@@ -65,6 +68,7 @@ public:
   void init_socket();
   void err(const char *message);
 
+  void request_measurement_start_packet();
   bool read_eeg_data_from_socket();
   double_t read_time_from_buffer(uint8_t index);
   void handle_trigger_packet();
@@ -74,8 +78,8 @@ public:
 
   void check_dropped_samples(double_t sample_time);
 
-  int get_trigger_package_from_buffer();
-  void publish_trigger_from_buffer(double_t time);
+  int get_trigger_data_from_sample_packet();
+  void handle_trigger_in_sample_packet(double_t time);
   void publish_eeg_sample(double_t time);
 
   void handle_sync_trigger(double_t sync_time);
@@ -113,7 +117,7 @@ private:
   uint16_t num_of_channels_excluding_trigger_;
 
   uint32_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
-  uint32_t sample_packets_received_ = 0;
+  uint32_t sample_packets_received_since_session_start = 0;
 
   double_t sampling_period;
 
@@ -132,6 +136,9 @@ private:
   };
   ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
   bool send_trigger_as_channel;
+
+  bool upcoming_trigger = false;
+  double_t upcoming_trigger_time;
 
   /* Healthcheck */
   uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;

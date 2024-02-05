@@ -85,6 +85,8 @@ public:
   }
 
   void timer_callback() {
+    auto start_time = std::chrono::steady_clock::now();
+
     double max_time = 0.0;
     double q95_time = 0.0;
     double median_time = 0.0;
@@ -134,6 +136,12 @@ public:
     max_time_between_preprocessed_samples = 0;
 
     processing_times.clear();
+
+    /* Log the duration of the callback. */
+    auto end_time = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
+
+    RCLCPP_DEBUG(this->get_logger(), "Timer callback duration: %lld us", duration.count());
   }
 
 
