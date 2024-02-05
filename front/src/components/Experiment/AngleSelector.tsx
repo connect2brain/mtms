@@ -155,8 +155,13 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({
               const labelY = 200 + 170 * Math.sin((angle * Math.PI) / 180)
 
               return (
-                <g key={angle}>
-                  <AngleLabel x={labelX} y={labelY} fill={isSelected ? 'black' : '#bbb'}>
+                  <g key={angle} transform={'rotate(-90 200 200)'}>
+                    <AngleLabel
+                      x={labelX}
+                      y={labelY}
+                      fill={isSelected ? 'black' : '#bbb'}
+                      transform={`rotate(90 ${labelX} ${labelY})`} // Counter-rotate the label
+                    >
                     {angle}°
                   </AngleLabel>
                   <Sector

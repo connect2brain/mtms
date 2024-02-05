@@ -60,9 +60,10 @@ private:
 
   bool mtms_device_available = false;
 
+  std::chrono::steady_clock::time_point session_start_time;
+
   /* Internal session variables */
   uint8_t session_state = system_interfaces::msg::SessionState::STOPPED;
-  double_t time = 0.0;
 };
 
 #endif //SESSION_MANAGER_H

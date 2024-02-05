@@ -4,12 +4,13 @@ SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
     python3-pip \
-    ros-iron-rmw-cyclonedds-cpp
+    python3-tk \
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
 # Note: Tensorflow is needed for mneflow, which is used for machine learning.
 RUN pip3 install tensorflow
@@ -19,7 +20,6 @@ RUN pip3 install tensorflow
 ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
 
 RUN pip3 install git+https://github.com/zubara/mneflow.git@38dcee430
-RUN apt-get install -y python3-tk
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/

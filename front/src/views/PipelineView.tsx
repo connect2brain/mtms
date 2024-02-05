@@ -244,7 +244,7 @@ export const PipelineView = () => {
           <SmallerTitle>Preprocessor</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={preprocessorEnabled} onChange={handlePreprocessorEnabled} />
+            <ToggleSwitch type='flat' checked={preprocessorEnabled} onChange={handlePreprocessorEnabled} disabled={true} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>

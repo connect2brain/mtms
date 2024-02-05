@@ -9,7 +9,6 @@
 
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
-#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -65,7 +64,6 @@ private:
   std::tuple<bool, bool, double_t> publish_sample(double_t current_time);
 
   void read_next_trigger_time();
-  void publish_triggers_up_to(double_t time);
 
   void update_inotify_watch();
   void inotify_timer_callback();
@@ -126,7 +124,6 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr loop_publisher;
 
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_publisher;
-  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
 
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
