@@ -46,7 +46,7 @@ classdef MTMSApi < handle
         %   * 'node' - An instance of the MTMSApiNode class.
         %   * 'event_id' - A numerical ID, initialized to 0.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
-        %   * 'session_states' - A ROS2 message object, of type "mtms_device_interfaces/SessionState".
+        %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
         %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
             obj.node = MTMSApiNode();
@@ -54,7 +54,7 @@ classdef MTMSApi < handle
             obj.event_id = 0;
 
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
-            obj.session_states = ros2message("mtms_device_interfaces/SessionState");
+            obj.session_states = ros2message("system_interfaces/SessionState");
 
             obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
         end
