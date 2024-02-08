@@ -210,37 +210,50 @@ classdef MTMSApi < handle
         function voltage = get_voltage(obj, channel)
         % Return the capacitor voltage (V) of the given channel.
         %
-        % :param channel: The channel ID.
+        % :param channel: The channel number. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :return: The capacitor voltage (V) of the specified channel.
         % :rtype: float
 
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+
             obj.node.wait_for_new_state();
-            voltage = obj.node.system_state.channel_states(channel).voltage;
+
+            % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
+            voltage = obj.node.system_state.channel_states(channel + 1).voltage;
         end
 
         function temperature = get_temperature(obj, channel)
         % Return the coil temperature of the given channel if a temperature sensor is present,
         % otherwise return None.
         %
-        % :param channel: The channel ID.
+        % :param channel: The channel number. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :return: The coil temperature of the specified channel.
         % :rtype: float
+
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+
             obj.node.wait_for_new_state();
-            temperature = obj.node.system_state.channel_states(channel).temperature;
+
+            % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
+            temperature = obj.node.system_state.channel_states(channel + 1).temperature;
         end
 
         function pulse_count = get_pulse_count(obj, channel)
         % Return the total number of pulses generated with the coil connected to the specified channel.
         %
-        % :param channel: The channel ID.
+        % :param channel: The channel number. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :return: The total number of pulses generated.
         % :rtype: float
 
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+
             obj.node.wait_for_new_state();
-            pulse_count = obj.node.system_state.channel_states(channel).pulse_count;
+
+            % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
+            pulse_count = obj.node.system_state.channel_states(channel + 1).pulse_count;
         end
 
         function time = get_time(obj)
@@ -289,7 +302,7 @@ classdef MTMSApi < handle
         function id = send_pulse(obj, channel, waveform, execution_condition, time, delay, reverse_polarity, wait_for_completion)
         % Send a pulse event to a specified channel.
         %
-        % :param channel: The target channel. Range: 1-5
+        % :param channel: The target channel. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :param waveform: A list of dictionaries with keys `mode` and `duration_in_ticks`:
         %
@@ -322,6 +335,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each pulse sent.
 
             assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
 
             id = obj.next_event_id();
 
@@ -340,7 +354,7 @@ classdef MTMSApi < handle
         function id = send_charge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
         % Send a charge to a specified channel.
         %
-        % :param channel: The channel for charging. Range: 1-5
+        % :param channel: The channel for charging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :param target_voltage: The target voltage for charging. Range: 0-1500
         % :type target_voltage: float
@@ -363,6 +377,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each charge sent.
 
             assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
 
             id = obj.next_event_id();
 
@@ -376,7 +391,7 @@ classdef MTMSApi < handle
         function id = send_discharge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
         % Send a discharge to a specified channel.
         %
-        % :param channel: The channel for discharging. Range: 0-5
+        % :param channel: The channel for discharging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
         % :param target_voltage: The target voltage for the discharge.
         % :type target_voltage: float
@@ -399,6 +414,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each discharge sent.
 
             assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
 
             id = obj.next_event_id();
 
@@ -652,12 +668,16 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), sprintf("Session not started."));
 
-            assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage only defined for %d channels, channel count %d.", ...
+            assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage defined for %d channels, but channel count is %d.", ...
                 length(target_voltages), obj.N_CHANNELS));
 
             ids = [];
-            for channel = 1:obj.N_CHANNELS
-                target_voltage = target_voltages(channel);
+
+            % Channel indexing starts from 0, hence start the loop from 0.
+            for channel = 0:obj.N_CHANNELS - 1
+
+                % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
+                target_voltage = target_voltages(channel + 1);
 
                 new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, 0.0, false);
                 ids = [ids new_id];
@@ -700,12 +720,18 @@ classdef MTMSApi < handle
             assert(obj.is_session_started(), sprintf("Session not started."));
 
             assert(length(reverse_polarities) == obj.N_CHANNELS, ...
-                sprintf("Reverse polarities only defined for %d channels, channel count %d.", length(reverse_polarities), obj.N_CHANNELS));
+                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.N_CHANNELS));
 
             ids = [];
-            for channel = 1:obj.N_CHANNELS
-                reverse_polarity = reverse_polarities(channel);
-                waveform = obj.get_default_waveform(channel - 1);
+
+            % Channel indexing starts from 0, hence start the loop from 0.
+            for channel = 0:obj.N_CHANNELS - 1
+
+                % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
+                reverse_polarity = reverse_polarities(channel + 1);
+
+                % get_default_waveform is a ROS service call that uses 0-based indexing, hence no need to add 1 here.
+                waveform = obj.get_default_waveform(channel);
 
                 new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, 0.0, reverse_polarity, false);
                 ids = [ids new_id];
