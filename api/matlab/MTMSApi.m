@@ -223,6 +223,19 @@ classdef MTMSApi < handle
             voltage = obj.node.system_state.channel_states(channel + 1).voltage;
         end
 
+        function voltage = get_voltages(obj)
+        % Return the capacitor voltages (V) of all channels.
+
+            obj.node.wait_for_new_state();
+
+            voltage = zeros(1, obj.N_CHANNELS);
+            for channel = 0:obj.N_CHANNELS - 1
+
+                % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
+                voltage(channel + 1) = obj.node.system_state.channel_states(channel + 1).voltage;
+            end
+        end
+
         function temperature = get_temperature(obj, channel)
         % Return the coil temperature of the given channel if a temperature sensor is present,
         % otherwise return None.
