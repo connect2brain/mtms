@@ -20,13 +20,12 @@ void allow_trigger_out([[maybe_unused]] const std::shared_ptr<mtms_device_interf
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Allowtriggerout, allow_trigger_out));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out_handler"), "%s trigger out", allow_trigger_out ? "Allow" : "Disallow");
+  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out"), "%s trigger out.", allow_trigger_out ? "Allowing" : "Disallowing");
 }
 
 class AllowTriggerOut : public rclcpp::Node {
 public:
-  AllowTriggerOut()
-      : Node("allow_trigger_out") {
+  AllowTriggerOut() : Node("allow_trigger_out") {
     allow_trigger_out_service_ = this->create_service<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms_device/allow_trigger_out", allow_trigger_out);
   }
 
@@ -38,19 +37,19 @@ int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out_handler"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
 
   auto node = std::make_shared<AllowTriggerOut>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out_handler"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out_handler"), "Allow trigger out handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out"), "Allow trigger out handler ready.");
 
   init_fpga();
 
