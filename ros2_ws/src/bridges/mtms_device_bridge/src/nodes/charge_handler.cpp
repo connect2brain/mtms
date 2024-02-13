@@ -22,30 +22,43 @@ public:
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Charge> charge) -> void {
-      if (!is_fpga_ok()) {
-        RCLCPP_WARN(rclcpp::get_logger("charge_handler"), "FPGA not in OK state while attempting to charge");
-        return;
-      }
-
+      /* Unpack charge message. */
       uint8_t channel = charge->channel;
 
-      /* Serialize event. */
       event_interfaces::msg::EventInfo event_info = charge->event_info;
-
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
       double_t delay = event_info.delay;
 
+      /* Log charge message. */
+      RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Charging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s, delay: %.4f s)",
+                  charge->channel,
+                  charge->target_voltage,
+                  charge->event_info.id,
+                  charge->event_info.execution_condition.value,
+                  charge->event_info.execution_time,
+                  charge->event_info.delay);
+
+      /* Check if FPGA is OK. */
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("charge_handler"), "FPGA is not in OK state, aborting charge (id: %d)", id);
+        return;
+      }
+
+      /* Check that execution time and delay are non-negative. */
+
       /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
       if (execution_time < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing charge event.");
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting charge (id: %d)", id);
         return;
       }
       if (delay < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing charge event.");
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting charge (id: %d)", id);
         return;
       }
+
+      /* Serialize event info. */
 
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
       uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
@@ -56,9 +69,9 @@ public:
       serialized_message.add_uint64(execution_time_ticks);
       serialized_message.add_uint32(delay_ticks);
 
-      /* Serialize charge. */
+      /* Serialize charge parameters. */
 
-      // Charge requires the channel here instead of the beginning of the message
+      /* XXX: Charge requires the channel here instead of the beginning of the message. */
 
       /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
            indexing here. It would rather be the responsibility of FPGA to do the conversion;
@@ -70,25 +83,21 @@ public:
 
       serialized_message.finalize();
 
-      if (!this->safe_mode) {
-        NiFpga_MergeStatus(&status,
-                           NiFpga_StartFifo(session,
-                                            charge_fifo));
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_WriteFifoU8(session,
-                                              charge_fifo,
-                                              serialized_message.serialized_message.data(),
-                                              serialized_message.get_length(),
-                                              NiFpga_InfiniteTimeout,
-                                              NULL));
-
-
-        RCLCPP_INFO(rclcpp::get_logger("charge_handler"), "Sent charge to channel %d", channel);
-      } else {
-        RCLCPP_WARN(rclcpp::get_logger("charge_handler"),
-                    "Tried to send charge to channel %d but safe mode is enabled.", channel);
+      if (this->safe_mode) {
+        RCLCPP_WARN(rclcpp::get_logger("charge_handler"), "Safe mode is enabled, aborting charge (id: %d)", id);
+        return;
       }
+      NiFpga_MergeStatus(&status,
+                          NiFpga_StartFifo(session,
+                                          charge_fifo));
+
+      NiFpga_MergeStatus(&status,
+                          NiFpga_WriteFifoU8(session,
+                                            charge_fifo,
+                                            serialized_message.serialized_message.data(),
+                                            serialized_message.get_length(),
+                                            NiFpga_InfiniteTimeout,
+                                            NULL));
     };
 
     serialized_message = SerializedMessage();
