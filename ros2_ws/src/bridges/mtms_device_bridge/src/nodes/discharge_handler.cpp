@@ -22,15 +22,8 @@ public:
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Discharge> discharge) -> void {
-      if (!is_fpga_ok()) {
-        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"), "FPGA not in OK state while attempting to discharge");
-        return;
-      }
-
+      /* Unpack discharge message. */
       uint8_t channel = discharge->channel;
-
-      /* Serialize event info. */
-
       event_interfaces::msg::EventInfo event_info = discharge->event_info;
 
       uint16_t id = event_info.id;
@@ -38,15 +31,34 @@ public:
       double_t execution_time = event_info.execution_time;
       double_t delay = event_info.delay;
 
+      /* Log discharge message. */
+      RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Discharging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s, delay: %.4f s)",
+                  discharge->channel,
+                  discharge->target_voltage,
+                  discharge->event_info.id,
+                  discharge->event_info.execution_condition.value,
+                  discharge->event_info.execution_time,
+                  discharge->event_info.delay);
+
+      /* Check if FPGA is OK. */
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"), "Tried to discharge (id: %d) but FPGA is not in OK state", id);
+        return;
+      }
+
+      /* Check that execution time and delay are non-negative. */
+
       /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
       if (execution_time < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing discharge event.");
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting discharge (id: %d)", id);
         return;
       }
       if (delay < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing discharge event.");
+        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting discharge (id: %d)", id);
         return;
       }
+
+      /* Serialize event info. */
 
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
       uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
@@ -60,34 +72,29 @@ public:
       serialized_message.add_uint64(execution_time_ticks);
       serialized_message.add_uint32(delay_ticks);
 
-      /* Serialize discharge. */
+      /* Serialize discharge parameter. */
 
       uint16_t target_voltage = discharge->target_voltage;
       serialized_message.add_uint16(target_voltage);
 
       serialized_message.finalize();
 
-      if (!this->safe_mode) {
-          NiFpga_MergeStatus(&status,
-                           NiFpga_StartFifo(session,
-                                            discharge_fifo));
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_WriteFifoU8(session,
-                                              discharge_fifo,
-                                              serialized_message.serialized_message.data(),
-                                              serialized_message.get_length(),
-                                              NiFpga_InfiniteTimeout,
-                                              NULL));
-
-        RCLCPP_INFO(rclcpp::get_logger("discharge_handler"), "Sent discharge to channel %d", channel);
-
-      } else {
-        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"),
-                    "Tried to send discharge to channel %d but safe mode is enabled.", channel);
+      if (this->safe_mode) {
+        RCLCPP_WARN(rclcpp::get_logger("discharge_handler"), "Safe mode is enabled, aborting discharge (id: %d)", id);
+        return;
       }
-    };
+      NiFpga_MergeStatus(&status,
+                         NiFpga_StartFifo(session,
+                                          discharge_fifo));
 
+      NiFpga_MergeStatus(&status,
+                          NiFpga_WriteFifoU8(session,
+                                            discharge_fifo,
+                                            serialized_message.serialized_message.data(),
+                                            serialized_message.get_length(),
+                                            NiFpga_InfiniteTimeout,
+                                            NULL));
+    };
     serialized_message = SerializedMessage();
     send_discharge_subscriber_ = this->create_subscription<event_interfaces::msg::Discharge>(
         "/event/send/discharge", 10, callback);
