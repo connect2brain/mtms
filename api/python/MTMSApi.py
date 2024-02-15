@@ -277,6 +277,7 @@ class MTMSApi:
         float
             The current time as seconds.
         """
+        self.node.wait_for_new_state()
         return self.node.session.time
 
     def get_event_feedback(self, id):
