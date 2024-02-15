@@ -15,10 +15,11 @@ void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettin
   auto settings = request->settings;
 
   RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Received new settings:");
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum_rising_falling_difference_ticks: %d", settings.maximum_rising_falling_difference_ticks);
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum_pulse_duration_ticks: %d", settings.maximum_pulse_duration_ticks);
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  time_in_maximum_pulses_per_time_ms: %d", settings.time_in_maximum_pulses_per_time_ms);
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  pulses_in_maximum_pulses_per_time: %d", settings.pulses_in_maximum_pulses_per_time);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum number of pulse pieces: %d", settings.maximum_number_of_pulse_pieces);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum rising-falling difference (ticks): %d", settings.maximum_rising_falling_difference_ticks);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulse duration (ticks): %d", settings.maximum_pulse_duration_ticks);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulses per unit time, pulses: %d", settings.pulses_in_maximum_pulses_per_time);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulses per unit time, unit time: %d", settings.time_in_maximum_pulses_per_time_ms);
 
   /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
@@ -26,7 +27,12 @@ void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettin
     return;
   }
 
-  /* Serialize settings. */
+  /* Write settings to registers. */
+  NiFpga_MergeStatus(&status,
+                     NiFpga_WriteU8(session,
+                                    NiFpga_mTMS_ControlU8_Maximumnumberofpulsepieces,
+                                    settings.maximum_number_of_pulse_pieces));
+
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteU16(session,
                                      NiFpga_mTMS_ControlU16_Maximumrisingfallingdifferenceticks,
