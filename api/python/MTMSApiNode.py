@@ -183,7 +183,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event_trigger()
 
-    def send_pulse(self, id, execution_condition, time, delay, channel, waveform):
+    def send_pulse(self, id, execution_condition, time, channel, waveform):
         topic, message_type = self.ROS_MESSAGE_SEND_PULSE
 
         publisher = self.ros_message_publishers[topic]
@@ -193,7 +193,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -209,7 +208,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_charge(self, id, execution_condition, time, delay, channel, target_voltage):
+    def send_charge(self, id, execution_condition, time, channel, target_voltage):
         topic, message_type = self.ROS_MESSAGE_SEND_CHARGE
 
         publisher = self.ros_message_publishers[topic]
@@ -219,7 +218,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -235,7 +233,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_discharge(self, id, execution_condition, time, delay, channel, target_voltage):
+    def send_discharge(self, id, execution_condition, time, channel, target_voltage):
         topic, message_type = self.ROS_MESSAGE_SEND_DISCHARGE
 
         publisher = self.ros_message_publishers[topic]
@@ -245,7 +243,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -261,7 +258,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_trigger_out(self, id, execution_condition, time, delay, port, duration_us):
+    def send_trigger_out(self, id, execution_condition, time, port, duration_us):
         topic, message_type = self.ROS_MESSAGE_SEND_TRIGGER_OUT
 
         publisher = self.ros_message_publishers[topic]
@@ -271,7 +268,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.port = port

@@ -157,9 +157,6 @@ class MTMSApiPrinter():
         id = event_info.id
         time = event_info.execution_time
 
-        # TODO: Include delay in the output
-        delay = event_info.delay
-
         if execution_condition == ExecutionCondition.TIMED:
             execution_condition_str = 'Timed at (s): {0:g}'.format(time)
         elif execution_condition == ExecutionCondition.WAIT_FOR_TRIGGER:

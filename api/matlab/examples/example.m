@@ -11,10 +11,9 @@ channel = 1;
 target_voltage = 20;
 execution_condition = api.execution_conditions.IMMEDIATE;
 time = 10.0;
-delay = 0.0;
 wait_for_completion = true;
 
-api.send_charge(channel, target_voltage, execution_condition, time, delay, wait_for_completion);
+api.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
 
 
 %% Allow stimulation before sending a pulse.
@@ -26,12 +25,12 @@ api.allow_stimulation(true);
 waveform = api.get_default_waveform(channel);
 reverse_polarity = false;
 
-api.send_pulse(channel, waveform, execution_condition, time, delay, reverse_polarity, wait_for_completion);
+api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
 
 
 %% Discharge channel 1 completely.
 
-api.send_discharge(channel, 0, execution_condition, time, delay, wait_for_completion);
+api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
 
 
 %% Send trigger out on port 1.
@@ -39,7 +38,7 @@ api.send_discharge(channel, 0, execution_condition, time, delay, wait_for_comple
 port = 1;
 duration_us = 1000;
 
-api.send_trigger_out(port, duration_us, execution_condition, time, delay, wait_for_completion);
+api.send_trigger_out(port, duration_us, execution_condition, time, wait_for_completion);
 
 
 %% Send pulse on channel 1 and analyze MEP.
@@ -56,7 +55,7 @@ execution_condition = api.execution_conditions.TIMED;
 time = api.get_time() + 3.0;
 wait_for_completion = false;  % Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
-api.send_pulse(channel, waveform, execution_condition, time, delay, reverse_polarity, wait_for_completion);
+api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
 
 % Create a custom waveform.
 
