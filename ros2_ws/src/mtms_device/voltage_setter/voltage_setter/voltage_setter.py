@@ -196,7 +196,6 @@ class VoltageSetterNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
         event_info.execution_time = 0.0
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -217,7 +216,6 @@ class VoltageSetterNode(Node):
         event_info.id = id
         event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
         event_info.execution_time = 0.0
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel

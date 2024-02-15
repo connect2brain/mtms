@@ -312,7 +312,7 @@ classdef MTMSApi < handle
             success = obj.node.allow_stimulation(allow_stimulation);
         end
 
-        function id = send_pulse(obj, channel, waveform, execution_condition, time, delay, reverse_polarity, wait_for_completion)
+        function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion)
         % Send a pulse event to a specified channel.
         %
         % :param channel: The target channel. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -357,14 +357,14 @@ classdef MTMSApi < handle
                 waveform_ = obj.reverse_polarity(waveform);
             end
 
-            obj.node.send_pulse(id, execution_condition, time, delay, channel, waveform_);
+            obj.node.send_pulse(id, execution_condition, time, channel, waveform_);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_charge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
+        function id = send_charge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
         % Send a charge to a specified channel.
         %
         % :param channel: The channel for charging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -394,14 +394,14 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_charge(id, execution_condition, time, delay, channel, target_voltage);
+            obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_discharge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
+        function id = send_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
         % Send a discharge to a specified channel.
         %
         % :param channel: The channel for discharging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -431,14 +431,14 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_discharge(id, execution_condition, time, delay, channel, target_voltage);
+            obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
             end
         end
 
-        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, delay, wait_for_completion)
+        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
         % Sends a trigger output to a specified port.
         %
         % :param port: The port number to send the trigger output to.
@@ -467,7 +467,7 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
 
-            obj.node.send_trigger_out(id, execution_condition, time, delay, port, duration_us);
+            obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
 
             if wait_for_completion
                 obj.wait_for_completion(id);
@@ -635,7 +635,7 @@ classdef MTMSApi < handle
 
         % Compound events
 
-        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, delay, wait_for_completion)
+        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
         % Send charge or discharge command to a specified channel based on the current and target voltage.
         %
         % :param channel: Channel number.
@@ -650,7 +650,7 @@ classdef MTMSApi < handle
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
-        % :param time: Time delay before sending the pulse, by default 0.0.
+        % :param time: Time at when  before sending the pulse, by default 0.0.
         % :type time: float, optional
         % :param wait_for_completion: Whether to wait for the completion of the command, by default true.
         % :type wait_for_completion: bool, optional
@@ -662,9 +662,9 @@ classdef MTMSApi < handle
 
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
-                id = obj.send_charge(channel, target_voltage, execution_condition, time, delay, wait_for_completion);
+                id = obj.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
             else
-                id = obj.send_discharge(channel, target_voltage, execution_condition, time, delay, wait_for_completion);
+                id = obj.send_discharge(channel, target_voltage, execution_condition, time, wait_for_completion);
             end
         end
 
@@ -692,7 +692,7 @@ classdef MTMSApi < handle
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 target_voltage = target_voltages(channel + 1);
 
-                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, 0.0, false);
+                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, false);
                 ids = [ids new_id];
             end
 
@@ -722,7 +722,7 @@ classdef MTMSApi < handle
         %
         % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
         % :type reverse_polarities: list of bools
-        % :param time: Time delay before sending the pulse, by default 0.0.
+        % :param time: The time at which to execute the pulse. Default is 0.0.
         % :type time: float, optional
         % :param wait_for_completion: Whether to wait for the completion of all commands, by default true.
         % :type wait_for_completion: bool, optional
@@ -746,7 +746,7 @@ classdef MTMSApi < handle
                 % get_default_waveform is a ROS service call that uses 0-based indexing, hence no need to add 1 here.
                 waveform = obj.get_default_waveform(channel);
 
-                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, 0.0, reverse_polarity, false);
+                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity, false);
                 ids = [ids new_id];
             end
 
