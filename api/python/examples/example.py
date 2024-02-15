@@ -152,7 +152,7 @@ latency = mep.latency
 displacement_x = 5  # mm
 displacement_y = 5  # mm
 rotation_angle = 90  # deg
-intensity = 20  # V/m
+intensity = 5  # V/m
 
 target_voltages, reverse_polarities = api.get_channel_voltages(
     displacement_x=displacement_x,
@@ -186,13 +186,14 @@ api.send_immediate_default_pulse_to_all_channels(
 displacement_x = 5  # mm
 displacement_y = 5  # mm
 rotation_angle = 90  # deg
-intensity = 20  # V/m
+intensity = 5  # V/m
 
 target_voltages, reverse_polarities = api.get_channel_voltages(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
     intensity=intensity,
+    algorithm=TargetingAlgorithm.GENETIC
 )
 
 # Charge all channels to target voltages.
