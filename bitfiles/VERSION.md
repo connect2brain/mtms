@@ -1,5 +1,9 @@
 ## Version history
 
+### 0.5.8
+- ADD: Configurable number pulse of pieces with a maximum of 32.
+- FIX: Attempt to fix occasionally missing discharge feedback message.
+
 ### 0.5.7
 - MOD: Increase time before checking IGBT feedback to 200 ticks.
 
