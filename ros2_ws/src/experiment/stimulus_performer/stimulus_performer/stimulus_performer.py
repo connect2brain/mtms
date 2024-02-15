@@ -287,7 +287,6 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.port = port
@@ -303,7 +302,6 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -402,11 +400,8 @@ class StimulusPerformerNode(Node):
             if stimulus.triggers[i].enabled:
                 id = self.get_next_id()
                 delay = stimulus.triggers[i].delay
-                port = i + 1
-
-                # Note that the field 'delay' of TriggerOut ROS message cannot be used here, as it cannot have a
-                # negative value.
                 delayed_time = time + delay
+                port = i + 1
 
                 self.trigger_out(
                     id=id,

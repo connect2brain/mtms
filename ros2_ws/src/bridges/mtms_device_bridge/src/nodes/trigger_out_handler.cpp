@@ -26,15 +26,13 @@ public:
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
-      double_t delay = event_info.delay;
 
       /* Log trigger out message. */
-      RCLCPP_INFO(rclcpp::get_logger("trigger_out_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s, delay: %.4f s)",
+      RCLCPP_INFO(rclcpp::get_logger("trigger_out_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
                   port,
                   trigger_out->event_info.id,
                   trigger_out->event_info.execution_condition.value,
-                  trigger_out->event_info.execution_time,
-                  trigger_out->event_info.delay);
+                  trigger_out->event_info.execution_time);
 
       /* Check if FPGA is OK. */
       if (!is_fpga_ok()) {
@@ -42,28 +40,22 @@ public:
         return;
       }
 
-      /* Check that execution time and delay are non-negative. */
+      /* Check that execution time is non-negative. */
 
       /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
       if (execution_time < 0.0) {
         RCLCPP_ERROR(rclcpp::get_logger("trigger_out_handler"), "Execution time cannot be negative, aborting trigger out (id: %d)", id);
         return;
       }
-      if (delay < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("trigger_out_handler"), "Delay cannot be negative, aborting trigger out (id: %d)", id);
-        return;
-      }
 
       /* Serialize event info. */
 
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-      uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
 
       serialized_message.init(port);
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(execution_time_ticks);
-      serialized_message.add_uint32(delay_ticks);
 
       /* Serialize trigger out parameters. */
 
