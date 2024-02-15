@@ -184,6 +184,13 @@ classdef MTMSApiNode < handle
             %
             %   Send pulse event to the mTMS device.
 
+            % MATLAB defaults to floating point numbers, but the ROS2 message expects
+            % unsigned 16-bit integers. Therefore, we need to convert the durations
+            % to the correct type.
+            for i = 1:length(waveform)
+                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
+            end
+
             publisher = obj.send_pulse_publisher;
 
             pulse = ros2message(publisher);
@@ -368,6 +375,13 @@ classdef MTMSApiNode < handle
 
         function waveform = reverse_polarity(obj, waveform)
             client = obj.reverse_polarity_client;
+
+            % MATLAB defaults to floating point numbers, but the ROS2 message expects
+            % unsigned 16-bit integers. Therefore, we need to convert the durations
+            % to the correct type.
+            for i = 1:length(waveform)
+                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
+            end
 
             request = ros2message(client);
 
