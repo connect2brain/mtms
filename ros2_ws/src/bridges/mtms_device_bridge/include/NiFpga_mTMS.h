@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "74AB1836C31BF6B0092A80DDF6146135";
+static const char* const NiFpga_mTMS_Signature = "3CEDA6C07D7277DB3B939C8BCA89BEAA";
 
 #if NiFpga_Cpp
 extern "C"
@@ -117,6 +117,7 @@ typedef enum
 
 typedef enum
 {
+   NiFpga_mTMS_ControlU8_Maximumnumberofpulsepieces = 0x1811A,
    NiFpga_mTMS_ControlU8_Maximumpulsespertimepulses = 0x180DA
 } NiFpga_mTMS_ControlU8;
 
