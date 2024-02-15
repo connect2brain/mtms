@@ -312,7 +312,7 @@ class MTMSApi:
             allow_stimulation=allow_stimulation,
         )
 
-    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
         """
         Send a pulse event to a specified channel.
 
@@ -340,8 +340,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the pulse is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        delay : float, optional
-            The delay for executing the trigger.
         reverse_polarity : bool, optional
             Whether to reverse the polarity of the waveform. Default is False.
         wait_for_completion : bool, optional
@@ -369,7 +367,6 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
-            delay=delay,
             channel=channel,
             waveform=waveform_,
         )
@@ -379,7 +376,7 @@ class MTMSApi:
 
         return id
 
-    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a charge to a specified channel.
 
@@ -399,8 +396,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which charging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        delay : float, optional
-            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the charge to complete before returning. Default is True.
 
@@ -423,7 +418,6 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
-            delay=delay,
             channel=channel,
             target_voltage=target_voltage,
         )
@@ -433,7 +427,7 @@ class MTMSApi:
 
         return id
 
-    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Send a discharge to a specified channel.
 
@@ -453,8 +447,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        delay : float, optional
-            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the discharge to complete before returning. Default is True.
 
@@ -477,7 +469,6 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
-            delay=delay,
             channel=channel,
             target_voltage=target_voltage,
         )
@@ -487,7 +478,7 @@ class MTMSApi:
 
         return id
 
-    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None, delay=None, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
         """
         Sends a trigger output to a specified port.
 
@@ -507,8 +498,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the trigger is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        delay : float, optional
-            The delay for executing the trigger.
         wait_for_completion : bool, optional
             Whether to wait for the trigger to complete before returning. Default is True.
 
@@ -530,7 +519,6 @@ class MTMSApi:
             id=id,
             execution_condition=execution_condition,
             time=time,
-            delay=delay,
             port=port,
             duration_us=duration_us,
         )
