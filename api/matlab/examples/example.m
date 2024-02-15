@@ -88,7 +88,7 @@ latency = mep.latency;
 displacement_x = 5;  % mm
 displacement_y = 5;  % mm
 rotation_angle = 90;  % deg
-intensity = 20;  % V/m
+intensity = 5;  % V/m
 algorithm = api.get_targeting_algorithm('least_squares');
 
 [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
@@ -112,7 +112,7 @@ api.send_immediate_default_pulse_to_all_channels(reverse_polarities, wait_for_co
 displacement_x = 5;  % mm
 displacement_y = 5;  % mm
 rotation_angle = 90;  % deg
-intensity = 20;  % V/m
+intensity = 5;  % V/m
 algorithm = api.get_targeting_algorithm('least_squares');
 
 [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
