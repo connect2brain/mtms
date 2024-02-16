@@ -5,14 +5,14 @@ api.start_session();
 
 %%     Single events
 
-%% Charge channel 1 to 20 V.
+%% Charge channel 0 to 20 V.
 
-channel = 1;
+% Note that the TMS channel indexing starts from 0.
+channel = 0;
 target_voltage = 20;
 execution_condition = api.execution_conditions.IMMEDIATE;
-time = 10.0;
 
-api.send_charge(channel, target_voltage, execution_condition, time);
+api.send_charge(channel, target_voltage, execution_condition);
 api.wait_for_completion();
 
 
@@ -20,31 +20,41 @@ api.wait_for_completion();
 
 api.allow_stimulation(true);
 
-%% Send pulse on channel 1, using the default waveform.
+%% Send pulse on channel 0, using the default waveform.
 
 waveform = api.get_default_waveform(channel);
 reverse_polarity = false;
 
-api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity);
+channel = 0;
+execution_condition = api.execution_conditions.IMMEDIATE;
+
+api.send_pulse(channel, waveform, reverse_polarity, execution_condition);
 api.wait_for_completion();
 
 
-%% Discharge channel 1 completely.
+%% Discharge channel 0 completely.
 
-api.send_discharge(channel, 0, execution_condition, time);
+target_voltage = 0;
+
+channel = 0;
+execution_condition = api.execution_conditions.IMMEDIATE;
+
+api.send_discharge(channel, target_voltage, execution_condition);
 api.wait_for_completion();
 
 
 %% Send trigger out on port 1.
 
-port = 1;
 duration_us = 1000;
 
-api.send_trigger_out(port, duration_us, execution_condition, time);
+port = 1;
+execution_condition = api.execution_conditions.IMMEDIATE;
+
+api.send_trigger_out(port, duration_us, execution_condition);
 api.wait_for_completion();
 
 
-%% Send pulse on channel 1 and analyze MEP.
+%% Send pulse on channel 0 and analyze MEP.
 
 % Use default waveform for the pulse.
 
@@ -53,16 +63,16 @@ reverse_polarity = false;
 
 % Generate a timed pulse.
 
-channel = 1;
 execution_condition = api.execution_conditions.TIMED;
 time = api.get_time() + 3.0;
+channel = 0;
 
-api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity);
+api.send_pulse(channel, waveform, reverse_polarity, execution_condition, time);
 % Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-% Analyze MEP on EMG channel 1, coinciding with the pulse.
+% Analyze MEP on EMG channel 0, coinciding with the pulse.
 
-% Note that the channel indexing starts from 0.
+% Note that the EMG channel indexing starts from 0.
 emg_channel = 0;
 
 mep_start_time = 0.02;  % in ms, after the stimulation pulse
@@ -137,7 +147,7 @@ api.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
 
 % Analyze MEP on EMG channel 0, coinciding with the pulse.
 
-% Note that the channel indexing starts from 0.
+% Note that the EMG channel indexing starts from 0.
 emg_channel = 0;
 
 mep_start_time = 0.02;  % in ms, after the stimulation pulse
