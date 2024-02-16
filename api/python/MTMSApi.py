@@ -209,9 +209,9 @@ class MTMSApi:
         self.node.wait_for_new_state()
         return self.node.session.state.value
 
-    def get_voltage(self, channel):
+    def get_current_voltage(self, channel):
         """
-        Return the capacitor voltage (V) of the given channel.
+        Return the current capacitor voltage (V) of the given channel.
 
         Parameters
         ----------
@@ -225,6 +225,20 @@ class MTMSApi:
         """
         self.node.wait_for_new_state()
         return self.node.system_state.channel_states[channel].voltage
+
+    def get_current_voltages(self):
+        """
+        Return the current capacitor voltages (V) of all channels.
+
+        Returns
+        -------
+        array-like
+            The current channel voltages.
+        """
+        self.node.wait_for_new_state()
+
+        voltages = [self.node.system_state.channel_states[channel].voltage for channel in range(self.N_CHANNELS)]
+        return voltages
 
     def get_temperature(self, channel):
         """
@@ -543,7 +557,7 @@ class MTMSApi:
 
     def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
         """
-        Return the channel voltages (V) given the displacements, rotation angle and intensity.
+        Return the target voltages (V), given the displacements, rotation angle, and intensity.
 
         Parameters
         ----------
@@ -563,7 +577,7 @@ class MTMSApi:
         Returns
         -------
         array-like
-            Channel voltages.
+            Target voltages.
         """
         return self.node.get_target_voltages(
             displacement_x=displacement_x,
