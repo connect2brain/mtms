@@ -99,7 +99,7 @@ class Experiment:
 
             intensity = min(intensity, 5)
 
-        voltages, reverse_polarities = self.api.get_channel_voltages(
+        voltages, reverse_polarities = self.api.get_target_voltages(
             displacement_x=x,
             displacement_y=y,
             rotation_angle=angle,
