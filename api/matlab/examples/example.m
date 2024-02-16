@@ -101,7 +101,7 @@ rotation_angle = 90;  % deg
 intensity = 5;  % V/m
 algorithm = api.get_targeting_algorithm('least_squares');
 
-[target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+[target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
 
 % Get maximum intensity
 
@@ -126,7 +126,7 @@ rotation_angle = 90;  % deg
 intensity = 5;  % V/m
 algorithm = api.get_targeting_algorithm('least_squares');
 
-[target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+[target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
 
 % Charge all channels to target voltages.
 
