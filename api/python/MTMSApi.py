@@ -395,7 +395,8 @@ class MTMSApi:
         The event ID is incremented with each charge sent.
         """
         assert self.is_session_started(), "Session not started."
-        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
+        assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
         id = self._next_event_id()
 
@@ -440,7 +441,8 @@ class MTMSApi:
         The event ID is incremented with each discharge sent.
         """
         assert self.is_session_started(), "Session not started."
-        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
+        assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
         id = self._next_event_id()
 
@@ -485,7 +487,8 @@ class MTMSApi:
         The event ID is incremented with each trigger sent.
         """
         assert self.is_session_started(), "Session not started."
-        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
+        assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
         id = self._next_event_id()
 
@@ -796,7 +799,8 @@ class MTMSApi:
             ID of the sent command.
         """
         assert self.is_session_started(), "Session not started."
-        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is ExecutionCondition.TIMED but time not given."
+        assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
+        assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
         voltage = self.get_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
