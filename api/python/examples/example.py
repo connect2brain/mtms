@@ -21,42 +21,46 @@ api.start_session()
 
 ## Single events
 
-# Charge channel 1 to 20 V.
+# Charge channel 0 to 20 V.
 
-channel = 0  # Note that channel indexing starts at 0.
 target_voltage = 20
+
+# Note that the TMS channel indexing starts from 0.
+channel = 0
 execution_condition = ExecutionCondition.IMMEDIATE
-time = 10.0
 
 api.send_charge(
     channel=channel,
     target_voltage=target_voltage,
     execution_condition=execution_condition,
-    time=time,
 )
 api.wait_for_completion()
 
-# Send pulse on channel 1, using the default waveform.
+# Execute pulse on channel 0, using the default waveform.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
 
-api.allow_stimulation(True)
+channel = 0
+execution_condition = ExecutionCondition.IMMEDIATE
 
 api.send_pulse(
     channel=channel,
     waveform=waveform,
     execution_condition=execution_condition,
-    time=time,
     reverse_polarity=reverse_polarity,
 )
 api.wait_for_completion()
 
-# Discharge channel 1 completely.
+# Discharge channel 0 completely.
+target_voltage = 0
+
+channel = 0
+execution_condition = ExecutionCondition.IMMEDIATE
+
 api.send_discharge(
     channel=channel,
-    target_voltage=0,
+    target_voltage=target_voltage,
     execution_condition=execution_condition,
-    time=time,
 )
 api.wait_for_completion()
 
@@ -64,18 +68,20 @@ api.wait_for_completion()
 port = 1
 duration_us = 1000
 
+execution_condition = ExecutionCondition.IMMEDIATE
+
 api.send_trigger_out(
     port=port,
     duration_us=duration_us,
     execution_condition=execution_condition,
-    time=time,
 )
 api.wait_for_completion()
 
-# Send pulse on channel 1 and a simultaneous trigger out on port 1.
-channel = 1
+# Send pulse on channel 0 and a simultaneous trigger out on port 1.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
+
+channel = 0
 execution_condition = ExecutionCondition.TIMED
 time = api.get_time() + 1.0
 
@@ -84,16 +90,16 @@ api.allow_stimulation(True)
 api.send_pulse(
     channel=channel,
     waveform=waveform,
+    reverse_polarity=reverse_polarity,
     execution_condition=execution_condition,
     time=time,
-    reverse_polarity=reverse_polarity,
 )
-
 # Do not wait for completion here, as we want to execute the trigger out simultaneously with the pulse.
 
 port = 1
 duration_us = 1000
 
+# Use the same time and execution condition as for the pulse.
 api.send_trigger_out(
     port=port,
     duration_us=duration_us,

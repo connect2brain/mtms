@@ -15,11 +15,6 @@ execution_condition = api.execution_conditions.IMMEDIATE;
 api.send_charge(channel, target_voltage, execution_condition);
 api.wait_for_completion();
 
-
-%% Allow stimulation before sending a pulse.
-
-api.allow_stimulation(true);
-
 %% Send pulse on channel 0, using the default waveform.
 
 waveform = api.get_default_waveform(channel);
