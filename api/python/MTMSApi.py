@@ -42,7 +42,8 @@ class MTMSApi:
         """
         rclpy.init(args=None)
         self.node = MTMSApiNode()
-        self.event_id = 0
+        self.latest_event_id = 0
+        self.incomplete_events = []
 
         signal.signal(signal.SIGINT, self.handle_sigint)
 
@@ -57,8 +58,10 @@ class MTMSApi:
 
         Does not require any parameters, and does not return any value.
         """
-        self.event_id += 1
-        return self.event_id
+        self.latest_event_id += 1
+        self.incomplete_events.append(self.latest_event_id)
+
+        return self.latest_event_id
 
     # Start and stop
 
@@ -118,39 +121,29 @@ class MTMSApi:
             except KeyboardInterrupt:
                 pass
 
-    # Wait
+    # Functions for waiting
 
-    def _wait_for_completion(self, id):
+    def wait_for_completion(self, timeout=None):
         """
-        Wait until the completion of an event with a given id.
-
-        Parameters
-        ----------
-        id : int
-            The id of the event to wait for.
-        """
-        self.node.wait_for_new_state()
-        while self.node.get_event_feedback(id) is None:
-            self.node.wait_for_new_state()
-
-    def _wait_for_completions(self, ids):
-        """
-        Wait until the completion of multiple events given their ids.
+        Wait until the completion of all remaining events.
 
         Parameters
         ----------
-        ids : list of int
-            The ids of the events to wait for.
+        timeout : float, optional
+            The maximum time to wait for the completion of events. If None, wait indefinitely.
         """
-        for id in ids:
-            self._wait_for_completion(id)
+        start_time = self.get_time()
 
-    def wait_forever(self):
-        """
-        Continuously wait for a new system state indefinitely.
-        """
-        while True:
+        while len(self.incomplete_events) > 0:
             self.node.wait_for_new_state()
+
+            # Remove completed events.
+            self.incomplete_events = [id for id in self.incomplete_events if self.get_event_feedback(id) is None]
+
+            # Check if timeout has been reached.
+            if timeout is not None and self.get_time() - start_time > timeout:
+                print("Timeout reached while waiting for completion of events.")
+                break
 
     def wait_until(self, time):
         """
@@ -313,7 +306,7 @@ class MTMSApi:
             allow_stimulation=allow_stimulation,
         )
 
-    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False, wait_for_completion=True):
+    def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False):
         """
         Send a pulse event to a specified channel.
 
@@ -343,8 +336,6 @@ class MTMSApi:
             The time at which the pulse is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
         reverse_polarity : bool, optional
             Whether to reverse the polarity of the waveform. Default is False.
-        wait_for_completion : bool, optional
-            Whether to wait for the pulse to complete before returning. Default is True.
 
         Returns
         -------
@@ -371,13 +362,9 @@ class MTMSApi:
             channel=channel,
             waveform=waveform_,
         )
-
-        if wait_for_completion:
-            self._wait_for_completion(id=id)
-
         return id
 
-    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_charge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None):
         """
         Send a charge to a specified channel.
 
@@ -397,8 +384,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which charging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        wait_for_completion : bool, optional
-            Whether to wait for the charge to complete before returning. Default is True.
 
         Returns
         -------
@@ -422,13 +407,9 @@ class MTMSApi:
             channel=channel,
             target_voltage=target_voltage,
         )
-
-        if wait_for_completion:
-            self._wait_for_completion(id=id)
-
         return id
 
-    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None):
         """
         Send a discharge to a specified channel.
 
@@ -448,8 +429,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        wait_for_completion : bool, optional
-            Whether to wait for the discharge to complete before returning. Default is True.
 
         Returns
         -------
@@ -473,13 +452,9 @@ class MTMSApi:
             channel=channel,
             target_voltage=target_voltage,
         )
-
-        if wait_for_completion:
-            self._wait_for_completion(id=id)
-
         return id
 
-    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_trigger_out(self, port, duration_us=1000, execution_condition=ExecutionCondition.TIMED, time=None):
         """
         Sends a trigger output to a specified port.
 
@@ -499,8 +474,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which the trigger is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        wait_for_completion : bool, optional
-            Whether to wait for the trigger to complete before returning. Default is True.
 
         Returns
         -------
@@ -523,10 +496,6 @@ class MTMSApi:
             port=port,
             duration_us=duration_us,
         )
-
-        if wait_for_completion:
-            self._wait_for_completion(id=id)
-
         return id
 
     def trigger_events(self):
@@ -646,7 +615,7 @@ class MTMSApi:
 
     # Compound events
 
-    def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages, wait_for_completion=True):
+    def send_immediate_charge_or_discharge_to_all_channels(self, target_voltages):
         """
         Send immediate charge or discharge commands to all channels.
 
@@ -654,8 +623,6 @@ class MTMSApi:
         ----------
         target_voltages : list of floats
             List of target voltages for each channel.
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of all commands, by default True.
 
         Returns
         -------
@@ -674,23 +641,14 @@ class MTMSApi:
                 execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
                 target_voltage=target_voltage,
-                wait_for_completion=False,
             )
             ids.append(id)
 
-        if wait_for_completion:
-            self._wait_for_completions(ids=ids)
-
         return ids
 
-    def send_immediate_full_discharge_to_all_channels(self, wait_for_completion=True):
+    def send_immediate_full_discharge_to_all_channels(self):
         """
         Send immediate full discharge commands to all channels.
-
-        Parameters
-        ----------
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of all commands, by default True.
 
         Returns
         -------
@@ -703,12 +661,11 @@ class MTMSApi:
 
         ids = self.send_immediate_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
-            wait_for_completion=wait_for_completion,
         )
 
         return ids
 
-    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time, wait_for_completion=True):
+    def send_timed_default_pulse_to_all_channels(self, reverse_polarities, time):
         """
         Send timed default pulse commands to all channels.
 
@@ -718,8 +675,6 @@ class MTMSApi:
             List of boolean values indicating whether to reverse polarities for each channel.
         time : float
             The time at which the pulse is executed.
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of all commands, by default True.
 
         Returns
         -------
@@ -741,16 +696,12 @@ class MTMSApi:
                 channel=channel,
                 waveform=waveform,
                 reverse_polarity=reverse_polarity,
-                wait_for_completion=False,
             )
             ids.append(id)
 
-        if wait_for_completion:
-            self._wait_for_completions(ids=ids)
-
         return ids
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED, wait_for_completion=True):
+    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED):
         """
         Send default pulse commands to all channels.
 
@@ -768,8 +719,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float
             The time at which the pulse is executed.
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of all commands, by default True.
 
         Returns
         -------
@@ -791,16 +740,12 @@ class MTMSApi:
                 channel=channel,
                 waveform=waveform,
                 reverse_polarity=reverse_polarity,
-                wait_for_completion=False,
             )
             ids.append(id)
 
-        if wait_for_completion:
-            self._wait_for_completions(ids=ids)
-
         return ids
 
-    def send_immediate_default_pulse_to_all_channels(self, reverse_polarities, wait_for_completion=True):
+    def send_immediate_default_pulse_to_all_channels(self, reverse_polarities):
         """
         Send immediate default pulse commands to all channels.
 
@@ -808,8 +753,6 @@ class MTMSApi:
         ----------
         reverse_polarities : list of bools
             List of boolean values indicating whether to reverse polarities for each channel.
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of all commands, by default True.
 
         Returns
         -------
@@ -823,11 +766,10 @@ class MTMSApi:
         ids = self.send_timed_default_pulse_to_all_channels(
             reverse_polarities=reverse_polarities,
             time=time,
-            wait_for_completion=wait_for_completion,
         )
         return ids
 
-    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None, wait_for_completion=True):
+    def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None):
         """
         Send charge or discharge command to a specified channel based on the current and target voltage.
 
@@ -847,8 +789,6 @@ class MTMSApi:
             Default is ExecutionCondition.TIMED
         time : float, optional
             The time at which charging or discharging is executed. Only needs to be given if execution condition is ExecutionCondition.TIMED.
-        wait_for_completion : bool, optional
-            Whether to wait for the completion of the command, by default True.
 
         Returns
         -------
@@ -866,9 +806,7 @@ class MTMSApi:
             target_voltage=target_voltage,
             execution_condition=execution_condition,
             time=time,
-            wait_for_completion=wait_for_completion,
         )
-
         return id
 
     # MEP analysis
