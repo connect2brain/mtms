@@ -14,7 +14,7 @@ from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, Trigger
 
 from mep_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetChannelVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetTargetVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
 
 from stimulation_interfaces.srv import IsStimulationAllowed
 
@@ -37,7 +37,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
 
-    ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
+    ROS_SERVICE_get_target_voltages = ('/targeting/get_target_voltages', GetTargetVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
@@ -60,7 +60,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
         ROS_SERVICE_ALLOW_STIMULATION,
-        ROS_SERVICE_GET_CHANNEL_VOLTAGES,
+        ROS_SERVICE_get_target_voltages,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
@@ -315,8 +315,8 @@ class MTMSApiNode(Node):
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
-        topic, service_type = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
+    def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
+        topic, service_type = self.ROS_SERVICE_get_target_voltages
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()

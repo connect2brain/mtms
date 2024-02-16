@@ -31,7 +31,7 @@ classdef MTMSApiNode < handle
         charge_feedback_subscriber
         discharge_feedback_subscriber
 
-        get_channel_voltages_client
+        get_target_voltages_client
         get_maximum_intensity_client
         get_default_waveform_client
         reverse_polarity_client
@@ -89,7 +89,7 @@ classdef MTMSApiNode < handle
 
             % To other parts of the system.
 
-            obj.get_channel_voltages_client = ros2svcclient(obj.node, "/targeting/get_channel_voltages", "targeting_interfaces/GetChannelVoltages");
+            obj.get_target_voltages_client = ros2svcclient(obj.node, "/targeting/get_target_voltages", "targeting_interfaces/GetTargetVoltages");
             obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
@@ -334,9 +334,9 @@ classdef MTMSApiNode < handle
 
         % Targeting
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+        function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
 
-            client = obj.get_channel_voltages_client;
+            client = obj.get_target_voltages_client;
 
             request = ros2message(client);
 
