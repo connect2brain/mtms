@@ -179,7 +179,7 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function send_pulse(obj, id, execution_condition, time, channel, waveform)
+        function send_pulse(obj, id, channel, waveform, execution_condition, time)
             %send_pulse Send pulse event
             %
             %   Send pulse event to the mTMS device.
@@ -195,6 +195,11 @@ classdef MTMSApiNode < handle
 
             pulse = ros2message(publisher);
 
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
@@ -207,7 +212,7 @@ classdef MTMSApiNode < handle
             send(publisher, pulse);
         end
 
-        function send_charge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_charge(obj, id, channel, target_voltage, execution_condition, time)
             %send_charge Send charge event
             %
             %   Sends charge event to the mTMS device.
@@ -215,6 +220,11 @@ classdef MTMSApiNode < handle
             publisher = obj.send_charge_publisher;
 
             charge = ros2message(publisher);
+
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
 
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
@@ -228,7 +238,7 @@ classdef MTMSApiNode < handle
             send(publisher, charge);
         end
 
-        function send_discharge(obj, id, execution_condition, time, channel, target_voltage)
+        function send_discharge(obj, id, channel, target_voltage, execution_condition, time)
             %send_discharge Send discharge command to mTMS device
             %
             %   Sends discharge command to the mTMS device.
@@ -236,6 +246,11 @@ classdef MTMSApiNode < handle
             publisher = obj.send_discharge_publisher;
 
             discharge = ros2message(publisher);
+
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
 
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
@@ -249,7 +264,7 @@ classdef MTMSApiNode < handle
             send(publisher, discharge);
         end
 
-        function send_trigger_out(obj, id, execution_condition, time, port, duration_us)
+        function send_trigger_out(obj, id, port, duration_us, execution_condition, time)
             %send_trigger_out Send trigger out event
             %
             %   Send trigger out event to the mTMS device.
@@ -257,6 +272,11 @@ classdef MTMSApiNode < handle
             publisher = obj.send_trigger_out_publisher;
 
             trigger_out = ros2message(publisher);
+
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
 
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);

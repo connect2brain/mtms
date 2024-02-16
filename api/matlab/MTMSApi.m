@@ -333,7 +333,7 @@ classdef MTMSApi < handle
             success = obj.node.allow_stimulation(allow_stimulation);
         end
 
-        function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity)
+        function id = send_pulse(obj, channel, waveform, reverse_polarity, execution_condition, time)
         % Send a pulse event to a specified channel.
         %
         % :param channel: The target channel. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -348,26 +348,39 @@ classdef MTMSApi < handle
         %   * `duration_in_ticks`, range: 0-65535
         %
         % :type waveform: list of dictionaries
+        % :param reverse_polarity: Whether to reverse the polarity of the waveform. Default is false.
+        % :type reverse_polarity: bool, optional
         % :param execution_condition: The condition under which the event should be executed. One of the following:
         %
         %   * ExecutionCondition.IMMEDIATE : Execute the event immediately.
         %   * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-        %   * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+        %   * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
         % :param time: The time at which the pulse should be sent. Default is 0.0.
         % :type time: float, optional
         %
-        % :param reverse_polarity: Whether to reverse the polarity of the waveform. Default is false.
-        % :type reverse_polarity: bool, optional
         % :return: The ID of the event.
         % :rtype: int
         %
         % .. note:: The event ID is incremented with each pulse sent.
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
             assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+
+            % Interpret NaN time as if time was not provided.
+            is_time_provided = nargin == 6 && ~isnan(time);
+
+            % Assert that time is provided if execution condition is 'timed'.
+            assert(~(execution_condition == obj.execution_conditions.TIMED && ~is_time_provided), "Execution condition is 'timed', but no time provided.");
+
+            % Assert that time is not provided if execution condition is not 'timed'.
+            assert(~(execution_condition ~= obj.execution_conditions.TIMED && is_time_provided), "Execution condition is not 'timed', but time was provided.");
+
+            if ~is_time_provided
+                time = NaN;
+            end
 
             id = obj.next_event_id();
 
@@ -376,7 +389,7 @@ classdef MTMSApi < handle
                 waveform_ = obj.reverse_polarity(waveform);
             end
 
-            obj.node.send_pulse(id, execution_condition, time, channel, waveform_);
+            obj.node.send_pulse(id, channel, waveform_, execution_condition, time);
         end
 
         function id = send_charge(obj, channel, target_voltage, execution_condition, time)
@@ -390,7 +403,7 @@ classdef MTMSApi < handle
         %
         %   * ExecutionCondition.IMMEDIATE : Execute the event immediately.
         %   * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-        %   * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+        %   * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
@@ -402,12 +415,24 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each charge sent.
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
             assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
 
-            id = obj.next_event_id();
+            % Interpret NaN time as if time was not provided.
+            is_time_provided = nargin == 5 && ~isnan(time);
 
-            obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
+            % Assert that time is provided if execution condition is 'timed'.
+            assert(~(execution_condition == obj.execution_conditions.TIMED && ~is_time_provided), "Execution condition is 'timed', but no time provided.");
+
+            % Assert that time is not provided if execution condition is not 'timed'.
+            assert(~(execution_condition ~= obj.execution_conditions.TIMED && is_time_provided), "Execution condition is not 'timed', but time was provided.");
+
+            if ~is_time_provided
+                time = NaN;
+            end
+
+            id = obj.next_event_id();
+            obj.node.send_charge(id, channel, target_voltage, execution_condition, time);
         end
 
         function id = send_discharge(obj, channel, target_voltage, execution_condition, time)
@@ -421,7 +446,7 @@ classdef MTMSApi < handle
         %
         %   * ExecutionCondition.IMMEDIATE : Execute the event immediately.
         %   * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-        %   * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+        %   * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
@@ -433,12 +458,25 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each discharge sent.
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
             assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
 
-            id = obj.next_event_id();
+            % Interpret NaN time as if time was not provided.
+            is_time_provided = nargin == 5 && ~isnan(time);
 
-            obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
+            % Assert that time is provided if execution condition is 'timed'.
+            assert(~(execution_condition == obj.execution_conditions.TIMED && ~is_time_provided), "Execution condition is 'timed', but no time provided.");
+
+            % Assert that time is not provided if execution condition is not 'timed'.
+            assert(~(execution_condition ~= obj.execution_conditions.TIMED && is_time_provided), "Execution condition is not 'timed', but time was provided.");
+
+            % XXX: If time is not provided, use a dummy value, as ROS2 messages require the field to have a value.
+            if ~is_time_provided
+                time = NaN;
+            end
+
+            id = obj.next_event_id();
+            obj.node.send_discharge(id, channel, target_voltage, execution_condition, time);
         end
 
         function id = send_trigger_out(obj, port, duration_us, execution_condition, time)
@@ -452,7 +490,7 @@ classdef MTMSApi < handle
         %
         %   * ExecutionCondition.IMMEDIATE : Execute the event immediately.
         %   * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-        %   * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+        %   * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
@@ -464,15 +502,28 @@ classdef MTMSApi < handle
         %
         % .. note:: The event ID is incremented with each trigger sent.
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
+
+            % Interpret NaN time as if time was not provided.
+            is_time_provided = nargin == 5 && ~isnan(time);
+
+            % Assert that time is provided if execution condition is 'timed'.
+            assert(~(execution_condition == obj.execution_conditions.TIMED && ~is_time_provided), "Execution condition is 'timed', but no time provided.");
+
+            % Assert that time is not provided if execution condition is not 'timed'.
+            assert(~(execution_condition ~= obj.execution_conditions.TIMED && is_time_provided), "Execution condition is not 'timed', but time was provided.");
+
+            % XXX: If time is not provided, use a dummy value, as ROS2 messages require the field to have a value.
+            if ~is_time_provided
+                time = NaN;
+            end
 
             id = obj.next_event_id();
-
-            obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
+            obj.node.send_trigger_out(id, port, duration_us, execution_condition, time);
         end
 
         function trigger_events(obj)
-        % Execute the events which have execution_condition set to ExecutionCondition.TRIGGERED.
+        % Execute the events which have execution_condition set to ExecutionCondition.WAIT_FOR_TRIGGER.
         %
         % Does not require any parameters. Does not return any value.
 
@@ -643,7 +694,7 @@ classdef MTMSApi < handle
         %
         %   * ExecutionCondition.IMMEDIATE : Execute the event immediately.
         %   * ExecutionCondition.TIMED : Execute the event when the desired time is reached.
-        %   * ExecutionCondition.TRIGGERED : Execute the event when an external trigger is sent or a trigger command is sent.
+        %   * ExecutionCondition.WAIT_FOR_TRIGGER : Execute the event when an external trigger is sent or a trigger command is sent.
         %
         %   Default is ExecutionCondition.TIMED
         % :type execution_condition: ExecutionCondition, optional
@@ -653,7 +704,20 @@ classdef MTMSApi < handle
         % :return: ID of the sent command.
         % :rtype: int
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
+
+            % Interpret NaN time as if time was not provided.
+            is_time_provided = nargin == 5 && ~isnan(time);
+
+            % Assert that time is provided if execution condition is 'timed'.
+            assert(~(execution_condition == obj.execution_conditions.TIMED && ~is_time_provided), "Execution condition is 'timed', but no time provided.");
+
+            % Assert that time is not provided if execution condition is not 'timed'.
+            assert(~(execution_condition ~= obj.execution_conditions.TIMED && is_time_provided), "Execution condition is not 'timed', but time was provided.");
+
+            if ~is_time_provided
+                time = NaN;
+            end
 
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
@@ -672,7 +736,7 @@ classdef MTMSApi < handle
         % :return: list of event IDs for each sent command
         % :return type: list of ints
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
 
             assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage defined for %d channels, but channel count is %d.", ...
                 length(target_voltages), obj.N_CHANNELS));
@@ -685,7 +749,7 @@ classdef MTMSApi < handle
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 target_voltage = target_voltages(channel + 1);
 
-                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0);
+                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE);
                 ids = [ids new_id];
             end
         end
@@ -696,10 +760,9 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
 
             target_voltages = zeros(1, obj.N_CHANNELS);
-
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
         end
 
@@ -714,7 +777,7 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
 
             assert(length(reverse_polarities) == obj.N_CHANNELS, ...
                 sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.N_CHANNELS));
@@ -730,7 +793,7 @@ classdef MTMSApi < handle
                 % get_default_waveform is a ROS service call that uses 0-based indexing, hence no need to add 1 here.
                 waveform = obj.get_default_waveform(channel);
 
-                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity);
+                new_id = obj.send_pulse(channel, waveform, reverse_polarity, obj.execution_conditions.TIMED, time);
                 ids = [ids new_id];
             end
         end
@@ -744,10 +807,9 @@ classdef MTMSApi < handle
         % :return: IDs for each sent command.
         % :rtype: list of ints
 
-            assert(obj.is_session_started(), sprintf("Session not started."));
+            assert(obj.is_session_started(), "Session not started.");
 
             time = obj.get_time() + obj.TIME_EPSILON;
-
             ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
         end
 
