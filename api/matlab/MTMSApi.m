@@ -228,7 +228,7 @@ classdef MTMSApi < handle
             state = obj.node.session.state.value;
         end
 
-        function voltage = get_voltage(obj, channel)
+        function voltage = get_current_voltage(obj, channel)
         % Return the capacitor voltage (V) of the given channel.
         %
         % :param channel: The channel number. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -244,16 +244,16 @@ classdef MTMSApi < handle
             voltage = obj.node.system_state.channel_states(channel + 1).voltage;
         end
 
-        function voltage = get_voltages(obj)
+        function voltages = get_current_voltages(obj)
         % Return the capacitor voltages (V) of all channels.
 
             obj.node.wait_for_new_state();
 
-            voltage = zeros(1, obj.N_CHANNELS);
+            voltages = zeros(1, obj.N_CHANNELS);
             for channel = 0:obj.N_CHANNELS - 1
 
                 % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
-                voltage(channel + 1) = obj.node.system_state.channel_states(channel + 1).voltage;
+                voltages(channel + 1) = obj.node.system_state.channel_states(channel + 1).voltage;
             end
         end
 
@@ -584,7 +584,7 @@ classdef MTMSApi < handle
         end
 
         function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
-        % Return the channel voltages (V) given the displacements, rotation angle and intensity.
+        % Return the target voltages (V), given the displacements, rotation angle, and intensity.
         %
         % :param displacement_x: Displacement in the x direction.
         % :type displacement_x: float
@@ -595,7 +595,7 @@ classdef MTMSApi < handle
         % :param intensity: Intensity value.
         % :type intensity: float
         %
-        % :return: Channel voltages.
+        % :return: Target voltages.
         % :rtype: list of floats
 
             [voltages, reverse_polarities] = obj.node.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
@@ -719,7 +719,7 @@ classdef MTMSApi < handle
                 time = NaN;
             end
 
-            voltage = obj.get_voltage(channel);
+            voltage = obj.get_current_voltage(channel);
             if voltage < target_voltage
                 id = obj.send_charge(channel, target_voltage, execution_condition, time);
             else
