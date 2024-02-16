@@ -33,7 +33,8 @@ classdef MTMSApi < handle
         session_states
         execution_conditions
 
-        event_id
+        latest_event_id
+        incomplete_events
     end
 
     methods
@@ -45,13 +46,15 @@ classdef MTMSApi < handle
         %
         %   * 'node' - An instance of the MTMSApiNode class.
         %   * 'event_id' - A numerical ID, initialized to 0.
+        %   * 'incomplete_events' - An empty list.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
         %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
         %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
             obj.node = MTMSApiNode();
 
-            obj.event_id = 0;
+            obj.latest_event_id = 0;
+            obj.incomplete_events = [];
 
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
             obj.session_states = ros2message("system_interfaces/SessionState");
@@ -67,8 +70,9 @@ classdef MTMSApi < handle
         % :returns: The incremented event ID.
         % :rtype: int
 
-            obj.event_id = obj.event_id + 1;
-            event_id = obj.event_id;
+            obj.latest_event_id = obj.latest_event_id + 1;
+            obj.incomplete_events = [obj.incomplete_events, obj.latest_event_id];
+            event_id = obj.latest_event_id;
         end
 
         % Start and stop
@@ -136,26 +140,43 @@ classdef MTMSApi < handle
             end
         end
 
-        function wait_for_completion(obj, id)
-        % Wait until the completion of an event with a given ID.
-        %
-        % :param id: The ID of the event to wait for.
-        % :type id: int
+        function wait_for_completion(obj, timeout)
+            % Wait until the completion of all remaining events.
+            %
+            % :param timeout: The maximum time to wait for the completion of events. If not provided, wait indefinitely.
+            % :type timeout: float, optional
 
-            obj.node.wait_for_new_state();
-            while ~isstruct(obj.node.get_event_feedback(id))
-                obj.node.wait_for_new_state();
+            % Check if timeout is provided, otherwise set to Inf for no timeout.
+            if nargin <= 1
+                timeout = Inf;
             end
-        end
 
-        function wait_for_completions(obj, ids)
-        % Wait until the completion of events with given IDs.
-        %
-        % :param ids: The ids of the events to wait for.
-        % :type ids: list of ints
+            start_time = obj.get_time();
 
-            for i = 1:length(ids)
-                obj.wait_for_completion(ids(i));
+            while ~isempty(obj.incomplete_events)
+                obj.node.wait_for_new_state();
+
+                % Pre-allocate a list for completed events.
+                completed_events = [];
+
+                % Check if any of the incomplete events are completed.
+                for idx = 1:length(obj.incomplete_events)
+                    id = obj.incomplete_events(idx);
+
+                    % Event feedback, when available, is a struct, so we can use isstruct to check if it is available.
+                    if isstruct(obj.get_event_feedback(id))
+                        completed_events = [completed_events, idx];
+                    end
+                end
+
+                % Remove the completed events.
+                obj.incomplete_events(completed_events) = [];
+
+                % Check if timeout has been reached.
+                if ~isinf(timeout) && obj.get_time() - start_time > timeout
+                    disp("Timeout reached while waiting for completion of events.");
+                    return;
+                end
             end
         end
 
@@ -312,7 +333,7 @@ classdef MTMSApi < handle
             success = obj.node.allow_stimulation(allow_stimulation);
         end
 
-        function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion)
+        function id = send_pulse(obj, channel, waveform, execution_condition, time, reverse_polarity)
         % Send a pulse event to a specified channel.
         %
         % :param channel: The target channel. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -340,8 +361,6 @@ classdef MTMSApi < handle
         %
         % :param reverse_polarity: Whether to reverse the polarity of the waveform. Default is false.
         % :type reverse_polarity: bool, optional
-        % :param wait_for_completion: Whether to wait for the pulse to complete before returning. Default is true.
-        % :type wait_for_completion: bool, optional
         % :return: The ID of the event.
         % :rtype: int
         %
@@ -358,13 +377,9 @@ classdef MTMSApi < handle
             end
 
             obj.node.send_pulse(id, execution_condition, time, channel, waveform_);
-
-            if wait_for_completion
-                obj.wait_for_completion(id);
-            end
         end
 
-        function id = send_charge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_charge(obj, channel, target_voltage, execution_condition, time)
         % Send a charge to a specified channel.
         %
         % :param channel: The channel for charging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -381,8 +396,6 @@ classdef MTMSApi < handle
         % :type execution_condition: ExecutionCondition, optional
         % :param time: The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
         % :type time: float, optional
-        % :param wait_for_completion: Whether to wait for the charge to complete before returning. Default is true.
-        % :type wait_for_completion: bool, optional
         %
         % :return:  The ID of the event.
         % :rtype: int
@@ -395,13 +408,9 @@ classdef MTMSApi < handle
             id = obj.next_event_id();
 
             obj.node.send_charge(id, execution_condition, time, channel, target_voltage);
-
-            if wait_for_completion
-                obj.wait_for_completion(id);
-            end
         end
 
-        function id = send_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_discharge(obj, channel, target_voltage, execution_condition, time)
         % Send a discharge to a specified channel.
         %
         % :param channel: The channel for discharging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
@@ -418,8 +427,6 @@ classdef MTMSApi < handle
         % :type execution_condition: ExecutionCondition, optional
         % :param time: The desired time for executing the event. Only used if execution_condition is ExecutionCondition.TIMED. Default is 0.0.
         % :type time: float, optional
-        % :param wait_for_completion: Whether to wait for the discharge to complete before returning. Default is true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: The ID of the event.
         % :rtype: int
@@ -432,13 +439,9 @@ classdef MTMSApi < handle
             id = obj.next_event_id();
 
             obj.node.send_discharge(id, execution_condition, time, channel, target_voltage);
-
-            if wait_for_completion
-                obj.wait_for_completion(id);
-            end
         end
 
-        function id = send_trigger_out(obj, port, duration_us, execution_condition, time, wait_for_completion)
+        function id = send_trigger_out(obj, port, duration_us, execution_condition, time)
         % Sends a trigger output to a specified port.
         %
         % :param port: The port number to send the trigger output to.
@@ -455,8 +458,6 @@ classdef MTMSApi < handle
         % :type execution_condition: ExecutionCondition, optional
         % :param time: The time at which the trigger should be sent. Default is 0.0.
         % :type time: float, optional
-        % :param wait_for_completion: Whether to wait for the trigger to complete before returning. Default is true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: The ID of the event.
         % :rtype: int
@@ -468,10 +469,6 @@ classdef MTMSApi < handle
             id = obj.next_event_id();
 
             obj.node.send_trigger_out(id, execution_condition, time, port, duration_us);
-
-            if wait_for_completion
-                obj.wait_for_completion(id);
-            end
         end
 
         function trigger_events(obj)
@@ -635,7 +632,7 @@ classdef MTMSApi < handle
 
         % Compound events
 
-        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time, wait_for_completion)
+        function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time)
         % Send charge or discharge command to a specified channel based on the current and target voltage.
         %
         % :param channel: Channel number.
@@ -652,8 +649,6 @@ classdef MTMSApi < handle
         % :type execution_condition: ExecutionCondition, optional
         % :param time: Time at when  before sending the pulse, by default 0.0.
         % :type time: float, optional
-        % :param wait_for_completion: Whether to wait for the completion of the command, by default true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: ID of the sent command.
         % :rtype: int
@@ -662,19 +657,17 @@ classdef MTMSApi < handle
 
             voltage = obj.get_voltage(channel);
             if voltage < target_voltage
-                id = obj.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
+                id = obj.send_charge(channel, target_voltage, execution_condition, time);
             else
-                id = obj.send_discharge(channel, target_voltage, execution_condition, time, wait_for_completion);
+                id = obj.send_discharge(channel, target_voltage, execution_condition, time);
             end
         end
 
-        function ids = send_immediate_charge_or_discharge_to_all_channels(obj, target_voltages, wait_for_completion)
+        function ids = send_immediate_charge_or_discharge_to_all_channels(obj, target_voltages)
         % Send immediate charge or discharge commands to all channels.
         %
         % :param target_voltages: List of target voltages for each channel.
         % :type target_voltages: list of floats
-        % :param wait_for_completion: Whether to wait for the completion of all commands, by default true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: list of event IDs for each sent command
         % :return type: list of ints
@@ -692,20 +685,13 @@ classdef MTMSApi < handle
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 target_voltage = target_voltages(channel + 1);
 
-                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0, false);
+                new_id = obj.send_charge_or_discharge(channel, target_voltage, obj.execution_conditions.IMMEDIATE, 0.0);
                 ids = [ids new_id];
-            end
-
-            if wait_for_completion
-                obj.wait_for_completions(ids);
             end
         end
 
-        function ids = send_immediate_full_discharge_to_all_channels(obj, wait_for_completion)
+        function ids = send_immediate_full_discharge_to_all_channels(obj)
         % Send immediate full discharge commands to all channels.
-        %
-        % :param wait_for_completion: Whether to wait for the completion of all commands, by default true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
@@ -714,18 +700,16 @@ classdef MTMSApi < handle
 
             target_voltages = zeros(1, obj.N_CHANNELS);
 
-            ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
+            ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
         end
 
-        function ids = send_timed_default_pulse_to_all_channels(obj, reverse_polarities, time, wait_for_completion)
+        function ids = send_timed_default_pulse_to_all_channels(obj, reverse_polarities, time)
         % Send timed default pulse commands to all channels.
         %
         % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
         % :type reverse_polarities: list of bools
         % :param time: The time at which to execute the pulse. Default is 0.0.
         % :type time: float, optional
-        % :param wait_for_completion: Whether to wait for the completion of all commands, by default true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
@@ -746,22 +730,16 @@ classdef MTMSApi < handle
                 % get_default_waveform is a ROS service call that uses 0-based indexing, hence no need to add 1 here.
                 waveform = obj.get_default_waveform(channel);
 
-                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity, false);
+                new_id = obj.send_pulse(channel, waveform, obj.execution_conditions.TIMED, time, reverse_polarity);
                 ids = [ids new_id];
-            end
-
-            if wait_for_completion
-                obj.wait_for_completions(ids);
             end
         end
 
-        function ids = send_immediate_default_pulse_to_all_channels(obj, reverse_polarities, wait_for_completion)
+        function ids = send_immediate_default_pulse_to_all_channels(obj, reverse_polarities)
         % Send immediate default pulse commands to all channels.
         %
         % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
         % :type reverse_polarities: list of bools
-        % :param wait_for_completion: Whether to wait for the completion of all commands, by default true.
-        % :type wait_for_completion: bool, optional
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
@@ -770,7 +748,7 @@ classdef MTMSApi < handle
 
             time = obj.get_time() + obj.TIME_EPSILON;
 
-            ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_completion);
+            ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
         end
 
         % Other
