@@ -583,7 +583,7 @@ classdef MTMSApi < handle
             end
         end
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+        function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
         % Return the channel voltages (V) given the displacements, rotation angle and intensity.
         %
         % :param displacement_x: Displacement in the x direction.
@@ -598,7 +598,7 @@ classdef MTMSApi < handle
         % :return: Channel voltages.
         % :rtype: list of floats
 
-            [voltages, reverse_polarities] = obj.node.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+            [voltages, reverse_polarities] = obj.node.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
         end
 
         function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)

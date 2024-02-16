@@ -541,7 +541,7 @@ class MTMSApi:
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
+    def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
         """
         Return the channel voltages (V) given the displacements, rotation angle and intensity.
 
@@ -565,7 +565,7 @@ class MTMSApi:
         array-like
             Channel voltages.
         """
-        return self.node.get_channel_voltages(
+        return self.node.get_target_voltages(
             displacement_x=displacement_x,
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
