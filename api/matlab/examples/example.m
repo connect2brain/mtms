@@ -11,9 +11,9 @@ channel = 1;
 target_voltage = 20;
 execution_condition = api.execution_conditions.IMMEDIATE;
 time = 10.0;
-wait_for_completion = true;
 
-api.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
+api.send_charge(channel, target_voltage, execution_condition, time);
+api.wait_for_completion();
 
 
 %% Allow stimulation before sending a pulse.
@@ -25,12 +25,14 @@ api.allow_stimulation(true);
 waveform = api.get_default_waveform(channel);
 reverse_polarity = false;
 
-api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
+api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity);
+api.wait_for_completion();
 
 
 %% Discharge channel 1 completely.
 
-api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
+api.send_discharge(channel, 0, execution_condition, time);
+api.wait_for_completion();
 
 
 %% Send trigger out on port 1.
@@ -38,7 +40,8 @@ api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
 port = 1;
 duration_us = 1000;
 
-api.send_trigger_out(port, duration_us, execution_condition, time, wait_for_completion);
+api.send_trigger_out(port, duration_us, execution_condition, time);
+api.wait_for_completion();
 
 
 %% Send pulse on channel 1 and analyze MEP.
@@ -53,16 +56,9 @@ reverse_polarity = false;
 channel = 1;
 execution_condition = api.execution_conditions.TIMED;
 time = api.get_time() + 3.0;
-wait_for_completion = false;  % Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
-api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
-
-% Create a custom waveform.
-
-phases = {'RISING', 'HOLD', 'FALLING'};
-durations_in_ticks = {2400, 1200, 1480};
-
-custom_waveform = api.create_waveform(phases, durations_in_ticks);
+api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity);
+% Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 % Analyze MEP on EMG channel 1, coinciding with the pulse.
 
@@ -83,6 +79,15 @@ mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, me
 amplitude = mep.amplitude;
 latency = mep.latency;
 
+%% Custom waveforms
+
+% Create a custom waveform.
+
+phases = {'RISING', 'HOLD', 'FALLING'};
+durations_in_ticks = {2400, 1200, 1480};
+
+custom_waveform = api.create_waveform(phases, durations_in_ticks);
+
 %% Targeting
 
 displacement_x = 5;  % mm
@@ -99,12 +104,13 @@ maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, ro
 
 % Charge all channels to target voltages.
 
-wait_for_completion = true;
-api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
+api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
+api.wait_for_completion();
 
 % Send default pulse to all channels.
 
-api.send_immediate_default_pulse_to_all_channels(reverse_polarities, wait_for_completion);
+api.send_immediate_default_pulse_to_all_channels(reverse_polarities);
+api.wait_for_completion();
 
 
 %% Targeting and MEP analysis
@@ -119,15 +125,15 @@ algorithm = api.get_targeting_algorithm('least_squares');
 
 % Charge all channels to target voltages.
 
-wait_for_completion = true;
-api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
+api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
+api.wait_for_completion();
 
 % Send default pulse to all channels.
 
-wait_for_completion = false;
 time = api.get_time() + 3.0;
 
-api.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_completion);
+api.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
+% Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 % Analyze MEP on EMG channel 0, coinciding with the pulse.
 

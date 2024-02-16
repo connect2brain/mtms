@@ -34,6 +34,7 @@ api.send_charge(
     execution_condition=execution_condition,
     time=time,
 )
+api.wait_for_completion()
 
 # Send pulse on channel 1, using the default waveform.
 waveform = api.get_default_waveform(channel)
@@ -48,6 +49,7 @@ api.send_pulse(
     time=time,
     reverse_polarity=reverse_polarity,
 )
+api.wait_for_completion()
 
 # Discharge channel 1 completely.
 api.send_discharge(
@@ -56,6 +58,7 @@ api.send_discharge(
     execution_condition=execution_condition,
     time=time,
 )
+api.wait_for_completion()
 
 # Send trigger out on port 1.
 port = 1
@@ -67,6 +70,7 @@ api.send_trigger_out(
     execution_condition=execution_condition,
     time=time,
 )
+api.wait_for_completion()
 
 # Send pulse on channel 1 and a simultaneous trigger out on port 1.
 channel = 1
@@ -83,8 +87,9 @@ api.send_pulse(
     execution_condition=execution_condition,
     time=time,
     reverse_polarity=reverse_polarity,
-    wait_for_completion=False,
 )
+
+# Do not wait for completion here, as we want to execute the trigger out simultaneously with the pulse.
 
 port = 1
 duration_us = 1000
@@ -94,10 +99,10 @@ api.send_trigger_out(
     duration_us=duration_us,
     execution_condition=execution_condition,
     time=time,
-    wait_for_completion=False,
 )
 
-api.wait(2)
+# Once both pulse and trigger out are sent, wait for the completion of both.
+api.wait_for_completion()
 
 ## Send pulse on channel 1 and analyze MEP.
 
@@ -109,7 +114,6 @@ reverse_polarity = False
 channel = 1
 execution_condition = ExecutionCondition.TIMED
 time = api.get_time() + 3.0
-wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
 api.send_pulse(
     channel=channel,
@@ -117,8 +121,8 @@ api.send_pulse(
     execution_condition=execution_condition,
     time=time,
     reverse_polarity=reverse_polarity,
-    wait_for_completion=wait_for_completion,
 )
+# Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
 mep_configuration = MepConfiguration(
@@ -174,12 +178,13 @@ maximum_intensity = api.get_maximum_intensity(
 api.send_immediate_charge_or_discharge_to_all_channels(
     target_voltages=target_voltages,
 )
+api.wait_for_completion()
 
 # Send default pulse to all channels.
 api.send_immediate_default_pulse_to_all_channels(
     reverse_polarities=reverse_polarities,
 )
-
+api.wait_for_completion()
 
 ## Targeting combined with MEP analysis
 
@@ -200,16 +205,16 @@ target_voltages, reverse_polarities = api.get_channel_voltages(
 api.send_immediate_charge_or_discharge_to_all_channels(
     target_voltages=target_voltages,
 )
+api.wait_for_completion()
 
 # Send default pulse to all channels.
-wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 time = api.get_time() + 3.0
 
 api.send_timed_default_pulse_to_all_channels(
     reverse_polarities=reverse_polarities,
     time=time,
-    wait_for_completion=wait_for_completion,
 )
+# Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
 mep_configuration = MepConfiguration(
@@ -253,7 +258,6 @@ waveform = [
         duration_in_ticks=1480,
     )
 ]
-
 
 ## Restart session
 api.stop_session()
