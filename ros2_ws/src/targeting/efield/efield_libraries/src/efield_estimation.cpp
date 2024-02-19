@@ -228,7 +228,7 @@ void efield_estimation_ROI_max_loc(std::vector<float>& position, std::vector<flo
         MatrixX3f_RM sumEfield = MatrixX3f_RM::Zero(id_list.size(),3);
 
         for (int I = 0; I < coils.Noc(); I++) {
-            Ecoilset[I] = TMS_obj->Efield(coils.GetCoil(I), dIperdt_vect.at(I), Id_list);
+            Ecoilset[I] = TMS_obj->Efield(coils.GetCoil(I), -dIperdt_vect.at(I), Id_list);
             sumEfield += Ecoilset[I];
             std::cout<<"dIperdt: "<<-dIperdt_vect.at(I)<<std::endl;
         }
