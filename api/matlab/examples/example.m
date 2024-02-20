@@ -93,6 +93,16 @@ durations_in_ticks = {2400, 1200, 1480};
 
 custom_waveform = api.create_waveform(phases, durations_in_ticks);
 
+% Send pulse on all channels, using the custom waveform created above.
+
+% Note that in this example, the same waveform is used on all channels, but in reality, different waveforms
+% should be used on different channels due to different coil characteristics.
+
+reverse_polarities = [false, false, false, false, false];
+waveforms = {custom_waveform, custom_waveform, custom_waveform, custom_waveform, custom_waveform};
+
+api.send_immediate_custom_pulse_to_all_channels(waveforms, reverse_polarities);
+
 %% Targeting
 
 displacement_x = 5;  % mm
