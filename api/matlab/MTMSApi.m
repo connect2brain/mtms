@@ -766,6 +766,41 @@ classdef MTMSApi < handle
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
         end
 
+        function ids = send_timed_custom_pulse_to_all_channels(obj, waveforms, reverse_polarities, time)
+        % Send timed default pulse commands to all channels.
+        %
+        % :param waveforms: Cell array of waveforms for each channel.
+        % :type waveforms: cell array of waveforms
+        % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
+        % :type reverse_polarities: list of bools
+        % :param time: The time at which to execute the pulse. Default is 0.0.
+        % :type time: float, optional
+        %
+        % :return: IDs for each sent command.
+        % :rtype: list of ints
+
+            assert(obj.is_session_started(), "Session not started.");
+
+            assert(length(waveforms) == obj.N_CHANNELS, ...
+                sprintf("Waveforms defined for %d channels, but channel count is %d.", length(waveforms), obj.N_CHANNELS));
+
+            assert(length(reverse_polarities) == obj.N_CHANNELS, ...
+                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.N_CHANNELS));
+
+            ids = [];
+
+            % Channel indexing starts from 0, hence start the loop from 0.
+            for channel = 0:obj.N_CHANNELS - 1
+
+                % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
+                reverse_polarity = reverse_polarities(channel + 1);
+                waveform = waveforms{channel + 1};
+
+                new_id = obj.send_pulse(channel, waveform, reverse_polarity, obj.execution_conditions.TIMED, time);
+                ids = [ids new_id];
+            end
+        end
+
         function ids = send_timed_default_pulse_to_all_channels(obj, reverse_polarities, time)
         % Send timed default pulse commands to all channels.
         %
@@ -811,6 +846,23 @@ classdef MTMSApi < handle
 
             time = obj.get_time() + obj.TIME_EPSILON;
             ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
+        end
+
+        function ids = send_immediate_custom_pulse_to_all_channels(obj, waveforms, reverse_polarities)
+        % Send immediate default pulse commands to all channels.
+        %
+        % :param waveforms: Cell array of waveforms for each channel.
+        % :type waveforms: cell array of waveforms
+        % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
+        % :type reverse_polarities: list of bools
+        %
+        % :return: IDs for each sent command.
+        % :rtype: list of ints
+
+            assert(obj.is_session_started(), "Session not started.");
+
+            time = obj.get_time() + obj.TIME_EPSILON;
+            ids = obj.send_timed_custom_pulse_to_all_channels(waveforms, reverse_polarities, time);
         end
 
         % Other
