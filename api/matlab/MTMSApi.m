@@ -71,8 +71,16 @@ classdef MTMSApi < handle
         % :rtype: int
 
             obj.latest_event_id = obj.latest_event_id + 1;
-            obj.incomplete_events = [obj.incomplete_events, obj.latest_event_id];
             event_id = obj.latest_event_id;
+        end
+
+        function add_to_incomplete_events(obj, event_id)
+        % Add given event ID to list of incomplete events.
+        %
+        % :param event_id: The event ID to add to the list.
+        % :type event_id: int
+
+            obj.incomplete_events = [obj.incomplete_events, event_id];
         end
 
         % Start and stop
@@ -390,6 +398,8 @@ classdef MTMSApi < handle
             end
 
             obj.node.send_pulse(id, channel, waveform_, execution_condition, time);
+
+            obj.add_to_incomplete_events(id);
         end
 
         function id = send_charge(obj, channel, target_voltage, execution_condition, time)
@@ -433,6 +443,8 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
             obj.node.send_charge(id, channel, target_voltage, execution_condition, time);
+
+            obj.add_to_incomplete_events(id);
         end
 
         function id = send_discharge(obj, channel, target_voltage, execution_condition, time)
@@ -477,6 +489,8 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
             obj.node.send_discharge(id, channel, target_voltage, execution_condition, time);
+
+            obj.add_to_incomplete_events(id);
         end
 
         function id = send_trigger_out(obj, port, duration_us, execution_condition, time)
@@ -520,6 +534,8 @@ classdef MTMSApi < handle
 
             id = obj.next_event_id();
             obj.node.send_trigger_out(id, port, duration_us, execution_condition, time);
+
+            obj.add_to_incomplete_events(id);
         end
 
         function trigger_events(obj)
