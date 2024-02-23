@@ -71,10 +71,12 @@ class MTMSApiNode(Node):
         ROS_ACTION_ANALYZE_MEP,
     )
 
-    def __init__(self):
+    def __init__(self, channel_count):
         super().__init__('mtms_api_node')
 
-        self.printer = MTMSApiPrinter()
+        self.printer = MTMSApiPrinter(
+            channel_count=channel_count
+        )
 
         self.system_state = None
         self.session = None

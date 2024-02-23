@@ -8,7 +8,7 @@ api.start_session();
 %% Charge channel 0 to 20 V.
 
 % Note that the TMS channel indexing starts from 0.
-channel = 0;
+channel = 5;
 target_voltage = 20;
 execution_condition = api.execution_conditions.IMMEDIATE;
 

@@ -40,7 +40,7 @@ classdef MTMSApiNode < handle
     end
 
     methods
-        function obj = MTMSApiNode()
+        function obj = MTMSApiNode(channel_count)
 
             % Currently in the Aalto mTMS lab, the API seems to work without changing
             % RMW_IMPLEMENTATION. Hence, comment out the line below. If in the
@@ -51,7 +51,7 @@ classdef MTMSApiNode < handle
             % setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp")
 
             obj.node = ros2node("mtms_matlab_api");
-            obj.printer = MTMSApiPrinter();
+            obj.printer = MTMSApiPrinter(channel_count);
 
             obj.system_state = NaN;
             obj.session = NaN;
