@@ -22,43 +22,50 @@
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-const uint8_t CHANNEL_COUNT = 5;
-
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 #define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)
 
-NiFpga_mTMS_IndicatorU16 voltage_indicators[CHANNEL_COUNT] = {
+/* 6 is the max number of channels in the mTMS device. */
+NiFpga_mTMS_IndicatorU16 voltage_indicators[6] = {
     NiFpga_mTMS_IndicatorU16_Channel1Capacitorvoltage,
     NiFpga_mTMS_IndicatorU16_Channel2Capacitorvoltage,
     NiFpga_mTMS_IndicatorU16_Channel3Capacitorvoltage,
     NiFpga_mTMS_IndicatorU16_Channel4Capacitorvoltage,
-    NiFpga_mTMS_IndicatorU16_Channel5Capacitorvoltage
+    NiFpga_mTMS_IndicatorU16_Channel5Capacitorvoltage,
+    NiFpga_mTMS_IndicatorU16_Channel6Capacitorvoltage
 };
 
-NiFpga_mTMS_IndicatorU16 temperature_indicators[CHANNEL_COUNT] = {
+NiFpga_mTMS_IndicatorU16 temperature_indicators[6] = {
     NiFpga_mTMS_IndicatorU16_Coil1Temperature,
     NiFpga_mTMS_IndicatorU16_Coil2Temperature,
     NiFpga_mTMS_IndicatorU16_Coil3Temperature,
     NiFpga_mTMS_IndicatorU16_Coil4Temperature,
-    NiFpga_mTMS_IndicatorU16_Coil5Temperature
+    NiFpga_mTMS_IndicatorU16_Coil5Temperature,
+    NiFpga_mTMS_IndicatorU16_Coil6Temperature
 };
 
-NiFpga_mTMS_IndicatorU32 pulse_count_indicators[CHANNEL_COUNT] = {
+NiFpga_mTMS_IndicatorU32 pulse_count_indicators[6] = {
     NiFpga_mTMS_IndicatorU32_Coil1Pulsecount,
     NiFpga_mTMS_IndicatorU32_Coil2Pulsecount,
     NiFpga_mTMS_IndicatorU32_Coil3Pulsecount,
     NiFpga_mTMS_IndicatorU32_Coil4Pulsecount,
-    NiFpga_mTMS_IndicatorU32_Coil5Pulsecount
+    NiFpga_mTMS_IndicatorU32_Coil5Pulsecount,
+    NiFpga_mTMS_IndicatorU32_Coil6Pulsecount
 };
 
-NiFpga_mTMS_IndicatorU16 channel_error_indicators[CHANNEL_COUNT] = {
+NiFpga_mTMS_IndicatorU16 channel_error_indicators[6] = {
     NiFpga_mTMS_IndicatorU16_Channel1Errors,
     NiFpga_mTMS_IndicatorU16_Channel2Errors,
     NiFpga_mTMS_IndicatorU16_Channel3Errors,
     NiFpga_mTMS_IndicatorU16_Channel4Errors,
-    NiFpga_mTMS_IndicatorU16_Channel5Errors
+    NiFpga_mTMS_IndicatorU16_Channel5Errors,
+    /* XXX: Channel6Errors is missing from the FPGA; to make things consistent, it should be added there, even as a
+         dummy register that doesn't change in value. (Channel 6 is available only in Aalto, and the discharge
+         controllers in Aalto do not report errors due to being the old generation.) Meanwhile, just repeat
+         Channel5Errors. */
+    NiFpga_mTMS_IndicatorU16_Channel5Errors,
 };
 
 NiFpga_mTMS_IndicatorU16 cumulative_error_indicator = NiFpga_mTMS_IndicatorU16_Cumulativeerrors;
@@ -79,6 +86,17 @@ public:
   SystemStateBridge()
       : Node("system_state_bridge") {
 
+    /* Read ROS parameters. */
+    auto descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+
+    descriptor.description = "Channel count";
+    descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+    this->declare_parameter("channel-count", NULL, descriptor);
+    this->get_parameter("channel-count", this->channel_count);
+
+    RCLCPP_INFO(rclcpp::get_logger("system_state_bridge"), "Channel count: %d", this->channel_count);
+
+    /* Create publishers. */
     const auto DEADLINE_NS = std::chrono::nanoseconds(SYSTEM_STATE_PUBLISHING_INTERVAL + SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE);
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -151,7 +169,7 @@ private:
 
     uint16_t error;
 
-    for (auto i = 0; i < CHANNEL_COUNT; i++) {
+    for (auto i = 0; i < channel_count; i++) {
       mtms_device_interfaces::msg::ChannelState channel_state = mtms_device_interfaces::msg::ChannelState();
       channel_state.channel_index = i;
 
@@ -244,6 +262,8 @@ private:
                           "Please start the mTMS device.");
     }
   }
+
+  uint8_t channel_count;
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
