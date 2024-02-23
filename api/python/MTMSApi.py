@@ -21,9 +21,6 @@ class MTMSApi:
     """
     An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
     """
-    # TODO: Channel count hardcoded for now.
-    N_CHANNELS = 5
-
     # TIME_EPSILON is used to implement events that are to be executed immediately but
     # wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
     # and execute all the events at that time.
@@ -34,16 +31,31 @@ class MTMSApi:
     #
     TIME_EPSILON = 0.15
 
-    def __init__(self):
+    def __init__(self, channel_count=5):
         """
         Initializes the MTMSApi instance, creating a new MTMSApiNode.
 
-        Does not require any parameters, and does not return any value.
+        Parameters
+        ----------
+        channel_count : int, optional
+            The number of channels in the device. Default is 5.
+
+            TODO: This should come from .env instead of the API user setting it.
         """
         rclpy.init(args=None)
-        self.node = MTMSApiNode()
+
+        self.node = MTMSApiNode(
+            channel_count=channel_count,
+        )
+
+        self.channel_count = channel_count
+
         self.latest_event_id = 0
         self.incomplete_events = []
+
+        print("Configuration:")
+        print("")
+        print("  Channel count: {}".format(self.channel_count))
 
         signal.signal(signal.SIGINT, self.handle_sigint)
 
@@ -237,7 +249,7 @@ class MTMSApi:
         """
         self.node.wait_for_new_state()
 
-        voltages = [self.node.system_state.channel_states[channel].voltage for channel in range(self.N_CHANNELS)]
+        voltages = [self.node.system_state.channel_states[channel].voltage for channel in range(self.channel_count)]
         return voltages
 
     def get_temperature(self, channel):
@@ -647,11 +659,11 @@ class MTMSApi:
             IDs for each sent command.
         """
         assert self.is_session_started(), "Session not started."
-        assert len(target_voltages) == self.N_CHANNELS, "Target voltage only defined for {} channels, channel count: {}.".format(
-            len(target_voltages), self.N_CHANNELS)
+        assert len(target_voltages) == self.channel_count, "Target voltage only defined for {} channels, channel count: {}.".format(
+            len(target_voltages), self.channel_count)
 
         ids = []
-        for channel in range(self.N_CHANNELS):
+        for channel in range(self.channel_count):
             target_voltage = target_voltages[channel]
 
             id = self.send_charge_or_discharge(
@@ -674,7 +686,7 @@ class MTMSApi:
         """
         assert self.is_session_started(), "Session not started."
 
-        target_voltages = self.N_CHANNELS * [0]
+        target_voltages = self.channel_count * [0]
 
         ids = self.send_immediate_charge_or_discharge_to_all_channels(
             target_voltages=target_voltages,
@@ -699,11 +711,11 @@ class MTMSApi:
             IDs for each sent command.
         """
         assert self.is_session_started(), "Session not started."
-        assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
-            len(reverse_polarities), self.N_CHANNELS)
+        assert len(reverse_polarities) == self.channel_count, "Reverse polarities only defined for {} channels, channel count: {}.".format(
+            len(reverse_polarities), self.channel_count)
 
         ids = []
-        for channel in range(self.N_CHANNELS):
+        for channel in range(self.channel_count):
             reverse_polarity = reverse_polarities[channel]
             waveform = self.get_default_waveform(channel=channel)
 
@@ -743,11 +755,11 @@ class MTMSApi:
             IDs for each sent command.
         """
         assert self.is_session_started(), "Session not started."
-        assert len(reverse_polarities) == self.N_CHANNELS, "Reverse polarities only defined for {} channels, channel count: {}.".format(
-            len(reverse_polarities), self.N_CHANNELS)
+        assert len(reverse_polarities) == self.channel_count, "Reverse polarities only defined for {} channels, channel count: {}.".format(
+            len(reverse_polarities), self.channel_count)
 
         ids = []
-        for channel in range(self.N_CHANNELS):
+        for channel in range(self.channel_count):
             reverse_polarity = reverse_polarities[channel]
             waveform = self.get_default_waveform(channel=channel)
 
