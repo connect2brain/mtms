@@ -8,9 +8,6 @@ classdef MTMSApi < handle
     % An API for controlling a multi-channel transcranial magnetic stimulation (mTMS) device.
 
     properties (Constant)
-        % TODO: Channel count hardcoded for now.
-        N_CHANNELS = 5
-
         % TIME_EPSILON is used to implement events that are to be executed immediately but
         % wanting to synchronize them: to do that, get current time, add TIME_EPSILON to it,
         % and execute all the events at that time.
@@ -29,6 +26,8 @@ classdef MTMSApi < handle
         node
         enums
 
+        channel_count
+
         device_states
         session_states
         execution_conditions
@@ -39,7 +38,7 @@ classdef MTMSApi < handle
 
     methods
 
-        function obj = MTMSApi()
+        function obj = MTMSApi(channel_count)
         % Initializes the MTMSApi object. Does not require any parameters.
         %
         % :returns: An MTMSApi object with five properties:
@@ -51,7 +50,17 @@ classdef MTMSApi < handle
         %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
         %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
-            obj.node = MTMSApiNode();
+            % TODO: Should receive channel count automatically from .env so that the user of the API wouldn't have to care.
+
+            % If channel count is not given, default to 5, which is the channel count of the Gen 2 mTMS devices.
+            if nargin < 1
+                channel_count = 5;
+            end
+
+            % Initialize object
+            obj.node = MTMSApiNode(channel_count);
+
+            obj.channel_count = channel_count;
 
             obj.latest_event_id = 0;
             obj.incomplete_events = [];
@@ -60,6 +69,11 @@ classdef MTMSApi < handle
             obj.session_states = ros2message("system_interfaces/SessionState");
 
             obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
+
+            % Print configuration
+            disp("Configuration:")
+            disp(" ")
+            disp(sprintf("  Channel count: %d", channel_count))
         end
 
         % General
@@ -244,7 +258,7 @@ classdef MTMSApi < handle
         % :return: The capacitor voltage (V) of the specified channel.
         % :rtype: float
 
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             obj.node.wait_for_new_state();
 
@@ -257,8 +271,8 @@ classdef MTMSApi < handle
 
             obj.node.wait_for_new_state();
 
-            voltages = zeros(1, obj.N_CHANNELS);
-            for channel = 0:obj.N_CHANNELS - 1
+            voltages = zeros(1, obj.channel_count);
+            for channel = 0:obj.channel_count - 1
 
                 % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
                 voltages(channel + 1) = obj.node.system_state.channel_states(channel + 1).voltage;
@@ -274,7 +288,7 @@ classdef MTMSApi < handle
         % :return: The coil temperature of the specified channel.
         % :rtype: float
 
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             obj.node.wait_for_new_state();
 
@@ -290,7 +304,7 @@ classdef MTMSApi < handle
         % :return: The total number of pulses generated.
         % :rtype: float
 
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             obj.node.wait_for_new_state();
 
@@ -375,7 +389,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each pulse sent.
 
             assert(obj.is_session_started(), "Session not started.");
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             % Interpret NaN time as if time was not provided.
             is_time_provided = nargin == 6 && ~isnan(time);
@@ -426,7 +440,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each charge sent.
 
             assert(obj.is_session_started(), "Session not started.");
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             % Interpret NaN time as if time was not provided.
             is_time_provided = nargin == 5 && ~isnan(time);
@@ -471,7 +485,7 @@ classdef MTMSApi < handle
         % .. note:: The event ID is incremented with each discharge sent.
 
             assert(obj.is_session_started(), "Session not started.");
-            assert(channel >= 0 && channel < obj.N_CHANNELS, sprintf("Channel must be in range 0-%d.", obj.N_CHANNELS - 1));
+            assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
 
             % Interpret NaN time as if time was not provided.
             is_time_provided = nargin == 5 && ~isnan(time);
@@ -754,13 +768,13 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
 
-            assert(length(target_voltages) == obj.N_CHANNELS, sprintf("Target voltage defined for %d channels, but channel count is %d.", ...
-                length(target_voltages), obj.N_CHANNELS));
+            assert(length(target_voltages) == obj.channel_count, sprintf("Target voltage defined for %d channels, but channel count is %d.", ...
+                length(target_voltages), obj.channel_count));
 
             ids = [];
 
             % Channel indexing starts from 0, hence start the loop from 0.
-            for channel = 0:obj.N_CHANNELS - 1
+            for channel = 0:obj.channel_count - 1
 
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 target_voltage = target_voltages(channel + 1);
@@ -778,7 +792,7 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
 
-            target_voltages = zeros(1, obj.N_CHANNELS);
+            target_voltages = zeros(1, obj.channel_count);
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
         end
 
@@ -797,16 +811,16 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
 
-            assert(length(waveforms) == obj.N_CHANNELS, ...
-                sprintf("Waveforms defined for %d channels, but channel count is %d.", length(waveforms), obj.N_CHANNELS));
+            assert(length(waveforms) == obj.channel_count, ...
+                sprintf("Waveforms defined for %d channels, but channel count is %d.", length(waveforms), obj.channel_count));
 
-            assert(length(reverse_polarities) == obj.N_CHANNELS, ...
-                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.N_CHANNELS));
+            assert(length(reverse_polarities) == obj.channel_count, ...
+                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.channel_count));
 
             ids = [];
 
             % Channel indexing starts from 0, hence start the loop from 0.
-            for channel = 0:obj.N_CHANNELS - 1
+            for channel = 0:obj.channel_count - 1
 
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 reverse_polarity = reverse_polarities(channel + 1);
@@ -830,13 +844,13 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
 
-            assert(length(reverse_polarities) == obj.N_CHANNELS, ...
-                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.N_CHANNELS));
+            assert(length(reverse_polarities) == obj.channel_count, ...
+                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.channel_count));
 
             ids = [];
 
             % Channel indexing starts from 0, hence start the loop from 0.
-            for channel = 0:obj.N_CHANNELS - 1
+            for channel = 0:obj.channel_count - 1
 
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
                 reverse_polarity = reverse_polarities(channel + 1);

@@ -22,10 +22,12 @@ export $(grep "^MTMS_DEVICE_ENABLED=" $SITE_ENV_FILE | xargs)
 export $(grep "^MTMS_DEVICE_GENERATION=" $SITE_ENV_FILE | xargs)
 export $(grep "^BITFILE_VERSION=" $SITE_ENV_FILE | xargs)
 export $(grep "^RESOURCE=" $SITE_ENV_FILE | xargs)
+export $(grep "^CHANNEL_COUNT=" $SITE_ENV_FILE | xargs)
 
 echo "mTMS device enabled: $MTMS_DEVICE_ENABLED"
 echo "mTMS device generation: $MTMS_DEVICE_GENERATION"
 echo "Bitfile version: $BITFILE_VERSION"
+echo "Channel count: $CHANNEL_COUNT"
 
 # Configure mTMS bridge
 export BITFILE_DIRECTORY=$MTMS_ROOT/bitfiles
@@ -52,4 +54,4 @@ colcon build --packages-select mtms_device_bridge
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
 # Start mTMS bridge
-ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false enabled:=$MTMS_DEVICE_ENABLED
+ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false enabled:=$MTMS_DEVICE_ENABLED channel-count:=$CHANNEL_COUNT
