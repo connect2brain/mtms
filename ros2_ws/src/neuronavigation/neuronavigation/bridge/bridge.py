@@ -534,9 +534,25 @@ class Connection(Thread):
         self.neuronavigation_pedal_bridge.remove_pedal_callback(name=name)
 
 
+class RosLoggerWrapper:
+    def __init__(self, node):
+        self.node = node
+
+    def write(self, message):
+        if message.rstrip() != "":
+            # Redirect to ROS2's logging.
+            self.node.get_logger().info(message.rstrip())
+
+    def flush(self):
+        pass
+
+
 def main():
     connection = Connection()
     connection.start()
+
+    # Override stdout to redirect print statements to ROS2 logging.
+    sys.stdout = RosLoggerWrapper(connection.node)
 
     if platform.system() != 'Windows':
         # XInitThreads call is needed for multithreading in InVesalius to not crash when running in Docker.

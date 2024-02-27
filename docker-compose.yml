@@ -255,6 +255,12 @@ services:
       dockerfile: ros2_ws/src/pipeline/triggerer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
+    volumes:
+      # XXX: This is a workaround to allow access to LabJack over reconnects. Most likely the correct
+      #   solution would be to modify LabJack installation scripts so that they could be successfully
+      #   run in Docker container. This workaround potentially increases security risks by exposing
+      #   the host's devices to the container.
+      - "/dev:/dev"
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host

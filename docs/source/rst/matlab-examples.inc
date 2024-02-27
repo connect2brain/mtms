@@ -97,7 +97,7 @@ Targeting
     rotation_angle = 90;  % deg
     intensity = 20;  % V/m
 
-    [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
+    [target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity);
 
 .. rubric:: Get maximum intensity
 .. code-block:: matlab
@@ -128,7 +128,7 @@ Targeting combined with MEP analysis
     rotation_angle = 90;  % deg
     intensity = 20;  % V/m
 
-    [target_voltages, reverse_polarities] = api.get_channel_voltages(displacement_x, displacement_y, rotation_angle, intensity);
+    [target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity);
 
 .. rubric:: Charge all channels to target voltages.
 .. code-block:: matlab
