@@ -44,7 +44,7 @@ bool TurboLinkAdapter::init_socket() {
   /* Bind socket to address */
   if (bind(this->socket_, (struct sockaddr *)&(this->socket_own), sizeof(this->socket_own)) == -1) {
     RCLCPP_ERROR(rclcpp::get_logger(LOGGER_NAME),
-                 "Error: Failed to bind socket file descriptor to socket.");
+                 "Error: Failed to bind socket file descriptor to socket. Reason %s", strerror(errno));
     return false;
   }
 
