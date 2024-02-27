@@ -14,7 +14,7 @@ from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, Trigger
 
 from mep_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetChannelVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetTargetVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
 
 from stimulation_interfaces.srv import IsStimulationAllowed
 
@@ -37,7 +37,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
 
-    ROS_SERVICE_GET_CHANNEL_VOLTAGES = ('/targeting/get_channel_voltages', GetChannelVoltages)
+    ROS_SERVICE_get_target_voltages = ('/targeting/get_target_voltages', GetTargetVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
@@ -60,7 +60,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
         ROS_SERVICE_ALLOW_STIMULATION,
-        ROS_SERVICE_GET_CHANNEL_VOLTAGES,
+        ROS_SERVICE_get_target_voltages,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
@@ -71,10 +71,12 @@ class MTMSApiNode(Node):
         ROS_ACTION_ANALYZE_MEP,
     )
 
-    def __init__(self):
+    def __init__(self, channel_count):
         super().__init__('mtms_api_node')
 
-        self.printer = MTMSApiPrinter()
+        self.printer = MTMSApiPrinter(
+            channel_count=channel_count
+        )
 
         self.system_state = None
         self.session = None
@@ -183,7 +185,7 @@ class MTMSApiNode(Node):
 
         self.printer.print_event_trigger()
 
-    def send_pulse(self, id, execution_condition, time, delay, channel, waveform):
+    def send_pulse(self, id, execution_condition, time, channel, waveform):
         topic, message_type = self.ROS_MESSAGE_SEND_PULSE
 
         publisher = self.ros_message_publishers[topic]
@@ -193,7 +195,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -209,7 +210,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_charge(self, id, execution_condition, time, delay, channel, target_voltage):
+    def send_charge(self, id, execution_condition, time, channel, target_voltage):
         topic, message_type = self.ROS_MESSAGE_SEND_CHARGE
 
         publisher = self.ros_message_publishers[topic]
@@ -219,7 +220,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -235,7 +235,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_discharge(self, id, execution_condition, time, delay, channel, target_voltage):
+    def send_discharge(self, id, execution_condition, time, channel, target_voltage):
         topic, message_type = self.ROS_MESSAGE_SEND_DISCHARGE
 
         publisher = self.ros_message_publishers[topic]
@@ -245,7 +245,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -261,7 +260,7 @@ class MTMSApiNode(Node):
 
         self.event_feedback[id] = None
 
-    def send_trigger_out(self, id, execution_condition, time, delay, port, duration_us):
+    def send_trigger_out(self, id, execution_condition, time, port, duration_us):
         topic, message_type = self.ROS_MESSAGE_SEND_TRIGGER_OUT
 
         publisher = self.ros_message_publishers[topic]
@@ -271,7 +270,6 @@ class MTMSApiNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
-        event_info.delay = float(delay) if delay is not None else 0.0
 
         message.event_info = event_info
         message.port = port
@@ -319,8 +317,8 @@ class MTMSApiNode(Node):
 
     # Targeting
 
-    def get_channel_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
-        topic, service_type = self.ROS_SERVICE_GET_CHANNEL_VOLTAGES
+    def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
+        topic, service_type = self.ROS_SERVICE_get_target_voltages
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()

@@ -31,7 +31,7 @@ classdef MTMSApiNode < handle
         charge_feedback_subscriber
         discharge_feedback_subscriber
 
-        get_channel_voltages_client
+        get_target_voltages_client
         get_maximum_intensity_client
         get_default_waveform_client
         reverse_polarity_client
@@ -40,7 +40,7 @@ classdef MTMSApiNode < handle
     end
 
     methods
-        function obj = MTMSApiNode()
+        function obj = MTMSApiNode(channel_count)
 
             % Currently in the Aalto mTMS lab, the API seems to work without changing
             % RMW_IMPLEMENTATION. Hence, comment out the line below. If in the
@@ -51,7 +51,7 @@ classdef MTMSApiNode < handle
             % setenv("RMW_IMPLEMENTATION","rmw_cyclonedds_cpp")
 
             obj.node = ros2node("mtms_matlab_api");
-            obj.printer = MTMSApiPrinter();
+            obj.printer = MTMSApiPrinter(channel_count);
 
             obj.system_state = NaN;
             obj.session = NaN;
@@ -89,7 +89,7 @@ classdef MTMSApiNode < handle
 
             % To other parts of the system.
 
-            obj.get_channel_voltages_client = ros2svcclient(obj.node, "/targeting/get_channel_voltages", "targeting_interfaces/GetChannelVoltages");
+            obj.get_target_voltages_client = ros2svcclient(obj.node, "/targeting/get_target_voltages", "targeting_interfaces/GetTargetVoltages");
             obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
@@ -179,20 +179,31 @@ classdef MTMSApiNode < handle
             success = response.success;
         end
 
-        function send_pulse(obj, id, execution_condition, time, delay, channel, waveform)
+        function send_pulse(obj, id, channel, waveform, execution_condition, time)
             %send_pulse Send pulse event
             %
             %   Send pulse event to the mTMS device.
+
+            % MATLAB defaults to floating point numbers, but the ROS2 message expects
+            % unsigned 16-bit integers. Therefore, we need to convert the durations
+            % to the correct type.
+            for i = 1:length(waveform)
+                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
+            end
 
             publisher = obj.send_pulse_publisher;
 
             pulse = ros2message(publisher);
 
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
-            event_info.delay = double(delay);
 
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
@@ -201,7 +212,7 @@ classdef MTMSApiNode < handle
             send(publisher, pulse);
         end
 
-        function send_charge(obj, id, execution_condition, time, delay, channel, target_voltage)
+        function send_charge(obj, id, channel, target_voltage, execution_condition, time)
             %send_charge Send charge event
             %
             %   Sends charge event to the mTMS device.
@@ -210,11 +221,15 @@ classdef MTMSApiNode < handle
 
             charge = ros2message(publisher);
 
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
-            event_info.delay = double(delay);
 
             charge.event_info = event_info;
             charge.channel = uint8(channel);
@@ -223,7 +238,7 @@ classdef MTMSApiNode < handle
             send(publisher, charge);
         end
 
-        function send_discharge(obj, id, execution_condition, time, delay, channel, target_voltage)
+        function send_discharge(obj, id, channel, target_voltage, execution_condition, time)
             %send_discharge Send discharge command to mTMS device
             %
             %   Sends discharge command to the mTMS device.
@@ -232,11 +247,15 @@ classdef MTMSApiNode < handle
 
             discharge = ros2message(publisher);
 
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
-            event_info.delay = double(delay);
 
             discharge.event_info = event_info;
             discharge.channel = uint8(channel);
@@ -245,7 +264,7 @@ classdef MTMSApiNode < handle
             send(publisher, discharge);
         end
 
-        function send_trigger_out(obj, id, execution_condition, time, delay, port, duration_us)
+        function send_trigger_out(obj, id, port, duration_us, execution_condition, time)
             %send_trigger_out Send trigger out event
             %
             %   Send trigger out event to the mTMS device.
@@ -254,11 +273,15 @@ classdef MTMSApiNode < handle
 
             trigger_out = ros2message(publisher);
 
+            % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
+            if isnan(time)
+                time = 0;
+            end
+
             event_info = ros2message("event_interfaces/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
-            event_info.delay = double(delay);
 
             trigger_out.event_info = event_info;
             trigger_out.port = uint8(port);
@@ -311,9 +334,9 @@ classdef MTMSApiNode < handle
 
         % Targeting
 
-        function [voltages, reverse_polarities] = get_channel_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+        function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
 
-            client = obj.get_channel_voltages_client;
+            client = obj.get_target_voltages_client;
 
             request = ros2message(client);
 
@@ -368,6 +391,13 @@ classdef MTMSApiNode < handle
 
         function waveform = reverse_polarity(obj, waveform)
             client = obj.reverse_polarity_client;
+
+            % MATLAB defaults to floating point numbers, but the ROS2 message expects
+            % unsigned 16-bit integers. Therefore, we need to convert the durations
+            % to the correct type.
+            for i = 1:length(waveform)
+                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
+            end
 
             request = ros2message(client);
 

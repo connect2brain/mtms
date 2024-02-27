@@ -12,12 +12,9 @@ find_package(std_msgs REQUIRED)
 find_package(event_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBSERIALPORT REQUIRED libserialport)
+include_directories(include include/labjack)
 
-include_directories(${LIBSERIALPORT_INCLUDE_DIRS})
-link_directories(${LIBSERIALPORT_LIBRARY_DIRS})
-
+find_library(LABJACKM_LIBRARY NAMES LabJackM)
 
 add_executable(
         triggerer
@@ -33,7 +30,7 @@ target_include_directories(triggerer
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
-target_link_libraries(triggerer ${LIBSERIALPORT_LIBRARIES})
+target_link_libraries(triggerer ${LABJACKM_LIBRARY})
 
 ament_target_dependencies(
   triggerer
