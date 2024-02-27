@@ -8,9 +8,22 @@ RUN apt-get update && \
     apt-get install -y \
     dos2unix \
     python3-pip \
-    libserialport-dev \
+    wget \
+    tar \
     ros-iron-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
+
+# Download and install LabJack LJM
+RUN wget https://files.labjack.com/installers/LJM/Linux/x64/release/labjack_ljm_software_2019_07_16_x86_64.tar.gz && \
+    tar -zvxf labjack_ljm_software_2019_07_16_x86_64.tar.gz && \
+    cd labjack_ljm_software_2019_07_16_x86_64 && \
+    # XXX: The LJM installer fails with error code 127 when run in Docker container, possibly related to the part
+    #   installing device rules. LabJack can still be accessed and used, but it doesn't work over reconnects without
+    #   a workaround (mapping /dev in local Ubuntu into the /dev of the container, see docker-compose.yml for a more
+    #   detailed explanation.)
+    sudo bash -x ./labjack_ljm_installer.run || true && \
+    cd .. && \
+    rm -rf labjack_ljm_software_2019_07_16_x86_64 labjack_ljm_software_2019_07_16_x86_64.tar.gz
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/

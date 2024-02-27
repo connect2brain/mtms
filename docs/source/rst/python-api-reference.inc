@@ -20,7 +20,7 @@ Functions querying the system state
     MTMSApi.MTMSApi.get_temperature
     MTMSApi.MTMSApi.get_pulse_count
     MTMSApi.MTMSApi.get_time
-    MTMSApi.MTMSApi.get_channel_voltages
+    MTMSApi.MTMSApi.get_target_voltages
     MTMSApi.MTMSApi.get_maximum_intensity
 
 Functions related to event requests

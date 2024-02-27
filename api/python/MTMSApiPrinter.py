@@ -86,10 +86,9 @@ class MTMSApiPrinter():
         'Discharge': bcolors.WARNING,
         'Trigger out': bcolors.OKGREEN,
     }
-    def __init__(self):
+    def __init__(self, channel_count):
+        self.channel_count = channel_count
 
-        # TODO: Hard-coded channel count and temperature and pulse count support for now.
-        self.n_channels = 5
         self.support_temperature = True
         self.support_pulse_count = True
 
@@ -117,7 +116,7 @@ class MTMSApiPrinter():
         temperatures_str = 'T: '
         pulse_counts_str = 'P: '
 
-        for channel in range(self.n_channels):
+        for channel in range(self.channel_count):
             channel_state = state.channel_states[channel]
 
             voltage = '{:5}'.format(channel_state.voltage)
@@ -156,9 +155,6 @@ class MTMSApiPrinter():
         execution_condition = event_info.execution_condition.value
         id = event_info.id
         time = event_info.execution_time
-
-        # TODO: Include delay in the output
-        delay = event_info.delay
 
         if execution_condition == ExecutionCondition.TIMED:
             execution_condition_str = 'Timed at (s): {0:g}'.format(time)

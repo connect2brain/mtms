@@ -21,7 +21,7 @@ from event_interfaces.msg import (
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from system_interfaces.msg import Session, SessionState
-from targeting_interfaces.srv import GetChannelVoltages, GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import GetTargetVoltages, GetDefaultWaveform, ReversePolarity
 from utility_interfaces.srv import GetNextId
 
 
@@ -55,9 +55,9 @@ class StimulusPerformerNode(Node):
             self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
         # Service client for targeting.
-        self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages', callback_group=self.callback_group)
+        self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages', callback_group=self.callback_group)
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /targeting/get_channel_voltages not available, waiting...')
+            self.get_logger().info('Service /targeting/get_target_voltages not available, waiting...')
 
         # Service client for waveforms.
         self.waveform_client = self.create_client(GetDefaultWaveform, '/waveforms/get_default', callback_group=self.callback_group)
@@ -247,8 +247,8 @@ class StimulusPerformerNode(Node):
 
     # Targeting services
 
-    def get_channel_voltages(self, target, intensity):
-        request = GetChannelVoltages.Request()
+    def get_target_voltages(self, target, intensity):
+        request = GetTargetVoltages.Request()
 
         request.target = target
         request.intensity = intensity
@@ -287,7 +287,6 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.port = port
@@ -303,7 +302,6 @@ class StimulusPerformerNode(Node):
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time)
-        event_info.delay = 0.0
 
         message.event_info = event_info
         message.channel = channel
@@ -313,7 +311,7 @@ class StimulusPerformerNode(Node):
         self.event_feedback[id] = None
 
     def targeted_pulse(self, target, intensity, time, execution_condition):
-        _, reversed_polarities = self.get_channel_voltages(target, intensity)
+        _, reversed_polarities = self.get_target_voltages(target, intensity)
 
         ids = [None] * self.NUM_OF_CHANNELS
         for channel in range(self.NUM_OF_CHANNELS):
@@ -402,11 +400,8 @@ class StimulusPerformerNode(Node):
             if stimulus.triggers[i].enabled:
                 id = self.get_next_id()
                 delay = stimulus.triggers[i].delay
-                port = i + 1
-
-                # Note that the field 'delay' of TriggerOut ROS message cannot be used here, as it cannot have a
-                # negative value.
                 delayed_time = time + delay
+                port = i + 1
 
                 self.trigger_out(
                     id=id,

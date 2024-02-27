@@ -139,7 +139,7 @@ Targeting
     rotation_angle = 90  # deg
     intensity = 20  # V/m
 
-    target_voltages, reverse_polarities = api.get_channel_voltages(
+    target_voltages, reverse_polarities = api.get_target_voltages(
         displacement_x=displacement_x,
         displacement_y=displacement_y,
         rotation_angle=rotation_angle,
@@ -181,7 +181,7 @@ Targeting combined with MEP analysis
     rotation_angle = 90  # deg
     intensity = 20  # V/m
 
-    target_voltages, reverse_polarities = api.get_channel_voltages(
+    target_voltages, reverse_polarities = api.get_target_voltages(
         displacement_x=displacement_x,
         displacement_y=displacement_y,
         rotation_angle=rotation_angle,

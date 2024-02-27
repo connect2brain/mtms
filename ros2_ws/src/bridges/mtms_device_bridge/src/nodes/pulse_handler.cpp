@@ -16,41 +16,44 @@ const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 class PulseHandler : public rclcpp::Node {
 public:
-  PulseHandler()
-      : Node("pulse_handler") {
+  PulseHandler() : Node("pulse_handler") {
 
     this->declare_parameter<bool>("safe-mode", false);
     this->get_parameter("safe-mode", safe_mode);
 
     auto callback = [this](const std::shared_ptr<event_interfaces::msg::Pulse> pulse) -> void {
-      if (!is_fpga_ok()) {
-        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "FPGA not in OK state while attempting to execute pulse");
-        return;
-      }
-
+      /* Unpack pulse message. */
       uint8_t channel = pulse->channel;
 
-      /* Serialize event info. */
-
       event_interfaces::msg::EventInfo event_info = pulse->event_info;
-
       uint16_t id = event_info.id;
       uint8_t execution_condition = event_info.execution_condition.value;
       double_t execution_time = event_info.execution_time;
-      double_t delay = event_info.delay;
+
+      /* Log pulse message. */
+      RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+                  pulse->channel,
+                  pulse->event_info.id,
+                  pulse->event_info.execution_condition.value,
+                  pulse->event_info.execution_time);
+
+      /* Check if FPGA is OK. */
+      if (!is_fpga_ok()) {
+        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Tried to execute pulse (id: %d) but FPGA is not in OK state", id);
+        return;
+      }
+
+      /* Check that execution time is non-negative. */
 
       /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
       if (execution_time < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Execution time cannot be negative, aborting executing pulse event.");
-        return;
-      }
-      if (delay < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("charge_handler"), "Delay cannot be negative, aborting executing pulse event.");
+        RCLCPP_ERROR(rclcpp::get_logger("pulse_handler"), "Execution time cannot be negative, aborting pulse (id: %d)", id);
         return;
       }
 
+      /* Serialize event info. */
+
       uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-      uint32_t delay_ticks = (uint32_t)(delay * CLOCK_FREQUENCY_HZ);
 
       /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
            indexing here. It would rather be the responsibility of FPGA to do the conversion;
@@ -59,9 +62,8 @@ public:
       serialized_message.add_uint16(id);
       serialized_message.add_byte(execution_condition);
       serialized_message.add_uint64(execution_time_ticks);
-      serialized_message.add_uint32(delay_ticks);
 
-      /* Serialize stimulation pulse. */
+      /* Serialize pulse parameters. */
 
       uint8_t n_waveform = (uint8_t) pulse->waveform.size();
       serialized_message.add_byte(n_waveform);
@@ -75,25 +77,21 @@ public:
 
       serialized_message.finalize();
 
-      if (!this->safe_mode) {
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_StartFifo(session,
-                                            channel_pulse_fifo));
-
-        NiFpga_MergeStatus(&status,
-                           NiFpga_WriteFifoU8(session,
-                                              channel_pulse_fifo,
-                                              serialized_message.serialized_message.data(),
-                                              serialized_message.get_length(),
-                                              NiFpga_InfiniteTimeout,
-                                              NULL));
-
-        RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Sent pulse to channel %d", channel);
-      } else {
-        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Tried to send pulse to channel %d but safe mode is enabled.",
-                    channel);
+      if (this->safe_mode) {
+        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Safe mode is enabled, aborting pulse (id: %d)", id);
+        return;
       }
+
+      NiFpga_MergeStatus(&status,
+                          NiFpga_StartFifo(session,
+                                          channel_pulse_fifo));
+      NiFpga_MergeStatus(&status,
+                          NiFpga_WriteFifoU8(session,
+                                            channel_pulse_fifo,
+                                            serialized_message.serialized_message.data(),
+                                            serialized_message.get_length(),
+                                            NiFpga_InfiniteTimeout,
+                                            NULL));
     };
 
     serialized_message = SerializedMessage();

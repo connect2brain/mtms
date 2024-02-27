@@ -2,7 +2,8 @@ from MTMSApi import MTMSApi
 
 from event_interfaces.msg import (
     ExecutionCondition,
-    WaveformPhase
+    WaveformPhase,
+    WaveformPiece
 )
 from mep_interfaces.msg import (
     MepConfiguration,
@@ -20,57 +21,67 @@ api.start_session()
 
 ## Single events
 
-# Charge channel 1 to 20 V.
+# Charge channel 0 to 20 V.
 
-channel = 0  # Note that channel indexing starts at 0.
 target_voltage = 20
+
+# Note that the TMS channel indexing starts from 0.
+channel = 0
 execution_condition = ExecutionCondition.IMMEDIATE
-time = 10.0
 
 api.send_charge(
     channel=channel,
     target_voltage=target_voltage,
     execution_condition=execution_condition,
-    time=time,
 )
+api.wait_for_completion()
 
-# Send pulse on channel 1, using the default waveform.
+# Execute pulse on channel 0, using the default waveform.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
 
-api.allow_stimulation(True)
+channel = 0
+execution_condition = ExecutionCondition.IMMEDIATE
 
 api.send_pulse(
     channel=channel,
     waveform=waveform,
     execution_condition=execution_condition,
-    time=time,
     reverse_polarity=reverse_polarity,
 )
+api.wait_for_completion()
 
-# Discharge channel 1 completely.
+# Discharge channel 0 completely.
+target_voltage = 0
+
+channel = 0
+execution_condition = ExecutionCondition.IMMEDIATE
+
 api.send_discharge(
     channel=channel,
-    target_voltage=0,
+    target_voltage=target_voltage,
     execution_condition=execution_condition,
-    time=time,
 )
+api.wait_for_completion()
 
 # Send trigger out on port 1.
 port = 1
 duration_us = 1000
 
+execution_condition = ExecutionCondition.IMMEDIATE
+
 api.send_trigger_out(
     port=port,
     duration_us=duration_us,
     execution_condition=execution_condition,
-    time=time,
 )
+api.wait_for_completion()
 
-# Send pulse on channel 1 and a simultaneous trigger out on port 1.
-channel = 1
+# Send pulse on channel 0 and a simultaneous trigger out on port 1.
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
+
+channel = 0
 execution_condition = ExecutionCondition.TIMED
 time = api.get_time() + 1.0
 
@@ -79,24 +90,25 @@ api.allow_stimulation(True)
 api.send_pulse(
     channel=channel,
     waveform=waveform,
+    reverse_polarity=reverse_polarity,
     execution_condition=execution_condition,
     time=time,
-    reverse_polarity=reverse_polarity,
-    wait_for_completion=False,
 )
+# Do not wait for completion here, as we want to execute the trigger out simultaneously with the pulse.
 
 port = 1
 duration_us = 1000
 
+# Use the same time and execution condition as for the pulse.
 api.send_trigger_out(
     port=port,
     duration_us=duration_us,
     execution_condition=execution_condition,
     time=time,
-    wait_for_completion=False,
 )
 
-api.wait(2)
+# Once both pulse and trigger out are sent, wait for the completion of both.
+api.wait_for_completion()
 
 ## Send pulse on channel 1 and analyze MEP.
 
@@ -108,7 +120,6 @@ reverse_polarity = False
 channel = 1
 execution_condition = ExecutionCondition.TIMED
 time = api.get_time() + 3.0
-wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
 api.send_pulse(
     channel=channel,
@@ -116,8 +127,8 @@ api.send_pulse(
     execution_condition=execution_condition,
     time=time,
     reverse_polarity=reverse_polarity,
-    wait_for_completion=wait_for_completion,
 )
+# Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
 mep_configuration = MepConfiguration(
@@ -151,9 +162,9 @@ latency = mep.latency
 displacement_x = 5  # mm
 displacement_y = 5  # mm
 rotation_angle = 90  # deg
-intensity = 20  # V/m
+intensity = 5  # V/m
 
-target_voltages, reverse_polarities = api.get_channel_voltages(
+target_voltages, reverse_polarities = api.get_target_voltages(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
@@ -173,41 +184,43 @@ maximum_intensity = api.get_maximum_intensity(
 api.send_immediate_charge_or_discharge_to_all_channels(
     target_voltages=target_voltages,
 )
+api.wait_for_completion()
 
 # Send default pulse to all channels.
 api.send_immediate_default_pulse_to_all_channels(
     reverse_polarities=reverse_polarities,
 )
-
+api.wait_for_completion()
 
 ## Targeting combined with MEP analysis
 
 displacement_x = 5  # mm
 displacement_y = 5  # mm
 rotation_angle = 90  # deg
-intensity = 20  # V/m
+intensity = 5  # V/m
 
-target_voltages, reverse_polarities = api.get_channel_voltages(
+target_voltages, reverse_polarities = api.get_target_voltages(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
     intensity=intensity,
+    algorithm=TargetingAlgorithm.GENETIC
 )
 
 # Charge all channels to target voltages.
 api.send_immediate_charge_or_discharge_to_all_channels(
     target_voltages=target_voltages,
 )
+api.wait_for_completion()
 
 # Send default pulse to all channels.
-wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 time = api.get_time() + 3.0
 
 api.send_timed_default_pulse_to_all_channels(
     reverse_polarities=reverse_polarities,
     time=time,
-    wait_for_completion=wait_for_completion,
 )
+# Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on EMG channel 1, coinciding with the pulse.
 mep_configuration = MepConfiguration(
@@ -234,6 +247,23 @@ mep, errors = api.analyze_mep(
 
 amplitude = mep.amplitude
 latency = mep.latency
+
+## Define custom waveform
+
+waveform = [
+    WaveformPiece(
+        waveform_phase=WaveformPhase.RISING,
+        duration_in_ticks=2400,
+    ),
+    WaveformPiece(
+        waveform_phase=WaveformPhase.HOLD,
+        duration_in_ticks=1200,
+    ),
+    WaveformPiece(
+        waveform_phase=WaveformPhase.FALLING,
+        duration_in_ticks=1480,
+    )
+]
 
 ## Restart session
 api.stop_session()
