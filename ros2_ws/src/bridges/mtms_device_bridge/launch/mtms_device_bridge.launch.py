@@ -23,9 +23,15 @@ def generate_launch_description():
         description="Is mTMS device enabled (boolean)",
     )
 
+    channel_count_arg = DeclareLaunchArgument(
+        "channel-count",
+        description="The channel count of the mTMS device",
+    )
+
     logger = LaunchConfiguration("log-level")
     safe_mode = LaunchConfiguration("safe-mode")
     enabled = LaunchConfiguration("enabled")
+    channel_count = LaunchConfiguration("channel-count")
 
     node_executables = [
         "run_fpga",
@@ -59,6 +65,7 @@ def generate_launch_description():
             parameters=[
                 {
                     "safe-mode": safe_mode,
+                    "channel-count": channel_count,
                     "enabled": enabled,
                 }
             ],

@@ -11,20 +11,32 @@ const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Request> request,
                    std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Response> response) {
+  /* Log new settings. */
+  auto settings = request->settings;
+
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Received new settings:");
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum number of pulse pieces: %d", settings.maximum_number_of_pulse_pieces);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum rising-falling difference (ticks): %d", settings.maximum_rising_falling_difference_ticks);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulse duration (ticks): %d", settings.maximum_pulse_duration_ticks);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulses per unit time, pulses: %d", settings.pulses_in_maximum_pulses_per_time);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "  maximum pulses per unit time, unit time: %d", settings.time_in_maximum_pulses_per_time_ms);
+
+  /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
-    RCLCPP_WARN(rclcpp::get_logger("settings_handler"), "FPGA not in OK state during service call");
-    response->success = false;
+    RCLCPP_WARN(rclcpp::get_logger("settings_handler"), "Tried to change settings but FPGA is not in OK state");
     return;
   }
 
-  auto settings = request->settings;
-
+  /* Write settings to registers. */
+  NiFpga_MergeStatus(&status,
+                     NiFpga_WriteU8(session,
+                                    NiFpga_mTMS_ControlU8_Maximumnumberofpulsepieces,
+                                    settings.maximum_number_of_pulse_pieces));
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteU16(session,
                                      NiFpga_mTMS_ControlU16_Maximumrisingfallingdifferenceticks,
                                      settings.maximum_rising_falling_difference_ticks));
-
 
   NiFpga_MergeStatus(&status,
                      NiFpga_WriteU16(session,
@@ -32,10 +44,10 @@ void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettin
                                      settings.maximum_pulse_duration_ticks));
 
   uint16_t time_ms = settings.time_in_maximum_pulses_per_time_ms;
-  uint32_t time_ticks = CLOCK_FREQUENCY_HZ / 1000 * time_ms;
+  uint32_t time_ticks = CLOCK_FREQUENCY_HZ / 1000 * (uint32_t)time_ms;
 
   NiFpga_MergeStatus(&status,
-                     NiFpga_WriteU16(session,
+                     NiFpga_WriteU32(session,
                                      NiFpga_mTMS_ControlU32_Maximumpulsespertimetimeticks,
                                      time_ticks));
 
@@ -45,12 +57,7 @@ void send_settings(const std::shared_ptr<mtms_device_interfaces::srv::SendSettin
                                     settings.pulses_in_maximum_pulses_per_time));
 
   response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("settings_handler"),
-              "Sent settings: maximum_rising_falling_difference_ticks %d, maximum_pulse_duration_ticks %d, time_in_maximum_pulses_per_time_ms %d, pulses_in_maximum_pulses_per_time %d",
-              settings.maximum_rising_falling_difference_ticks,
-              settings.maximum_pulse_duration_ticks,
-              settings.time_in_maximum_pulses_per_time_ms,
-              settings.pulses_in_maximum_pulses_per_time);
+  RCLCPP_INFO(rclcpp::get_logger("settings_handler"), "Settings changed successfully.");
 }
 
 class SettingsHandler : public rclcpp::Node {

@@ -17,7 +17,7 @@ from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.action import SetVoltages
 
 from system_interfaces.msg import Session, SessionState
-from targeting_interfaces.srv import GetChannelVoltages
+from targeting_interfaces.srv import GetTargetVoltages
 
 
 class TrialPerformerNode(Node):
@@ -75,9 +75,9 @@ class TrialPerformerNode(Node):
 
         # Service client for targeting.
 
-        self.targeting_client = self.create_client(GetChannelVoltages, '/targeting/get_channel_voltages')
+        self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages')
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /targeting/get_channel_voltages not available, waiting...')
+            self.get_logger().info('Service /targeting/get_target_voltages not available, waiting...')
 
         # Subscriber for system state.
 
@@ -271,8 +271,8 @@ class TrialPerformerNode(Node):
 
     # Targeting services
 
-    def get_channel_voltages(self, target, intensity):
-        request = GetChannelVoltages.Request()
+    def get_target_voltages(self, target, intensity):
+        request = GetTargetVoltages.Request()
 
         request.target = target
         request.intensity = intensity
@@ -434,7 +434,7 @@ class TrialPerformerNode(Node):
         target = stimulus.target
         intensity = stimulus.intensity
 
-        target_voltages, _ = self.get_channel_voltages(target, intensity)
+        target_voltages, _ = self.get_target_voltages(target, intensity)
 
         self.logger.info('{}: Performing trial...'.format(goal_id))
 

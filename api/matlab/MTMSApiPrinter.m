@@ -7,7 +7,7 @@ classdef MTMSApiPrinter < handle
     end
 
     properties
-        n_channels
+        channel_count
         support_temperature
         support_pulse_count
 
@@ -18,10 +18,8 @@ classdef MTMSApiPrinter < handle
     end
 
     methods
-        function obj = MTMSApiPrinter()
-            % TODO: Hard-coded channel count and temperature and pulse
-            % count support for now.
-            obj.n_channels = 5;
+        function obj = MTMSApiPrinter(channel_count)
+            obj.channel_count = channel_count;
             obj.support_temperature = true;
             obj.support_pulse_count = true;
 
@@ -62,7 +60,7 @@ classdef MTMSApiPrinter < handle
             temperatures_str = "T: ";
             pulse_counts_str = "P: ";
 
-            for channel = 1:obj.n_channels
+            for channel = 1:obj.channel_count
                 channel_state = state.channel_states(channel);
 
                 voltage = sprintf("%d ", channel_state.voltage);
