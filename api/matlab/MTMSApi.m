@@ -263,7 +263,7 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
 
             % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
-            voltage = obj.node.system_state.channel_states(channel + 1).voltage;
+            voltage = double(obj.node.system_state.channel_states(channel + 1).voltage);
         end
 
         function voltages = get_current_voltages(obj)
