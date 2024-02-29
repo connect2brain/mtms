@@ -6,7 +6,6 @@
 
 const std::string LOGGER_NAME = "neurone_adapter";
 
-
 NeurOneAdapter::NeurOneAdapter(uint16_t port) {
   this->port = port;
   bool success = init_socket();
@@ -40,7 +39,8 @@ bool NeurOneAdapter::init_socket() {
   /* Bind socket to address */
   if (bind(this->socket_, (struct sockaddr *)&(this->socket_own), sizeof(this->socket_own)) == -1) {
     RCLCPP_ERROR(rclcpp::get_logger(LOGGER_NAME),
-                 "Error: Failed to bind socket file descriptor to socket. Reason %s", strerror(errno));
+                 "Error: Failed to bind socket file descriptor to socket. Reason %s",
+                 strerror(errno));
     return false;
   }
 
@@ -119,7 +119,8 @@ void NeurOneAdapter::handle_measurement_start_packet() {
   this->sampling_frequency =
       ntohl(*reinterpret_cast<uint32_t *>(buffer + StartPacketFieldIndex::SAMPLING_RATE_HZ));
 
-  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Sampling frequency set to: %u Hz", this->sampling_frequency);
+  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Sampling frequency set to: %u Hz",
+              this->sampling_frequency);
 
   uint16_t channel_count =
       ntohs(*reinterpret_cast<uint16_t *>(buffer + StartPacketFieldIndex::NUM_CHANNELS));
@@ -207,7 +208,7 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
 
   if (this->trigger_in_next_sample && this->trigger_sample_index >= sample_index) {
     sample.trigger = true;
-    trigger_in_next_sample = false;
+    this->trigger_in_next_sample = false;
   }
 
   sample.time = sample_time_s;
@@ -262,7 +263,7 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
 std::tuple<PacketResult, eeg_interfaces::msg::Sample, double>
 NeurOneAdapter::read_eeg_data_packet() {
 
-  // Return variables
+  /* Return variables */
   PacketResult result_type = PacketResult::INTERNAL;
   auto sample = eeg_interfaces::msg::Sample();
   double sync_trigger_time = -1.0; // in seconds
