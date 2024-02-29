@@ -263,7 +263,7 @@ classdef MTMSApi < handle
             obj.node.wait_for_new_state();
 
             % Array indexing in MATLAB starts from 1, so we need to add 1 to the channel number.
-            voltage = obj.node.system_state.channel_states(channel + 1).voltage;
+            voltage = double(obj.node.system_state.channel_states(channel + 1).voltage);
         end
 
         function voltages = get_current_voltages(obj)
@@ -421,7 +421,7 @@ classdef MTMSApi < handle
         %
         % :param channel: The channel for charging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
-        % :param target_voltage: The target voltage for charging. Range: 0-1500
+        % :param target_voltage: The target voltage for charging. Range: 0-1499
         % :type target_voltage: float
         % :param execution_condition: The condition under which the event should be executed. One of the following:
         %
@@ -441,6 +441,7 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
             assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
+            assert(target_voltage >= 0 && target_voltage <= 1499, sprintf("Voltage must be in range 0-1499"))
 
             % Interpret NaN time as if time was not provided.
             is_time_provided = nargin == 5 && ~isnan(time);
