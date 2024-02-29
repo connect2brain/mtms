@@ -205,48 +205,6 @@ void EegBridge::subscribe_to_mtms_device_healthcheck() {
                                                                mtms_device_healtcheck_callback);
 }
 
-void EegBridge::update_state() {
-  if (!this->session_been_stopped) {
-    RCLCPP_DEBUG_THROTTLE(
-        this->get_logger(), *this->get_clock(), 5000,
-        "An mTMS session is ongoing, cannot synchronize EEG data with an ongoing session.");
-
-    this->eeg_bridge_state = EegBridgeState::WAITING_FOR_SESSION_STOP;
-    return;
-  }
-
-  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
-      this->eeg_bridge_state == EegBridgeState::WAITING_FOR_SESSION_START) {
-
-    this->eeg_bridge_state = STREAMING;
-  }
-
-  if (this->mtms_device_available &&
-      this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
-      this->first_sync_trigger_timestamp != UNSET_TIME) {
-
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-                          "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS "
-                          "device is connected to 'Trigger A in' in the EEG device, and 2) sending "
-                          "triggers is enabled in the EEG software.");
-
-    /* Wait for one second to receive the sync trigger before reporting an error. */
-    auto sampling_frequency = this->eeg_adapter->get_eeg_info().sampling_frequency;
-    if (this->sample_packets_received_since_session_start > sampling_frequency) {
-      this->eeg_bridge_state = EegBridgeState::ERROR_OUT_OF_SYNC;
-    }
-    return;
-  }
-
-  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
-                          "Waiting for session to start...");
-
-    this->eeg_bridge_state = EegBridgeState::WAITING_FOR_SESSION_START;
-    return;
-  }
-}
-
 void EegBridge::handle_sync_trigger(double_t sync_time) {
   this->num_of_sync_triggers_received++;
 
@@ -269,9 +227,14 @@ void EegBridge::handle_sync_trigger(double_t sync_time) {
 }
 
 void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
-  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
-    this->sample_packets_received_since_session_start++;
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                          "Waiting for session to start...");
+    this->eeg_bridge_state = WAITING_FOR_SESSION_START;
+    return;
   }
+
+  this->sample_packets_received_since_session_start++;
 
   /* Ignore sample packets if in an error state, preventing streaming. */
   if (this->eeg_bridge_state == EegBridgeState::ERROR_OUT_OF_SYNC ||
@@ -282,14 +245,30 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
   /* If mTMS device is available to send triggers AND first trigger has not been received yet,
      ignore the sample packet. */
   if (this->mtms_device_available && this->first_sync_trigger_timestamp == UNSET_TIME) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+                         "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS "
+                         "device is connected to 'Trigger A in' in the EEG device, and 2) sending "
+                         "triggers is enabled in the EEG software.");
+    this->eeg_bridge_state = WAITING_FOR_SESSION_START;
+
+    auto sampling_frequency = this->eeg_adapter->get_eeg_info().sampling_frequency;
+    if (this->sample_packets_received_since_session_start > sampling_frequency) {
+      this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
+    }
     return;
   }
 
   /* Check for dropped samples */
-  if (sample.index != 0 && sample.index != previous_sample_index + 1) {
+  if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX && sample.index != previous_sample_index + 1) {
     this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
+    RCLCPP_ERROR(this->get_logger(), "Samples dropped.");
     return;
   }
+  if (this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
+    RCLCPP_INFO(this->get_logger(), "Streaming data.");
+  }
+  this->eeg_bridge_state = EegBridgeState::STREAMING;
+
 
   this->previous_sample_index = sample.index;
 
@@ -327,12 +306,6 @@ void EegBridge::process_eeg_data_packet() {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No sampling frequency set");
   }
 
-  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
-    return;
-  }
-
-  update_state();
-
   switch (result_type) {
   case PacketResult::SAMPLE_WITH_SYNC:
     /* Handle sync before sample, as sync will update time_correction */
@@ -350,6 +323,7 @@ void EegBridge::process_eeg_data_packet() {
     break;
   case PacketResult::ERROR:
     RCLCPP_ERROR(this->get_logger(), "Error reading data packet.");
+    this->eeg_bridge_state == EegBridgeState::WAITING_FOR_EEG_DEVICE;
     break;
   case PacketResult::END:
     RCLCPP_INFO(this->get_logger(), "EEG device measurement stopped.");
@@ -399,6 +373,10 @@ void EegBridge::spin() {
       process_eeg_data_packet();
 
       switch (this->eeg_bridge_state) {
+      case EegBridgeState::WAITING_FOR_EEG_DEVICE:
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus ::NOT_READY,
+                                 "Waiting for EEG measurement to start",
+                                 "Please start the measurement on the EEG device.");
       case EegBridgeState::WAITING_FOR_SESSION_STOP:
         this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                                  "Waiting for session to stop",
