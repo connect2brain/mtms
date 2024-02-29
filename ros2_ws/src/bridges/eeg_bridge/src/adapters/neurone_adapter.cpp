@@ -182,7 +182,7 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
 
   for (uint16_t i = 0; i < channel_count; i++) {
     uint8_t *buffer_offset = buffer + SamplesPacketFieldIndex::SAMPLE_SAMPLES + 3 * i;
-    uint32_t value = int24asint32(buffer_offset);
+    int32_t value = int24asint32(buffer_offset);
 
     /* Scale the value by the scale factor (gain) and change from nV to uV*/
     double result_uV = value * DC_MODE_SCALE * 1e-3;
