@@ -19,19 +19,19 @@ using namespace std::chrono;
 using namespace std::chrono_literals;
 using namespace std::placeholders;
 
-// Publisher topics
+/* Publisher topics */
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
 
-// Subscriber topics
+/* Subscriber topics */
 const std::string MTMS_DEVICE_HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
 const std::string SYSTEM_SESSION_TOPIC = "/system/session";
 
-// Have a long queue to avoid dropping messages.
+/* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
 
-// Note: Needs to match the values in session_bridge.cpp.
+/* Note: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
 const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
@@ -259,7 +259,8 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
   }
 
   /* Check for dropped samples */
-  if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX && sample.index != previous_sample_index + 1) {
+  if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX &&
+      sample.index != previous_sample_index + 1) {
     this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
     RCLCPP_ERROR(this->get_logger(), "Samples dropped.");
     return;
@@ -268,7 +269,6 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
     RCLCPP_INFO(this->get_logger(), "Streaming data.");
   }
   this->eeg_bridge_state = EegBridgeState::STREAMING;
-
 
   this->previous_sample_index = sample.index;
 

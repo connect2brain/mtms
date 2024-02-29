@@ -8,7 +8,6 @@
 
 const std::string LOGGER_NAME = "turbolink_adapter";
 
-
 TurboLinkAdapter::TurboLinkAdapter(uint16_t port, uint32_t sampling_frequency,
                                    uint8_t eeg_channel_count)
     : port(port) {
@@ -47,7 +46,8 @@ bool TurboLinkAdapter::init_socket() {
   /* Bind socket to address */
   if (bind(this->socket_, (struct sockaddr *)&(this->socket_own), sizeof(this->socket_own)) == -1) {
     RCLCPP_ERROR(rclcpp::get_logger(LOGGER_NAME),
-                 "Error: Failed to bind socket file descriptor to socket. Reason %s", strerror(errno));
+                 "Error: Failed to bind socket file descriptor to socket. Reason %s",
+                 strerror(errno));
     return false;
   }
 
@@ -140,7 +140,7 @@ std::tuple<eeg_interfaces::msg::Sample, bool> TurboLinkAdapter::handle_packet() 
 
 std::tuple<PacketResult, eeg_interfaces::msg::Sample, double>
 TurboLinkAdapter::read_eeg_data_packet() {
-  // Return variables
+  /* Return variables */
   PacketResult result_type = PacketResult::INTERNAL;
   auto sample = eeg_interfaces::msg::Sample();
   double sync_trigger_time = -1.0; // in seconds
