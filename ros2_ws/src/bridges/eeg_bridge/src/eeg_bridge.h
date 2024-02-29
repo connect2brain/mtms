@@ -24,6 +24,7 @@
 using namespace std::chrono_literals;
 
 enum EegBridgeState {
+  WAITING_FOR_EEG_DEVICE,
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
@@ -70,8 +71,6 @@ private:
   void handle_sync_trigger(double_t sync_time);
   void handle_sample(eeg_interfaces::msg::Sample sample);
 
-  void update_state();
-
   void create_publishers();
   void create_subscribers();
 
@@ -85,7 +84,7 @@ private:
 
   uint16_t port = 0;
 
-  EegBridgeState eeg_bridge_state;
+  EegBridgeState eeg_bridge_state = EegBridgeState::WAITING_FOR_EEG_DEVICE;
 
   EegDevice eeg_device;
   std::shared_ptr<EegAdapter> eeg_adapter;
