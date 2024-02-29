@@ -127,6 +127,10 @@ std::tuple<eeg_interfaces::msg::Sample, bool> TurboLinkAdapter::handle_packet() 
   sample.trigger = triggers[TriggerBitPosition::PULSE_TRIGGER_BIT];
   sync_trigger_received = triggers[TriggerBitPosition::SYNC_TRIGGER_BIT];
 
+  if (sample.trigger) {
+    RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Trigger received with sample %d", sample_index);
+  }
+
   /* Turbolink has no timestamp so interpret time from sampling frequency */
   sample.time = (double)sample_index / this->sampling_frequency;
   sample.index = sample_index;
