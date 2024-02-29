@@ -4,6 +4,9 @@
 #include <bitset>
 #include <sys/socket.h>
 
+const std::string LOGGER_NAME = "neurone_adapter";
+
+
 NeurOneAdapter::NeurOneAdapter(uint16_t port) {
   this->port = port;
   bool success = init_socket();
@@ -115,6 +118,8 @@ bool NeurOneAdapter::request_measurement_start_packet() const {
 void NeurOneAdapter::handle_measurement_start_packet() {
   this->sampling_frequency =
       ntohl(*reinterpret_cast<uint32_t *>(buffer + StartPacketFieldIndex::SAMPLING_RATE_HZ));
+
+  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Sampling frequency set to: %u Hz", this->sampling_frequency);
 
   uint16_t channel_count =
       ntohs(*reinterpret_cast<uint16_t *>(buffer + StartPacketFieldIndex::NUM_CHANNELS));
@@ -274,6 +279,7 @@ NeurOneAdapter::read_eeg_data_packet() {
 
   switch (frame_type) {
   case FrameType::MEASUREMENT_START:
+    RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Measurement start packet received");
     handle_measurement_start_packet();
     result_type = PacketResult::INTERNAL;
     break;

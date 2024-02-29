@@ -8,10 +8,8 @@
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
 
-const std::string LOGGER_NAME = "eeg_bridge";
-
-// UDP datagram length is limited by Ethernet MTU (IP layer fragmentation isn’t
-// supported).
+/** UDP datagram length is limited by Ethernet MTU (IP layer fragmentation isn’t
+    supported). */
 const int BUFFER_SIZE = 1472;
 
 const uint32_t UNSET_SAMPLING_FREQUENCY = 0;
@@ -36,7 +34,7 @@ public:
       the adapter configuration and state or return a sample.
 
       @return type of the packet read, sample packet if packet was a sample and
-      sync trigger timestamp if sync trigger was in the sample or sync trigger in
+      sync trigger timestamp in seconds, if sync trigger was in the sample or sync trigger in
       the packet. */
   virtual std::tuple<PacketResult, eeg_interfaces::msg::Sample, double>
   read_eeg_data_packet() = 0;

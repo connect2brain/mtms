@@ -6,6 +6,9 @@
 
 #include "turbolink_adapter.h"
 
+const std::string LOGGER_NAME = "turbolink_adapter";
+
+
 TurboLinkAdapter::TurboLinkAdapter(uint16_t port, uint32_t sampling_frequency,
                                    uint8_t eeg_channel_count)
     : port(port) {
