@@ -1,20 +1,16 @@
-//
-// Created by alqio on 12.12.2022.
-//
+#ifndef MTMS_EEG_BRIDGE_H
+#define MTMS_EEG_BRIDGE_H
 
-#ifndef EEG_BRIDGE_EEG_BRIDGE_H
-#define EEG_BRIDGE_EEG_BRIDGE_H
-
-#include <netinet/in.h>
 #include <cstdlib>
+#include <netinet/in.h>
 
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
 
-#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
 #include "system_interfaces/msg/session.hpp"
@@ -23,24 +19,12 @@
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
-/* The maximum length of the UDP packet, as mentioned in the manual of Bittium NeurOne. */
-#define BUFFER_LENGTH 1472
-
-/* The maximum number of channels as supported by four amplifiers (40 channels per amplifier). */
-#define MAX_NUMBER_OF_CHANNELS 160
-
+#include "adapters/eeg_adapter.h"
 
 using namespace std::chrono_literals;
 
-const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
-const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
-
-/* TODO: Should probably be configurable via an environment variable. */
-const std::string EEG_DEVICE_IP = "192.168.200.220";
-
 enum EegBridgeState {
-  WAITING_FOR_MEASUREMENT_START_PACKET,
-  WAITING_FOR_REQUESTED_MEASUREMENT_START_PACKET,
+  WAITING_FOR_EEG_DEVICE,
   WAITING_FOR_SESSION_STOP,
   WAITING_FOR_SESSION_START,
   STREAMING,
@@ -48,109 +32,108 @@ enum EegBridgeState {
   ERROR_SAMPLES_DROPPED
 };
 
+/**
+ * Supported EEG Devices
+ *
+ * List the options for the currently supported EEG devices. Used to define, which
+ * adpter to use for the socket communnication between this software and the eeg device.
+ */
+enum EegDevice {
+  NEURONE,
+  TURBOLINK,
+};
+
+const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
+const uint64_t UNSET_PREVIOUS_SAMPLE_INDEX = std::numeric_limits<uint64_t>::quiet_NaN();
+
+/**
+ * Translate data from EEG adapter interface to ROS messages.
+ *
+ * Follows the adapter structure where class implementing EegAdapter interface
+ * will be used to translate the raw socket data from the EEG device into common
+ * format.
+ *
+ * Currently supported EEG devices are:
+ *   - Bittium NeurOne
+ */
 class EegBridge : public rclcpp::Node {
 
 public:
   EegBridge();
 
+  void spin();
+
+private:
+  void process_eeg_data_packet();
+  void update_healthcheck(uint8_t status, std::string status_message,
+                          std::string actionable_message);
+
+  void handle_sync_trigger(double_t sync_time);
+  void handle_sample(eeg_interfaces::msg::Sample sample);
+
   void create_publishers();
+  void create_subscribers();
 
-  void update_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
-  void publish_healthcheck();
-
-  void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
+  void publish_eeg_healthcheck();
 
   void subscribe_to_session();
+  void subscribe_to_mtms_device_healthcheck();
+
   void reset_session();
   void wait_for_session();
 
-  void spin();
-  void init_socket();
-  void err(const char *message);
+  uint16_t port = 0;
 
-  void request_measurement_start_packet();
-  bool read_eeg_data_from_socket();
-  double_t read_time_from_buffer(uint8_t index);
-  void handle_trigger_packet();
-  void handle_sample_packet();
-  void handle_measurement_start_packet();
-  void handle_eeg_data_packet();
+  EegBridgeState eeg_bridge_state = EegBridgeState::WAITING_FOR_EEG_DEVICE;
 
-  void check_dropped_samples(double_t sample_time);
+  EegDevice eeg_device;
+  std::shared_ptr<EegAdapter> eeg_adapter;
 
-  int get_trigger_data_from_sample_packet();
-  void handle_trigger_in_sample_packet(double_t time);
-  void publish_eeg_sample(double_t time);
-
-  void handle_sync_trigger(double_t sync_time);
-
-private:
-  EegBridgeState eeg_bridge_state;
-
-  system_interfaces::msg::SessionState session_state;
-  bool session_been_stopped;
-  bool session_received;
-
-  uint16_t num_of_sync_triggers_received;
-  double_t time_correction;
-  bool sync_trigger_received;
-
-  rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr mtms_device_healthcheck_subscriber;
-
-  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
-
+  /* Publishers */
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
-  rclcpp::Publisher<eeg_interfaces::msg::Trigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
+
+  /* Subscribers */
+  rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr
+      mtms_device_healthcheck_subscriber;
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
-  double_t first_sync_trigger_timestamp;
-
-  bool measurement_start_packet_received_;
-
-  uint8_t num_of_eeg_channels;
-  uint8_t num_of_emg_channels;
-
-  uint16_t num_of_channels_;
-  uint16_t num_of_channels_excluding_trigger_;
-
-  uint32_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
+  /* Session management */
+  bool first_sample_of_session = true;
+  uint64_t previous_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
   uint32_t sample_packets_received_since_session_start = 0;
 
-  double_t sampling_period;
+  double_t time_correction = UNSET_TIME; // in seconds
+  double_t time_offset = UNSET_TIME;     // in seconds
 
-  double_t previous_time = UNSET_PREVIOUS_TIME;
+  bool session_been_stopped = true;
+  bool session_received = false;
+  system_interfaces::msg::SessionState session_state;
 
-  uint16_t port_;
-  int socket_;
-  sockaddr_in socket_own;
-  sockaddr_in socket_other;
-  socklen_t socket_length;
-  uint8_t buffer[BUFFER_LENGTH];
-  bool first_sample_of_session;
+  /*
+    bool first_sample_of_session = true;
 
-  enum ChannelType {
-    EEG, EMG
-  };
-  ChannelType channel_types[MAX_NUMBER_OF_CHANNELS];
-  bool send_trigger_as_channel;
+    double_t time_correction = 0.0;
+    double_t previous_time = UNSET_PREVIOUS_TIME;
 
-  bool upcoming_trigger = false;
-  double_t upcoming_trigger_time;
 
-  /* Healthcheck */
-  uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-  std::string status_message = "";
-  std::string actionable_message = "";
+    uint16_t num_of_sync_triggers_received;
 
-  /* mTMS device healthcheck */
+    uint32_t sample_packets_received_since_session_start = 0;
+    */
+
+  /* Time synchronisation */
+  uint16_t num_of_sync_triggers_received;
+  double_t first_sync_trigger_timestamp = UNSET_TIME;
+
   bool mtms_device_available = false;
 
-  /* When determining if samples have been dropped by comparing the timestamps of two consecutive
-     samples, allow some tolerance to account for finite precision of floating point numbers. */
-  static constexpr double_t TOLERANCE_S = 2 * pow(10, -5);
+  uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+  std::string status_message;
+  std::string actionable_message;
 };
 
-#endif //EEG_BRIDGE_EEG_BRIDGE_H
+#endif
