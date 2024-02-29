@@ -53,7 +53,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto eeg_device_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
   eeg_device_descriptor.description = "EEG device to use";
   eeg_device_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
-  this->declare_parameter("eeg-device", NULL, eeg_device_descriptor);
+  this->declare_parameter("eeg-device", "", eeg_device_descriptor);
 
   std::string eeg_device_type;
   this->get_parameter("eeg-device", eeg_device_type);
