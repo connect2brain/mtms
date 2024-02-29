@@ -1,4 +1,4 @@
-FROM osrf/ros:iron-desktop
+FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
 
 SHELL ["/bin/bash", "-c"]
 
