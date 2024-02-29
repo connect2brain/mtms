@@ -464,11 +464,7 @@ void EegBridge::check_dropped_samples(double_t sample_time) {
 
     if (time_diff > threshold) {
       /* Err if sample(s) were dropped. */
-
-      /* NOTE: Disabled for now, until we can figure out why UDP packets are dropped. */
-      if (false) {
-        this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
-      }
+      this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
 
       RCLCPP_ERROR(this->get_logger(),
           "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
