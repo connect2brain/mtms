@@ -24,13 +24,11 @@ def generate_launch_description():
     turbolink_sampling_frequency_arg = DeclareLaunchArgument(
         "turbolink-sampling-frequency",
         description="Sampling frequency of a Turbolink device",
-        default_value="5000"
     )
 
     turbolink_eeg_channel_count_arg = DeclareLaunchArgument(
         "turbolink-eeg-channel-count",
         description="EEG channel count of a Turbolink device",
-        default_value="64"
     )
 
 
