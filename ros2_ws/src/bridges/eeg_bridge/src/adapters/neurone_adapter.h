@@ -49,8 +49,8 @@ enum SamplesPacketFieldIndex {
   SAMPLE_NUM_CHANNELS = 8,
   SAMPLE_NUM_SAMPLE_BUNDLES = 10,
   SAMPLE_FIRST_SAMPLE_INDEX = 12,
-  SAMPLE_FIRST_SAMPLE_TIME = 16,
-  SAMPLE_SAMPLES = 20,
+  SAMPLE_FIRST_SAMPLE_TIME = 20,
+  SAMPLE_SAMPLES = 28,
 };
 
 /// Start indexes of the Trigger packet fields relative to start of the packet.
