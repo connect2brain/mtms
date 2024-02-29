@@ -18,7 +18,6 @@ def generate_launch_description():
     eeg_device_arg = DeclareLaunchArgument(
         "eeg-device",
         description="EEG device to use: neurone | turbolink",
-        default_value="neurone",
     )
 
     turbolink_sampling_frequency_arg = DeclareLaunchArgument(
