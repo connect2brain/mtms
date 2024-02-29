@@ -99,27 +99,25 @@ std::tuple<eeg_interfaces::msg::Sample, bool> TurboLinkAdapter::handle_packet() 
   auto sample = eeg_interfaces::msg::Sample();
   bool sync_trigger_received = false;
 
-  uint32_t token = ntohl(*reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::TOKEN));
+  uint32_t token = *reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::TOKEN);
 
   if (token != 0x0050) {
     RCLCPP_ERROR(rclcpp::get_logger(LOGGER_NAME), "Sample packet started with unknown token %x",
                  token);
   }
 
-  uint32_t sample_index =
-      ntohl(*reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::SAMPLE_COUNTER));
+  uint32_t sample_index = *reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::SAMPLE_COUNTER);
 
-  uint32_t trigger_bits =
-      ntohl(*reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::TRIGGER_BITS));
+  uint32_t trigger_bits = *reinterpret_cast<uint32_t *>(buffer + SamplePacketFieldIndex::TRIGGER_BITS);
 
   for (uint8_t i = 0; i < this->num_of_emg_channels; i++) {
     uint8_t *data = buffer + SamplePacketFieldIndex::AUX_CHANNELS + 4 * i;
-    float_t value = convert_be_float_to_host(data);
+    float_t value = *reinterpret_cast<float *>(data);
     sample.emg_data.push_back(value);
   }
   for (uint8_t i = 0; i < this->num_of_eeg_channels; i++) {
     uint8_t *data = buffer + SamplePacketFieldIndex::EEG_CHANNELS + 4 * i;
-    float_t value = convert_be_float_to_host(data);
+    float_t value = *reinterpret_cast<float *>(data);
     sample.eeg_data.push_back(value);
   }
 
