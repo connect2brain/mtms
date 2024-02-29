@@ -327,7 +327,7 @@ void EegBridge::process_eeg_data_packet() {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No sampling frequency set");
   }
 
-  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED) {
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
     return;
   }
 
@@ -384,6 +384,8 @@ void EegBridge::wait_for_session() {
 }
 
 void EegBridge::spin() {
+  /* Session has a deadline of 25 ms, but it will only start affecting once the first session
+   is received. Hence, wait here until the session is received. */
   wait_for_session();
 
   RCLCPP_INFO(this->get_logger(), "Waiting for measurement start...");
