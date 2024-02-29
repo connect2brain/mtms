@@ -199,6 +199,11 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
       auto triggers = std::bitset<32>(value);
       sample.trigger = triggers[TriggerBits::B_IN];
       sync_trigger_received = triggers[TriggerBits::A_IN];
+
+      if (sample.trigger) {
+        RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Trigger received with sample %lu",
+                    sample_index);
+      }
       break;
     }
     default:
@@ -228,7 +233,7 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
       ntohs(*reinterpret_cast<uint16_t *>(buffer + TriggerPacketFieldIndex::TRIGGER_NUM_TRIGGER));
 
   bool sync_trigger = false;
-  uint64_t trigger_time = 0;
+  uint64_t sync_trigger_time = 0;
 
   for (uint16_t i = 0; i < trigger_count; i++) {
     int trigger_event_base_index = TriggerPacketFieldIndex::TRIGGERS + 20 * i;
@@ -248,15 +253,20 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
        EEG device */
     if (trigger_channel == 1) {
       sync_trigger = true;
-      trigger_time = be64toh(*reinterpret_cast<uint64_t *>(buffer + trigger_event_base_index +
-                                                           TriggerEvent::MICROTIME));
+      sync_trigger_time = be64toh(*reinterpret_cast<uint64_t *>(buffer + trigger_event_base_index +
+                                                                TriggerEvent::MICROTIME));
     } else if (trigger_channel == 2) {
       this->trigger_in_next_sample = true;
       this->trigger_sample_index = sample_index;
+
+      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Publishing a trigger with sample idx: %lu",
+                  this->trigger_sample_index);
+    } else {
+      RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown trigger port: %u", trigger_channel);
     }
   }
 
-  double trigger_time_s = (double)trigger_time * 1e-6;
+  double trigger_time_s = (double)sync_trigger_time * 1e-6;
   return {sync_trigger, trigger_time_s};
 }
 
