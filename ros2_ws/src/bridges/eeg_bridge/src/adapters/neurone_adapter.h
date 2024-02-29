@@ -1,7 +1,3 @@
-//
-// Created by oula on 25.1.2024.
-//
-
 #ifndef MTMS_ROS2_WS_SRC_BRIDGES_EEG_BRIDGE_SRC_ADAPTERS_NEURONE_ADAPTER_H
 #define MTMS_ROS2_WS_SRC_BRIDGES_EEG_BRIDGE_SRC_ADAPTERS_NEURONE_ADAPTER_H
 
@@ -77,6 +73,7 @@ enum TriggerBits {
   B_IN = 3,
 };
 
+/// Possible channel types from the Bittium NeurOne.
 enum ChannelType {
   UNDEFINED_CHANNEL,
   EEG_CHANNEL,
@@ -137,7 +134,6 @@ private:
 
   bool trigger_in_next_sample = false;
   uint64_t trigger_sample_index = 0;
-
 };
 
 #endif // MTMS_ROS2_WS_SRC_BRIDGES_EEG_BRIDGE_SRC_ADAPTERS_NEURONE_ADAPTER_H
