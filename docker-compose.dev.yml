@@ -34,9 +34,7 @@ services:
   efield:
     build:
       context: .
-      dockerfile: ${DOCKERFILE_NAME:-Dockerfile}
-      args:
-        - DOCKERFILE_NAME=${DOCKERFILE_NAME}
+      dockerfile: ros2_ws/src/targeting/efield/Dockerfile.cuda2
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
