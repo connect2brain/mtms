@@ -1,5 +1,5 @@
 # Cuda image adapted from: https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.0.0/ubuntu2004/base/Dockerfile
-FROM osrf/ros:iron-desktop as base
+FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e as base
 FROM base as base-amd64
 
 ENV NVARCH x86_64
@@ -66,7 +66,7 @@ RUN apt-get install -y \
     dos2unix \
     ros-iron-rmw-cyclonedds-cpp \
     wget
-    
+
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
