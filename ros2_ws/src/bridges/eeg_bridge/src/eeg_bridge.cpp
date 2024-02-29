@@ -53,7 +53,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   auto eeg_device_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
   eeg_device_descriptor.description = "EEG device to use";
   eeg_device_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_STRING;
-  this->declare_parameter("eeg-device", "neurone", eeg_device_descriptor);
+  this->declare_parameter("eeg-device", NULL, eeg_device_descriptor);
 
   std::string eeg_device_type;
   this->get_parameter("eeg-device", eeg_device_type);
@@ -63,7 +63,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   turbolink_sampling_frequency_descriptor.description = "Sampling frequency of a Turbolink device";
   turbolink_sampling_frequency_descriptor.type =
       rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
-  this->declare_parameter("turbolink-sampling-frequency", 5000,
+  this->declare_parameter("turbolink-sampling-frequency", NULL,
                           turbolink_sampling_frequency_descriptor);
 
   uint32_t turbolink_sampling_frequency;
@@ -74,7 +74,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   turbolink_eeg_channel_count_descriptor.description = "EEG channel count of a Turbolink device";
   turbolink_eeg_channel_count_descriptor.type =
       rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
-  this->declare_parameter("turbolink-eeg-channel-count", 64,
+  this->declare_parameter("turbolink-eeg-channel-count", NULL,
                           turbolink_eeg_channel_count_descriptor);
 
   uint8_t turbolink_eeg_channel_count;
