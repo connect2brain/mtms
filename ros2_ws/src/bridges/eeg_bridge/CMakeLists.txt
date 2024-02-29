@@ -13,13 +13,19 @@ find_package(eeg_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
 add_executable(eeg_bridge
-        src/eeg_bridge.h
-        src/eeg_bridge.cpp
         src/memory_utils.cpp
         src/memory_utils.h
         src/scheduling_utils.cpp
         src/scheduling_utils.h
-        )
+        src/adapters/eeg_adapter.h
+        src/adapters/neurone_adapter.cpp
+        src/adapters/neurone_adapter.h
+        src/adapters/turbolink_adapter.h
+        src/adapters/turbolink_adapter.cpp
+        src/eeg_bridge.cpp
+        src/eeg_bridge.h
+)
+
 add_executable(mock_eeg_bridge src/mock_eeg_bridge.cpp)
 ament_target_dependencies(eeg_bridge rclcpp std_msgs eeg_interfaces system_interfaces)
 ament_target_dependencies(mock_eeg_bridge rclcpp std_msgs eeg_interfaces system_interfaces)
