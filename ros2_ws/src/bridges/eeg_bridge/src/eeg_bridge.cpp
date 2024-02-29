@@ -129,7 +129,6 @@ void EegBridge::create_subscribers() {
 }
 
 void EegBridge::subscribe_to_session() {
-  this->session_been_stopped = false;
   this->session_received = false;
 
   auto session_callback =
@@ -145,9 +144,9 @@ void EegBridge::subscribe_to_session() {
      */
     if (session_state.value == system_interfaces::msg::SessionState::STOPPING ||
         session_state.value == system_interfaces::msg::SessionState::STOPPED) {
-
+      RCLCPP_INFO(this->get_logger(), "Session stopped.");
+      this->eeg_bridge_state = EegBridgeState::WAITING_FOR_SESSION_STOP;
       this->reset_session();
-      this->session_been_stopped = true;
     }
   };
 
@@ -387,6 +386,8 @@ void EegBridge::spin() {
                                  "Ready");
         break;
       case EegBridgeState::STREAMING:
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY, "Streaming data",
+                                 "Streaming data");
         break;
       case EegBridgeState::ERROR_OUT_OF_SYNC:
         this->update_healthcheck(
