@@ -192,6 +192,24 @@ Gateway: -
 - Run `sudo update-grub`
 - Reboot
 
+## Configure logging
+
+- Run `sudo nano /etc/logrotate.d/rsyslog`
+
+- Modify the lines
+
+```
+        rotate 4
+        weekly
+```
+
+to
+
+```
+        rotate 7
+        daily
+```
+
 ## Install NVIDIA display driver (for two-display setup)
 
 - The automatically installed NVIDIA display driver don’t work with PREEMPT_RT kernel patch, causing the GPU (NVIDIA RTX3080 at Aalto) to not recognize two displays. Here are the instructions to manually install the display driver.
