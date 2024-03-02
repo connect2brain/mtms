@@ -58,9 +58,17 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   std::string eeg_device_type;
   this->get_parameter("eeg-device", eeg_device_type);
 
+  /* The number of tolerated dropped samples */
+  auto num_of_tolerated_dropped_samples_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  num_of_tolerated_dropped_samples_descriptor.description = "The number of tolerated dropped samples";
+  num_of_tolerated_dropped_samples_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+  this->declare_parameter("num-of-tolerated-dropped-samples", NULL, num_of_tolerated_dropped_samples_descriptor);
+
+  this->get_parameter("num-of-tolerated-dropped-samples", this->num_of_tolerated_dropped_samples);
+
   /* Turbolink sampling frequency */
   auto turbolink_sampling_frequency_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
-  turbolink_sampling_frequency_descriptor.description = "Sampling frequency of a Turbolink device";
+  turbolink_sampling_frequency_descriptor.description = "Sampling frequency of Turbolink device";
   turbolink_sampling_frequency_descriptor.type =
       rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
   this->declare_parameter("turbolink-sampling-frequency", NULL,
@@ -71,7 +79,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
 
   /* Turbolink channel count */
   auto turbolink_eeg_channel_count_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
-  turbolink_eeg_channel_count_descriptor.description = "EEG channel count of a Turbolink device";
+  turbolink_eeg_channel_count_descriptor.description = "EEG channel count of Turbolink device";
   turbolink_eeg_channel_count_descriptor.type =
       rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
   this->declare_parameter("turbolink-eeg-channel-count", NULL,
@@ -80,7 +88,14 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   uint8_t turbolink_eeg_channel_count;
   this->get_parameter("turbolink-eeg-channel-count", turbolink_eeg_channel_count);
 
-  /* string to enum conversion should be done with cleaner solution at some
+  /* Log configuration. */
+  RCLCPP_INFO(this->get_logger(), "EEG bridge configuration:");
+  RCLCPP_INFO(this->get_logger(), "  Port: %d", this->port);
+  RCLCPP_INFO(this->get_logger(), "  EEG device: %s", eeg_device_type.c_str());
+  RCLCPP_INFO(this->get_logger(), "  Number of tolerated dropped samples: %d",
+              this->num_of_tolerated_dropped_samples);
+
+  /* TODO: string to enum conversion should be done with cleaner solution at some
      point, maybe. */
   if (eeg_device_type == "neurone") {
     this->eeg_adapter = std::make_shared<NeurOneAdapter>(this->port);
@@ -259,17 +274,20 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 
   /* Check for dropped samples */
   if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX &&
-      sample.index != previous_sample_index + 1) {
+      sample.index != previous_sample_index + 1 + this->num_of_tolerated_dropped_samples) {
+
     this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
-    RCLCPP_ERROR(this->get_logger(), "Samples dropped.");
+    RCLCPP_ERROR(this->get_logger(), "Samples dropped. Previous sample index: %d, current sample index: %d.",
+                 previous_sample_index,
+                 sample.index);
     return;
   }
+  this->previous_sample_index = sample.index;
+
   if (this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
     RCLCPP_INFO(this->get_logger(), "Streaming data.");
   }
   this->eeg_bridge_state = EegBridgeState::STREAMING;
-
-  this->previous_sample_index = sample.index;
 
   /* If mTMS device is not available offset samples by the timestamp of the first sample */
   if (this->first_sample_of_session && !this->mtms_device_available) {
