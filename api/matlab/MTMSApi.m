@@ -197,6 +197,10 @@ classdef MTMSApi < handle
                 % Check if timeout has been reached.
                 if ~isinf(timeout) && obj.get_time() - start_time > timeout
                     disp("Timeout reached while waiting for completion of events.");
+
+                    % Remove the remaining incomplete events.
+                    obj.incomplete_events = [];
+
                     return;
                 end
             end
