@@ -272,9 +272,21 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
     return;
   }
 
+  /* Warn if the sample index wraps around. */
+  if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX &&
+      sample.index == 0 &&
+      previous_sample_index > 0) {
+
+    RCLCPP_WARN(this->get_logger(), "Sample index wrapped around. Previous sample index: %d, current sample index: %d.",
+                previous_sample_index,
+                sample.index);
+  }
+
   /* Check for dropped samples */
   if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX &&
-      sample.index != previous_sample_index + 1 + this->num_of_tolerated_dropped_samples) {
+      sample.index != previous_sample_index + 1 + this->num_of_tolerated_dropped_samples &&
+      /* Ignore the case where the sample index wraps around. */
+      sample.index != 0) {
 
     this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
     RCLCPP_ERROR(this->get_logger(), "Samples dropped. Previous sample index: %d, current sample index: %d.",
