@@ -15,11 +15,7 @@ RUN apt-get update && \
 # Note: Tensorflow is needed for mneflow, which is used for machine learning.
 RUN pip3 install tensorflow
 
-# HACK: Currently needed for mneflow to install successfully. Remove once the corresponding problem
-#   in mneflow has been fixed.
-ENV SKLEARN_ALLOW_DEPRECATED_SKLEARN_PACKAGE_INSTALL=True
-
-RUN pip3 install git+https://github.com/zubara/mneflow.git@38dcee430
+RUN pip3 install mneflow
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/

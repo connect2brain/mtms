@@ -82,12 +82,15 @@ private:
   void reset_session();
   void wait_for_session();
 
+  /* Configuration */
   uint16_t port = 0;
-
-  EegBridgeState eeg_bridge_state = EegBridgeState::WAITING_FOR_EEG_DEVICE;
-
+  uint8_t num_of_tolerated_dropped_samples = 0;
   EegDevice eeg_device;
+
   std::shared_ptr<EegAdapter> eeg_adapter;
+
+  /* State */
+  EegBridgeState eeg_bridge_state = EegBridgeState::WAITING_FOR_EEG_DEVICE;
 
   /* Publishers */
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
@@ -113,24 +116,13 @@ private:
   bool session_received = false;
   system_interfaces::msg::SessionState session_state;
 
-  /*
-    bool first_sample_of_session = true;
-
-    double_t time_correction = 0.0;
-    double_t previous_time = UNSET_PREVIOUS_TIME;
-
-
-    uint16_t num_of_sync_triggers_received;
-
-    uint32_t sample_packets_received_since_session_start = 0;
-    */
-
   /* Time synchronisation */
   uint16_t num_of_sync_triggers_received;
   double_t first_sync_trigger_timestamp = UNSET_TIME;
 
   bool mtms_device_available = false;
 
+  /* Healthcheck */
   uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;
   std::string status_message;
   std::string actionable_message;
