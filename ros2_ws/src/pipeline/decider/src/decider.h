@@ -131,6 +131,10 @@ private:
   DeciderState decider_state = DeciderState::WAITING_FOR_ENABLED;
   bool first_sample = true;
 
+  /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
+     interval is respected. */
+  double_t previous_trigger_time = UNSET_PREVIOUS_TIME;
+
   bool reinitialize = false;
 
   std::string active_project = UNSET_STRING;
@@ -140,22 +144,28 @@ private:
 
   std::vector<std::string> modules;
 
+  /* Information about the EEG device configuration. */
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
   uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
   uint8_t num_of_emg_channels = UNSET_NUM_OF_CHANNELS;
-
   double_t sampling_period;
 
+  /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
 
+  /* For latency calculation, store the times of the previous pulse decisions in a queue. */
   std::queue<double_t> decision_times;
 
+  /* 'Ready for trigger' is set to true when the mTMS is ready to trigger the next pulse. */
   bool ready_for_trigger = false;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
+
+  /* ROS parameters */
+  double_t minimum_pulse_interval;
 
   /* Healthcheck */
   uint8_t status;
