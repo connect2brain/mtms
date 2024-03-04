@@ -33,6 +33,30 @@ const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 
 EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")) {
+  /* Read ROS parameter: Minimum interval between consecutive pulses (in seconds). */
+  auto minimum_pulse_interval_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  minimum_pulse_interval_descriptor.description = "The minimum interval between consecutive pulses (in seconds)";
+  minimum_pulse_interval_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+  /* XXX: Have to provide 0.0 as a default value because the parameter server does not interpret NULL correctly
+          when the parameter is a double. */
+  this->declare_parameter("minimum-pulse-interval", 0.0, minimum_pulse_interval_descriptor);
+  this->get_parameter("minimum-pulse-interval", this->minimum_pulse_interval);
+
+  /* Log the minimum pulse interval. */
+  RCLCPP_INFO(this->get_logger(), "Configuration:");
+  RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_pulse_interval);
+  RCLCPP_INFO(this->get_logger(), " ");
+
+  /* Validate the minimum pulse interval. */
+  if (this->minimum_pulse_interval <= 0) {
+    RCLCPP_ERROR(this->get_logger(), "Invalid minimum pulse interval: %.1f (s)", this->minimum_pulse_interval);
+    exit(1);
+  }
+  if (this->minimum_pulse_interval < 0.5) {
+    RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_pulse_interval);
+    RCLCPP_WARN(this->get_logger(), " ");
+  }
+
   /* Publisher for healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
@@ -575,57 +599,79 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
+  /* Append the sample to the buffer. */
   this->sample_buffer.append(msg);
 
   if (!this->sample_buffer.is_full()) {
     return;
   }
 
+  /* Process the sample. */
   auto [success, send_trigger, send_external_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
     ready_for_trigger);
 
-  if (success) {
-    /* Measure the processing time of the sample.  TODO: Unused at the moment. */
-    auto end_time = std::chrono::high_resolution_clock::now();
-    double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
-
-    /* Send trigger if desired. */
-    if (send_trigger) {
-      this->decision_times.push(sample_time);
-
-      RCLCPP_INFO(this->get_logger(), "Sending trigger at time %.3f (s).", sample_time);
-
-      auto msg = event_interfaces::msg::EventTrigger();
-      this->trigger_publisher->publish(msg);
-
-      ready_for_trigger = false;
-    }
-
-    if (send_external_trigger) {
-      this->decision_times.push(sample_time);
-
-      RCLCPP_INFO(this->get_logger(), "Sending external trigger at time %.3f (s).", sample_time);
-
-      auto msg = event_interfaces::msg::EventTrigger();
-      this->external_trigger_publisher->publish(msg);
-
-      ready_for_trigger = false;
-    }
-
-    if (send_sensory_stimulus) {
-      RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
-
-      this->sensory_stimulus_publisher->publish(this->sensory_stimulus);
-    }
-  } else {
+  /* Log and return early if the Python call failed. */
+  if (!success) {
     RCLCPP_ERROR_THROTTLE(this->get_logger(),
                           *this->get_clock(),
                           1000,
                           "Python call failed, not processing EEG sample at time %.3f (s).",
                           sample_time);
+    return;
+  }
+
+  /* Measure the processing time of the sample.  TODO: Unused at the moment. */
+  auto end_time = std::chrono::high_resolution_clock::now();
+  double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
+
+  /* Check that the minimum pulse interval is respected. */
+  if (send_trigger || send_external_trigger) {
+    if (this->previous_trigger_time != UNSET_PREVIOUS_TIME &&
+        sample_time - this->previous_trigger_time < this->minimum_pulse_interval) {
+
+      RCLCPP_ERROR(this->get_logger(), "Minimum pulse interval (%.1f s) not respected, not sending trigger at time %.3f (s).",
+                    this->minimum_pulse_interval,
+                    sample_time);
+      return;
+    }
+  }
+
+  /* Send trigger if desired. */
+  if (send_trigger) {
+    this->decision_times.push(sample_time);
+
+    RCLCPP_INFO(this->get_logger(), "Sending trigger at time %.3f (s).", sample_time);
+
+    auto msg = event_interfaces::msg::EventTrigger();
+    this->trigger_publisher->publish(msg);
+
+    /* Update the previous trigger time. */
+    this->previous_trigger_time = sample_time;
+
+    ready_for_trigger = false;
+  }
+
+  /* Send external trigger if desired. */
+  if (send_external_trigger) {
+    this->decision_times.push(sample_time);
+
+    RCLCPP_INFO(this->get_logger(), "Sending external trigger at time %.3f (s).", sample_time);
+
+    auto msg = event_interfaces::msg::EventTrigger();
+    this->external_trigger_publisher->publish(msg);
+
+    /* Update the previous trigger time. */
+    this->previous_trigger_time = sample_time;
+  }
+
+  /* Send sensory stimulus if desired. */
+  if (send_sensory_stimulus) {
+    RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
+
+    this->sensory_stimulus_publisher->publish(this->sensory_stimulus);
   }
 }
 

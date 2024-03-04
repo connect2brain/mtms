@@ -155,6 +155,10 @@ class MTMSApi:
             # Check if timeout has been reached.
             if timeout is not None and self.get_time() - start_time > timeout:
                 print("Timeout reached while waiting for completion of events.")
+
+                # Remove remaining events.
+                self.incomplete_events = []
+
                 break
 
     def wait_until(self, time):
