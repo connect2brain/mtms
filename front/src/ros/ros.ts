@@ -193,6 +193,39 @@ export const performExperiment = (
     })
   }
 
+/* Visualize targets service */
+const visualizeTargetsService = new ROSLIB.Service({
+  ros: ros,
+  name: '/neuronavigation/visualize/targets',
+  serviceType: 'neuronavigation_interfaces/VisualizeTargets',
+})
+
+export const visualizeTargets = (
+  targets: any,
+  is_ordered: boolean,
+  callback: () => void
+) => {
+  const request = new ROSLIB.ServiceRequest({}) as any
+
+  request.targets = targets
+  request.is_ordered = is_ordered
+
+  visualizeTargetsService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to visualize targets: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to visualize targets, error:')
+      console.log(error)
+    },
+  )
+}
+
 /* Pause experiment service */
 const pauseExperimentService = new ROSLIB.Service({
   ros: ros,

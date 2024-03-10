@@ -31,6 +31,7 @@ import {
   resumeExperiment,
   cancelExperiment,
   setActiveProject,
+  visualizeTargets,
 } from 'ros/ros'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -574,6 +575,27 @@ export const ExperimentView = () => {
       })
     }
   }, [selectedAngles, selectedPoints, targetingAlgorithm])
+
+  /* Updates the target visualization in neuronavigation. */
+  useEffect(() => {
+    let targets: any[] = []
+    if (selectedPoints.length >= 1 && selectedAngles.length === 1) {
+      targets = selectedPoints.map((point) => {
+        return {
+          target: {
+            displacement_x: point.x,
+            displacement_y: point.y,
+            rotation_angle: selectedAngles[0],
+          },
+          intensity: intensity,
+        }
+      })
+    }
+    const is_ordered = true
+    visualizeTargets(targets, is_ordered, () => {
+      console.log('Visualization successful')
+    })
+  }, [selectedAngles, selectedPoints, intensity])
 
   /* Update the number of valid trials. */
   useEffect(() => {
