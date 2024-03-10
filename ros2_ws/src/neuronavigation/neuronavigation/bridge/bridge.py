@@ -25,7 +25,8 @@ from invesalius3 import app
 import time
 from launch.substitutions import LaunchConfiguration
 
-from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
+from .pedal_bridge import PedalBridge
+from .target_visualizer import TargetVisualizer
 
 
 # TODO: Divide this large class into several nodes.
@@ -43,7 +44,7 @@ class NeuronavigationNode(Node):
     # HACK: Needs to match the corresponding value in stimulation allower ROS node.
     COIL_AT_TARGET_DEADLINE_S = 0.6
 
-    def __init__(self):
+    def __init__(self, callback_group):
         super().__init__("neuronavigation")
 
         ## ROS parameters
@@ -70,11 +71,10 @@ class NeuronavigationNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
-        callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
-        # Create subscriber for stimulus feedback.esko
+        # Create subscriber for stimulus feedback.
         self._stimulus_feedback_subscriber = self.create_subscription(
             StimulusFeedback,
             "/event/stimulus_feedback",
@@ -412,12 +412,17 @@ class Connection(Thread):
         self.daemon = True
 
         rclpy.init(args=None)
-        self.node = NeuronavigationNode()
-        self.neuronavigation_pedal_bridge = NeuronavigationPedalBridge()
+
+        callback_group = ReentrantCallbackGroup()
+
+        self.node = NeuronavigationNode(callback_group=callback_group)
+        self.pedal_bridge = PedalBridge()
+        self.target_visualizer = TargetVisualizer(callback_group=callback_group)
 
         self.executor = rclpy.executors.MultiThreadedExecutor()
         self.executor.add_node(self.node)
-        self.executor.add_node(self.neuronavigation_pedal_bridge)
+        self.executor.add_node(self.pedal_bridge)
+        self.executor.add_node(self.target_visualizer)
 
     def run(self):
         self.executor.spin()
@@ -523,15 +528,18 @@ class Connection(Thread):
     def set_callback__open_orientation_dialog(self, callback):
         self.node.set_callback__open_orientation_dialog(callback)
 
+    def set_callback__set_vector_field(self, callback):
+        self.target_visualizer.set_callback__set_vector_field(callback)
+
     def add_pedal_callback(self, name, callback, remove_when_released=False):
-        self.neuronavigation_pedal_bridge.add_pedal_callback(
+        self.pedal_bridge.add_pedal_callback(
             name=name,
             callback=callback,
             remove_when_released=remove_when_released,
         )
 
     def remove_pedal_callback(self, name):
-        self.neuronavigation_pedal_bridge.remove_pedal_callback(name=name)
+        self.pedal_bridge.remove_pedal_callback(name=name)
 
 
 class RosLoggerWrapper:
