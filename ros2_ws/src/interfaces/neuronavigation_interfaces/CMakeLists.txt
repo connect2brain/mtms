@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(experiment_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -37,7 +38,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/EfieldRoi.srv"
   "srv/EfieldRoiMax.srv"
   "srv/Setdiperdt.srv"
-  DEPENDENCIES geometry_msgs
+
+  "srv/VisualizeTargets.srv"
+
+  DEPENDENCIES geometry_msgs experiment_interfaces
  )
 
 ament_package()
