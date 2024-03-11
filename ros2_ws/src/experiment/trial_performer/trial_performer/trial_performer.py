@@ -271,11 +271,10 @@ class TrialPerformerNode(Node):
 
     # Targeting services
 
-    def get_target_voltages(self, target, intensity):
+    def get_target_voltages(self, target):
         request = GetTargetVoltages.Request()
 
         request.target = target
-        request.intensity = intensity
 
         response = self.async_service_call(self.targeting_client, request)
         assert response.success, "Invalid displacement, rotation angle, or intensity."
@@ -432,9 +431,8 @@ class TrialPerformerNode(Node):
         stimulus = stimuli[0]
 
         target = stimulus.target
-        intensity = stimulus.intensity
 
-        target_voltages, _ = self.get_target_voltages(target, intensity)
+        target_voltages, _ = self.get_target_voltages(target)
 
         self.logger.info('{}: Performing trial...'.format(goal_id))
 

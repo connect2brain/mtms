@@ -1,7 +1,6 @@
 # ROS service for getting channel voltages.
 
 ElectricTarget target
-uint8 intensity
 ---
 bool success
 float64[] voltages
