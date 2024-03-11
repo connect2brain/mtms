@@ -27,6 +27,7 @@ class Channel:
         time_constant: float,
         pulse_voltage_drop_proportion: float,
         max_voltage: int,
+        logger,
     ):
         """
         Initialising of the Channel with channel specific properties.
@@ -37,7 +38,9 @@ class Channel:
             time_constant: time constant for discharge rate in seconds, tau=RC.
             pulse_voltage_drop_proportion: the proportion which the voltage drops per pulse.
             max_voltage: the maximum voltage of this channel.
+            logger: logger to log the events.
         """
+        self.logger = logger
 
         self.charge_rate = charge_rate
         """Charge rate of the voltage in watts."""
@@ -126,11 +129,20 @@ class Channel:
         # To prevent division by zero if discharging the coil back to 0
         target_voltage = max(target_voltage, 3)
 
+        self.logger.info(f"Discharging from {self.current_voltage} to {target_voltage}")
+
         # Calculate wait time
         t = self.time_constant * math.log(self.current_voltage / target_voltage)
 
         self.is_discharging = True
-        time.sleep(t)
+
+        # Note: Due to the system state messages being sent so infrequently, the
+        #   discharging sometimes happens from a lower voltage to a higher voltage
+        #   (because the event was sent before the voltage was updated). This is a
+        #   fix to prevent the 'sleep' call from crashing in that case.
+        if t > 0:
+            time.sleep(t)
+
         self.is_discharging = False
 
         # Set new voltage
