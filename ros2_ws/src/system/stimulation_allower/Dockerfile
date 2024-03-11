@@ -17,11 +17,8 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 WORKDIR /app
 COPY ros2_ws/src/system/stimulation_allower ros2_ws/src/system/stimulation_allower/
-COPY ros2_ws/src/interfaces/eeg_interfaces ros2_ws/src/interfaces/eeg_interfaces/
-COPY ros2_ws/src/interfaces/experiment_interfaces ros2_ws/src/interfaces/experiment_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
-COPY ros2_ws/src/interfaces/mep_interfaces ros2_ws/src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/stimulation_interfaces ros2_ws/src/interfaces/stimulation_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/

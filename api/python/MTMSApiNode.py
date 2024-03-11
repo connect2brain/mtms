@@ -37,7 +37,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
 
-    ROS_SERVICE_get_target_voltages = ('/targeting/get_target_voltages', GetTargetVoltages)
+    ROS_SERVICE_GET_TARGET_VOLTAGES = ('/targeting/get_target_voltages', GetTargetVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
@@ -60,7 +60,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
         ROS_SERVICE_ALLOW_STIMULATION,
-        ROS_SERVICE_get_target_voltages,
+        ROS_SERVICE_GET_TARGET_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
         ROS_SERVICE_REVERSE_POLARITY,
@@ -318,7 +318,7 @@ class MTMSApiNode(Node):
     # Targeting
 
     def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
-        topic, service_type = self.ROS_SERVICE_get_target_voltages
+        topic, service_type = self.ROS_SERVICE_GET_TARGET_VOLTAGES
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
@@ -327,7 +327,7 @@ class MTMSApiNode(Node):
         request.target.displacement_y = displacement_y
         request.target.rotation_angle = rotation_angle
         request.target.algorithm.value = algorithm
-        request.intensity = intensity
+        request.target.intensity = intensity
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement, rotation angle, intensity, or algorithm."
@@ -340,10 +340,10 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.target.displacement_x = displacement_x
-        request.target.displacement_y = displacement_y
-        request.target.rotation_angle = rotation_angle
-        request.target.algorithm.value = algorithm
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+        request.algorithm.value = algorithm
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement, rotation angle, or algorithm."

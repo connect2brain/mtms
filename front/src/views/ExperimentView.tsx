@@ -220,11 +220,11 @@ type Stimulus = {
     displacement_x: number
     displacement_y: number
     rotation_angle: number
+    intensity: number
     algorithm: {
       value: number
     }
   }
-  intensity: number
   triggers: TriggerConfig[]
 }
 
@@ -425,11 +425,11 @@ export const ExperimentView = () => {
             displacement_x: point.x,
             displacement_y: point.y,
             rotation_angle: angle,
+            intensity: intensity,
             algorithm: {
               value: targetingAlgorithm,
             },
           },
-          intensity: intensity,
           triggers: triggers,
         }
 
@@ -582,11 +582,9 @@ export const ExperimentView = () => {
     if (selectedPoints.length >= 1 && selectedAngles.length === 1) {
       targets = selectedPoints.map((point) => {
         return {
-          target: {
-            displacement_x: point.x,
-            displacement_y: point.y,
-            rotation_angle: selectedAngles[0],
-          },
+          displacement_x: point.x,
+          displacement_y: point.y,
+          rotation_angle: selectedAngles[0],
           intensity: intensity,
         }
       })
