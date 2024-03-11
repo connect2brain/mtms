@@ -170,7 +170,7 @@ class StimulusPerformerNode(Node):
             stimulus.target.displacement_y,
             stimulus.target.rotation_angle,
         ))
-        self.logger.info('{}:     - Intensity: {} V/m'.format(goal_id, stimulus.intensity))
+        self.logger.info('{}:     - Intensity: {} V/m'.format(goal_id, stimulus.target.intensity))
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}:   Trigger 1:'.format(goal_id))
         self.logger.info('{}:     - Enabled: {}'.format(goal_id, stimulus.triggers[0].enabled))
@@ -247,11 +247,10 @@ class StimulusPerformerNode(Node):
 
     # Targeting services
 
-    def get_target_voltages(self, target, intensity):
+    def get_target_voltages(self, target):
         request = GetTargetVoltages.Request()
 
         request.target = target
-        request.intensity = intensity
 
         response = self.async_service_call(self.targeting_client, request)
         assert response.success, "Invalid displacement, rotation angle, or intensity."
@@ -310,8 +309,8 @@ class StimulusPerformerNode(Node):
         self.send_pulse_publisher.publish(message)
         self.event_feedback[id] = None
 
-    def targeted_pulse(self, target, intensity, time, execution_condition):
-        _, reversed_polarities = self.get_target_voltages(target, intensity)
+    def targeted_pulse(self, target, time, execution_condition):
+        _, reversed_polarities = self.get_target_voltages(target)
 
         ids = [None] * self.NUM_OF_CHANNELS
         for channel in range(self.NUM_OF_CHANNELS):
@@ -389,7 +388,6 @@ class StimulusPerformerNode(Node):
         #   to hide the logic.
         pulse_ids = self.targeted_pulse(
             target=stimulus.target,
-            intensity=stimulus.intensity,
             time=time,
             execution_condition=execution_condition,
         )

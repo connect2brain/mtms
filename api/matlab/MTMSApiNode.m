@@ -344,7 +344,7 @@ classdef MTMSApiNode < handle
             request.target.displacement_y = int8(displacement_y);
             request.target.rotation_angle = uint16(rotation_angle);
             request.target.algorithm = algorithm;
-            request.intensity = uint8(intensity);
+            request.target.intensity = uint8(intensity);
 
             response = call(client, request);
             success = response.success;
@@ -361,10 +361,10 @@ classdef MTMSApiNode < handle
 
             request = ros2message(client);
 
-            request.target.displacement_x = int8(displacement_x);
-            request.target.displacement_y = int8(displacement_y);
-            request.target.rotation_angle = uint16(rotation_angle);
-            request.target.algorithm = algorithm;
+            request.displacement_x = int8(displacement_x);
+            request.displacement_y = int8(displacement_y);
+            request.rotation_angle = uint16(rotation_angle);
+            request.algorithm = algorithm;
 
             response = call(client, request);
             success = response.success;
