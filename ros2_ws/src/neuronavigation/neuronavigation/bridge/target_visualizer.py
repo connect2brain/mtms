@@ -36,8 +36,8 @@ class TargetVisualizer(Node):
         vector_field = []
         for target, color in zip(targets, colors):
             # Visualize each target 15 mm below the coil centerpoint.
-            position = [target.target.displacement_x, target.target.displacement_y, -15]
-            orientation = [0, 0, target.target.rotation_angle]
+            position = [target.displacement_x, target.displacement_y, -15]
+            orientation = [0, 0, target.rotation_angle]
             length = target.intensity / 100
 
             vector_field.append({
