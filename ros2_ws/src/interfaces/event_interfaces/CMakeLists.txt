@@ -35,6 +35,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/PulseError.msg"
         "msg/WaveformPiece.msg"
         "msg/WaveformPhase.msg"
+        "msg/Waveform.msg"
 
         "msg/TriggerOut.msg"
         "msg/TriggerOutFeedback.msg"
