@@ -1,3 +1,3 @@
-# Defines a waveform
+# Defines a waveform, consisting of a sequence of pieces.
 
-WaveformPiece[] waveform
+WaveformPiece[] pieces
