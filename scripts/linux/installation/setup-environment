@@ -59,6 +59,11 @@ if ! grep -q 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' ~/.bashrc; then
     echo 'export PATH=$PATH:$MTMS_ROOT/scripts/linux/usage' >> ~/.bashrc
 fi
 
+# Needed for custom ROS messages to work in MATLAB.
+if ! grep -q 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6' ~/.bashrc; then
+    echo 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6' >> ~/.bashrc
+fi
+
 # Automatically show instructions when opening a new terminal
 if ! grep -q "instructions" ~/.bashrc; then
     echo 'instructions' >> ~/.bashrc
