@@ -98,10 +98,50 @@ custom_waveform = api.create_waveform(phases, durations_in_ticks);
 % Note that in this example, the same waveform is used on all channels, but in reality, different waveforms
 % should be used on different channels due to different coil characteristics.
 
-reverse_polarities = [false, false, false, false, false];
-waveforms = {custom_waveform, custom_waveform, custom_waveform, custom_waveform, custom_waveform};
+waveforms_for_coil_set = api.create_waveforms_for_coil_set([custom_waveform, custom_waveform, custom_waveform, custom_waveform, custom_waveform]);
 
-api.send_immediate_custom_pulse_to_all_channels(waveforms, reverse_polarities);
+api.send_immediate_custom_pulse_to_all_channels(waveforms_for_coil_set, reverse_polarities);
+
+%% Paired pulse targeting
+
+algorithm = api.get_targeting_algorithm('genetic');
+
+displacement_x = 0;  % mm
+displacement_y = 0;  % mm
+rotation_angle = 45;  % deg
+intensity = 10;  % V/m
+
+first_target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+displacement_x = 5;  % mm
+displacement_y = 5;  % mm
+rotation_angle = 90;  % deg
+intensity = 5;  % V/m
+
+second_target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+targets = [first_target, second_target];
+
+[initial_voltages, approximated_waveforms] = api.get_multipulse_waveforms(targets)
+
+% Charge all channels to initial voltages.
+api.send_immediate_charge_or_discharge_to_all_channels(initial_voltages);
+
+api.wait_for_completion()
+
+% Set the times (in seconds).
+time = api.get_time() + 1.0;
+time_between_pulses = 0.003;
+
+% Send the first pulse.
+api.send_timed_pulse_to_all_channels(approximated_waveforms(1), time);
+
+% Send the second pulse.
+api.send_timed_pulse_to_all_channels(approximated_waveforms(2), time + time_between_pulses);
+
+% Wait for completion of both pulses.
+api.wait_for_completion()
+
 
 %% Targeting
 
@@ -109,9 +149,11 @@ displacement_x = 5;  % mm
 displacement_y = 5;  % mm
 rotation_angle = 90;  % deg
 intensity = 5;  % V/m
-algorithm = api.get_targeting_algorithm('least_squares');
+algorithm = api.get_targeting_algorithm('genetic');
 
-[target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+[target_voltages, reverse_polarities] = api.get_target_voltages(target);
 
 % Get maximum intensity
 
@@ -134,9 +176,11 @@ displacement_x = 5;  % mm
 displacement_y = 5;  % mm
 rotation_angle = 90;  % deg
 intensity = 5;  % V/m
-algorithm = api.get_targeting_algorithm('least_squares');
+algorithm = api.get_targeting_algorithm('genetic');
 
-[target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+[target_voltages, reverse_polarities] = api.get_target_voltages(target);
 
 % Charge all channels to target voltages.
 
