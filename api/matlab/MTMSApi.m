@@ -364,16 +364,8 @@ classdef MTMSApi < handle
         %
         % :param channel: The target channel. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
-        % :param waveform: A list of dictionaries with keys `mode` and `duration_in_ticks`:
-        %
-        %   * `mode` is one of the following:
-        %   * PulseMode.RISING
-        %   * PulseMode.HOLD
-        %   * PulseMode.FALLING
-        %   * PulseMode.ALTERNATIVE_HOLD
-        %   * `duration_in_ticks`, range: 0-65535
-        %
-        % :type waveform: list of dictionaries
+        % :param waveform: A waveform object, as returned by, e.g., get_default_waveform.
+        % :type waveform: ROS message (Waveform)
         % :param reverse_polarity: Whether to reverse the polarity of the waveform. Default is false.
         % :type reverse_polarity: bool, optional
         % :param execution_condition: The condition under which the event should be executed. One of the following:
@@ -568,12 +560,22 @@ classdef MTMSApi < handle
         % Waveforms and targeting
 
         function waveform = create_waveform(obj, phases, durations_in_ticks)
+        % Create a waveform from a list of phases and durations.
+        %
+        % :param phases: A cell array of phases, e.g., {'RISING', 'HOLD', 'FALLING'}.
+        % :type phases: cell array of strings
+        % :param durations_in_ticks: A cell array of durations in ticks, e.g., {1200, 2400, 1200}.
+        % :type durations_in_ticks: cell array of ints
+        %
+        % :return: A waveform object.
+        % :rtype: ROS message (Waveform)
+
             assert(iscell(phases), "Phases must be given as a cell array, e.g., {'RISING', 'HOLD', 'FALLING'}.");
             assert(iscell(durations_in_ticks), "Durations must be given as a cell array, e.g., {1200, 2400, 1200}.");
 
             assert(length(phases) == length(durations_in_ticks), 'Length of phases must be equal to the length of durations.');
 
-            waveform = [];
+            waveform = ros2message('event_interfaces/Waveform');
             for i = 1:length(phases)
                 phase = phases{i};
                 duration_in_ticks = durations_in_ticks{i};
@@ -586,12 +588,34 @@ classdef MTMSApi < handle
 
                 piece.waveform_phase.value = piece.waveform_phase.(phase);
 
-                waveform = [waveform piece];
+                waveform.pieces(i) = piece;
+            end
+        end
+
+        function waveforms_for_coil_set = create_waveforms_for_coil_set(obj, waveforms)
+        % Create a WaveformsForCoilSet object from a list of waveforms.
+        %
+        % :param waveforms: A list of waveforms, one for each channel.
+        % :type waveforms: list of ROS message (Waveform)
+        %
+        % :return: A WaveformsForCoilSet object.
+        % :rtype: ROS message (WaveformsForCoilSet)
+
+            waveforms_for_coil_set = ros2message('event_interfaces/WaveformsForCoilSet');
+            for channel = 0:obj.channel_count - 1
+                waveforms_for_coil_set.waveforms(channel + 1) = waveforms(channel + 1);
             end
         end
 
         function waveform = get_default_waveform(obj, channel)
             waveform = obj.node.get_default_waveform(channel);
+        end
+
+        function waveforms_for_coil_set = get_default_waveforms_for_coil_set(obj)
+            waveforms_for_coil_set = ros2message('event_interfaces/WaveformsForCoilSet');
+            for channel = 0:obj.channel_count - 1
+                waveforms_for_coil_set.waveforms(channel + 1) = obj.get_default_waveform(channel);
+            end
         end
 
         function waveform = reverse_polarity(obj, waveform)
@@ -605,35 +629,28 @@ classdef MTMSApi < handle
         % :type algorithm_str: string
         %
         % :return: Targeting algorithm.
-        % :rtype: ROS message.
+        % :rtype: ROS message (TargetingAlgorithm)
 
+            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
             if strcmp(algorithm_str, 'least_squares')
-                algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
                 algorithm.value = algorithm.LEAST_SQUARES;
             elseif strcmp(algorithm_str, 'genetic')
-                algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
                 algorithm.value = algorithm.GENETIC;
             else
                 error('Unknown targeting algorithm: %s', algorithm_str);
             end
         end
 
-        function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
-        % Return the target voltages (V), given the displacements, rotation angle, and intensity.
+        function [voltages, reverse_polarities] = get_target_voltages(obj, target)
+        % Return the target voltages (V), given a target ROS message.
         %
-        % :param displacement_x: Displacement in the x direction.
-        % :type displacement_x: float
-        % :param displacement_y: Displacement in the y direction.
-        % :type displacement_y: float
-        % :param rotation_angle: Rotation angle in degrees.
-        % :type rotation_angle: float
-        % :param intensity: Intensity value.
-        % :type intensity: float
+        % :param target: A target ROS message.
+        % :type target: ROS message (ElectricTarget)
         %
         % :return: Target voltages.
         % :rtype: list of floats
 
-            [voltages, reverse_polarities] = obj.node.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+            [voltages, reverse_polarities] = obj.node.get_target_voltages(target);
         end
 
         function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)
@@ -650,6 +667,25 @@ classdef MTMSApi < handle
         % :rtype: float
 
             maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
+        end
+
+        function [initial_voltages, approximated_waveforms] = get_multipulse_waveforms(obj, targets)
+        % Return the paired pulse waveforms for the first and second channels.
+        %
+        % :param targets: A list of ElectricTarget objects, each containing the displacement, rotation angle, intensity, and algorithm.
+        % :type targets: list of ElectricTarget
+        %
+        % :return: Initial voltages for each coil.
+        % :rtype: list of integers
+        % :return: A WaveformsForCoilSet object for each target, each defining the waveforms for each coil.
+        % :rtype: list of WaveformsForCoilSet
+
+            target_waveforms = cell(1, length(targets));
+            for i = 1:length(targets)
+                target_waveforms{i} = obj.get_default_waveforms_for_coil_set();
+            end
+
+            [initial_voltages, approximated_waveforms] = obj.node.get_multipulse_waveforms(targets, target_waveforms);
         end
 
         % Other
@@ -677,27 +713,27 @@ classdef MTMSApi < handle
         end
 
         function mep_configuration = create_mep_configuration(obj, emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
-            % FIXME: Placeholder
-            % Create an MEP configuration given the start and end of time window, and four parameters
-            % defining the preactivation check: whether the check is enabled, start and end time for the check, and preactivation voltage range limit.
+            % Create a MEP configuration object, given the EMG channel for the analysis, the start and end of time window, and
+            % parameters defining the preactivation check.
             %
             % :param emg_channel: The EMG channel number.
             % :type emg_channel: int
-            % :param mep_start_time: Start of the configuration time window.
+            % :param mep_start_time: Start of the time window for MEP analysis, relative to the event of interest (e.g., pulse).
             % :type mep_start_time: float
-            % :param mep_end_time: End of the configuration time window.
+            % :param mep_end_time: End of the time window for MEP analysis, relative to the event of interest (e.g., pulse).
             % :type mep_end_time: float
-            % :param preactivation_check_enabled: Whether to enable the check.
+            % :param preactivation_check_enabled: Whether to enable the preactivation check.
             % :type preactivation_check_enabled: bool
-            % :param preactivation_start_time: Start of the preactivation.
+            % :param preactivation_start_time: Start of the preactivation time window, relative to the event of interest (e.g., pulse).
             % :type mep_start_time: float
-            % :param preactivation_end_time: End of the preactivation.
+            % :param preactivation_end_time: End of the preactivation time window, relative to the event of interest (e.g., pulse).
             % :type mep_end_time: float
-            % :param preactivation_voltage_range_limit: Voltage range limit.
-            % :type mep_end_time: float
+            % :param preactivation_voltage_range_limit: Voltage range limit; if the range of voltages within the preactivation time window
+            %    exceeds this limit, the preactivation check will fail.
+            % :type preactivation_voltage_range_limit: float
             %
             % :return: MEP configuration
-            % :rtype: ???
+            % :rtype: ROS message (MepConfiguration)
 
             mep_configuration = ros2message('mep_interfaces/MepConfiguration');
 
@@ -714,6 +750,32 @@ classdef MTMSApi < handle
             preactivation_check.voltage_range_limit = preactivation_voltage_range_limit;
 
             mep_configuration.preactivation_check = preactivation_check;
+        end
+
+        function [target] = create_target(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+            % Create a target ROS message.
+            %
+            % :param displacement_x: Displacement in the x direction.
+            % :type displacement_x: int
+            % :param displacement_y: Displacement in the y direction.
+            % :type displacement_y: int
+            % :param rotation_angle: Rotation angle in degrees.
+            % :type rotation_angle: int
+            % :param intensity: Intensity value.
+            % :type intensity: int
+            % :param algorithm: Targeting algorithm.
+            % :type algorithm: ROS message (TargetingAlgorithm)
+            %
+            % :return: Target message.
+            % :rtype: ROS message (ElectricTarget)
+
+            target = ros2message('targeting_interfaces/ElectricTarget');
+
+            target.displacement_x = int8(displacement_x);
+            target.displacement_y = int8(displacement_y);
+            target.rotation_angle = uint16(rotation_angle);
+            target.intensity = uint8(intensity);
+            target.algorithm = algorithm;
         end
 
         % Compound events
@@ -801,26 +863,23 @@ classdef MTMSApi < handle
             ids = obj.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
         end
 
-        function ids = send_timed_custom_pulse_to_all_channels(obj, waveforms, reverse_polarities, time)
-        % Send timed default pulse commands to all channels.
+        function ids = send_timed_custom_pulse_to_all_channels(obj, waveforms_for_coil_set, time)
+        % Send timed default pulse commands to all channels. Assumes that the waveform polarities are already as desired.
         %
-        % :param waveforms: Cell array of waveforms for each channel.
-        % :type waveforms: cell array of waveforms
-        % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
-        % :type reverse_polarities: list of bools
-        % :param time: The time at which to execute the pulse. Default is 0.0.
-        % :type time: float, optional
+        % :param waveforms_for_coil_set: Waveforms for each coil.
+        % :type waveforms_for_coil_set: ROS message (WaveformsForCoilSet)
+        % :param time: The time at which to execute the pulse.
+        % :type time: float
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
+
+            waveforms = waveforms_for_coil_set.waveforms;
 
             assert(obj.is_session_started(), "Session not started.");
 
             assert(length(waveforms) == obj.channel_count, ...
                 sprintf("Waveforms defined for %d channels, but channel count is %d.", length(waveforms), obj.channel_count));
-
-            assert(length(reverse_polarities) == obj.channel_count, ...
-                sprintf("Reverse polarities defined for %d channels, but channel count is %d.", length(reverse_polarities), obj.channel_count));
 
             ids = [];
 
@@ -828,10 +887,9 @@ classdef MTMSApi < handle
             for channel = 0:obj.channel_count - 1
 
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
-                reverse_polarity = reverse_polarities(channel + 1);
                 waveform = waveforms{channel + 1};
 
-                new_id = obj.send_pulse(channel, waveform, reverse_polarity, obj.execution_conditions.TIMED, time);
+                new_id = obj.send_pulse(channel, waveform, false, obj.execution_conditions.TIMED, time);
                 ids = [ids new_id];
             end
         end
@@ -883,13 +941,34 @@ classdef MTMSApi < handle
             ids = obj.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
         end
 
-        function ids = send_immediate_custom_pulse_to_all_channels(obj, waveforms, reverse_polarities)
-        % Send immediate default pulse commands to all channels.
+        function ids = send_timed_pulse_to_all_channels(obj, waveforms_for_coil_set, time)
+        % Send pulse command to all channels, using the given waveforms. Assumes that the waveform
+        % polarities are already as desired.
         %
-        % :param waveforms: Cell array of waveforms for each channel.
-        % :type waveforms: cell array of waveforms
-        % :param reverse_polarities: List of boolean values indicating whether to reverse polarities for each channel.
-        % :type reverse_polarities: list of bools
+        % :param waveforms_for_coil_set: Waveforms for each coil.
+        % :type waveforms_for_coil_set: WaveformsForCoilSet
+        % :param time: The time at which the pulse is executed.
+        % :type time: float
+        %
+        % :return: IDs for each sent command.
+        % :rtype: list of ints
+
+            assert(obj.is_session_started(), "Session not started.");
+
+            ids = [];
+            for channel = 0:obj.channel_count - 1
+                waveform = waveforms_for_coil_set.waveforms(channel + 1);
+
+                id = obj.send_pulse(channel, waveform, false, obj.execution_conditions.TIMED, time);
+                ids = [ids id];
+            end
+        end
+
+        function ids = send_immediate_custom_pulse_to_all_channels(obj, waveforms_for_coil_set)
+        % Send immediate default pulse commands to all channels. Assumes that the waveform polarities are already as desired.
+        %
+        % :param waveforms_for_coil_set: Waveforms for each coil.
+        % :type waveforms_for_coil_set: ROS message (WaveformsForCoilSet)
         %
         % :return: IDs for each sent command.
         % :rtype: list of ints
@@ -897,7 +976,7 @@ classdef MTMSApi < handle
             assert(obj.is_session_started(), "Session not started.");
 
             time = obj.get_time() + obj.TIME_EPSILON;
-            ids = obj.send_timed_custom_pulse_to_all_channels(waveforms, reverse_polarities, time);
+            ids = obj.send_timed_custom_pulse_to_all_channels(waveforms_for_coil_set, time);
         end
 
         % Other
