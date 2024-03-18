@@ -10,10 +10,14 @@ from mep_interfaces.msg import (
     PreactivationCheck
 )
 from eeg_interfaces.msg import TimeWindow
-from targeting_interfaces.msg import TargetingAlgorithm
+from targeting_interfaces.msg import (
+    TargetingAlgorithm,
+    ElectricTarget
+)
 
 
 api = MTMSApi()
+
 
 api.start_device()
 api.start_session()
@@ -157,20 +161,84 @@ amplitude = mep.amplitude
 latency = mep.latency
 
 
+## Paired pulse targeting
+
+algorithm = TargetingAlgorithm(
+    value=TargetingAlgorithm.GENETIC
+)
+
+# Define the targets.
+first_target = ElectricTarget(
+    displacement_x=0,  # mm
+    displacement_y=0,  # mm
+    rotation_angle=45,  # deg
+    intensity=10,  # V/m
+    algorithm=algorithm,
+)
+
+second_target = ElectricTarget(
+    displacement_x=5,  # mm
+    displacement_y=5,  # mm
+    rotation_angle=90,  # deg
+    intensity=5,  # V/m
+    algorithm=algorithm,
+)
+
+targets = [first_target, second_target]
+
+initial_voltages, approximated_waveforms = api.get_multipulse_waveforms(targets)
+
+# Charge all channels to initial voltages.
+api.send_immediate_charge_or_discharge_to_all_channels(
+    target_voltages=initial_voltages,
+)
+api.wait_for_completion()
+
+# Set the times (in seconds).
+time = api.get_time() + 1.0
+time_between_pulses = 0.003
+
+# Send the first pulse.
+api.send_timed_pulse_to_all_channels(
+    waveforms=approximated_waveforms[0],
+    time=time,
+)
+
+# Send the second pulse.
+api.send_timed_pulse_to_all_channels(
+    waveforms=approximated_waveforms[1],
+    time=time + time_between_pulses,
+)
+
+# Wait for completion of both pulses.
+api.wait_for_completion()
+
+
 ## Targeting
 
-displacement_x = 5  # mm
-displacement_y = 5  # mm
-rotation_angle = 90  # deg
-intensity = 5  # V/m
+# Define the target.
 
-target_voltages, reverse_polarities = api.get_target_voltages(
+# Available algorithms:
+#   TargetingAlgorithm.LEAST_SQUARES
+#   TargetingAlgorithm.GENETIC
+
+algorithm = TargetingAlgorithm(
+    value=TargetingAlgorithm.GENETIC
+)
+displacement_x = 0  # mm
+displacement_y = 0  # mm
+rotation_angle = 45  # deg
+intensity = 10  # V/m
+
+target = ElectricTarget(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
     intensity=intensity,
-    algorithm=TargetingAlgorithm.GENETIC,
+    algorithm=algorithm,
 )
+
+target_voltages, reverse_polarities = api.get_target_voltages(target)
 
 # Get maximum intensity
 maximum_intensity = api.get_maximum_intensity(
