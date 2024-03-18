@@ -34,6 +34,7 @@ classdef MTMSApiNode < handle
         get_target_voltages_client
         get_maximum_intensity_client
         get_default_waveform_client
+        get_multipulse_waveforms_client
         reverse_polarity_client
 
         analyze_mep_client
@@ -92,6 +93,7 @@ classdef MTMSApiNode < handle
             obj.get_target_voltages_client = ros2svcclient(obj.node, "/targeting/get_target_voltages", "targeting_interfaces/GetTargetVoltages");
             obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
             obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
+            obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/waveforms/get_multipulse_waveforms", "targeting_interfaces/GetMultipulseWaveforms");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
             obj.analyze_mep_client = ros2svcclient(obj.node, "/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
@@ -183,13 +185,6 @@ classdef MTMSApiNode < handle
             %send_pulse Send pulse event
             %
             %   Send pulse event to the mTMS device.
-
-            % MATLAB defaults to floating point numbers, but the ROS2 message expects
-            % unsigned 16-bit integers. Therefore, we need to convert the durations
-            % to the correct type.
-            for i = 1:length(waveform)
-                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
-            end
 
             publisher = obj.send_pulse_publisher;
 
@@ -334,17 +329,13 @@ classdef MTMSApiNode < handle
 
         % Targeting
 
-        function [voltages, reverse_polarities] = get_target_voltages(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+        function [voltages, reverse_polarities] = get_target_voltages(obj, target)
 
             client = obj.get_target_voltages_client;
 
             request = ros2message(client);
 
-            request.target.displacement_x = int8(displacement_x);
-            request.target.displacement_y = int8(displacement_y);
-            request.target.rotation_angle = uint16(rotation_angle);
-            request.target.algorithm = algorithm;
-            request.target.intensity = uint8(intensity);
+            request.target = target;
 
             response = call(client, request);
             success = response.success;
@@ -392,13 +383,6 @@ classdef MTMSApiNode < handle
         function waveform = reverse_polarity(obj, waveform)
             client = obj.reverse_polarity_client;
 
-            % MATLAB defaults to floating point numbers, but the ROS2 message expects
-            % unsigned 16-bit integers. Therefore, we need to convert the durations
-            % to the correct type.
-            for i = 1:length(waveform)
-                waveform(i).duration_in_ticks = uint16(waveform(i).duration_in_ticks);
-            end
-
             request = ros2message(client);
 
             request.waveform = waveform;
@@ -409,6 +393,26 @@ classdef MTMSApiNode < handle
             assert(success, "Failed request.");
 
             waveform = response.waveform;
+        end
+
+        function [initial_voltages, approximated_waveforms] = get_multipulse_waveforms(obj, targets, target_waveforms)
+            client = obj.get_multipulse_waveforms_client;
+
+            request = ros2message(client);
+
+            request.targets = targets;
+
+            for i = 1:length(target_waveforms)
+                request.target_waveforms(i) = target_waveforms{i};
+            end
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Invalid number of pulses, targets, or target waveforms.");
+
+            initial_voltages = response.initial_voltages;
+            approximated_waveforms = response.approximated_waveforms;
         end
 
         % Other
