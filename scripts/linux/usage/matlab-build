@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Build the ROS2 workspace and generate the MATLAB message files.
+#
+# This script is intended to be run on the mTMS computer when ROS2 messages have been added or modified.
+
+# Define the text formatting codes
+BOLD=$(tput bold)
+UNDERLINE=$(tput smul)
+RESET=$(tput sgr0)
+
 # Run the MATLAB commands non-interactively
 matlab -nodisplay -nosplash -nodesktop -r " \
 pyenv('Version', '/opt/python3.9.5/bin/python3.9'); \
@@ -20,14 +29,13 @@ else
     echo "matlab_msg_gen directory does not exist."
 fi
 
-# Register messages in MATLAB
-matlab -nodisplay -nosplash -nodesktop -r " \
-ros2RegisterMessages('/home/mtms/mtms/api/matlab'); \
-exit;"
-
-# Delete the unneeded interfaces directory, generated when running ros2RegisterMessages
-rm -rf $MTMS_ROOT/api/matlab/*interfaces
-
-# Commit the changes to the repository
-cd $MTMS_ROOT
-git commit api/matlab/matlab_msg_gen.zip -m "UPD: ROS interfaces in MATLAB API"
+echo "Done."
+echo ""
+echo "• To register the MATLAB message files with MATLAB, run the following command:"
+echo ""
+echo "${BOLD}matlab-register${RESET}"
+echo ""
+echo "• To commit the built MATLAB message files, run the following command:"
+echo ""
+echo "${BOLD}matlab-commit${RESET}"
+echo ""
