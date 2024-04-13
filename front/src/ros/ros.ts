@@ -177,7 +177,8 @@ export const performExperiment = (
 ) => {
   const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
-  performExperimentActionClient.sendGoal(goal,
+  performExperimentActionClient.sendGoal(
+    goal,
     (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to perform experiment: success field was false.')
@@ -188,8 +189,9 @@ export const performExperiment = (
     },
     (feedback: any) => {
       feedback_callback(feedback)
-    })
-  }
+    },
+  )
+}
 
 /* Visualize targets service */
 const visualizeTargetsService = new ROSLIB.Service({
@@ -198,11 +200,7 @@ const visualizeTargetsService = new ROSLIB.Service({
   serviceType: 'neuronavigation_interfaces/VisualizeTargets',
 })
 
-export const visualizeTargets = (
-  targets: any,
-  is_ordered: boolean,
-  callback: () => void
-) => {
+export const visualizeTargets = (targets: any, is_ordered: boolean, callback: () => void) => {
   const request = new ROSLIB.ServiceRequest({}) as any
 
   request.targets = targets
