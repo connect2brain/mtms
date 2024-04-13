@@ -748,7 +748,7 @@ class MTMSApi:
 
         return ids
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED):
+    def send_default_pulse_to_all_channels(self, reverse_polarities, time=None, execution_condition=ExecutionCondition.TIMED):
         """
         Send default pulse commands to all channels.
 
@@ -879,7 +879,7 @@ class MTMSApi:
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
         assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
-        voltage = self.get_voltage(channel=channel)
+        voltage = self.get_current_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
 
         id = charge_or_discharge(
