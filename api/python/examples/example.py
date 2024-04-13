@@ -41,10 +41,11 @@ api.send_charge(
 api.wait_for_completion()
 
 # Execute pulse on channel 0, using the default waveform.
+channel = 0
+
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
 
-channel = 0
 execution_condition = ExecutionCondition.IMMEDIATE
 
 api.send_pulse(
