@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/msg/waveform_piece.hpp"
+#include "event_interfaces/msg/waveform.hpp"
 #include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/event_info.hpp"
 
@@ -64,12 +64,11 @@ public:
       serialized_message.add_uint64(execution_time_ticks);
 
       /* Serialize pulse parameters. */
+      uint8_t num_of_waveform_pieces = (uint8_t) pulse->waveform.pieces.size();
+      serialized_message.add_byte(num_of_waveform_pieces);
 
-      uint8_t n_waveform = (uint8_t) pulse->waveform.size();
-      serialized_message.add_byte(n_waveform);
-
-      for (uint8_t i = 0; i < n_waveform; i++) {
-        event_interfaces::msg::WaveformPiece piece = pulse->waveform[i];
+      for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
+        event_interfaces::msg::WaveformPiece piece = pulse->waveform.pieces[i];
 
         serialized_message.add_byte(piece.waveform_phase.value);
         serialized_message.add_uint16(piece.duration_in_ticks);
