@@ -22,7 +22,6 @@ from event_interfaces.msg import (
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from system_interfaces.msg import Session, SessionState
 from targeting_interfaces.srv import GetTargetVoltages, GetDefaultWaveform, ReversePolarity
-from utility_interfaces.srv import GetNextId
 
 
 class StimulusPerformerNode(Node):
@@ -48,11 +47,6 @@ class StimulusPerformerNode(Node):
             self.perform_stimulus_action_handler,
             callback_group=self.callback_group,
         )
-
-        # Service client for getting next ID.
-        self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
-        while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
         # Service client for targeting.
         self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages', callback_group=self.callback_group)
@@ -235,16 +229,6 @@ class StimulusPerformerNode(Node):
         response = response_value[0]
         return response
 
-    # Utility services
-
-    def get_next_id(self):
-        request = GetNextId.Request()
-
-        response = self.async_service_call(self.get_next_id_client, request)
-        assert response.success, "Getting next ID failed."
-
-        return response.id
-
     # Targeting services
 
     def get_target_voltages(self, target):
@@ -276,66 +260,6 @@ class StimulusPerformerNode(Node):
         assert response.success, "Reversing polarity unsuccessful."
 
         return response.waveform
-
-    # Pulse and trigger out services
-
-    def trigger_out(self, id, time, execution_condition, port):
-        message = TriggerOut()
-
-        event_info = EventInfo()
-        event_info.id = id
-        event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
-
-        message.event_info = event_info
-        message.port = port
-        message.duration_us = self.TRIGGER_DURATION_US
-
-        self.send_trigger_out_publisher.publish(message)
-        self.event_feedback[id] = None
-
-    def pulse(self, id, time, execution_condition, channel, waveform):
-        message = Pulse()
-
-        event_info = EventInfo()
-        event_info.id = id
-        event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
-
-        message.event_info = event_info
-        message.channel = channel
-        message.waveform = waveform
-
-        self.send_pulse_publisher.publish(message)
-        self.event_feedback[id] = None
-
-    def targeted_pulse(self, target, time, execution_condition):
-        _, reversed_polarities = self.get_target_voltages(target)
-
-        ids = [None] * self.NUM_OF_CHANNELS
-        for channel in range(self.NUM_OF_CHANNELS):
-            id = self.get_next_id()
-
-            reverse_polarity = reversed_polarities[channel]
-            waveform = self.get_default_waveform(
-                channel=channel,
-            )
-            # TODO: Double-check that reversing works correctly!
-            if reverse_polarity:
-                waveform = self.reverse_polarity(
-                    waveform=waveform,
-                )
-
-            self.pulse(
-                id=id,
-                time=time,
-                channel=channel,
-                waveform=waveform,
-                execution_condition=execution_condition,
-            )
-            ids[channel] = id
-
-        return ids
 
     # General
 
@@ -382,71 +306,6 @@ class StimulusPerformerNode(Node):
         if not success:
             return False
 
-        execution_condition = ExecutionCondition.WAIT_FOR_TRIGGER if wait_for_trigger else ExecutionCondition.TIMED
-
-        # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
-        #   to hide the logic.
-        pulse_ids = self.targeted_pulse(
-            target=stimulus.target,
-            time=time,
-            execution_condition=execution_condition,
-        )
-
-        num_of_trigger_ports = len(stimulus.triggers)
-        trigger_ids = []
-        for i in range(num_of_trigger_ports):
-            if stimulus.triggers[i].enabled:
-                id = self.get_next_id()
-                delay = stimulus.triggers[i].delay
-                delayed_time = time + delay
-                port = i + 1
-
-                self.trigger_out(
-                    id=id,
-                    port=port,
-                    time=delayed_time,
-                    execution_condition=execution_condition,
-                )
-                trigger_ids += [id]
-
-        if wait_for_trigger:
-            msg = ReadyForEventTrigger()
-            self.event_trigger_readiness_publisher.publish(msg)
-
-            self.logger.info('{}: Waiting for trigger...'.format(goal_id))
-        else:
-            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
-
-        pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
-        trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
-
-        # TODO: If there is an error, do something with the error code.
-        pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
-        trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
-
-        # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
-        execution_time = pulse_feedbacks[0].execution_time
-
-        # Check that all pulses were executed concurrently.
-        pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
-
-        if not pulses_executed_concurrently:
-            self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
-
-        success = pulse_success and trigger_out_success and pulses_executed_concurrently
-
-        self.logger.info('{}: Done! Stimulus {}.'.format(
-            goal_id,
-            'was successful' if success else 'failed'
-        ))
-
-        # Publish stimulus feedback.
-        feedback = StimulusFeedback()
-
-        feedback.success = success
-        feedback.execution_time = execution_time
-
-        self.stimulus_feedback_publisher.publish(feedback)
 
         return success
 
