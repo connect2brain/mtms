@@ -31,7 +31,7 @@ class MTMSApi:
     #
     TIME_EPSILON = 0.15
 
-    def __init__(self, channel_count=5):
+    def __init__(self, channel_count=5, verbose=True):
         """
         Initializes the MTMSApi instance, creating a new MTMSApiNode.
 
@@ -49,6 +49,7 @@ class MTMSApi:
         )
 
         self.channel_count = channel_count
+        self.verbose = verbose
 
         self.latest_event_id = 0
         self.incomplete_events = []
@@ -56,6 +57,8 @@ class MTMSApi:
         print("Configuration:")
         print("")
         print("  Channel count: {}".format(self.channel_count))
+        print("  Verbose: {}".format(self.verbose))
+        print("")
 
         signal.signal(signal.SIGINT, self.handle_sigint)
 
@@ -87,7 +90,8 @@ class MTMSApi:
 
         # If start-up fails, device state will end up as 'Not operational'. Hence, check both conditions.
         while self.get_device_state() not in [DeviceState.OPERATIONAL, DeviceState.NOT_OPERATIONAL]:
-            pass
+            if self.verbose:
+                self.node.print_state()
 
     def stop_device(self):
         """
@@ -102,7 +106,8 @@ class MTMSApi:
             # when it is finished - hence do not allow interrupting waiting for the device to
             # be stopped using SIGINT.
             try:
-                pass
+                if self.verbose:
+                    self.node.print_state()
             except KeyboardInterrupt:
                 pass
 
@@ -114,7 +119,8 @@ class MTMSApi:
         """
         self.node.start_session()
         while self.get_session_state() != SessionState.STARTED:
-            pass
+            if self.verbose:
+                self.node.print_state()
 
     def stop_session(self):
         """
@@ -129,7 +135,8 @@ class MTMSApi:
             # when it is finished - hence do not allow interrupting waiting for the session to
             # be stopped using SIGINT.
             try:
-                pass
+                if self.verbose:
+                    self.node.print_state()
             except KeyboardInterrupt:
                 pass
 
@@ -161,6 +168,13 @@ class MTMSApi:
 
                 break
 
+            if self.verbose:
+                self.node.print_state()
+
+        # Always print the state after completion.
+        self.node.wait_for_new_state()
+        self.node.print_state(force=True)
+
     def wait_until(self, time):
         """
         Wait until the system time is equal to or greater than the specified time.
@@ -170,9 +184,9 @@ class MTMSApi:
         time : float
             The time to wait until (as seconds).
         """
-        self.node.wait_for_new_state()
         while self.get_time() < time:
-            self.node.wait_for_new_state()
+            if self.verbose:
+                self.node.print_state()
 
     def wait(self, time):
         """
@@ -188,6 +202,8 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_wallclock_time() < start_time + time:
             self.node.wait_for_new_state()
+            if self.verbose:
+                self.node.print_state()
 
     # Getters
 
@@ -925,8 +941,9 @@ class MTMSApi:
 
     # Other
 
-    def print_system_state(self):
+    def print_state(self):
         self.node.wait_for_new_state()
+        self.node.print_state()
 
     def get_wallclock_time(self):
         return time.time()
