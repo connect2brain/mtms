@@ -92,7 +92,7 @@ class MTMSApiNode(Node):
         super().__init__('mtms_api_node')
 
         self.printer = MTMSApiPrinter(
-            channel_count=channel_count
+            channel_count=channel_count,
         )
 
         self.system_state = None
@@ -465,7 +465,12 @@ class MTMSApiNode(Node):
         while self.system_state is None:
             rclpy.spin_once(self)
 
-        self.printer.print_state(self.system_state, self.session)
+    def print_state(self, force=False):
+        self.printer.print_state(
+            state=self.system_state,
+            session=self.session,
+            force=force,
+        )
 
     # Session
 
