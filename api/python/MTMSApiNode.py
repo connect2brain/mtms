@@ -356,7 +356,7 @@ class MTMSApiNode(Node):
         request.displacement_x = displacement_x
         request.displacement_y = displacement_y
         request.rotation_angle = rotation_angle
-        request.algorithm.value = algorithm
+        request.algorithm = algorithm
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement, rotation angle, or algorithm."
