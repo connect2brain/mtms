@@ -1,13 +1,5 @@
 # MATLAB API for mTMS software
 
-## Setting up
-
-1. Install MATLAB
-2. Install ROS Toolbox for MATLAB
-3. Add `/home/mtms/mtms/api/matlab` to the path in MATLAB (change path according to your setup).
-4. Run `ros2RegisterMessages('/home/mtms/mtms/api/matlab')` (change path according to your setup).
-5. Check using `ros2 msg list` that the ROS messages are registered. There should be mTMS-specific message types such as ones starting with `mtms` string.
-
 ## Using API
 
 ### Getting started
@@ -20,59 +12,6 @@ api.start_device();
 ```
 
 See `example.m` for a more thorough example on how to use the API.
-
-## Development
-
-### Rebuilding ROS messages
-
-When ROS interfaces in `ros2_ws/src/interfaces` directory change, the ROS message types
-need to be rebuilt into MATLAB types.
-
-It is recommended to do this in Ubuntu; in Windows, you may run into problems, such as ROS Toolbox not finding Cmake.
-
-Here are the steps:
-
-1. Install colcon: `sudo apt install python3-colcon-common-extensions -y`. Alternatively, just install CMake.
-2. Install Python 3.9 (NB: Needs to be Python 3.9. ROS Toolbox requires that particular version.) If your system has another Python version installed, you can
-install Python 3.9 using Anaconda. Another option is to install Python 3.9 so that it coexists with another Python version.
-
-NB: To be supported by ROS Toolbox, the installed version of Python 3.9 needs to be old enough.
-For instance, 3.9.15 does not work. Some ways to install an old version of Python 3.9.x
-is to use Anaconda or to build it from the source code.
-
-3. Open MATLAB by running `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 matlab`. This prevents message generation from failing because of conflicting
-libraries.
-4. Run `!which python3.9`. In case the command does not return anything, use the command line to see where the Python
-executable is located (e.g., `/opt/python3.9.5/bin/python3.9.5`).
-5. Run `pyenv('Version', '<the result from previous command>')`.
-6. Run `ros2genmsg('/home/mtms/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')` (change path according to your setup).
-7. Move `matlab_msg_gen.zip` to `api/matlab` directory in mTMS repository, replace the existing file.
-8. Commit the updated ZIP file and push.
-
-Here are step-by-step instructions, including installing Python 3.9 to a system with an existing Python installation:
-
-```
-sudo apt install -y python3-colcon-common-extensions
-
-cd ~/Downloads
-wget https://www.python.org/ftp/python/3.9.5/Python-3.9.5.tgz
-tar xzf Python-3.9.5.tgz
-cd Python-3.9.5
-./configure --prefix=/opt/python3.9.5
-make
-sudo make install
-
-LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 matlab
-```
-
-NOTE: The instructions below have been tested, and they work in Aalto mTMS lab in Sep 2023:
-
-In MATLAB, run:
-
-```
-pyenv('Version', '/opt/python3.9.5/bin/python3.9')
-ros2genmsg('/home/mtms/mtms/ros2_ws/src/interfaces', CreateShareableFile=true, BuildConfiguration='fasterruns')
-```
 
 ## Troubleshooting
 
