@@ -18,7 +18,6 @@ from targeting_interfaces.msg import (
 
 api = MTMSApi()
 
-
 api.start_device()
 api.start_session()
 
@@ -162,6 +161,45 @@ amplitude = mep.amplitude
 latency = mep.latency
 
 
+## Targeting
+
+# Define the target.
+
+# Available algorithms:
+#   TargetingAlgorithm.LEAST_SQUARES
+#   TargetingAlgorithm.GENETIC
+
+algorithm = TargetingAlgorithm(
+    value=TargetingAlgorithm.GENETIC
+)
+displacement_x = 0  # mm
+displacement_y = 0  # mm
+rotation_angle = 45  # deg
+intensity = 10  # V/m
+
+target = ElectricTarget(
+    displacement_x=displacement_x,
+    displacement_y=displacement_y,
+    rotation_angle=rotation_angle,
+    intensity=intensity,
+    algorithm=algorithm,
+)
+
+target_voltages, reverse_polarities = api.get_target_voltages(target)
+
+# Charge all channels to target voltages.
+api.send_immediate_charge_or_discharge_to_all_channels(
+    target_voltages=target_voltages,
+)
+api.wait_for_completion()
+
+# Send default pulse to all channels.
+api.send_immediate_default_pulse_to_all_channels(
+    reverse_polarities=reverse_polarities,
+)
+api.wait_for_completion()
+
+
 ## Paired pulse targeting
 
 algorithm = TargetingAlgorithm(
@@ -215,51 +253,23 @@ api.send_timed_pulse_to_all_channels(
 api.wait_for_completion()
 
 
-## Targeting
+## Targeting-related utilities
 
-# Define the target.
-
-# Available algorithms:
-#   TargetingAlgorithm.LEAST_SQUARES
-#   TargetingAlgorithm.GENETIC
-
+# Get maximum intensity
 algorithm = TargetingAlgorithm(
     value=TargetingAlgorithm.GENETIC
 )
 displacement_x = 0  # mm
 displacement_y = 0  # mm
 rotation_angle = 45  # deg
-intensity = 10  # V/m
 
-target = ElectricTarget(
-    displacement_x=displacement_x,
-    displacement_y=displacement_y,
-    rotation_angle=rotation_angle,
-    intensity=intensity,
-    algorithm=algorithm,
-)
-
-target_voltages, reverse_polarities = api.get_target_voltages(target)
-
-# Get maximum intensity
 maximum_intensity = api.get_maximum_intensity(
     displacement_x=displacement_x,
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
-    algorithm=TargetingAlgorithm.GENETIC
+    algorithm=algorithm,
 )
 
-# Charge all channels to target voltages.
-api.send_immediate_charge_or_discharge_to_all_channels(
-    target_voltages=target_voltages,
-)
-api.wait_for_completion()
-
-# Send default pulse to all channels.
-api.send_immediate_default_pulse_to_all_channels(
-    reverse_polarities=reverse_polarities,
-)
-api.wait_for_completion()
 
 ## Targeting combined with MEP analysis
 
