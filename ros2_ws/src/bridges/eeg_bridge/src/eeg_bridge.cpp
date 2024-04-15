@@ -148,21 +148,29 @@ void EegBridge::subscribe_to_session() {
 
   auto session_callback =
       [this](const std::shared_ptr<system_interfaces::msg::Session> message) -> void {
-    this->session_received = true;
 
+    /* Check if the session state has changed or if this is the first session message. */
+    bool session_state_changed = this->session_state.value != message->state.value || !this->session_received;
+
+    /* Update session state. */
     this->session_state = message->state;
+
+    bool session_stopping = session_state.value == system_interfaces::msg::SessionState::STOPPING &&
+                            session_state_changed;
+    bool session_stopped = session_state.value == system_interfaces::msg::SessionState::STOPPED &&
+                           session_state_changed;
 
     /* Stopping a session takes several seconds, whereas if another session is
        started immediately after the previous one is stopped, the mTMS device
        remains in "stopped" state only for a very short period of time. Hence,
        check both conditions to ensure that we notice if the session is stopped.
      */
-    if (session_state.value == system_interfaces::msg::SessionState::STOPPING ||
-        session_state.value == system_interfaces::msg::SessionState::STOPPED) {
-      RCLCPP_INFO(this->get_logger(), "Session stopped.");
-      this->eeg_bridge_state = EegBridgeState::WAITING_FOR_SESSION_STOP;
-      this->reset_session();
+    if (session_stopping || session_stopped) {
+      RCLCPP_INFO(this->get_logger(), "Session %s.", session_stopping ? "stopping" : "stopped");
+      this->stop_session();
     }
+
+    this->session_received = true;
   };
 
   /* HACK: Duplicates code from session_bridge.cpp. */
@@ -186,7 +194,12 @@ void EegBridge::subscribe_to_session() {
       SYSTEM_SESSION_TOPIC, qos, session_callback, subscription_options);
 }
 
-void EegBridge::reset_session() {
+void EegBridge::stop_session() {
+  /* Reset error state when session is stopped. */
+  this->error_state = ErrorState::NO_ERROR;
+
+  this->wait_for_session_to_stop = false;
+
   this->first_sample_of_session = true;
 
   this->first_sync_trigger_timestamp = UNSET_TIME;
@@ -197,7 +210,7 @@ void EegBridge::reset_session() {
   this->num_of_sync_triggers_received = 0;
 
   /* Reset number of sample packets received. */
-  this->sample_packets_received_since_session_start = 0;
+  this->sample_packets_received_since_last_sync = 0;
 }
 
 void EegBridge::update_healthcheck(uint8_t status, std::string status_message,
@@ -220,56 +233,67 @@ void EegBridge::subscribe_to_mtms_device_healthcheck() {
 }
 
 void EegBridge::handle_sync_trigger(double_t sync_time) {
-  this->num_of_sync_triggers_received++;
+  this->sample_packets_received_since_last_sync = 0;
 
-  if (first_sync_trigger_timestamp == UNSET_TIME) {
+  if (std::isnan(first_sync_trigger_timestamp)) {
+    RCLCPP_INFO(this->get_logger(), "First sync trigger received at %.4f s.", sync_time);
     first_sync_trigger_timestamp = sync_time;
   }
 
   double_t new_time_correction =
       (sync_time - first_sync_trigger_timestamp) - num_of_sync_triggers_received * SYNC_INTERVAL;
 
+  this->num_of_sync_triggers_received++;
+
   if (abs(new_time_correction - this->time_correction) >
       MAXIMUM_TIME_CORRECTION_ADJUSTMENT_PER_SYNC_TRIGGER) {
     RCLCPP_ERROR(this->get_logger(),
                  "Sync triggers received too frequently or infrequently. Check the BNC cable and "
                  "EEG software configuration for double triggers.");
-    this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
+
+    this->error_state = ERROR_OUT_OF_SYNC;
   }
 
   this->time_correction = new_time_correction;
 }
 
 void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
-  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
-    RCLCPP_DEBUG_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
-                          "Waiting for session to start...");
-    this->eeg_bridge_state = WAITING_FOR_SESSION_START;
+  this->eeg_device_state = EegDeviceState::EEG_DEVICE_STREAMING;
+
+  if (this->wait_for_session_to_stop) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                          "Waiting for session to stop...");
     return;
   }
 
-  this->sample_packets_received_since_session_start++;
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                          "Waiting for session to start...");
+    return;
+  }
+
+  this->sample_packets_received_since_last_sync++;
 
   /* Ignore sample packets if in an error state, preventing streaming. */
-  if (this->eeg_bridge_state == EegBridgeState::ERROR_OUT_OF_SYNC ||
-      this->eeg_bridge_state == EegBridgeState::ERROR_SAMPLES_DROPPED) {
+  if (this->error_state != ErrorState::NO_ERROR) {
     return;
   }
 
-  /* If mTMS device is available to send triggers AND first trigger has not been received yet,
-     ignore the sample packet. */
-  if (this->mtms_device_available && this->first_sync_trigger_timestamp == UNSET_TIME) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
-                         "Sync trigger not received. Please ensure: 1) 'Sync' port in the mTMS "
-                         "device is connected to 'Trigger A in' in the EEG device, and 2) sending "
-                         "triggers is enabled in the EEG software.");
-    this->eeg_bridge_state = WAITING_FOR_SESSION_START;
-
+  /* Check for out of sync condition; a similar is needed both here and when an actual sync trigger is received
+     to detect both cases where the sync trigger is not received at all and where it is received too frequently
+     or infrequently. */
+  if (this->mtms_device_available) {
     auto sampling_frequency = this->eeg_adapter->get_eeg_info().sampling_frequency;
-    if (this->sample_packets_received_since_session_start > sampling_frequency) {
-      this->eeg_bridge_state = ERROR_OUT_OF_SYNC;
+
+    if (sampling_frequency != UNSET_SAMPLING_FREQUENCY && this->sample_packets_received_since_last_sync > 2 * sampling_frequency) {
+      RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
+                            "No sync trigger received within two seconds. Please ensure: 1) 'Sync' port in the mTMS "
+                            "device is connected to 'Trigger A in' in the EEG device, and 2) sending "
+                            "triggers is enabled in the EEG software.");
+
+      this->error_state = ErrorState::ERROR_OUT_OF_SYNC;
+      return;
     }
-    return;
   }
 
   /* Warn if the sample index wraps around. */
@@ -284,11 +308,12 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 
   /* Check for dropped samples */
   if (previous_sample_index != UNSET_PREVIOUS_SAMPLE_INDEX &&
-      sample.index != previous_sample_index + 1 + this->num_of_tolerated_dropped_samples &&
+      sample.index > previous_sample_index + 1 + this->num_of_tolerated_dropped_samples &&
       /* Ignore the case where the sample index wraps around. */
       sample.index != 0) {
 
-    this->eeg_bridge_state = EegBridgeState::ERROR_SAMPLES_DROPPED;
+    this->error_state = ErrorState::ERROR_SAMPLES_DROPPED;
+
     RCLCPP_ERROR(this->get_logger(), "Samples dropped. Previous sample index: %d, current sample index: %d.",
                  previous_sample_index,
                  sample.index);
@@ -296,33 +321,43 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
   }
   this->previous_sample_index = sample.index;
 
-  if (this->eeg_bridge_state == WAITING_FOR_SESSION_START) {
-    RCLCPP_INFO(this->get_logger(), "Streaming data.");
-  }
-  this->eeg_bridge_state = EegBridgeState::STREAMING;
-
-  /* If mTMS device is not available offset samples by the timestamp of the first sample */
-  if (this->first_sample_of_session && !this->mtms_device_available) {
-    this->first_sample_of_session = false;
-    this->time_offset = sample.time;
-  }
-
+  /* If mTMS device is not available, offset samples by the timestamp of the first sample. */
   if (!this->mtms_device_available) {
+
+    /* If this is the first sample of the session, set the time offset. */
+    if (this->first_sample_of_session) {
+      this->first_sample_of_session = false;
+      this->time_offset = sample.time;
+    }
+
     sample.time -= this->time_offset;
     this->eeg_sample_publisher->publish(sample);
+
+    /* If the mTMS device is not available, return early. */
     return;
   }
 
-  if (this->first_sync_trigger_timestamp == UNSET_TIME ||
+  /* Only start publishing samples after the first sync trigger timestamp is set. */
+  if (std::isnan(this->first_sync_trigger_timestamp)) {
+    return;
+  }
+
+  /* Only start publishing samples after sample times exceed the first sync trigger timestamp. */
+  if (!std::isnan(this->first_sync_trigger_timestamp) &&
       sample.time < this->first_sync_trigger_timestamp) {
+
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
                          "Sample packet arrived %.4f s before first sync trigger. First sync "
                          "trigger timestamp: %.4f, sample timestamp: %.4f.",
                          this->first_sync_trigger_timestamp - sample.time,
                          this->first_sync_trigger_timestamp, sample.time);
+    return;
   }
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                       "Streaming...");
 
   sample.time = sample.time - this->first_sync_trigger_timestamp - time_correction;
+
   eeg_sample_publisher->publish(sample);
 }
 
@@ -352,10 +387,12 @@ void EegBridge::process_eeg_data_packet() {
     break;
   case PacketResult::ERROR:
     RCLCPP_ERROR(this->get_logger(), "Error reading data packet.");
-    this->eeg_bridge_state == EegBridgeState::WAITING_FOR_EEG_DEVICE;
+    this->eeg_device_state = EegDeviceState::WAITING_FOR_EEG_DEVICE;
     break;
   case PacketResult::END:
     RCLCPP_INFO(this->get_logger(), "EEG device measurement stopped.");
+    this->eeg_device_state = EegDeviceState::WAITING_FOR_EEG_DEVICE;
+    break;
   default:
     RCLCPP_WARN(this->get_logger(), "Unknown result type while reading packet.");
   }
@@ -401,25 +438,63 @@ void EegBridge::spin() {
 
       process_eeg_data_packet();
 
-      switch (this->eeg_bridge_state) {
-      case EegBridgeState::WAITING_FOR_EEG_DEVICE:
-        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus ::NOT_READY,
+      /* Case: the EEG device is not streaming, and the session has not started. */
+      if (this->eeg_device_state == EegDeviceState::WAITING_FOR_EEG_DEVICE &&
+          this->session_state.value != system_interfaces::msg::SessionState::STARTED &&
+          this->error_state == ErrorState::NO_ERROR) {
+
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                                  "Waiting for EEG measurement to start",
                                  "Please start the measurement on the EEG device.");
-      case EegBridgeState::WAITING_FOR_SESSION_STOP:
+      }
+
+      /* Case: the EEG device is not streaming, but the session has started. */
+      if (this->eeg_device_state == EegDeviceState::WAITING_FOR_EEG_DEVICE &&
+          this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+          this->error_state == ErrorState::NO_ERROR) {
+
+        /* If we the EEG device is not streaming, but the session has already been started,
+           we need to wait for the session to stop before we can start streaming. */
+        this->wait_for_session_to_stop = true;
         this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
                                  "Waiting for session to stop",
                                  "Please stop the session on the mTMS device.");
-        break;
-      case EegBridgeState::WAITING_FOR_SESSION_START:
-        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY, "Ready",
+      }
+
+      /* Case: the EEG device is streaming and the session has not started. */
+      if (this->eeg_device_state == EegDeviceState::EEG_DEVICE_STREAMING &&
+          this->session_state.value != system_interfaces::msg::SessionState::STARTED &&
+          this->error_state == ErrorState::NO_ERROR) {
+
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
+                                 "Ready",
                                  "Ready");
-        break;
-      case EegBridgeState::STREAMING:
-        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY, "Streaming data",
+      }
+
+      /* Case: the EEG device is streaming, the session has started, but we are waiting for the session to stop. */
+      if (this->eeg_device_state == EegDeviceState::EEG_DEVICE_STREAMING &&
+          this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+          this->wait_for_session_to_stop &&
+          this->error_state == ErrorState::NO_ERROR) {
+
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
+                                 "Waiting for session to stop",
+                                 "Please stop the session on the mTMS device.");
+      }
+
+      /* Case: the EEG device is streaming, the session has started, and we are not waiting for the session to stop. */
+      if (this->eeg_device_state == EegDeviceState::EEG_DEVICE_STREAMING &&
+          this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
+          !this->wait_for_session_to_stop &&
+          this->error_state == ErrorState::NO_ERROR) {
+
+        this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
+                                 "Streaming data",
                                  "Streaming data");
-        break;
-      case EegBridgeState::ERROR_OUT_OF_SYNC:
+      }
+
+      /* Case: Explicit error case: out of sync. */
+      if (this->error_state == ErrorState::ERROR_OUT_OF_SYNC) {
         this->update_healthcheck(
             system_interfaces::msg::HealthcheckStatus::ERROR,
             "Out of sync between EEG and mTMS device",
@@ -429,11 +504,12 @@ void EegBridge::spin() {
             come to the UI, this could be changed to "Please stop the session on the mTMS device"
             or similar. */
             "Out of sync between EEG and mTMS device.");
-        break;
-      case EegBridgeState::ERROR_SAMPLES_DROPPED:
+      }
+
+      /* Case: Explicit error case: samples dropped. */
+      if (this->error_state == ErrorState::ERROR_SAMPLES_DROPPED) {
         this->update_healthcheck(system_interfaces::msg::HealthcheckStatus::ERROR,
                                  "Samples dropped in EEG device", "Samples dropped in EEG device.");
-        break;
       }
     }
   } catch (const rclcpp::exceptions::RCLError &exception) {
