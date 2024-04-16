@@ -494,6 +494,11 @@ class MTMSApi:
         id = self._next_event_id()
 
         target_voltage = int(target_voltage)
+
+        # XXX: Discharging to 0-2 V can take a relatively long time; therefore, set the minimum target voltage to 3.
+        #   In the long term, come up with a better solution.
+        target_voltage = max(3, target_voltage)
+
         self.node.send_discharge(
             id=id,
             execution_condition=execution_condition,
@@ -700,7 +705,6 @@ class MTMSApi:
         ids = []
         for channel in range(self.channel_count):
             target_voltage = target_voltages[channel]
-
             id = self.send_charge_or_discharge(
                 execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
