@@ -5,7 +5,7 @@
 
 const uint8_t NUM_OF_COILS = 5;
 
-const uint16_t INITIAL_VOLTAGE = 1499;
+const uint16_t INITIAL_VOLTAGE = 1500;
 
 GetMultipulseWaveforms::GetMultipulseWaveforms() : Node("get_multipulse_waveforms"), logger(rclcpp::get_logger("get_multipulse_waveforms")) {
   callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
