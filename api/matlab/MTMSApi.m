@@ -417,7 +417,7 @@ classdef MTMSApi < handle
         %
         % :param channel: The channel for charging. The indexing starts from 0. Only supports the five first channels of the mTMS device. Range: 0-4
         % :type channel: int
-        % :param target_voltage: The target voltage for charging. Range: 0-1499
+        % :param target_voltage: The target voltage for charging. Range: 0-1500
         % :type target_voltage: float
         % :param execution_condition: The condition under which the event should be executed. One of the following:
         %
@@ -437,7 +437,7 @@ classdef MTMSApi < handle
 
             assert(obj.is_session_started(), "Session not started.");
             assert(channel >= 0 && channel < obj.channel_count, sprintf("Channel must be in range 0-%d.", obj.channel_count - 1));
-            assert(target_voltage >= 0 && target_voltage <= 1499, sprintf("Voltage must be in range 0-1499"))
+            assert(target_voltage >= 0 && target_voltage <= 1500, sprintf("Voltage must be in range 0-1500"))
 
             % Interpret NaN time as if time was not provided.
             is_time_provided = nargin == 5 && ~isnan(time);
