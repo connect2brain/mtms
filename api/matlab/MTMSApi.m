@@ -498,6 +498,10 @@ classdef MTMSApi < handle
                 time = NaN;
             end
 
+            % XXX: Discharging to 0-2 V can take a relatively long time; therefore, set the minimum target voltage to 3.
+            %   In the long term, come up with a better solution.
+            target_voltage = max(target_voltage, 3);
+
             id = obj.next_event_id();
             obj.node.send_discharge(id, channel, target_voltage, execution_condition, time);
 
