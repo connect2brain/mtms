@@ -443,6 +443,7 @@ class MTMSApi:
         assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
         assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
+        assert 0 <= target_voltage <= 1500, "Target voltage out of range."
 
         id = self._next_event_id()
 
