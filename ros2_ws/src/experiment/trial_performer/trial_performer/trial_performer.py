@@ -546,7 +546,7 @@ class TrialPerformerNode(Node):
 
         self.sync_set_voltages(initial_voltages)
 
-        self.logger.info('{}: Voltages set.'.format(goal_id))
+        self.logger.info('{}: Voltages set to {}.'.format(goal_id, [int(voltage) for voltage in initial_voltages]))
 
         # Earliest feasible time for the trial cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
@@ -564,6 +564,11 @@ class TrialPerformerNode(Node):
         for target_idx in range(len(targets)):
             waveforms_for_coil_set = approximated_waveforms[target_idx]
             time = start_time + pulse_times_since_trial_start[target_idx]
+
+            self.logger.info('{}: First waveform phase for each channel: {}'.format(
+                goal_id,
+                [waveforms_for_coil_set[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set))]
+            ))
 
             # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
             #   to hide the logic.
