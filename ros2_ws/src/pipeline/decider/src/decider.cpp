@@ -152,11 +152,11 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     10,
     std::bind(&EegDecider::update_ready_for_trigger, this, _1));
 
-  /* Subscriber for stimulus feedback. */
-  this->stimulus_feedback_subscriber = create_subscription<event_interfaces::msg::StimulusFeedback>(
-    "/event/stimulus_feedback",
+  /* Subscriber for trial feedback. */
+  this->trial_feedback_subscriber = create_subscription<experiment_interfaces::msg::TrialFeedback>(
+    "/trial/feedback",
     10,
-    std::bind(&EegDecider::handle_stimulus_feedback, this, _1));
+    std::bind(&EegDecider::handle_trial_feedback, this, _1));
 
   /* Publisher for latency. */
   this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
@@ -531,10 +531,13 @@ void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::T
   this->calculate_latency(msg->time);
 }
 
-/* Handle stimulus feedback, received directly from the mTMS device. */
-void EegDecider::handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg) {
+/* Handle trial feedback. */
 
-  RCLCPP_INFO(this->get_logger(), "Registered stimulus feedback at: %.5f (s).", msg->execution_time);
+/* XXX: As of Apr 2024, this seems to only work when used in conjunction with the UI, which has a back-end that
+        publishes the trial feedback. */
+void EegDecider::handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg) {
+
+  RCLCPP_INFO(this->get_logger(), "Registered trial feedback at: %.5f (s).", msg->execution_time);
   this->calculate_latency(msg->execution_time);
 }
 

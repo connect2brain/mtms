@@ -44,7 +44,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/TriggerOutError.msg"
 
         "msg/Stimulus.msg"
-        "msg/StimulusFeedback.msg"
 
         "msg/EventTrigger.msg"
         "msg/ReadyForEventTrigger.msg"
