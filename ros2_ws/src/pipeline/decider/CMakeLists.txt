@@ -15,6 +15,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
+find_package(experiment_interfaces REQUIRED)
 find_package(pipeline_interfaces REQUIRED)
 find_package(project_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
@@ -41,6 +42,7 @@ ament_target_dependencies(
   std_msgs
   eeg_interfaces
   event_interfaces
+  experiment_interfaces
   pipeline_interfaces
   project_interfaces
   system_interfaces
@@ -79,6 +81,8 @@ ament_target_dependencies(
   rclcpp_action
   std_msgs
   eeg_interfaces
+  event_interfaces
+  experiment_interfaces
   pipeline_interfaces
   project_interfaces
   system_interfaces

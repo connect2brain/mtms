@@ -70,13 +70,11 @@ class TrialValidatorNode(Node):
         return response.maximum_intensity
 
     def validate_trial_callback(self, request, response):
-        stimuli = request.trial.stimuli
+        targets = request.trial.targets
 
-        assert len(stimuli) == 1, "Multiple stimuli per trial not supported yet!"
+        assert len(targets) == 1, "Multiple targets per trial not supported yet!"
 
-        stimulus = stimuli[0]
-
-        target = stimulus.target
+        target = targets[0]
 
         displacement_x = target.displacement_x
         displacement_y = target.displacement_y
