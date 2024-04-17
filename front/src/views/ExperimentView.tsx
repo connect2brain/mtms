@@ -304,17 +304,14 @@ type Experiment = {
   autopause_interval: number
 }
 
-type Stimulus = {
-  target: {
-    displacement_x: number
-    displacement_y: number
-    rotation_angle: number
-    intensity: number
-    algorithm: {
-      value: number
-    }
+type Target = {
+  displacement_x: number
+  displacement_y: number
+  rotation_angle: number
+  intensity: number
+  algorithm: {
+    value: number
   }
-  triggers: TriggerConfig[]
 }
 
 type TimeWindow = {
@@ -334,15 +331,14 @@ type MepConfiguration = {
   preactivation_check: PreactivationCheck
 }
 
-type TrialConfig = {
+type Trial = {
+  targets: Target[]
+  pulse_times_since_trial_start: number[]
+
+  triggers: TriggerConfig[]
+
   analyze_mep: boolean
   mep_config: MepConfiguration
-}
-
-type Trial = {
-  stimuli: Stimulus[]
-  stimulus_times_since_trial_start: number[]
-  config: TrialConfig
 }
 
 enum StartButtonState {
@@ -473,7 +469,8 @@ export const ExperimentView = () => {
   const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
 
   const visualizeFeedback = (feedback: any) => {
-    const target = feedback.trial.stimuli[0].target
+    /* TODO: Only visualize the first target for now. */
+    const target = feedback.trial.targets[0]
     const x: number = target.displacement_x
     const y: number = target.displacement_y
     const angle: number = target.rotation_angle
@@ -542,17 +539,14 @@ export const ExperimentView = () => {
           },
         ]
 
-        const stimulus: Stimulus = {
-          target: {
-            displacement_x: point.x,
-            displacement_y: point.y,
-            rotation_angle: angle,
-            intensity: intensity,
-            algorithm: {
-              value: targetingAlgorithm,
-            },
+        const target: Target = {
+          displacement_x: point.x,
+          displacement_y: point.y,
+          rotation_angle: angle,
+          intensity: intensity,
+          algorithm: {
+            value: targetingAlgorithm,
           },
-          triggers: triggers,
         }
 
         /* TODO: Hard-coded for now - make configurable. */
@@ -582,16 +576,15 @@ export const ExperimentView = () => {
           preactivation_check: preactivation_check,
         }
 
-        const trial_config: TrialConfig = {
+        const trial: Trial = {
+          targets: [target],
+          pulse_times_since_trial_start: [0],
+
+          triggers: triggers,
+
           /* Override mepEnabled if MEP healthcheck is not ok. */
           analyze_mep: mepHealthcheckOk ? mepEnabled : false,
           mep_config: mep_config,
-        }
-
-        const trial: Trial = {
-          stimuli: [stimulus],
-          stimulus_times_since_trial_start: [0],
-          config: trial_config,
         }
         trials.push(trial)
       })

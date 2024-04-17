@@ -17,7 +17,7 @@ class TrialLoggerNode(Node):
     TRIAL_COLUMNS = [
         "Trial index",
         "Number of attempts",
-        "Trial finish time (s)",
+        "Trial start time (s)",
         "x (mm)",
         "y (mm)",
         "Angle (deg)",
@@ -102,20 +102,18 @@ class TrialLoggerNode(Node):
         file.write(header)
 
     def log_trial_row(self, file, trial_number, trial, trial_result, num_of_attempts):
-        assert len(trial.stimuli) == 1, "Does not support multistimulus trials yet!"
+        assert len(trial.targets) == 1, "Does not support multiple targets yet!"
 
-        stimulus = trial.stimuli[0]
-        target = stimulus.target
-        intensity = stimulus.intensity
+        target = trial.targets[0]
 
         row = "{};{};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
             trial_number,
             num_of_attempts,
-            trial_result.trial_finish_time,
+            trial_result.actual_start_time,
             target.displacement_x,
             target.displacement_y,
             target.rotation_angle,
-            intensity,
+            target.intensity,
             trial_result.mep.amplitude,
             trial_result.mep.latency,
         )
