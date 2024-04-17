@@ -70,13 +70,15 @@ print("")
 try:
     while True:
         for n in range(2):
-            print("Targeting at ({}, {}, {}) with intensity {} V/m, using {} algorithm".format(
-                displacement_x,
-                displacement_y,
-                rotation_angle,
-                intensity,
-                'genetic' if algorithm.value == TargetingAlgorithm.GENETIC else 'least squares'
-            ))
+            if use_electrical_targeting:
+                print("Targeting at ({}, {}, {}) with intensity {} V/m, using {} algorithm".format(
+                    displacement_x,
+                    displacement_y,
+                    rotation_angle,
+                    intensity,
+                    'genetic' if algorithm.value == TargetingAlgorithm.GENETIC else 'least squares'
+                ))
+
             time_before_charging = time.time()
 
             execution_condition = ExecutionCondition.IMMEDIATE
@@ -95,8 +97,6 @@ try:
                 duration_us=duration_us,
                 execution_condition=ExecutionCondition.WAIT_FOR_TRIGGER,
             )
-
-            print(reverse_polarities)
 
             # Send pulse on the channel, using the default waveform.
             ids = api.send_default_pulse_to_all_channels(
