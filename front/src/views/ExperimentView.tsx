@@ -557,7 +557,7 @@ export const ExperimentView = () => {
 
         /* TODO: Hard-coded for now - make configurable. */
         const preactivation_check_time_window: TimeWindow = {
-          start: -0.05,
+          start: -0.10,
           end: -0.01,
         }
 
