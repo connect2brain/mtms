@@ -15,7 +15,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from event_interfaces.msg import StimulusFeedback
+from experiment_interfaces.msg import TrialFeedback
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
@@ -74,11 +74,11 @@ class NeuronavigationNode(Node):
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
-        # Create subscriber for stimulus feedback.
-        self._stimulus_feedback_subscriber = self.create_subscription(
-            StimulusFeedback,
-            "/event/stimulus_feedback",
-            self.stimulus_feedback_callback,
+        # Create subscriber for trial feedback.
+        self._trial_feedback_subscriber = self.create_subscription(
+            TrialFeedback,
+            "/trial/feedback",
+            self.trial_feedback_callback,
             10,
             callback_group=callback_group,
         )
@@ -166,8 +166,12 @@ class NeuronavigationNode(Node):
         response.success = True
         return response
 
-    def stimulus_feedback_callback(self, msg):
-        self.get_logger().info(f'Stimulation pulse received')
+    def trial_feedback_callback(self, msg):
+        if not msg.success:
+            self.get_logger().info('Trial not successful')
+            return
+
+        self.get_logger().info(f'Successful trial')
         self._stimulation_pulse_received()
 
     def planner_state_callback(self, msg):
