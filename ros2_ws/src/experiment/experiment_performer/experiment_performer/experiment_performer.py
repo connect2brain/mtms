@@ -275,9 +275,10 @@ class ExperimentPerformerNode(Node):
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial):
+    def sync_perform_trial_action(self, trial, timing):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
+            timing=timing,
         )
         event.wait()
 
@@ -642,7 +643,7 @@ class ExperimentPerformerNode(Node):
             allow_late = True
 
             timing = TrialTiming(
-                time=trial_time,
+                desired_start_time=trial_time,
                 allow_late=allow_late,
                 wait_for_trigger=wait_for_trigger,
             )
@@ -680,7 +681,7 @@ class ExperimentPerformerNode(Node):
                 i += 1
                 num_of_attempts = 0
             else:
-                self.logger.info('{}: Trial not successful, redoing in {} seconds.'.format(
+                self.logger.info('{}: Trial not successful, attempting again in {} seconds.'.format(
                     goal_id,
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
