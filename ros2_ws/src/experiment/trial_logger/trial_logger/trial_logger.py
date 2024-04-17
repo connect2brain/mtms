@@ -106,7 +106,7 @@ class TrialLoggerNode(Node):
 
         target = trial.targets[0]
 
-        row = "{};{};{:.3f};{};{};{};{:.1f};{:.4f}\n".format(
+        row = "{};{};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
             trial_number,
             num_of_attempts,
             trial_result.actual_start_time,
