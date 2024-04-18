@@ -464,6 +464,9 @@ export const ExperimentView = () => {
   const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
   const [cancelButtonState, setCancelButtonState] = useState(CancelButtonState.Cancel)
 
+  /* Time (in seconds) at which the experiment was paused; used for showing the pause duration for the user. */
+  const [pauseTime, setPauseTime] = useState<number | null>(null)
+
   const [trialNumber, setTrialNumber] = useState<number | null>(null)
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
   const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
@@ -805,6 +808,9 @@ export const ExperimentView = () => {
 
       case ExperimentState.Paused:
         setStartButtonState(StartButtonState.Resume)
+        if (session) {
+          setPauseTime(session.time)
+        }
         break
     }
   }, [experimentState])
@@ -1315,6 +1321,13 @@ export const ExperimentView = () => {
                 : '\u2013'}
             </ConfigLabel>
           </ConfigRow>
+          {/* Gray out 'Paused for' if experiment is not paused. */}
+          <GrayedOutPanel isGrayedOut={!(experimentState === ExperimentState.Paused)}>
+            <ConfigRow>
+              <ConfigLabel>Paused for:</ConfigLabel>
+              <ConfigLabel>{experimentState === ExperimentState.Paused && pauseTime && session ? formatTime(session?.time - pauseTime) : '\u2013'}</ConfigLabel>
+            </ConfigRow>
+          </GrayedOutPanel>
           <CloseConfigRow></CloseConfigRow>
           <StyledButton
             onClick={() => runStartButtonAction(startButtonState)}
