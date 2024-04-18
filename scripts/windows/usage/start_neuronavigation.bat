@@ -13,9 +13,11 @@ call C:\dev\ros2_iron\local_setup.bat
 
 cd %MTMS_ROOT%\ros2_ws
 
-call install\local_setup.bat
+REM Note that neuronavigation is also rebuilt when running this script.
 
-REM Note that neuronavigation is NOT rebuilt when starting this script. To build neuronavigation, run build_neuronavigation.bat.
+colcon build --packages-select neuronavigation
+
+call install\local_setup.bat
 
 REM E-field is disabled for now, enable when it works in production.
 ros2 run neuronavigation start --ros-args -p electric_field_enable:=false -p robot_enable:=true
