@@ -38,7 +38,7 @@ const Sector = styled.path<SectorProps>`
   transition: fill 0.2s;
 
   fill: ${(props) => {
-    if (props.isHighlighted) return '#00f'
+    if (props.isHighlighted) return '#000'
     if (props.isSelected) return '#007bff'
     return 'transparent'
   }};
@@ -138,7 +138,7 @@ export const AngleSelector: React.FC<AngleSelectorProps> = ({
   }
 
   const isAngleSelected = (angle: number) => selectedAngles.includes(angle)
-  const isAngleHighlighted = (angle: number) => highlightedAngles.includes(angle)
+  const isAngleHighlighted = (angle: number) => highlightedAngles.includes(angle) && selectedAngles.length > 1
 
   return (
     <div>
