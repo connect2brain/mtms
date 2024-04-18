@@ -49,7 +49,7 @@ const GridCell = styled.div<GridCellProps>`
   border: 1px solid #ccc;
 
   background-color: ${(props) => {
-    if (props.isHighlighted) return '#00f'
+    if (props.isHighlighted) return '#000'
     if (props.isSelected) return '#007bff'
     if (props.isOriginLine) return '#ddd'
     return 'transparent'
@@ -154,7 +154,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     selectedPoints.some((point) => point.x === x && point.y === y)
 
   const isPointHighlighted = (x: number, y: number): boolean =>
-    highlightedPoints.some((point) => point.x === x && point.y === y)
+    highlightedPoints.some((point) => point.x === x && point.y === y) && selectedPoints.length > 1
 
   const selectCell = (x: number, y: number) => {
     if (!isPointSelected(x, y)) {
