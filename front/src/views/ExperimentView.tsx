@@ -512,7 +512,6 @@ export const ExperimentView = () => {
 
   const handleIntensityChange = (intensity: number) => {
     setIntensity(intensity)
-    setStartButtonState(StartButtonState.Updating)
   }
 
   const handleIntensityChangeForPairedPulse = (intensity: number) => {
@@ -521,7 +520,6 @@ export const ExperimentView = () => {
     } else {
       setIntensitySecondPulse(intensity)
     }
-    setStartButtonState(StartButtonState.Updating)
   }
 
   const formTrials = (): Trial[] => {
@@ -560,7 +558,7 @@ export const ExperimentView = () => {
 
         /* TODO: Hard-coded for now - make configurable. */
         const preactivation_check_time_window: TimeWindow = {
-          start: -0.10,
+          start: -0.1,
           end: -0.01,
         }
 
@@ -1325,7 +1323,11 @@ export const ExperimentView = () => {
           <GrayedOutPanel isGrayedOut={!(experimentState === ExperimentState.Paused)}>
             <ConfigRow>
               <ConfigLabel>Paused for:</ConfigLabel>
-              <ConfigLabel>{experimentState === ExperimentState.Paused && pauseTime && session ? formatTime(session?.time - pauseTime) : '\u2013'}</ConfigLabel>
+              <ConfigLabel>
+                {experimentState === ExperimentState.Paused && pauseTime && session
+                  ? formatTime(session?.time - pauseTime)
+                  : '\u2013'}
+              </ConfigLabel>
             </ConfigRow>
           </GrayedOutPanel>
           <CloseConfigRow></CloseConfigRow>
