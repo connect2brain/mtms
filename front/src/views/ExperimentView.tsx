@@ -435,10 +435,10 @@ export const ExperimentView = () => {
   const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 10))
   const [maximumIntensity, setMaximumIntensity] = useState<number>(() => getKey('maximumIntensity', 100))
 
-  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', false))
+  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', true))
   const [trigger1Delay, setTrigger1Delay] = useState<number>(() => getKey('trigger1Delay', 0))
 
-  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(() => getKey('trigger2Enabled', false))
+  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(() => getKey('trigger2Enabled', true))
   const [trigger2Delay, setTrigger2Delay] = useState<number>(() => getKey('trigger2Delay', 0))
 
   const [mepEnabled, setMepEnabled] = useState<boolean>(() => getKey('mepEnabled', true))
