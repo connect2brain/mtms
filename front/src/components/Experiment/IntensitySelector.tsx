@@ -87,7 +87,6 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
           value={value}
           onChange={handleSliderChange}
           style={{
-            writingMode: 'vertical-lr',
             WebkitAppearance: 'slider-vertical' /* WebKit */,
             width: '8px',
             height: '350px',
@@ -95,13 +94,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
           }}
         />
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
-        <ValidatedInput
-          type='number'
-          value={value}
-          min={min}
-          max={max}
-          onChange={handleChange}
-        />
+        <ValidatedInput type='number' value={value} min={min} max={max} onChange={handleChange} />
       </IntensitySelectorContainer>
     </div>
   )
