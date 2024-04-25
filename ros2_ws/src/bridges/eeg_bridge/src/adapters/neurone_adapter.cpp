@@ -116,6 +116,8 @@ bool NeurOneAdapter::request_measurement_start_packet() const {
 }
 
 void NeurOneAdapter::handle_measurement_start_packet() {
+  this->measurement_start_packet_received = true;
+
   this->sampling_frequency =
       ntohl(*reinterpret_cast<uint32_t *>(buffer + StartPacketFieldIndex::SAMPLING_RATE_HZ));
 
@@ -319,14 +321,18 @@ NeurOneAdapter::read_eeg_data_packet() {
     RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown frame type received, doing nothing.");
   }
 
-  /* First packet is measured start packet, if first packet received is something else,
-     the socket started reading middle of the measurement, thus request the start packet
-     again */
-  if (!any_packet_received && frame_type != FrameType::MEASUREMENT_START) {
-    request_measurement_start_packet();
-  }
+  /* The first packet in a new stream is the measurement start packet. If the first received
+     packet is something else, the socket started reading middle of the measurement, thus
+     request the measurement start packet.
 
-  any_packet_received = true;
+     In addition, re-request it every 1000 packets. This is because NeurOne does not seem to always
+     respond to the first request. */
+  if (!measurement_start_packet_received && frame_type != FrameType::MEASUREMENT_START) {
+    if (packets_since_measurement_start_packet_requested == 0) {
+      request_measurement_start_packet();
+    }
+    packets_since_measurement_start_packet_requested = (packets_since_measurement_start_packet_requested + 1) % 1000;
+  }
 
   return {result_type, sample, sync_trigger_time};
 }

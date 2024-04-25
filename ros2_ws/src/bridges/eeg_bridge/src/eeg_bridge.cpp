@@ -368,31 +368,39 @@ void EegBridge::process_eeg_data_packet() {
 
   if (eeg_info.sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "No sampling frequency set");
+    return;
   }
 
   switch (result_type) {
+
   case PacketResult::SAMPLE_WITH_SYNC:
     /* Handle sync before sample, as sync will update time_correction */
     handle_sync_trigger(sync_time);
     handle_sample(sample);
     break;
+
   case PacketResult::SAMPLE:
     handle_sample(sample);
     break;
+
   case PacketResult::SYNC_TRIGGER:
     handle_sync_trigger(sync_time);
     break;
+
   case PacketResult::INTERNAL:
     RCLCPP_DEBUG(this->get_logger(), "Internal adapter packet received.");
     break;
+
   case PacketResult::ERROR:
     RCLCPP_ERROR(this->get_logger(), "Error reading data packet.");
     this->eeg_device_state = EegDeviceState::WAITING_FOR_EEG_DEVICE;
     break;
+
   case PacketResult::END:
     RCLCPP_INFO(this->get_logger(), "EEG device measurement stopped.");
     this->eeg_device_state = EegDeviceState::WAITING_FOR_EEG_DEVICE;
     break;
+
   default:
     RCLCPP_WARN(this->get_logger(), "Unknown result type while reading packet.");
   }
