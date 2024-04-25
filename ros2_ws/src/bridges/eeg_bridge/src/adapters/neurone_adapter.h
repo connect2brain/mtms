@@ -130,7 +130,8 @@ private:
   uint16_t port = 0;
   sockaddr_in socket_own = {};
 
-  bool any_packet_received = false;
+  bool measurement_start_packet_received = false;
+  uint16_t packets_since_measurement_start_packet_requested = 0;
 
   bool trigger_in_next_sample = false;
   uint64_t trigger_sample_index = 0;
