@@ -7,7 +7,6 @@
 #include "eeg_interfaces/msg/time_window.hpp"
 #include "eeg_interfaces/msg/gather_eeg_error.hpp"
 
-const uint16_t UNSET_SAMPLING_FREQUENCY = 0;
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
 enum class DataGatheringState {
@@ -22,7 +21,7 @@ enum class DataGatheringState {
 class EegGatherer {
 
 public:
-  EegGatherer(std::string goal_id, double_t start_time, double_t end_time, uint16_t sampling_frequency);
+  EegGatherer(std::string goal_id, double_t start_time, double_t end_time);
   void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
   bool is_finished();
   bool success();
@@ -30,7 +29,7 @@ public:
   eeg_interfaces::msg::GatherEegError::SharedPtr get_error();
 
 private:
-  void check_dropped_samples(double_t current_time);
+  void check_dropped_samples(double_t current_time, uint16_t sampling_frequency);
 
   bool handle_state__check_if_valid_request(double_t current_time);
   bool handle_state__wait_for_mep(double_t current_time);
@@ -43,9 +42,6 @@ private:
   double_t start_time;
   double_t end_time;
   double_t duration;
-
-  uint16_t sampling_frequency;
-  double_t sampling_period;
 
   DataGatheringState state;
   double_t previous_time;

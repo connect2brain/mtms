@@ -20,22 +20,6 @@ GatherEegServer::GatherEegServer() : Node("eeg_gatherer") {
     std::bind(&GatherEegServer::handle_goal, this, _1, _2),
     std::bind(&GatherEegServer::handle_cancel, this, _1),
     std::bind(&GatherEegServer::handle_accepted, this, _1));
-
-  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
-      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-
-  this->eeg_info_subscription = this->create_subscription<eeg_interfaces::msg::EegInfo>(
-    "/eeg/info",
-    qos_persist_latest,
-    std::bind(&GatherEegServer::update_eeg_info, this, _1));
-
-  this->sampling_frequency = UNSET_SAMPLING_FREQUENCY;
-}
-
-void GatherEegServer::update_eeg_info(const std::shared_ptr<eeg_interfaces::msg::EegInfo> msg) {
-  this->sampling_frequency = msg->sampling_frequency;
-  RCLCPP_INFO(this->get_logger(), "Sampling frequency updated to %d Hz.", this->sampling_frequency);
 }
 
 rclcpp_action::GoalResponse GatherEegServer::handle_goal([[maybe_unused]] const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const GatherEeg::Goal> goal) {
@@ -61,7 +45,7 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
   /* TODO: Replace with proper UUID-based id. */
   std::string goal_id = "abcd";
 
-  auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time, sampling_frequency);
+  auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time);
 
   auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
     "/eeg/preprocessed",
