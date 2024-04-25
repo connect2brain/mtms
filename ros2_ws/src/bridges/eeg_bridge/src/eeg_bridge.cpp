@@ -128,6 +128,11 @@ void EegBridge::create_publishers() {
       std::chrono::milliseconds(500), [this] { publish_eeg_healthcheck(); });
 }
 
+void EegBridge::publish_eeg_info() {
+  auto eeg_info = this->eeg_adapter->get_eeg_info();
+  this->eeg_info_publisher->publish(eeg_info);
+}
+
 void EegBridge::publish_eeg_healthcheck() {
   auto healtcheck = system_interfaces::msg::Healthcheck();
 
@@ -159,6 +164,8 @@ void EegBridge::subscribe_to_session() {
                             session_state_changed;
     bool session_stopped = session_state.value == system_interfaces::msg::SessionState::STOPPED &&
                            session_state_changed;
+    bool session_started = session_state.value == system_interfaces::msg::SessionState::STARTED &&
+                           session_state_changed;
 
     /* Stopping a session takes several seconds, whereas if another session is
        started immediately after the previous one is stopped, the mTMS device
@@ -168,6 +175,11 @@ void EegBridge::subscribe_to_session() {
     if (session_stopping || session_stopped) {
       RCLCPP_INFO(this->get_logger(), "Session %s.", session_stopping ? "stopping" : "stopped");
       this->stop_session();
+    }
+
+    if (session_started) {
+      RCLCPP_INFO(this->get_logger(), "Session started.");
+      publish_eeg_info();
     }
 
     this->session_received = true;

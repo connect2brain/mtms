@@ -77,6 +77,7 @@ private:
   void create_subscribers();
 
   void publish_eeg_healthcheck();
+  void publish_eeg_info();
 
   void subscribe_to_session();
   void subscribe_to_mtms_device_healthcheck();
