@@ -17,6 +17,9 @@ RUN pip3 install tensorflow
 
 RUN pip3 install mneflow
 
+# Install statsmodels for the pipeline
+RUN pip3 install statsmodels
+
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
