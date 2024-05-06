@@ -56,6 +56,19 @@ export const SystemState = () => {
     }
   }
 
+  const getHumanReadableError = (error: any) => {
+    if (!error) {
+      return ''
+    }
+    if (error['coil_error']) {
+      return 'Coil error – Please check the coil connections.'
+    }
+    if (error['emergency_stop']) {
+      return 'Emergency stop – Please check the emergency stop button.'
+    }
+    return ''
+  }
+
   const getHumanReadableDeviceState = (deviceState: any, value: any) => {
     const key = getKeyByValue(DeviceState, value)
     if (key) {
@@ -74,6 +87,7 @@ export const SystemState = () => {
       <br />
       <ErrorTitle>Errors</ErrorTitle>
       <ErrorsContainer>
+        <ErrorItem>Human-readable: {getHumanReadableError(systemState?.system_error_emergency)}</ErrorItem>
         <ErrorItem>Current: {getListValue(systemState?.system_error_current)}</ErrorItem>
         <ErrorItem>Cumulative: {getListValue(systemState?.system_error_cumulative)}</ErrorItem>
         <ErrorItem>Emergency: {getListValue(systemState?.system_error_emergency)}</ErrorItem>
