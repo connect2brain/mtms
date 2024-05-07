@@ -12,6 +12,17 @@ FOLLOW=true          # Default to follow mode
 SAVE_TO=""
 TIME_FILTERS=false   # Indicator for specific time filters
 
+# Print usage
+function print_usage() {
+    echo ""
+    echo "Usage examples:"
+    echo "./log [container_name] --from \"YYYY-MM-DD HH:MM:SS\" --to \"YYYY-MM-DD HH:MM:SS\""
+    echo "./log [container_name] --last-hour"
+    echo "./log [container_name] --save output.log"
+    echo ""
+    exit 0
+}
+
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -22,6 +33,7 @@ while [[ "$#" -gt 0 ]]; do
         --last-minute) FROM="1 minute ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
         --save) SAVE_TO=$2; shift 2;;
         --follow) FOLLOW=true; shift;;
+        --help|-h) print_usage;;
         *)
             if [[ -z "$CONTAINER_NAME" ]]; then
                 CONTAINER_NAME=$1
@@ -31,6 +43,7 @@ while [[ "$#" -gt 0 ]]; do
             shift;;
     esac
 done
+
 
 # Check if the save file exists and prompt for overwrite if necessary
 if [ ! -z "$SAVE_TO" ] && [ -f "$SAVE_TO" ]; then
