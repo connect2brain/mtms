@@ -1,81 +1,49 @@
-function waveform = approximate(obj, actual_voltage, target_voltage, waveform, steps)
-    gr = (sqrt(5) + 1) / 2;             % golden ratio
-    tau = 1;                            % error tolerance
+function approximated_waveform = approximate(obj, actual_voltage, sampling_points, algorithm)
 
-    % Get the crossing points.
-    crossing_points = obj.get_crossing_points(waveform, steps);
-
-    % Calculate the reference timecourse.
-    reference_timecourse = obj.calculate_timecourse(target_voltage, waveform);
+    states = [sampling_points.state];
+    I_coils = [states.I_coil];
+    max_I_coil = max(I_coils);
 
     % Generate initial conditions.
-    ic = obj.generate_initial_conditions(actual_voltage, crossing_points.index(1));
+    initial_state = obj.generate_initial_state(actual_voltage);
 
-    % Initialize control sequence
+    %% Loop through the sampling points and approximate the waveform.
+    approximated_waveform = struct('mode', {}, 'duration', {});
+    
+    for i = 1:length(sampling_points) - 1
+        mode_info = sampling_points(i).mode_info;
 
-    % TODO: preallocate
-    waveform.durations = [];
-    waveform.modes = 'h';
+        % Calculate total duration between two consecutive points
+        total_duration = sampling_points(i + 1).time - sampling_points(i).time;
 
-    start_index = 0;
+        % Initialize search bounds
+        lower_bound = 0;
+        upper_bound = total_duration;
 
-    for i = 1:length(crossing_points.index)
-        if i == 1
-            a = 1;
-        else
-            a = crossing_points.index(i-1);
+        target_state = sampling_points(i + 1).state;
+
+        [parameter, error] = obj.golden_section_search( ...
+            @(parameter) obj.calculate_error(parameter, algorithm, initial_state, target_state, total_duration, mode_info), ...
+            lower_bound, ...
+            upper_bound);
+            
+        relative_error = error / max_I_coil;
+
+       % assert(relative_error < 0.01, sprintf('Relative error %f in current at sampling point %d is too high, please increase the time resolution', ...
+       %     relative_error, i));
+
+        % Approximate the mode with the calculated parameter
+        waveform = algorithm(parameter, total_duration, mode_info);
+
+        % Update the initial state for the next iteration
+        initial_state = obj.apply_waveform_to_state(initial_state, waveform);
+
+        % Append the approximated waveform
+        for i = 1:length(waveform)
+            mode = waveform(i).mode;
+            duration = waveform(i).duration;
+
+            approximated_waveform = [approximated_waveform, struct('mode', mode, 'duration', duration)];
         end
-        b = crossing_points.index(i);
-
-        c = floor(b - (b - a) / gr);
-        d = floor(a + (b - a) / gr);
-
-        while (abs(c - d) > tau)
-            ic_c = obj.get_initial_conditions_by_index(ic, c-start_index);
-            dur_c = floor(crossing_points.index(i)-c)*obj.resolution;
-            i_c = obj.calculate_coil_current(ic_c, crossing_points.step_type(i), dur_c);
-
-            ic_d = obj.get_initial_conditions_by_index(ic, d-start_index);
-            dur_d = floor(crossing_points.index(i)-d)*obj.resolution;
-            i_d = obj.calculate_coil_current(ic_d, crossing_points.step_type(i), dur_d);
-
-            % distance from the midpoint
-            delta_ic = abs(reference_timecourse.I_coil(crossing_points.index(i)) - i_c);
-            delta_id = abs(reference_timecourse.I_coil(crossing_points.index(i)) - i_d);
-
-            % Update the section of search
-            if (delta_ic < delta_id)
-                b = d;
-            else
-                a = c;
-            end
-
-            % Update iteration points
-            c = floor(b - (b - a) / gr);
-            d = floor(a + (b - a) / gr);
-        end
-
-        old_start_index = start_index;
-        start_index = floor((a+b)/2);
-
-        conds = obj.get_initial_conditions_by_index(ic, start_index-old_start_index);
-
-        if i == length(crossing_points.index)
-            forward_duration = 10e-6;
-        elseif i == 1
-            forward_duration = (crossing_points.index(i+1)-1)*obj.resolution;
-        else
-            forward_duration = (crossing_points.index(i+1)-crossing_points.index(i-1))*obj.resolution;
-        end
-        ic = obj.calculate_step(conds, crossing_points.step_type(i), forward_duration);
-
-        waveform.modes = [waveform.modes crossing_points.step_type(i)];
-        waveform.durations = [waveform.durations (start_index-old_start_index)*obj.resolution];
     end
-    waveform.durations = [waveform.durations 10e-6];
-
-    % Assert that durations are not too short; the minimum duration is 4 us.
-    %
-    % TODO: This should be mTMS device specific; for instance, it differs between Tubingen and Aalto.
-    assert (all(waveform.durations >= 4e-6), 'The duration of the waveform is too short.');
 end

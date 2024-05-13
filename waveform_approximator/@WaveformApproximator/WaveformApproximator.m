@@ -1,25 +1,20 @@
 classdef WaveformApproximator < handle
 
     properties (SetAccess = public, GetAccess = public)
-        resolution;                     % resolution of calculation
+        time_resolution;
         solutions;
         functions;
         metadata;
     end
 
-    properties (SetAccess = private, GetAccess = public)
-
-    end
-
-    % Public methods for calculating and visualizing waveforms, updating
-    % the reference
     methods (Access = public)
-        % Approximator constructor
+
+        % Constructor for the waveform approximator.
         % input:
-        %   @solutions_file: file containing phase functions
-        %   @resolution: system resolution
-        function obj = WaveformApproximator(solutions_file, resolution)
-            obj.resolution = resolution;
+        %   @solutions_filename: filename of the file containing phase functions
+        %   @time_resolution: time resolution for computing the state trajectories
+        function obj = WaveformApproximator(solutions_file, time_resolution)
+            obj.time_resolution = time_resolution;
             obj.solutions = load(solutions_file);
         end
 
@@ -31,70 +26,106 @@ classdef WaveformApproximator < handle
             obj.metadata = obj.solutions.sols(index).metadata;
         end
 
-        % Calculate a timecourse from a command sequence and an initial system voltage
+        % Generate a state trajectory from an initial voltage and a waveform.
         % input:
         %   @voltage: initial voltage
-        %   @waveform: a waveform struct with the following fields:
-        %       @modes: the mode of each waveform phase as a string, e.g.,'fhrh' for a 4-phase waveform
-        %       @durations: a list of durations for each mode
+        %   @waveform: an array of structs, each with the following fields:
+        %       @mode: the mode of the waveform phase as a character, e.g., 'f' for falling
+        %       @duration: the mode duration in seconds
         % output:
-        %   @timecourse: resulting timecourse, including the fields V_c, V_s1, V_s2, ..., I_z_R.
-        timecourse = calculate_timecourse(obj, voltage, waveform);
+        %   @state_trajectory: an array of states, each state a struct, including the fields V_c, V_s1, V_s2, ..., I_z_R.
+        state_trajectory = generate_state_trajectory_from_waveform(obj, voltage, waveform)
 
-        % Approximate the reference waveform with initial voltage and step information
+        % Generate a state trajectory from an arbitrary function and a duration.
         % input:
-        %   @actual_voltage: the initial voltage to do the approximation with
-        %   @target_voltage: the voltage to approximate to
-        %   @waveform: a waveform struct with the following fields:
-        %       @modes: the mode of each waveform phase as a string, e.g.,'fhrh' for a 4-phase waveform
-        %       @durations: a list of durations for each mode
-        %   @steps: a list of the number of approximation steps for each mode
+        %   @coil_current_function: function that returns the coil current at a given time in seconds
+        %   @duration: duration for the state trajectory
         % output:
-        %   @waveform: a struct containing the approximate waveform, includes the following fields:
-        %       @modes: the mode of each waveform phase as a string
-        %       @durations: a list of durations for each mode
-        waveform = approximate(obj, actual_voltage, target_voltage, waveform, steps);
+        %   @state_trajectory: an array of states, each state a struct, including the fields V_c, V_s1, V_s2, ..., I_z_R.
+        state_trajectory = generate_state_trajectory_from_function(obj, coil_current_function, duration);
 
-        % Calculate the final voltage after a waveform is applied.
+        % Generate sampling points from a state trajectory and a target waveform.
+        % input:
+        %   @state_trajectory: an array of states, each state a struct, including the fields V_c, V_s1, V_s2, ..., I_z_R.
+        %   @target_waveform: an array of structs, each with the following fields:
+        %       @mode: the mode of the waveform phase as a character, e.g., 'f' for falling
+        %       @duration: the mode duration in seconds
+        %       @num_of_intermediate_points: the number of intermediate points between two consecutive modes
+        % output:
+        %   @sampling_points: an array of structs, each with the following fields:
+        %       @time: the time in seconds
+        %       @index: the index of the state in the state trajectory
+        %       @state: the state at the index
+        %       @mode_info: a struct with the following fields:
+        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last: a boolean indicating if the mode is the last one
+        %           @index: the index of the mode in the target waveform
+        sampling_points = sample_state_trajectory_by_waveform(obj, state_trajectory, target_waveform)
+
+        % Generate sampling points from a state trajectory and a number of intermediate points.
+        % input:
+        %   @state_trajectory: an array of states, each state a struct, including the fields V_c, V_s1, V_s2, ..., I_z_R.
+        %   @num_of_sampling_points: the number of intermediate points between two consecutive modes
+        % output:
+        %   @sampling_points: an array of structs, each with the following fields:
+        %       @time: the time in seconds
+        %       @index: the index of the state in the state trajectory
+        %       @state: the state at the index
+        %       @mode_info: a struct with the following fields:
+        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last: a boolean indicating if the mode is the last one
+        %           @index: the index of the mode in the target waveform
+        sampling_points = sample_state_trajectory_uniformly(obj, state_trajectory, num_of_sampling_points)
+
+        approximated_waveform = approximate(obj, actual_voltage, sampling_points, approximator, algorithm)
+
+        % Estimate the final voltage after a waveform is applied.
         % input:
         %   @voltage: initial voltage
-        %   @waveform: a waveform struct with the following fields:
-        %       @modes: the mode of each waveform phase as a string, e.g.,'fhrh' for a 4-phase waveform
-        %       @durations: a list of durations for each mode
-        final_voltage = calculate_final_voltage(obj, voltage, waveform);
+        %   @waveform: an array of structs, each with the following fields:
+        %       @mode: the mode of the waveform phase as a character, e.g., 'f' for falling
+        %       @duration: the mode duration in seconds
+        % output:
+        %   @final_voltage: the final voltage after the waveform is applied
+        final_voltage = estimate_final_voltage(obj, voltage, waveform);
+
+        plot_state_trajectories(obj, target_state_trajectory, approximated_state_trajectory, sampling_points)
+
+        % Algorithms for approximating waveforms
+        %
+        % Usage, e.g.:
+        %   algorithm = @approximator.algorithm_hold;
+        %   approximated_waveform = approximator.approximate(actual_voltage, sampling_points, approximator, algorithm);
+
+        % Approximate each sampling interval with a hold and either a falling or a rising mode.
+        waveform = algorithm_hold(obj, parameter, total_duration, mode_info)
+
+        % Approximate each sampling interval with a hold mode at the beginning and the end, and a falling or a rising
+        % mode in between. The hold modes are of the same duration.
+        waveform = algorithm_hold_both_ends(obj, parameter, total_duration, mode_info)
+
+        % Approximate each sampling interval with a hold and either a falling or a rising mode. The order of the hold and
+        % the falling/rising mode is alternating.
+        waveform = algorithm_alternating_hold(obj, parameter, total_duration, mode_info)
+
+        % Approximate each sampling interval with a hold, a falling mode, and a rising mode. The falling mode precedes
+        % the rising mode if the target current is increasing, and vice versa.
+        waveform = algorithm_falling_rising(obj, parameter, total_duration, mode_info)
     end
-
-    % Private methods for generating approximations
+    
     methods (Access = private)
-        % Calculate all the parameters (V_c, ..., I_z_R) after applying a mode for a specified duration.
-        % input:
-        %   @initial_conditions: initial conditions; a struct including the fields V_c, ..., I_z_R
-        %   @mode: mode as a character (either 'f', 'h', 'r', or 'a')
-        %   @duration: duration of the mode
-        parameters = calculate_step(obj, initial_conditions, mode, duration);
+        initial_state = generate_initial_state(obj, voltage);
 
-        % Calculate value of coil current after a specified time
-        coil_current = calculate_coil_current(obj, initial_conditions, step_type, dt);
+        final_state = apply_mode_to_state(obj, initial_state, mode, duration)
+        final_state = apply_waveform_to_state(obj, initial_state, waveform)
 
-        % Generate initial conditions struct from a voltage
-        % input:
-        %   @voltage: initial voltage
-        %   @len: length of each initial condition vector
-        % output:
-        %   @ic_struct: a generated struct, including the fields V_c, ..., I_z_R. Each field is a vector of length 'len'.
-        ic_struct = generate_initial_conditions(obj, voltage, len);
+        state_trajectory = generate_state_trajectory_from_mode(obj, initial_state, mode, duration, varargin)
 
-        % Extract initial conditions timepoint from an initial conditions struct by index
-        initial_conditions = get_initial_conditions_by_index(obj, ic_struct, index);
+        [parameter, error] = golden_section_search(obj, error_function, lower_bound, upper_bound)
 
-        % Get crossing points for the approximator to follow
-        % input:
-        %   @waveform: a waveform struct with the following fields:
-        %     @modes: the mode of each waveform phase as a string, e.g.,'fhrh' for a 4-phase waveform
-        %     @durations: the duration of each waveform phase, e.g., [60, 30, 37, 5.57] * 1e-6
-        %   @steps: the number of approximation steps for each waveform phase, e.g., [2, 1, 2, 1]
-        % output:
-        %   @crossing_points: points (indices) where the approximate waveform crosses the reference waveform
-        crossing_points = get_crossing_points(obj, waveform, steps);
+        error = calculate_error(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)        
+
+        index = get_index_from_time(obj, time)
+        time = get_state_trajectory_end_time(obj, state_trajectory)
     end
 end
