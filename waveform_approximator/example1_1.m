@@ -1,7 +1,6 @@
-% Example: Approximate a waveform using the falling-rising algorithm.
+% Example: Approximate a waveform using the 'alternating hold' algorithm.
 %
-% This script demonstrates how to approximate a waveform using the falling-rising algorithm,
-% suitable for approximating waveforms of small target voltage using a high actual voltage.
+% This script demonstrates how to approximate a waveform using the alternating hold algorithm.
 
 clear all
 
@@ -16,21 +15,21 @@ approximator = WaveformApproximator(solutions_filename, time_resolution);
 approximator.select_coil(1);
 
 % Select the algorithm.
-algorithm = @approximator.algorithm_micropulse;
+algorithm = @approximator.algorithm_alternating_hold;
 
 % Set the actual and target voltages.
 actual_voltage = 1500;
 
 % Note: If target voltage is very low, the approximation might contain modes with too short a duration;
 %       checking the durations is the responsibility of the user.
-target_voltage = 100;
+target_voltage = 1000;
 
 
 % Create a simple target waveform.
 target_waveform = struct( ...
     'mode', {'f', 'h', 'r'}, ...
     'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}, ...
-    'num_of_intermediate_points', {0, 0, 0} ...
+    'num_of_intermediate_points', {2, 0, 2} ...
 );
 
 % Generate the state trajectory for the target waveform.

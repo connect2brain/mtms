@@ -13,7 +13,7 @@ approximator = WaveformApproximator(solutions_filename, time_resolution);
 approximator.select_coil(1);
 
 % Select the algorithm.
-algorithm = @approximator.algorithm_hold;
+algorithm = @approximator.algorithm_alternating_hold;
 
 % Set the actual and target voltages.
 actual_voltage = 1500;
@@ -28,7 +28,7 @@ duration = 100 * 1e-6;
 omega = 2 * pi / duration;
 I_max = 1000;
 coil_current_function = @(t) I_max * sin(omega * t);
-num_of_intermediate_points = 20;
+num_of_intermediate_points = 10;
 
 % Generate the state trajectory based on the coil current function.
 state_trajectory = approximator.generate_state_trajectory_from_function(coil_current_function, duration);
@@ -44,3 +44,24 @@ approximated_state_trajectory = approximator.generate_state_trajectory_from_wave
 
 % Plot the state trajectories.
 approximator.plot_state_trajectories(state_trajectory, approximated_state_trajectory, sampling_points)
+
+
+% Optionally, perform the pulse.
+inp = input('Do you want to perform the pulse? (y/n): ', 's');
+if ~strcmp(inp, 'y')
+    return
+end
+
+api = MTMSApi();
+
+api.start_device();
+api.start_session();
+
+waveform = api.create_waveform(approximated_waveform);
+reverse_polarity = false;
+
+channel = 0;
+execution_condition = api.execution_conditions.IMMEDIATE;
+
+api.send_pulse(channel, waveform, reverse_polarity, execution_condition);
+api.wait_for_completion();

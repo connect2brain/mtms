@@ -2,7 +2,7 @@ function approximated_waveform = approximate(obj, actual_voltage, sampling_point
 
     states = [sampling_points.state];
     I_coils = [states.I_coil];
-    max_I_coil = max(I_coils);
+    max_I_coil = max(abs(I_coils));
 
     % Generate initial conditions.
     initial_state = obj.generate_initial_state(actual_voltage);
@@ -26,11 +26,11 @@ function approximated_waveform = approximate(obj, actual_voltage, sampling_point
             @(parameter) obj.calculate_error(parameter, algorithm, initial_state, target_state, total_duration, mode_info), ...
             lower_bound, ...
             upper_bound);
-            
+
         relative_error = error / max_I_coil;
 
-       % assert(relative_error < 0.01, sprintf('Relative error %f in current at sampling point %d is too high, please increase the time resolution', ...
-       %     relative_error, i));
+        assert(relative_error < 0.01, sprintf('Relative error %f in current at sampling point %d is too high', ...
+            relative_error, i));
 
         % Approximate the mode with the calculated parameter
         waveform = algorithm(parameter, total_duration, mode_info);
@@ -46,4 +46,5 @@ function approximated_waveform = approximate(obj, actual_voltage, sampling_point
             approximated_waveform = [approximated_waveform, struct('mode', mode, 'duration', duration)];
         end
     end
+    approximated_waveform = obj.merge_consecutive_modes(approximated_waveform);
 end

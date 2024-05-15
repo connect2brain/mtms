@@ -24,12 +24,11 @@ actual_voltage = 1500;
 %       checking the durations is the responsibility of the user.
 target_voltage = 1000;
 
-
 % Create a simple target waveform.
 target_waveform = struct( ...
-    'mode', {'f', 'h', 'r'}, ...
-    'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}, ...
-    'num_of_intermediate_points', {3, 0, 3} ...
+    'mode', {'f', 'h', 'r', 'h', 'f', 'h'}, ...
+    'duration', {60e-6, 30e-6, 120e-6, 30e-6, 45e-6, 5e-6}, ...
+    'num_of_intermediate_points', {2, 0, 4, 0, 1, 0} ...
 );
 
 % Generate the state trajectory for the target waveform.
@@ -46,3 +45,24 @@ approximated_state_trajectory = approximator.generate_state_trajectory_from_wave
 
 % Plot the state trajectories.
 approximator.plot_state_trajectories(state_trajectory, approximated_state_trajectory, sampling_points)
+
+
+% Optionally, perform the pulse.
+inp = input('Do you want to perform the pulse? (y/n): ', 's');
+if ~strcmp(inp, 'y')
+    return
+end
+
+api = MTMSApi();
+
+api.start_device();
+api.start_session();
+
+waveform = api.create_waveform(approximated_waveform);
+reverse_polarity = false;
+
+channel = 0;
+execution_condition = api.execution_conditions.IMMEDIATE;
+
+api.send_pulse(channel, waveform, reverse_polarity, execution_condition);
+api.wait_for_completion();

@@ -1,6 +1,6 @@
 function [parameter, error] = golden_section_search(obj, error_function, lower_bound, upper_bound)
 
-    % Have a tolerance that is small enough compared to the resolution.
+    % Have a tolerance that is small enough compared to the time resolution.
     bounds_tolerance = obj.time_resolution / 4;
 
     % Golden ratio
