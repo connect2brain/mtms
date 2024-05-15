@@ -77,7 +77,24 @@ classdef WaveformApproximator < handle
         %           @index: the index of the mode in the target waveform
         sampling_points = sample_state_trajectory_uniformly(obj, state_trajectory, num_of_sampling_points)
 
+        % Generate sampling points from a state trajectory and an array of sampling times.
+        % input:
+        %   @state_trajectory: an array of states, each state a struct, including the fields V_c, V_s1, V_s2, ..., I_z_R.
+        %   @sampling_times: an array of times in seconds
+        % output:
+        %   @sampling_points: an array of structs, each with the following fields:
+        %       @time: the time in seconds
+        %       @index: the index of the state in the state trajectory
+        %       @state: the state at the index
+        %       @mode_info: a struct with the following fields:
+        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last: a boolean indicating if the mode is the last one
+        %           @index: the index of the mode in the target waveform
+        sampling_points = sample_state_trajectory(obj, state_trajectory, sampling_times)
+
         approximated_waveform = approximate(obj, actual_voltage, sampling_points, approximator, algorithm)
+
+        waveform = merge_consecutive_modes(obj, waveform)
 
         % Estimate the final voltage after a waveform is applied.
         % input:
@@ -108,11 +125,13 @@ classdef WaveformApproximator < handle
         % the falling/rising mode is alternating.
         waveform = algorithm_alternating_hold(obj, parameter, total_duration, mode_info)
 
+        waveform = algorithm_alternating_hold_overshoot(obj, parameter, total_duration, mode_info)
+
         % Approximate each sampling interval with a hold, a falling mode, and a rising mode. The falling mode precedes
         % the rising mode if the target current is increasing, and vice versa.
-        waveform = algorithm_falling_rising(obj, parameter, total_duration, mode_info)
+        waveform = algorithm_micropulse(obj, parameter, total_duration, mode_info)
     end
-    
+
     methods (Access = private)
         initial_state = generate_initial_state(obj, voltage);
 
@@ -123,7 +142,8 @@ classdef WaveformApproximator < handle
 
         [parameter, error] = golden_section_search(obj, error_function, lower_bound, upper_bound)
 
-        error = calculate_error(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)        
+        error = calculate_error(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)
+        error = memoizedCalculateError(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)
 
         index = get_index_from_time(obj, time)
         time = get_state_trajectory_end_time(obj, state_trajectory)

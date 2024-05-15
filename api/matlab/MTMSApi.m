@@ -563,34 +563,47 @@ classdef MTMSApi < handle
 
         % Waveforms and targeting
 
-        function waveform = create_waveform(obj, phases, durations_in_ticks)
-        % Create a waveform from a list of phases and durations.
+        function waveform = create_waveform(obj, waveform_struct)
+        % Create a waveform from a list of waveform mode structs.
         %
-        % :param phases: A cell array of phases, e.g., {'RISING', 'HOLD', 'FALLING'}.
-        % :type phases: cell array of strings
-        % :param durations_in_ticks: A cell array of durations in ticks, e.g., {1200, 2400, 1200}.
-        % :type durations_in_ticks: cell array of ints
+        % :param waveform_struct: A list of mode structs, each struct containing a mode and a duration.
+        %   E.g., struct('mode', 'r', 'duration', 60 * 1e-6). Modes can be 'r' (rising), 'h' (hold), or 'f' (falling),
+        %   or alternatively, 'RISING', 'HOLD', 'FALLING'. The duration is in seconds.
         %
         % :return: A waveform object.
         % :rtype: ROS message (Waveform)
 
-            assert(iscell(phases), "Phases must be given as a cell array, e.g., {'RISING', 'HOLD', 'FALLING'}.");
-            assert(iscell(durations_in_ticks), "Durations must be given as a cell array, e.g., {1200, 2400, 1200}.");
+            modes = {waveform_struct.mode};
+            durations = {waveform_struct.duration};
 
-            assert(length(phases) == length(durations_in_ticks), 'Length of phases must be equal to the length of durations.');
+            assert(iscell(modes), "Modes must be given as a cell array, e.g., {'RISING', 'HOLD', 'FALLING'} or {'r', 'h', 'f'}.");
+            assert(iscell(durations), "Durations must be given as a cell array, e.g., {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}.");
+
+            assert(length(modes) == length(durations), 'Length of modes must be equal to the length of durations.');
 
             waveform = ros2message('event_interfaces/Waveform');
-            for i = 1:length(phases)
-                phase = phases{i};
-                duration_in_ticks = durations_in_ticks{i};
+            for i = 1:length(modes)
+                mode = modes{i};
+                duration_in_ticks = durations{i} / 25e-9;
 
-                allowed_phases = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
-                assert(ismember(phase, allowed_phases), ['Phase must be one of ' strjoin(allowed_phases, ', ')]);
+                if mode == 'r'
+                    mode = 'RISING';
+                elseif mode == 'h'
+                    mode = 'HOLD';
+                elseif mode == 'f'
+                    mode = 'FALLING';
+                elseif mode == 'a'
+                    mode = 'ALTERNATIVE_HOLD';
+                end
+
+                allowed_modes = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
+                assert(ismember(mode, allowed_modes), ['Mode must be one of ' strjoin(allowed_modes, ', ')]);
 
                 piece = ros2message('event_interfaces/WaveformPiece');
-                piece.duration_in_ticks = duration_in_ticks;
+                piece.duration_in_ticks = uint16(duration_in_ticks);
 
-                piece.waveform_phase.value = piece.waveform_phase.(phase);
+                % TODO: Unify terms mode and phase.
+                piece.waveform_phase.value = piece.waveform_phase.(mode);
 
                 waveform.pieces(i) = piece;
             end

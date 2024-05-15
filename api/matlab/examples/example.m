@@ -88,10 +88,12 @@ latency = mep.latency;
 
 % Create a custom waveform.
 
-phases = {'RISING', 'HOLD', 'FALLING'};
-durations_in_ticks = {2400, 1200, 1480};
+custom_waveform_struct = struct( ...
+    'mode', {'r', 'h', 'f'}, ...                        % 'r' for rising, 'h' for hold, 'f' for falling
+    'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6} ...   % in seconds
+);
 
-custom_waveform = api.create_waveform(phases, durations_in_ticks);
+custom_waveform = api.create_waveform(custom_waveform_struct);
 
 % Send pulse on all channels, using the custom waveform created above.
 

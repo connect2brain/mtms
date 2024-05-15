@@ -16,12 +16,26 @@ function waveform = algorithm_alternating_hold(obj, parameter, total_duration, m
                 'duration', {parameter, total_duration - parameter});
         end
 
+        % Always approximate with hold, rise if it is the last mode.
+        if is_last
+            waveform = struct( ...
+                'mode', {'h', 'r'}, ...
+                'duration', {parameter, total_duration - parameter});
+        end
+
     elseif next_mode == 'f'
-        if is_even
+        if is_even || is_last
             waveform = struct( ...
                 'mode', {'f', 'h'}, ...
                 'duration', {parameter, total_duration - parameter});
         else
+            waveform = struct( ...
+                'mode', {'h', 'f'}, ...
+                'duration', {parameter, total_duration - parameter});
+        end
+
+        % Always approximate with hold, fall if it is the last mode.
+        if is_last
             waveform = struct( ...
                 'mode', {'h', 'f'}, ...
                 'duration', {parameter, total_duration - parameter});
