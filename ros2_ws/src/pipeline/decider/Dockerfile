@@ -12,8 +12,8 @@ RUN apt-get update && \
     ros-iron-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# Note: Tensorflow is needed for mneflow, which is used for machine learning.
-RUN pip3 install tensorflow
+# Note: Scikit-learn is needed for mneflow, used for machine learning.
+RUN pip3 install scikit-learn
 
 RUN pip3 install mneflow
 
