@@ -57,8 +57,8 @@ classdef WaveformApproximator < handle
         %       @index: the index of the state in the state trajectory
         %       @state: the state at the index
         %       @mode_info: a struct with the following fields:
-        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
-        %           @is_last: a boolean indicating if the mode is the last one
+        %           @current_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last_segment: a boolean indicating if the mode is the last one
         %           @index: the index of the mode in the target waveform
         sampling_points = sample_state_trajectory_by_waveform(obj, state_trajectory, target_waveform)
 
@@ -72,8 +72,8 @@ classdef WaveformApproximator < handle
         %       @index: the index of the state in the state trajectory
         %       @state: the state at the index
         %       @mode_info: a struct with the following fields:
-        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
-        %           @is_last: a boolean indicating if the mode is the last one
+        %           @current_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last_segment: a boolean indicating if the mode is the last one
         %           @index: the index of the mode in the target waveform
         sampling_points = sample_state_trajectory_uniformly(obj, state_trajectory, num_of_sampling_points)
 
@@ -87,8 +87,8 @@ classdef WaveformApproximator < handle
         %       @index: the index of the state in the state trajectory
         %       @state: the state at the index
         %       @mode_info: a struct with the following fields:
-        %           @next_mode: the mode of the next phase as a character, e.g., 'f' for falling
-        %           @is_last: a boolean indicating if the mode is the last one
+        %           @current_mode: the mode of the next phase as a character, e.g., 'f' for falling
+        %           @is_last_segment: a boolean indicating if the mode is the last one
         %           @index: the index of the mode in the target waveform
         sampling_points = sample_state_trajectory(obj, state_trajectory, sampling_times)
 
@@ -143,7 +143,6 @@ classdef WaveformApproximator < handle
         [parameter, error] = golden_section_search(obj, error_function, lower_bound, upper_bound)
 
         error = calculate_error(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)
-        error = memoizedCalculateError(obj, parameter, algorithm, initial_state, target_state, total_duration, mode_info)
 
         index = get_index_from_time(obj, time)
         time = get_state_trajectory_end_time(obj, state_trajectory)

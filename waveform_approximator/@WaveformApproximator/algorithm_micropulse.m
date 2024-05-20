@@ -1,19 +1,32 @@
-function waveform = algorithm_falling_rising(obj, parameter, total_duration, mode_info)
-    next_mode = mode_info.next_mode;
-    is_last = mode_info.is_last;
-    index = mode_info.index;
+function waveform = algorithm_micropulse(obj, parameter, total_duration, mode_info)
+    current_mode = mode_info.current_mode;
+    is_last_segment = mode_info.is_last_segment;
+    segment_index = mode_info.segment_index;
+    mode_index = mode_info.mode_index;
 
-    if next_mode == 'r'
+    assert (mode_index <= 3, 'Micropulse algorithm only supports waveforms with up to 3 modes.');
+
+    if current_mode == 'r' && mode_index == 1
         waveform = struct( ...
-            'mode', {'r', 'f', 'h'}, ...
+            'mode', {'h', 'f', 'r'}, ...
             'duration', {parameter, 4e-6, total_duration - parameter - 4e-6});
 
-    elseif next_mode == 'f'
+    elseif current_mode == 'r' && mode_index > 1
+        waveform = struct( ...
+            'mode', {'f', 'r', 'h'}, ...
+            'duration', {parameter, 4e-6, total_duration - parameter - 4e-6});
+
+    elseif current_mode == 'f' && mode_index == 1
         waveform = struct( ...
             'mode', {'h', 'r', 'f'}, ...
             'duration', {parameter, 4e-6, total_duration - parameter - 4e-6});
 
-    elseif next_mode == 'h'
+    elseif current_mode == 'f' && mode_index > 1
+        waveform = struct( ...
+            'mode', {'r', 'f', 'h'}, ...
+            'duration', {parameter, 4e-6, total_duration - parameter - 4e-6});
+
+    elseif current_mode == 'h'
         waveform = struct( ...
             'mode', {'h'}, ...
             'duration', {total_duration});
