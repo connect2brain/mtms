@@ -17,17 +17,15 @@ function sampling_points = sample_state_trajectory(obj, state_trajectory, sampli
             next_state_when_holding = obj.apply_mode_to_state(state, 'h', time_difference);
 
             if next_state_when_holding.I_coil > next_state.I_coil
-                next_mode = 'r';
+                current_mode = 'r';
             else
-                next_mode = 'f';
+                current_mode = 'f';
             end
-            is_last = false;
         else
-            next_mode = 'h';
-            is_last = true;
+            current_mode = 'h';
         end
 
-        mode_info = struct('next_mode', next_mode, 'is_last', is_last, 'index', j);
+        mode_info = struct('current_mode', current_mode, 'mode_index', j, 'segment_index', 1, 'is_last_segment', true);
 
         sampling_point = struct( ...
             'time', time, ...

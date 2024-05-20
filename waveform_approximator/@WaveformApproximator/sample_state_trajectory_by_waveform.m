@@ -17,10 +17,10 @@ function sampling_points = sample_state_trajectory_by_waveform(obj, state_trajec
             time = sampling_times(j);
             index = obj.get_index_from_time(time);
 
-            next_mode = target_waveform(i).mode;
-            is_last = j == length(sampling_times);
+            current_mode = target_waveform(i).mode;
+            is_last_segment = j == length(sampling_times);
 
-            mode_info = struct('next_mode', next_mode, 'is_last', is_last, 'index', j);
+            mode_info = struct('current_mode', current_mode, 'mode_index', i, 'segment_index', j, 'is_last_segment', is_last_segment);
 
             state = state_trajectory(index);
 

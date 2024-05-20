@@ -1,6 +1,6 @@
-% Example: Approximate a waveform using the falling-rising algorithm.
+% Example: Approximate a waveform using the micropulse algorithm.
 %
-% This script demonstrates how to approximate a waveform using the falling-rising algorithm,
+% This script demonstrates how to approximate a waveform using the micropulse algorithm,
 % suitable for approximating waveforms of small target voltage using a high actual voltage.
 
 clear all
@@ -28,7 +28,7 @@ target_voltage = 100;
 
 % Create a simple target waveform.
 target_waveform = struct( ...
-    'mode', {'f', 'h', 'r'}, ...
+    'mode', {'r', 'h', 'f'}, ...
     'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}, ...
     'num_of_intermediate_points', {0, 0, 0} ...
 );
