@@ -102,7 +102,7 @@ custom_waveform = api.create_waveform(custom_waveform_struct);
 
 waveforms_for_coil_set = api.create_waveforms_for_coil_set([custom_waveform, custom_waveform, custom_waveform, custom_waveform, custom_waveform]);
 
-api.send_immediate_custom_pulse_to_all_channels(waveforms_for_coil_set, reverse_polarities);
+api.send_immediate_custom_pulse_to_all_channels(waveforms_for_coil_set);
 
 %% Paired pulse targeting
 
