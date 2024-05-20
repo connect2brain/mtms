@@ -1,4 +1,4 @@
-function waveform = algorithm_alternating_hold(obj, parameter, total_duration, mode_info)
+function waveform = algorithm_alternating_hold_overshoot(obj, parameter, total_duration, mode_info)
     current_mode = mode_info.current_mode;
     is_last_segment = mode_info.is_last_segment;
     segment_index = mode_info.segment_index;
@@ -17,26 +17,12 @@ function waveform = algorithm_alternating_hold(obj, parameter, total_duration, m
                 'duration', {parameter, total_duration - parameter});
         end
 
-        % Always approximate with hold-rise if it is the last mode.
-        if is_last_segment
-            waveform = struct( ...
-                'mode', {'h', 'r'}, ...
-                'duration', {parameter, total_duration - parameter});
-        end
-
     elseif current_mode == 'f'
-        if is_even_segment || is_last_segment
+        if is_even_segment
             waveform = struct( ...
                 'mode', {'f', 'h'}, ...
                 'duration', {parameter, total_duration - parameter});
         else
-            waveform = struct( ...
-                'mode', {'h', 'f'}, ...
-                'duration', {parameter, total_duration - parameter});
-        end
-
-        % Always approximate with hold-fall if it is the last mode.
-        if is_last_segment
             waveform = struct( ...
                 'mode', {'h', 'f'}, ...
                 'duration', {parameter, total_duration - parameter});
