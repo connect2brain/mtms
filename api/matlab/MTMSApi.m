@@ -564,11 +564,17 @@ classdef MTMSApi < handle
         % Waveforms and targeting
 
         function waveform = create_waveform(obj, waveform_struct)
-        % Create a waveform from a list of waveform mode structs.
+        % Create a waveform from an array of waveform mode structs.
         %
-        % :param waveform_struct: A list of mode structs, each struct containing a mode and a duration.
-        %   E.g., struct('mode', 'r', 'duration', 60 * 1e-6). Modes can be 'r' (rising), 'h' (hold), or 'f' (falling),
-        %   or alternatively, 'RISING', 'HOLD', 'FALLING'. The duration is in seconds.
+        % :param waveform_struct: A struct array, each struct containing a mode and a duration.
+        %
+        %   For instance, a single struct could be: struct('mode', 'r', 'duration', 60 * 1e-6).
+        %
+        %   The struct array can be created, e.g., by: struct('mode', {'r', 'h', 'f'}, 'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}).
+        %
+        %   Modes can be either 'r' (rising), 'h' (hold), or 'f' (falling), or alternatively, 'RISING', 'HOLD', 'FALLING'.
+        %
+        %   The durations are in seconds.
         %
         % :return: A waveform object.
         % :rtype: ROS message (Waveform)
@@ -904,7 +910,7 @@ classdef MTMSApi < handle
             for channel = 0:obj.channel_count - 1
 
                 % MATLAB indexing starts from 1, so we need to add 1 to the channel number, as we are indexing a MATLAB array.
-                waveform = waveforms{channel + 1};
+                waveform = waveforms(channel + 1);
 
                 new_id = obj.send_pulse(channel, waveform, false, obj.execution_conditions.TIMED, time);
                 ids = [ids new_id];
