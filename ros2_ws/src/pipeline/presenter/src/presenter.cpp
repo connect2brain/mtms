@@ -131,23 +131,12 @@ void EegPresenter::initialize_presenter_module() {
 
 /* Session handler. */
 void EegPresenter::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
-  auto new_session_state = msg->state;
+  bool state_changed = this->session_state.value != msg->state.value;
+  this->session_state = msg->state;
 
-  if (this->session_state.value != new_session_state.value) {
-    RCLCPP_INFO(this->get_logger(), "Session state changed from %d to %d.",
-                this->session_state.value, new_session_state.value);
-  }
-
-  /* Stopping a session can take several seconds, whereas if another session is started immediately after the previous
-      one is stopped, the system remains in "stopped" state only for a very short period of time. Hence, check both conditions
-      to ensure that we notice if the session is stopped. */
-  if (this->session_state.value == system_interfaces::msg::SessionState::STARTED &&
-      (new_session_state.value == system_interfaces::msg::SessionState::STOPPING ||
-       new_session_state.value == system_interfaces::msg::SessionState::STOPPED)) {
-
+  if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->initialize_presenter_module();
   }
-  this->session_state = new_session_state;
 
   update_time(msg->time);
 }
