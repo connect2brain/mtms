@@ -174,7 +174,10 @@ void EegPreprocessor::publish_healthcheck() {
 }
 
 void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
-  if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+  bool state_changed = this->session_state.value != msg->state.value;
+  this->session_state = msg->state;
+
+  if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->reinitialize = true;
 
     /* Reset the preprocessor state when the session is stopped. */
@@ -475,6 +478,16 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
   auto start_time = std::chrono::high_resolution_clock::now();
 
   double_t sample_time = msg->time;
+
+  /* Check that session has started. */
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Session not started, not processing EEG sample at time %.3f (s).",
+                         sample_time);
+    return;
+  }
 
   /* Log if this is the first sample of the session. */
   if (msg->metadata.first_sample_of_session) {
