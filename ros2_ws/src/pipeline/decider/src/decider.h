@@ -130,13 +130,15 @@ private:
   bool enabled = false;
 
   DeciderState decider_state = DeciderState::WAITING_FOR_ENABLED;
-  bool first_sample = true;
+  system_interfaces::msg::SessionState session_state;
+
+  bool first_sample_ever = true;
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
   double_t previous_trigger_time = UNSET_PREVIOUS_TIME;
 
-  bool reinitialize = false;
+  bool reinitialize = true;
 
   std::string active_project = UNSET_STRING;
 
