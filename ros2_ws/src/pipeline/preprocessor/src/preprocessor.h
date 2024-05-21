@@ -110,7 +110,8 @@ private:
   bool enabled = false;
 
   PreprocessorState preprocessor_state = PreprocessorState::WAITING_FOR_ENABLED;
-  bool first_sample = true;
+  bool first_sample_ever = true;
+  bool first_sample_of_session_received = false;
 
   bool reinitialize = false;
 
