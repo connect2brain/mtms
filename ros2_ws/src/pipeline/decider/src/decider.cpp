@@ -232,7 +232,10 @@ void EegDecider::publish_healthcheck() {
 }
 
 void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
-  if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+  bool state_changed = this->session_state.value != msg->state.value;
+  this->session_state = msg->state;
+
+  if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->reinitialize = true;
 
     /* Reset the decider state when the session is stopped. */
@@ -552,19 +555,29 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   double_t sample_time = msg->time;
 
+  /* Check that session has started. */
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Session not started, not processing EEG sample at time %.3f (s).",
+                         sample_time);
+    return;
+  }
+
   /* Log if this is the first sample of the session. */
   if (msg->metadata.first_sample_of_session) {
     RCLCPP_INFO(this->get_logger(), "First sample of session received.");
   }
 
   /* Update EEG info with every new session OR if this is the first EEG sample received. */
-  if (msg->metadata.first_sample_of_session || this->first_sample) {
+  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
     this->previous_time = UNSET_PREVIOUS_TIME;
 
-    this->first_sample = false;
+    this->first_sample_ever = false;
   }
 
   check_dropped_samples(sample_time);

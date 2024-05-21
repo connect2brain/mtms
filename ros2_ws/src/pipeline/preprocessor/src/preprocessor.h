@@ -110,10 +110,12 @@ private:
   bool enabled = false;
 
   PreprocessorState preprocessor_state = PreprocessorState::WAITING_FOR_ENABLED;
+  system_interfaces::msg::SessionState session_state;
+
   bool first_sample_ever = true;
   bool first_sample_of_session_received = false;
 
-  bool reinitialize = false;
+  bool reinitialize = true;
 
   std::string active_project = UNSET_STRING;
 
