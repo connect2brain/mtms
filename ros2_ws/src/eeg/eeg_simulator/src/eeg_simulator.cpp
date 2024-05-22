@@ -22,8 +22,6 @@ using namespace std::chrono_literals;
 using namespace std::placeholders;
 
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
-const std::string EEG_INFO_TOPIC = "/eeg/info";
-const std::string EEG_TRIGGER_TOPIC = "/eeg/trigger";
 const std::string DATASET_LIST_TOPIC = "/eeg_simulator/dataset/list";
 
 const std::string PROJECTS_DIRECTORY = "projects/";
@@ -115,8 +113,6 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   eeg_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH);
-
-  eeg_info_publisher = this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
 
   /* Initialize inotify. */
   this->inotify_descriptor = inotify_init();
@@ -461,15 +457,6 @@ void EegSimulator::initialize_streaming() {
   } else {
     RCLCPP_INFO(this->get_logger(), "No trigger file defined.");
   }
-
-  /* Publish EEG info. */
-  eeg_interfaces::msg::EegInfo eeg_info;
-
-  eeg_info.sampling_frequency = this->sampling_frequency;
-  eeg_info.num_of_eeg_channels = this->num_of_eeg_channels;
-  eeg_info.num_of_emg_channels = this->num_of_emg_channels;
-
-  eeg_info_publisher->publish(eeg_info);
 }
 
 void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
