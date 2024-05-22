@@ -237,6 +237,7 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->reinitialize = true;
+    this->previous_trigger_time = UNSET_PREVIOUS_TIME;
 
     /* Reset the decider state when the session is stopped. */
     reset_decider_state();
