@@ -121,6 +121,7 @@ void EegBridge::create_publishers() {
 
   this->eeg_info_publisher =
       this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
+
   this->healthcheck_publisher =
       this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
