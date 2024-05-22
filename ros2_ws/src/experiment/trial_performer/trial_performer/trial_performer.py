@@ -560,6 +560,8 @@ class TrialPerformerNode(Node):
 
         start_time = max(desired_start_time, earliest_feasible_time)
 
+        execution_condition = ExecutionCondition.TIMED if not wait_for_trigger else ExecutionCondition.WAIT_FOR_TRIGGER
+
         # Perform pulses
         for target_idx in range(len(targets)):
             waveforms_for_coil_set = approximated_waveforms[target_idx]
@@ -575,7 +577,7 @@ class TrialPerformerNode(Node):
             pulse_ids = self.pulse_for_all_channels(
                 waveforms_for_coil_set=waveforms_for_coil_set,
                 time=time,
-                execution_condition=ExecutionCondition.TIMED,
+                execution_condition=execution_condition,
             )
 
         # Perform trigger outs
@@ -592,7 +594,7 @@ class TrialPerformerNode(Node):
                     id=id,
                     port=port,
                     time=delayed_time,
-                    execution_condition=ExecutionCondition.TIMED,
+                    execution_condition=execution_condition,
                 )
                 trigger_ids += [id]
 
