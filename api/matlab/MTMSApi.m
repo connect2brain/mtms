@@ -16,10 +16,10 @@ classdef MTMSApi < handle
         % the mTMS device, but not too large so that the events are not executed 'immediately'.
         %
         % TODO: In MATLAB, 0.1 seconds is too little. In Python, however, 0.1 s works fine.
-        %   Settle for 1.0 s for now, but it could be investigated if the code could be optimized
+        %   Settle for 1.5 s for now, but it could be investigated if the code could be optimized
         %   to allow a shorter time interval.
         %
-        TIME_EPSILON = 1.0
+        TIME_EPSILON = 1.5
     end
 
     properties
