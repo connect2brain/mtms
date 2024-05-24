@@ -19,7 +19,7 @@ classdef WaveformApproximatorWrapper < handle
             % Create ROS server
             obj.approximate_waveform_server = ros2svcserver(obj.node, "/targeting/approximate_waveform", ...
                 "targeting_interfaces/ApproximateWaveform", ...
-                @obj.approximate_waveform);
+                @obj.approximate_waveform_wrapper);
 
             obj.estimate_voltage_after_pulse_server = ros2svcserver(obj.node, "/targeting/estimate_voltage_after_pulse", ...
                 "targeting_interfaces/EstimateVoltageAfterPulse", ...
@@ -32,12 +32,20 @@ classdef WaveformApproximatorWrapper < handle
         end
 
         % Convert the ROS message to a MATLAB struct
+        %
+        % Example output:
+        %
+        % struct( ...
+        %    'mode', {'r', 'h', 'f'}, ...
+        %    'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}, ...
+        % );
+
         function waveform_struct = convert_ros_waveform_to_matlab_waveform(obj, waveform)
             pieces = waveform.pieces;
 
-            % Initialize the mode string and durations array
-            modes = '';
-            durations_in_ticks = zeros(1, length(pieces));
+            % Loop through the pieces and extract the modes and durations
+            modes = cell(1, length(pieces));
+            durations = cell(1, length(pieces));
 
             for i = 1:length(pieces)
                 piece = pieces(i);
@@ -56,19 +64,17 @@ classdef WaveformApproximatorWrapper < handle
                     otherwise
                         assert (false, 'Invalid phase');
                 end
+                modes{i} = mode;
 
-                % Concatenate the phase to the mode string
-                modes = [modes mode];
-                durations_in_ticks(i) = piece.duration_in_ticks;
+                % Convert ticks to seconds (1 tick = 25 ns)
+                durations{i} = double(piece.duration_in_ticks) * 25 / 1e9;
             end
 
-            % Convert ticks to seconds (1 tick = 25 ns)
-            durations = double(durations_in_ticks) * 25 / 1e9;
-
-            % Create waveform struct
-            waveform_struct = struct();
-            waveform_struct.modes = modes;
-            waveform_struct.durations = durations;
+            % Create the MATLAB struct
+            waveform_struct = struct( ...
+                'mode', modes, ...
+                'duration', durations ...
+            );
         end
 
         % Convert the MATLAB struct to a ROS message
@@ -107,48 +113,22 @@ classdef WaveformApproximatorWrapper < handle
             end
         end
 
-        function response = approximate_waveform(obj, request, response)
+        function response = approximate_waveform_wrapper(obj, request, response)
             actual_voltage = double(request.actual_voltage);
             target_voltage = double(request.target_voltage);
             target_waveform = request.target_waveform;
             coil_number = request.coil_number;
 
-            order_of_algorithms = {
-                'constant_current', ...
-                'constant_voltage', ...
-                'linear_ramp', ...
-                'exponential_ramp', ...
-                'sine_wave', ...
-                'square_wave', ...
-                'triangle_wave', ...
-                'sawtooth_wave', ...
-                'custom_wave'
-            }
-
             % Convert the ROS message to a MATLAB struct
             target_waveform = obj.convert_ros_waveform_to_matlab_waveform(target_waveform);
 
-            % Select the coil
-            obj.approximator.select_coil(coil_number);
-
-            actual_voltage
-            target_voltage
-            target_waveform
-            % Approximate the waveform
-            while not hyväksyttävä vaihe:
-                [success, approximated_waveform, ~] = obj.approximator.approximate(actual_voltage, target_voltage, target_waveform);
-                
-                if liian pitkä vaihe:
-                    tee uusi funktio, joka ottaa parametrit ja palauttaa approximated_waveformin
-                end
-            end
-            
-            print("mitä tapahtuu tässä nyt")
+            [success, approximated_waveform] = approximate_waveform(approximator, actual_voltage, target_voltage, target_waveform, coil_number);
 
             % Populate the response message
             if success
                 response.approximated_waveform = obj.convert_matlab_waveform_to_ros_waveform(approximated_waveform);
             end
+            response.approximate_waveform
             response.success = success;
         end
 

@@ -29,23 +29,28 @@ target_voltage = 100;
 % Create a simple target waveform.
 target_waveform = struct( ...
     'mode', {'r', 'h', 'f'}, ...
-    'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6}, ...
-    'num_of_intermediate_points', {0, 0, 0} ...
-);
+    'duration', {60 * 1e-6, 30 * 1e-6, 37 * 1e-6});
+
+num_of_intermediate_points_per_mode = [0, 0, 0];
 
 % Generate the state trajectory for the target waveform.
 state_trajectory = approximator.generate_state_trajectory_from_waveform(target_voltage, target_waveform);
 
 % Sample the state trajectory using the waveform.
-sampling_points = approximator.sample_state_trajectory_by_waveform(state_trajectory, target_waveform);
+sampling_points = approximator.sample_state_trajectory_by_waveform(state_trajectory, target_waveform, num_of_intermediate_points_per_mode);
 
 % Approximate the waveform.
-approximated_waveform = approximator.approximate(actual_voltage, sampling_points, algorithm);
+[approximated_waveform, relative_errors] = approximator.approximate(actual_voltage, sampling_points, algorithm);
+
+% Note that it is the responsibility of the user to check that the durations of the modes are not too short
+% and that the relative errors are acceptable (e.g., smaller than 0.02). For more automated checking,
+% see example_approximate_iteratively.m.
 
 % Generate the state trajectory for the approximated waveform.
 approximated_state_trajectory = approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
 
 % Plot the state trajectories.
+figure
 approximator.plot_state_trajectories(state_trajectory, approximated_state_trajectory, sampling_points)
 
 
