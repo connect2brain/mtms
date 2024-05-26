@@ -14,6 +14,7 @@
 
   <depend>eeg_interfaces</depend>
   <depend>event_interfaces</depend>
+  <depend>experiment_interfaces</depend>
   <depend>pipeline_interfaces</depend>
   <depend>project_interfaces</depend>
   <depend>system_interfaces</depend>

@@ -15,7 +15,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from event_interfaces.msg import StimulusFeedback
+from experiment_interfaces.msg import TrialFeedback
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
@@ -25,7 +25,8 @@ from invesalius3 import app
 import time
 from launch.substitutions import LaunchConfiguration
 
-from .neuronavigation_pedal_bridge import NeuronavigationPedalBridge
+from .pedal_bridge import PedalBridge
+from .target_visualizer import TargetVisualizer
 
 
 # TODO: Divide this large class into several nodes.
@@ -43,7 +44,7 @@ class NeuronavigationNode(Node):
     # HACK: Needs to match the corresponding value in stimulation allower ROS node.
     COIL_AT_TARGET_DEADLINE_S = 0.6
 
-    def __init__(self):
+    def __init__(self, callback_group):
         super().__init__("neuronavigation")
 
         ## ROS parameters
@@ -70,15 +71,14 @@ class NeuronavigationNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
-        callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
-        # Create subscriber for stimulus feedback.esko
-        self._stimulus_feedback_subscriber = self.create_subscription(
-            StimulusFeedback,
-            "/event/stimulus_feedback",
-            self.stimulus_feedback_callback,
+        # Create subscriber for trial feedback.
+        self._trial_feedback_subscriber = self.create_subscription(
+            TrialFeedback,
+            "/trial/feedback",
+            self.trial_feedback_callback,
             10,
             callback_group=callback_group,
         )
@@ -166,8 +166,12 @@ class NeuronavigationNode(Node):
         response.success = True
         return response
 
-    def stimulus_feedback_callback(self, msg):
-        self.get_logger().info(f'Stimulation pulse received')
+    def trial_feedback_callback(self, msg):
+        if not msg.success:
+            self.get_logger().info('Trial not successful')
+            return
+
+        self.get_logger().info(f'Successful trial')
         self._stimulation_pulse_received()
 
     def planner_state_callback(self, msg):
@@ -412,12 +416,17 @@ class Connection(Thread):
         self.daemon = True
 
         rclpy.init(args=None)
-        self.node = NeuronavigationNode()
-        self.neuronavigation_pedal_bridge = NeuronavigationPedalBridge()
+
+        callback_group = ReentrantCallbackGroup()
+
+        self.node = NeuronavigationNode(callback_group=callback_group)
+        self.pedal_bridge = PedalBridge()
+        self.target_visualizer = TargetVisualizer(callback_group=callback_group)
 
         self.executor = rclpy.executors.MultiThreadedExecutor()
         self.executor.add_node(self.node)
-        self.executor.add_node(self.neuronavigation_pedal_bridge)
+        self.executor.add_node(self.pedal_bridge)
+        self.executor.add_node(self.target_visualizer)
 
     def run(self):
         self.executor.spin()
@@ -523,15 +532,18 @@ class Connection(Thread):
     def set_callback__open_orientation_dialog(self, callback):
         self.node.set_callback__open_orientation_dialog(callback)
 
+    def set_callback__set_vector_field(self, callback):
+        self.target_visualizer.set_callback__set_vector_field(callback)
+
     def add_pedal_callback(self, name, callback, remove_when_released=False):
-        self.neuronavigation_pedal_bridge.add_pedal_callback(
+        self.pedal_bridge.add_pedal_callback(
             name=name,
             callback=callback,
             remove_when_released=remove_when_released,
         )
 
     def remove_pedal_callback(self, name):
-        self.neuronavigation_pedal_bridge.remove_pedal_callback(name=name)
+        self.pedal_bridge.remove_pedal_callback(name=name)
 
 
 class RosLoggerWrapper:

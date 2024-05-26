@@ -5,6 +5,7 @@
 #include "targeting_interfaces/srv/reverse_polarity.hpp"
 #include "event_interfaces/msg/waveform_phase.hpp"
 #include "event_interfaces/msg/waveform_piece.hpp"
+#include "event_interfaces/msg/waveform.hpp"
 
 using namespace std;
 
@@ -27,16 +28,17 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
+      event_interfaces::msg::Waveform waveform = request->waveform;
       event_interfaces::msg::WaveformPiece piece;
 
-      uint8_t n_pieces = std::size(request->waveform);
-      for (uint8_t i = 0; i < n_pieces; i++) {
-        piece.duration_in_ticks = request->waveform[i].duration_in_ticks;
+      uint8_t num_of_pieces = std::size(waveform.pieces);
+      for (uint8_t i = 0; i < num_of_pieces; i++) {
+        piece.duration_in_ticks = waveform.pieces[i].duration_in_ticks;
 
         /* TODO: Does not check that the current mode is valid, i.e., that the value is in the correct range.
          *   This will be checked by ROS2 once WaveformPhase ROS message type is a proper enum.
          */
-        uint8_t waveform_phase = request->waveform[i].waveform_phase.value;
+        uint8_t waveform_phase = waveform.pieces[i].waveform_phase.value;
         uint8_t new_waveform_phase;
 
         for (uint8_t j = 0; j < std::size(WAVEFORM_PHASE_MAPPING); j++) {
@@ -46,7 +48,7 @@ public:
         }
         piece.waveform_phase.value = new_waveform_phase;
 
-        response->waveform.push_back(piece);
+        response->waveform.pieces.push_back(piece);
       }
 
       response->success = true;

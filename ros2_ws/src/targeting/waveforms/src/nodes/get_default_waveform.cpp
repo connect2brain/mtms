@@ -48,7 +48,7 @@ public:
           piece.duration_in_ticks = DEFAULT_WAVEFORM[i][1];
         }
 
-        response->waveform.push_back(piece);
+        response->waveform.pieces.push_back(piece);
       }
 
       response->success = true;
