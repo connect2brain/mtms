@@ -18,7 +18,8 @@
 
 #include "event_interfaces/msg/event_trigger.hpp"
 #include "event_interfaces/msg/ready_for_event_trigger.hpp"
-#include "event_interfaces/msg/stimulus_feedback.hpp"
+
+#include "experiment_interfaces/msg/trial_feedback.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -86,7 +87,7 @@ private:
 
   void calculate_latency(double_t pulse_execution_time);
   void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
-  void handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg);
+  void handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg);
 
   void update_ready_for_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
 
@@ -120,7 +121,7 @@ private:
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
   rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_trigger_subscriber;
 
-  rclcpp::Subscription<event_interfaces::msg::StimulusFeedback>::SharedPtr stimulus_feedback_subscriber;
+  rclcpp::Subscription<experiment_interfaces::msg::TrialFeedback>::SharedPtr trial_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
@@ -129,13 +130,15 @@ private:
   bool enabled = false;
 
   DeciderState decider_state = DeciderState::WAITING_FOR_ENABLED;
-  bool first_sample = true;
+  system_interfaces::msg::SessionState session_state;
+
+  bool first_sample_ever = true;
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
   double_t previous_trigger_time = UNSET_PREVIOUS_TIME;
 
-  bool reinitialize = false;
+  bool reinitialize = true;
 
   std::string active_project = UNSET_STRING;
 

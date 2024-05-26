@@ -7,19 +7,14 @@
 using namespace std::chrono_literals;
 using namespace std::chrono;
 
-EegGatherer::EegGatherer(std::string goal_id, double_t start_time, double_t end_time, uint16_t sampling_frequency) {
-  assert(sampling_frequency != UNSET_SAMPLING_FREQUENCY);
-
+EegGatherer::EegGatherer(std::string goal_id, double_t start_time, double_t end_time) {
   this->goal_id = goal_id;
 
   this->start_time = start_time;
   this->end_time = end_time;
   this->duration = end_time - start_time;
 
-  this->sampling_frequency = sampling_frequency;
   this->previous_time = UNSET_PREVIOUS_TIME;
-
-  this->sampling_period = 1.0 / this->sampling_frequency;
 
   this->eeg_buffer = std::vector<eeg_interfaces::msg::PreprocessedSample>();
 
@@ -27,10 +22,12 @@ EegGatherer::EegGatherer(std::string goal_id, double_t start_time, double_t end_
 
 }
 
-void EegGatherer::check_dropped_samples(double_t current_time) {
+void EegGatherer::check_dropped_samples(double_t current_time, uint16_t sampling_frequency) {
   if (this->previous_time) {
+    double_t sampling_period = 1.0 / sampling_frequency;
+
     auto time_diff = current_time - this->previous_time;
-    auto threshold = this->sampling_period + this->TOLERANCE_S;
+    auto threshold = sampling_period + this->TOLERANCE_S;
 
     if (time_diff > threshold) {
 
@@ -39,10 +36,10 @@ void EegGatherer::check_dropped_samples(double_t current_time) {
         this->state = DataGatheringState::FINAL_STATE__SAMPLES_DROPPED;
 
         RCLCPP_ERROR(rclcpp::get_logger("eeg_gatherer"),
-          "%s: Sample(s) dropped while gathering data. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, this->sampling_period, threshold);
+          "%s: Sample(s) dropped while gathering data. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, sampling_period, threshold);
       } else {
         RCLCPP_WARN(rclcpp::get_logger("eeg_gatherer"),
-          "%s: Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, this->sampling_period, threshold);
+          "%s: Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", this->goal_id.c_str(), time_diff, sampling_period, threshold);
       }
     } else {
       /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
@@ -97,8 +94,9 @@ bool EegGatherer::handle_state__gather_data(double_t current_time, const std::sh
 
 void EegGatherer::handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
   auto current_time = msg->time;
+  auto sampling_frequency = msg->metadata.sampling_frequency;
 
-  check_dropped_samples(current_time);
+  check_dropped_samples(current_time, sampling_frequency);
 
   bool next_sample = false;
 

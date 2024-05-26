@@ -50,22 +50,6 @@ class AnalyzeMepNode(Node):
         self.logger = self.get_logger()
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create subscriber for EegInfo.
-
-        qos_persist_latest = QoSProfile(
-            depth=1,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
-            history=HistoryPolicy.KEEP_LAST,
-            reliability=ReliabilityPolicy.RELIABLE,
-        )
-        self.eeg_info_subscriber = self.create_subscription(
-            EegInfo,
-            '/eeg/info',
-            self.eeg_info_callback,
-            qos_persist_latest,
-            callback_group=self.callback_group,
-        )
-
         # Create action client for gathering EEG data.
 
         topic, action_type = self.ROS_ACTION_GATHER_EEG
@@ -132,13 +116,6 @@ class AnalyzeMepNode(Node):
         self.publish_healthcheck()
 
     # ROS callbacks and callers
-
-    def eeg_info_callback(self, eeg_info):
-
-        # Update sampling frequency
-        self.sampling_frequency = eeg_info.sampling_frequency
-        self.logger.info('Sampling frequency updated to {} Hz.'.format(self.sampling_frequency))
-
     def async_gather_eeg(self, goal_id, start_time, end_time, gathered_eeg_buffer):
         topic, action_type = self.ROS_ACTION_GATHER_EEG
 

@@ -8,13 +8,28 @@ from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession
 
-from event_interfaces.msg import EventTrigger, Pulse, Charge, Discharge, TriggerOut, \
-    ChargeFeedback, DischargeFeedback, TriggerOutFeedback, \
-    PulseFeedback, EventInfo
+from event_interfaces.msg import (
+    Charge,
+    ChargeFeedback,
+    Discharge,
+    DischargeFeedback,
+    EventTrigger,
+    EventInfo,
+    Pulse,
+    PulseFeedback,
+    TriggerOut,
+    TriggerOutFeedback,
+)
 
 from mep_interfaces.action import AnalyzeMep
 
-from targeting_interfaces.srv import GetTargetVoltages, GetMaximumIntensity, GetDefaultWaveform, ReversePolarity
+from targeting_interfaces.srv import (
+    GetTargetVoltages,
+    GetMaximumIntensity,
+    GetDefaultWaveform,
+    ReversePolarity,
+    GetMultipulseWaveforms
+)
 
 from stimulation_interfaces.srv import IsStimulationAllowed
 
@@ -37,9 +52,10 @@ class MTMSApiNode(Node):
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
     ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
 
-    ROS_SERVICE_get_target_voltages = ('/targeting/get_target_voltages', GetTargetVoltages)
+    ROS_SERVICE_GET_TARGET_VOLTAGES = ('/targeting/get_target_voltages', GetTargetVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
     ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
+    ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS = ('/waveforms/get_multipulse_waveforms', GetMultipulseWaveforms)
     ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
 
     ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/stimulation/allowed', IsStimulationAllowed)
@@ -60,9 +76,10 @@ class MTMSApiNode(Node):
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
         ROS_SERVICE_ALLOW_STIMULATION,
-        ROS_SERVICE_get_target_voltages,
+        ROS_SERVICE_GET_TARGET_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
+        ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS,
         ROS_SERVICE_REVERSE_POLARITY,
         ROS_SERVICE_IS_STIMULATION_ALLOWED,
     )
@@ -75,7 +92,7 @@ class MTMSApiNode(Node):
         super().__init__('mtms_api_node')
 
         self.printer = MTMSApiPrinter(
-            channel_count=channel_count
+            channel_count=channel_count,
         )
 
         self.system_state = None
@@ -317,17 +334,13 @@ class MTMSApiNode(Node):
 
     # Targeting
 
-    def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
-        topic, service_type = self.ROS_SERVICE_get_target_voltages
+    def get_target_voltages(self, target):
+        topic, service_type = self.ROS_SERVICE_GET_TARGET_VOLTAGES
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.target.displacement_x = displacement_x
-        request.target.displacement_y = displacement_y
-        request.target.rotation_angle = rotation_angle
-        request.target.algorithm.value = algorithm
-        request.intensity = intensity
+        request.target = target
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement, rotation angle, intensity, or algorithm."
@@ -340,10 +353,10 @@ class MTMSApiNode(Node):
         client = self.ros_service_clients[topic]
         request = service_type.Request()
 
-        request.target.displacement_x = displacement_x
-        request.target.displacement_y = displacement_y
-        request.target.rotation_angle = rotation_angle
-        request.target.algorithm.value = algorithm
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+        request.algorithm = algorithm
 
         value = self.call_service(client, request)
         assert value.success, "Invalid displacement, rotation angle, or algorithm."
@@ -362,6 +375,20 @@ class MTMSApiNode(Node):
         assert value.success, "Invalid channel."
 
         return value.waveform
+
+    def get_multipulse_waveforms(self, targets, target_waveforms):
+        topic, service_type = self.ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS
+
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
+
+        request.targets = targets
+        request.target_waveforms = target_waveforms
+
+        value = self.call_service(client, request)
+        assert value.success, "Invalid number of pulses, targets, or target waveforms."
+
+        return value.initial_voltages, value.approximated_waveforms
 
     def reverse_polarity(self, waveform):
         topic, service_type = self.ROS_SERVICE_REVERSE_POLARITY
@@ -438,7 +465,12 @@ class MTMSApiNode(Node):
         while self.system_state is None:
             rclpy.spin_once(self)
 
-        self.printer.print_state(self.system_state, self.session)
+    def print_state(self, force=False):
+        self.printer.print_state(
+            state=self.system_state,
+            session=self.session,
+            force=force,
+        )
 
     # Session
 

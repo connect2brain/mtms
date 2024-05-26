@@ -31,6 +31,7 @@ import {
   resumeExperiment,
   cancelExperiment,
   setActiveProject,
+  visualizeTargets,
 } from 'ros/ros'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -74,18 +75,66 @@ const Input = styled.input`
   }
 `
 
+interface ActiveProps {
+  isActive: boolean
+}
+
+const ExperimentTypeText = styled.div<ActiveProps>`
+  cursor: pointer;
+  display: inline-block;
+  margin-right: 15px;
+  margin-bottom: 10px;
+  font-weight: ${(props) => (props.isActive ? 'bold' : 'normal')};
+`
+
+/* Styles for tab for pulse selection */
+const PulseTab = styled.a<ActiveProps>`
+  padding: 5px 11px;
+  cursor: pointer;
+  border: ${(props) => (props.isActive ? '1px solid #888' : '1px solid #ddd')};
+  border-radius: 4px;
+  background-color: ${(props) => (props.isActive ? 'white' : '#f5f5f5')};
+  color: ${(props) => (props.isActive ? 'black' : '#333')};
+  text-decoration: none;
+  margin-right: 5px;
+  font-weight: ${(props) => (props.isActive ? 'bold' : 'normal')};
+  font-size: 18px;
+
+  &:hover {
+    background-color: #ddd;
+  }
+`
+
+const PulseSelectorContainer = styled.div<ActiveProps>`
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+
+  ${(props) =>
+    props.isActive &&
+    `
+    opacity: 1;
+    visibility: visible;
+  `}
+`
+
 const StimulationParametersPanel = styled.div`
   display: grid;
   grid-template-rows: repeat(1, 1fr);
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  width: 600px;
   margin-bottom: 20px;
 `
 
-const GridPanel = styled(StyledPanel)`
+const LocationPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
-  width: 600px;
+  width: 626px;
   height: 500px;
 `
 
@@ -93,7 +142,7 @@ const AnglePanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   gap: 1.5rem;
-  width: 600px;
+  width: 597px;
   height: 500px;
 `
 
@@ -101,8 +150,49 @@ const IntensityPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 3 / 4;
   gap: 1.5rem;
-  width: 100px;
+  width: 105px;
   height: 500px;
+`
+
+/* Timing (for paired pulses) */
+const TimingPanel = styled(StyledPanel)<ActiveProps>`
+  grid-row: 1 / 2;
+  grid-column: 4 / 5;
+  gap: 1.5rem;
+  width: 270px;
+  height: 100px;
+
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+
+  ${(props) =>
+    props.isActive &&
+    `
+    opacity: 1;
+    visibility: visible;
+  `}
+`
+
+const TimingRow = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
+  width: 350px;
+`
+
+const TimingLabel = styled.div`
+  font-size: 16px;
+
+  /* XXX: The negative margin is to align the text with the input field; the larger than normal
+     arrow otherwise causes the text to be misaligned. */
+  margin-top: -15px;
+
+  margin-right: 40px;
+  .arrow {
+    font-size: 250%;
+  }
 `
 
 /* Config panels */
@@ -118,7 +208,7 @@ const ConfigPanel = styled.div`
 const TriggerPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
-  width: 272px;
+  width: 300px;
   height: 240px;
 `
 
@@ -162,7 +252,7 @@ const TriggerRow = styled.div`
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 10px;
+  gap: 0px;
   margin-bottom: 10px;
 `
 
@@ -177,7 +267,7 @@ const TriggerLabel = styled.label`
 const DelayLabel = styled.label`
   margin-left: -8px;
   margin-right: 15px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: bold;
   text-align: right;
   color: 'black';
@@ -214,17 +304,14 @@ type Experiment = {
   autopause_interval: number
 }
 
-type Stimulus = {
-  target: {
-    displacement_x: number
-    displacement_y: number
-    rotation_angle: number
-    algorithm: {
-      value: number
-    }
-  }
+type Target = {
+  displacement_x: number
+  displacement_y: number
+  rotation_angle: number
   intensity: number
-  triggers: TriggerConfig[]
+  algorithm: {
+    value: number
+  }
 }
 
 type TimeWindow = {
@@ -244,15 +331,14 @@ type MepConfiguration = {
   preactivation_check: PreactivationCheck
 }
 
-type TrialConfig = {
+type Trial = {
+  targets: Target[]
+  pulse_times_since_trial_start: number[]
+
+  triggers: TriggerConfig[]
+
   analyze_mep: boolean
   mep_config: MepConfiguration
-}
-
-type Trial = {
-  stimuli: Stimulus[]
-  stimulus_times_since_trial_start: number[]
-  config: TrialConfig
 }
 
 enum StartButtonState {
@@ -278,6 +364,7 @@ enum ExperimentState {
 enum ExperimentTab {
   SingleLocation,
   MultipleLocations,
+  PairedPulse,
 }
 
 /* Session storage utilities. */
@@ -314,6 +401,29 @@ export const ExperimentView = () => {
 
   const [activeTab, setActiveTab] = useState<ExperimentTab>(() => getKey('activeTab', ExperimentTab.SingleLocation))
 
+  /* For paired pulse experiments. */
+  const [selectedPulse, setSelectedPulse] = useState<number>(() => getKey('selectedPulse', 1))
+
+  const [selectedPointFirstPulse, setSelectedPointFirstPulse] = useState<Point[]>(() =>
+    getKey('selectedPointFirstPulse', [{ x: 0, y: 0 }]),
+  )
+  const [selectedPointSecondPulse, setSelectedPointSecondPulse] = useState<Point[]>(() =>
+    getKey('selectedPointSecondPulse', [{ x: 0, y: 0 }]),
+  )
+
+  const [selectedAngleFirstPulse, setSelectedAngleFirstPulse] = useState<number[]>(() =>
+    getKey('selectedAngleFirstPulse', [0]),
+  )
+  const [selectedAngleSecondPulse, setSelectedAngleSecondPulse] = useState<number[]>(() =>
+    getKey('selectedAngleSecondPulse', [0]),
+  )
+
+  const [intensityFirstPulse, setIntensityFirstPulse] = useState<number>(() => getKey('intensityFirstPulse', 10))
+  const [intensitySecondPulse, setIntensitySecondPulse] = useState<number>(() => getKey('intensitySecondPulse', 10))
+
+  const [pairedPulseDelay, setPairedPulseDelay] = useState<number>(() => getKey('pairedPulseDelay', 5))
+
+  /* For single-pulse experiments. */
   const [selectedAngles, setSelectedAngles] = useState<number[]>(() => getKey('selectedAngles', [0]))
   const [selectedPoints, setSelectedPoints] = useState<Point[]>(() => getKey('selectedPoints', [{ x: 0, y: 0 }]))
 
@@ -325,10 +435,10 @@ export const ExperimentView = () => {
   const [intensity, setIntensity] = useState<number>(() => getKey('intensity', 10))
   const [maximumIntensity, setMaximumIntensity] = useState<number>(() => getKey('maximumIntensity', 100))
 
-  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', false))
+  const [trigger1Enabled, setTrigger1Enabled] = useState<boolean>(() => getKey('trigger1Enabled', true))
   const [trigger1Delay, setTrigger1Delay] = useState<number>(() => getKey('trigger1Delay', 0))
 
-  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(() => getKey('trigger2Enabled', false))
+  const [trigger2Enabled, setTrigger2Enabled] = useState<boolean>(() => getKey('trigger2Enabled', true))
   const [trigger2Delay, setTrigger2Delay] = useState<number>(() => getKey('trigger2Delay', 0))
 
   const [mepEnabled, setMepEnabled] = useState<boolean>(() => getKey('mepEnabled', true))
@@ -354,12 +464,16 @@ export const ExperimentView = () => {
   const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
   const [cancelButtonState, setCancelButtonState] = useState(CancelButtonState.Cancel)
 
+  /* Time (in seconds) at which the experiment was paused; used for showing the pause duration for the user. */
+  const [pauseTime, setPauseTime] = useState<number | null>(null)
+
   const [trialNumber, setTrialNumber] = useState<number | null>(null)
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
   const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
 
   const visualizeFeedback = (feedback: any) => {
-    const target = feedback.trial.stimuli[0].target
+    /* TODO: Only visualize the first target for now. */
+    const target = feedback.trial.targets[0]
     const x: number = target.displacement_x
     const y: number = target.displacement_y
     const angle: number = target.rotation_angle
@@ -398,7 +512,14 @@ export const ExperimentView = () => {
 
   const handleIntensityChange = (intensity: number) => {
     setIntensity(intensity)
-    setStartButtonState(StartButtonState.Updating)
+  }
+
+  const handleIntensityChangeForPairedPulse = (intensity: number) => {
+    if (selectedPulse === 1) {
+      setIntensityFirstPulse(intensity)
+    } else {
+      setIntensitySecondPulse(intensity)
+    }
   }
 
   const formTrials = (): Trial[] => {
@@ -419,17 +540,14 @@ export const ExperimentView = () => {
           },
         ]
 
-        const stimulus: Stimulus = {
-          target: {
-            displacement_x: point.x,
-            displacement_y: point.y,
-            rotation_angle: angle,
-            algorithm: {
-              value: targetingAlgorithm,
-            },
-          },
+        const target: Target = {
+          displacement_x: point.x,
+          displacement_y: point.y,
+          rotation_angle: angle,
           intensity: intensity,
-          triggers: triggers,
+          algorithm: {
+            value: targetingAlgorithm,
+          },
         }
 
         /* TODO: Hard-coded for now - make configurable. */
@@ -440,7 +558,7 @@ export const ExperimentView = () => {
 
         /* TODO: Hard-coded for now - make configurable. */
         const preactivation_check_time_window: TimeWindow = {
-          start: -0.05,
+          start: -0.1,
           end: -0.01,
         }
 
@@ -459,16 +577,15 @@ export const ExperimentView = () => {
           preactivation_check: preactivation_check,
         }
 
-        const trial_config: TrialConfig = {
+        const trial: Trial = {
+          targets: [target],
+          pulse_times_since_trial_start: [0],
+
+          triggers: triggers,
+
           /* Override mepEnabled if MEP healthcheck is not ok. */
           analyze_mep: mepHealthcheckOk ? mepEnabled : false,
           mep_config: mep_config,
-        }
-
-        const trial: Trial = {
-          stimuli: [stimulus],
-          stimulus_times_since_trial_start: [0],
-          config: trial_config,
         }
         trials.push(trial)
       })
@@ -549,7 +666,16 @@ export const ExperimentView = () => {
         setNumOfRepetitions(10)
 
         break
+
       case ExperimentTab.MultipleLocations:
+        setNumOfRepetitions(1)
+
+        break
+
+      case ExperimentTab.PairedPulse:
+        setNumOfTrials(0)
+        setNumOfValidTrials(null)
+
         setNumOfRepetitions(1)
 
         break
@@ -574,6 +700,72 @@ export const ExperimentView = () => {
       })
     }
   }, [selectedAngles, selectedPoints, targetingAlgorithm])
+
+  /* Updates the target visualization in neuronavigation for single location or multiple locations (paired pulse
+     is handled separately). */
+  useEffect(() => {
+    if (activeTab === ExperimentTab.PairedPulse) {
+      return
+    }
+
+    let targets: any[] = []
+    if (selectedPoints.length >= 1 && selectedAngles.length === 1) {
+      targets = selectedPoints.map((point) => {
+        return {
+          displacement_x: point.x,
+          displacement_y: point.y,
+          rotation_angle: selectedAngles[0],
+          intensity: intensity,
+        }
+      })
+    }
+    const is_ordered = true
+    visualizeTargets(targets, is_ordered, () => {
+      console.log('Visualization successful')
+    })
+  }, [selectedAngles, selectedPoints, intensity, activeTab])
+
+  /* Updates the target visualization in neuronavigation for paired pulses. */
+  useEffect(() => {
+    if (activeTab !== ExperimentTab.PairedPulse) {
+      return
+    }
+
+    let targets: any[] = []
+    if (selectedPointFirstPulse.length === 1 && selectedAngleFirstPulse.length === 1) {
+      targets = [
+        {
+          displacement_x: selectedPointFirstPulse[0].x,
+          displacement_y: selectedPointFirstPulse[0].y,
+          rotation_angle: selectedAngleFirstPulse[0],
+          intensity: intensityFirstPulse,
+        },
+      ]
+    }
+    if (selectedPointSecondPulse.length === 1 && selectedAngleSecondPulse.length === 1) {
+      targets = [
+        ...targets,
+        {
+          displacement_x: selectedPointSecondPulse[0].x,
+          displacement_y: selectedPointSecondPulse[0].y,
+          rotation_angle: selectedAngleSecondPulse[0],
+          intensity: intensitySecondPulse,
+        },
+      ]
+    }
+    const is_ordered = true
+    visualizeTargets(targets, is_ordered, () => {
+      console.log('Visualization of paired pulse successful')
+    })
+  }, [
+    selectedPointFirstPulse,
+    selectedPointSecondPulse,
+    selectedAngleFirstPulse,
+    selectedAngleSecondPulse,
+    intensityFirstPulse,
+    intensitySecondPulse,
+    activeTab,
+  ])
 
   /* Update the number of valid trials. */
   useEffect(() => {
@@ -614,6 +806,9 @@ export const ExperimentView = () => {
 
       case ExperimentState.Paused:
         setStartButtonState(StartButtonState.Resume)
+        if (session) {
+          setPauseTime(session.time)
+        }
         break
     }
   }, [experimentState])
@@ -637,6 +832,30 @@ export const ExperimentView = () => {
   }, [activeTab])
 
   useEffect(() => {
+    storeKey('selectedPulse', selectedPulse)
+  }, [selectedPulse])
+
+  useEffect(() => {
+    storeKey('selectedPointFirstPulse', selectedPointFirstPulse)
+  }, [selectedPointFirstPulse])
+
+  useEffect(() => {
+    storeKey('selectedPointSecondPulse', selectedPointSecondPulse)
+  }, [selectedPointSecondPulse])
+
+  useEffect(() => {
+    storeKey('selectedAngleFirstPulse', selectedAngleFirstPulse)
+  }, [selectedAngleFirstPulse])
+
+  useEffect(() => {
+    storeKey('selectedAngleSecondPulse', selectedAngleSecondPulse)
+  }, [selectedAngleSecondPulse])
+
+  useEffect(() => {
+    storeKey('pairedPulseDelay', pairedPulseDelay)
+  }, [pairedPulseDelay])
+
+  useEffect(() => {
     storeKey('selectedAngles', selectedAngles)
   }, [selectedAngles])
 
@@ -647,6 +866,14 @@ export const ExperimentView = () => {
   useEffect(() => {
     storeKey('intensity', intensity)
   }, [intensity])
+
+  useEffect(() => {
+    storeKey('intensityFirstPulse', intensityFirstPulse)
+  }, [intensityFirstPulse])
+
+  useEffect(() => {
+    storeKey('intensitySecondPulse', intensitySecondPulse)
+  }, [intensitySecondPulse])
 
   useEffect(() => {
     storeKey('maximumIntensity', maximumIntensity)
@@ -809,24 +1036,35 @@ export const ExperimentView = () => {
       </ExperimentMetadata>
 
       <TabBar>
-        <a
-          href='#'
+        <ExperimentTypeText
           onClick={() => changeActiveTab(ExperimentTab.SingleLocation)}
-          className={activeTab === ExperimentTab.SingleLocation ? 'active' : ''}
+          isActive={activeTab === ExperimentTab.SingleLocation}
         >
           Single Location
-        </a>
-        <a
-          href='#'
+        </ExperimentTypeText>
+        <ExperimentTypeText
           onClick={() => changeActiveTab(ExperimentTab.MultipleLocations)}
-          className={activeTab === ExperimentTab.MultipleLocations ? 'active' : ''}
+          isActive={activeTab === ExperimentTab.MultipleLocations}
         >
           Multiple Locations
-        </a>
+        </ExperimentTypeText>
+        <ExperimentTypeText
+          onClick={() => changeActiveTab(ExperimentTab.PairedPulse)}
+          isActive={activeTab === ExperimentTab.PairedPulse}
+        >
+          Paired Pulse
+        </ExperimentTypeText>
       </TabBar>
-
+      <PulseSelectorContainer isActive={activeTab === ExperimentTab.PairedPulse}>
+        <PulseTab onClick={() => setSelectedPulse(1)} isActive={selectedPulse === 1}>
+          1
+        </PulseTab>
+        <PulseTab onClick={() => setSelectedPulse(2)} isActive={selectedPulse === 2}>
+          2
+        </PulseTab>
+      </PulseSelectorContainer>
       <StimulationParametersPanel>
-        <GridPanel>
+        <LocationPanel>
           {activeTab === ExperimentTab.SingleLocation && (
             <LocationSelector
               selectedPoints={selectedPoints}
@@ -842,7 +1080,14 @@ export const ExperimentView = () => {
               multiSelectMode={true}
             />
           )}
-        </GridPanel>
+          {activeTab === ExperimentTab.PairedPulse && (
+            <LocationSelector
+              selectedPoints={selectedPulse === 1 ? selectedPointFirstPulse : selectedPointSecondPulse}
+              setSelectedPoints={selectedPulse === 1 ? setSelectedPointFirstPulse : setSelectedPointSecondPulse}
+              highlightedPoints={highlightedPoints}
+            />
+          )}
+        </LocationPanel>
         <AnglePanel>
           {activeTab === ExperimentTab.SingleLocation && (
             <AngleSelector
@@ -857,6 +1102,13 @@ export const ExperimentView = () => {
               setSelectedAngles={setSelectedAngles}
               highlightedAngles={highlightedAngles}
               multiSelectMode={true}
+            />
+          )}
+          {activeTab === ExperimentTab.PairedPulse && (
+            <AngleSelector
+              selectedAngles={selectedPulse === 1 ? selectedAngleFirstPulse : selectedAngleSecondPulse}
+              setSelectedAngles={selectedPulse === 1 ? setSelectedAngleFirstPulse : setSelectedAngleSecondPulse}
+              highlightedAngles={highlightedAngles}
             />
           )}
         </AnglePanel>
@@ -881,7 +1133,27 @@ export const ExperimentView = () => {
               onValueChange={handleIntensityChange}
             />
           )}
+          {activeTab === ExperimentTab.PairedPulse && (
+            <IntensitySelector
+              value={selectedPulse === 1 ? intensityFirstPulse : intensitySecondPulse}
+              min={0}
+              max={150}
+              showMaximumIntensity={true}
+              maximumIntensity={maximumIntensity}
+              onValueChange={handleIntensityChangeForPairedPulse}
+            />
+          )}
         </IntensityPanel>
+        <TimingPanel isActive={activeTab === ExperimentTab.PairedPulse}>
+          <SmallerTitle>Timing</SmallerTitle>
+          <TimingRow>
+            <TimingLabel>
+              1 <span className='arrow'>&rarr;</span> 2
+            </TimingLabel>
+            <DelayLabel>Delay (ms)</DelayLabel>
+            <ValidatedInput value={pairedPulseDelay} min={0} max={99} onChange={setPairedPulseDelay} />
+          </TimingRow>
+        </TimingPanel>
       </StimulationParametersPanel>
       <ConfigPanel>
         <TriggerPanel>
@@ -944,9 +1216,9 @@ export const ExperimentView = () => {
           </GrayedOutPanel>
         </MepPanel>
         <TrialsPanel>
-          <SmallerTitle>{activeTab === ExperimentTab.SingleLocation ? 'Trials' : 'Repetitions'}</SmallerTitle>
+          <SmallerTitle>{activeTab === ExperimentTab.MultipleLocations ? 'Repetitions' : 'Trials'}</SmallerTitle>
           <ConfigRow>
-            <ConfigLabel># of {activeTab === ExperimentTab.SingleLocation ? 'trials' : 'repetitions'}:</ConfigLabel>
+            <ConfigLabel># of {activeTab === ExperimentTab.MultipleLocations ? 'repetitions' : 'trials'}:</ConfigLabel>
             <ValidatedInput type='text' value={numOfRepetitions} min={1} max={999} onChange={setNumOfRepetitions} />
           </ConfigRow>
           <ConfigRow>
@@ -1047,6 +1319,17 @@ export const ExperimentView = () => {
                 : '\u2013'}
             </ConfigLabel>
           </ConfigRow>
+          {/* Gray out 'Paused for' if experiment is not paused. */}
+          <GrayedOutPanel isGrayedOut={!(experimentState === ExperimentState.Paused)}>
+            <ConfigRow>
+              <ConfigLabel>Paused for:</ConfigLabel>
+              <ConfigLabel>
+                {experimentState === ExperimentState.Paused && pauseTime && session
+                  ? formatTime(session?.time - pauseTime)
+                  : '\u2013'}
+              </ConfigLabel>
+            </ConfigRow>
+          </GrayedOutPanel>
           <CloseConfigRow></CloseConfigRow>
           <StyledButton
             onClick={() => runStartButtonAction(startButtonState)}

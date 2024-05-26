@@ -1,3 +1,3 @@
 uint8 channel
-WaveformPiece[] waveform
+Waveform waveform
 EventInfo event_info

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 import { LocationControls } from './LocationControls'
@@ -49,7 +49,7 @@ const GridCell = styled.div<GridCellProps>`
   border: 1px solid #ccc;
 
   background-color: ${(props) => {
-    if (props.isHighlighted) return '#00f'
+    if (props.isHighlighted) return '#000'
     if (props.isSelected) return '#007bff'
     if (props.isOriginLine) return '#ddd'
     return 'transparent'
@@ -144,7 +144,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [dragAction, setDragAction] = useState<'selecting' | 'deselecting'>('selecting')
   const [hoveredPoint, setHoveredPoint] = useState<Point | null>(null)
   const [isHoveringOverGrid, setIsHoveringOverGrid] = useState<boolean>(false)
-  const [selectedSinglePoint, setSelectedSinglePoint] = useState<Point | null>(null)
+  const [describedPoint, setDescribedPoint] = useState<Point | null>(null)
 
   const resetGrid = () => {
     setSelectedPoints([])
@@ -154,7 +154,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     selectedPoints.some((point) => point.x === x && point.y === y)
 
   const isPointHighlighted = (x: number, y: number): boolean =>
-    highlightedPoints.some((point) => point.x === x && point.y === y)
+    highlightedPoints.some((point) => point.x === x && point.y === y) && selectedPoints.length > 1
 
   const selectCell = (x: number, y: number) => {
     if (!isPointSelected(x, y)) {
@@ -164,14 +164,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   const deselectCell = (x: number, y: number) => {
     setSelectedPoints((prevPoints) => prevPoints.filter((point) => !(point.x === x && point.y === y)))
-    setSelectedSinglePoint(null)
   }
 
   const handleCellMouseDown = (x: number, y: number) => {
     setIsMouseDown(true)
     if (!multiSelectMode) {
       setSelectedPoints([])
-      setSelectedSinglePoint({ x, y })
     }
     if (isPointSelected(x, y)) {
       setDragAction('deselecting')
@@ -193,7 +191,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         }
       } else {
         setSelectedPoints([{ x, y }])
-        setSelectedSinglePoint({ x, y })
       }
     }
   }
@@ -239,6 +236,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     if (y < 0) return `${Math.abs(y)} mm posterior`
     return null
   }
+
+  useEffect(() => {
+    if (!multiSelectMode && selectedPoints.length === 1) {
+      setDescribedPoint(selectedPoints[0])
+    } else {
+      setDescribedPoint(null)
+    }
+  }, [selectedPoints])
 
   return (
     <div>
@@ -290,15 +295,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         )}
         {!multiSelectMode && (
           <div>
-            <CoordinateText isActive={selectedSinglePoint !== null}>
-              {selectedSinglePoint ? (
+            <CoordinateText isActive={!multiSelectMode}>
+              {describedPoint ? (
                 <>
-                  {selectedSinglePoint.x === 0 && selectedSinglePoint.y === 0 ? (
+                  {describedPoint.x === 0 && describedPoint.y === 0 ? (
                     <div>Center</div>
                   ) : (
                     <>
-                      {getXDirection(selectedSinglePoint.x) && <div>{getXDirection(selectedSinglePoint.x)}</div>}
-                      {getYDirection(selectedSinglePoint.y) && <div>{getYDirection(selectedSinglePoint.y)}</div>}
+                      {getXDirection(describedPoint.x) && <div>{getXDirection(describedPoint.x)}</div>}
+                      {getYDirection(describedPoint.y) && <div>{getYDirection(describedPoint.y)}</div>}
                     </>
                   )}
                 </>

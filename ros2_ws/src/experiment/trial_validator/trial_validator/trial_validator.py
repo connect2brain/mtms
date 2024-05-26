@@ -56,9 +56,12 @@ class TrialValidatorNode(Node):
         response = response_value[0]
         return response
 
-    def get_maximum_intensity(self, target):
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         request = GetMaximumIntensity.Request()
-        request.target = target
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+        request.algorithm = algorithm
 
         response = self.async_service_call(self.get_maximum_intensity_client, request)
 
@@ -67,22 +70,30 @@ class TrialValidatorNode(Node):
         return response.maximum_intensity
 
     def validate_trial_callback(self, request, response):
-        stimuli = request.trial.stimuli
+        targets = request.trial.targets
 
-        assert len(stimuli) == 1, "Multiple stimuli per trial not supported yet!"
+        assert len(targets) == 1, "Multiple targets per trial not supported yet!"
 
-        stimulus = stimuli[0]
+        target = targets[0]
 
-        target = stimulus.target
-        intensity = stimulus.intensity
+        displacement_x = target.displacement_x
+        displacement_y = target.displacement_y
+        rotation_angle = target.rotation_angle
+        algorithm = target.algorithm
+        intensity = target.intensity
 
         self.get_logger().info('Validation requested for target at (x, y, angle) = ({}, {}, {}) with intensity {} V/m.'.format(
-            target.displacement_x,
-            target.displacement_y,
-            target.rotation_angle,
+            displacement_x,
+            displacement_y,
+            rotation_angle,
             intensity,
         ))
-        max_intensity = self.get_maximum_intensity(target)
+        max_intensity = self.get_maximum_intensity(
+            displacement_x=displacement_x,
+            displacement_y=displacement_y,
+            rotation_angle=rotation_angle,
+            algorithm=algorithm,
+        )
 
         is_trial_valid = intensity <= max_intensity
 

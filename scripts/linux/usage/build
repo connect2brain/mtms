@@ -1,10 +1,15 @@
 #!/bin/bash
 
+# Define the text formatting codes
+BOLD=$(tput bold)
+UNDERLINE=$(tput smul)
+RESET=$(tput sgr0)
+
 # If a parameter is provided, use it as the container name.
 CONTAINER_NAME=$1
 
 # Rebuild the specified core container or all containers if none is specified.
-echo "Building containers..."
+echo "${BOLD}Building containers...${RESET}"
 
 if [ -z "$CONTAINER_NAME" ]; then
     docker-compose -f $MTMS_ROOT/docker-compose.yml build
@@ -19,8 +24,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # Restart core containers.
-echo "Restarting..."
+echo "${BOLD}Restarting...${RESET}"
 
 sudo systemctl restart mtms-core-containers
 
-echo "Done."
+echo "${BOLD}Done.${RESET}"

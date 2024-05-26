@@ -27,6 +27,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ElectricTarget.msg"
   "msg/TargetingAlgorithm.msg"
 
+  "srv/ApproximateWaveform.srv"
+  "srv/EstimateVoltageAfterPulse.srv"
+  "srv/GetMultipulseWaveforms.srv"
+
   "srv/GetTargetVoltages.srv"
   "srv/GetMaximumIntensity.srv"
   "srv/GetDefaultWaveform.srv"
