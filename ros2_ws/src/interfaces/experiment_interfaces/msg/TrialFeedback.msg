@@ -1,4 +1,4 @@
-# Contains feedback of a stimulus, consisting of a pulse on each channel and possibly trigger(s).
+# Contains feedback of a trial.
 
 # TODO: This is a very bare-bones feedback message - add fields to it as needed.
 

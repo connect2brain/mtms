@@ -152,11 +152,11 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     10,
     std::bind(&EegDecider::update_ready_for_trigger, this, _1));
 
-  /* Subscriber for stimulus feedback. */
-  this->stimulus_feedback_subscriber = create_subscription<event_interfaces::msg::StimulusFeedback>(
-    "/event/stimulus_feedback",
+  /* Subscriber for trial feedback. */
+  this->trial_feedback_subscriber = create_subscription<experiment_interfaces::msg::TrialFeedback>(
+    "/trial/feedback",
     10,
-    std::bind(&EegDecider::handle_stimulus_feedback, this, _1));
+    std::bind(&EegDecider::handle_trial_feedback, this, _1));
 
   /* Publisher for latency. */
   this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
@@ -232,8 +232,12 @@ void EegDecider::publish_healthcheck() {
 }
 
 void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
-  if (msg->state.value != system_interfaces::msg::SessionState::STARTED) {
+  bool state_changed = this->session_state.value != msg->state.value;
+  this->session_state = msg->state;
+
+  if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->reinitialize = true;
+    this->previous_trigger_time = UNSET_PREVIOUS_TIME;
 
     /* Reset the decider state when the session is stopped. */
     reset_decider_state();
@@ -531,10 +535,13 @@ void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::T
   this->calculate_latency(msg->time);
 }
 
-/* Handle stimulus feedback, received directly from the mTMS device. */
-void EegDecider::handle_stimulus_feedback(const std::shared_ptr<event_interfaces::msg::StimulusFeedback> msg) {
+/* Handle trial feedback. */
 
-  RCLCPP_INFO(this->get_logger(), "Registered stimulus feedback at: %.5f (s).", msg->execution_time);
+/* XXX: As of Apr 2024, this seems to only work when used in conjunction with the UI, which has a back-end that
+        publishes the trial feedback. */
+void EegDecider::handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg) {
+
+  RCLCPP_INFO(this->get_logger(), "Registered trial feedback at: %.5f (s).", msg->execution_time);
   this->calculate_latency(msg->execution_time);
 }
 
@@ -549,19 +556,29 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   double_t sample_time = msg->time;
 
+  /* Check that session has started. */
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    RCLCPP_INFO_THROTTLE(this->get_logger(),
+                         *this->get_clock(),
+                         1000,
+                         "Session not started, not processing EEG sample at time %.3f (s).",
+                         sample_time);
+    return;
+  }
+
   /* Log if this is the first sample of the session. */
   if (msg->metadata.first_sample_of_session) {
     RCLCPP_INFO(this->get_logger(), "First sample of session received.");
   }
 
   /* Update EEG info with every new session OR if this is the first EEG sample received. */
-  if (msg->metadata.first_sample_of_session || this->first_sample) {
+  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
     this->previous_time = UNSET_PREVIOUS_TIME;
 
-    this->first_sample = false;
+    this->first_sample_ever = false;
   }
 
   check_dropped_samples(sample_time);
@@ -678,11 +695,12 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
+/*
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("decider"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
-
+*/
   auto node = std::make_shared<EegDecider>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)

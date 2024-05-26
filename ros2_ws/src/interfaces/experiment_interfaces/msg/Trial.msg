@@ -1,5 +1,7 @@
-Stimulus[] stimuli
-float64[] stimulus_times_since_trial_start
+targeting_interfaces/ElectricTarget[] targets
+float64[] pulse_times_since_trial_start
 
-TrialTiming timing
-TrialConfig config
+TriggerConfig[] triggers
+
+bool analyze_mep
+mep_interfaces/MepConfiguration mep_config
