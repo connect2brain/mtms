@@ -95,6 +95,8 @@ void SessionManager::handle_start_session(
 
   if (success) {
     RCLCPP_INFO(this->get_logger(), "Session started.");
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to start session.");
   }
   response->success = success;
 }
@@ -112,6 +114,8 @@ void SessionManager::handle_stop_session(
 
   if (success) {
     RCLCPP_INFO(this->get_logger(), "Session stopped.");
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to stop session.");
   }
   response->success = success;
 }

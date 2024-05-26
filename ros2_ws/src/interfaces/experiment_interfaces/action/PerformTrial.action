@@ -1,4 +1,5 @@
 Trial trial
+TrialTiming timing
 ---
 bool success
 TrialResult trial_result

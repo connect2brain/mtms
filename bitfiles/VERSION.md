@@ -1,5 +1,10 @@
 ## Version history
 
+### 0.5.9
+- MOD: Change maximum number of pulse pieces to 16 to save space on FPGA.
+- FIX: Maximum voltage in charging/discharging was not inclusive, thus excluding 1500 V.
+- MOD: Allow first pulse phase to be shorter than minimum duration if it is "Hold" phase.
+
 ### 0.5.8
 - ADD: Configurable number pulse of pieces with a maximum of 32.
 - FIX: Attempt to fix occasionally missing discharge feedback message.

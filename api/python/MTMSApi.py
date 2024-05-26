@@ -13,7 +13,7 @@ import rclpy
 
 from system_interfaces.msg import SessionState
 from mtms_device_interfaces.msg import DeviceState
-from event_interfaces.msg import ExecutionCondition, WaveformPhase
+from event_interfaces.msg import ExecutionCondition, WaveformsForCoilSet
 
 from MTMSApiNode import MTMSApiNode
 
@@ -31,7 +31,7 @@ class MTMSApi:
     #
     TIME_EPSILON = 0.15
 
-    def __init__(self, channel_count=5):
+    def __init__(self, channel_count=5, verbose=True):
         """
         Initializes the MTMSApi instance, creating a new MTMSApiNode.
 
@@ -49,6 +49,7 @@ class MTMSApi:
         )
 
         self.channel_count = channel_count
+        self.verbose = verbose
 
         self.latest_event_id = 0
         self.incomplete_events = []
@@ -56,6 +57,8 @@ class MTMSApi:
         print("Configuration:")
         print("")
         print("  Channel count: {}".format(self.channel_count))
+        print("  Verbose: {}".format(self.verbose))
+        print("")
 
         signal.signal(signal.SIGINT, self.handle_sigint)
 
@@ -87,7 +90,8 @@ class MTMSApi:
 
         # If start-up fails, device state will end up as 'Not operational'. Hence, check both conditions.
         while self.get_device_state() not in [DeviceState.OPERATIONAL, DeviceState.NOT_OPERATIONAL]:
-            pass
+            if self.verbose:
+                self.node.print_state()
 
     def stop_device(self):
         """
@@ -102,7 +106,8 @@ class MTMSApi:
             # when it is finished - hence do not allow interrupting waiting for the device to
             # be stopped using SIGINT.
             try:
-                pass
+                if self.verbose:
+                    self.node.print_state()
             except KeyboardInterrupt:
                 pass
 
@@ -114,7 +119,8 @@ class MTMSApi:
         """
         self.node.start_session()
         while self.get_session_state() != SessionState.STARTED:
-            pass
+            if self.verbose:
+                self.node.print_state()
 
     def stop_session(self):
         """
@@ -129,7 +135,8 @@ class MTMSApi:
             # when it is finished - hence do not allow interrupting waiting for the session to
             # be stopped using SIGINT.
             try:
-                pass
+                if self.verbose:
+                    self.node.print_state()
             except KeyboardInterrupt:
                 pass
 
@@ -161,6 +168,13 @@ class MTMSApi:
 
                 break
 
+            if self.verbose:
+                self.node.print_state()
+
+        # Always print the state after completion.
+        self.node.wait_for_new_state()
+        self.node.print_state(force=True)
+
     def wait_until(self, time):
         """
         Wait until the system time is equal to or greater than the specified time.
@@ -170,9 +184,9 @@ class MTMSApi:
         time : float
             The time to wait until (as seconds).
         """
-        self.node.wait_for_new_state()
         while self.get_time() < time:
-            self.node.wait_for_new_state()
+            if self.verbose:
+                self.node.print_state()
 
     def wait(self, time):
         """
@@ -188,6 +202,8 @@ class MTMSApi:
         self.node.wait_for_new_state()
         while self.get_wallclock_time() < start_time + time:
             self.node.wait_for_new_state()
+            if self.verbose:
+                self.node.print_state()
 
     # Getters
 
@@ -427,6 +443,7 @@ class MTMSApi:
         assert self.is_session_started(), "Session not started."
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
         assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
+        assert 0 <= target_voltage <= 1500, "Target voltage out of range."
 
         id = self._next_event_id()
 
@@ -477,6 +494,11 @@ class MTMSApi:
         id = self._next_event_id()
 
         target_voltage = int(target_voltage)
+
+        # XXX: Discharging to 0-2 V can take a relatively long time; therefore, set the minimum target voltage to 3.
+        #   In the long term, come up with a better solution.
+        target_voltage = max(3, target_voltage)
+
         self.node.send_discharge(
             id=id,
             execution_condition=execution_condition,
@@ -566,42 +588,33 @@ class MTMSApi:
     def get_default_waveform(self, channel):
         return self.node.get_default_waveform(channel=channel)
 
+    def get_default_waveforms_for_coil_set(self):
+        waveforms = [self.get_default_waveform(channel=channel) for channel in range(self.channel_count)]
+
+        return WaveformsForCoilSet(
+            waveforms=waveforms,
+        )
+
     def reverse_polarity(self, waveform):
         return self.node.reverse_polarity(waveform=waveform)
 
     # Targeting
 
-    def get_target_voltages(self, displacement_x, displacement_y, rotation_angle, intensity, algorithm):
+    def get_target_voltages(self, target):
         """
-        Return the target voltages (V), given the displacements, rotation angle, and intensity.
+        Return the target voltages (V), given the target ROS message.
 
         Parameters
         ----------
-        displacement_x : float
-            Displacement in the x direction.
-        displacement_y : float
-            Displacement in the y direction.
-        rotation_angle : float
-            Rotation angle in degrees.
-        intensity : float
-            Intensity value.
-        algorithm : int
-            One of the following:
-                TargetingAlgorithm.LEAST_SQUARES
-                TargetingAlgorithm.GENETIC
+        target : ElectricTarget
+            The target object, containing the displacement, rotation angle, intensity, and targeting algorithm.
 
         Returns
         -------
         array-like
             Target voltages.
         """
-        return self.node.get_target_voltages(
-            displacement_x=displacement_x,
-            displacement_y=displacement_y,
-            rotation_angle=rotation_angle,
-            intensity=intensity,
-            algorithm=algorithm,
-        )
+        return self.node.get_target_voltages(target)
 
     def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         """
@@ -631,6 +644,29 @@ class MTMSApi:
             displacement_y=displacement_y,
             rotation_angle=rotation_angle,
             algorithm=algorithm,
+        )
+
+    def get_multipulse_waveforms(self, targets):
+        """
+        Return the paired pulse waveforms for the first and second channels.
+
+        Parameters
+        ----------
+        targets : list of ElectricTarget
+            A list of ElectricTarget objects, each containing the displacement, rotation angle, intensity, and algorithm.
+
+        Returns
+        -------
+        initial_voltages : list of integers
+            The initial voltages for each coil.
+        approximated_waveforms : list of WaveformsForCoilSet
+            A WaveformsForCoilSet object for each target, each defining the waveforms for each coil.
+        """
+        target_waveforms = [self.get_default_waveforms_for_coil_set() for _ in range(len(targets))]
+
+        return self.node.get_multipulse_waveforms(
+            targets=targets,
+            target_waveforms=target_waveforms,
         )
 
     # Stimulation
@@ -669,7 +705,6 @@ class MTMSApi:
         ids = []
         for channel in range(self.channel_count):
             target_voltage = target_voltages[channel]
-
             id = self.send_charge_or_discharge(
                 execution_condition=ExecutionCondition.IMMEDIATE,
                 channel=channel,
@@ -734,7 +769,7 @@ class MTMSApi:
 
         return ids
 
-    def send_default_pulse_to_all_channels(self, reverse_polarities, time, execution_condition=ExecutionCondition.TIMED):
+    def send_default_pulse_to_all_channels(self, reverse_polarities, time=None, execution_condition=ExecutionCondition.TIMED):
         """
         Send default pulse commands to all channels.
 
@@ -802,6 +837,39 @@ class MTMSApi:
         )
         return ids
 
+    def send_timed_pulse_to_all_channels(self, waveforms_for_coil_set, time):
+        """
+        Send pulse command to all channels, using the given waveforms. Assumes that the waveform
+        polarities are already as desired.
+
+        Parameters
+        ----------
+        waveforms_for_coil_set : WaveformsForCoilSet object
+        time : float
+            The time at which the pulse is executed.
+
+        Returns
+        -------
+        list
+            IDs for each sent command.
+        """
+        assert self.is_session_started(), "Session not started."
+
+        ids = []
+        for channel in range(self.channel_count):
+            waveform = waveforms_for_coil_set[channel]
+
+            id = self.send_pulse(
+                execution_condition=ExecutionCondition.TIMED,
+                time=time,
+                channel=channel,
+                waveform=waveform,
+                reverse_polarity=False,
+            )
+            ids.append(id)
+
+        return ids
+
     def send_charge_or_discharge(self, channel, target_voltage, execution_condition=ExecutionCondition.TIMED, time=None):
         """
         Send charge or discharge command to a specified channel based on the current and target voltage.
@@ -832,7 +900,7 @@ class MTMSApi:
         assert not (execution_condition == ExecutionCondition.TIMED and time is None), "Execution condition is 'timed' but time not provided."
         assert not (execution_condition != ExecutionCondition.TIMED and time is not None), "Execution condition is not 'timed' but time is provided."
 
-        voltage = self.get_voltage(channel=channel)
+        voltage = self.get_current_voltage(channel=channel)
         charge_or_discharge = self.send_charge if voltage < target_voltage else self.send_discharge
 
         id = charge_or_discharge(
@@ -878,8 +946,9 @@ class MTMSApi:
 
     # Other
 
-    def print_system_state(self):
+    def print_state(self):
         self.node.wait_for_new_state()
+        self.node.print_state()
 
     def get_wallclock_time(self):
         return time.time()

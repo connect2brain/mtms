@@ -86,13 +86,17 @@ class MTMSApiPrinter():
         'Discharge': bcolors.WARNING,
         'Trigger out': bcolors.OKGREEN,
     }
+
+    # Print the system state every 5th iteration while waiting; this is to avoid spamming the
+    # console with state prints, but still have some visibility on the state.
+    PRINT_STATE_INTERVAL = 5
+
     def __init__(self, channel_count):
         self.channel_count = channel_count
 
         self.support_temperature = True
         self.support_pulse_count = True
 
-        self.print_every_nth_state = 5
         self.state_counter = 0
 
     def colored_text(self, text, color):
@@ -105,9 +109,11 @@ class MTMSApiPrinter():
 
         assert False, "Invalid value"
 
-    def print_state(self, state, session):
+    def print_state(self, state, session, force):
+        # Print the state occasionally to avoid spamming the console. However,
+        # if 'force' argument is set, the state will be printed always.
         self.state_counter += 1
-        if self.state_counter != self.print_every_nth_state:
+        if not force and self.state_counter < self.PRINT_STATE_INTERVAL:
             return
 
         self.state_counter = 0

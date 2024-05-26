@@ -264,19 +264,21 @@ class ExperimentPerformerNode(Node):
 
     # Action callers
 
-    def async_perform_trial_action(self, trial):
+    def async_perform_trial_action(self, trial, timing):
         client = self.perform_trial_client
         goal = PerformTrial.Goal()
 
         goal.trial = trial
+        goal.timing = timing
 
         event, result_container = self.async_action_call(client, goal)
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial):
+    def sync_perform_trial_action(self, trial, timing):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
+            timing=timing,
         )
         event.wait()
 
@@ -475,7 +477,7 @@ class ExperimentPerformerNode(Node):
 
         return response
 
-    def check_goal_feasible(self, goal_id, valid_trials):
+    def check_experiment_feasible(self, goal_id, valid_trials):
         # Check that the mTMS device is started.
         if not self.is_device_started():
             self.logger.info('{}: mTMS device not started, aborting.'.format(goal_id))
@@ -544,8 +546,8 @@ class ExperimentPerformerNode(Node):
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
 
-        # Check that the goal is feasible
-        feasible = self.check_goal_feasible(
+        # Check that the experiment is feasible
+        feasible = self.check_experiment_feasible(
             goal_id=goal_id,
             valid_trials=valid_trials
         )
@@ -640,8 +642,8 @@ class ExperimentPerformerNode(Node):
             # When performing an (rTMS style) experiment, always allow late trials, as the exact timing of the pulse is unimportant.
             allow_late = True
 
-            trial.timing = TrialTiming(
-                time=trial_time,
+            timing = TrialTiming(
+                desired_start_time=trial_time,
                 allow_late=allow_late,
                 wait_for_trigger=wait_for_trigger,
             )
@@ -655,6 +657,7 @@ class ExperimentPerformerNode(Node):
 
             result = self.sync_perform_trial_action(
                 trial=trial,
+                timing=timing,
             )
             trial_result = result.trial_result
             success = result.success
@@ -678,7 +681,7 @@ class ExperimentPerformerNode(Node):
                 i += 1
                 num_of_attempts = 0
             else:
-                self.logger.info('{}: Trial not successful, redoing in {} seconds.'.format(
+                self.logger.info('{}: Trial not successful, attempting again in {} seconds.'.format(
                     goal_id,
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
