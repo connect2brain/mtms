@@ -12,10 +12,13 @@ RUN apt-get update && \
     ros-iron-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# Note: Tensorflow is needed for mneflow, which is used for machine learning.
-RUN pip3 install tensorflow
+# Note: Scikit-learn is needed for mneflow, used for machine learning.
+RUN pip3 install scikit-learn
 
 RUN pip3 install mneflow
+
+# Install statsmodels for the pipeline
+RUN pip3 install statsmodels
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
@@ -28,9 +31,12 @@ WORKDIR /app/ros2_ws
 # ROS interfaces
 COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
+COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/pipeline_interfaces src/interfaces/pipeline_interfaces/
 COPY ros2_ws/src/interfaces/project_interfaces src/interfaces/project_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
+COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node

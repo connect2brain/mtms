@@ -1,10 +1,80 @@
 #!/bin/bash
 
-CONTAINER_NAME=$1
+# Usage examples:
+# ./log [container_name] --from "YYYY-MM-DD HH:MM:SS" --to "YYYY-MM-DD HH:MM:SS"
+# ./log [container_name] --last-hour
+# ./log [container_name] --save output.log
 
-# If container name is provided, filter the logs, otherwise show all logs
-if [ -z "$CONTAINER_NAME" ]; then
-    journalctl -u mtms-core-containers.service -f -n 1000
+CONTAINER_NAME=""
+FROM=""
+TO=""
+FOLLOW=true          # Default to follow mode
+SAVE_TO=""
+TIME_FILTERS=false   # Indicator for specific time filters
+
+# Print usage
+function print_usage() {
+    echo ""
+    echo "Usage examples:"
+    echo "./log [container_name] --from \"YYYY-MM-DD HH:MM:SS\" --to \"YYYY-MM-DD HH:MM:SS\""
+    echo "./log [container_name] --last-hour"
+    echo "./log [container_name] --save output.log"
+    echo ""
+    exit 0
+}
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --from) FROM=$2; FOLLOW=false; TIME_FILTERS=true; shift 2;;
+        --to) TO=$2; FOLLOW=false; TIME_FILTERS=true; shift 2;;
+        --last-hour) FROM="1 hour ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --last-day) FROM="1 day ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --last-minute) FROM="1 minute ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --save) SAVE_TO=$2; shift 2;;
+        --follow) FOLLOW=true; shift;;
+        --help|-h) print_usage;;
+        *)
+            if [[ -z "$CONTAINER_NAME" ]]; then
+                CONTAINER_NAME=$1
+            else
+                echo "Unknown parameter passed: $1"; exit 1;
+            fi
+            shift;;
+    esac
+done
+
+
+# Check if the save file exists and prompt for overwrite if necessary
+if [ ! -z "$SAVE_TO" ] && [ -f "$SAVE_TO" ]; then
+    read -p "$SAVE_TO exists. Overwrite? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
+fi
+
+# Define sed command for timestamp formatting
+FORMAT_CMD="sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})[0-9]{0,6}Z/\\1 \\2/' --unbuffered"
+
+# Use docker-compose logs if no specific time filters are provided
+if [ "$TIME_FILTERS" = false ]; then
+    LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail 100"
+    LOG_CMD="$LOG_CMD -f"
+    [ ! -z "$CONTAINER_NAME" ] && LOG_CMD="$LOG_CMD $CONTAINER_NAME"
+    LOG_CMD="$LOG_CMD | $FORMAT_CMD"
+    [ ! -z "$SAVE_TO" ] && LOG_CMD="$LOG_CMD | tee $SAVE_TO"
+
+    eval $LOG_CMD
 else
-    journalctl -u mtms-core-containers.service -f -n 1000 | grep "$CONTAINER_NAME"
+    # If specific time filters are provided, use journalctl
+    CMD="journalctl -u mtms-core-containers"
+    [ ! -z "$FROM" ] && CMD="$CMD --since \"$FROM\""
+    [ ! -z "$TO" ] && CMD="$CMD --until \"$TO\""
+    [ "$FOLLOW" = true ] && CMD="$CMD -f"
+    [ ! -z "$CONTAINER_NAME" ] && CMD="$CMD | grep \"mtms-$CONTAINER_NAME\""
+    [ ! -z "$SAVE_TO" ] && CMD="$CMD > $SAVE_TO"
+
+    eval $CMD
 fi

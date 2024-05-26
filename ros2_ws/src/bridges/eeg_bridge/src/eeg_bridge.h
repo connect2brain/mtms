@@ -23,11 +23,13 @@
 
 using namespace std::chrono_literals;
 
-enum EegBridgeState {
+enum EegDeviceState {
   WAITING_FOR_EEG_DEVICE,
-  WAITING_FOR_SESSION_STOP,
-  WAITING_FOR_SESSION_START,
-  STREAMING,
+  EEG_DEVICE_STREAMING
+};
+
+enum ErrorState {
+  NO_ERROR,
   ERROR_OUT_OF_SYNC,
   ERROR_SAMPLES_DROPPED
 };
@@ -44,7 +46,7 @@ enum EegDevice {
 };
 
 const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
-const uint64_t UNSET_PREVIOUS_SAMPLE_INDEX = std::numeric_limits<uint64_t>::quiet_NaN();
+const uint64_t UNSET_PREVIOUS_SAMPLE_INDEX = std::numeric_limits<uint64_t>::max();
 
 /**
  * Translate data from EEG adapter interface to ROS messages.
@@ -75,11 +77,12 @@ private:
   void create_subscribers();
 
   void publish_eeg_healthcheck();
+  void publish_eeg_info();
 
   void subscribe_to_session();
   void subscribe_to_mtms_device_healthcheck();
 
-  void reset_session();
+  void stop_session();
   void wait_for_session();
 
   /* Configuration */
@@ -90,7 +93,8 @@ private:
   std::shared_ptr<EegAdapter> eeg_adapter;
 
   /* State */
-  EegBridgeState eeg_bridge_state = EegBridgeState::WAITING_FOR_EEG_DEVICE;
+  EegDeviceState eeg_device_state = EegDeviceState::WAITING_FOR_EEG_DEVICE;
+  ErrorState error_state = ErrorState::NO_ERROR;
 
   /* Publishers */
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
@@ -107,7 +111,6 @@ private:
   /* Session management */
   bool first_sample_of_session = true;
   uint64_t previous_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
-  uint32_t sample_packets_received_since_session_start = 0;
 
   double_t time_correction = UNSET_TIME; // in seconds
   double_t time_offset = UNSET_TIME;     // in seconds
@@ -120,7 +123,16 @@ private:
   uint16_t num_of_sync_triggers_received;
   double_t first_sync_trigger_timestamp = UNSET_TIME;
 
+  uint32_t sample_packets_received_since_last_sync = 0;
+
   bool mtms_device_available = false;
+
+  /* Session management */
+
+  /* Initialize 'wait_for_session_to_stop' to true to avoid starting streaming when EEG bridge is restarted in the middle
+     of a session, while EEG device is already streaming (in which case we should wait for the session to stop before
+     starting to stream because there is no way the session and the EEG device can be in sync). */
+  bool wait_for_session_to_stop = true;
 
   /* Healthcheck */
   uint8_t status = system_interfaces::msg::HealthcheckStatus::NOT_READY;

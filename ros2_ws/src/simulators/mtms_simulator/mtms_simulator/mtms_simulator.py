@@ -21,7 +21,6 @@ from event_interfaces.msg import (
 from mtms_device_interfaces.msg import (
     SystemState,
     DeviceState,
-    SessionState,
     ChannelState,
     Settings,
 )
@@ -30,9 +29,18 @@ from mtms_device_interfaces.srv import (
     SendSettings,
     StartDevice,
     StopDevice,
-    StopSession,
-    StartSession,
 )
+from system_interfaces.msg import (
+    Session,
+    SessionState,
+    Healthcheck,
+    HealthcheckStatus,
+)
+from system_interfaces.srv import (
+    StartSession,
+    StopSession,
+)
+
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from rclpy.duration import Duration
 from rclpy.executors import MultiThreadedExecutor
@@ -55,8 +63,14 @@ class MTMSSimulator(Node):
     corresponding topics of the ros2 node interface described by the mtms_device_bridge
     nodes."""
 
-    SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 20
-    SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5
+    # Publish session less frequently than with the actual device.
+    SESSION_PUBLISHING_INTERVAL_MS = 1000
+    SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 10
+
+    SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 1000
+    SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 10
+
+    HEALTHCHECK_PUBLISHING_INTERVAL_MS = 800
 
     # TODO: Make these values configurable
     CAPACITANCE = 1020e-6
@@ -147,7 +161,26 @@ class MTMSSimulator(Node):
         )
         self.node_message_publisher = self.create_publisher(String, "/node/message", 10)
 
-        # QoS definition for System state.
+        # QoS definition for session.
+        deadline_ns = 1000 * (
+            MTMSSimulator.SESSION_PUBLISHING_INTERVAL_MS
+            + MTMSSimulator.SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS
+        )
+        lifespan_ns = deadline_ns
+
+        session_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            deadline=Duration(nanoseconds=deadline_ns),
+            lifespan=Duration(nanoseconds=lifespan_ns),
+        )
+        self.session_publisher = self.create_publisher(
+            Session, "/mtms_device/session", session_qos
+        )
+
+        # QoS definition for system state.
         deadline_ns = 1000 * (
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS
             + MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS
@@ -166,9 +199,19 @@ class MTMSSimulator(Node):
             SystemState, "/mtms_device/system_state", system_state_qos
         )
 
+        # Healthcheck publisher
+        self.healthcheck_publisher = self.create_publisher(
+            Healthcheck,
+            "/mtms_device/healthcheck",
+            10
+        )
+
         # Internal state variables
         self.system_state: SystemState = SystemState()
         self.system_state.channel_states = self.num_of_channels * [None]
+
+        self.session: Session = Session()
+        self.session.state.value = SessionState.STOPPED
 
         self.channels = [
             Channel(
@@ -177,6 +220,7 @@ class MTMSSimulator(Node):
                 time_constant=self.TIME_CONSTANT,
                 pulse_voltage_drop_proportion=self.PULSE_VOLTAGE_DROP_PROPORTION,
                 max_voltage=self.max_voltage,
+                logger=self.get_logger(),
             )
             for _ in range(self.num_of_channels)
         ]
@@ -186,8 +230,16 @@ class MTMSSimulator(Node):
         self.settings: Settings = Settings()
 
         self.create_timer(
+            MTMSSimulator.SESSION_PUBLISHING_INTERVAL_MS / 1000,
+            self.session_callback,
+        )
+        self.create_timer(
             MTMSSimulator.SYSTEM_STATE_PUBLISHING_INTERVAL_MS / 1000,
             self.system_state_callback,
+        )
+        self.create_timer(
+            MTMSSimulator.HEALTHCHECK_PUBLISHING_INTERVAL_MS / 1000,
+            self.healthcheck_callback,
         )
 
     def allow_stimulation_handler(self, request, response):
@@ -221,7 +273,8 @@ class MTMSSimulator(Node):
         return response
 
     def stop_device_handler(self, request, response):
-        self.system_state.device_state.value = DeviceState.SHUTDOWN
+        # NOTE: skipping SHUTDOWN phase
+        self.system_state.device_state.value = DeviceState.NOT_OPERATIONAL
         self.get_logger().info("Device stopped")
         response.success = True
         return response
@@ -233,7 +286,7 @@ class MTMSSimulator(Node):
             response.success = False
             return response
 
-        self.system_state.session_state.value = SessionState.STARTED
+        self.session.state.value = SessionState.STARTED
         self.session_start_time = time.time()
         self.get_logger().info("Session started")
         response.success = True
@@ -241,13 +294,13 @@ class MTMSSimulator(Node):
 
     def stop_session_handler(self, request, response):
         # NOTE: Skipping STOPPING phase
-        self.system_state.session_state.value = SessionState.STOPPED
+        self.session.state.value = SessionState.STOPPED
         self.get_logger().info("Session stopped")
         response.success = True
         return response
 
     def _is_session_started(self) -> bool:
-        return self.system_state.session_state.value != SessionState.STARTED
+        return self.session.state.value != SessionState.STARTED
 
     def _validate_charge_or_discharge(
         self, message: Charge | Discharge
@@ -307,7 +360,8 @@ class MTMSSimulator(Node):
         match execution_condition.value:
             case ExecutionCondition.TIMED:
                 wait = execution_time - (time.time() - self.session_start_time)
-                time.sleep(wait)
+                if wait > 0:
+                    time.sleep(wait)
             case ExecutionCondition.WAIT_FOR_TRIGGER:
                 self.get_logger().warn(
                     "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing."
@@ -529,10 +583,6 @@ class MTMSSimulator(Node):
     def system_state_callback(self):
         msg = self.system_state
 
-        msg.time = 0.0
-        if msg.session_state.value == SessionState.STARTED:
-            msg.time = time.time() - self.session_start_time  # in seconds
-
         for i in range(self.num_of_channels):
             channel = self.channels[i]
             channel_state = ChannelState(
@@ -545,6 +595,25 @@ class MTMSSimulator(Node):
             msg.channel_states[i] = channel_state
 
         self.system_state_publisher.publish(msg)
+
+    # NOTE: Session is not published fast enough with python.
+    def session_callback(self):
+        msg = self.session
+
+        msg.time = 0.0
+        if msg.state.value == SessionState.STARTED:
+            msg.time = time.time() - self.session_start_time  # in seconds
+
+        self.session_publisher.publish(msg)
+
+    def healthcheck_callback(self):
+        msg = Healthcheck()
+
+        msg.status.value = HealthcheckStatus.READY
+        msg.status_message = "Simulator is ready"
+        msg.actionable_message = ""
+
+        self.healthcheck_publisher.publish(msg)
 
 
 def main(args=None):

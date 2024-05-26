@@ -1,3 +1,4 @@
+import time
 from threading import Event
 
 import rclpy
@@ -7,8 +8,8 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from experiment_interfaces.msg import TrialResult
-from experiment_interfaces.action import PerformTrial, PerformStimulus
+from experiment_interfaces.msg import TrialResult, TrialFeedback
+from experiment_interfaces.action import PerformTrial
 
 from mep_interfaces.msg import Mep
 from mep_interfaces.action import AnalyzeMep
@@ -17,20 +18,33 @@ from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.action import SetVoltages
 
 from system_interfaces.msg import Session, SessionState
-from targeting_interfaces.srv import GetTargetVoltages
+from targeting_interfaces.srv import GetMultipulseWaveforms, GetDefaultWaveform, GetTargetVoltages, ReversePolarity
+
+from utility_interfaces.srv import GetNextId
+
+from event_interfaces.msg import (
+    ExecutionCondition,
+    Pulse,
+    PulseFeedback,
+    TriggerOut,
+    TriggerOutFeedback,
+    EventInfo,
+    ReadyForEventTrigger
+)
 
 
 class TrialPerformerNode(Node):
 
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
-    ROS_ACTION_PERFORM_STIMULUS = ('/stimulus/perform', PerformStimulus)
     ROS_ACTION_SET_VOLTAGES = ('/mtms_device/set_voltages', SetVoltages)
 
     # TODO: Channel count hardcoded for now.
-    N_CHANNELS = 5
+    NUM_OF_CHANNELS = 5
+
+    TRIGGER_DURATION_US = 1000
 
     # Ensure that at least this amount of time is reserved after voltages are set,
-    # before performing the stimulus.
+    # before performing the trial.
     TRIAL_TIME_MARGINAL_S = 0.1
 
     def __init__(self):
@@ -49,14 +63,6 @@ class TrialPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Action client for performing stimulus.
-
-        topic, action_type = self.ROS_ACTION_PERFORM_STIMULUS
-
-        self.perform_stimulus_client = ActionClient(self, action_type, topic, callback_group=self.callback_group)
-        while not self.perform_stimulus_client.wait_for_server(timeout_sec=1.0):
-            self.get_logger().info('Action {} not available, waiting...'.format(topic))
-
         # Action client for setting voltages.
 
         topic, action_type = self.ROS_ACTION_SET_VOLTAGES
@@ -73,11 +79,34 @@ class TrialPerformerNode(Node):
         while not self.analyze_mep_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
+        # Service client for getting next ID.
+
+        self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
+        while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /utility/get_next_id not available, waiting...')
+
         # Service client for targeting.
 
-        self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages')
+        self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages', callback_group=self.callback_group)
         while not self.targeting_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /targeting/get_target_voltages not available, waiting...')
+
+        # Service client for reversing polarity.
+        self.reverse_polarity_client = self.create_client(ReversePolarity, '/waveforms/reverse_polarity', callback_group=self.callback_group)
+        while not self.reverse_polarity_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /waveforms/reverse_polarity not available, waiting...')
+
+        # Service client for getting default waveform.
+
+        self.get_default_waveform_client = self.create_client(GetDefaultWaveform, '/waveforms/get_default')
+        while not self.get_default_waveform_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /waveforms/get_default not available, waiting...')
+
+        # Service client for getting multipulse waveforms.
+
+        self.get_multipulse_waveforms_client = self.create_client(GetMultipulseWaveforms, '/waveforms/get_multipulse_waveforms')
+        while not self.get_multipulse_waveforms_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /waveforms/get_multipulse_waveforms not available, waiting...')
 
         # Subscriber for system state.
 
@@ -88,6 +117,24 @@ class TrialPerformerNode(Node):
         # Subscriber for session
         self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
         self.session = None
+
+        # Publishers for pulse and trigger out.
+        self.send_pulse_publisher = self.create_publisher(Pulse, '/event/send/pulse', 10, callback_group=self.callback_group)
+        self.send_trigger_out_publisher = self.create_publisher(TriggerOut, '/event/send/trigger_out', 10, callback_group=self.callback_group)
+
+        # Subscribers for feedback for pulse and trigger out.
+        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
+        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
+
+        # Publisher for event trigger readiness.
+        self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
+
+        # Publisher for trial feedback.
+        self.trial_feedback_publisher = self.create_publisher(TrialFeedback, '/trial/feedback', 10, callback_group=self.callback_group)
+
+        self.event_id = 0
+
+        self.event_feedback = {}
 
     ## ROS callbacks and callers
 
@@ -128,33 +175,58 @@ class TrialPerformerNode(Node):
 
         return self.session.time
 
+    # Events
+
+    def update_event_feedback(self, feedback):
+        id = feedback.id
+        error = feedback.error
+
+        # TODO: Improve feedback logging, preferably by implementing events as ROS actions.
+        self.logger.info('Event {} finished with error code: {}'.format(id, error.value))
+
+        self.event_feedback[id] = feedback
+
+    def get_event_feedback(self, id):
+        if id not in self.event_feedback:
+            return None
+
+        return self.event_feedback[id]
+
+    def wait_for_events_to_finish(self, ids):
+        while True:
+            feedbacks = [self.get_event_feedback(id) for id in ids]
+            if all([x is not None for x in feedbacks]):
+                break
+
+            # XXX: This will cause an extra delay of up to 0.1 seconds. However, the correct
+            #   fix would be to implement pulses as ROS actions, which removes the need
+            #   for this kind of a check. Aim directly at that, hence settle on this for now.
+            time.sleep(0.1)
+
+        return feedbacks
+
     # Logging
 
-    def log_trial(self, goal_id, trial):
+    def log_trial(self, goal_id, trial, timing):
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}: Trial:'.format(goal_id))
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}:   Stimuli:'.format(goal_id))
-        self.logger.info('{}:     Count: {}'.format(goal_id, len(trial.stimuli)))
-
-        timing = trial.timing
+        self.logger.info('{}:   # of targets: {}'.format(goal_id, len(trial.targets)))
 
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}:   Timing:'.format(goal_id))
         if not timing.wait_for_trigger:
-            self.logger.info('{}:     Execution time: {:.3f} s'.format(goal_id, timing.time))
+            self.logger.info('{}:     Desired start time: {:.3f} s'.format(goal_id, timing.desired_start_time))
             self.logger.info('{}:     Allow trial to be late: {}'.format(goal_id, timing.allow_late))
         else:
             self.logger.info('{}:     Waiting for trigger'.format(goal_id))
 
         self.logger.info('{}:'.format(goal_id))
 
-        config = trial.config
-
         self.logger.info('{}:   MEP analysis:'.format(goal_id))
-        self.logger.info('{}:     - Enabled: {}'.format(goal_id, config.analyze_mep))
-        if config.analyze_mep:
-            self.logger.info('{}:     - EMG channel: {}'.format(goal_id, config.mep_config.emg_channel))
+        self.logger.info('{}:     - Enabled: {}'.format(goal_id, trial.analyze_mep))
+        if trial.analyze_mep:
+            self.logger.info('{}:     - EMG channel: {}'.format(goal_id, trial.mep_config.emg_channel))
             # TODO: Potentially log the rest of the MEP config, although it will be logged by the EMG analyzer, as well.
 
         self.logger.info('{}:'.format(goal_id))
@@ -230,7 +302,7 @@ class TrialPerformerNode(Node):
         client = self.set_voltages_client
         goal = SetVoltages.Goal()
 
-        goal.voltages = voltages
+        goal.voltages = [int(voltage) for voltage in voltages]
 
         event, result_container = self.async_action_call(client, goal)
 
@@ -243,18 +315,6 @@ class TrialPerformerNode(Node):
         result = self.get_result_from_container(result_container)
 
         assert result.success, "Setting voltages failed."
-
-    def async_perform_stimulus(self, stimulus, time, wait_for_trigger):
-        client = self.perform_stimulus_client
-        goal = PerformStimulus.Goal()
-
-        goal.stimulus = stimulus
-        goal.time = time
-        goal.wait_for_trigger = wait_for_trigger
-
-        event, result_container = self.async_action_call(client, goal)
-
-        return event, result_container
 
     def async_analyze_mep(self, mep_config, time):
         client = self.analyze_mep_client
@@ -269,21 +329,130 @@ class TrialPerformerNode(Node):
 
     ## Service calls
 
+    # Utility services
+
+    def get_next_id(self):
+        request = GetNextId.Request()
+
+        response = self.async_service_call(self.get_next_id_client, request)
+        assert response.success, "Getting next ID failed."
+
+        return response.id
+
+    # Pulse and trigger out services
+
+    def trigger_out(self, id, time, execution_condition, port):
+        message = TriggerOut()
+
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
+
+        message.event_info = event_info
+        message.port = port
+        message.duration_us = self.TRIGGER_DURATION_US
+
+        self.send_trigger_out_publisher.publish(message)
+        self.event_feedback[id] = None
+
+    def pulse(self, id, time, execution_condition, channel, waveform):
+        message = Pulse()
+
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
+
+        message.event_info = event_info
+        message.channel = channel
+        message.waveform = waveform
+
+        self.send_pulse_publisher.publish(message)
+        self.event_feedback[id] = None
+
+    def pulse_for_all_channels(self, waveforms_for_coil_set, time, execution_condition):
+        ids = [None] * self.NUM_OF_CHANNELS
+        for channel in range(self.NUM_OF_CHANNELS):
+            id = self.get_next_id()
+
+            waveform = waveforms_for_coil_set[channel]
+            self.pulse(
+                id=id,
+                time=time,
+                channel=channel,
+                waveform=waveform,
+                execution_condition=execution_condition,
+            )
+            ids[channel] = id
+
+        return ids
+
     # Targeting services
 
-    def get_target_voltages(self, target, intensity):
+    def get_target_voltages(self, target):
         request = GetTargetVoltages.Request()
 
         request.target = target
-        request.intensity = intensity
 
         response = self.async_service_call(self.targeting_client, request)
         assert response.success, "Invalid displacement, rotation angle, or intensity."
 
-        # XXX: Voltages should be integers to begin with.
-        voltages = [int(voltage) for voltage in response.voltages]
+        voltages = response.voltages
+        reversed_polarities = response.reversed_polarities
 
-        return voltages, response.reversed_polarities
+        return voltages, reversed_polarities
+
+    def reverse_polarity(self, waveform):
+        request = ReversePolarity.Request()
+
+        request.waveform = waveform
+
+        response = self.async_service_call(self.reverse_polarity_client, request)
+        assert response.success, "Reversing polarity unsuccessful."
+
+        return response.waveform
+
+    # Waveform services
+
+    def get_default_waveform(self, channel):
+        request = GetDefaultWaveform.Request()
+
+        request.channel = channel
+
+        response = self.async_service_call(self.get_default_waveform_client, request)
+        assert response.success, "Invalid channel."
+
+        waveform = response.waveform
+
+        return waveform
+
+    def get_multipulse_waveforms(self, targets, target_waveforms):
+        request = GetMultipulseWaveforms.Request()
+
+        request.targets = targets
+        request.target_waveforms = target_waveforms
+
+        response = self.async_service_call(self.get_multipulse_waveforms_client, request)
+        assert response.success, "Invalid targets or target waveforms."
+
+        initial_voltages = response.initial_voltages
+        approximated_waveforms = response.approximated_waveforms
+
+        return initial_voltages, approximated_waveforms
+
+    def get_singlepulse_waveforms(self, target, target_waveforms):
+        initial_voltages, reversed_polarities = self.get_target_voltages(target=target)
+
+        target_waveforms_reversed = target_waveforms.copy()
+        for channel in range(self.NUM_OF_CHANNELS):
+            if reversed_polarities[channel]:
+                target_waveforms_reversed[channel] = self.reverse_polarity(target_waveforms[channel])
+
+        # With only one target, the approximated waveforms are the same as the target waveforms.
+        approximated_waveforms = [target_waveforms_reversed]
+
+        return initial_voltages, approximated_waveforms
 
     ## Performing trial
 
@@ -291,6 +460,7 @@ class TrialPerformerNode(Node):
         request = goal_handle.request
 
         trial = request.trial
+        timing = request.timing
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -303,6 +473,7 @@ class TrialPerformerNode(Node):
         success, trial_result = self.perform_trial(
             goal_id=goal_id,
             trial=trial,
+            timing=timing,
         )
 
         # Create and return a Result object.
@@ -318,7 +489,7 @@ class TrialPerformerNode(Node):
 
         return result
 
-    def check_goal_feasible(self, goal_id):
+    def check_trial_feasible(self, goal_id):
         # Check that the mTMS device is started.
         if not self.is_device_started():
             self.logger.info('{}: mTMS device not started, aborting.'.format(goal_id))
@@ -331,127 +502,175 @@ class TrialPerformerNode(Node):
 
         return True
 
-    def attempt_trial(self, goal_id, target_voltages, trial):
-        config = trial.config
-        timing = trial.timing
-        stimulus = trial.stimuli[0]
+    def perform_trial(self, goal_id, trial, timing):
+        pulse_times_since_trial_start = trial.pulse_times_since_trial_start
+        analyze_mep = trial.analyze_mep
+        mep_config = trial.mep_config
+        triggers = trial.triggers
 
-        trial_time = timing.time
+        desired_start_time = timing.desired_start_time
         allow_late = timing.allow_late
         wait_for_trigger = timing.wait_for_trigger
-
-        self.sync_set_voltages(target_voltages)
-
-        self.logger.info('{}: Voltages set.'.format(goal_id))
-
-        # Earliest feasible trial time cannot be less than the current time. Also, take
-        # into account the marginal that we want to have after setting voltages.
-        earliest_feasible_trial_time = self.get_current_time() + self.TRIAL_TIME_MARGINAL_S
-
-        if not allow_late and earliest_feasible_trial_time > trial_time:
-            mep = Mep()
-            success = False
-
-            return success, mep
-
-        trial_time = max(trial_time, earliest_feasible_trial_time)
-
-        stimulus_event, stimulus_result_container = self.async_perform_stimulus(
-            stimulus=stimulus,
-            time=trial_time,
-            wait_for_trigger=wait_for_trigger,
-        )
-
-        analyze_mep = config.analyze_mep
-        mep_config = config.mep_config
-
-        if not analyze_mep:
-            mep = Mep()
-            mep_success = True
-
-        else:
-            mep_event, mep_result_container = self.async_analyze_mep(
-                mep_config=mep_config,
-                time=trial_time,
-            )
-            mep_event.wait()
-
-            mep_result = self.get_result_from_container(mep_result_container)
-
-            mep = mep_result.mep
-            mep_success = mep_result.success
-
-        self.logger.info('{}: Waiting for stimulus to be performed.'.format(goal_id))
-
-        stimulus_event.wait()
-
-        self.logger.info('{}: Stimulus finished.'.format(goal_id))
-
-        stimulus_result = self.get_result_from_container(stimulus_result_container)
-
-        # XXX: StimulusResult is not a very useful abstraction for now.
-        #   It also makes variable names clash a bit, like here. However,
-        #   maybe there will be more fields in it later on, and it needs to be
-        #   passed in some other ROS topics, services, or actions, making it worthwhile.
-        stimulus_result = stimulus_result.stimulus_result
-
-        stimulus_success = stimulus_result.success
-
-        # Print info messages if either stimulus or MEP analysis or both failed.
-        if not stimulus_success:
-            self.logger.info('{}: Performing stimulus failed.'.format(goal_id))
-
-        if not mep_success:
-            self.logger.info('{}: MEP analysis failed.'.format(goal_id))
-
-        success = stimulus_success and mep_success
-
-        return success, mep
-
-    def perform_trial(self, goal_id, trial):
-        # Unused at the moment; take into use once a trial supports more than one stimuli.
-        stimulus_times_since_trial_start = trial.stimulus_times_since_trial_start
 
         self.log_trial(
             goal_id=goal_id,
             trial=trial,
+            timing=timing,
         )
 
-        feasible = self.check_goal_feasible(goal_id)
+        feasible = self.check_trial_feasible(goal_id)
         if not feasible:
             trial_result = TrialResult()
             success = False
 
             return success, trial_result
 
-        stimuli = trial.stimuli
-
-        num_of_stimuli = len(stimuli)
-        assert num_of_stimuli == 1, "Only one stimulus per trial currently supported!"
-
-        stimulus = stimuli[0]
-
-        target = stimulus.target
-        intensity = stimulus.intensity
-
-        target_voltages, _ = self.get_target_voltages(target, intensity)
-
         self.logger.info('{}: Performing trial...'.format(goal_id))
 
-        success, mep = self.attempt_trial(
-            goal_id=goal_id,
-            target_voltages=target_voltages,
-            trial=trial,
-        )
+        targets = trial.targets
 
-        trial_finish_time = self.get_current_time()
+        target_waveforms = [self.get_default_waveform(channel) for channel in range(self.NUM_OF_CHANNELS)]
 
-        trial_result = TrialResult()
+        # Use PWM approximation if there are multiple targets.
+        if len(targets) > 1:
+            # TODO: This codepath is not really tested, probably doesn't work properly.
+            initial_voltages, approximated_waveforms = self.get_multipulse_waveforms(
+                targets=targets,
+                target_waveforms=target_waveforms,
+            )
+        else:
+            initial_voltages, approximated_waveforms = self.get_singlepulse_waveforms(
+                target=targets[0],
+                target_waveforms=target_waveforms,
+            )
 
-        trial_result.mep = mep
-        trial_result.trial_finish_time = trial_finish_time
+        self.sync_set_voltages(initial_voltages)
 
-        return success, trial_result
+        self.logger.info('{}: Voltages set to {}.'.format(goal_id, [int(voltage) for voltage in initial_voltages]))
+
+        # Earliest feasible time for the trial cannot be less than the current time. Also, take
+        # into account the marginal that we want to have after setting voltages.
+        earliest_feasible_time = self.get_current_time() + self.TRIAL_TIME_MARGINAL_S
+
+        if earliest_feasible_time > desired_start_time and not allow_late:
+            mep = Mep()
+            success = False
+
+            return success, mep
+
+        start_time = max(desired_start_time, earliest_feasible_time)
+
+        execution_condition = ExecutionCondition.TIMED if not wait_for_trigger else ExecutionCondition.WAIT_FOR_TRIGGER
+
+        # Perform pulses
+        for target_idx in range(len(targets)):
+            waveforms_for_coil_set = approximated_waveforms[target_idx]
+            time = start_time + pulse_times_since_trial_start[target_idx]
+
+            self.logger.info('{}: First waveform phase for each channel: {}'.format(
+                goal_id,
+                [waveforms_for_coil_set[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set))]
+            ))
+
+            # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
+            #   to hide the logic.
+            pulse_ids = self.pulse_for_all_channels(
+                waveforms_for_coil_set=waveforms_for_coil_set,
+                time=time,
+                execution_condition=execution_condition,
+            )
+
+        # Perform trigger outs
+        num_of_trigger_out_ports = len(triggers)
+        trigger_ids = []
+        for i in range(num_of_trigger_out_ports):
+            if triggers[i].enabled:
+                id = self.get_next_id()
+                delay = triggers[i].delay
+                delayed_time = time + delay
+                port = i + 1
+
+                self.trigger_out(
+                    id=id,
+                    port=port,
+                    time=delayed_time,
+                    execution_condition=execution_condition,
+                )
+                trigger_ids += [id]
+
+        # Send request for MEP analysis.
+        if analyze_mep:
+            mep_event, mep_result_container = self.async_analyze_mep(
+                mep_config=mep_config,
+                time=start_time,
+            )
+
+        # TÄLLE JOTAIN
+        if wait_for_trigger:
+            msg = ReadyForEventTrigger()
+            self.event_trigger_readiness_publisher.publish(msg)
+
+            self.logger.info('{}: Waiting for trigger...'.format(goal_id))
+        else:
+            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
+
+        pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
+        trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
+
+        # TODO: If there is an error, do something with the error code.
+        pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
+        trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
+
+        # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
+        execution_time = pulse_feedbacks[0].execution_time
+
+        # Check that all pulses were executed concurrently.
+        pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
+
+        if not pulses_executed_concurrently:
+            self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
+
+        success = pulse_success and trigger_out_success and pulses_executed_concurrently
+
+        self.logger.info('{}: Done! Trial {}.'.format(
+            goal_id,
+            'was successful' if success else 'failed'
+        ))
+
+        if analyze_mep:
+            mep_event.wait()
+
+            mep_result = self.get_result_from_container(mep_result_container)
+
+            mep = mep_result.mep
+            mep_success = mep_result.success
+        else:
+            # Return a dummy MEP if MEP analysis was not requested.
+            mep = Mep()
+            mep_success = True
+
+        # Publish trial feedback.
+        feedback = TrialFeedback()
+
+        feedback.success = success
+        feedback.execution_time = execution_time
+
+        self.trial_feedback_publisher.publish(feedback)
+
+        self.logger.info('{}: Waiting for trial to be performed.'.format(goal_id))
+
+        if not mep_success:
+            self.logger.info('{}: MEP analysis failed.'.format(goal_id))
+
+        success = mep_success
+
+        result = TrialResult()
+
+        result.mep = mep
+        result.actual_start_time = execution_time
+
+        return success, result
+
 
 def main(args=None):
     rclpy.init(args=args)

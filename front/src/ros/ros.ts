@@ -42,13 +42,11 @@ export const getMaximumIntensity = (
   callback: (maximum_intensity: number) => void,
 ) => {
   const request = new ROSLIB.ServiceRequest({
-    target: {
-      displacement_x: x,
-      displacement_y: y,
-      rotation_angle: angle,
-      algorithm: {
-        value: algorithm,
-      },
+    displacement_x: x,
+    displacement_y: y,
+    rotation_angle: angle,
+    algorithm: {
+      value: algorithm,
     },
   }) as any
 
@@ -179,7 +177,8 @@ export const performExperiment = (
 ) => {
   const goal: any = new (ROSLIB as any).ActionGoal(experiment)
 
-  performExperimentActionClient.sendGoal(goal,
+  performExperimentActionClient.sendGoal(
+    goal,
     (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to perform experiment: success field was false.')
@@ -190,8 +189,38 @@ export const performExperiment = (
     },
     (feedback: any) => {
       feedback_callback(feedback)
-    })
-  }
+    },
+  )
+}
+
+/* Visualize targets service */
+const visualizeTargetsService = new ROSLIB.Service({
+  ros: ros,
+  name: '/neuronavigation/visualize/targets',
+  serviceType: 'neuronavigation_interfaces/VisualizeTargets',
+})
+
+export const visualizeTargets = (targets: any, is_ordered: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({}) as any
+
+  request.targets = targets
+  request.is_ordered = is_ordered
+
+  visualizeTargetsService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to visualize targets: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to visualize targets, error:')
+      console.log(error)
+    },
+  )
+}
 
 /* Pause experiment service */
 const pauseExperimentService = new ROSLIB.Service({

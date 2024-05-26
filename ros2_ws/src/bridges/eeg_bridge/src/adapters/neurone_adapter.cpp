@@ -116,14 +116,19 @@ bool NeurOneAdapter::request_measurement_start_packet() const {
 }
 
 void NeurOneAdapter::handle_measurement_start_packet() {
+  this->measurement_start_packet_received = true;
+
   this->sampling_frequency =
       ntohl(*reinterpret_cast<uint32_t *>(buffer + StartPacketFieldIndex::SAMPLING_RATE_HZ));
 
-  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Sampling frequency set to: %u Hz",
+  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "  Sampling frequency: %u Hz",
               this->sampling_frequency);
 
   uint16_t channel_count =
       ntohs(*reinterpret_cast<uint16_t *>(buffer + StartPacketFieldIndex::NUM_CHANNELS));
+
+  this->num_of_eeg_channels = 0;
+  this->num_of_emg_channels = 0;
 
   for (uint16_t i = 0; i < channel_count; i++) {
     uint16_t source_channel = ntohs(
@@ -150,6 +155,9 @@ void NeurOneAdapter::handle_measurement_start_packet() {
       this->channel_types[i] = ChannelType::EEG_CHANNEL;
     }
   }
+
+  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "  Number of EEG channels: %u", this->num_of_eeg_channels);
+  RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "  Number of EMG channels: %u", this->num_of_emg_channels);
 }
 
 std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_packet() {
@@ -319,14 +327,18 @@ NeurOneAdapter::read_eeg_data_packet() {
     RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown frame type received, doing nothing.");
   }
 
-  /* First packet is measured start packet, if first packet received is something else,
-     the socket started reading middle of the measurement, thus request the start packet
-     again */
-  if (!any_packet_received && frame_type != FrameType::MEASUREMENT_START) {
-    request_measurement_start_packet();
-  }
+  /* The first packet in a new stream is the measurement start packet. If the first received
+     packet is something else, the socket started reading middle of the measurement, thus
+     request the measurement start packet.
 
-  any_packet_received = true;
+     In addition, re-request it every 1000 packets. This is because NeurOne does not seem to always
+     respond to the first request. */
+  if (!measurement_start_packet_received && frame_type != FrameType::MEASUREMENT_START) {
+    if (packets_since_measurement_start_packet_requested == 0) {
+      request_measurement_start_packet();
+    }
+    packets_since_measurement_start_packet_requested = (packets_since_measurement_start_packet_requested + 1) % 1000;
+  }
 
   return {result_type, sample, sync_trigger_time};
 }
