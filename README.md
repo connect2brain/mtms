@@ -24,14 +24,13 @@ Please see the repository roots of the external repositories for their respectiv
 
 The mTMS software is intended to be used with a dedicated computer with real-time Ubuntu installed.
 
-Steps for installing and configuring the system are listed [here](docs/source/markdown/computer-setup.md).
+Steps for installing and configuring the system and the software can be found under
+`Groups/SW Group/Computer installation` folder in ConnectToBrain Google Drive.
 
 After those steps, re-booting the computer automatically starts the Docker containers that run the mTMS software.
 
 ## Getting started
 
-After the installation, you can open "mTMS panel" on the desktop to access some features of the system, such as the real-time
-pipeline.
+After the installation, you can open "mTMS panel" on the desktop to access some features of the system, such as the real-time pipeline.
 
-Other features, such as the Python and MATLAB APIs to control the mTMS device, are documented in "mtms documentation" file, which
-can be found on the desktop.
+Other features, such as the Python and MATLAB APIs to control the mTMS device, are documented in "mtms documentation" file, which can be found on the computer desktop after following the installation instructions.
