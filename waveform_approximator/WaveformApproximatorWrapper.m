@@ -124,6 +124,15 @@ classdef WaveformApproximatorWrapper < handle
             % Convert the ROS message to a MATLAB struct
             target_waveform = obj.convert_ros_waveform_to_matlab_waveform(target_waveform);
 
+            % Print the target waveform
+            disp(' ');
+            disp('Received target waveform:');
+            disp(' ');
+            disp('Modes:');
+            disp([target_waveform.mode]);
+            disp('Durations (microseconds):');
+            disp([target_waveform.duration] * 1e6);
+
             % Select the coil.
             obj.approximator.select_coil(coil_number);
 
