@@ -1,5 +1,10 @@
 function [approximated_waveform, sampling_points, success] = approximate_iteratively(obj, actual_voltage, target_voltage, target_waveform)
 
+    % Check that the target voltage does not exceed the actual voltage.
+    if target_voltage > actual_voltage
+        error('The target voltage exceeds the actual voltage.');
+    end
+
     relative_error_threshold = 0.02;
 
     % Generate the state trajectory for the target waveform.
