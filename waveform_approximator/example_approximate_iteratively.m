@@ -111,7 +111,7 @@ for j = 1:length(target_waveforms)
             disp(['Actual voltage before pulse: ', num2str(voltage_before_pulse), ' V.']);
             disp(['Actual voltage after pulse: ', num2str(voltage_after_pulse), ' V.']);
 
-            estimated_voltage = approximator.estimate_final_voltage(actual_voltage, approximated_waveform);
+            estimated_voltage = approximator.estimate_voltage_after_pulse(actual_voltage, approximated_waveform);
             disp(['Estimated voltage after pulse: ', num2str(estimated_voltage), ' V.']);
 
             disp(' ');

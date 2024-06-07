@@ -16,7 +16,7 @@ classdef WaveformApproximatorWrapper < handle
 
             obj.node = ros2node("waveform_approximator");
 
-            % Create ROS server
+            % Create ROS servers
             obj.approximate_waveform_server = ros2svcserver(obj.node, "/targeting/approximate_waveform", ...
                 "targeting_interfaces/ApproximateWaveform", ...
                 @obj.approximate_waveform_wrapper);
@@ -25,10 +25,11 @@ classdef WaveformApproximatorWrapper < handle
                 "targeting_interfaces/EstimateVoltageAfterPulse", ...
                 @obj.estimate_voltage_after_pulse);
 
-            resolution = 0.01e-6;
-            solutions_file = 'solutions_five_coil_set.mat';
+            % Create the approximator object.
+            time_resolution = 0.01e-6;
+            solutions_filename = 'solutions_five_coil_set.mat';
 
-            obj.approximator = WaveformApproximator(solutions_file, resolution);
+            obj.approximator = WaveformApproximator(solutions_filename, time_resolution);
         end
 
         % Convert the ROS message to a MATLAB struct
@@ -79,7 +80,8 @@ classdef WaveformApproximatorWrapper < handle
 
         % Convert the MATLAB struct to a ROS message
         function waveform = convert_matlab_waveform_to_ros_waveform(obj, waveform_struct)
-            modes = waveform_struct.modes;
+            modes = [waveform_struct.mode];
+            durations = [waveform_struct.duration];
 
             % Create the waveform ROS message
             waveform = ros2message("event_interfaces/Waveform");
@@ -106,7 +108,7 @@ classdef WaveformApproximatorWrapper < handle
                 piece.waveform_phase.value = value;
 
                 % Convert seconds to ticks (1 tick = 25 ns)
-                piece.duration_in_ticks = uint16(waveform_struct.durations(i) / 25 * 1e9);
+                piece.duration_in_ticks = uint16(durations(i) / 25 * 1e9);
 
                 % Append the piece to the waveform ROS message
                 waveform.pieces = [waveform.pieces piece];
@@ -122,13 +124,20 @@ classdef WaveformApproximatorWrapper < handle
             % Convert the ROS message to a MATLAB struct
             target_waveform = obj.convert_ros_waveform_to_matlab_waveform(target_waveform);
 
-            [success, approximated_waveform] = approximate_waveform(approximator, actual_voltage, target_voltage, target_waveform, coil_number);
+            % Select the coil.
+            obj.approximator.select_coil(coil_number);
+
+            % Approximate the waveform.
+            [approximated_waveform, ~, success] = obj.approximator.approximate_iteratively(actual_voltage, target_voltage, target_waveform);
+
+            if ~success
+                disp('Approximation failed.');
+            end
 
             % Populate the response message
             if success
                 response.approximated_waveform = obj.convert_matlab_waveform_to_ros_waveform(approximated_waveform);
             end
-            response.approximate_waveform
             response.success = success;
         end
 
