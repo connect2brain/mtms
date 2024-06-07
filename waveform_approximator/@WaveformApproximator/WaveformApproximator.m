@@ -125,13 +125,13 @@ classdef WaveformApproximator < handle
         % Estimate the final voltage after a waveform is applied.
         %
         % input:
-        %   @voltage: initial voltage
+        %   @voltage_before: initial voltage before the pulse
         %   @waveform: an array of structs, each with the following fields:
         %       @mode: the mode of the waveform phase as a character, e.g., 'f' for falling
         %       @duration: the mode duration in seconds
         % output:
-        %   @final_voltage: the final voltage after the waveform is applied
-        final_voltage = estimate_final_voltage(obj, voltage, waveform);
+        %   @voltage_after: the final voltage after the waveform is applied
+        voltage_after = estimate_voltage_after_pulse(obj, voltage_before, waveform);
 
         plot_state_trajectories(obj, target_state_trajectory, approximated_state_trajectory, sampling_points)
 
