@@ -31,7 +31,12 @@ export const StyledPanel = styled.div<{ isGrayedOut?: boolean }>`
   `}
 `
 
-export const StyledButton = styled.button`
+export interface ActiveProps {
+  isActive?: boolean
+  isHidden?: boolean
+}
+
+export const StyledButton = styled.button<ActiveProps>`
   width: 200px;
   height: 50px;
 
@@ -54,6 +59,13 @@ export const StyledButton = styled.button`
   &:hover:disabled {
     background-color: #cccccc;
   }
+  transition: opacity 0.2s;
+
+  ${(props) =>
+    props.isHidden &&
+    `
+    opacity: 0.0;
+  `}
 `
 
 export const StyledRedButton = styled(StyledButton)`
