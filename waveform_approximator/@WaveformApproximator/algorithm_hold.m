@@ -18,5 +18,13 @@ function waveform = algorithm_hold(obj, parameter, total_duration, mode_info)
         waveform = struct( ...
             'mode', {'h'}, ...
             'duration', {total_duration});
+
+    elseif current_mode == 'a'
+        waveform = struct( ...
+            'mode', {'a'}, ...
+            'duration', {total_duration});
+
+    else
+        error('Invalid mode: %s', current_mode);
     end
 end

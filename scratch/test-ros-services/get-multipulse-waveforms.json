@@ -2,16 +2,16 @@
     "targets":
     [
         {
-            "displacement_x": 4,
-            "displacement_y": 4,
-            "rotation_angle": 0,
+            "displacement_x": 5,
+            "displacement_y": 5,
+            "rotation_angle": 90,
             "intensity": 20
         },
         {
-            "displacement_x": 0,
+            "displacement_x": 5,
             "displacement_y": 0,
-            "rotation_angle": 10,
-            "intensity": 30
+            "rotation_angle": 0,
+            "intensity": 10
         }
     ],
     "target_waveforms":
