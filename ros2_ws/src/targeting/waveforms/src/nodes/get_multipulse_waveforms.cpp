@@ -165,6 +165,14 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
       /* Print information about the target and coil. */
       RCLCPP_INFO(logger, "Target #: %d, Coil #: %d, Actual Voltage: %d, Target Voltage: %d", i, j, actual_voltage, target_voltage);
 
+      /* Check that the target voltage is not larger than the actual voltage. */
+      if (target_voltage > actual_voltage) {
+        RCLCPP_WARN(logger, "Target voltage is larger than actual voltage for coil %d", j);
+
+        response->success = false;
+        return;
+      }
+
       auto target_waveform = request->target_waveforms[i].waveforms[j];
 
       /* If polarity is reversed, call the ROS service to get the reversed waveform. */
