@@ -14,6 +14,7 @@ class TrialLoggerNode(Node):
 
     PROJECTS_ROOT = '/app/projects/'
 
+    # TODO: Columns only for one target for now. Rethink how to log multiple targets.
     TRIAL_COLUMNS = [
         "Trial index",
         "Number of attempts",
@@ -102,21 +103,42 @@ class TrialLoggerNode(Node):
         file.write(header)
 
     def log_trial_row(self, file, trial_number, trial, trial_result, num_of_attempts):
-        assert len(trial.targets) == 1, "Does not support multiple targets yet!"
+        assert len(trial.targets) <= 2, "Does not support more than two targets."
 
-        target = trial.targets[0]
+        if len(trial.targets) == 1:
+            target = trial.targets[0]
 
-        row = "{};{};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
-            trial_number,
-            num_of_attempts,
-            trial_result.actual_start_time,
-            target.displacement_x,
-            target.displacement_y,
-            target.rotation_angle,
-            target.intensity,
-            trial_result.mep.amplitude,
-            trial_result.mep.latency,
-        )
+            row = "{};{};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
+                trial_number,
+                num_of_attempts,
+                trial_result.actual_start_time,
+                target.displacement_x,
+                target.displacement_y,
+                target.rotation_angle,
+                target.intensity,
+                trial_result.mep.amplitude,
+                trial_result.mep.latency,
+            )
+
+        else:
+            target1 = trial.targets[0]
+            target2 = trial.targets[1]
+            row = "{};{};{:.3f};{};{};{};{};{};{};{};{};{:.1f};{:.4f}\n".format(
+                trial_number,
+                num_of_attempts,
+                trial_result.actual_start_time,
+                target1.displacement_x,
+                target1.displacement_y,
+                target1.rotation_angle,
+                target1.intensity,
+                target2.displacement_x,
+                target2.displacement_y,
+                target2.rotation_angle,
+                target2.intensity,
+                trial_result.mep.amplitude,
+                trial_result.mep.latency,
+            )
+
         file.write(row)
 
     def log_trial(self, metadata, trial_number, trial, trial_result, num_of_attempts):
