@@ -8,6 +8,8 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
+from std_msgs.msg import Bool
+
 from experiment_interfaces.msg import TrialResult, TrialFeedback
 from experiment_interfaces.action import PerformTrial
 
@@ -126,6 +128,10 @@ class TrialPerformerNode(Node):
         # Subscribers for feedback for pulse and trigger out.
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
+
+        # Subscriber for pedal.
+        self.pedal_subscriber = self.create_subscription(Bool, "/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
+        self.is_pedal_pressed = False
 
         # Publisher for event trigger readiness.
         self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
@@ -457,6 +463,15 @@ class TrialPerformerNode(Node):
         return initial_voltages, approximated_waveforms
 
     ## Performing trial
+    def handle_pedal_pressed(self, msg):
+        state = msg.data
+
+        if state:
+            self.logger.info('Pedal pressed.')
+            self.is_pedal_pressed = True
+        else:
+            self.logger.info('Pedal released.')
+            self.is_pedal_pressed = False
 
     def perform_trial_action_handler(self, goal_handle):
         request = goal_handle.request
@@ -529,6 +544,14 @@ class TrialPerformerNode(Node):
 
         self.logger.info('{}: Performing trial...'.format(goal_id))
 
+        if wait_for_trigger:
+            self.logger.info('{}: Waiting for a pedal press...'.format(goal_id))
+
+            # Wait for a pedal press.
+            while not self.is_pedal_pressed:
+                time.sleep(0.1)
+                pass
+
         targets = trial.targets
 
         # Use the default waveform for each channel for each target.
@@ -565,13 +588,12 @@ class TrialPerformerNode(Node):
 
         start_time = max(desired_start_time, earliest_feasible_time)
 
-        # Not working for paired pulses.
-        execution_condition = ExecutionCondition.TIMED if not wait_for_trigger else ExecutionCondition.WAIT_FOR_TRIGGER
+        execution_condition = ExecutionCondition.TIMED
 
         # Perform pulses
         for target_idx in range(len(targets)):
             waveforms_for_coil_set = approximated_waveforms[target_idx]
-            time = start_time + pulse_times_since_trial_start[target_idx]
+            pulse_time = start_time + pulse_times_since_trial_start[target_idx]
 
             self.logger.info('{}: First waveform phase for each channel: {}'.format(
                 goal_id,
@@ -582,7 +604,7 @@ class TrialPerformerNode(Node):
             #   to hide the logic.
             pulse_ids = self.pulse_for_all_channels(
                 waveforms_for_coil_set=waveforms_for_coil_set,
-                time=time,
+                time=pulse_time,
                 execution_condition=execution_condition,
             )
 
@@ -593,7 +615,7 @@ class TrialPerformerNode(Node):
             if triggers[i].enabled:
                 id = self.get_next_id()
                 delay = triggers[i].delay
-                delayed_time = time + delay
+                delayed_time = pulse_time + delay
                 port = i + 1
 
                 self.trigger_out(
