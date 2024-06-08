@@ -32,7 +32,6 @@ from event_interfaces.msg import (
     TriggerOut,
     TriggerOutFeedback,
     EventInfo,
-    ReadyForEventTrigger
 )
 
 
@@ -132,9 +131,6 @@ class TrialPerformerNode(Node):
         # Subscriber for pedal.
         self.pedal_subscriber = self.create_subscription(Bool, "/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
         self.is_pedal_pressed = False
-
-        # Publisher for event trigger readiness.
-        self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
 
         # Publisher for trial feedback.
         self.trial_feedback_publisher = self.create_publisher(TrialFeedback, '/trial/feedback', 10, callback_group=self.callback_group)
@@ -633,14 +629,7 @@ class TrialPerformerNode(Node):
                 time=start_time,
             )
 
-        # TODO: This is still not doing the right thing for paired pulses.
-        if wait_for_trigger:
-            msg = ReadyForEventTrigger()
-            self.event_trigger_readiness_publisher.publish(msg)
-
-            self.logger.info('{}: Waiting for trigger...'.format(goal_id))
-        else:
-            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
+        self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
         pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
         trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
