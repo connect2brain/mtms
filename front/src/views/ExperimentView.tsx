@@ -1248,7 +1248,7 @@ export const ExperimentView = () => {
               1 <span className='arrow'>&rarr;</span> 2
             </TimingLabel>
             <DelayLabel>Delay (ms)</DelayLabel>
-            <ValidatedInput value={pairedPulseDelay} min={0} max={99} onChange={setPairedPulseDelay} />
+            <ValidatedInput value={pairedPulseDelay} min={0} max={1000} onChange={setPairedPulseDelay} />
           </TimingRow>
         </TimingPanel>
       </StimulationParametersPanel>
