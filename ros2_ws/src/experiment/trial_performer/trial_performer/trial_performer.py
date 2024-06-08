@@ -19,6 +19,7 @@ from mtms_device_interfaces.action import SetVoltages
 
 from system_interfaces.msg import Session, SessionState
 from targeting_interfaces.srv import GetMultipulseWaveforms, GetDefaultWaveform, GetTargetVoltages, ReversePolarity
+from event_interfaces.msg import WaveformsForCoilSet
 
 from utility_interfaces.srv import GetNextId
 
@@ -376,7 +377,7 @@ class TrialPerformerNode(Node):
         for channel in range(self.NUM_OF_CHANNELS):
             id = self.get_next_id()
 
-            waveform = waveforms_for_coil_set[channel]
+            waveform = waveforms_for_coil_set.waveforms[channel]
             self.pulse(
                 id=id,
                 time=time,
@@ -444,13 +445,14 @@ class TrialPerformerNode(Node):
     def get_singlepulse_waveforms(self, target, target_waveforms):
         initial_voltages, reversed_polarities = self.get_target_voltages(target=target)
 
-        target_waveforms_reversed = target_waveforms.copy()
+        target_waveforms_reversed = target_waveforms.waveforms.copy()
         for channel in range(self.NUM_OF_CHANNELS):
             if reversed_polarities[channel]:
-                target_waveforms_reversed[channel] = self.reverse_polarity(target_waveforms[channel])
+                target_waveforms_reversed[channel] = self.reverse_polarity(target_waveforms.waveforms[channel])
 
         # With only one target, the approximated waveforms are the same as the target waveforms.
-        approximated_waveforms = [target_waveforms_reversed]
+        approximated_waveforms = [WaveformsForCoilSet()]
+        approximated_waveforms[0].waveforms = target_waveforms_reversed
 
         return initial_voltages, approximated_waveforms
 
@@ -529,7 +531,10 @@ class TrialPerformerNode(Node):
 
         targets = trial.targets
 
-        target_waveforms = [self.get_default_waveform(channel) for channel in range(self.NUM_OF_CHANNELS)]
+        # Use the default waveform for each channel for each target.
+        target_waveforms = [WaveformsForCoilSet() for _ in range(len(targets))]
+        for i in range(len(targets)):
+            target_waveforms[i].waveforms = [self.get_default_waveform(channel) for channel in range(self.NUM_OF_CHANNELS)]
 
         # Use PWM approximation if there are multiple targets.
         if len(targets) > 1:
@@ -541,7 +546,7 @@ class TrialPerformerNode(Node):
         else:
             initial_voltages, approximated_waveforms = self.get_singlepulse_waveforms(
                 target=targets[0],
-                target_waveforms=target_waveforms,
+                target_waveforms=target_waveforms[0],
             )
 
         self.sync_set_voltages(initial_voltages)
@@ -560,6 +565,7 @@ class TrialPerformerNode(Node):
 
         start_time = max(desired_start_time, earliest_feasible_time)
 
+        # Not working for paired pulses.
         execution_condition = ExecutionCondition.TIMED if not wait_for_trigger else ExecutionCondition.WAIT_FOR_TRIGGER
 
         # Perform pulses
@@ -569,7 +575,7 @@ class TrialPerformerNode(Node):
 
             self.logger.info('{}: First waveform phase for each channel: {}'.format(
                 goal_id,
-                [waveforms_for_coil_set[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set))]
+                [waveforms_for_coil_set.waveforms[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set.waveforms))]
             ))
 
             # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
@@ -605,7 +611,7 @@ class TrialPerformerNode(Node):
                 time=start_time,
             )
 
-        # TÄLLE JOTAIN
+        # TODO: This is still not doing the right thing for paired pulses.
         if wait_for_trigger:
             msg = ReadyForEventTrigger()
             self.event_trigger_readiness_publisher.publish(msg)
