@@ -16,7 +16,6 @@ from event_interfaces.msg import (
     TriggerOutFeedback,
     StimulusFeedback,
     EventInfo,
-    ReadyForEventTrigger
 )
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
@@ -80,9 +79,6 @@ class StimulusPerformerNode(Node):
         # Subscribers for feedback for pulse and trigger out.
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
-
-        # Publisher for event trigger readiness.
-        self.event_trigger_readiness_publisher = self.create_publisher(ReadyForEventTrigger, '/event/trigger/ready', 10, callback_group=self.callback_group)
 
         # Publisher for stimulus feedback.
         self.stimulus_feedback_publisher = self.create_publisher(StimulusFeedback, '/event/stimulus_feedback', 10, callback_group=self.callback_group)

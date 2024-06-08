@@ -146,12 +146,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/event/trigger",
     10);
 
-  /* Subscriber for event trigger readiness. */
-  this->ready_for_trigger_subscriber = this->create_subscription<event_interfaces::msg::ReadyForEventTrigger>(
-    "/event/trigger/ready",
-    10,
-    std::bind(&EegDecider::update_ready_for_trigger, this, _1));
-
   /* Subscriber for trial feedback. */
   this->trial_feedback_subscriber = create_subscription<experiment_interfaces::msg::TrialFeedback>(
     "/trial/feedback",
@@ -543,12 +537,6 @@ void EegDecider::handle_trial_feedback(const std::shared_ptr<experiment_interfac
 
   RCLCPP_INFO(this->get_logger(), "Registered trial feedback at: %.5f (s).", msg->execution_time);
   this->calculate_latency(msg->execution_time);
-}
-
-void EegDecider::update_ready_for_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
-  this->ready_for_trigger = true;
-
-  RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
 }
 
 void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
