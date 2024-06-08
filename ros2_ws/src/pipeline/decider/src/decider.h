@@ -89,8 +89,6 @@ private:
   void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
   void handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg);
 
-  void update_ready_for_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
-
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
 
   /* Inotify functions */
@@ -119,7 +117,6 @@ private:
 
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
-  rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_trigger_subscriber;
 
   rclcpp::Subscription<experiment_interfaces::msg::TrialFeedback>::SharedPtr trial_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
