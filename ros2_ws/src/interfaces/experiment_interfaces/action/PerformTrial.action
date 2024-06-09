@@ -1,5 +1,6 @@
 Trial trial
 TrialTiming timing
+TrialConfig config
 ---
 bool success
 TrialResult trial_result

@@ -3,7 +3,7 @@ from threading import Event, Lock
 
 import numpy as np
 
-from experiment_interfaces.msg import ExperimentState, TrialTiming
+from experiment_interfaces.msg import ExperimentState, TrialTiming, TrialConfig
 from experiment_interfaces.action import PerformExperiment, PerformTrial
 from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
@@ -264,21 +264,23 @@ class ExperimentPerformerNode(Node):
 
     # Action callers
 
-    def async_perform_trial_action(self, trial, timing):
+    def async_perform_trial_action(self, trial, timing, config):
         client = self.perform_trial_client
         goal = PerformTrial.Goal()
 
         goal.trial = trial
         goal.timing = timing
+        goal.config = config
 
         event, result_container = self.async_action_call(client, goal)
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial, timing):
+    def sync_perform_trial_action(self, trial, timing, config):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
             timing=timing,
+            config=config,
         )
         event.wait()
 
@@ -655,9 +657,22 @@ class ExperimentPerformerNode(Node):
                 num_of_attempts,
             ))
 
+            use_pulse_width_modulation_approximation = True if len(trial.targets) > 1 else False
+            dry_run = False
+            recharge_after_trial = True
+            voltage_tolerance_proportion_for_precharging = 0.03
+
+            config = TrialConfig(
+                use_pulse_width_modulation_approximation=use_pulse_width_modulation_approximation,
+                dry_run=dry_run,
+                recharge_after_trial=recharge_after_trial,
+                voltage_tolerance_proportion_for_precharging=voltage_tolerance_proportion_for_precharging,
+            )
+
             result = self.sync_perform_trial_action(
                 trial=trial,
                 timing=timing,
+                config=config,
             )
             trial_result = result.trial_result
             success = result.success
