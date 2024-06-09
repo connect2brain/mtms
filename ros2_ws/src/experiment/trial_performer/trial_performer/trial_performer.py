@@ -430,7 +430,7 @@ class TrialPerformerNode(Node):
 
         return waveform
 
-    def get_multipulse_waveforms(self, targets, target_waveforms):
+    def get_approximated_waveforms(self, targets, target_waveforms):
         request = GetMultipulseWaveforms.Request()
 
         request.targets = targets
@@ -444,7 +444,7 @@ class TrialPerformerNode(Node):
 
         return initial_voltages, approximated_waveforms
 
-    def get_singlepulse_waveforms(self, target, target_waveforms):
+    def get_non_approximated_waveforms(self, target, target_waveforms):
         initial_voltages, reversed_polarities = self.get_target_voltages(target=target)
 
         target_waveforms_reversed = target_waveforms.waveforms.copy()
@@ -474,6 +474,7 @@ class TrialPerformerNode(Node):
 
         trial = request.trial
         timing = request.timing
+        config = request.config
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -487,6 +488,7 @@ class TrialPerformerNode(Node):
             goal_id=goal_id,
             trial=trial,
             timing=timing,
+            config=config,
         )
 
         # Create and return a Result object.
@@ -515,7 +517,7 @@ class TrialPerformerNode(Node):
 
         return True
 
-    def perform_trial(self, goal_id, trial, timing):
+    def perform_trial(self, goal_id, trial, timing, config):
         pulse_times_since_trial_start = trial.pulse_times_since_trial_start
         analyze_mep = trial.analyze_mep
         mep_config = trial.mep_config
@@ -524,6 +526,11 @@ class TrialPerformerNode(Node):
         desired_start_time = timing.desired_start_time
         allow_late = timing.allow_late
         wait_for_trigger = timing.wait_for_trigger
+
+        use_pulse_width_modulation_approximation = config.use_pulse_width_modulation_approximation
+        dry_run = config.dry_run
+        recharge_after_trial = config.recharge_after_trial
+        voltage_tolerance_proportion_for_precharging = config.voltage_tolerance_proportion_for_precharging
 
         self.log_trial(
             goal_id=goal_id,
@@ -555,15 +562,16 @@ class TrialPerformerNode(Node):
         for i in range(len(targets)):
             target_waveforms[i].waveforms = [self.get_default_waveform(channel) for channel in range(self.NUM_OF_CHANNELS)]
 
-        # Use PWM approximation if there are multiple targets.
-        if len(targets) > 1:
-            # TODO: This codepath is not really tested, probably doesn't work properly.
-            initial_voltages, approximated_waveforms = self.get_multipulse_waveforms(
+        # Use PWM approximation if defined in trial config.
+        if use_pulse_width_modulation_approximation:
+            initial_voltages, approximated_waveforms = self.get_approximated_waveforms(
                 targets=targets,
                 target_waveforms=target_waveforms,
             )
+
         else:
-            initial_voltages, approximated_waveforms = self.get_singlepulse_waveforms(
+            assert len(targets) == 1, "Multiple targets require pulse-width modulation approximation."
+            initial_voltages, approximated_waveforms = self.get_non_approximated_waveforms(
                 target=targets[0],
                 target_waveforms=target_waveforms[0],
             )
