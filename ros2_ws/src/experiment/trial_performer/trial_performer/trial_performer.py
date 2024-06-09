@@ -49,6 +49,8 @@ class TrialPerformerNode(Node):
     # before performing the trial.
     TRIAL_TIME_MARGINAL_S = 0.1
 
+    ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING = 5
+
     def __init__(self):
         super().__init__('trial_performer_node')
 
@@ -154,6 +156,18 @@ class TrialPerformerNode(Node):
 
     def is_device_started(self):
         return self.get_device_state() == DeviceState.OPERATIONAL
+
+    def get_channel_voltage(self, channel):
+        if self.system_state is None:
+            return None
+
+        return self.system_state.channel_states[channel].voltage
+
+    def get_channel_voltages(self):
+        if self.system_state is None:
+            return None
+
+        return [self.system_state.channel_states[channel].voltage for channel in range(self.NUM_OF_CHANNELS)]
 
     # Session
 
@@ -576,9 +590,36 @@ class TrialPerformerNode(Node):
                 target_waveforms=target_waveforms[0],
             )
 
-        self.sync_set_voltages(initial_voltages)
+        # Set voltages to the initial voltages if we are outside the margin.
+        if not dry_run:
+            precharge = False
+            channel_voltages = self.get_channel_voltages()
+            self.logger.info('{}: Channel voltages before precharging: {}'.format(goal_id, channel_voltages))
 
-        self.logger.info('{}: Voltages set to {}.'.format(goal_id, [int(voltage) for voltage in initial_voltages]))
+            for i in range(len(channel_voltages)):
+                channel_voltage = channel_voltages[i]
+                initial_voltage = initial_voltages[i]
+
+                absolute_error = abs(channel_voltage - initial_voltage)
+                relative_error = absolute_error / channel_voltage
+
+                if relative_error > voltage_tolerance_proportion_for_precharging and \
+                   absolute_error > self.ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING:
+
+                    self.logger.info('{}: Voltage tolerance exceeded on channel {} (relative error: {:.2f}, absolute error: {:.0f} V). Precharging...'.format(
+                        goal_id,
+                        i,
+                        relative_error,
+                        absolute_error,
+                    ))
+                    precharge = True
+                    break
+
+            if precharge:
+                self.sync_set_voltages(initial_voltages)
+
+        channel_voltages = self.get_channel_voltages()
+        self.logger.info('{}: Channel voltages before trial: {}'.format(goal_id, channel_voltages))
 
         # Earliest feasible time for the trial cannot be less than the current time. Also, take
         # into account the marginal that we want to have after setting voltages.
@@ -594,74 +635,94 @@ class TrialPerformerNode(Node):
 
         execution_condition = ExecutionCondition.TIMED
 
-        # Perform pulses
-        for target_idx in range(len(targets)):
-            waveforms_for_coil_set = approximated_waveforms[target_idx]
-            pulse_time = start_time + pulse_times_since_trial_start[target_idx]
+        if not dry_run:
+            # Perform pulses
+            for target_idx in range(len(targets)):
+                waveforms_for_coil_set = approximated_waveforms[target_idx]
+                pulse_time = start_time + pulse_times_since_trial_start[target_idx]
 
-            self.logger.info('{}: First waveform phase for each channel: {}'.format(
-                goal_id,
-                [waveforms_for_coil_set.waveforms[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set.waveforms))]
-            ))
+                self.logger.info('{}: First waveform phase for each channel: {}'.format(
+                    goal_id,
+                    [waveforms_for_coil_set.waveforms[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set.waveforms))]
+                ))
 
-            # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
-            #   to hide the logic.
-            pulse_ids = self.pulse_for_all_channels(
-                waveforms_for_coil_set=waveforms_for_coil_set,
-                time=pulse_time,
-                execution_condition=execution_condition,
-            )
-
-        # Perform trigger outs
-        num_of_trigger_out_ports = len(triggers)
-        trigger_ids = []
-        for i in range(num_of_trigger_out_ports):
-            if triggers[i].enabled:
-                id = self.get_next_id()
-                delay = triggers[i].delay
-                delayed_time = pulse_time + delay
-                port = i + 1
-
-                self.trigger_out(
-                    id=id,
-                    port=port,
-                    time=delayed_time,
+                # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
+                #   to hide the logic.
+                pulse_ids = self.pulse_for_all_channels(
+                    waveforms_for_coil_set=waveforms_for_coil_set,
+                    time=pulse_time,
                     execution_condition=execution_condition,
                 )
-                trigger_ids += [id]
 
-        # Send request for MEP analysis.
-        if analyze_mep:
-            mep_event, mep_result_container = self.async_analyze_mep(
-                mep_config=mep_config,
-                time=start_time,
-            )
+            # Perform trigger outs
+            num_of_trigger_out_ports = len(triggers)
+            trigger_ids = []
+            for i in range(num_of_trigger_out_ports):
+                if triggers[i].enabled:
+                    id = self.get_next_id()
+                    delay = triggers[i].delay
+                    delayed_time = pulse_time + delay
+                    port = i + 1
 
-        self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
+                    self.trigger_out(
+                        id=id,
+                        port=port,
+                        time=delayed_time,
+                        execution_condition=execution_condition,
+                    )
+                    trigger_ids += [id]
 
-        pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
-        trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
+            # Send request for MEP analysis.
+            if analyze_mep:
+                mep_event, mep_result_container = self.async_analyze_mep(
+                    mep_config=mep_config,
+                    time=start_time,
+                )
 
-        # TODO: If there is an error, do something with the error code.
-        pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
-        trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
+            self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
-        # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
-        execution_time = pulse_feedbacks[0].execution_time
+            pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
+            trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
 
-        # Check that all pulses were executed concurrently.
-        pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
+            # TODO: If there is an error, do something with the error code.
+            pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
+            trigger_out_success = all([feedback.error.value == 0 for feedback in trigger_out_feedbacks])
 
-        if not pulses_executed_concurrently:
-            self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
+            # Determine execution time from the first pulse. All pulses should be executed concurrently, so it doesn't matter which one is used.
+            execution_time = pulse_feedbacks[0].execution_time
 
-        success = pulse_success and trigger_out_success and pulses_executed_concurrently
+            # Check that all pulses were executed concurrently.
+            pulses_executed_concurrently = all([feedback.execution_time == execution_time for feedback in pulse_feedbacks])
 
-        self.logger.info('{}: Done! Trial {}.'.format(
-            goal_id,
-            'was successful' if success else 'failed'
-        ))
+            if not pulses_executed_concurrently:
+                self.logger.error('{}: Pulses on different channels were not executed concurrently.'.format(goal_id))
 
+            success = pulse_success and trigger_out_success and pulses_executed_concurrently
+
+            self.logger.info('{}: Done! Trial {}.'.format(
+                goal_id,
+                'was successful' if success else 'failed'
+            ))
+
+        else:
+            success = True
+            execution_time = start_time
+
+            self.logger.info('{}: Dry run, not performing trial.'.format(goal_id))
+
+        # Print channel voltages after trial.
+        channel_voltages = self.get_channel_voltages()
+        self.logger.info('{}: Channel voltages after trial: {}'.format(goal_id, channel_voltages))
+
+        # Recharge the channels if requested.
+        if recharge_after_trial:
+            self.logger.info('{}: Recharging...'.format(goal_id))
+            self.sync_set_voltages(initial_voltages)
+
+            channel_voltages = self.get_channel_voltages()
+            self.logger.info('{}: Channel voltages after recharging: {}'.format(goal_id, channel_voltages))
+
+        # Get MEP result.
         if analyze_mep:
             mep_event.wait()
 
