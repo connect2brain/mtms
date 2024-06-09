@@ -8,8 +8,6 @@ from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from std_msgs.msg import Bool
-
 from experiment_interfaces.msg import TrialResult, TrialFeedback
 from experiment_interfaces.action import PerformTrial
 
@@ -130,10 +128,6 @@ class TrialPerformerNode(Node):
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.update_event_feedback, 10, callback_group=self.callback_group)
 
-        # Subscriber for pedal.
-        self.pedal_subscriber = self.create_subscription(Bool, "/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
-        self.is_pedal_pressed = False
-
         # Publisher for trial feedback.
         self.trial_feedback_publisher = self.create_publisher(TrialFeedback, '/trial/feedback', 10, callback_group=self.callback_group)
 
@@ -232,11 +226,8 @@ class TrialPerformerNode(Node):
 
         self.logger.info('{}:'.format(goal_id))
         self.logger.info('{}:   Timing:'.format(goal_id))
-        if not timing.wait_for_trigger:
-            self.logger.info('{}:     Desired start time: {:.3f} s'.format(goal_id, timing.desired_start_time))
-            self.logger.info('{}:     Allow trial to be late: {}'.format(goal_id, timing.allow_late))
-        else:
-            self.logger.info('{}:     Waiting for trigger'.format(goal_id))
+        self.logger.info('{}:     Desired start time: {:.3f} s'.format(goal_id, timing.desired_start_time))
+        self.logger.info('{}:     Allow trial to be late: {}'.format(goal_id, timing.allow_late))
 
         self.logger.info('{}:'.format(goal_id))
 
@@ -473,16 +464,6 @@ class TrialPerformerNode(Node):
         return initial_voltages, approximated_waveforms
 
     ## Performing trial
-    def handle_pedal_pressed(self, msg):
-        state = msg.data
-
-        if state:
-            self.logger.info('Pedal pressed.')
-            self.is_pedal_pressed = True
-        else:
-            self.logger.info('Pedal released.')
-            self.is_pedal_pressed = False
-
     def perform_trial_action_handler(self, goal_handle):
         request = goal_handle.request
 
@@ -539,7 +520,6 @@ class TrialPerformerNode(Node):
 
         desired_start_time = timing.desired_start_time
         allow_late = timing.allow_late
-        wait_for_trigger = timing.wait_for_trigger
 
         use_pulse_width_modulation_approximation = config.use_pulse_width_modulation_approximation
         dry_run = config.dry_run
@@ -560,14 +540,6 @@ class TrialPerformerNode(Node):
             return success, trial_result
 
         self.logger.info('{}: Performing trial...'.format(goal_id))
-
-        if wait_for_trigger:
-            self.logger.info('{}: Waiting for a pedal press...'.format(goal_id))
-
-            # Wait for a pedal press.
-            while not self.is_pedal_pressed:
-                time.sleep(0.1)
-                pass
 
         targets = trial.targets
 

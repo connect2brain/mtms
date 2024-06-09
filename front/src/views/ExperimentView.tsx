@@ -295,7 +295,7 @@ type Experiment = {
   intertrial_interval: IntertrialInterval
 
   randomize_trials: boolean
-  wait_for_trigger: boolean
+  wait_for_pedal_press: boolean
 
   autopause: boolean
   autopause_interval: number
@@ -442,7 +442,7 @@ export const ExperimentView = () => {
   const [emgChannel, setEmgChannel] = useState<number>(() => getKey('emgChannel', 1))
 
   const [numOfRepetitions, setNumOfRepetitions] = useState<number>(() => getKey('numOfRepetitions', 10))
-  const [waitForTrigger, setWaitForTrigger] = useState<boolean>(() => getKey('waitForTrigger', false))
+  const [waitForPedalPress, setwaitForPedalPress] = useState<boolean>(() => getKey('waitForPedalPress', false))
 
   const [itiMin, setItiMin] = useState<number>(() => getKey('itiMin', 3.5))
   const [itiMax, setItiMax] = useState<number>(() => getKey('itiMax', 4.5))
@@ -672,7 +672,7 @@ export const ExperimentView = () => {
       },
 
       randomize_trials: true,
-      wait_for_trigger: waitForTrigger,
+      wait_for_pedal_press: waitForPedalPress,
 
       autopause: autopause,
       autopause_interval: autopauseIntervalMinutes * 60,
@@ -1005,8 +1005,8 @@ export const ExperimentView = () => {
   }, [numOfRepetitions])
 
   useEffect(() => {
-    storeKey('waitForTrigger', waitForTrigger)
-  }, [waitForTrigger])
+    storeKey('waitForPedalPress', waitForPedalPress)
+  }, [waitForPedalPress])
 
   useEffect(() => {
     storeKey('itiMin', itiMin)
@@ -1327,10 +1327,10 @@ export const ExperimentView = () => {
             </ConfigRow>
           )}
           <ConfigRow>
-            <ConfigLabel>Wait for trigger:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={waitForTrigger} onChange={setWaitForTrigger} />
+            <ConfigLabel>Wait for pedal press:</ConfigLabel>
+            <ToggleSwitch type='flat' checked={waitForPedalPress} onChange={setwaitForPedalPress} />
           </ConfigRow>
-          <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
+          <GrayedOutPanel isGrayedOut={waitForPedalPress || numOfTrials === null || numOfTrials < 2}>
             <ConfigRow>
               <ConfigLabel>Interval (s)</ConfigLabel>
             </ConfigRow>
@@ -1343,7 +1343,7 @@ export const ExperimentView = () => {
                 max={100}
                 step={0.1}
                 onChange={setItiMin}
-                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+                disabled={waitForPedalPress || numOfTrials === null || numOfTrials < 2}
               />
             </CloseConfigRow>
             <CloseConfigRow>
@@ -1355,7 +1355,7 @@ export const ExperimentView = () => {
                 max={100}
                 step={0.1}
                 onChange={setItiMax}
-                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+                disabled={waitForPedalPress || numOfTrials === null || numOfTrials < 2}
               />
             </CloseConfigRow>
           </GrayedOutPanel>
