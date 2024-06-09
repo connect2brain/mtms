@@ -17,7 +17,6 @@
 #include "eeg_interfaces/msg/trigger.hpp"
 
 #include "event_interfaces/msg/event_trigger.hpp"
-#include "event_interfaces/msg/ready_for_event_trigger.hpp"
 
 #include "experiment_interfaces/msg/trial_feedback.hpp"
 
