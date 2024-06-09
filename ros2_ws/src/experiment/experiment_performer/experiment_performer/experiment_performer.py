@@ -7,7 +7,7 @@ from experiment_interfaces.msg import ExperimentState, TrialTiming, TrialConfig
 from experiment_interfaces.action import PerformExperiment, PerformTrial
 from experiment_interfaces.srv import ValidateTrial, CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
-from mep_interfaces.msg import Mep
+from std_msgs.msg import Bool
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 
@@ -123,6 +123,10 @@ class ExperimentPerformerNode(Node):
         self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
         self.session = None
 
+        # Subscriber for pedal.
+        self.pedal_subscriber = self.create_subscription(Bool, "/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
+        self.is_pedal_pressed = False
+
         # Create a lock so that service and action calls can modify the experiment state concurrently.
         self.experiment_state_lock = Lock()
         self.experiment_state = ExperimentState.NOT_RUNNING
@@ -175,6 +179,18 @@ class ExperimentPerformerNode(Node):
             return None
 
         return self.session.time
+
+    # Other subscribers
+
+    def handle_pedal_pressed(self, msg):
+        state = msg.data
+
+        if state:
+            self.logger.info('Pedal pressed.')
+            self.is_pedal_pressed = True
+        else:
+            self.logger.info('Pedal released.')
+            self.is_pedal_pressed = False
 
     # Logging
 
@@ -335,7 +351,7 @@ class ExperimentPerformerNode(Node):
         metadata = request.metadata
         trials = request.trials
         intertrial_interval = request.intertrial_interval
-        wait_for_trigger = request.wait_for_trigger
+        wait_for_pedal_press = request.wait_for_pedal_press
         randomize_trials = request.randomize_trials
         autopause = request.autopause
         autopause_interval = request.autopause_interval
@@ -366,7 +382,7 @@ class ExperimentPerformerNode(Node):
             metadata=metadata,
             valid_trials=valid_trials,
             intertrial_interval=intertrial_interval,
-            wait_for_trigger=wait_for_trigger,
+            wait_for_pedal_press=wait_for_pedal_press,
             randomize_trials=randomize_trials,
             autopause=autopause,
             autopause_interval=autopause_interval,
@@ -492,11 +508,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval, wait_for_trigger):
-        # If waiting for trigger, don't wait between trials.
-        if wait_for_trigger:
-            return 0.0
-
+    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval):
         if num_of_attempts > 1:
             return self.TRIAL_REDO_INTERVAL_S
 
@@ -543,7 +555,7 @@ class ExperimentPerformerNode(Node):
         while not self.is_session_stopped():
             time.sleep(0.1)
 
-    def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_trigger, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
@@ -631,12 +643,28 @@ class ExperimentPerformerNode(Node):
             # The starting time of the first trial is handled differently, hence the check.
             is_first_trial = i == 0
 
-            time_to_next_trial = self.get_time_to_next_trial(
-                num_of_attempts=num_of_attempts,
-                is_first_trial=is_first_trial,
-                intertrial_interval=intertrial_interval,
-                wait_for_trigger=wait_for_trigger,
-            )
+            if wait_for_pedal_press:
+                self.logger.info('{}: Waiting for a pedal press...'.format(goal_id))
+
+                # Wait for a pedal press.
+                while not (self.is_pedal_pressed or experiment_state == ExperimentState.CANCELED):
+                    time.sleep(0.1)
+                    experiment_state = self.get_experiment_state()
+
+                # Check if the experiment was canceled.
+                if experiment_state == ExperimentState.CANCELED:
+                    self.logger.info('{}: Experiment canceled while waiting for pedal press.'.format(goal_id))
+
+                    success = False
+                    break
+
+                time_to_next_trial = 0.0
+            else:
+                time_to_next_trial = self.get_time_to_next_trial(
+                    num_of_attempts=num_of_attempts,
+                    is_first_trial=is_first_trial,
+                    intertrial_interval=intertrial_interval,
+                )
 
             # Determine the time of the next trial.
             trial_time = self.get_current_time() + time_to_next_trial
@@ -647,7 +675,6 @@ class ExperimentPerformerNode(Node):
             timing = TrialTiming(
                 desired_start_time=trial_time,
                 allow_late=allow_late,
-                wait_for_trigger=wait_for_trigger,
             )
 
             self.logger.info('{}: Performing trial {} / {}, attempt number {}'.format(
@@ -706,7 +733,6 @@ class ExperimentPerformerNode(Node):
 
         self.finalize_session(goal_id)
 
-        success = True
         return success, trial_results
 
 def main(args=None):
