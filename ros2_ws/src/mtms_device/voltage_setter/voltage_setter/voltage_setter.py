@@ -10,6 +10,7 @@ from rclpy.node import Node
 from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFeedback, DischargeFeedback, EventInfo
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
+from mtms_device_interfaces.srv import RequestEvents
 from mtms_device_interfaces.action import SetVoltages
 from system_interfaces.msg import Session, SessionState
 from utility_interfaces.srv import GetNextId
@@ -45,6 +46,11 @@ class VoltageSetterNode(Node):
         while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /utility/get_next_id not available, waiting...')
 
+        # Service client for requesting events.
+        self.request_events_client = self.create_client(RequestEvents, '/mtms_device/request_events')
+        while not self.request_events_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /mtms_device/request_events not available, waiting...')
+
         # Subscriber for system state
 
         # Have a queue of only one message so that only the latest system state is received.
@@ -55,10 +61,7 @@ class VoltageSetterNode(Node):
         self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
         self.session = None
 
-        # Publishers for charging and discharging.
-        self.send_charge_publisher = self.create_publisher(Charge, '/event/send/charge', 10)
-        self.send_discharge_publisher = self.create_publisher(Discharge, '/event/send/discharge', 10)
-
+        # Publishers for feedbacks.
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.update_event_feedback, 10)
         self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/event/discharge_feedback', self.update_event_feedback, 10)
 
@@ -187,41 +190,49 @@ class VoltageSetterNode(Node):
 
     # Charging and discharging
 
-    def immediately_charge(self, channel, target_voltage):
-        message = Charge()
+    def request_charge(self, channel, target_voltage, execution_condition, execution_time):
+        request = RequestEvents.Request()
 
         id = self.get_next_id()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
-        event_info.execution_time = 0.0
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = execution_time
 
-        message.event_info = event_info
-        message.channel = channel
-        message.target_voltage = target_voltage
+        charge = Charge(
+            event_info=event_info,
+            channel=channel,
+            target_voltage=target_voltage,
+        )
+        request.charges.append(charge)
 
-        self.send_charge_publisher.publish(message)
+        response = self.async_service_call(self.request_events_client, request)
+        assert response.success, "Requesting charge failed."
 
         self.event_feedback[id] = None
 
         return id
 
-    def immediately_discharge(self, channel, target_voltage):
-        message = Discharge()
+    def request_discharge(self, channel, target_voltage, execution_condition, execution_time):
+        request = RequestEvents.Request()
 
         id = self.get_next_id()
 
         event_info = EventInfo()
         event_info.id = id
-        event_info.execution_condition.value = ExecutionCondition.IMMEDIATE
-        event_info.execution_time = 0.0
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = execution_time
 
-        message.event_info = event_info
-        message.channel = channel
-        message.target_voltage = target_voltage
+        discharge = Discharge(
+            event_info=event_info,
+            channel=channel,
+            target_voltage=target_voltage,
+        )
+        request.discharges.append(discharge)
 
-        self.send_discharge_publisher.publish(message)
+        response = self.async_service_call(self.request_events_client, request)
+        assert response.success, "Requesting discharge failed."
 
         self.event_feedback[id] = None
 
@@ -235,7 +246,7 @@ class VoltageSetterNode(Node):
             current_voltage = self.get_voltage(channel)
 
             is_charging = current_voltage < target_voltage
-            charge_or_discharge_function = self.immediately_charge if is_charging else self.immediately_discharge
+            charge_or_discharge_function = self.request_charge if is_charging else self.request_discharge
 
             self.logger.info('{}: Channel {}: Current voltage is {} V, {} to {} V.'.format(
                 goal_id,
@@ -248,6 +259,8 @@ class VoltageSetterNode(Node):
             id = charge_or_discharge_function(
                 channel=channel,
                 target_voltage=target_voltage,
+                execution_condition=ExecutionCondition.IMMEDIATE,
+                execution_time=0.0,
             )
             ids[channel] = id
 
