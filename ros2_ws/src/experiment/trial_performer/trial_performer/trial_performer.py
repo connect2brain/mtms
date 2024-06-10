@@ -341,64 +341,18 @@ class TrialPerformerNode(Node):
 
     ## Service calls
 
-    # Pulse and trigger out services
+    # Service for requesting events.
 
-    def request_trigger_out(self, id, time, execution_condition, port):
+    def request_events(self, pulses, trigger_outs, charges, discharges):
         request = RequestEvents.Request()
 
-        event_info = EventInfo()
-        event_info.id = id
-        event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
-
-        trigger_out = TriggerOut(
-            event_info=event_info,
-            port=port,
-            duration_us=self.TRIGGER_DURATION_US,
-        )
-        request.trigger_outs.append(trigger_out)
+        request.pulses = pulses
+        request.trigger_outs = trigger_outs
+        request.charges = charges
+        request.discharges = discharges
 
         response = self.async_service_call(self.request_events_client, request)
-        assert response.success, "Requesting trigger out failed."
-
-        self.event_feedback[id] = None
-
-    def request_pulse(self, id, time, execution_condition, channel, waveform):
-        request = RequestEvents.Request()
-
-        event_info = EventInfo()
-        event_info.id = id
-        event_info.execution_condition.value = execution_condition
-        event_info.execution_time = float(time)
-
-        pulse = Pulse(
-            event_info=event_info,
-            channel=channel,
-            waveform=waveform,
-        )
-        request.pulses.append(pulse)
-
-        response = self.async_service_call(self.request_events_client, request)
-        assert response.success, "Requesting pulse failed."
-
-        self.event_feedback[id] = None
-
-    def request_pulse_for_all_channels(self, waveforms_for_coil_set, time, execution_condition):
-        ids = [None] * self.NUM_OF_CHANNELS
-        for channel in range(self.NUM_OF_CHANNELS):
-            id = self.get_next_id()
-
-            waveform = waveforms_for_coil_set.waveforms[channel]
-            self.request_pulse(
-                id=id,
-                time=time,
-                channel=channel,
-                waveform=waveform,
-                execution_condition=execution_condition,
-            )
-            ids[channel] = id
-
-        return ids
+        assert response.success, "Requesting events failed."
 
     # Targeting services
 
@@ -467,7 +421,35 @@ class TrialPerformerNode(Node):
 
         return initial_voltages, approximated_waveforms
 
+    ## ROS message creation
+    def create_trigger_out(self, id, time, execution_condition, port):
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
+
+        trigger_out = TriggerOut(
+            event_info=event_info,
+            port=port,
+            duration_us=self.TRIGGER_DURATION_US,
+        )
+        return trigger_out
+
+    def create_pulse(self, id, channel, waveform, time, execution_condition):
+        event_info = EventInfo()
+        event_info.id = id
+        event_info.execution_condition.value = execution_condition
+        event_info.execution_time = float(time)
+
+        pulse = Pulse(
+            event_info=event_info,
+            channel=channel,
+            waveform=waveform,
+        )
+        return pulse
+
     ## Performing trial
+
     def perform_trial_action_handler(self, goal_handle):
         request = goal_handle.request
 
@@ -614,41 +596,63 @@ class TrialPerformerNode(Node):
         execution_condition = ExecutionCondition.TIMED
 
         if not dry_run:
-            # Perform pulses
+            # Create pulse ROS messages
+            pulse_ids = []
+            pulses = []
+
             for target_idx in range(len(targets)):
                 waveforms_for_coil_set = approximated_waveforms[target_idx]
                 pulse_time = start_time + pulse_times_since_trial_start[target_idx]
 
-                self.logger.info('{}: First waveform phase for each channel: {}'.format(
-                    goal_id,
-                    [waveforms_for_coil_set.waveforms[i].pieces[0].waveform_phase.value for i in range(len(waveforms_for_coil_set.waveforms))]
-                ))
+                for channel in range(self.NUM_OF_CHANNELS):
+                    id = self.get_next_id()
+                    waveform = waveforms_for_coil_set.waveforms[channel]
 
-                # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
-                #   to hide the logic.
-                pulse_ids = self.request_pulse_for_all_channels(
-                    waveforms_for_coil_set=waveforms_for_coil_set,
-                    time=pulse_time,
-                    execution_condition=execution_condition,
-                )
+                    pulse = self.create_pulse(
+                        id=id,
+                        channel=channel,
+                        waveform=waveform,
+                        time=pulse_time,
+                        execution_condition=execution_condition,
+                    )
+                    pulse_ids.append(id)
+                    pulses.append(pulse)
 
-            # Perform trigger outs
-            num_of_trigger_out_ports = len(triggers)
-            trigger_ids = []
-            for i in range(num_of_trigger_out_ports):
+                    # Initialize feedback to None.
+                    self.event_feedback[id] = None
+
+            # Create trigger out ROS messages
+            trigger_out_ids = []
+            trigger_outs = []
+
+            for i in range(len(triggers)):
                 if triggers[i].enabled:
                     id = self.get_next_id()
                     delay = triggers[i].delay
                     delayed_time = pulse_time + delay
                     port = i + 1
 
-                    self.request_trigger_out(
+                    trigger_out = self.create_trigger_out(
                         id=id,
                         port=port,
                         time=delayed_time,
                         execution_condition=execution_condition,
                     )
-                    trigger_ids += [id]
+                    trigger_out_ids.append(id)
+                    trigger_outs.append(trigger_out)
+
+                    # Initialize feedback to None.
+                    self.event_feedback[id] = None
+
+            # Send requests for pulses and trigger outs.
+            charges = []
+            discharges = []
+            self.request_events(
+                pulses=pulses,
+                trigger_outs=trigger_outs,
+                charges=charges,
+                discharges=discharges,
+            )
 
             # Send request for MEP analysis.
             if analyze_mep:
@@ -660,7 +664,7 @@ class TrialPerformerNode(Node):
             self.logger.info('{}: Waiting for pulse and trigger out(s) to finish...'.format(goal_id))
 
             pulse_feedbacks = self.wait_for_events_to_finish(pulse_ids)
-            trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_ids)
+            trigger_out_feedbacks = self.wait_for_events_to_finish(trigger_out_ids)
 
             # TODO: If there is an error, do something with the error code.
             pulse_success = all([feedback.error.value == 0 for feedback in pulse_feedbacks])
