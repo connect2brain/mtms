@@ -1,10 +1,11 @@
 #include "rclcpp/rclcpp.hpp"
 
+#include "mtms_device_interfaces/srv/request_events.hpp"
+
+#include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/charge.hpp"
 #include "event_interfaces/msg/discharge.hpp"
-#include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/trigger_out.hpp"
-#include "event_interfaces/msg/event_info.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -24,54 +25,60 @@ public:
   EventHandler();
 
 private:
-  void pulse_callback(const std::shared_ptr<event_interfaces::msg::Pulse> pulse);
-  void charge_callback(const std::shared_ptr<event_interfaces::msg::Charge> charge);
-  void discharge_callback(const std::shared_ptr<event_interfaces::msg::Discharge> discharge);
-  void trigger_out_callback(const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out);
+  void handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
+                             std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response);
 
-  rclcpp::Subscription<event_interfaces::msg::Pulse>::SharedPtr send_pulse_subscriber_;
-  rclcpp::Subscription<event_interfaces::msg::Charge>::SharedPtr send_charge_subscriber_;
-  rclcpp::Subscription<event_interfaces::msg::Discharge>::SharedPtr send_discharge_subscriber_;
-  rclcpp::Subscription<event_interfaces::msg::TriggerOut>::SharedPtr send_trigger_out_subscriber_;
+  void process_pulse(const event_interfaces::msg::Pulse &pulse);
+  void process_charge(const event_interfaces::msg::Charge &charge);
+  void process_discharge(const event_interfaces::msg::Discharge &discharge);
+  void process_trigger_out(const event_interfaces::msg::TriggerOut &trigger_out);
 
+  rclcpp::Service<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_service;
   SerializedMessage serialized_message;
   bool safe_mode;
 };
 
+// Implementation of the constructor
 EventHandler::EventHandler() : Node("event_handler") {
   this->declare_parameter<bool>("safe-mode", false);
   this->get_parameter("safe-mode", safe_mode);
 
   serialized_message = SerializedMessage();
 
-  send_pulse_subscriber_ = this->create_subscription<event_interfaces::msg::Pulse>(
-      "/event/send/pulse", 10, std::bind(&EventHandler::pulse_callback, this, std::placeholders::_1));
-
-  send_charge_subscriber_ = this->create_subscription<event_interfaces::msg::Charge>(
-      "/event/send/charge", 10, std::bind(&EventHandler::charge_callback, this, std::placeholders::_1));
-
-  send_discharge_subscriber_ = this->create_subscription<event_interfaces::msg::Discharge>(
-      "/event/send/discharge", 10, std::bind(&EventHandler::discharge_callback, this, std::placeholders::_1));
-
-  send_trigger_out_subscriber_ = this->create_subscription<event_interfaces::msg::TriggerOut>(
-      "/event/send/trigger_out", 10, std::bind(&EventHandler::trigger_out_callback, this, std::placeholders::_1));
+  request_events_service = this->create_service<mtms_device_interfaces::srv::RequestEvents>(
+      "/mtms_device/request_events", std::bind(&EventHandler::handle_request_events, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-void EventHandler::pulse_callback(const std::shared_ptr<event_interfaces::msg::Pulse> pulse) {
-  /* Unpack pulse message. */
-  uint8_t channel = pulse->channel;
+// Implementation of the handle_request_events method
+void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
+                                         std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
+  for (const auto &pulse : request->pulses) {
+    process_pulse(pulse);
+  }
+  for (const auto &charge : request->charges) {
+    process_charge(charge);
+  }
+  for (const auto &discharge : request->discharges) {
+    process_discharge(discharge);
+  }
+  for (const auto &trigger_out : request->trigger_outs) {
+    process_trigger_out(trigger_out);
+  }
 
-  event_interfaces::msg::EventInfo event_info = pulse->event_info;
+  response->success = true;
+}
+
+// Implementation of the process_pulse method
+void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
+  /* Unpack and log pulse message. */
+  uint8_t channel = pulse.channel;
+  event_interfaces::msg::EventInfo event_info = pulse.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
 
-  /* Log pulse message. */
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              pulse->channel,
-              pulse->event_info.id,
-              pulse->event_info.execution_condition.value,
-              pulse->event_info.execution_time);
+              pulse.channel, id, execution_condition, execution_time);
 
   /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
@@ -79,33 +86,24 @@ void EventHandler::pulse_callback(const std::shared_ptr<event_interfaces::msg::P
     return;
   }
 
-  /* Check that execution time is non-negative. */
-
-  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
   if (execution_time < 0.0) {
     RCLCPP_ERROR(rclcpp::get_logger("event_handler"), "Execution time cannot be negative, aborting pulse (id: %d)", id);
     return;
   }
 
   /* Serialize event info. */
-
   uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
-  /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
-       indexing here. It would rather be the responsibility of FPGA to do the conversion;
-       move the logic there eventually. */
   serialized_message.init(channel + 1);
   serialized_message.add_uint16(id);
   serialized_message.add_byte(execution_condition);
   serialized_message.add_uint64(execution_time_ticks);
 
   /* Serialize pulse parameters. */
-  uint8_t num_of_waveform_pieces = (uint8_t) pulse->waveform.pieces.size();
+  uint8_t num_of_waveform_pieces = (uint8_t) pulse.waveform.pieces.size();
   serialized_message.add_byte(num_of_waveform_pieces);
 
   for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
-    event_interfaces::msg::WaveformPiece piece = pulse->waveform.pieces[i];
-
+    event_interfaces::msg::WaveformPiece piece = pulse.waveform.pieces[i];
     serialized_message.add_byte(piece.waveform_phase.value);
     serialized_message.add_uint16(piece.duration_in_ticks);
   }
@@ -117,34 +115,22 @@ void EventHandler::pulse_callback(const std::shared_ptr<event_interfaces::msg::P
     return;
   }
 
-  NiFpga_MergeStatus(&status,
-                      NiFpga_StartFifo(session,
-                                      channel_pulse_fifo));
-  NiFpga_MergeStatus(&status,
-                      NiFpga_WriteFifoU8(session,
-                                        channel_pulse_fifo,
-                                        serialized_message.serialized_message.data(),
-                                        serialized_message.get_length(),
-                                        NiFpga_InfiniteTimeout,
-                                        NULL));
+  NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, channel_pulse_fifo));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, channel_pulse_fifo, serialized_message.serialized_message.data(),
+                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::charge_callback(const std::shared_ptr<event_interfaces::msg::Charge> charge) {
-  /* Unpack charge message. */
-  uint8_t channel = charge->channel;
-
-  event_interfaces::msg::EventInfo event_info = charge->event_info;
+// Implementation of the process_charge method
+void EventHandler::process_charge(const event_interfaces::msg::Charge &charge) {
+  /* Unpack and log charge message. */
+  uint8_t channel = charge.channel;
+  event_interfaces::msg::EventInfo event_info = charge.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
 
-  /* Log charge message. */
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Charging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              charge->channel,
-              charge->target_voltage,
-              charge->event_info.id,
-              charge->event_info.execution_condition.value,
-              charge->event_info.execution_time);
+              charge.channel, charge.target_voltage, id, execution_condition, execution_time);
 
   /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
@@ -152,70 +138,44 @@ void EventHandler::charge_callback(const std::shared_ptr<event_interfaces::msg::
     return;
   }
 
-  /* Check that execution time is non-negative. */
-
-  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
   if (execution_time < 0.0) {
     RCLCPP_ERROR(rclcpp::get_logger("event_handler"), "Execution time cannot be negative, aborting charge (id: %d)", id);
     return;
   }
 
   /* Serialize event info. */
-
   uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
   serialized_message.init();
   serialized_message.add_uint16(id);
   serialized_message.add_byte(execution_condition);
   serialized_message.add_uint64(execution_time_ticks);
 
   /* Serialize charge parameters. */
-
-  /* XXX: Charge requires the channel here instead of the beginning of the message. */
-
-  /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
-       indexing here. It would rather be the responsibility of FPGA to do the conversion;
-       move the logic there eventually. */
-  serialized_message.add_byte(channel + 1);
-
-  uint16_t target_voltage = charge->target_voltage;
-  serialized_message.add_uint16(target_voltage);
-
+  serialized_message.add_byte(channel + 1); // Note: 1-based indexing for LabVIEW
+  serialized_message.add_uint16(charge.target_voltage);
   serialized_message.finalize();
 
   if (this->safe_mode) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Safe mode is enabled, aborting charge (id: %d)", id);
     return;
   }
-  NiFpga_MergeStatus(&status,
-                      NiFpga_StartFifo(session,
-                                      charge_fifo));
 
-  NiFpga_MergeStatus(&status,
-                      NiFpga_WriteFifoU8(session,
-                                        charge_fifo,
-                                        serialized_message.serialized_message.data(),
-                                        serialized_message.get_length(),
-                                        NiFpga_InfiniteTimeout,
-                                        NULL));
+  NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, charge_fifo));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, charge_fifo, serialized_message.serialized_message.data(),
+                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::discharge_callback(const std::shared_ptr<event_interfaces::msg::Discharge> discharge) {
-  /* Unpack discharge message. */
-  uint8_t channel = discharge->channel;
-  event_interfaces::msg::EventInfo event_info = discharge->event_info;
-
+// Implementation of the process_discharge method
+void EventHandler::process_discharge(const event_interfaces::msg::Discharge &discharge) {
+  /* Unpack and log discharge message. */
+  uint8_t channel = discharge.channel;
+  event_interfaces::msg::EventInfo event_info = discharge.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
 
-  /* Log discharge message. */
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Discharging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              discharge->channel,
-              discharge->target_voltage,
-              discharge->event_info.id,
-              discharge->event_info.execution_condition.value,
-              discharge->event_info.execution_time);
+              discharge.channel, discharge.target_voltage, id, execution_condition, execution_time);
 
   /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
@@ -223,65 +183,43 @@ void EventHandler::discharge_callback(const std::shared_ptr<event_interfaces::ms
     return;
   }
 
-  /* Check that execution time is non-negative. */
-
-  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
   if (execution_time < 0.0) {
     RCLCPP_ERROR(rclcpp::get_logger("event_handler"), "Execution time cannot be negative, aborting discharge (id: %d)", id);
     return;
   }
 
   /* Serialize event info. */
-
   uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
-  /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
-       indexing here. It would rather be the responsibility of FPGA to do the conversion;
-       move the logic there eventually. */
   serialized_message.init(channel + 1);
   serialized_message.add_uint16(id);
   serialized_message.add_byte(execution_condition);
   serialized_message.add_uint64(execution_time_ticks);
 
-  /* Serialize discharge parameter. */
-
-  uint16_t target_voltage = discharge->target_voltage;
-  serialized_message.add_uint16(target_voltage);
-
+  /* Serialize discharge parameters. */
+  serialized_message.add_uint16(discharge.target_voltage);
   serialized_message.finalize();
 
   if (this->safe_mode) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Safe mode is enabled, aborting discharge (id: %d)", id);
     return;
   }
-  NiFpga_MergeStatus(&status,
-                      NiFpga_StartFifo(session,
-                                       discharge_fifo));
 
-  NiFpga_MergeStatus(&status,
-                      NiFpga_WriteFifoU8(session,
-                                        discharge_fifo,
-                                        serialized_message.serialized_message.data(),
-                                        serialized_message.get_length(),
-                                        NiFpga_InfiniteTimeout,
-                                        NULL));
+  NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, discharge_fifo));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, discharge_fifo, serialized_message.serialized_message.data(),
+                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::trigger_out_callback(const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out) {
-  /* Unpack trigger out message. */
-  uint8_t port = trigger_out->port;
-
-  event_interfaces::msg::EventInfo event_info = trigger_out->event_info;
+// Implementation of the process_trigger_out method
+void EventHandler::process_trigger_out(const event_interfaces::msg::TriggerOut &trigger_out) {
+  /* Unpack and log trigger out message. */
+  uint8_t port = trigger_out.port;
+  event_interfaces::msg::EventInfo event_info = trigger_out.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
 
-  /* Log trigger out message. */
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              port,
-              trigger_out->event_info.id,
-              trigger_out->event_info.execution_condition.value,
-              trigger_out->event_info.execution_time);
+              port, id, execution_condition, execution_time);
 
   /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
@@ -289,44 +227,28 @@ void EventHandler::trigger_out_callback(const std::shared_ptr<event_interfaces::
     return;
   }
 
-  /* Check that execution time is non-negative. */
-
-  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
   if (execution_time < 0.0) {
     RCLCPP_ERROR(rclcpp::get_logger("event_handler"), "Execution time cannot be negative, aborting trigger out (id: %d)", id);
     return;
   }
 
   /* Serialize event info. */
-
   uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
   serialized_message.init(port);
   serialized_message.add_uint16(id);
   serialized_message.add_byte(execution_condition);
   serialized_message.add_uint64(execution_time_ticks);
 
   /* Serialize trigger out parameters. */
-
-  uint32_t duration_us = trigger_out->duration_us;
+  uint32_t duration_us = trigger_out.duration_us;
   uint32_t duration_ticks = duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
-
   serialized_message.add_uint32(duration_ticks);
-
   serialized_message.finalize();
 
   /* For consistency with channel indexing, start trigger out indexing from 1. */
-  NiFpga_MergeStatus(&status,
-                      NiFpga_StartFifo(session,
-                                       trigger_out_fifo));
-
-  NiFpga_MergeStatus(&status,
-                      NiFpga_WriteFifoU8(session,
-                                        trigger_out_fifo,
-                                        serialized_message.serialized_message.data(),
-                                        serialized_message.get_length(),
-                                        NiFpga_InfiniteTimeout,
-                                        NULL));
+  NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, trigger_out_fifo));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, trigger_out_fifo, serialized_message.serialized_message.data(),
+                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
 int main(int argc, char **argv) {
