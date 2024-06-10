@@ -101,14 +101,6 @@ services:
     privileged: true
     network_mode: host
 
-  id_assigner:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/utility/id_assigner/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-    network_mode: host
-
   mep_analyzer:
     build:
       context: .
