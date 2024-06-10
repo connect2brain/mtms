@@ -32,13 +32,6 @@ services:
       context: ..
       dockerfile: ros2_ws/src/experiment/experiment_performer/Dockerfile
 
-  id_assigner:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: ros2_ws/src/utility/id_assigner/Dockerfile
-
   mep_analyzer:
     networks:
       - cinetwork
