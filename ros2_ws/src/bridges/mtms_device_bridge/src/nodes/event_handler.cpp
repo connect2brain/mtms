@@ -17,6 +17,7 @@ const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTarg
 const NiFpga_mTMS_HostToTargetFifoU8 charge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetChargeFIFO;
 const NiFpga_mTMS_HostToTargetFifoU8 discharge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetDischargeFIFO;
 const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetTriggerOutFIFO;
+const NiFpga_mTMS_ControlBool event_aggregation_lock = NiFpga_mTMS_ControlBool_Eventaggregationlock;
 
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
@@ -38,7 +39,6 @@ private:
   bool safe_mode;
 };
 
-// Implementation of the constructor
 EventHandler::EventHandler() : Node("event_handler") {
   this->declare_parameter<bool>("safe-mode", false);
   this->get_parameter("safe-mode", safe_mode);
@@ -49,9 +49,11 @@ EventHandler::EventHandler() : Node("event_handler") {
       "/mtms_device/request_events", std::bind(&EventHandler::handle_request_events, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-// Implementation of the handle_request_events method
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                                          std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
+  /* Set event aggregation lock before processing events. */
+  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, event_aggregation_lock, NiFpga_True));
+
   for (const auto &pulse : request->pulses) {
     process_pulse(pulse);
   }
@@ -65,10 +67,12 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
     process_trigger_out(trigger_out);
   }
 
+  /* Reset event aggregation lock after processing events. */
+  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, event_aggregation_lock, NiFpga_False));
+
   response->success = true;
 }
 
-// Implementation of the process_pulse method
 void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
   /* Unpack and log pulse message. */
   uint8_t channel = pulse.channel;
@@ -120,7 +124,6 @@ void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-// Implementation of the process_charge method
 void EventHandler::process_charge(const event_interfaces::msg::Charge &charge) {
   /* Unpack and log charge message. */
   uint8_t channel = charge.channel;
@@ -165,7 +168,6 @@ void EventHandler::process_charge(const event_interfaces::msg::Charge &charge) {
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-// Implementation of the process_discharge method
 void EventHandler::process_discharge(const event_interfaces::msg::Discharge &discharge) {
   /* Unpack and log discharge message. */
   uint8_t channel = discharge.channel;
@@ -209,7 +211,6 @@ void EventHandler::process_discharge(const event_interfaces::msg::Discharge &dis
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-// Implementation of the process_trigger_out method
 void EventHandler::process_trigger_out(const event_interfaces::msg::TriggerOut &trigger_out) {
   /* Unpack and log trigger out message. */
   uint8_t port = trigger_out.port;
