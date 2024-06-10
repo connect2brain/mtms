@@ -82,12 +82,6 @@ class TrialPerformerNode(Node):
         while not self.analyze_mep_client.wait_for_server(timeout_sec=1.0):
             self.get_logger().info('Action {} not available, waiting...'.format(topic))
 
-        # Service client for getting next ID.
-
-        self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
-        while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /utility/get_next_id not available, waiting...')
-
         # Service client for targeting.
 
         self.targeting_client = self.create_client(GetTargetVoltages, '/targeting/get_target_voltages', callback_group=self.callback_group)
@@ -133,8 +127,7 @@ class TrialPerformerNode(Node):
         # Publisher for trial feedback.
         self.trial_feedback_publisher = self.create_publisher(TrialFeedback, '/trial/feedback', 10, callback_group=self.callback_group)
 
-        self.event_id = 0
-
+        self.id_counter = 0
         self.event_feedback = {}
 
     ## ROS callbacks and callers
@@ -217,6 +210,15 @@ class TrialPerformerNode(Node):
             time.sleep(0.1)
 
         return feedbacks
+
+    # Event-related utilities
+
+    def get_next_id(self):
+        self.id_counter += 1
+        return self.id_counter
+
+    def reset_id_counter(self):
+        self.id_counter = 0
 
     # Logging
 
@@ -338,16 +340,6 @@ class TrialPerformerNode(Node):
         return event, result_container
 
     ## Service calls
-
-    # Utility services
-
-    def get_next_id(self):
-        request = GetNextId.Request()
-
-        response = self.async_service_call(self.get_next_id_client, request)
-        assert response.success, "Getting next ID failed."
-
-        return response.id
 
     # Pulse and trigger out services
 
@@ -551,6 +543,8 @@ class TrialPerformerNode(Node):
 
             return success, trial_result
 
+        self.reset_id_counter()
+
         self.logger.info('{}: Performing trial...'.format(goal_id))
 
         targets = trial.targets
@@ -590,10 +584,10 @@ class TrialPerformerNode(Node):
                 if relative_error > voltage_tolerance_proportion_for_precharging and \
                    absolute_error > self.ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING:
 
-                    self.logger.info('{}: Voltage tolerance exceeded on channel {} (relative error: {:.2f}, absolute error: {:.0f} V). Precharging...'.format(
+                    self.logger.info('{}: Voltage tolerance exceeded on channel {} (relative error: {:.0f}%, absolute error: {:.0f} V). Precharging...'.format(
                         goal_id,
                         i,
-                        relative_error,
+                        100 * relative_error,
                         absolute_error,
                     ))
                     precharge = True
