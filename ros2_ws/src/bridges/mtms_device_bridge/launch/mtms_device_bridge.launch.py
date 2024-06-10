@@ -44,11 +44,7 @@ def generate_launch_description():
         "allow_stimulation_handler",
         "allow_trigger_out_handler",
 
-        "pulse_handler",
-        "trigger_out_handler",
-        "charge_handler",
-        "discharge_handler",
-
+        "event_handler",
         "event_trigger_handler",
 
         "feedback_monitor_bridge",
