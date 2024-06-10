@@ -32,10 +32,7 @@ policies and other behaviour will be described in their own sections.
 | `/mtms_device/stop_device`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
-| `/event/send/charge`             | Subscription | `event_interfaces.msg.Charge`                 |
-| `/event/send/discharge`          | Subscription | `event_interfaces.msg.Discharge`              |
-| `/event/send/pulse`              | Subscription | `event_interfaces.msg.Pulse`                  |
-| `/event/send/trigger_out`        | Subscription | `event_interfaces.msg.TriggerOut`             |
+| `/mtms_device/request_events`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
 | `/event/charge_feedback`         | Publisher    | `event_interfaces.msg.ChargeFeedback`         |
 | `/event/discharge_feedback`      | Publisher    | `event_interfaces.msg.DischargeFeedback`      |
 | `/event/pulse_feedback`          | Publisher    | `event_interfaces.msg.PulseFeedback`          |
@@ -141,7 +138,8 @@ likewise when session stop request is made and complete, the session state will 
 `session_state.value=SessionState.STOPPED`
 
 #### Charging
-Charging works by sending a topic `/event/send/charge` message:
+Charging works by requesting a service `/mtms_device/request_events` with a message of type `Charge`
+in `charges` field. The message type `Charge` consists of the following fields:
 
     uint8 channel
     uint16 target_voltage # in volts
@@ -168,8 +166,8 @@ given in the charge message and possible error raised.
     ChargeError error
 
 #### Discharging
-The discharging process is similar to the charging process by having its own message
-for updating the channel voltage with topic `/event/send/discharge` and will return
+The discharging process is similar to the charging process by having the service
+`mtms_device/request_events` for updating the channel voltage and will return
 feedback message `/event/discharge_feedback` once complete or disrupted by error.
 
 #### Device configuration and settings
@@ -181,7 +179,7 @@ controlled with topic `/mtms_device/allow_stimulation`.
 
 #### Pulses
 Pulses, also work similarly to the charging and discharging processes in the regard that
-pulses are given using own topic `/event/send/pulse` and once finished or disrupted
+pulses are requested in service `/mtms_device/request_events` and once finished or disrupted
 by error return with `/event/pulse_feedback`.
 
     uint8 channel
@@ -192,9 +190,8 @@ The pulse is given to certain channel, with given waveform and event_info proper
 works similarly to the charging and discharging properties.
 
 #### Trigger out
-Trigger out messages work also similarly to the charging that the topic
-`/event/send/trigger_out` message and once the trigger out message is completed message
-to the topic `/event/trigger_out_feedback` is sent:
+Trigger out messages work also similarly to the charging and once the trigger out message
+is completed message to the topic `/event/trigger_out_feedback` is sent:
 
     uint8 port  # The index of the signal port.
     uint32 duration_us  # Duration of the pulse in microseconds.
@@ -249,41 +246,18 @@ Stop device. Response: Boolean indicating if stopping was successful.
     ---
     bool success
 
-## Subscribers
+### Topic: `/mtms_device/request_events`
+#### Service: `mtms_device_interfaces.srv.RequestEvents`
+QoS: ROS2 Default
 
-### Topic: `/event/send/charge`
-#### Message: `event_interfaces.msg.Charge`
-QoS: ROS2 Defaults with KEEP_LAST with depth 10
+Request events. Response: Boolean indicating if request was successful.
 
-    uint8 channel
-    uint16 target_voltage
-    EventInfo event_info
-
-### Topic: `/event/send/discharge`
-#### Message: `event_interfaces.msg.Discharge`
-QoS: ROS2 Defaults with KEEP_LAST with depth 10
-
-    uint8 channel
-    uint16 target_voltage
-    EventInfo event_info
-
-### Topic: `/event/send/pulse`
-#### Message: `event_interfaces.msg.Pulse`
-QoS: ROS2 Defaults with KEEP_LAST with depth 10
-
-    uint8 channel
-    WaveformPiece[] waveform
-    EventInfo event_info
-
-### Topic: `/event/send/trigger_out`
-#### Message: `event_interfaces.msg.TriggerOut`
-QoS: ROS2 Defaults with KEEP_LAST with depth 10
-
-
-    uint8 port # The index of the signal port.
-    uint32 duration_us # Duration of the pulse in microseconds.
-    EventInfo event_info
-
+    event_interfaces/Pulse[] pulses
+    event_interfaces/Charge[] charges
+    event_interfaces/Discharge[] discharges
+    event_interfaces/TriggerOut[] trigger_outs
+    ---
+    bool success
 
 ## Publishers
 
