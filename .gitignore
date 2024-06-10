@@ -32,3 +32,6 @@ matlab_msg_gen/
 .vscode
 venv
 .venv
+
+# MacOS temporary file
+.DS_Store
