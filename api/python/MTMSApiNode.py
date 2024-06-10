@@ -3,7 +3,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation
+from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents
 
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession
@@ -41,12 +41,9 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
+    ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/request_events', RequestEvents)
 
     ROS_MESSAGE_EVENT_TRIGGER = ('/event/trigger', EventTrigger)
-    ROS_MESSAGE_SEND_PULSE = ('/event/send/pulse', Pulse)
-    ROS_MESSAGE_SEND_CHARGE = ('/event/send/charge', Charge)
-    ROS_MESSAGE_SEND_DISCHARGE = ('/event/send/discharge', Discharge)
-    ROS_MESSAGE_SEND_TRIGGER_OUT = ('/event/send/trigger_out', TriggerOut)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
@@ -62,12 +59,9 @@ class MTMSApiNode(Node):
 
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
+    # TODO: This should also be a service.
     ROS_MESSAGES = (
         ROS_MESSAGE_EVENT_TRIGGER,
-        ROS_MESSAGE_SEND_PULSE,
-        ROS_MESSAGE_SEND_CHARGE,
-        ROS_MESSAGE_SEND_DISCHARGE,
-        ROS_MESSAGE_SEND_TRIGGER_OUT,
     )
 
     ROS_SERVICES = (
@@ -82,6 +76,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS,
         ROS_SERVICE_REVERSE_POLARITY,
         ROS_SERVICE_IS_STIMULATION_ALLOWED,
+        ROS_SERVICE_REQUEST_EVENTS,
     )
 
     ROS_ACTIONS = (
@@ -203,21 +198,24 @@ class MTMSApiNode(Node):
         self.printer.print_event_trigger()
 
     def send_pulse(self, id, execution_condition, time, channel, waveform):
-        topic, message_type = self.ROS_MESSAGE_SEND_PULSE
+        topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
-        publisher = self.ros_message_publishers[topic]
-        message = message_type()
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        message.event_info = event_info
-        message.channel = channel
-        message.waveform = waveform
+        request.pulses.append(Pulse(
+            event_info=event_info,
+            channel=channel,
+            waveform=waveform,
+        ))
 
-        publisher.publish(message)
+        response = self.call_service(client, request)
+        assert response.success, "Failed pulse request."
 
         self.printer.print_event(
             event_type='Pulse',
@@ -228,21 +226,24 @@ class MTMSApiNode(Node):
         self.event_feedback[id] = None
 
     def send_charge(self, id, execution_condition, time, channel, target_voltage):
-        topic, message_type = self.ROS_MESSAGE_SEND_CHARGE
+        topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
-        publisher = self.ros_message_publishers[topic]
-        message = message_type()
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        message.event_info = event_info
-        message.channel = channel
-        message.target_voltage = target_voltage
+        request.charges.append(Charge(
+            event_info=event_info,
+            channel=channel,
+            target_voltage=target_voltage,
+        ))
 
-        publisher.publish(message)
+        response = self.call_service(client, request)
+        assert response.success, "Failed charge request."
 
         self.printer.print_event(
             event_type='Charge',
@@ -253,21 +254,24 @@ class MTMSApiNode(Node):
         self.event_feedback[id] = None
 
     def send_discharge(self, id, execution_condition, time, channel, target_voltage):
-        topic, message_type = self.ROS_MESSAGE_SEND_DISCHARGE
+        topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
-        publisher = self.ros_message_publishers[topic]
-        message = message_type()
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        message.event_info = event_info
-        message.channel = channel
-        message.target_voltage = target_voltage
+        request.discharges.append(Discharge(
+            event_info=event_info,
+            channel=channel,
+            target_voltage=target_voltage,
+        ))
 
-        publisher.publish(message)
+        response = self.call_service(client, request)
+        assert response.success, "Failed discharge request."
 
         self.printer.print_event(
             event_type='Discharge',
@@ -278,21 +282,24 @@ class MTMSApiNode(Node):
         self.event_feedback[id] = None
 
     def send_trigger_out(self, id, execution_condition, time, port, duration_us):
-        topic, message_type = self.ROS_MESSAGE_SEND_TRIGGER_OUT
+        topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
-        publisher = self.ros_message_publishers[topic]
-        message = message_type()
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
 
         event_info = EventInfo()
         event_info.id = id
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        message.event_info = event_info
-        message.port = port
-        message.duration_us = duration_us
+        request.trigger_outs.append(TriggerOut(
+            event_info=event_info,
+            port=port,
+            duration_us=duration_us,
+        ))
 
-        publisher.publish(message)
+        response = self.call_service(client, request)
+        assert response.success, "Failed trigger out request."
 
         self.printer.print_event(
             event_type='Trigger out',
