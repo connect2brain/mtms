@@ -208,11 +208,12 @@ class MTMSApiNode(Node):
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        request.pulses.append(Pulse(
+        pulse = Pulse(
             event_info=event_info,
             channel=channel,
             waveform=waveform,
-        ))
+        )
+        request.pulses.append(pulse)
 
         response = self.call_service(client, request)
         assert response.success, "Failed pulse request."
@@ -236,11 +237,12 @@ class MTMSApiNode(Node):
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        request.charges.append(Charge(
+        charge = Charge(
             event_info=event_info,
             channel=channel,
             target_voltage=target_voltage,
-        ))
+        )
+        request.charges.append(charge)
 
         response = self.call_service(client, request)
         assert response.success, "Failed charge request."
@@ -264,11 +266,12 @@ class MTMSApiNode(Node):
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        request.discharges.append(Discharge(
+        discharge = Discharge(
             event_info=event_info,
             channel=channel,
             target_voltage=target_voltage,
-        ))
+        )
+        request.discharges.append(discharge)
 
         response = self.call_service(client, request)
         assert response.success, "Failed discharge request."
@@ -292,11 +295,12 @@ class MTMSApiNode(Node):
         event_info.execution_condition.value = execution_condition
         event_info.execution_time = float(time) if time is not None else 0.0
 
-        request.trigger_outs.append(TriggerOut(
+        trigger_out = TriggerOut(
             event_info=event_info,
             port=port,
             duration_us=duration_us,
-        ))
+        )
+        request.trigger_outs.append(trigger_out)
 
         response = self.call_service(client, request)
         assert response.success, "Failed trigger out request."
