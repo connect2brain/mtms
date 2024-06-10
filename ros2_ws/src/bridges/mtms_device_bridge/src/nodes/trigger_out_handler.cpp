@@ -10,85 +10,88 @@
 #include "scheduling_utils.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetTriggerOutFIFO;
-
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 class TriggerOutHandler : public rclcpp::Node {
 public:
-  TriggerOutHandler()
-      : Node("trigger_out_handler") {
-
-    auto callback = [this](const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out) -> void {
-      /* Unpack trigger out message. */
-      uint8_t port = trigger_out->port;
-
-      event_interfaces::msg::EventInfo event_info = trigger_out->event_info;
-      uint16_t id = event_info.id;
-      uint8_t execution_condition = event_info.execution_condition.value;
-      double_t execution_time = event_info.execution_time;
-
-      /* Log trigger out message. */
-      RCLCPP_INFO(rclcpp::get_logger("trigger_out_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-                  port,
-                  trigger_out->event_info.id,
-                  trigger_out->event_info.execution_condition.value,
-                  trigger_out->event_info.execution_time);
-
-      /* Check if FPGA is OK. */
-      if (!is_fpga_ok()) {
-        RCLCPP_WARN(rclcpp::get_logger("trigger_out_handler"), "FPGA is not in OK state, aborting sending trigger out event (id: %d)", id);
-        return;
-      }
-
-      /* Check that execution time is non-negative. */
-
-      /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
-      if (execution_time < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("trigger_out_handler"), "Execution time cannot be negative, aborting trigger out (id: %d)", id);
-        return;
-      }
-
-      /* Serialize event info. */
-
-      uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
-      serialized_message.init(port);
-      serialized_message.add_uint16(id);
-      serialized_message.add_byte(execution_condition);
-      serialized_message.add_uint64(execution_time_ticks);
-
-      /* Serialize trigger out parameters. */
-
-      uint32_t duration_us = trigger_out->duration_us;
-      uint32_t duration_ticks = duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
-
-      serialized_message.add_uint32(duration_ticks);
-
-      serialized_message.finalize();
-
-      /* For consistency with channel indexing, start trigger out indexing from 1. */
-      NiFpga_MergeStatus(&status,
-                         NiFpga_StartFifo(session,
-                                          trigger_out_fifo));
-
-      NiFpga_MergeStatus(&status,
-                         NiFpga_WriteFifoU8(session,
-                                            trigger_out_fifo,
-                                            serialized_message.serialized_message.data(),
-                                            serialized_message.get_length(),
-                                            NiFpga_InfiniteTimeout,
-                                            NULL));
-    };
-
-    serialized_message = SerializedMessage();
-    send_trigger_out_subscriber_ = this->create_subscription<event_interfaces::msg::TriggerOut>(
-        "/event/send/trigger_out", 10, callback);
-  }
+  TriggerOutHandler();
 
 private:
+  void trigger_out_callback(const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out);
+
   rclcpp::Subscription<event_interfaces::msg::TriggerOut>::SharedPtr send_trigger_out_subscriber_;
   SerializedMessage serialized_message;
 };
+
+// Implementation of the constructor
+TriggerOutHandler::TriggerOutHandler() : Node("trigger_out_handler") {
+  serialized_message = SerializedMessage();
+  send_trigger_out_subscriber_ = this->create_subscription<event_interfaces::msg::TriggerOut>(
+      "/event/send/trigger_out", 10, std::bind(&TriggerOutHandler::trigger_out_callback, this, std::placeholders::_1));
+}
+
+// Implementation of the callback method
+void TriggerOutHandler::trigger_out_callback(const std::shared_ptr<event_interfaces::msg::TriggerOut> trigger_out) {
+  /* Unpack trigger out message. */
+  uint8_t port = trigger_out->port;
+
+  event_interfaces::msg::EventInfo event_info = trigger_out->event_info;
+  uint16_t id = event_info.id;
+  uint8_t execution_condition = event_info.execution_condition.value;
+  double_t execution_time = event_info.execution_time;
+
+  /* Log trigger out message. */
+  RCLCPP_INFO(rclcpp::get_logger("trigger_out_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+              port,
+              trigger_out->event_info.id,
+              trigger_out->event_info.execution_condition.value,
+              trigger_out->event_info.execution_time);
+
+  /* Check if FPGA is OK. */
+  if (!is_fpga_ok()) {
+    RCLCPP_WARN(rclcpp::get_logger("trigger_out_handler"), "FPGA is not in OK state, aborting sending trigger out event (id: %d)", id);
+    return;
+  }
+
+  /* Check that execution time is non-negative. */
+
+  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
+  if (execution_time < 0.0) {
+    RCLCPP_ERROR(rclcpp::get_logger("trigger_out_handler"), "Execution time cannot be negative, aborting trigger out (id: %d)", id);
+    return;
+  }
+
+  /* Serialize event info. */
+
+  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+
+  serialized_message.init(port);
+  serialized_message.add_uint16(id);
+  serialized_message.add_byte(execution_condition);
+  serialized_message.add_uint64(execution_time_ticks);
+
+  /* Serialize trigger out parameters. */
+
+  uint32_t duration_us = trigger_out->duration_us;
+  uint32_t duration_ticks = duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
+
+  serialized_message.add_uint32(duration_ticks);
+
+  serialized_message.finalize();
+
+  /* For consistency with channel indexing, start trigger out indexing from 1. */
+  NiFpga_MergeStatus(&status,
+                      NiFpga_StartFifo(session,
+                                       trigger_out_fifo));
+
+  NiFpga_MergeStatus(&status,
+                      NiFpga_WriteFifoU8(session,
+                                        trigger_out_fifo,
+                                        serialized_message.serialized_message.data(),
+                                        serialized_message.get_length(),
+                                        NiFpga_InfiniteTimeout,
+                                        NULL));
+}
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
