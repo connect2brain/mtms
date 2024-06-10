@@ -13,7 +13,6 @@ from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
 from mtms_device_interfaces.action import SetVoltages
 from system_interfaces.msg import Session, SessionState
-from utility_interfaces.srv import GetNextId
 
 
 class VoltageSetterNode(Node):
@@ -41,11 +40,6 @@ class VoltageSetterNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Service client for getting next ID.
-        self.get_next_id_client = self.create_client(GetNextId, '/utility/get_next_id', callback_group=self.callback_group)
-        while not self.get_next_id_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /utility/get_next_id not available, waiting...')
-
         # Service client for requesting events.
         self.request_events_client = self.create_client(RequestEvents, '/mtms_device/request_events')
         while not self.request_events_client.wait_for_service(timeout_sec=1.0):
@@ -66,6 +60,7 @@ class VoltageSetterNode(Node):
         self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/event/discharge_feedback', self.update_event_feedback, 10)
 
         self.event_feedback = {}
+        self.id_counter = 0
 
     ## ROS callbacks and callers
 
@@ -106,7 +101,7 @@ class VoltageSetterNode(Node):
 
         return self.session.time
 
-    # Feedback
+    # Events
 
     def update_event_feedback(self, feedback):
         id = feedback.id
@@ -122,6 +117,15 @@ class VoltageSetterNode(Node):
             return None
 
         return self.event_feedback[id]
+
+    # Event-related utilities
+
+    def get_next_id(self):
+        self.id_counter += 1
+        return self.id_counter
+
+    def reset_id_counter(self):
+        self.id_counter = 0
 
     # Utilities
 
@@ -177,16 +181,6 @@ class VoltageSetterNode(Node):
 
         response = response_value[0]
         return response
-
-    # Utility services
-
-    def get_next_id(self):
-        request = GetNextId.Request()
-
-        response = self.async_service_call(self.get_next_id_client, request)
-        assert response.success, "Getting next ID failed."
-
-        return response.id
 
     # Charging and discharging
 
@@ -298,6 +292,8 @@ class VoltageSetterNode(Node):
         success = self.check_goal_feasible(goal_id)
         if not success:
             return False
+
+        self.reset_id_counter()
 
         # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
         #   to hide the logic.
