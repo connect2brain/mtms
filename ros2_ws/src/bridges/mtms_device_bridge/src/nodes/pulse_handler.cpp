@@ -11,98 +11,102 @@
 #include "scheduling_utils.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetPulseFIFO;
-
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 class PulseHandler : public rclcpp::Node {
 public:
-  PulseHandler() : Node("pulse_handler") {
-
-    this->declare_parameter<bool>("safe-mode", false);
-    this->get_parameter("safe-mode", safe_mode);
-
-    auto callback = [this](const std::shared_ptr<event_interfaces::msg::Pulse> pulse) -> void {
-      /* Unpack pulse message. */
-      uint8_t channel = pulse->channel;
-
-      event_interfaces::msg::EventInfo event_info = pulse->event_info;
-      uint16_t id = event_info.id;
-      uint8_t execution_condition = event_info.execution_condition.value;
-      double_t execution_time = event_info.execution_time;
-
-      /* Log pulse message. */
-      RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-                  pulse->channel,
-                  pulse->event_info.id,
-                  pulse->event_info.execution_condition.value,
-                  pulse->event_info.execution_time);
-
-      /* Check if FPGA is OK. */
-      if (!is_fpga_ok()) {
-        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Tried to execute pulse (id: %d) but FPGA is not in OK state", id);
-        return;
-      }
-
-      /* Check that execution time is non-negative. */
-
-      /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
-      if (execution_time < 0.0) {
-        RCLCPP_ERROR(rclcpp::get_logger("pulse_handler"), "Execution time cannot be negative, aborting pulse (id: %d)", id);
-        return;
-      }
-
-      /* Serialize event info. */
-
-      uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-
-      /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
-           indexing here. It would rather be the responsibility of FPGA to do the conversion;
-           move the logic there eventually. */
-      serialized_message.init(channel + 1);
-      serialized_message.add_uint16(id);
-      serialized_message.add_byte(execution_condition);
-      serialized_message.add_uint64(execution_time_ticks);
-
-      /* Serialize pulse parameters. */
-      uint8_t num_of_waveform_pieces = (uint8_t) pulse->waveform.pieces.size();
-      serialized_message.add_byte(num_of_waveform_pieces);
-
-      for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
-        event_interfaces::msg::WaveformPiece piece = pulse->waveform.pieces[i];
-
-        serialized_message.add_byte(piece.waveform_phase.value);
-        serialized_message.add_uint16(piece.duration_in_ticks);
-      }
-
-      serialized_message.finalize();
-
-      if (this->safe_mode) {
-        RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Safe mode is enabled, aborting pulse (id: %d)", id);
-        return;
-      }
-
-      NiFpga_MergeStatus(&status,
-                          NiFpga_StartFifo(session,
-                                          channel_pulse_fifo));
-      NiFpga_MergeStatus(&status,
-                          NiFpga_WriteFifoU8(session,
-                                            channel_pulse_fifo,
-                                            serialized_message.serialized_message.data(),
-                                            serialized_message.get_length(),
-                                            NiFpga_InfiniteTimeout,
-                                            NULL));
-    };
-
-    serialized_message = SerializedMessage();
-    send_pulse_subscriber_ = this->create_subscription<event_interfaces::msg::Pulse>(
-        "/event/send/pulse", 10, callback);
-  }
+  PulseHandler();
 
 private:
+  void pulse_callback(const std::shared_ptr<event_interfaces::msg::Pulse> pulse);
+
   rclcpp::Subscription<event_interfaces::msg::Pulse>::SharedPtr send_pulse_subscriber_;
   SerializedMessage serialized_message;
   bool safe_mode;
 };
+
+// Implementation of the constructor
+PulseHandler::PulseHandler() : Node("pulse_handler") {
+  this->declare_parameter<bool>("safe-mode", false);
+  this->get_parameter("safe-mode", safe_mode);
+
+  serialized_message = SerializedMessage();
+  send_pulse_subscriber_ = this->create_subscription<event_interfaces::msg::Pulse>(
+      "/event/send/pulse", 10, std::bind(&PulseHandler::pulse_callback, this, std::placeholders::_1));
+}
+
+// Implementation of the callback method
+void PulseHandler::pulse_callback(const std::shared_ptr<event_interfaces::msg::Pulse> pulse) {
+  /* Unpack pulse message. */
+  uint8_t channel = pulse->channel;
+
+  event_interfaces::msg::EventInfo event_info = pulse->event_info;
+  uint16_t id = event_info.id;
+  uint8_t execution_condition = event_info.execution_condition.value;
+  double_t execution_time = event_info.execution_time;
+
+  /* Log pulse message. */
+  RCLCPP_INFO(rclcpp::get_logger("pulse_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+              pulse->channel,
+              pulse->event_info.id,
+              pulse->event_info.execution_condition.value,
+              pulse->event_info.execution_time);
+
+  /* Check if FPGA is OK. */
+  if (!is_fpga_ok()) {
+    RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Tried to execute pulse (id: %d) but FPGA is not in OK state", id);
+    return;
+  }
+
+  /* Check that execution time is non-negative. */
+
+  /* TODO: To properly propagate the error, sending pulses, charges, discharges, and trigger outs should be ROS services instead of messages. */
+  if (execution_time < 0.0) {
+    RCLCPP_ERROR(rclcpp::get_logger("pulse_handler"), "Execution time cannot be negative, aborting pulse (id: %d)", id);
+    return;
+  }
+
+  /* Serialize event info. */
+
+  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+
+  /* XXX: Note that LabVIEW starts indexing from 1. Hence, do the conversion from 0-based
+       indexing here. It would rather be the responsibility of FPGA to do the conversion;
+       move the logic there eventually. */
+  serialized_message.init(channel + 1);
+  serialized_message.add_uint16(id);
+  serialized_message.add_byte(execution_condition);
+  serialized_message.add_uint64(execution_time_ticks);
+
+  /* Serialize pulse parameters. */
+  uint8_t num_of_waveform_pieces = (uint8_t) pulse->waveform.pieces.size();
+  serialized_message.add_byte(num_of_waveform_pieces);
+
+  for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
+    event_interfaces::msg::WaveformPiece piece = pulse->waveform.pieces[i];
+
+    serialized_message.add_byte(piece.waveform_phase.value);
+    serialized_message.add_uint16(piece.duration_in_ticks);
+  }
+
+  serialized_message.finalize();
+
+  if (this->safe_mode) {
+    RCLCPP_WARN(rclcpp::get_logger("pulse_handler"), "Safe mode is enabled, aborting pulse (id: %d)", id);
+    return;
+  }
+
+  NiFpga_MergeStatus(&status,
+                      NiFpga_StartFifo(session,
+                                      channel_pulse_fifo));
+  NiFpga_MergeStatus(&status,
+                      NiFpga_WriteFifoU8(session,
+                                        channel_pulse_fifo,
+                                        serialized_message.serialized_message.data(),
+                                        serialized_message.get_length(),
+                                        NiFpga_InfiniteTimeout,
+                                        NULL));
+}
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
