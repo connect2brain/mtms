@@ -172,7 +172,7 @@ target_include_directories(event_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces)
+ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_device_interfaces)
 
 # Event trigger handler
 

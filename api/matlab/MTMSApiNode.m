@@ -15,11 +15,7 @@ classdef MTMSApiNode < handle
         stop_session_client
 
         allow_stimulation_client
-
-        send_charge_publisher
-        send_discharge_publisher
-        send_trigger_out_publisher
-        send_pulse_publisher
+        request_events_client
 
         event_trigger_publisher
 
@@ -64,6 +60,7 @@ classdef MTMSApiNode < handle
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
+            obj.request_events_client = ros2svcclient(obj.node, "/mtms_device/request_events", "mtms_device_interfaces/RequestEvents");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
@@ -75,12 +72,6 @@ classdef MTMSApiNode < handle
             obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
-
-            obj.send_charge_publisher = ros2publisher(obj.node, "/event/send/charge", "event_interfaces/Charge");
-            obj.send_discharge_publisher = ros2publisher(obj.node, "/event/send/discharge", "event_interfaces/Discharge");
-            obj.send_trigger_out_publisher = ros2publisher(obj.node, "/event/send/trigger_out", "event_interfaces/TriggerOut");
-            obj.send_pulse_publisher = ros2publisher(obj.node, "/event/send/pulse", "event_interfaces/Pulse");
-
             obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/EventTrigger");
 
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
@@ -186,9 +177,9 @@ classdef MTMSApiNode < handle
             %
             %   Send pulse event to the mTMS device.
 
-            publisher = obj.send_pulse_publisher;
+            client = obj.request_events_client;
 
-            pulse = ros2message(publisher);
+            request = ros2message(client);
 
             % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
             if isnan(time)
@@ -200,11 +191,20 @@ classdef MTMSApiNode < handle
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
 
+            pulse = ros2message("event_interfaces/Pulse");
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
             pulse.waveform = waveform;
 
-            send(publisher, pulse);
+            request.pulses = [pulse];
+            request.charges = struct([]);
+            request.discharges = struct([]);
+            request.trigger_outs = struct([]);
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Failed to request pulse event.");
         end
 
         function send_charge(obj, id, channel, target_voltage, execution_condition, time)
@@ -212,9 +212,9 @@ classdef MTMSApiNode < handle
             %
             %   Sends charge event to the mTMS device.
 
-            publisher = obj.send_charge_publisher;
+            client = obj.request_events_client;
 
-            charge = ros2message(publisher);
+            request = ros2message(client);
 
             % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
             if isnan(time)
@@ -230,7 +230,15 @@ classdef MTMSApiNode < handle
             charge.channel = uint8(channel);
             charge.target_voltage = uint16(target_voltage);
 
-            send(publisher, charge);
+            request.charges = [charge];
+            request.pulses = struct([]);
+            request.discharges = struct([]);
+            request.trigger_outs = struct([]);
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Failed to request charge event.");
         end
 
         function send_discharge(obj, id, channel, target_voltage, execution_condition, time)
@@ -238,9 +246,9 @@ classdef MTMSApiNode < handle
             %
             %   Sends discharge command to the mTMS device.
 
-            publisher = obj.send_discharge_publisher;
+            client = obj.request_events_client;
 
-            discharge = ros2message(publisher);
+            request = ros2message(client);
 
             % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
             if isnan(time)
@@ -256,7 +264,15 @@ classdef MTMSApiNode < handle
             discharge.channel = uint8(channel);
             discharge.target_voltage = uint16(target_voltage);
 
-            send(publisher, discharge);
+            request.discharges = [discharge];
+            request.charges = struct([]);
+            request.pulses = struct([]);
+            request.trigger_outs = struct([]);
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Failed to request discharge event.");
         end
 
         function send_trigger_out(obj, id, port, duration_us, execution_condition, time)
@@ -264,9 +280,9 @@ classdef MTMSApiNode < handle
             %
             %   Send trigger out event to the mTMS device.
 
-            publisher = obj.send_trigger_out_publisher;
+            client = obj.request_events_client;
 
-            trigger_out = ros2message(publisher);
+            request = ros2message(client);
 
             % XXX: Encode NaN as 0, as ROS2 messages do not support null values.
             if isnan(time)
@@ -282,7 +298,15 @@ classdef MTMSApiNode < handle
             trigger_out.port = uint8(port);
             trigger_out.duration_us = uint32(duration_us);
 
-            send(publisher, trigger_out);
+            request.trigger_outs = [trigger_out];
+            request.charges = struct([]);
+            request.pulses = struct([]);
+            request.discharges = struct([]);
+
+            response = call(client, request);
+            success = response.success;
+
+            assert(success, "Failed to request trigger out event.");
         end
 
         % Feedback
