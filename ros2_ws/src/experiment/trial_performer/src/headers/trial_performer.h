@@ -84,7 +84,7 @@ private:
   std::vector<uint16_t> get_actual_voltages() const;
 
   /* Events */
-  void wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids, const std::vector<uint16_t> &trigger_out_ids);
+  bool wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids, const std::vector<uint16_t> &trigger_out_ids);
 
   /* ROS message creation */
   std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> create_pulses(
@@ -126,6 +126,11 @@ private:
   /* Logging */
   void log_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing);
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
+
+  /* Timing */
+  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  void tic();
+  void toc(const std::string &prefix);
 
   std::pair<bool, experiment_interfaces::msg::TrialResult> perform_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing, const experiment_interfaces::msg::TrialConfig &config);
 
