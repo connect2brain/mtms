@@ -9,23 +9,19 @@ def generate_launch_description():
 
     log_arg = DeclareLaunchArgument(
         "log-level",
+        default_value=["info"],
         description="Logging level",
     )
 
     logger = LaunchConfiguration("log-level")
 
-    node_executables = [
-        "trial_performer",
-    ]
-
-    for node_executable in node_executables:
-        node = Node(
-            package="trial_performer",
-            executable=node_executable,
-            arguments=['--ros-args', '--log-level', logger]
-        )
-        ld.add_action(node)
-
+    node = Node(
+        package="trial_performer",
+        executable="trial_performer",
+        name="trial_performer",
+        arguments=['--ros-args', '--log-level', logger]
+    )
+    ld.add_action(node)
     ld.add_action(log_arg)
 
     return ld
