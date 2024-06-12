@@ -230,6 +230,8 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
   this->session_state = msg->state;
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
+    this->first_sample_of_session = true;
+
     this->reinitialize = true;
     this->previous_trigger_time = UNSET_PREVIOUS_TIME;
 
@@ -554,13 +556,8 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
-  /* Log if this is the first sample of the session. */
-  if (msg->metadata.first_sample_of_session) {
-    RCLCPP_INFO(this->get_logger(), "First sample of session received.");
-  }
-
   /* Update EEG info with every new session OR if this is the first EEG sample received. */
-  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
+  if (this->first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
@@ -585,13 +582,14 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   if (this->reinitialize ||
       this->decider_wrapper->get_state() == WrapperState::UNINITIALIZED ||
-      msg->metadata.first_sample_of_session) {
+      this->first_sample_of_session) {
 
     initialize_module();
     reset_decider_state();
 
     this->reinitialize = false;
   }
+  this->first_sample_of_session = false;
 
   /* Check that the decider module has not encountered an error. */
   if (this->decider_wrapper->get_state() == WrapperState::ERROR) {

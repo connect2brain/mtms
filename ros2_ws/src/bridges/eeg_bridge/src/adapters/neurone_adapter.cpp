@@ -230,9 +230,6 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
   sample.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
   sample.metadata.sampling_frequency = this->sampling_frequency;
 
-  /* The adapter has no knowledge of the session so keep as false */
-  sample.metadata.first_sample_of_session = false;
-
   return {sample, sync_trigger_received};
 }
 
