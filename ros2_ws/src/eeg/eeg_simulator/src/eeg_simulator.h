@@ -90,8 +90,6 @@ private:
   double_t next_trigger_time;
   double_t latest_sample_time;
 
-  bool first_sample_of_session;
-
   uint16_t sampling_frequency;
   uint8_t num_of_eeg_channels;
   uint8_t num_of_emg_channels;

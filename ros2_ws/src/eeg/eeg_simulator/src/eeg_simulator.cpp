@@ -481,8 +481,6 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
     RCLCPP_INFO(this->get_logger(), "Session started, starting streaming.");
 
     this->session_started = true;
-    this->first_sample_of_session = true;
-
     time_offset = current_time;
   }
 
@@ -563,7 +561,6 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   msg.eeg_data.insert(msg.eeg_data.end(), data.begin() + 1, data.begin() + 1 + num_of_eeg_channels);
   msg.emg_data.insert(msg.emg_data.end(), data.begin() + 1 + num_of_eeg_channels, data.end());
 
-  msg.metadata.first_sample_of_session = this->first_sample_of_session;
   msg.metadata.sampling_frequency = this->sampling_frequency;
   msg.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
   msg.metadata.num_of_emg_channels = this->num_of_emg_channels;
@@ -581,8 +578,6 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   eeg_publisher->publish(msg);
 
-  /* Update 'first sample of session'. */
-  this->first_sample_of_session = false;
   this->latest_sample_time = sample_time;
   this->current_sample_index++;
 

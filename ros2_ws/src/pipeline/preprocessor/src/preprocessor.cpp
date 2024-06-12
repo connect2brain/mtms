@@ -178,6 +178,7 @@ void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::ms
   this->session_state = msg->state;
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
+    this->first_sample_of_session = true;
     this->reinitialize = true;
 
     /* Reset the preprocessor state when the session is stopped. */
@@ -489,16 +490,8 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  /* Log if this is the first sample of the session. */
-  if (msg->metadata.first_sample_of_session) {
-    RCLCPP_INFO(this->get_logger(), "First sample of session received.");
-
-    /* Mark that the first sample of the session has been received so that it can be passed on when publishing the preprocessed sample. */
-    this->first_sample_of_session_received = true;
-  }
-
   /* Update EEG info with every new session OR if this is the first EEG sample received ever. */
-  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
+  if (this->first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
@@ -523,13 +516,14 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
 
   if (this->reinitialize ||
       this->preprocessor_wrapper->get_state() == WrapperState::UNINITIALIZED ||
-      msg->metadata.first_sample_of_session) {
+      this->first_sample_of_session) {
 
     initialize_module();
     reset_preprocessor_state();
 
     this->reinitialize = false;
   }
+  this->first_sample_of_session = false;
 
   /* Check that the preprocessor module has not encountered an error. */
   if (this->preprocessor_wrapper->get_state() == WrapperState::ERROR) {
@@ -565,13 +559,6 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     preprocessed_sample.metadata.sampling_frequency = msg->metadata.sampling_frequency;
     preprocessed_sample.metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
     preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
-
-    /* 'First sample of session' field cannot be copied directly from the raw sample, as the preprocessing
-        only starts taking place when the sample buffer is full, and by that time the actual first sample
-        of the session has already passed through the preprocessor. Hence wait until the sample buffer is
-        full, and only then set the 'first sample of session' field to true. */
-    preprocessed_sample.metadata.first_sample_of_session = this->first_sample_of_session_received;
-    this->first_sample_of_session_received = false;
 
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();
