@@ -64,15 +64,6 @@ class MockEegBridge : public rclcpp::Node {
             message.eeg_data.push_back(result);
             RCLCPP_INFO(this->get_logger(), "EEG channel: %d, Result: %f", channel, result);
         }
-
-        if (this->time_ == 0) {
-          message.metadata.first_sample_of_session = true;
-        }
-
-        else {
-          message.metadata.first_sample_of_session = false;
-        }
-
         message.time = this->time_;
         this->time_ += this->sampling_interval_;
 

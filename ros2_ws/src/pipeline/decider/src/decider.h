@@ -129,6 +129,7 @@ private:
   system_interfaces::msg::SessionState session_state;
 
   bool first_sample_ever = true;
+  bool first_sample_of_session = false;
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */

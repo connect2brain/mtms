@@ -113,7 +113,7 @@ private:
   system_interfaces::msg::SessionState session_state;
 
   bool first_sample_ever = true;
-  bool first_sample_of_session_received = false;
+  bool first_sample_of_session = false;
 
   bool reinitialize = true;
 
