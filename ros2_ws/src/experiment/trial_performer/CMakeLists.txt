@@ -14,6 +14,7 @@ find_package(event_interfaces REQUIRED)
 find_package(experiment_interfaces REQUIRED)
 find_package(mep_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
+find_package(neuronavigation_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
 add_executable(
@@ -43,6 +44,7 @@ ament_target_dependencies(
         experiment_interfaces
         mep_interfaces
         mtms_device_interfaces
+        neuronavigation_interfaces
         system_interfaces
 )
 

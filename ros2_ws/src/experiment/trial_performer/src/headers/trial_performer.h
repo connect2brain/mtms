@@ -13,7 +13,6 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 
 #include "experiment_interfaces/action/perform_trial.hpp"
-#include "experiment_interfaces/msg/trial_feedback.hpp"
 #include "experiment_interfaces/msg/trial_result.hpp"
 
 #include "mep_interfaces/action/analyze_mep.hpp"
@@ -21,6 +20,7 @@
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/srv/request_events.hpp"
+#include "neuronavigation_interfaces/msg/create_marker.hpp"
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
 #include "targeting_interfaces/srv/get_target_voltages.hpp"
@@ -57,7 +57,7 @@ private:
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
   rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
-  rclcpp::Publisher<experiment_interfaces::msg::TrialFeedback>::SharedPtr trial_feedback_publisher;
+  rclcpp::Publisher<neuronavigation_interfaces::msg::CreateMarker>::SharedPtr create_marker_publisher;
 
   mtms_device_interfaces::msg::SystemState::SharedPtr system_state;
   system_interfaces::msg::Session::SharedPtr session;
@@ -109,6 +109,7 @@ private:
   event_interfaces::msg::Waveform reverse_polarity(const event_interfaces::msg::Waveform &waveform);
   void request_events(const std::vector<event_interfaces::msg::Pulse> &pulses, const std::vector<event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
+  void set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
 
   /* Action calls */
   std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> analyze_mep(const mep_interfaces::msg::MepConfiguration &mep_config, double time);
@@ -122,6 +123,9 @@ private:
   void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle);
 
   void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle);
+
+  /* Publishers */
+  void create_marker();
 
   /* Logging */
   void log_trial(const experiment_interfaces::msg::Trial &trial);
@@ -139,9 +143,6 @@ private:
 
   std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
       const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
-
-  void set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
-  void publish_trial_feedback(bool success, double execution_time);
 };
 
 #endif // TRIAL_PERFORMER_H

@@ -93,7 +93,7 @@ void TrialPerformerNode::initialize_subscribers() {
 }
 
 void TrialPerformerNode::initialize_publishers() {
-  trial_feedback_publisher = this->create_publisher<experiment_interfaces::msg::TrialFeedback>("/trial/feedback", 10);
+  create_marker_publisher = this->create_publisher<neuronavigation_interfaces::msg::CreateMarker>("/neuronavigation/create_marker", 10);
 }
 
 /* Subscriber callbacks */
@@ -114,6 +114,15 @@ void TrialPerformerNode::update_pulse_feedback(const event_interfaces::msg::Puls
 void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
   trigger_out_feedback[msg->id] = msg;
   RCLCPP_INFO(get_logger(), "Event %d finished with error code: %d", msg->id, msg->error.value);
+}
+
+/* Publishers */
+
+void TrialPerformerNode::create_marker() {
+  RCLCPP_INFO(this->get_logger(), "Creating marker...");
+
+  auto msg = std::make_shared<neuronavigation_interfaces::msg::CreateMarker>();
+  create_marker_publisher->publish(*msg);
 }
 
 /* Helpers */
@@ -660,8 +669,10 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
     log_voltages(voltages_after_recharging, "Voltages after recharging");
   }
 
-  /* Publish trial feedback. */
-  publish_trial_feedback(success, start_time);
+  /* If trial was successful, create a marker in neuronavigation. */
+  if (success) {
+    create_marker();
+  }
 
   return {success, trial_result};
 }
@@ -738,13 +749,6 @@ void TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &des
   if (precharge_needed) {
     set_voltages(desired_voltages);
   }
-}
-
-void TrialPerformerNode::publish_trial_feedback(bool success, double execution_time) {
-  auto feedback = std::make_shared<experiment_interfaces::msg::TrialFeedback>();
-  feedback->success = success;
-
-  trial_feedback_publisher->publish(*feedback);
 }
 
 int main(int argc, char **argv) {
