@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(triggerer)
+project(labjack_triggerer)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -17,23 +17,23 @@ include_directories(include include/labjack)
 find_library(LABJACKM_LIBRARY NAMES LabJackM)
 
 add_executable(
-        triggerer
+        labjack_triggerer
 
-        src/triggerer.cpp
+        src/labjack_triggerer.cpp
 
         src/memory_utils.cpp
         src/scheduling_utils.cpp
 )
 
-target_include_directories(triggerer
+target_include_directories(labjack_triggerer
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
-target_link_libraries(triggerer ${LABJACKM_LIBRARY})
+target_link_libraries(labjack_triggerer ${LABJACKM_LIBRARY})
 
 ament_target_dependencies(
-  triggerer
+  labjack_triggerer
   rclcpp
   rclcpp_action
   std_msgs
@@ -42,7 +42,7 @@ ament_target_dependencies(
 )
 
 install(TARGETS
-        triggerer
+        labjack_triggerer
         DESTINATION lib/${PROJECT_NAME}
         )
 
