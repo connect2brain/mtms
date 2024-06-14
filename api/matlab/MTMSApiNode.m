@@ -14,10 +14,10 @@ classdef MTMSApiNode < handle
         start_session_client
         stop_session_client
 
+        request_trigger_client
+
         allow_stimulation_client
         request_events_client
-
-        event_trigger_publisher
 
         system_state_subscriber
         session_subscriber
@@ -71,9 +71,9 @@ classdef MTMSApiNode < handle
             obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "system_interfaces/StartSession");
             obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
 
-            % Event-related.
-            obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/RequestTrigger");
+            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "system_interfaces/RequestTrigger");
 
+            % Event-related.
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
             obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_interfaces/DischargeFeedback", @obj.handle_discharge_feedback);
@@ -146,16 +146,17 @@ classdef MTMSApiNode < handle
 
         % Events
 
-        function trigger_events(obj)
-            %trigger_events Trigger events
+        function request_trigger(obj)
+            %request_trigger Request trigger from mTMS device
             %
-            %   Send event trigger to the mTMS device.
+            %   Request trigger from the mTMS device.
 
-            publisher = obj.event_trigger_publisher;
+            client = obj.request_trigger_client;
 
-            event_trigger = ros2message(publisher);
+            request = ros2message(client);
 
-            send(publisher, event_trigger);
+            response = call(client, request);
+            success = response.success;
         end
 
         function success = allow_stimulation(obj, allow_stimulation)

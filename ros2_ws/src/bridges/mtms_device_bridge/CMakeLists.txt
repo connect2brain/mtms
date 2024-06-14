@@ -176,18 +176,18 @@ ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_de
 
 # Event trigger handler
 
-add_executable(event_trigger_handler
-  src/nodes/event_trigger_handler.cpp
+add_executable(request_trigger_handler
+  src/nodes/request_trigger_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(event_trigger_handler
+target_include_directories(request_trigger_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_trigger_handler rclcpp std_msgs event_interfaces)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_interfaces)
 
 # Feedback monitor bridge
 
@@ -236,7 +236,7 @@ install(TARGETS
 
   event_handler
 
-  event_trigger_handler
+  request_trigger_handler
   feedback_monitor_bridge
   settings_handler
   DESTINATION lib/${PROJECT_NAME})

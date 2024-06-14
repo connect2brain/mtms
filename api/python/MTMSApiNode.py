@@ -6,14 +6,13 @@ from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents
 
 from system_interfaces.msg import Session
-from system_interfaces.srv import StartSession, StopSession
+from system_interfaces.srv import StartSession, StopSession, RequestTrigger
 
 from event_interfaces.msg import (
     Charge,
     ChargeFeedback,
     Discharge,
     DischargeFeedback,
-    RequestTrigger,
     EventInfo,
     Pulse,
     PulseFeedback,
@@ -42,8 +41,7 @@ class MTMSApiNode(Node):
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/request_events', RequestEvents)
-
-    ROS_MESSAGE_EVENT_TRIGGER = ('/event/trigger', RequestTrigger)
+    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms_device/request_trigger', RequestTrigger)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
@@ -59,11 +57,6 @@ class MTMSApiNode(Node):
 
     ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
 
-    # TODO: This should also be a service.
-    ROS_MESSAGES = (
-        ROS_MESSAGE_EVENT_TRIGGER,
-    )
-
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
         ROS_SERVICE_STOP_DEVICE,
@@ -77,6 +70,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_REVERSE_POLARITY,
         ROS_SERVICE_IS_STIMULATION_ALLOWED,
         ROS_SERVICE_REQUEST_EVENTS,
+        ROS_SERVICE_REQUEST_TRIGGER,
     )
 
     ROS_ACTIONS = (
@@ -92,14 +86,6 @@ class MTMSApiNode(Node):
 
         self.system_state = None
         self.session = None
-
-        # Message publishers
-
-        self.ros_message_publishers = {}
-
-        for topic, message_type in self.ROS_MESSAGES:
-            publisher = self.create_publisher(message_type, topic, 10)
-            self.ros_message_publishers[topic] = publisher
 
         # Service clients
 
@@ -187,15 +173,13 @@ class MTMSApiNode(Node):
 
         return self.call_service(client, request)
 
-    def trigger_events(self):
-        topic, message_type = self.ROS_MESSAGE_EVENT_TRIGGER
+    def request_trigger(self):
+        topic, service_type = self.ROS_SERVICE_REQUEST_TRIGGER
 
-        publisher = self.ros_message_publishers[topic]
-        message = message_type()
+        client = self.ros_service_clients[topic]
+        request = service_type.Request()
 
-        publisher.publish(message)
-
-        self.printer.print_event_trigger()
+        return self.call_service(client, request)
 
     def send_pulse(self, id, execution_condition, time, channel, waveform):
         topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS

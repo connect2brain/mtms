@@ -553,12 +553,12 @@ classdef MTMSApi < handle
             obj.add_to_incomplete_events(id);
         end
 
-        function trigger_events(obj)
+        function request_trigger(obj)
         % Execute the events which have execution_condition set to ExecutionCondition.WAIT_FOR_TRIGGER.
         %
         % Does not require any parameters. Does not return any value.
 
-            obj.node.trigger_events();
+            obj.node.request_trigger();
         end
 
         % Waveforms and targeting
