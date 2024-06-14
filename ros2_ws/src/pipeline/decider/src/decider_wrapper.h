@@ -13,7 +13,8 @@
 
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
-
+#include "experiment_interfaces/msg/trial.hpp"
+#include "targeting_interfaces/msg/electric_target.hpp"
 #include "pipeline_interfaces/msg/sensory_stimulus.hpp"
 
 #include "std_msgs/msg/string.hpp"
@@ -42,11 +43,13 @@ public:
 
   void reset_module_state();
 
-  std::tuple<bool, bool, bool, bool> process(
+  std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> get_targets();
+
+  std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool> process(
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
-    bool ready_for_event_trigger);
+    bool ready_for_trial);
 
   WrapperState get_state() const;
 
@@ -54,6 +57,9 @@ public:
 
   /* Exposed to Python, defined in cpp_bindings.cpp. */
   static void log(const std::string& message);
+
+  /* Exposed to Python, defined in cpp_bindings.cpp. */
+  static void log_throttle(const std::string& message, const double_t period);
 
 private:
   /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see cpp_bindings.cpp). */

@@ -124,7 +124,7 @@ private:
   void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle);
 
   /* Logging */
-  void log_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing);
+  void log_trial(const experiment_interfaces::msg::Trial &trial);
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
 
   /* Timing */
@@ -132,7 +132,7 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  std::pair<bool, experiment_interfaces::msg::TrialResult> perform_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing, const experiment_interfaces::msg::TrialConfig &config);
+  std::pair<bool, experiment_interfaces::msg::TrialResult> perform_trial(const experiment_interfaces::msg::Trial &trial);
 
   std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
       const targeting_interfaces::msg::ElectricTarget &target, const event_interfaces::msg::WaveformsForCoilSet &target_waveforms);
