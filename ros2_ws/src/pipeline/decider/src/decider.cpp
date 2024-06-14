@@ -136,11 +136,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled",
     qos_persist_latest);
 
-  /* Publisher for LabJack trigger. */
-  this->labjack_trigger_publisher = this->create_publisher<event_interfaces::msg::RequestTrigger>(
-    "/event/trigger",
-    10);
-
   /* Publisher for latency. */
   this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
     "/pipeline/latency",
@@ -152,11 +147,18 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     10);
 
   /* Action client for performing trial. */
-  perform_trial_client = rclcpp_action::create_client<experiment_interfaces::action::PerformTrial>(
+  this->perform_trial_client = rclcpp_action::create_client<experiment_interfaces::action::PerformTrial>(
       this, "/trial/perform");
 
   while (!perform_trial_client->wait_for_action_server(2s)) {
     RCLCPP_INFO(get_logger(), "Action /trial/perform not available, waiting...");
+  }
+
+  /* Service client for LabJack trigger. */
+  this->labjack_trigger_client = this->create_client<system_interfaces::srv::RequestTrigger>("/labjack/trigger");
+
+  while (!labjack_trigger_client->wait_for_service(2s)) {
+    RCLCPP_INFO(get_logger(), "Service /labjack/trigger not available, waiting...");
   }
 
   /* Initialize variables. */
@@ -349,6 +351,34 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
 
   this->performing_trial = false;
 }
+
+/* Service clients */
+
+void EegDecider::trigger_labjack() {
+  auto request = std::make_shared<system_interfaces::srv::RequestTrigger::Request>();
+
+  using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest;
+
+  auto response_received_callback = [this](ServiceResponseFuture future) {
+    this->labjack_triggered_callback(future);
+  };
+
+  auto future_result = this->labjack_trigger_client->async_send_request(request, response_received_callback);
+
+  this->triggering_labjack = true;
+}
+
+void EegDecider::labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future) {
+  auto result = future.get().second;
+  if (result->success) {
+    RCLCPP_INFO(this->get_logger(), "Successfully triggered LabJack.");
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to trigger LabJack.");
+  }
+  this->triggering_labjack = false;
+}
+
+/* Initialization and reset functions */
 
 void EegDecider::reset_decider_state() {
   this->decider_state = this->enabled ? DeciderState::READY : DeciderState::WAITING_FOR_ENABLED;
@@ -676,7 +706,10 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
   auto time_since_previous_trial = sample_time - this->previous_trial_time;
   auto has_minimum_intertrial_interval_passed = std::isnan(this->previous_trial_time) ||
                                                 time_since_previous_trial >= this->minimum_intertrial_interval;
-  auto ready_for_trial = !performing_trial && this->trial_queue.empty() && has_minimum_intertrial_interval_passed;
+  auto ready_for_trial = !performing_trial &&
+                         !triggering_labjack &&
+                         this->trial_queue.empty() &&
+                         has_minimum_intertrial_interval_passed;
 
   /* Process the sample. */
   auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
@@ -696,9 +729,9 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
   }
 
   static bool print_once = true;
-  if (this->performing_trial) {
+  if (this->performing_trial || this->triggering_labjack) {
     if (print_once) {
-      RCLCPP_INFO(this->get_logger(), "Ignoring decider output while performing trial.");
+      RCLCPP_INFO(this->get_logger(), "Ignoring decider output while performing trial or triggering LabJack.");
       print_once = false;
     }
     return;
@@ -733,8 +766,7 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
     RCLCPP_INFO(this->get_logger(), "Triggering LabJack at time %.3f (s).", sample_time);
 
-    auto msg = event_interfaces::msg::RequestTrigger();
-    this->labjack_trigger_publisher->publish(msg);
+    this->trigger_labjack();
 
     /* Update the previous trial time. */
     this->previous_trial_time = sample_time;

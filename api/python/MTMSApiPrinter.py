@@ -202,7 +202,7 @@ class MTMSApiPrinter():
             error_str
         ))
 
-    def print_event_trigger(self):
+    def print_request_trigger(self):
         # HACK: This should probably be a feedback message that is received from the mTMS device, informing that the
         #   event trigger was successfully generated, similar to the feedback messages from the actual events.
         #
