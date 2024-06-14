@@ -184,8 +184,8 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
 
   bool success = true;
   std::shared_ptr<experiment_interfaces::msg::Trial> trial = nullptr;
-  bool send_external_trigger = false;
-  bool send_sensory_stimulus = false;
+  bool trigger_labjack = false;
+  bool request_sensory_stimulus = false;
 
   /* TODO: The logic below, as well as the difference in semantics between "sample time" and "current time", needs to
      be documented somewhere more thoroughly. */
@@ -226,19 +226,19 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     state = WrapperState::ERROR;
     success = false;
 
-    return {success, trial, send_external_trigger, send_sensory_stimulus};
+    return {success, trial, trigger_labjack, request_sensory_stimulus};
 
   } catch(const std::exception& e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     state = WrapperState::ERROR;
     success = false;
 
-    return {success, trial, send_external_trigger, send_sensory_stimulus};
+    return {success, trial, trigger_labjack, request_sensory_stimulus};
   }
 
   /* If the return value is None, return early but mark it as successful. */
   if (result.is_none()) {
-    return {success, trial, send_external_trigger, send_sensory_stimulus};
+    return {success, trial, trigger_labjack, request_sensory_stimulus};
   }
 
   /* If the return value is not None, ensure that it is a dictionary. */
@@ -247,7 +247,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     state = WrapperState::ERROR;
     success = false;
 
-    return {success, trial, send_external_trigger, send_sensory_stimulus};
+    return {success, trial, trigger_labjack, request_sensory_stimulus};
   }
 
   py::dict dict_result = result.cast<py::dict>();
@@ -264,7 +264,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     py::list py_targets = py_trial["targets"].cast<py::list>();
@@ -296,7 +296,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     py::list py_pulse_times = py_trial["pulse_times"].cast<py::list>();
@@ -314,7 +314,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     py::list py_triggers = py_trial["triggers"].cast<py::list>();
@@ -334,8 +334,8 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     trial->config.dry_run = false;
   }
 
-  if (dict_result.contains("send_external_trigger")) {
-    send_external_trigger = dict_result["send_external_trigger"].cast<bool>();
+  if (dict_result.contains("trigger_labjack")) {
+    trigger_labjack = dict_result["trigger_labjack"].cast<bool>();
   }
 
   if (dict_result.contains("sensory_stimulus")) {
@@ -347,7 +347,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py_sensory_stimulus.contains("state")) {
@@ -355,7 +355,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py_sensory_stimulus.contains("parameter")) {
@@ -363,7 +363,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py_sensory_stimulus.contains("duration")) {
@@ -371,7 +371,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py::isinstance<py::float_>(py_sensory_stimulus["time"])) {
@@ -379,7 +379,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py::isinstance<py::int_>(py_sensory_stimulus["state"])) {
@@ -387,7 +387,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py::isinstance<py::int_>(py_sensory_stimulus["parameter"])) {
@@ -395,7 +395,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     if (!py::isinstance<py::float_>(py_sensory_stimulus["duration"])) {
@@ -403,7 +403,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
       state = WrapperState::ERROR;
       success = false;
 
-      return {success, trial, send_external_trigger, send_sensory_stimulus};
+      return {success, trial, trigger_labjack, request_sensory_stimulus};
     }
 
     /* Convert each field from the dictionary to the ROS message. */
@@ -412,10 +412,10 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     output_sensory_stimulus.parameter = py_sensory_stimulus["parameter"].cast<uint16_t>();
     output_sensory_stimulus.duration = py_sensory_stimulus["duration"].cast<double_t>();
 
-    send_sensory_stimulus = true;
+    request_sensory_stimulus = true;
   }
 
-  return {success, trial, send_external_trigger, send_sensory_stimulus};
+  return {success, trial, trigger_labjack, request_sensory_stimulus};
 }
 
 rclcpp::Logger* DeciderWrapper::logger_ptr = nullptr;
