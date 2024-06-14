@@ -1,13 +1,13 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/msg/event_trigger.hpp"
+#include "event_interfaces/msg/request_trigger.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
-void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::EventTrigger> event_trigger) {
+void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::RequestTrigger> event_trigger) {
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_trigger_handler"), "FPGA not in OK state while attempting to trigger events.");
     return;
@@ -21,17 +21,17 @@ void callback([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::Even
   RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Events triggered.");
 }
 
-class EventTriggerHandler : public rclcpp::Node {
+class RequestTriggerHandler : public rclcpp::Node {
 public:
-  EventTriggerHandler() : Node("event_trigger_handler") {
+  RequestTriggerHandler() : Node("event_trigger_handler") {
 
     /* XXX: This should probably be called something else than event trigger to distinguish it. */
-    event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::EventTrigger>(
+    event_trigger_subscriber_ = this->create_subscription<event_interfaces::msg::RequestTrigger>(
         "/mtms_device/trigger", 10, callback);
   }
 
 private:
-  rclcpp::Subscription<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_subscriber_;
+  rclcpp::Subscription<event_interfaces::msg::RequestTrigger>::SharedPtr event_trigger_subscriber_;
 };
 
 int main(int argc, char **argv) {
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_NORMAL_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<EventTriggerHandler>();
+  auto node = std::make_shared<RequestTriggerHandler>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("event_trigger_handler"), "Locking memory");

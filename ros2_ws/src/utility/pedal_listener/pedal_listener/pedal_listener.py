@@ -6,7 +6,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from std_msgs.msg import Bool
-from event_interfaces.msg import EventTrigger
+from event_interfaces.msg import RequestTrigger
 
 class PedalListenerNode(Node):
 
@@ -43,7 +43,7 @@ class PedalListenerNode(Node):
         )
 
         self.event_trigger_publisher = self.create_publisher(
-            EventTrigger,
+            RequestTrigger,
             "/mtms_device/trigger",
             10
         )

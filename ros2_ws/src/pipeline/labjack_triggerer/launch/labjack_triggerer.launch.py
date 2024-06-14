@@ -16,9 +16,9 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node = Node(
-        package="triggerer",
-        executable="triggerer",
-        name="triggerer",
+        package="labjack_triggerer",
+        executable="labjack_triggerer",
+        name="labjack_triggerer",
         arguments=['--ros-args', '--log-level', logger]
     )
     ld.add_action(node)

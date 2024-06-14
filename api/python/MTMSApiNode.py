@@ -13,7 +13,7 @@ from event_interfaces.msg import (
     ChargeFeedback,
     Discharge,
     DischargeFeedback,
-    EventTrigger,
+    RequestTrigger,
     EventInfo,
     Pulse,
     PulseFeedback,
@@ -43,7 +43,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/request_events', RequestEvents)
 
-    ROS_MESSAGE_EVENT_TRIGGER = ('/event/trigger', EventTrigger)
+    ROS_MESSAGE_EVENT_TRIGGER = ('/event/trigger', RequestTrigger)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
