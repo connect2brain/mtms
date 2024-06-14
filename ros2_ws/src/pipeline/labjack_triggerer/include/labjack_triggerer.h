@@ -12,7 +12,7 @@
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
-#include "event_interfaces/msg/request_trigger.hpp"
+#include "system_interfaces/srv/request_trigger.hpp"
 
 class LabjackTriggerer : public rclcpp::Node {
 public:
@@ -25,13 +25,14 @@ private:
 
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
-  void request_trigger(const std::shared_ptr<event_interfaces::msg::RequestTrigger> msg);
+  void request_trigger(
+      [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::RequestTrigger::Request> request,
+      std::shared_ptr<system_interfaces::srv::RequestTrigger::Response> response);
 
   rclcpp::Logger logger;
   rclcpp::TimerBase::SharedPtr timer;
 
-  rclcpp::Subscription<event_interfaces::msg::RequestTrigger>::SharedPtr trigger_request_subscriber;
-
+  rclcpp::Service<system_interfaces::srv::RequestTrigger>::SharedPtr trigger_request_service;
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr mtms_device_healthcheck_subscriber;
 
   /* LabJack connection */
