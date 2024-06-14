@@ -17,7 +17,7 @@
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
-#include "event_interfaces/msg/event_trigger.hpp"
+#include "event_interfaces/msg/request_trigger.hpp"
 
 #include "experiment_interfaces/msg/trial.hpp"
 #include "experiment_interfaces/action/perform_trial.hpp"
@@ -127,7 +127,7 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
+  rclcpp::Publisher<event_interfaces::msg::RequestTrigger>::SharedPtr labjack_trigger_publisher;
 
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 

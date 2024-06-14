@@ -136,8 +136,8 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled",
     qos_persist_latest);
 
-  /* Publisher for external trigger. */
-  this->external_trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
+  /* Publisher for LabJack trigger. */
+  this->labjack_trigger_publisher = this->create_publisher<event_interfaces::msg::RequestTrigger>(
     "/event/trigger",
     10);
 
@@ -679,7 +679,7 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
   auto ready_for_trial = !performing_trial && this->trial_queue.empty() && has_minimum_intertrial_interval_passed;
 
   /* Process the sample. */
-  auto [success, trial, send_external_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
+  auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
@@ -727,22 +727,22 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     this->previous_trial_time = sample_time;
   }
 
-  /* Send external trigger if desired. */
-  if (send_external_trigger) {
+  /* Trigger LabJack if desired. */
+  if (trigger_labjack) {
     this->decision_times.push(sample_time);
 
-    RCLCPP_INFO(this->get_logger(), "Sending external trigger at time %.3f (s).", sample_time);
+    RCLCPP_INFO(this->get_logger(), "Triggering LabJack at time %.3f (s).", sample_time);
 
-    auto msg = event_interfaces::msg::EventTrigger();
-    this->external_trigger_publisher->publish(msg);
+    auto msg = event_interfaces::msg::RequestTrigger();
+    this->labjack_trigger_publisher->publish(msg);
 
     /* Update the previous trial time. */
     this->previous_trial_time = sample_time;
   }
 
-  /* Send sensory stimulus if desired. */
-  if (send_sensory_stimulus) {
-    RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
+  /* Request sensory stimulus if desired. */
+  if (request_sensory_stimulus) {
+    RCLCPP_INFO(this->get_logger(), "Requesting sensory stimulus at time %.3f (s).", sample_time);
 
     this->sensory_stimulus_publisher->publish(this->sensory_stimulus);
   }

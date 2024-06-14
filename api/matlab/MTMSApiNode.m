@@ -72,7 +72,7 @@ classdef MTMSApiNode < handle
             obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
-            obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/EventTrigger");
+            obj.event_trigger_publisher = ros2publisher(obj.node, "/event/trigger", "event_interfaces/RequestTrigger");
 
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);

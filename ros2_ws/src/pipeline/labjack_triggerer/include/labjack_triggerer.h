@@ -2,8 +2,8 @@
 // Created by alqio on 16.1.2023.
 //
 
-#ifndef EEG_PROCESSOR_TRIGGERER_H
-#define EEG_PROCESSOR_TRIGGERER_H
+#ifndef EEG_PROCESSOR_LABJACKTRIGGERER_H
+#define EEG_PROCESSOR_LABJACKTRIGGERER_H
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -12,12 +12,12 @@
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
 
-#include "event_interfaces/msg/event_trigger.hpp"
+#include "event_interfaces/msg/request_trigger.hpp"
 
-class Triggerer : public rclcpp::Node {
+class LabjackTriggerer : public rclcpp::Node {
 public:
-  Triggerer();
-  ~Triggerer();
+  LabjackTriggerer();
+  ~LabjackTriggerer();
 
 private:
   void attempt_labjack_connection();
@@ -25,15 +25,14 @@ private:
 
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
-  void process_event_trigger(const std::shared_ptr<event_interfaces::msg::EventTrigger> msg);
+  void request_trigger(const std::shared_ptr<event_interfaces::msg::RequestTrigger> msg);
 
   rclcpp::Logger logger;
   rclcpp::TimerBase::SharedPtr timer;
 
-  rclcpp::Subscription<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_subscriber;
+  rclcpp::Subscription<event_interfaces::msg::RequestTrigger>::SharedPtr trigger_request_subscriber;
 
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr mtms_device_healthcheck_subscriber;
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr event_trigger_publisher;
 
   /* LabJack connection */
   int labjack_handle = -1;
@@ -47,4 +46,4 @@ private:
   bool mtms_device_available = false;
 };
 
-#endif //EEG_PROCESSOR_TRIGGERER_H
+#endif //EEG_PROCESSOR_LABJACKTRIGGERER_H

@@ -45,7 +45,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
         "msg/Stimulus.msg"
 
-        "msg/EventTrigger.msg"
+        "msg/RequestTrigger.msg"
 
         "msg/EventInfo.msg"
         "msg/ExecutionCondition.msg"
