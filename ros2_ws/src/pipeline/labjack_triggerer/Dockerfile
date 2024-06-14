@@ -39,14 +39,14 @@ COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/pipeline/triggerer src/pipeline/triggerer/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select triggerer
+COPY ros2_ws/src/pipeline/labjack_triggerer src/pipeline/labjack_triggerer/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select labjack_triggerer
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/pipeline/triggerer/ros_entrypoint.sh .
+COPY ros2_ws/src/pipeline/labjack_triggerer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
