@@ -47,9 +47,6 @@ void TrialPerformerNode::initialize_actions() {
 
 void TrialPerformerNode::initialize_service_clients() {
   targeting_client = this->create_client<targeting_interfaces::srv::GetTargetVoltages>("/targeting/get_target_voltages");
-  while (!targeting_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /targeting/get_target_voltages not available, waiting...");
-  }
 
   reverse_polarity_client = this->create_client<targeting_interfaces::srv::ReversePolarity>("/waveforms/reverse_polarity");
   while (!reverse_polarity_client->wait_for_service(2s)) {
