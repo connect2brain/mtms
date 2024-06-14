@@ -11,7 +11,7 @@
 
 using namespace std::placeholders;
 
-const std::string LABJACK_TRIGGER_TOPIC = "/labjack/trigger";
+const std::string LABJACK_TRIGGER_SERVICE = "/labjack/trigger";
 
 LabjackTriggerer::LabjackTriggerer() : Node("labjack_triggerer"), logger(rclcpp::get_logger("labjack_triggerer")) {
   /* Subscriber for mTMS device healthcheck. */
@@ -20,11 +20,10 @@ LabjackTriggerer::LabjackTriggerer() : Node("labjack_triggerer"), logger(rclcpp:
     10,
     std::bind(&LabjackTriggerer::handle_mtms_device_healthcheck, this, _1));
 
-  /* Subscriber for trigger request. */
-  this->trigger_request_subscriber = create_subscription<event_interfaces::msg::RequestTrigger>(
-    LABJACK_TRIGGER_TOPIC,
-    10,
-    std::bind(&LabjackTriggerer::request_trigger, this, _1));
+  /* Service for trigger request. */
+  this->trigger_request_service = create_service<system_interfaces::srv::RequestTrigger>(
+    LABJACK_TRIGGER_SERVICE,
+    std::bind(&LabjackTriggerer::request_trigger, this, _1, _2));
 
   /* Attempt initial connection to LabJack. */
   attempt_labjack_connection();
@@ -73,11 +72,15 @@ void LabjackTriggerer::handle_mtms_device_healthcheck(const std::shared_ptr<syst
   this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
 }
 
-void LabjackTriggerer::request_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::RequestTrigger> msg) {
+void LabjackTriggerer::request_trigger(
+    [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::RequestTrigger::Request> request,
+    std::shared_ptr<system_interfaces::srv::RequestTrigger::Response> response) {
+
   RCLCPP_INFO(logger, "LabJack trigger requested.");
 
   if (labjack_handle == -1) {
     RCLCPP_WARN(logger, "LabJack is not connected. Unable to trigger.");
+    response->success = false;
     return;
   }
 
@@ -86,6 +89,7 @@ void LabjackTriggerer::request_trigger([[maybe_unused]] const std::shared_ptr<ev
   /* Set output port state to high. */
   int err = LJM_eWriteName(labjack_handle, name, 1);
   if (!safe_error_check(err, "Setting digital output on LabJack")) {
+    response->success = false;
     return;
   }
 
@@ -95,10 +99,12 @@ void LabjackTriggerer::request_trigger([[maybe_unused]] const std::shared_ptr<ev
   /* Set output port state to low. */
   err = LJM_eWriteName(labjack_handle, name, 0);
   if (!safe_error_check(err, "Setting digital output on LabJack")) {
+    response->success = false;
     return;
   }
 
   RCLCPP_INFO(logger, "Triggered LabJack on output port %s", name);
+  response->success = true;
 }
 
 int main(int argc, char *argv[]) {

@@ -17,7 +17,7 @@
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
-#include "event_interfaces/msg/request_trigger.hpp"
+#include "system_interfaces/srv/request_trigger.hpp"
 
 #include "experiment_interfaces/msg/trial.hpp"
 #include "experiment_interfaces/action/perform_trial.hpp"
@@ -70,8 +70,11 @@ private:
 
   void empty_trial_queue();
   void precompute_trials();
+
   void perform_trial(const experiment_interfaces::msg::Trial& trial);
   void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
+  void trigger_labjack();
+  void labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
   void initialize_module();
@@ -127,7 +130,7 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Publisher<event_interfaces::msg::RequestTrigger>::SharedPtr labjack_trigger_publisher;
+  rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedPtr labjack_trigger_client;
 
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
@@ -174,6 +177,7 @@ private:
 
   std::queue<experiment_interfaces::msg::Trial> trial_queue;
   bool performing_trial = false;
+  bool triggering_labjack = false;
 
   /* ROS parameters */
   double_t minimum_intertrial_interval;
