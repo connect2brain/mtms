@@ -15,8 +15,7 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool
 
-from experiment_interfaces.msg import TrialFeedback
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
@@ -74,11 +73,11 @@ class NeuronavigationNode(Node):
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
-        # Create subscriber for trial feedback.
-        self._trial_feedback_subscriber = self.create_subscription(
-            TrialFeedback,
-            "/trial/feedback",
-            self.trial_feedback_callback,
+        # Create subscriber for creating marker.
+        self._create_marker_subscriber = self.create_subscription(
+            CreateMarker,
+            "/neuronavigation/create_marker",
+            self.create_marker_callback,
             10,
             callback_group=callback_group,
         )
@@ -166,12 +165,11 @@ class NeuronavigationNode(Node):
         response.success = True
         return response
 
-    def trial_feedback_callback(self, msg):
-        if not msg.success:
-            self.get_logger().info('Trial not successful')
-            return
-
-        self.get_logger().info(f'Successful trial')
+    def create_marker_callback(self, msg):
+        self.get_logger().info(f'Creating a marker')
+        # TODO: This should be renamed from 'stimulation_pulse_received' to something
+        #   more generic related to the creation of a marker; however, that needs changes
+        #   on InVesalius side as well.
         self._stimulation_pulse_received()
 
     def planner_state_callback(self, msg):
