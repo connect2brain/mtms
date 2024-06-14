@@ -280,23 +280,19 @@ class ExperimentPerformerNode(Node):
 
     # Action callers
 
-    def async_perform_trial_action(self, trial, timing, config):
+    def async_perform_trial_action(self, trial):
         client = self.perform_trial_client
         goal = PerformTrial.Goal()
 
         goal.trial = trial
-        goal.timing = timing
-        goal.config = config
 
         event, result_container = self.async_action_call(client, goal)
 
         return event, result_container
 
-    def sync_perform_trial_action(self, trial, timing, config):
+    def sync_perform_trial_action(self, trial):
         event, result_container = self.async_perform_trial_action(
             trial=trial,
-            timing=timing,
-            config=config,
         )
         event.wait()
 
@@ -696,10 +692,11 @@ class ExperimentPerformerNode(Node):
                 voltage_tolerance_proportion_for_precharging=voltage_tolerance_proportion_for_precharging,
             )
 
+            trial.timing = timing
+            trial.config = config
+
             result = self.sync_perform_trial_action(
                 trial=trial,
-                timing=timing,
-                config=config,
             )
             trial_result = result.trial_result
             success = result.success

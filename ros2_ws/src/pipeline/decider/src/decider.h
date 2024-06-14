@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -18,7 +19,8 @@
 
 #include "event_interfaces/msg/event_trigger.hpp"
 
-#include "experiment_interfaces/msg/trial_feedback.hpp"
+#include "experiment_interfaces/msg/trial.hpp"
+#include "experiment_interfaces/action/perform_trial.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -54,12 +56,22 @@ public:
   EegDecider();
   ~EegDecider();
 
+  void spin();
+
 private:
+  rclcpp_action::Client<experiment_interfaces::action::PerformTrial>::SharedPtr perform_trial_client;
+  rclcpp::CallbackGroup::SharedPtr callback_group;
+
   void publish_healthcheck();
 
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
+  void empty_trial_queue();
+  void precompute_trials();
+  void perform_trial(const experiment_interfaces::msg::Trial& trial);
+  void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
   void initialize_module();
@@ -86,9 +98,10 @@ private:
 
   void calculate_latency(double_t pulse_execution_time);
   void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
-  void handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+
+  void log_trial(const experiment_interfaces::msg::Trial& trial, size_t num_of_remaining_trials);
 
   /* Inotify functions */
   void update_inotify_watch();
@@ -114,10 +127,8 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr trigger_publisher;
   rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
 
-  rclcpp::Subscription<experiment_interfaces::msg::TrialFeedback>::SharedPtr trial_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
@@ -133,7 +144,7 @@ private:
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
-  double_t previous_trigger_time = UNSET_PREVIOUS_TIME;
+  double_t previous_trial_time = UNSET_PREVIOUS_TIME;
 
   bool reinitialize = true;
 
@@ -156,16 +167,16 @@ private:
   /* For latency calculation, store the times of the previous pulse decisions in a queue. */
   std::queue<double_t> decision_times;
 
-  /* 'Ready for trigger' is set to true when the mTMS is ready to trigger the next pulse. */
-  bool ready_for_trigger = false;
-
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
 
+  std::queue<experiment_interfaces::msg::Trial> trial_queue;
+  bool performing_trial = false;
+
   /* ROS parameters */
-  double_t minimum_pulse_interval;
+  double_t minimum_intertrial_interval;
 
   /* Healthcheck */
   uint8_t status;

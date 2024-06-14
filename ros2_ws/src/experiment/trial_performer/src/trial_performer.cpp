@@ -262,7 +262,8 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 
 /* Logging */
 
-void TrialPerformerNode::log_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing) {
+void TrialPerformerNode::log_trial(const experiment_interfaces::msg::Trial &trial) {
+  auto timing = trial.timing;
   RCLCPP_INFO(this->get_logger(), "Trial:");
   RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
   RCLCPP_INFO(this->get_logger(), "  Timing:");
@@ -316,14 +317,14 @@ std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsFor
   get_multipulse_waveforms_client->async_send_request(request, response_callback);
 
   /* Wait for the response. */
-  auto future_status = future.wait_for(10s);
+  auto future_status = future.wait_for(60s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Service call timed out");
+    throw std::runtime_error("Call to GetMultipulseWaveforms service timed out");
   }
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Service get_multipulse_waveforms failed");
+    throw std::runtime_error("Call to GetMultipulseWaveforms service failed");
   }
 
   std::vector<event_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(
@@ -356,12 +357,12 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Service call timed out");
+    throw std::runtime_error("Call to GetTargetVoltages service timed out");
   }
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Service get_target_voltages failed");
+    throw std::runtime_error("Call to GetTargetVoltages service failed");
   }
 
   return {response->voltages, response->reversed_polarities};
@@ -389,7 +390,7 @@ event_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Service call timed out");
+    throw std::runtime_error("Call to GetDefaultWaveform service timed out");
   }
   auto response = future.get();
 
@@ -419,12 +420,12 @@ event_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const event
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Service call timed out");
+    throw std::runtime_error("Call to ReversePolarity service timed out");
   }
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Service reverse_polarity failed");
+    throw std::runtime_error("Call to ReversePolarity service failed");
   }
 
   return response->waveform;
@@ -453,12 +454,12 @@ void TrialPerformerNode::request_events(const std::vector<event_interfaces::msg:
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Service call timed out");
+    throw std::runtime_error("Call to RequestEvents service timed out");
   }
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Service request_events failed");
+    throw std::runtime_error("Call to RequestEvents service failed");
   }
 }
 
@@ -574,7 +575,7 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
   auto result = std::make_shared<experiment_interfaces::action::PerformTrial::Result>();
 
   /* Log trial details. */
-  log_trial(goal->trial, goal->timing);
+  log_trial(goal->trial);
 
   /* Check feasibility. */
   if (!check_trial_feasible()) {
@@ -585,7 +586,7 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
   }
 
   /* Perform the trial. */
-  auto [success, trial_result] = perform_trial(goal->trial, goal->timing, goal->config);
+  auto [success, trial_result] = perform_trial(goal->trial);
 
   /* Set result and succeed the goal. */
   result->trial_result = trial_result;
@@ -594,15 +595,19 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
   goal_handle->succeed(result);
 }
 
-std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const experiment_interfaces::msg::Trial &trial, const experiment_interfaces::msg::TrialTiming &timing, const experiment_interfaces::msg::TrialConfig &config) {
+std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const experiment_interfaces::msg::Trial &trial) {
   tic();
 
   bool success = true;
   experiment_interfaces::msg::TrialResult trial_result;
   double_t start_time;
 
+  auto timing = trial.timing;
+  auto config = trial.config;
+
   /* Always get initial voltages and waveforms to warm up the cache. */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, config.use_pulse_width_modulation_approximation);
+
   log_voltages(desired_voltages, "Desired voltages");
 
   /* Actually set voltages and perform pulses if not in dry run mode. */
@@ -741,7 +746,6 @@ void TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &des
 void TrialPerformerNode::publish_trial_feedback(bool success, double execution_time) {
   auto feedback = std::make_shared<experiment_interfaces::msg::TrialFeedback>();
   feedback->success = success;
-  feedback->execution_time = execution_time;
 
   trial_feedback_publisher->publish(*feedback);
 }
