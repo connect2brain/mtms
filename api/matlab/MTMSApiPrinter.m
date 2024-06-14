@@ -148,7 +148,7 @@ classdef MTMSApiPrinter < handle
             fprintf(str);
         end
 
-        function print_event_trigger(obj)
+        function print_request_trigger(obj)
             % HACK: This should probably be a feedback message that is received from the mtms_device, informing that the
             %   event trigger was successfully generated, similar to the feedback messages from the actual events.
             %
