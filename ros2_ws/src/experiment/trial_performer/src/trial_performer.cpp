@@ -108,12 +108,12 @@ void TrialPerformerNode::handle_session(const system_interfaces::msg::Session::S
 
 void TrialPerformerNode::update_pulse_feedback(const event_interfaces::msg::PulseFeedback::SharedPtr msg) {
   pulse_feedback[msg->id] = msg;
-  RCLCPP_INFO(get_logger(), "Event %d finished with error code: %d", msg->id, msg->error.value);
+  RCLCPP_INFO(get_logger(), "Event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
 }
 
 void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
   trigger_out_feedback[msg->id] = msg;
-  RCLCPP_INFO(get_logger(), "Event %d finished with error code: %d", msg->id, msg->error.value);
+  RCLCPP_INFO(get_logger(), "Event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
 }
 
 /* Publishers */
@@ -273,7 +273,7 @@ void TrialPerformerNode::log_trial(const experiment_interfaces::msg::Trial &tria
   RCLCPP_INFO(this->get_logger(), "Trial:");
   RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
   RCLCPP_INFO(this->get_logger(), "  Timing:");
-  RCLCPP_INFO(this->get_logger(), "    Desired start time: %.2f s", timing.desired_start_time);
+  RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
   RCLCPP_INFO(this->get_logger(), "    Allow trial to be late: %s", timing.allow_late ? "true" : "false");
 }
 
