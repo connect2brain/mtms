@@ -263,6 +263,11 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
       break;
     }
   }
+
+  /* Clear feedback. */
+  pulse_feedback.clear();
+  trigger_out_feedback.clear();
+
   return all_error_codes_zero;
 }
 
