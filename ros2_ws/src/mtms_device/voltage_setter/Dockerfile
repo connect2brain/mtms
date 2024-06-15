@@ -14,20 +14,19 @@ RUN apt-get update && \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace
-
-WORKDIR /app
-COPY ros2_ws/src/mtms_device/voltage_setter ros2_ws/src/mtms_device/voltage_setter/
-
-COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
-COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/interfaces/system_interfaces ros2_ws/src/interfaces/system_interfaces/
-
-# Build ROS packages
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
-    colcon build --symlink-install
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/mtms_device/voltage_setter src/mtms_device/voltage_setter/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select voltage_setter
 
 # Copy entrypoint
 
