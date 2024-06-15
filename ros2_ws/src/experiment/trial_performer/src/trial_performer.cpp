@@ -756,7 +756,24 @@ int main(int argc, char **argv) {
 
   auto trial_performer_node = std::make_shared<TrialPerformerNode>();
 
-  rclcpp::executors::MultiThreadedExecutor executor;
+  /* Note: Use SingleThreadedExecutor here for several reasons:
+
+    - Seems to offer better performance than MultiThreadedExecutor; the latter
+      seems to have occasional hiccup-like delays, giving rise to spikes of ~10 ms
+      in time between receiving the goal and requesting the trial-related events from
+      the mTMS device.
+    - Thread-safety won't need to be taken into account in the code.
+    - When using MultiThreadedExecutor, an action call (e.g., SetVoltages) within the action server
+      seems to occasionally crash with the following error:
+
+     [trial_performer-1] terminate called after throwing an instance of 'std::runtime_error'
+     [trial_performer-1]   what():  'data' is empty
+
+     This error doesn't seem to occur with SingleThreadedExecutor. It might be a bug in the
+     rclcpp_action library, but it's hard to say for sure. Here's a potentially relevant GitHub
+     issue: https://github.com/ros2/rclcpp/issues/2423
+  */
+  rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(trial_performer_node);
   executor.spin();
 
