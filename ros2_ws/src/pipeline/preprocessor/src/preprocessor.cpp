@@ -376,7 +376,7 @@ void EegPreprocessor::update_inotify_watch() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
   if (watch_descriptor == -1) {
       RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->working_directory.c_str());
       return;
@@ -407,8 +407,8 @@ void EegPreprocessor::inotify_timer_callback() {
         RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
         this->reinitialize = true;
       }
-      if (event->mask & (IN_CREATE | IN_DELETE)) {
-        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating preprocessor list.", event_name.c_str());
+      if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created, deleted, or moved, updating preprocessor list.", event_name.c_str());
         this->update_preprocessor_list();
       }
     }
