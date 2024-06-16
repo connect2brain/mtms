@@ -23,7 +23,7 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "/app/projects";
 
-const std::string DEFAULT_PREPROCESSOR_NAME = "dummy";
+const std::string DEFAULT_PREPROCESSOR_NAME = "example";
 
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
