@@ -627,7 +627,8 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
 
     /* Determine the start time of the trial. */
     if (timing.allow_late) {
-      /* If trial is allowed to be late, set the start time to the earliest possible time. */
+      /* If trial is allowed to be late, set the start time to the earliest possible time. The marginal
+         is added because it takes a while to request the events from the mTMS device. */
       double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
       start_time = std::max(earliest_start_time, timing.desired_start_time);
 
@@ -643,7 +644,11 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
     /* Request events. */
     request_events(pulses, trigger_outs);
 
+    /* For troubleshooting purposes, log the time passed after requesting events. */
     toc("Time passed after requesting events");
+
+    /* Fill in the earliest start time of the trial as the time right after requesting events. */
+    trial_result.earliest_start_time = this->get_current_time();
 
     /* Wait for events to finish. */
     success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
