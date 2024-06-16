@@ -88,6 +88,9 @@ class Decider:
         # Alternate between different target types.
         self.target_type = 0
 
+        # Open a file for writing decision times.
+        self.file = open("decision_times.txt", "a")
+
     def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial):
         self.sample_count += 1
 
@@ -104,6 +107,10 @@ class Decider:
         # Otherwise, perform trial once every two seconds.
         if self.sample_count % self.trial_interval_in_samples != 0:
             return
+
+        # Write the decision time into a file.
+        self.file.write("{:.4f}\n".format(current_time))
+        self.file.flush()
 
         # Select the target type.
         targets = self.targets[self.target_type]
