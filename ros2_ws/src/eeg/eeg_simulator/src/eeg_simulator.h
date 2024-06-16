@@ -38,7 +38,7 @@ private:
   void publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
   void handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
-  std::tuple<int, double, bool> get_dataset_info(const std::string& data_file_path);
+  std::tuple<bool, int, double, bool> get_dataset_info(const std::string& data_file_path);
   std::vector<project_interfaces::msg::Dataset> list_datasets(const std::string& path);
   void update_dataset_list();
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
