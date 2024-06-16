@@ -157,7 +157,7 @@ private:
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
-  double_t previous_trial_time = UNSET_PREVIOUS_TIME;
+  double_t previous_stimulation_time = UNSET_PREVIOUS_TIME;
 
   bool reinitialize = true;
 
