@@ -22,7 +22,7 @@ const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "/app/projects";
 
-const std::string DEFAULT_DECIDER_NAME = "dummy";
+const std::string DEFAULT_DECIDER_NAME = "example";
 
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;

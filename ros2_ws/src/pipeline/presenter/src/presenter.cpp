@@ -21,7 +21,7 @@ const std::string SENSORY_STIMULUS_TOPIC = "/pipeline/sensory_stimulus";
 
 const std::string PROJECTS_DIRECTORY = "/app/projects";
 
-const std::string DEFAULT_PRESENTER_NAME = "dummy";
+const std::string DEFAULT_PRESENTER_NAME = "example";
 
 /* XXX: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
