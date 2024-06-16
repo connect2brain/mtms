@@ -533,13 +533,7 @@ void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::
   this->active_project = msg->data;
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
-  bool success = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/decider");
-  if (success) {
-    this->modules = this->list_python_modules_in_working_directory();
-  } else {
-    this->modules.clear();
-  }
-
+  this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/decider");
   update_decider_list();
 
   if (this->modules.size() > 0) {
@@ -636,6 +630,11 @@ void EegDecider::inotify_timer_callback() {
 }
 
 void EegDecider::update_decider_list() {
+  if (is_working_directory_set) {
+    this->modules = this->list_python_modules_in_working_directory();
+  } else {
+    this->modules.clear();
+  }
   auto msg = project_interfaces::msg::DeciderList();
   msg.scripts = this->modules;
 

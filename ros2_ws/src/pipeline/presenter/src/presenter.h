@@ -74,6 +74,7 @@ private:
   std::string active_project;
 
   std::string working_directory  = UNSET_STRING;
+  bool is_working_directory_set = false;
   std::string module_name = UNSET_STRING;
 
   std::vector<std::string> modules;

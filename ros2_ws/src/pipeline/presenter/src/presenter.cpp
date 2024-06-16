@@ -214,13 +214,7 @@ void EegPresenter::handle_set_active_project(const std::shared_ptr<std_msgs::msg
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
-  bool success = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/presenter");
-  if (success) {
-    this->modules = this->list_python_modules_in_working_directory();
-  } else {
-    this->modules.clear();
-  }
-
+  this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/presenter");
   update_presenter_list();
 
   if (this->modules.size() > 0) {
@@ -317,6 +311,11 @@ void EegPresenter::inotify_timer_callback() {
 }
 
 void EegPresenter::update_presenter_list() {
+  if (this->is_working_directory_set) {
+    this->modules = this->list_python_modules_in_working_directory();
+  } else {
+    this->modules.clear();
+  }
   auto msg = project_interfaces::msg::PresenterList();
   msg.scripts = this->modules;
 
