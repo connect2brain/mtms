@@ -63,9 +63,13 @@ if [ "$TIME_FILTERS" = false ]; then
     LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail 100"
     LOG_CMD="$LOG_CMD -f"
     [ ! -z "$CONTAINER_NAME" ] && LOG_CMD="$LOG_CMD $CONTAINER_NAME"
+
+    # XXX: Use a custom script to convert UTC to local time. This is a workaround for docker-compose not
+    #   supporting local timezones in logs.
+    LOG_CMD="$LOG_CMD | docker-compose-logs-localtime"
+
     LOG_CMD="$LOG_CMD | $FORMAT_CMD"
     [ ! -z "$SAVE_TO" ] && LOG_CMD="$LOG_CMD | tee $SAVE_TO"
-
     eval $LOG_CMD
 else
     # If specific time filters are provided, use journalctl
