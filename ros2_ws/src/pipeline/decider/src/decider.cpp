@@ -232,7 +232,7 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
     this->first_sample_of_session = true;
 
     this->reinitialize = true;
-    this->previous_trial_time = UNSET_PREVIOUS_TIME;
+    this->previous_stimulation_time = UNSET_PREVIOUS_TIME;
 
     /* Reset the decider state when the session is stopped. */
     reset_decider_state();
@@ -295,7 +295,6 @@ void EegDecider::precompute_trials() {
   }
 
   RCLCPP_INFO(this->get_logger(), "Pre-computing %zu trials.", num_of_trials);
-  RCLCPP_INFO(this->get_logger(), " ");
 
   for (auto targets : trials) {
     auto trial = experiment_interfaces::msg::Trial();
@@ -384,6 +383,7 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
   if (result.code != rclcpp_action::ResultCode::SUCCEEDED) {
     RCLCPP_ERROR(this->get_logger(), "Trial failed");
   }
+  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Trial succeeded");
 
   /* If the trial was a dry run, return early without computing the latency. */
@@ -753,8 +753,8 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
   }
 
   /* Determine if we are ready for a trial. */
-  auto time_since_previous_trial = sample_time - this->previous_trial_time;
-  auto has_minimum_intertrial_interval_passed = std::isnan(this->previous_trial_time) ||
+  auto time_since_previous_trial = sample_time - this->previous_stimulation_time;
+  auto has_minimum_intertrial_interval_passed = std::isnan(this->previous_stimulation_time) ||
                                                 time_since_previous_trial >= this->minimum_intertrial_interval;
   auto ready_for_trial = !performing_trial &&
                          !triggering_labjack &&
@@ -778,22 +778,24 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
-  static bool print_once = true;
-  if (this->performing_trial || this->triggering_labjack) {
-    if (print_once) {
-      RCLCPP_INFO(this->get_logger(), "Ignoring decider output while performing trial or triggering LabJack.");
-      print_once = false;
-    }
+  bool is_trial_requested = trial != nullptr;
+
+  /* Note: 'Stimulation' encompasses both trial and LabJack trigger. */
+  bool is_stimulation_requested = is_trial_requested || trigger_labjack;
+
+  bool is_already_stimulating = this->performing_trial || this->triggering_labjack;
+
+  /* Check that the decider is not already stimulating. */
+  if (is_stimulation_requested && is_already_stimulating) {
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or triggering LabJack, ignoring the request.");
     return;
   }
-  print_once = true;
 
   /* Check that the minimum pulse interval is respected. */
-  if (trial != nullptr && !has_minimum_intertrial_interval_passed) {
-    RCLCPP_ERROR(this->get_logger(), "Minimum intertrial interval (%.1f s) not respected (time since previous trial: %.3f s), not performing trial at time %.3f (s).",
+  if (is_stimulation_requested && !has_minimum_intertrial_interval_passed) {
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but minimum intertrial interval (%.1f s) not respected (time since previous stimulation: %.3f s), ignoring the request.",
                  this->minimum_intertrial_interval,
-                 time_since_previous_trial,
-                 sample_time);
+                 time_since_previous_trial);
     return;
   }
 
@@ -801,15 +803,15 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
   auto end_time = std::chrono::high_resolution_clock::now();
   double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-  /* Add trial to the queue if desired. */
-  if (trial != nullptr) {
+  /* Add trial to the queue if requested. */
+  if (is_trial_requested) {
     this->trial_queue.push({*trial, sample_time});
 
-    /* Update the previous trial time. */
-    this->previous_trial_time = sample_time;
+    /* Update the previous stimulation time. */
+    this->previous_stimulation_time = sample_time;
   }
 
-  /* Trigger LabJack if desired. */
+  /* Trigger LabJack if requested. */
   if (trigger_labjack) {
     this->labjack_decision_times.push(sample_time);
 
@@ -817,11 +819,11 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
     this->trigger_labjack();
 
-    /* Update the previous trial time. */
-    this->previous_trial_time = sample_time;
+    /* Update the previous stimulation time. */
+    this->previous_stimulation_time = sample_time;
   }
 
-  /* Request sensory stimulus if desired. */
+  /* Request sensory stimulus if requested. */
   if (request_sensory_stimulus) {
     RCLCPP_INFO(this->get_logger(), "Requesting sensory stimulus at time %.3f (s).", sample_time);
 
