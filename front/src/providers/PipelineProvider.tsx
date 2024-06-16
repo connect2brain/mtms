@@ -5,7 +5,7 @@ import { ros } from 'ros/ros'
 
 interface Latency extends ROSLIB.Message {
   latency: number
-  sample_time: number
+  decision_time: number
 }
 
 interface PreprocessorList extends ROSLIB.Message {
