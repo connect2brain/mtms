@@ -99,7 +99,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
     "/eeg/trigger",
     10,
-    std::bind(&EegDecider::handle_eeg_trigger, this, _1));
+    std::bind(&EegDecider::handle_trigger_from_eeg_device, this, _1));
 
   /* Subscriber for active project. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -323,17 +323,33 @@ void EegDecider::precompute_trials() {
     trial.timing = timing;
     trial.config = config;
 
-    this->trial_queue.push(trial);
+    /* Use a dummy decision time for pre-computed trials. */
+    double_t decision_time = 0.0;
+
+    this->trial_queue.push({trial, decision_time});
   }
+}
+
+/* Helpers */
+
+std::string EegDecider::goal_id_to_string(const rclcpp_action::GoalUUID &uuid) {
+  std::ostringstream oss;
+  for (auto byte : uuid) {
+    oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+  }
+  return oss.str();
 }
 
 /* Action clients */
 
-void EegDecider::perform_trial(const experiment_interfaces::msg::Trial& trial) {
+void EegDecider::perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time) {
   auto goal = experiment_interfaces::action::PerformTrial::Goal();
   goal.trial = trial;
 
   auto send_goal_options = rclcpp_action::Client<experiment_interfaces::action::PerformTrial>::SendGoalOptions();
+  send_goal_options.goal_response_callback = [this, trial, decision_time](std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+    this->goal_response_callback(goal_handle, trial, decision_time);
+  };
   send_goal_options.result_callback = std::bind(&EegDecider::trial_performed_callback, this, std::placeholders::_1);
 
   perform_trial_client->async_send_goal(goal, send_goal_options);
@@ -341,15 +357,57 @@ void EegDecider::perform_trial(const experiment_interfaces::msg::Trial& trial) {
   this->performing_trial = true;
 }
 
-void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result) {
-  if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-    RCLCPP_INFO(this->get_logger(), "Trial succeeded");
+void EegDecider::goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time) {
+  if (goal_handle) {
+    GoalMetadata metadata = {trial, decision_time};
+    auto goal_id_str = goal_id_to_string(goal_handle->get_goal_id());
+    this->goal_to_metadata_map[goal_id_str] = metadata;
   } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to send goal");
+  }
+}
+
+void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result) {
+  this->performing_trial = false;
+
+  auto goal_id_str = goal_id_to_string(result.goal_id);
+  auto map_entry = this->goal_to_metadata_map.find(goal_id_str);
+
+  if (map_entry == this->goal_to_metadata_map.end()) {
+    RCLCPP_ERROR(this->get_logger(), "Could not find the corresponding metadata for the goal handle");
+    return;
+  }
+
+  GoalMetadata metadata = map_entry->second;
+  this->goal_to_metadata_map.erase(map_entry);
+
+  if (result.code != rclcpp_action::ResultCode::SUCCEEDED) {
     RCLCPP_ERROR(this->get_logger(), "Trial failed");
   }
+  RCLCPP_INFO(this->get_logger(), "Trial succeeded");
+
+  /* If the trial was a dry run, return early without computing the latency. */
+  auto trial_config = metadata.trial.config;
+  if (trial_config.dry_run) {
+    RCLCPP_INFO(this->get_logger(), " ");
+    return;
+  }
+
+  auto decision_time = metadata.decision_time;
+  auto earliest_start_time = result.result->trial_result.earliest_start_time;
+
+  /* Calculate the time difference between the earliest possible start time for the trial and the time based on which
+     the decision was made. */
+  double_t time_difference = earliest_start_time - decision_time;
+  RCLCPP_INFO(this->get_logger(), "  - End-to-end latency of the trial: %.1f (ms)", time_difference * 1000);
   RCLCPP_INFO(this->get_logger(), " ");
 
-  this->performing_trial = false;
+  /* Publish latency ROS message. */
+  auto msg = pipeline_interfaces::msg::Latency();
+  msg.latency = time_difference;
+  msg.decision_time = decision_time;
+
+  this->latency_publisher->publish(msg);
 }
 
 /* Service clients */
@@ -599,37 +657,29 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-void EegDecider::calculate_latency(double_t pulse_execution_time) {
-  if (!this->decision_times.empty()) {
-    double_t sample_time = this->decision_times.front();
-    this->decision_times.pop();
+/* Handle incoming trigger from the EEG device, indicating a pulse when using LabJack to trigger an external TMS device. */
+void EegDecider::handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> trigger_msg) {
+  auto eeg_trigger_time = trigger_msg->time;
 
-    /* Calculate the time difference between the decision time and the pulse execution time. */
-    double_t time_difference = pulse_execution_time - sample_time;
-
-    RCLCPP_INFO(this->get_logger(), "Time difference between the decision time and the pulse: %.5f (s)", time_difference);
-
-    /* Publish latency ROS message. */
-    auto msg = pipeline_interfaces::msg::Latency();
-    msg.latency = time_difference;
-    msg.sample_time = sample_time;
-
-    this->latency_publisher->publish(msg);
-
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "No previous pulse times found in the queue. Can't calculate latency.");
-  }
-}
-
-/* Handle EEG trigger, indicating a pulse IF mTMS device is available. If not, ignore the EEG trigger, as we get direct
-   feedback about the pulse from the mTMS device. */
-void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
-  if (this->mtms_device_available) {
-    RCLCPP_INFO(this->get_logger(), "Received EEG trigger, but mTMS device is available, ignoring.");
+  if (this->labjack_decision_times.empty()) {
     return;
   }
-  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", msg->time);
-  this->calculate_latency(msg->time);
+  RCLCPP_INFO(this->get_logger(), "Registered trigger from EEG device at: %.4f (s), interpreting as feedback from TMS.", eeg_trigger_time);
+
+  double_t decision_time = this->labjack_decision_times.front();
+  this->labjack_decision_times.pop();
+
+  /* Calculate the time difference between the incoming EEG trigger and the decision time. */
+  double_t time_difference = eeg_trigger_time - decision_time;
+
+  RCLCPP_INFO(this->get_logger(), "Time difference between deciding to trigger LabJack and the incoming EEG trigger: %.4f (s)", time_difference);
+
+  /* Publish latency ROS message. */
+  auto msg = pipeline_interfaces::msg::Latency();
+  msg.latency = time_difference;
+  msg.decision_time = decision_time;
+
+  this->latency_publisher->publish(msg);
 }
 
 void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
@@ -753,8 +803,7 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   /* Add trial to the queue if desired. */
   if (trial != nullptr) {
-    RCLCPP_INFO(this->get_logger(), "Adding trial to the queue at time %.3f (s).", sample_time);
-    this->trial_queue.push(*trial);
+    this->trial_queue.push({*trial, sample_time});
 
     /* Update the previous trial time. */
     this->previous_trial_time = sample_time;
@@ -762,7 +811,7 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   /* Trigger LabJack if desired. */
   if (trigger_labjack) {
-    this->decision_times.push(sample_time);
+    this->labjack_decision_times.push(sample_time);
 
     RCLCPP_INFO(this->get_logger(), "Triggering LabJack at time %.3f (s).", sample_time);
 
@@ -789,10 +838,10 @@ void EegDecider::spin() {
     if (!this->trial_queue.empty() && !this->performing_trial) {
       auto num_of_remaining_trials = this->trial_queue.size();
 
-      auto trial = this->trial_queue.front();
+      auto [trial, decision_time] = this->trial_queue.front();
       this->trial_queue.pop();
 
-      this->perform_trial(trial);
+      this->perform_trial(trial, decision_time);
       this->log_trial(trial, num_of_remaining_trials);
     }
   }
