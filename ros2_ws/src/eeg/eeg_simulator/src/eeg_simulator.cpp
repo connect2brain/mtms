@@ -621,7 +621,7 @@ void EegSimulator::update_inotify_watch() {
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->data_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->data_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
   if (watch_descriptor == -1) {
       RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->data_directory.c_str());
       return;
@@ -646,8 +646,8 @@ void EegSimulator::inotify_timer_callback() {
     struct inotify_event *event = (struct inotify_event *)&inotify_buffer[i];
     if (event->len) {
       std::string event_name = event->name;
-      if (event->mask & (IN_CREATE | IN_DELETE)) {
-        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating dataset list.", event_name.c_str());
+      if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created, deleted, or moved, updating dataset list.", event_name.c_str());
         this->update_dataset_list();
       }
     }
