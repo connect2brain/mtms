@@ -49,6 +49,14 @@ enum class DeciderState {
   MODULE_ERROR
 };
 
+struct GoalMetadata {
+  experiment_interfaces::msg::Trial trial;
+
+  /* The time of the sample based on which the decision to perform a trial was made. */
+  double decision_time;
+};
+
+
 class DeciderWrapper;
 
 class EegDecider : public rclcpp::Node {
@@ -68,10 +76,13 @@ private:
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
 
+  std::string goal_id_to_string(const rclcpp_action::GoalUUID &uuid);
+
   void empty_trial_queue();
   void precompute_trials();
 
-  void perform_trial(const experiment_interfaces::msg::Trial& trial);
+  void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
+  void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
   void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
   void trigger_labjack();
   void labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future);
@@ -99,8 +110,7 @@ private:
 
   void check_dropped_samples(double_t sample_time);
 
-  void calculate_latency(double_t pulse_execution_time);
-  void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
+  void handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
 
@@ -167,15 +177,17 @@ private:
   /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
 
-  /* For latency calculation, store the times of the previous pulse decisions in a queue. */
-  std::queue<double_t> decision_times;
+  /* For latency calculation using LabJack, store the times of triggering LabJack in a queue. */
+  std::queue<double_t> labjack_decision_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
 
-  std::queue<experiment_interfaces::msg::Trial> trial_queue;
+  std::queue<std::pair<experiment_interfaces::msg::Trial, double>> trial_queue;
+  std::map<std::string, GoalMetadata> goal_to_metadata_map;
+
   bool performing_trial = false;
   bool triggering_labjack = false;
 
