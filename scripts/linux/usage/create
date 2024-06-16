@@ -36,5 +36,5 @@ python3 $MTMS_ROOT/scripts/python/generate_random_data.py --dataset_name "Random
 echo ""
 echo "Project successfully created: ${BOLD}$PROJECT_NAME${RESET}"
 echo ""
-echo "The project now automatically shows up in the web interface."
+echo "Please refresh the web interface (ctrl + r) to see the new project."
 echo ""
