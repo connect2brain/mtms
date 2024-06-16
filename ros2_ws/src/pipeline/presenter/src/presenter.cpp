@@ -19,7 +19,7 @@ using namespace std::placeholders;
 
 const std::string SENSORY_STIMULUS_TOPIC = "/pipeline/sensory_stimulus";
 
-const std::string PROJECTS_DIRECTORY = "projects/";
+const std::string PROJECTS_DIRECTORY = "/app/projects";
 
 const std::string DEFAULT_PRESENTER_NAME = "dummy";
 
@@ -119,13 +119,13 @@ EegPresenter::~EegPresenter() {
 /* Functions to re-initialize the presenter state. */
 void EegPresenter::initialize_presenter_module() {
   if (!this->enabled ||
-      this->script_directory == UNSET_STRING ||
+      this->working_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING) {
 
     return;
   }
   this->presenter_wrapper->initialize_module(
-    this->script_directory,
+    this->working_directory,
     this->module_name);
 }
 
@@ -212,9 +212,14 @@ void EegPresenter::handle_set_presenter_module(
 void EegPresenter::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
-  this->script_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/presenter";
-
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
+
+  bool success = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/presenter");
+  if (success) {
+    this->modules = this->list_python_modules_in_working_directory();
+  } else {
+    this->modules.clear();
+  }
 
   update_presenter_list();
 
@@ -233,16 +238,47 @@ void EegPresenter::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   update_inotify_watch();
 }
 
-/* Inotify functions */
+/* File-system related functions */
+
+bool EegPresenter::change_working_directory(const std::string path) {
+  this->working_directory = path;
+
+  /* Check that the directory exists. */
+  if (!std::filesystem::exists(this->working_directory) || !std::filesystem::is_directory(this->working_directory)) {
+    RCLCPP_ERROR(this->get_logger(), "Directory does not exist: %s.", path.c_str());
+    return false;
+  }
+
+  /* Change the working directory to the project directory. */
+  if (chdir(this->working_directory.c_str()) != 0) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to change working directory to: %s.", this->working_directory.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+std::vector<std::string> EegPresenter::list_python_modules_in_working_directory() {
+  std::vector<std::string> modules;
+
+  /* List all .py files in the current working directory. */
+  auto path = std::filesystem::current_path();
+  for (const auto &entry : std::filesystem::directory_iterator(path)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".py") {
+      modules.push_back(entry.path().stem().string());
+    }
+  }
+  return modules;
+}
 
 void EegPresenter::update_inotify_watch() {
   /* Remove the old watch. */
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->script_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
   if (watch_descriptor == -1) {
-      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->script_directory.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->working_directory.c_str());
       return;
   }
 }
@@ -280,27 +316,7 @@ void EegPresenter::inotify_timer_callback() {
   }
 }
 
-std::vector<std::string> EegPresenter::list_python_modules(const std::string& path) {
-  std::vector<std::string> modules;
-
-  /* Check that the directory exists. */
-  if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-    RCLCPP_WARN(this->get_logger(), "Warning: Directory does not exist: %s.", path.c_str());
-    return modules;
-  }
-
-  /* List all .py files in the directory. */
-  for (const auto &entry : std::filesystem::directory_iterator(path)) {
-    if (entry.is_regular_file() && entry.path().extension() == ".py") {
-      modules.push_back(entry.path().stem().string());
-    }
-  }
-  return modules;
-}
-
 void EegPresenter::update_presenter_list() {
-  this->modules = this->list_python_modules(this->script_directory);
-
   auto msg = project_interfaces::msg::PresenterList();
   msg.scripts = this->modules;
 
