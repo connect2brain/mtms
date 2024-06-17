@@ -264,3 +264,19 @@ services:
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
+
+  waveform_approximator:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/targeting/waveform_approximator/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    volumes:
+      # Mount the whole MATLAB installation into the container; this is needed for the container
+      # to be able to find MATLAB license (located in /usr/local/MATLAB/[version]/licenses/).
+      #
+      # A better solution would be to mount only the license file, but the MATLAB version is defined
+      # site-specific .env file (e.g., sites/Aalto/.env), which is not easily available for
+      # docker-compose.yml, but only for Dockerfile.
+      - '/usr/local/MATLAB:/usr/local/MATLAB'
+    network_mode: host
