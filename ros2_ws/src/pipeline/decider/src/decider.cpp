@@ -380,8 +380,13 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
   GoalMetadata metadata = map_entry->second;
   this->goal_to_metadata_map.erase(map_entry);
 
-  if (result.code != rclcpp_action::ResultCode::SUCCEEDED) {
+  bool success = result.code == rclcpp_action::ResultCode::SUCCEEDED && result.result->success;
+
+  if (!success) {
     RCLCPP_ERROR(this->get_logger(), "Trial failed");
+
+    /* If the trial failed, return early without computing the latency. */
+    return;
   }
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Trial succeeded");
