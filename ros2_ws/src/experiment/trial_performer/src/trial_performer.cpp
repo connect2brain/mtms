@@ -116,7 +116,7 @@ void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg
   RCLCPP_INFO(get_logger(), "Event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
 }
 
-/* Publishers */
+/* Using publishers */
 
 void TrialPerformerNode::create_marker() {
   RCLCPP_INFO(this->get_logger(), "Creating marker...");
@@ -276,10 +276,15 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 void TrialPerformerNode::log_trial(const experiment_interfaces::msg::Trial &trial) {
   auto timing = trial.timing;
   RCLCPP_INFO(this->get_logger(), "Trial:");
+  if (trial.config.dry_run) {
+    RCLCPP_INFO(this->get_logger(), "  Dry run");
+  }
   RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
-  RCLCPP_INFO(this->get_logger(), "  Timing:");
-  RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
-  RCLCPP_INFO(this->get_logger(), "    Allow trial to be late: %s", timing.allow_late ? "true" : "false");
+  if (!trial.config.dry_run) {
+    RCLCPP_INFO(this->get_logger(), "  Timing:");
+    RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
+    RCLCPP_INFO(this->get_logger(), "    Allow trial to be late: %s", timing.allow_late ? "true" : "false");
+  }
 }
 
 void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
@@ -561,18 +566,15 @@ std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::
 /* Goal handling */
 
 rclcpp_action::GoalResponse TrialPerformerNode::handle_goal(
-    const rclcpp_action::GoalUUID &uuid,
-    std::shared_ptr<const experiment_interfaces::action::PerformTrial::Goal> goal) {
+    [[maybe_unused]] const rclcpp_action::GoalUUID &uuid,
+    [[maybe_unused]] std::shared_ptr<const experiment_interfaces::action::PerformTrial::Goal> goal) {
   RCLCPP_INFO(get_logger(), "Received goal request");
-  (void)uuid;
-  (void)goal;
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
 rclcpp_action::CancelResponse TrialPerformerNode::handle_cancel(
-    const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+    [[maybe_unused]] const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
   RCLCPP_INFO(get_logger(), "Received request to cancel goal");
-  (void)goal_handle;
   return rclcpp_action::CancelResponse::ACCEPT;
 }
 
