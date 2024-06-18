@@ -109,7 +109,7 @@ private:
   event_interfaces::msg::Waveform reverse_polarity(const event_interfaces::msg::Waveform &waveform);
   void request_events(const std::vector<event_interfaces::msg::Pulse> &pulses, const std::vector<event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
-  void set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
+  bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
 
   /* Action calls */
   std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> analyze_mep(const mep_interfaces::msg::MepConfiguration &mep_config, double time);
