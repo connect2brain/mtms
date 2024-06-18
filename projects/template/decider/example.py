@@ -13,8 +13,8 @@
 # command line), as 2.0 seconds is the default minimum intertrial interval for safety reasons.
 
 
-# As an example, import numpy. Native Python modules and other third-party libraries can be imported in the
-# same way. Of third-party libraries, the following are currently available:
+# Native Python modules and other third-party libraries can be imported here. Of third-party libraries,
+# the following are currently available:
 #
 #  - numpy
 #  - scipy
@@ -23,7 +23,12 @@
 #  - mneflow
 #
 # If more third-party libraries are needed, they can be installed by adding them in
-# ros2_ws/src/pipeline/decider/Dockerfile.
+# ros2_ws/src/pipeline/decider/Dockerfile, and running 'build' on the command line after
+# modifying the file.
+
+import multiprocessing
+import time
+
 import numpy as np
 
 # 'print' and 'print_throttle' are custom functions that log messages to the decider log.
@@ -197,6 +202,16 @@ class Decider:
         # into a file. Other information about the analysis can be written into a file, as well, for later analysis.
         self.file = open("decision_times.txt", "a")
 
+        # Initialize a multiprocessing pool with one process. The pool is used so that EEG/EMG sample stream processing can be
+        # continued while a long-standing computation is performed in the background.
+        self.pool = multiprocessing.Pool(processes=1)
+
+        self.model_training_interval = 10  # seconds
+        self.model_training_interval_in_samples = int(self.sampling_frequency * self.model_training_interval)
+
+        # A variable to store the ongoing training process. This is used to check if the training process is finished.
+        self.training_process = None
+
     def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial):
         """The 'process' method is called by the pipeline for each new EEG/EMG sample. The method receives the following arguments:
 
@@ -266,6 +281,34 @@ class Decider:
         if not np.all(valid_samples):
             return
 
+        # Start training a model every 10 seconds, as defined by self.model_training_interval_in_samples.
+        #
+        # See Python's multiprocessing documentation for more information on how to use the multiprocessing module:
+        # https://docs.python.org/3/library/multiprocessing.html
+        #
+        if self.sample_count % self.model_training_interval_in_samples == 0:
+            print("Starting to train a model at time {:.4f}".format(current_time))
+            self.training_process = self.pool.apply_async(train_model, (
+                eeg_samples,
+            ))
+
+        # If the training is finished, get the model parameters and execution time.
+        if self.training_process is not None:
+            try:
+                model_parameters, execution_time = self.training_process.get(timeout=0)
+
+                print("Finished training a model at time {:.4f}".format(current_time))
+                self.training_process = None
+
+                # Print the latest model parameters and execution time.
+                print("Model parameters: {}, Execution time (s): {:.4f}".format(
+                    model_parameters,
+                    execution_time,
+                    current_time))
+
+            except multiprocessing.TimeoutError as e:
+                pass
+
         # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval_in_samples.
         if self.sample_count % self.intertrial_interval_in_samples != 0:
             return
@@ -311,3 +354,11 @@ class Decider:
             # is always timed as soon as possible.
             'trigger_labjack': False,
         }
+
+
+def train_model(X):
+    # Train a model here. For now, just sleep for a while.
+    time.sleep(6.0)
+
+    # Return a dummy result; the first element are the model parameters, and the second element is the execution time in seconds.
+    return np.array([1.0, 2.0, 3.0]), 0.2
