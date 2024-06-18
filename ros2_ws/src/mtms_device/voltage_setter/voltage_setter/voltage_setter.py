@@ -198,7 +198,6 @@ class VoltageSetterNode(Node):
         goal_handle.succeed()
 
         result.success = success
-        self.logger.info('{}: Done.'.format(goal_id))
 
         return result
 

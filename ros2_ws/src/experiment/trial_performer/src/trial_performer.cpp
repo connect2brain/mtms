@@ -492,7 +492,7 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   send_goal_options.result_callback =
       [&promise](const rclcpp_action::ClientGoalHandle<mtms_device_interfaces::action::SetVoltages>::WrappedResult &result) {
         if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-          promise.set_value(true);
+          promise.set_value(result.result->success);
         } else {
           promise.set_value(false);
         }
@@ -518,7 +518,12 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
     return false;
   }
 
-  return future.get();
+  bool success = future.get();
+  if (!success) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to set voltages");
+  }
+
+  return success;
 }
 
 std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::analyze_mep(const mep_interfaces::msg::MepConfiguration &mep_config, double time) {
@@ -601,6 +606,11 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
   /* Perform the trial. */
   auto [success, trial_result] = perform_trial(goal->trial);
 
+  /* Log trial success. */
+  RCLCPP_INFO(this->get_logger(), "%s completed %s.",
+    goal->trial.config.dry_run ? "Dry run" : "Trial",
+    success ? "successfully" : "with errors");
+
   /* Set result and succeed the goal. */
   result->trial_result = trial_result;
   result->success = success;
@@ -625,7 +635,10 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
 
   /* Actually set voltages and perform pulses if not in dry run mode. */
   if (!config.dry_run) {
-    set_voltages_if_needed(desired_voltages, config.voltage_tolerance_proportion_for_precharging);
+    success = success && set_voltages_if_needed(desired_voltages, config.voltage_tolerance_proportion_for_precharging);
+    if (!success) {
+      return {false, trial_result};
+    }
 
     /* Determine the start time of the trial. */
     if (timing.allow_late) {
@@ -666,16 +679,12 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
   /* Fill trial result. */
   trial_result.actual_start_time = start_time;
 
-  RCLCPP_INFO(this->get_logger(), "%s completed %s.",
-    config.dry_run ? "Dry run" : "Trial",
-    success ? "successfully" : "with errors");
-
   auto voltages_after_trial = get_actual_voltages();
   log_voltages(voltages_after_trial, "Voltages after trial");
 
   if (config.recharge_after_trial) {
     RCLCPP_INFO(this->get_logger(), "Recharging...");
-    set_voltages(desired_voltages);
+    success = success && set_voltages(desired_voltages);
 
     auto voltages_after_recharging = get_actual_voltages();
     log_voltages(voltages_after_recharging, "Voltages after recharging");
@@ -738,7 +747,9 @@ std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsFor
   return {desired_voltages, approximated_waveforms};
 }
 
-void TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging) {
+bool TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging) {
+  bool success = true;
+
   auto actual_voltages = get_actual_voltages();
   log_voltages(actual_voltages, "Actual voltages");
 
@@ -759,8 +770,9 @@ void TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &des
   }
 
   if (precharge_needed) {
-    set_voltages(desired_voltages);
+    success = set_voltages(desired_voltages);
   }
+  return success;
 }
 
 int main(int argc, char **argv) {
