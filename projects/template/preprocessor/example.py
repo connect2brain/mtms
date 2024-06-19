@@ -1,13 +1,14 @@
-import multiprocessing
-import time
+# An example preprocessor that does not do any actual processing to the data, just
+# passes the data through. This can be a useful starting point for more advanced
+# preprocessing algorithms. For another example of a preprocessor, see `sound.py`
+# file in the same directory.
+#
+# For a more comprehensive documentation, please see a corresponding example of a
+# decider in the decider directory; most of the concepts are the same.
 
 import numpy as np
 
-import cpp_bindings
-
-# Override Python's native print() function.
-def print(x):
-    cpp_bindings.log(str(x))
+from common.utils import print, print_throttle
 
 
 class Preprocessor:
@@ -27,10 +28,10 @@ class Preprocessor:
     def process(self, timestamps, eeg_samples, emg_samples, current_sample_index, pulse_given):
         self.sample_count += 1
 
-        if self.sample_count % 1000 == 0:
-            # Do every 1000 samples. Useful for debug prints.
-            pass
+        print_throttle(eeg_samples[1, current_sample_index])
 
+        # If a pulse has been given on the previous sample, set the ongoing_pulse_artifact flag
+        # and starting counting the samples after the pulse.
         if pulse_given:
             self.ongoing_pulse_artifact = True
             self.samples_after_pulse = 0
@@ -42,11 +43,18 @@ class Preprocessor:
             if self.samples_after_pulse == 1000:
                 self.ongoing_pulse_artifact = False
 
+        # Return the incoming raw sample as it is; doesn't do any actual processing to the data.
         eeg_sample_preprocessed = eeg_samples[current_sample_index,:]
         emg_sample_preprocessed = emg_samples[current_sample_index,:]
 
+        # Mark the sample as invalid if there is an ongoing pulse artifact.
+        valid = not self.ongoing_pulse_artifact
+
+        # Based on the incoming buffer of raw EEG/EMG samples, return a single sample that
+        # corresponds to the current timestamp. These samples are collected by the decider
+        # in its own buffer, in turn, to be used for the stimulation decision.
         return {
             'eeg_sample': eeg_sample_preprocessed,
             'emg_sample': emg_sample_preprocessed,
-            'valid': not self.ongoing_pulse_artifact,
+            'valid': valid,
         }

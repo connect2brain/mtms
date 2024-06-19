@@ -3,11 +3,7 @@ import time
 
 import numpy as np
 
-import cpp_bindings
-
-# Override Python's native print() function.
-def print(x):
-    cpp_bindings.log(str(x))
+from common.utils import print, print_throttle
 
 
 class Preprocessor:
