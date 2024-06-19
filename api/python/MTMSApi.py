@@ -553,13 +553,14 @@ class MTMSApi:
         )
         return id
 
-    def trigger_events(self):
+    def request_trigger(self):
         """
-        Executes the events which have execution_condition set to ExecutionCondition.WAIT_FOR_TRIGGER.
+        Request a trigger from the mTMS device, executing events that have execution condition set to
+        ExecutionCondition.WAIT_FOR_TRIGGER.
 
         Does not require any parameters, and does not return any value.
         """
-        self.node.trigger_events()
+        self.node.request_trigger()
 
     # Testing and debugging (undocumented)
 

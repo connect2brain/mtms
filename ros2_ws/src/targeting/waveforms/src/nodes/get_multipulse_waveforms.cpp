@@ -7,6 +7,8 @@ const uint8_t NUM_OF_COILS = 5;
 
 const uint16_t INITIAL_VOLTAGE = 1500;
 
+const bool ENABLE_CACHING = true;
+
 GetMultipulseWaveforms::GetMultipulseWaveforms() : Node("get_multipulse_waveforms"), logger(rclcpp::get_logger("get_multipulse_waveforms")) {
   callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
@@ -65,7 +67,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms(
   std::string key = generate_md5_hash(request);
 
   /* Check if the response is cached. */
-  if (cache.find(key) != cache.end()) {
+  if (ENABLE_CACHING && cache.find(key) != cache.end()) {
     auto cached_response = cache[key];
 
     /* Copy the cached response. */
@@ -81,9 +83,13 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms(
   handle_get_multipulse_waveforms_no_cache(request, response);
 
   /* Cache the response. */
-  cache[key] = response;
+  if (ENABLE_CACHING) {
+    cache[key] = response;
 
-  RCLCPP_INFO(this->get_logger(), "Computed and cached result");
+    RCLCPP_INFO(this->get_logger(), "Computed and cached result");
+  } else {
+    RCLCPP_INFO(this->get_logger(), "Computed result (caching disabled)");
+  }
 };
 
 void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
@@ -122,7 +128,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
     auto result = get_target_voltages(request->targets[i]);
 
     if (!result->success) {
-      RCLCPP_WARN(logger, "Failed to get target voltages for pulse %d", i);
+      RCLCPP_WARN(logger, "Failed to get target voltages for pulse %d", i + 1);
 
       response->success = false;
       return;
@@ -163,7 +169,15 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
       uint16_t target_voltage = target_voltages[i][j];
 
       /* Print information about the target and coil. */
-      RCLCPP_INFO(logger, "Target #: %d, Coil #: %d, Actual Voltage: %d, Target Voltage: %d", i, j, actual_voltage, target_voltage);
+      RCLCPP_INFO(logger, "Target #: %d, Coil #: %d, Actual Voltage: %d, Target Voltage: %d", i + 1, j + 1, actual_voltage, target_voltage);
+
+      /* Check that the target voltage is not larger than the actual voltage. */
+      if (target_voltage > actual_voltage) {
+        RCLCPP_WARN(logger, "Failure: Target voltage is larger than actual voltage for coil %d", j + 1);
+
+        response->success = false;
+        return;
+      }
 
       auto target_waveform = request->target_waveforms[i].waveforms[j];
 
@@ -172,7 +186,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
         auto result = reverse_polarity(target_waveform);
 
         if (!result->success) {
-          RCLCPP_WARN(logger, "Failed to reverse polarity for coil %d", i);
+          RCLCPP_WARN(logger, "Failure: Failed to reverse polarity for coil %d", j + 1);
 
           response->success = false;
           return;
@@ -186,7 +200,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
       auto result = approximate_waveform(actual_voltage, target_voltage, target_waveform, coil_number);
 
       if (!result->success) {
-        RCLCPP_WARN(logger, "Failed to approximate waveform for coil %d", i);
+        RCLCPP_WARN(logger, "Failure: Failed to approximate waveform for coil %d", j + 1);
 
         response->success = false;
         return;
@@ -199,7 +213,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
       auto result2 = estimate_voltage_after_pulse(actual_voltage, result->approximated_waveform, coil_number);
 
       if (!result2->success) {
-        RCLCPP_WARN(logger, "Failed to estimate voltage after pulse for coil %d", i);
+        RCLCPP_WARN(logger, "Failure: Failed to estimate voltage after pulse for coil %d", j + 1);
 
         response->success = false;
         return;

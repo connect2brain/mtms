@@ -23,7 +23,7 @@
 /**
  * The signature of the FPGA bitfile.
  */
-static const char* const NiFpga_mTMS_Signature = "62C7836EE32DAADCB3B5B89003CBF42F";
+static const char* const NiFpga_mTMS_Signature = "6A1FD321CEBDC51B4AB6DC6E4EEA0123";
 
 #if NiFpga_Cpp
 extern "C"
@@ -108,6 +108,7 @@ typedef enum
 {
    NiFpga_mTMS_ControlBool_Allowstimulation = 0x18112,
    NiFpga_mTMS_ControlBool_Allowtriggerout = 0x18116,
+   NiFpga_mTMS_ControlBool_Eventaggregationlock = 0x1811E,
    NiFpga_mTMS_ControlBool_Eventtrigger = 0x18006,
    NiFpga_mTMS_ControlBool_Startdevice = 0x180E6,
    NiFpga_mTMS_ControlBool_Startsession = 0x18002,

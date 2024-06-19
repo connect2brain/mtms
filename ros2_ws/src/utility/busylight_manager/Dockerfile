@@ -24,6 +24,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
+COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 

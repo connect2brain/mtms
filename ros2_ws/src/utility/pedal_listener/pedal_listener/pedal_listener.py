@@ -6,7 +6,6 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from std_msgs.msg import Bool
-from event_interfaces.msg import EventTrigger
 
 class PedalListenerNode(Node):
 
@@ -31,16 +30,15 @@ class PedalListenerNode(Node):
             "/pedal/connected",
             qos
         )
-        self.left_button_pressed_pressed_publisher = self.create_publisher(
+        self.left_button_publisher = self.create_publisher(
             Bool,
             "/pedal/left_button/pressed",
             qos
         )
-
-        self.event_trigger_publisher = self.create_publisher(
-            EventTrigger,
-            "/mtms_device/trigger",
-            10
+        self.right_button_publisher = self.create_publisher(
+            Bool,
+            "/pedal/right_button/pressed",
+            qos
         )
 
         self.serial = None
@@ -50,21 +48,25 @@ class PedalListenerNode(Node):
     def handle_left_button_pressed(self):
         msg = Bool()
         msg.data = True
-        self.left_button_pressed_pressed_publisher.publish(msg)
+        self.left_button_publisher.publish(msg)
         self.get_logger().info("Left button pressed.")
 
     def handle_left_button_released(self):
         msg = Bool()
         msg.data = False
-        self.left_button_pressed_pressed_publisher.publish(msg)
+        self.left_button_publisher.publish(msg)
         self.get_logger().info("Left button released.")
 
     def handle_right_button_pressed(self):
-        msg = EventTrigger()
-        self.event_trigger_publisher.publish(msg)
-        self.get_logger().info("Right button pressed, sent a trigger.")
+        msg = Bool()
+        msg.data = True
+        self.right_button_publisher.publish(msg)
+        self.get_logger().info("Right button pressed.")
 
     def handle_right_button_released(self):
+        msg = Bool()
+        msg.data = False
+        self.right_button_publisher.publish(msg)
         self.get_logger().info("Right button released.")
 
     def handle_disconnected(self):

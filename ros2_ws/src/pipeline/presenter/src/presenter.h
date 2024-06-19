@@ -42,13 +42,15 @@ private:
       std::shared_ptr<project_interfaces::srv::SetPresenterEnabled::Response> response);
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
-  std::vector<std::string> list_python_modules(const std::string& path);
   void update_presenter_list();
 
   void update_time(double_t time);
   void handle_sensory_stimulus(const std::shared_ptr<pipeline_interfaces::msg::SensoryStimulus> msg);
 
-  /* Inotify functions */
+  /* File-system related functions */
+  bool change_working_directory(const std::string path);
+  std::vector<std::string> list_python_modules_in_working_directory();
+
   void update_inotify_watch();
   void inotify_timer_callback();
 
@@ -71,7 +73,8 @@ private:
 
   std::string active_project;
 
-  std::string script_directory  = UNSET_STRING;
+  std::string working_directory  = UNSET_STRING;
+  bool is_working_directory_set = false;
   std::string module_name = UNSET_STRING;
 
   std::vector<std::string> modules;

@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -16,10 +17,10 @@
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
-#include "event_interfaces/msg/event_trigger.hpp"
-#include "event_interfaces/msg/ready_for_event_trigger.hpp"
+#include "system_interfaces/srv/request_trigger.hpp"
 
-#include "experiment_interfaces/msg/trial_feedback.hpp"
+#include "experiment_interfaces/msg/trial.hpp"
+#include "experiment_interfaces/action/perform_trial.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -48,6 +49,14 @@ enum class DeciderState {
   MODULE_ERROR
 };
 
+struct GoalMetadata {
+  experiment_interfaces::msg::Trial trial;
+
+  /* The time of the sample based on which the decision to perform a trial was made. */
+  double decision_time;
+};
+
+
 class DeciderWrapper;
 
 class EegDecider : public rclcpp::Node {
@@ -55,12 +64,28 @@ public:
   EegDecider();
   ~EegDecider();
 
+  void spin();
+
 private:
+  rclcpp_action::Client<experiment_interfaces::action::PerformTrial>::SharedPtr perform_trial_client;
+  rclcpp::CallbackGroup::SharedPtr callback_group;
+
   void publish_healthcheck();
 
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+
+  std::string goal_id_to_string(const rclcpp_action::GoalUUID &uuid);
+
+  void empty_trial_queue();
+  void precompute_trials();
+
+  void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
+  void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
+  void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
+  void trigger_labjack();
+  void labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
   void initialize_module();
@@ -80,20 +105,20 @@ private:
       std::shared_ptr<project_interfaces::srv::SetDeciderModule::Response> response);
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
-  std::vector<std::string> list_python_modules(const std::string& path);
   void update_decider_list();
 
   void check_dropped_samples(double_t sample_time);
 
-  void calculate_latency(double_t pulse_execution_time);
-  void handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
-  void handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg);
-
-  void update_ready_for_trigger(const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg);
+  void handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
 
   void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
 
-  /* Inotify functions */
+  void log_trial(const experiment_interfaces::msg::Trial& trial, size_t num_of_remaining_trials);
+
+  /* File-system related functions */
+  bool change_working_directory(const std::string path);
+  std::vector<std::string> list_python_modules_in_working_directory();
+
   void update_inotify_watch();
   void inotify_timer_callback();
 
@@ -117,11 +142,8 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr trigger_publisher;
-  rclcpp::Publisher<event_interfaces::msg::EventTrigger>::SharedPtr external_trigger_publisher;
-  rclcpp::Subscription<event_interfaces::msg::ReadyForEventTrigger>::SharedPtr ready_for_trigger_subscriber;
+  rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedPtr labjack_trigger_client;
 
-  rclcpp::Subscription<experiment_interfaces::msg::TrialFeedback>::SharedPtr trial_feedback_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
   rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
@@ -133,16 +155,18 @@ private:
   system_interfaces::msg::SessionState session_state;
 
   bool first_sample_ever = true;
+  bool first_sample_of_session = false;
 
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
-  double_t previous_trigger_time = UNSET_PREVIOUS_TIME;
+  double_t previous_stimulation_time = UNSET_PREVIOUS_TIME;
 
   bool reinitialize = true;
 
   std::string active_project = UNSET_STRING;
 
-  std::string script_directory  = UNSET_STRING;
+  std::string working_directory  = UNSET_STRING;
+  bool is_working_directory_set = false;
   std::string module_name = UNSET_STRING;
 
   std::vector<std::string> modules;
@@ -156,19 +180,22 @@ private:
   /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
 
-  /* For latency calculation, store the times of the previous pulse decisions in a queue. */
-  std::queue<double_t> decision_times;
-
-  /* 'Ready for trigger' is set to true when the mTMS is ready to trigger the next pulse. */
-  bool ready_for_trigger = false;
+  /* For latency calculation using LabJack, store the times of triggering LabJack in a queue. */
+  std::queue<double_t> labjack_decision_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
 
   std::unique_ptr<DeciderWrapper> decider_wrapper;
 
+  std::queue<std::pair<experiment_interfaces::msg::Trial, double>> trial_queue;
+  std::map<std::string, GoalMetadata> goal_to_metadata_map;
+
+  bool performing_trial = false;
+  bool triggering_labjack = false;
+
   /* ROS parameters */
-  double_t minimum_pulse_interval;
+  double_t minimum_intertrial_interval;
 
   /* Healthcheck */
   uint8_t status;
