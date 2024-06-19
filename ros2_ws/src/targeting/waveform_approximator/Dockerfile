@@ -12,7 +12,7 @@
 
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
 # Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
-ARG MATLAB_RELEASE=r2023b
+ARG MATLAB_RELEASE=r2024a
 
 # Specify the list of products to install into MATLAB.
 ARG MATLAB_PRODUCT_LIST="MATLAB ROS_Toolbox Symbolic_Math_Toolbox"
