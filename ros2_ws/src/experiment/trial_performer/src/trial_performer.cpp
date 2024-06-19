@@ -108,12 +108,30 @@ void TrialPerformerNode::handle_session(const system_interfaces::msg::Session::S
 
 void TrialPerformerNode::update_pulse_feedback(const event_interfaces::msg::PulseFeedback::SharedPtr msg) {
   pulse_feedback[msg->id] = msg;
-  RCLCPP_INFO(get_logger(), "Event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+
+  auto error_code = msg->error.value;
+  auto execution_time = msg->execution_time;
+
+  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
+  if (error_code == 0) {
+    RCLCPP_INFO(get_logger(), "Pulse event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+  } else {
+    RCLCPP_WARN(get_logger(), "Pulse event %d finished with error code %d", msg->id, msg->error.value);
+  }
 }
 
 void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
   trigger_out_feedback[msg->id] = msg;
-  RCLCPP_INFO(get_logger(), "Event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+
+  auto error_code = msg->error.value;
+  auto execution_time = msg->execution_time;
+
+  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
+  if (error_code == 0) {
+    RCLCPP_INFO(get_logger(), "Trigger out event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+  } else {
+    RCLCPP_WARN(get_logger(), "Trigger out event %d finished with error code %d", msg->id, msg->error.value);
+  }
 }
 
 /* Using publishers */
