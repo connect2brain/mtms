@@ -295,15 +295,15 @@ class Decider:
         # If the training is finished, get the model parameters and execution time.
         if self.training_process is not None:
             try:
-                model_parameters, execution_time = self.training_process.get(timeout=0)
+                model_parameters, training_time = self.training_process.get(timeout=0)
 
                 print("Finished training a model at time {:.4f}".format(current_time))
                 self.training_process = None
 
                 # Print the latest model parameters and execution time.
-                print("Model parameters: {}, Execution time (s): {:.4f}".format(
+                print("Model parameters: {}, Training time (s): {:.4f}".format(
                     model_parameters,
-                    execution_time,
+                    training_time,
                     current_time))
 
             except multiprocessing.TimeoutError as e:
@@ -348,17 +348,23 @@ class Decider:
         return {
             'trial': trial,
 
-            # In addition to performing a trial using the mTMS device, the decider can create a trigger signal using LabJack T4.
-            # This is useful for triggering commercial TMS devices or other devices that require a trigger signal, and when the
-            # mTMS device is not available. For now, timing the LabJack trigger into the future is not supported, so the trigger
-            # is always timed as soon as possible.
+            # In addition to performing a trial using the mTMS device, the decider can create a trigger
+            # signal using LabJack T4. This is useful for triggering commercial TMS devices or other
+            # devices that require a trigger signal, and when the mTMS device is not available. For
+            # now, timing the LabJack trigger into the future is not supported, so the trigger is
+            # always timed as soon as possible.
             'trigger_labjack': False,
         }
 
 
 def train_model(X):
-    # Train a model here. For now, just sleep for a while.
+    start = time.time()
+
+    # Train the model here. For now, just sleep for a while.
     time.sleep(6.0)
 
-    # Return a dummy result; the first element are the model parameters, and the second element is the execution time in seconds.
-    return np.array([1.0, 2.0, 3.0]), 0.2
+    training_time = time.time() - start
+
+    # Return a dummy result; the first element are the model parameters, and the second element is
+    # the model training time in seconds.
+    return np.array([1.0, 2.0, 3.0]), training_time
