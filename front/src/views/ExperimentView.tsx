@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
-import { TabBar, Select, GrayedOutPanel } from 'styles/General'
+import { TabBar, Select, GrayedOutPanel, ActiveProps } from 'styles/General'
 
 import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
 import { AngleSelector } from 'components/Experiment/AngleSelector'
@@ -40,6 +40,7 @@ import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProv
 import { ConfigContext } from 'providers/ConfigProvider'
 
 import { formatTime } from 'utils/utils'
+import { set } from 'cypress/types/lodash'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -74,10 +75,6 @@ const Input = styled.input`
     background-color: transparent;
   }
 `
-
-interface ActiveProps {
-  isActive: boolean
-}
 
 const ExperimentTypeText = styled.div<ActiveProps>`
   cursor: pointer;
@@ -298,7 +295,7 @@ type Experiment = {
   intertrial_interval: IntertrialInterval
 
   randomize_trials: boolean
-  wait_for_trigger: boolean
+  wait_for_pedal_press: boolean
 
   autopause: boolean
   autopause_interval: number
@@ -445,7 +442,7 @@ export const ExperimentView = () => {
   const [emgChannel, setEmgChannel] = useState<number>(() => getKey('emgChannel', 1))
 
   const [numOfRepetitions, setNumOfRepetitions] = useState<number>(() => getKey('numOfRepetitions', 10))
-  const [waitForTrigger, setWaitForTrigger] = useState<boolean>(() => getKey('waitForTrigger', false))
+  const [waitForPedalPress, setwaitForPedalPress] = useState<boolean>(() => getKey('waitForPedalPress', false))
 
   const [itiMin, setItiMin] = useState<number>(() => getKey('itiMin', 3.5))
   const [itiMax, setItiMax] = useState<number>(() => getKey('itiMax', 4.5))
@@ -456,7 +453,8 @@ export const ExperimentView = () => {
   )
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
-  const [numOfTrials, setNumOfTrials] = useState<number | null>(null)
+  const [isValidating, setIsValidating] = useState<boolean>(false)
+  const [numOfTrials, setNumOfTrials] = useState<number>(10)
   const [duration, setDuration] = useState<number | null>(null)
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -523,79 +521,142 @@ export const ExperimentView = () => {
   }
 
   const formTrials = (): Trial[] => {
-    const trials: Trial[] = []
+    let trials: Trial[] = []
 
-    selectedPoints.forEach((point: Point) => {
-      selectedAngles.forEach((angle: number) => {
-        const triggers: TriggerConfig[] = [
-          {
-            enabled: trigger1Enabled,
-            /* Delay is presented as milliseconds in the UI, transform to seconds. */
-            delay: trigger1Delay / 1000,
-          },
-          {
-            enabled: trigger2Enabled,
-            /* Delay is presented as milliseconds in the UI, transform to seconds. */
-            delay: trigger2Delay / 1000,
-          },
-        ]
+    const triggers: TriggerConfig[] = [
+      {
+        enabled: trigger1Enabled,
+        /* Delay is presented as milliseconds in the UI, transform to seconds. */
+        delay: trigger1Delay / 1000,
+      },
+      {
+        enabled: trigger2Enabled,
+        /* Delay is presented as milliseconds in the UI, transform to seconds. */
+        delay: trigger2Delay / 1000,
+      },
+    ]
 
-        const target: Target = {
-          displacement_x: point.x,
-          displacement_y: point.y,
-          rotation_angle: angle,
-          intensity: intensity,
-          algorithm: {
-            value: targetingAlgorithm,
-          },
-        }
+    /* TODO: Hard-coded for now - make configurable. */
+    const mep_config_time_window: TimeWindow = {
+      start: 0.01,
+      end: 0.04,
+    }
 
-        /* TODO: Hard-coded for now - make configurable. */
-        const mep_config_time_window: TimeWindow = {
-          start: 0.01,
-          end: 0.04,
-        }
+    /* TODO: Hard-coded for now - make configurable. */
+    const preactivation_check_time_window: TimeWindow = {
+      start: -0.1,
+      end: -0.01,
+    }
 
-        /* TODO: Hard-coded for now - make configurable. */
-        const preactivation_check_time_window: TimeWindow = {
-          start: -0.1,
-          end: -0.01,
-        }
+    /* TODO: Hard-coded for now - make configurable. */
+    const preactivation_check: PreactivationCheck = {
+      enabled: false,
+      time_window: preactivation_check_time_window,
+      voltage_range_limit: 90,
+    }
 
-        /* TODO: Hard-coded for now - make configurable. */
-        const preactivation_check: PreactivationCheck = {
-          enabled: false,
-          time_window: preactivation_check_time_window,
-          voltage_range_limit: 90,
-        }
+    const mep_config: MepConfiguration = {
+      /* 0-based indexing is internally used for EMG channels, hence decrement to allow
+        the user to use 1-based indexing. */
+      emg_channel: emgChannel - 1,
+      time_window: mep_config_time_window,
+      preactivation_check: preactivation_check,
+    }
 
-        const mep_config: MepConfiguration = {
-          /* 0-based indexing is internally used for EMG channels, hence decrement to allow
-            the user to use 1-based indexing. */
-          emg_channel: emgChannel - 1,
-          time_window: mep_config_time_window,
-          preactivation_check: preactivation_check,
-        }
+    if (activeTab === ExperimentTab.MultipleLocations) {
+      const singleRepetitionTrials: Trial[] = []
 
-        const trial: Trial = {
-          targets: [target],
-          pulse_times_since_trial_start: [0],
+      selectedPoints.forEach((point: Point) => {
+        selectedAngles.forEach((angle: number) => {
+          const target: Target = {
+            displacement_x: point.x,
+            displacement_y: point.y,
+            rotation_angle: angle,
+            intensity: intensity,
+            algorithm: {
+              value: targetingAlgorithm,
+            },
+          }
 
-          triggers: triggers,
+          const trial: Trial = {
+            targets: [target],
+            pulse_times_since_trial_start: [0],
 
-          /* Override mepEnabled if MEP healthcheck is not ok. */
-          analyze_mep: mepHealthcheckOk ? mepEnabled : false,
-          mep_config: mep_config,
-        }
-        trials.push(trial)
+            triggers: triggers,
+
+            /* Override mepEnabled if MEP healthcheck is not ok. */
+            analyze_mep: mepHealthcheckOk ? mepEnabled : false,
+            mep_config: mep_config,
+          }
+          singleRepetitionTrials.push(trial)
+        })
       })
-    })
+      trials = ([] as Trial[]).concat(...Array(numOfRepetitions).fill(singleRepetitionTrials))
+    }
+    if (activeTab === ExperimentTab.SingleLocation) {
+      const target: Target = {
+        displacement_x: selectedPoints[0].x,
+        displacement_y: selectedPoints[0].y,
+        rotation_angle: selectedAngles[0],
+        intensity: intensity,
+        algorithm: {
+          value: targetingAlgorithm,
+        },
+      }
+
+      const trial: Trial = {
+        targets: [target],
+        pulse_times_since_trial_start: [0],
+
+        triggers: triggers,
+
+        /* Override mepEnabled if MEP healthcheck is not ok. */
+        analyze_mep: mepHealthcheckOk ? mepEnabled : false,
+        mep_config: mep_config,
+      }
+      for (let i = 0; i < numOfTrials; i++) {
+        trials.push(trial)
+      }
+    }
+    if (activeTab === ExperimentTab.PairedPulse) {
+      const targetFirstPulse: Target = {
+        displacement_x: selectedPointFirstPulse[0].x,
+        displacement_y: selectedPointFirstPulse[0].y,
+        rotation_angle: selectedAngleFirstPulse[0],
+        intensity: intensityFirstPulse,
+        algorithm: {
+          value: targetingAlgorithm,
+        },
+      }
+      const targetSecondPulse: Target = {
+        displacement_x: selectedPointSecondPulse[0].x,
+        displacement_y: selectedPointSecondPulse[0].y,
+        rotation_angle: selectedAngleSecondPulse[0],
+        intensity: intensitySecondPulse,
+        algorithm: {
+          value: targetingAlgorithm,
+        },
+      }
+
+      const trial: Trial = {
+        targets: [targetFirstPulse, targetSecondPulse],
+        pulse_times_since_trial_start: [0, pairedPulseDelay / 1000],
+
+        triggers: triggers,
+
+        /* Override mepEnabled if MEP healthcheck is not ok. */
+        analyze_mep: mepHealthcheckOk ? mepEnabled : false,
+        mep_config: mep_config,
+      }
+      for (let i = 0; i < numOfTrials; i++) {
+        trials.push(trial)
+      }
+    }
     return trials
   }
 
   const formExperiment = (): Experiment => {
     const trials = formTrials()
-    const repeatedTrials = ([] as Trial[]).concat(...Array(numOfRepetitions).fill(trials))
 
     const experiment: Experiment = {
       metadata: {
@@ -603,7 +664,7 @@ export const ExperimentView = () => {
         subject_name: subjectName,
       },
 
-      trials: repeatedTrials,
+      trials: trials,
       intertrial_interval: {
         min: itiMin,
         max: itiMax,
@@ -611,7 +672,7 @@ export const ExperimentView = () => {
       },
 
       randomize_trials: true,
-      wait_for_trigger: waitForTrigger,
+      wait_for_pedal_press: waitForPedalPress,
 
       autopause: autopause,
       autopause_interval: autopauseIntervalMinutes * 60,
@@ -625,10 +686,14 @@ export const ExperimentView = () => {
     callCountRef.current += 1
     const currentCallCount = callCountRef.current
 
+    setIsValidating(true)
+
     countValidTrials(experiment.trials, (numOfValidTrials) => {
       if (currentCallCount === callCountRef.current) {
         setNumOfValidTrials(numOfValidTrials)
         setStartButtonState(StartButtonState.Start)
+
+        setIsValidating(false)
       }
     })
   }
@@ -660,26 +725,33 @@ export const ExperimentView = () => {
         setSelectedAngles([0])
         setSelectedPoints([{ x: 0, y: 0 }])
 
-        setNumOfTrials(0)
+        setNumOfTrials(10)
         setNumOfValidTrials(null)
 
-        setNumOfRepetitions(10)
-
-        break
-
-      case ExperimentTab.MultipleLocations:
         setNumOfRepetitions(1)
 
         break
 
+      case ExperimentTab.MultipleLocations:
+        setNumOfRepetitions(3)
+
+        break
+
       case ExperimentTab.PairedPulse:
-        setNumOfTrials(0)
+        setNumOfTrials(10)
         setNumOfValidTrials(null)
+        setDuration(null)
 
         setNumOfRepetitions(1)
 
         break
     }
+  }
+
+  const validateTrials = () => {
+    const experiment: Experiment = formExperiment()
+    console.log(experiment)
+    updateValidTrials(experiment)
   }
 
   /* Set list of projects. */
@@ -769,8 +841,12 @@ export const ExperimentView = () => {
 
   /* Update the number of valid trials. */
   useEffect(() => {
+    /* Do it automatically only for single location and multiple locations, not for paired pulse due to its slowness. */
+    if (activeTab === ExperimentTab.PairedPulse) {
+      return
+    }
     if (selectedPoints.length == 0 || selectedAngles.length == 0) {
-      setNumOfTrials(null)
+      setNumOfTrials(0)
       setNumOfValidTrials(null)
       setDuration(null)
 
@@ -778,11 +854,32 @@ export const ExperimentView = () => {
     }
     const experiment: Experiment = formExperiment()
 
-    const numOfTrials = experiment.trials.length
-    setNumOfTrials(numOfTrials)
-
     updateValidTrialsWithDebounce(experiment)
-  }, [selectedAngles, selectedPoints, intensity, numOfRepetitions, targetingAlgorithm])
+  }, [selectedAngles, selectedPoints, intensity, targetingAlgorithm, numOfRepetitions, numOfTrials])
+
+  /* Update the total number of trials. */
+  useEffect(() => {
+    if (activeTab === ExperimentTab.MultipleLocations) {
+      setNumOfTrials(numOfRepetitions * selectedPoints.length * selectedAngles.length)
+    }
+  }, [numOfRepetitions, selectedPoints, selectedAngles, activeTab])
+
+  /* Do not show valid trials in paired pulse tab if the number of valid trials is not yet known. */
+  useEffect(() => {
+    if (activeTab === ExperimentTab.PairedPulse) {
+      setNumOfValidTrials(null)
+      setDuration(null)
+    }
+  }, [
+    numOfTrials,
+    selectedPointFirstPulse,
+    selectedPointSecondPulse,
+    selectedAngleFirstPulse,
+    selectedAngleSecondPulse,
+    intensityFirstPulse,
+    intensitySecondPulse,
+    targetingAlgorithm,
+  ])
 
   /* Update the experiment duration. */
   useEffect(() => {
@@ -908,8 +1005,8 @@ export const ExperimentView = () => {
   }, [numOfRepetitions])
 
   useEffect(() => {
-    storeKey('waitForTrigger', waitForTrigger)
-  }, [waitForTrigger])
+    storeKey('waitForPedalPress', waitForPedalPress)
+  }, [waitForPedalPress])
 
   useEffect(() => {
     storeKey('itiMin', itiMin)
@@ -1151,7 +1248,7 @@ export const ExperimentView = () => {
               1 <span className='arrow'>&rarr;</span> 2
             </TimingLabel>
             <DelayLabel>Delay (ms)</DelayLabel>
-            <ValidatedInput value={pairedPulseDelay} min={0} max={99} onChange={setPairedPulseDelay} />
+            <ValidatedInput value={pairedPulseDelay} min={0} max={1000} onChange={setPairedPulseDelay} />
           </TimingRow>
         </TimingPanel>
       </StimulationParametersPanel>
@@ -1216,16 +1313,24 @@ export const ExperimentView = () => {
           </GrayedOutPanel>
         </MepPanel>
         <TrialsPanel>
-          <SmallerTitle>{activeTab === ExperimentTab.MultipleLocations ? 'Repetitions' : 'Trials'}</SmallerTitle>
+          <SmallerTitle>Trials</SmallerTitle>
+          {activeTab === ExperimentTab.MultipleLocations && (
+            <ConfigRow>
+              <ConfigLabel># of repetitions:</ConfigLabel>
+              <ValidatedInput type='text' value={numOfRepetitions} min={1} max={999} onChange={setNumOfRepetitions} />
+            </ConfigRow>
+          )}
+          {activeTab !== ExperimentTab.MultipleLocations && (
+            <ConfigRow>
+              <ConfigLabel># of trials:</ConfigLabel>
+              <ValidatedInput type='text' value={numOfTrials} min={1} max={999} onChange={setNumOfTrials} />
+            </ConfigRow>
+          )}
           <ConfigRow>
-            <ConfigLabel># of {activeTab === ExperimentTab.MultipleLocations ? 'repetitions' : 'trials'}:</ConfigLabel>
-            <ValidatedInput type='text' value={numOfRepetitions} min={1} max={999} onChange={setNumOfRepetitions} />
+            <ConfigLabel>Wait for pedal press:</ConfigLabel>
+            <ToggleSwitch type='flat' checked={waitForPedalPress} onChange={setwaitForPedalPress} />
           </ConfigRow>
-          <ConfigRow>
-            <ConfigLabel>Wait for trigger:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={waitForTrigger} onChange={setWaitForTrigger} />
-          </ConfigRow>
-          <GrayedOutPanel isGrayedOut={waitForTrigger || numOfTrials === null || numOfTrials < 2}>
+          <GrayedOutPanel isGrayedOut={waitForPedalPress || numOfTrials === null || numOfTrials < 2}>
             <ConfigRow>
               <ConfigLabel>Interval (s)</ConfigLabel>
             </ConfigRow>
@@ -1238,7 +1343,7 @@ export const ExperimentView = () => {
                 max={100}
                 step={0.1}
                 onChange={setItiMin}
-                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+                disabled={waitForPedalPress || numOfTrials === null || numOfTrials < 2}
               />
             </CloseConfigRow>
             <CloseConfigRow>
@@ -1250,7 +1355,7 @@ export const ExperimentView = () => {
                 max={100}
                 step={0.1}
                 onChange={setItiMax}
-                disabled={waitForTrigger || numOfTrials === null || numOfTrials < 2}
+                disabled={waitForPedalPress || numOfTrials === null || numOfTrials < 2}
               />
             </CloseConfigRow>
           </GrayedOutPanel>
@@ -1295,6 +1400,10 @@ export const ExperimentView = () => {
             <IndentedLabel>Duration:</IndentedLabel>
             <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
+          <CloseConfigRow></CloseConfigRow>
+          <StyledButton isHidden={activeTab !== ExperimentTab.PairedPulse} onClick={() => validateTrials()}>
+            {isValidating ? 'Validating...' : 'Validate'}
+          </StyledButton>
         </ExperimentPanel>
         <StatusPanel>
           <SmallerTitle>Status</SmallerTitle>
