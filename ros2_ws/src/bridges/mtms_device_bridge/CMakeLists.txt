@@ -158,84 +158,36 @@ target_include_directories(allow_trigger_out_handler
 
 ament_target_dependencies(allow_trigger_out_handler rclcpp std_msgs mtms_device_interfaces)
 
-# Pulse handler
+# Event handler
 
-add_executable(pulse_handler
-  src/nodes/pulse_handler.cpp
+add_executable(event_handler
+  src/nodes/event_handler.cpp
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(pulse_handler
+target_include_directories(event_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(pulse_handler rclcpp std_msgs event_interfaces)
+ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_device_interfaces)
 
-# Trigger out handler
+# Request trigger handler
 
-add_executable(trigger_out_handler
-  src/nodes/trigger_out_handler.cpp
-  src/lib/serdes.cpp
+add_executable(request_trigger_handler
+  src/nodes/request_trigger_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
   src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
 
-target_include_directories(trigger_out_handler
+target_include_directories(request_trigger_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(trigger_out_handler rclcpp std_msgs event_interfaces)
-
-# Charge handler
-
-add_executable(charge_handler
-  src/nodes/charge_handler.cpp
-  src/lib/serdes.cpp
-  src/lib/fpga.cpp
-  src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(charge_handler
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(charge_handler rclcpp std_msgs event_interfaces)
-
-# Discharge handler
-
-add_executable(discharge_handler
-  src/nodes/discharge_handler.cpp
-  src/lib/serdes.cpp
-  src/lib/fpga.cpp
-  src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(discharge_handler
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(discharge_handler rclcpp std_msgs event_interfaces)
-
-# Event trigger handler
-
-add_executable(event_trigger_handler
-  src/nodes/event_trigger_handler.cpp
-  src/lib/fpga.cpp
-  src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
-
-target_include_directories(event_trigger_handler
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>)
-
-ament_target_dependencies(event_trigger_handler rclcpp std_msgs event_interfaces)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_interfaces system_interfaces)
 
 # Feedback monitor bridge
 
@@ -282,12 +234,9 @@ install(TARGETS
   allow_stimulation_handler
   allow_trigger_out_handler
 
-  charge_handler
-  discharge_handler
-  pulse_handler
-  trigger_out_handler
+  event_handler
 
-  event_trigger_handler
+  request_trigger_handler
   feedback_monitor_bridge
   settings_handler
   DESTINATION lib/${PROJECT_NAME})
