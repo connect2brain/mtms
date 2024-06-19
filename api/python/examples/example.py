@@ -29,7 +29,7 @@ api.start_session()
 target_voltage = 20
 
 # Note that the TMS channel indexing starts from 0.
-channel = 0
+channel = 1
 execution_condition = ExecutionCondition.IMMEDIATE
 
 api.send_charge(

@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 const StyledInput = styled.input<{ valid?: boolean }>`
   margintop: 0px;
-  width: 43px;
+  width: 47px;
   margin-right: 40px;
   border: 2px solid ${(props) => (props.valid ? 'black' : 'red')};
   outline-color: ${(props) => (props.valid ? 'black' : 'red')};

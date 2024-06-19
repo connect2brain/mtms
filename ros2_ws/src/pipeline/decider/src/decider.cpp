@@ -20,40 +20,40 @@ using namespace std::placeholders;
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
-const std::string PROJECTS_DIRECTORY = "projects/";
+const std::string PROJECTS_DIRECTORY = "/app/projects";
 
-const std::string DEFAULT_DECIDER_NAME = "dummy";
+const std::string DEFAULT_DECIDER_NAME = "example";
 
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
 
 /* XXX: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
-const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 20ms;
 
 
 EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")) {
   /* Read ROS parameter: Minimum interval between consecutive pulses (in seconds). */
-  auto minimum_pulse_interval_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
-  minimum_pulse_interval_descriptor.description = "The minimum interval between consecutive pulses (in seconds)";
-  minimum_pulse_interval_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
+  auto minimum_intertrial_interval_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  minimum_intertrial_interval_descriptor.description = "The minimum interval between consecutive pulses (in seconds)";
+  minimum_intertrial_interval_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_DOUBLE;
   /* XXX: Have to provide 0.0 as a default value because the parameter server does not interpret NULL correctly
           when the parameter is a double. */
-  this->declare_parameter("minimum-pulse-interval", 0.0, minimum_pulse_interval_descriptor);
-  this->get_parameter("minimum-pulse-interval", this->minimum_pulse_interval);
+  this->declare_parameter("minimum-intertrial-interval", 0.0, minimum_intertrial_interval_descriptor);
+  this->get_parameter("minimum-intertrial-interval", this->minimum_intertrial_interval);
 
   /* Log the minimum pulse interval. */
   RCLCPP_INFO(this->get_logger(), "Configuration:");
-  RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_pulse_interval);
+  RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
   RCLCPP_INFO(this->get_logger(), " ");
 
   /* Validate the minimum pulse interval. */
-  if (this->minimum_pulse_interval <= 0) {
-    RCLCPP_ERROR(this->get_logger(), "Invalid minimum pulse interval: %.1f (s)", this->minimum_pulse_interval);
+  if (this->minimum_intertrial_interval <= 0) {
+    RCLCPP_ERROR(this->get_logger(), "Invalid minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
     exit(1);
   }
-  if (this->minimum_pulse_interval < 0.5) {
-    RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_pulse_interval);
+  if (this->minimum_intertrial_interval < 0.5) {
+    RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_intertrial_interval);
     RCLCPP_WARN(this->get_logger(), " ");
   }
 
@@ -99,7 +99,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
     "/eeg/trigger",
     10,
-    std::bind(&EegDecider::handle_eeg_trigger, this, _1));
+    std::bind(&EegDecider::handle_trigger_from_eeg_device, this, _1));
 
   /* Subscriber for active project. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -136,28 +136,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled",
     qos_persist_latest);
 
-  /* Publisher for mTMS device trigger. */
-  this->trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
-    "/mtms_device/trigger",
-    10);
-
-  /* Publisher for external trigger. */
-  this->external_trigger_publisher = this->create_publisher<event_interfaces::msg::EventTrigger>(
-    "/event/trigger",
-    10);
-
-  /* Subscriber for event trigger readiness. */
-  this->ready_for_trigger_subscriber = this->create_subscription<event_interfaces::msg::ReadyForEventTrigger>(
-    "/event/trigger/ready",
-    10,
-    std::bind(&EegDecider::update_ready_for_trigger, this, _1));
-
-  /* Subscriber for trial feedback. */
-  this->trial_feedback_subscriber = create_subscription<experiment_interfaces::msg::TrialFeedback>(
-    "/trial/feedback",
-    10,
-    std::bind(&EegDecider::handle_trial_feedback, this, _1));
-
   /* Publisher for latency. */
   this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
     "/pipeline/latency",
@@ -167,6 +145,21 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->sensory_stimulus_publisher = this->create_publisher<pipeline_interfaces::msg::SensoryStimulus>(
     "/pipeline/sensory_stimulus",
     10);
+
+  /* Action client for performing trial. */
+  this->perform_trial_client = rclcpp_action::create_client<experiment_interfaces::action::PerformTrial>(
+      this, "/trial/perform");
+
+  while (!perform_trial_client->wait_for_action_server(2s)) {
+    RCLCPP_INFO(get_logger(), "Action /trial/perform not available, waiting...");
+  }
+
+  /* Service client for LabJack trigger. */
+  this->labjack_trigger_client = this->create_client<system_interfaces::srv::RequestTrigger>("/labjack/trigger");
+
+  while (!labjack_trigger_client->wait_for_service(2s)) {
+    RCLCPP_INFO(get_logger(), "Service /labjack/trigger not available, waiting...");
+  }
 
   /* Initialize variables. */
   this->decider_wrapper = std::make_unique<DeciderWrapper>(logger);
@@ -236,8 +229,10 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
   this->session_state = msg->state;
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
+    this->first_sample_of_session = true;
+
     this->reinitialize = true;
-    this->previous_trigger_time = UNSET_PREVIOUS_TIME;
+    this->previous_stimulation_time = UNSET_PREVIOUS_TIME;
 
     /* Reset the decider state when the session is stopped. */
     reset_decider_state();
@@ -257,7 +252,7 @@ void EegDecider::update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMe
 }
 
 void EegDecider::initialize_module() {
-  if (this->script_directory == UNSET_STRING ||
+  if (this->working_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING) {
 
     RCLCPP_INFO(this->get_logger(), "Not initializing decider module, module unset.");
@@ -265,7 +260,7 @@ void EegDecider::initialize_module() {
   }
 
   this->decider_wrapper->initialize_module(
-    this->script_directory,
+    this->working_directory,
     this->module_name,
     this->num_of_eeg_channels,
     this->num_of_emg_channels,
@@ -285,12 +280,177 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
   RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
   RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %lu", buffer_size);
+  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %zu", buffer_size);
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
+void EegDecider::precompute_trials() {
+  /* XXX: Naming is a bit confusing here. */
+  auto trials = this->decider_wrapper->get_targets();
+  auto num_of_trials = trials.size();
+
+  if (num_of_trials == 0) {
+    RCLCPP_INFO(this->get_logger(), "No trials to pre-compute.");
+    return;
+  }
+
+  RCLCPP_INFO(this->get_logger(), "Pre-computing %zu trials.", num_of_trials);
+
+  for (auto targets : trials) {
+    auto trial = experiment_interfaces::msg::Trial();
+
+    trial.targets = targets;
+
+    auto num_of_targets = targets.size();
+    trial.pulse_times_since_trial_start = std::vector<double_t>(num_of_targets, 0.0);
+
+    trial.analyze_mep = false;
+
+    auto timing = experiment_interfaces::msg::TrialTiming();
+
+    timing.desired_start_time = 0.0;
+    timing.allow_late = true;
+
+    auto config = experiment_interfaces::msg::TrialConfig();
+
+    config.voltage_tolerance_proportion_for_precharging = 0.0;
+    config.recharge_after_trial = true;
+    config.use_pulse_width_modulation_approximation = true;
+
+    config.dry_run = true;
+
+    trial.timing = timing;
+    trial.config = config;
+
+    /* Use a dummy decision time for pre-computed trials. */
+    double_t decision_time = 0.0;
+
+    this->trial_queue.push({trial, decision_time});
+  }
+}
+
+/* Helpers */
+
+std::string EegDecider::goal_id_to_string(const rclcpp_action::GoalUUID &uuid) {
+  std::ostringstream oss;
+  for (auto byte : uuid) {
+    oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+  }
+  return oss.str();
+}
+
+/* Action clients */
+
+void EegDecider::perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time) {
+  auto goal = experiment_interfaces::action::PerformTrial::Goal();
+  goal.trial = trial;
+
+  auto send_goal_options = rclcpp_action::Client<experiment_interfaces::action::PerformTrial>::SendGoalOptions();
+  send_goal_options.goal_response_callback = [this, trial, decision_time](std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+    this->goal_response_callback(goal_handle, trial, decision_time);
+  };
+  send_goal_options.result_callback = std::bind(&EegDecider::trial_performed_callback, this, std::placeholders::_1);
+
+  perform_trial_client->async_send_goal(goal, send_goal_options);
+
+  this->performing_trial = true;
+}
+
+void EegDecider::goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time) {
+  if (goal_handle) {
+    GoalMetadata metadata = {trial, decision_time};
+    auto goal_id_str = goal_id_to_string(goal_handle->get_goal_id());
+    this->goal_to_metadata_map[goal_id_str] = metadata;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to send goal");
+  }
+}
+
+void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result) {
+  this->performing_trial = false;
+
+  auto goal_id_str = goal_id_to_string(result.goal_id);
+  auto map_entry = this->goal_to_metadata_map.find(goal_id_str);
+
+  if (map_entry == this->goal_to_metadata_map.end()) {
+    RCLCPP_ERROR(this->get_logger(), "Could not find the corresponding metadata for the goal handle");
+    return;
+  }
+
+  GoalMetadata metadata = map_entry->second;
+  this->goal_to_metadata_map.erase(map_entry);
+
+  bool success = result.code == rclcpp_action::ResultCode::SUCCEEDED && result.result->success;
+
+  if (!success) {
+    RCLCPP_ERROR(this->get_logger(), "Trial failed");
+
+    /* If the trial failed, return early without computing the latency. */
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Trial succeeded");
+
+  /* If the trial was a dry run, return early without computing the latency. */
+  auto trial_config = metadata.trial.config;
+  if (trial_config.dry_run) {
+    RCLCPP_INFO(this->get_logger(), " ");
+    return;
+  }
+
+  auto decision_time = metadata.decision_time;
+  auto earliest_start_time = result.result->trial_result.earliest_start_time;
+
+  /* Calculate the time difference between the earliest possible start time for the trial and the time based on which
+     the decision was made. */
+  double_t time_difference = earliest_start_time - decision_time;
+  RCLCPP_INFO(this->get_logger(), "  - End-to-end latency of the trial: %.1f (ms)", time_difference * 1000);
+  RCLCPP_INFO(this->get_logger(), " ");
+
+  /* Publish latency ROS message. */
+  auto msg = pipeline_interfaces::msg::Latency();
+  msg.latency = time_difference;
+  msg.decision_time = decision_time;
+
+  this->latency_publisher->publish(msg);
+}
+
+/* Service clients */
+
+void EegDecider::trigger_labjack() {
+  auto request = std::make_shared<system_interfaces::srv::RequestTrigger::Request>();
+
+  using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest;
+
+  auto response_received_callback = [this](ServiceResponseFuture future) {
+    this->labjack_triggered_callback(future);
+  };
+
+  auto future_result = this->labjack_trigger_client->async_send_request(request, response_received_callback);
+
+  this->triggering_labjack = true;
+}
+
+void EegDecider::labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future) {
+  auto result = future.get().second;
+  if (result->success) {
+    RCLCPP_INFO(this->get_logger(), "Successfully triggered LabJack.");
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Failed to trigger LabJack.");
+  }
+  this->triggering_labjack = false;
+}
+
+/* Initialization and reset functions */
+
 void EegDecider::reset_decider_state() {
   this->decider_state = this->enabled ? DeciderState::READY : DeciderState::WAITING_FOR_ENABLED;
+}
+
+void EegDecider::empty_trial_queue() {
+  while (!this->trial_queue.empty()) {
+    this->trial_queue.pop();
+  }
 }
 
 /* Listing and setting EEG deciders. */
@@ -376,11 +536,9 @@ void EegDecider::handle_set_decider_module(
 
 void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
-
-  this->script_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/decider";
-
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
+  this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/decider");
   update_decider_list();
 
   if (this->modules.size() > 0) {
@@ -398,16 +556,47 @@ void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::
   update_inotify_watch();
 }
 
-/* Inotify functions */
+/* File-system related functions */
+
+bool EegDecider::change_working_directory(const std::string path) {
+  this->working_directory = path;
+
+  /* Check that the directory exists. */
+  if (!std::filesystem::exists(this->working_directory) || !std::filesystem::is_directory(this->working_directory)) {
+    RCLCPP_ERROR(this->get_logger(), "Directory does not exist: %s.", path.c_str());
+    return false;
+  }
+
+  /* Change the working directory to the project directory. */
+  if (chdir(this->working_directory.c_str()) != 0) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to change working directory to: %s.", this->working_directory.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+std::vector<std::string> EegDecider::list_python_modules_in_working_directory() {
+  std::vector<std::string> modules;
+
+  /* List all .py files in the current working directory. */
+  auto path = std::filesystem::current_path();
+  for (const auto &entry : std::filesystem::directory_iterator(path)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".py") {
+      modules.push_back(entry.path().stem().string());
+    }
+  }
+  return modules;
+}
 
 void EegDecider::update_inotify_watch() {
   /* Remove the old watch. */
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->script_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
   if (watch_descriptor == -1) {
-      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->script_directory.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->working_directory.c_str());
       return;
   }
 }
@@ -436,8 +625,8 @@ void EegDecider::inotify_timer_callback() {
         RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
         this->reinitialize = true;
       }
-      if (event->mask & (IN_CREATE | IN_DELETE)) {
-        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating decider list.", event_name.c_str());
+      if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created, deleted, or moved, updating decider list.", event_name.c_str());
         this->update_decider_list();
       }
     }
@@ -445,27 +634,12 @@ void EegDecider::inotify_timer_callback() {
   }
 }
 
-std::vector<std::string> EegDecider::list_python_modules(const std::string& path) {
-  std::vector<std::string> modules;
-
-  /* Check that the directory exists. */
-  if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-    RCLCPP_WARN(this->get_logger(), "Warning: Directory does not exist: %s.", path.c_str());
-    return modules;
-  }
-
-  /* List all .py files in the directory. */
-  for (const auto &entry : std::filesystem::directory_iterator(path)) {
-    if (entry.is_regular_file() && entry.path().extension() == ".py") {
-      modules.push_back(entry.path().stem().string());
-    }
-  }
-  return modules;
-}
-
 void EegDecider::update_decider_list() {
-  this->modules = this->list_python_modules(this->script_directory);
-
+  if (is_working_directory_set) {
+    this->modules = this->list_python_modules_in_working_directory();
+  } else {
+    this->modules.clear();
+  }
   auto msg = project_interfaces::msg::DeciderList();
   msg.scripts = this->modules;
 
@@ -502,53 +676,29 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-void EegDecider::calculate_latency(double_t pulse_execution_time) {
-  if (!this->decision_times.empty()) {
-    double_t sample_time = this->decision_times.front();
-    this->decision_times.pop();
+/* Handle incoming trigger from the EEG device, indicating a pulse when using LabJack to trigger an external TMS device. */
+void EegDecider::handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> trigger_msg) {
+  auto eeg_trigger_time = trigger_msg->time;
 
-    /* Calculate the time difference between the decision time and the pulse execution time. */
-    double_t time_difference = pulse_execution_time - sample_time;
-
-    RCLCPP_INFO(this->get_logger(), "Time difference between the decision time and the pulse: %.5f (s)", time_difference);
-
-    /* Publish latency ROS message. */
-    auto msg = pipeline_interfaces::msg::Latency();
-    msg.latency = time_difference;
-    msg.sample_time = sample_time;
-
-    this->latency_publisher->publish(msg);
-
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "No previous pulse times found in the queue. Can't calculate latency.");
-  }
-}
-
-/* Handle EEG trigger, indicating a pulse IF mTMS device is available. If not, ignore the EEG trigger, as we get direct
-   feedback about the pulse from the mTMS device. */
-void EegDecider::handle_eeg_trigger(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg) {
-  if (this->mtms_device_available) {
-    RCLCPP_INFO(this->get_logger(), "Received EEG trigger, but mTMS device is available, ignoring.");
+  if (this->labjack_decision_times.empty()) {
     return;
   }
-  RCLCPP_INFO(this->get_logger(), "Registered EEG trigger at: %.5f (s), interpreting as a pulse.", msg->time);
-  this->calculate_latency(msg->time);
-}
+  RCLCPP_INFO(this->get_logger(), "Registered trigger from EEG device at: %.4f (s), interpreting as feedback from TMS.", eeg_trigger_time);
 
-/* Handle trial feedback. */
+  double_t decision_time = this->labjack_decision_times.front();
+  this->labjack_decision_times.pop();
 
-/* XXX: As of Apr 2024, this seems to only work when used in conjunction with the UI, which has a back-end that
-        publishes the trial feedback. */
-void EegDecider::handle_trial_feedback(const std::shared_ptr<experiment_interfaces::msg::TrialFeedback> msg) {
+  /* Calculate the time difference between the incoming EEG trigger and the decision time. */
+  double_t time_difference = eeg_trigger_time - decision_time;
 
-  RCLCPP_INFO(this->get_logger(), "Registered trial feedback at: %.5f (s).", msg->execution_time);
-  this->calculate_latency(msg->execution_time);
-}
+  RCLCPP_INFO(this->get_logger(), "Time difference between deciding to trigger LabJack and the incoming EEG trigger: %.4f (s)", time_difference);
 
-void EegDecider::update_ready_for_trigger([[maybe_unused]] const std::shared_ptr<event_interfaces::msg::ReadyForEventTrigger> msg) {
-  this->ready_for_trigger = true;
+  /* Publish latency ROS message. */
+  auto msg = pipeline_interfaces::msg::Latency();
+  msg.latency = time_difference;
+  msg.decision_time = decision_time;
 
-  RCLCPP_INFO(this->get_logger(), "Ready for event trigger.");
+  this->latency_publisher->publish(msg);
 }
 
 void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
@@ -566,13 +716,8 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
-  /* Log if this is the first sample of the session. */
-  if (msg->metadata.first_sample_of_session) {
-    RCLCPP_INFO(this->get_logger(), "First sample of session received.");
-  }
-
   /* Update EEG info with every new session OR if this is the first EEG sample received. */
-  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
+  if (this->first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
@@ -597,13 +742,16 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
 
   if (this->reinitialize ||
       this->decider_wrapper->get_state() == WrapperState::UNINITIALIZED ||
-      msg->metadata.first_sample_of_session) {
+      this->first_sample_of_session) {
 
     initialize_module();
     reset_decider_state();
+    empty_trial_queue();
+    precompute_trials();
 
     this->reinitialize = false;
   }
+  this->first_sample_of_session = false;
 
   /* Check that the decider module has not encountered an error. */
   if (this->decider_wrapper->get_state() == WrapperState::ERROR) {
@@ -623,12 +771,21 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
+  /* Determine if we are ready for a trial. */
+  auto time_since_previous_trial = sample_time - this->previous_stimulation_time;
+  auto has_minimum_intertrial_interval_passed = std::isnan(this->previous_stimulation_time) ||
+                                                time_since_previous_trial >= this->minimum_intertrial_interval;
+  auto ready_for_trial = !performing_trial &&
+                         !triggering_labjack &&
+                         this->trial_queue.empty() &&
+                         has_minimum_intertrial_interval_passed;
+
   /* Process the sample. */
-  auto [success, send_trigger, send_external_trigger, send_sensory_stimulus] = this->decider_wrapper->process(
+  auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
-    ready_for_trigger);
+    ready_for_trial);
 
   /* Log and return early if the Python call failed. */
   if (!success) {
@@ -640,55 +797,105 @@ void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::Prepr
     return;
   }
 
+  bool is_trial_requested = trial != nullptr;
+
+  /* Note: 'Stimulation' encompasses both trial and LabJack trigger. */
+  bool is_stimulation_requested = is_trial_requested || trigger_labjack;
+
+  bool is_already_stimulating = this->performing_trial || this->triggering_labjack;
+
+  /* Check that the decider is not already stimulating. */
+  if (is_stimulation_requested && is_already_stimulating) {
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or triggering LabJack, ignoring the request.");
+    return;
+  }
+
+  /* Check that the minimum pulse interval is respected. */
+  if (is_stimulation_requested && !has_minimum_intertrial_interval_passed) {
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but minimum intertrial interval (%.1f s) not respected (time since previous stimulation: %.3f s), ignoring the request.",
+                 this->minimum_intertrial_interval,
+                 time_since_previous_trial);
+    return;
+  }
+
   /* Measure the processing time of the sample.  TODO: Unused at the moment. */
   auto end_time = std::chrono::high_resolution_clock::now();
   double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-  /* Check that the minimum pulse interval is respected. */
-  if (send_trigger || send_external_trigger) {
-    if (this->previous_trigger_time != UNSET_PREVIOUS_TIME &&
-        sample_time - this->previous_trigger_time < this->minimum_pulse_interval) {
+  /* Add trial to the queue if requested. */
+  if (is_trial_requested) {
+    this->trial_queue.push({*trial, sample_time});
 
-      RCLCPP_ERROR(this->get_logger(), "Minimum pulse interval (%.1f s) not respected, not sending trigger at time %.3f (s).",
-                    this->minimum_pulse_interval,
-                    sample_time);
-      return;
-    }
+    /* Update the previous stimulation time. */
+    this->previous_stimulation_time = sample_time;
   }
 
-  /* Send trigger if desired. */
-  if (send_trigger) {
-    this->decision_times.push(sample_time);
+  /* Trigger LabJack if requested. */
+  if (trigger_labjack) {
+    this->labjack_decision_times.push(sample_time);
 
-    RCLCPP_INFO(this->get_logger(), "Sending trigger at time %.3f (s).", sample_time);
+    RCLCPP_INFO(this->get_logger(), "Triggering LabJack at time %.3f (s).", sample_time);
 
-    auto msg = event_interfaces::msg::EventTrigger();
-    this->trigger_publisher->publish(msg);
+    this->trigger_labjack();
 
-    /* Update the previous trigger time. */
-    this->previous_trigger_time = sample_time;
-
-    ready_for_trigger = false;
+    /* Update the previous stimulation time. */
+    this->previous_stimulation_time = sample_time;
   }
 
-  /* Send external trigger if desired. */
-  if (send_external_trigger) {
-    this->decision_times.push(sample_time);
-
-    RCLCPP_INFO(this->get_logger(), "Sending external trigger at time %.3f (s).", sample_time);
-
-    auto msg = event_interfaces::msg::EventTrigger();
-    this->external_trigger_publisher->publish(msg);
-
-    /* Update the previous trigger time. */
-    this->previous_trigger_time = sample_time;
-  }
-
-  /* Send sensory stimulus if desired. */
-  if (send_sensory_stimulus) {
-    RCLCPP_INFO(this->get_logger(), "Sending sensory stimulus at time %.3f (s).", sample_time);
+  /* Request sensory stimulus if requested. */
+  if (request_sensory_stimulus) {
+    RCLCPP_INFO(this->get_logger(), "Requesting sensory stimulus at time %.3f (s).", sample_time);
 
     this->sensory_stimulus_publisher->publish(this->sensory_stimulus);
+  }
+}
+
+void EegDecider::spin() {
+  auto base_interface = this->get_node_base_interface();
+
+  while (rclcpp::ok()) {
+    rclcpp::spin_some(base_interface);
+
+    if (!this->trial_queue.empty() && !this->performing_trial) {
+      auto num_of_remaining_trials = this->trial_queue.size();
+
+      auto [trial, decision_time] = this->trial_queue.front();
+      this->trial_queue.pop();
+
+      this->perform_trial(trial, decision_time);
+      this->log_trial(trial, num_of_remaining_trials);
+    }
+  }
+}
+
+void EegDecider::log_trial(const experiment_interfaces::msg::Trial& trial, size_t num_of_remaining_trials) {
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "%s trial (remaining: %zu)", trial.config.dry_run ? "Pre-computing" : "Performing", num_of_remaining_trials);
+  RCLCPP_INFO(this->get_logger(), "  - Targets:");
+
+  auto targets = trial.targets;
+  auto num_of_targets = targets.size();
+
+  if (num_of_targets == 1) {
+    RCLCPP_INFO(this->get_logger(), "      Single pulse: x = %d (mm), y = %d (mm), rotation angle = %d (deg), intensity = %d (V/m)",
+                targets[0].displacement_x, targets[0].displacement_y, targets[0].rotation_angle, targets[0].intensity);
+
+  } else if (num_of_targets == 2) {
+    RCLCPP_INFO(this->get_logger(), "      Paired-pulse:");
+    RCLCPP_INFO(this->get_logger(), "        Pulse #1: x = %d (mm), y = %d (mm), rotation angle = %d (deg), intensity = %d (V/m)",
+                targets[0].displacement_x, targets[0].displacement_y, targets[0].rotation_angle, targets[0].intensity);
+    RCLCPP_INFO(this->get_logger(), "        Pulse #2: x = %d (mm), y = %d (mm), rotation angle = %d (deg), intensity = %d (V/m)",
+                targets[1].displacement_x, targets[1].displacement_y, targets[1].rotation_angle, targets[1].intensity);
+
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "      Invalid number of pulses: %zu", num_of_targets);
+  }
+
+  if (!trial.config.dry_run) {
+    RCLCPP_INFO(this->get_logger(), "  - Pulse times:");
+    for (const auto& pulse_time : trial.pulse_times_since_trial_start) {
+      RCLCPP_INFO(this->get_logger(), "    - %.3f (s)", pulse_time + trial.timing.desired_start_time);
+    }
   }
 }
 
@@ -709,7 +916,7 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::spin(node);
+  node->spin();
   rclcpp::shutdown();
 
   return 0;

@@ -3,11 +3,14 @@
 <package format="3">
   <name>mtms_device_interfaces</name>
   <version>0.0.1</version>
-  <description>Interfaces for communication with mTMS device</description>
-  <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
+  <description>Interfaces for communicating with mTMS device</description>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <build_depend>event_interfaces</build_depend>
+  <exec_depend>event_interfaces</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

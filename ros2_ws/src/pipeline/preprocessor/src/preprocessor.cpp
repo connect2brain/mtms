@@ -21,9 +21,9 @@ const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
 const std::string HEALTHCHECK_TOPIC = "/eeg/preprocessor/healthcheck";
 
-const std::string PROJECTS_DIRECTORY = "projects/";
+const std::string PROJECTS_DIRECTORY = "/app/projects";
 
-const std::string DEFAULT_PREPROCESSOR_NAME = "dummy";
+const std::string DEFAULT_PREPROCESSOR_NAME = "example";
 
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
@@ -178,6 +178,7 @@ void EegPreprocessor::handle_session(const std::shared_ptr<system_interfaces::ms
   this->session_state = msg->state;
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
+    this->first_sample_of_session = true;
     this->reinitialize = true;
 
     /* Reset the preprocessor state when the session is stopped. */
@@ -194,7 +195,7 @@ void EegPreprocessor::update_eeg_info(const eeg_interfaces::msg::SampleMetadata&
 }
 
 void EegPreprocessor::initialize_module() {
-  if (this->script_directory == UNSET_STRING ||
+  if (this->working_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING) {
 
     RCLCPP_INFO(this->get_logger(), "Not initializing preprocessor module, module unset.");
@@ -202,7 +203,7 @@ void EegPreprocessor::initialize_module() {
   }
 
   this->preprocessor_wrapper->initialize_module(
-    this->script_directory,
+    this->working_directory,
     this->module_name,
     this->num_of_eeg_channels,
     this->num_of_emg_channels,
@@ -314,10 +315,9 @@ void EegPreprocessor::handle_set_preprocessor_module(
 void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
-  this->script_directory = PROJECTS_DIRECTORY + "/" + this->active_project + "/preprocessor";
-
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
 
+  this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/preprocessor");
   update_preprocessor_list();
 
   if (this->modules.size() > 0) {
@@ -338,16 +338,47 @@ void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::
   update_inotify_watch();
 }
 
-/* Inotify functions */
+/* File-system related functions */
+
+bool EegPreprocessor::change_working_directory(const std::string path) {
+  this->working_directory = path;
+
+  /* Check that the directory exists. */
+  if (!std::filesystem::exists(this->working_directory) || !std::filesystem::is_directory(this->working_directory)) {
+    RCLCPP_ERROR(this->get_logger(), "Directory does not exist: %s.", path.c_str());
+    return false;
+  }
+
+  /* Change the working directory to the project directory. */
+  if (chdir(this->working_directory.c_str()) != 0) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to change working directory to: %s.", this->working_directory.c_str());
+    return false;
+  }
+
+  return true;
+}
+
+std::vector<std::string> EegPreprocessor::list_python_modules_in_working_directory() {
+  std::vector<std::string> modules;
+
+  /* List all .py files in the current working directory. */
+  auto path = std::filesystem::current_path();
+  for (const auto &entry : std::filesystem::directory_iterator(path)) {
+    if (entry.is_regular_file() && entry.path().extension() == ".py") {
+      modules.push_back(entry.path().stem().string());
+    }
+  }
+  return modules;
+}
 
 void EegPreprocessor::update_inotify_watch() {
   /* Remove the old watch. */
   inotify_rm_watch(inotify_descriptor, watch_descriptor);
 
   /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->script_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE);
+  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
   if (watch_descriptor == -1) {
-      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->script_directory.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->working_directory.c_str());
       return;
   }
 }
@@ -376,8 +407,8 @@ void EegPreprocessor::inotify_timer_callback() {
         RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
         this->reinitialize = true;
       }
-      if (event->mask & (IN_CREATE | IN_DELETE)) {
-        RCLCPP_INFO(this->get_logger(), "File '%s' created or deleted, updating preprocessor list.", event_name.c_str());
+      if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
+        RCLCPP_INFO(this->get_logger(), "File '%s' created, deleted, or moved, updating preprocessor list.", event_name.c_str());
         this->update_preprocessor_list();
       }
     }
@@ -385,27 +416,12 @@ void EegPreprocessor::inotify_timer_callback() {
   }
 }
 
-std::vector<std::string> EegPreprocessor::list_python_modules(const std::string& path) {
-  std::vector<std::string> modules;
-
-  /* Check that the directory exists. */
-  if (!std::filesystem::exists(path) || !std::filesystem::is_directory(path)) {
-    RCLCPP_WARN(this->get_logger(), "Warning: Directory does not exist: %s.", path.c_str());
-    return modules;
-  }
-
-  /* List all .py files in the directory. */
-  for (const auto &entry : std::filesystem::directory_iterator(path)) {
-    if (entry.is_regular_file() && entry.path().extension() == ".py") {
-      modules.push_back(entry.path().stem().string());
-    }
-  }
-  return modules;
-}
-
 void EegPreprocessor::update_preprocessor_list() {
-  this->modules = this->list_python_modules(this->script_directory);
-
+  if (this->is_working_directory_set) {
+    this->modules = this->list_python_modules_in_working_directory();
+  } else {
+    this->modules.clear();
+  }
   auto msg = project_interfaces::msg::PreprocessorList();
   msg.scripts = this->modules;
 
@@ -489,16 +505,8 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  /* Log if this is the first sample of the session. */
-  if (msg->metadata.first_sample_of_session) {
-    RCLCPP_INFO(this->get_logger(), "First sample of session received.");
-
-    /* Mark that the first sample of the session has been received so that it can be passed on when publishing the preprocessed sample. */
-    this->first_sample_of_session_received = true;
-  }
-
   /* Update EEG info with every new session OR if this is the first EEG sample received ever. */
-  if (msg->metadata.first_sample_of_session || this->first_sample_ever) {
+  if (this->first_sample_of_session || this->first_sample_ever) {
     update_eeg_info(msg->metadata);
 
     /* Avoid checking for dropped samples on the first sample. */
@@ -523,13 +531,14 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
 
   if (this->reinitialize ||
       this->preprocessor_wrapper->get_state() == WrapperState::UNINITIALIZED ||
-      msg->metadata.first_sample_of_session) {
+      this->first_sample_of_session) {
 
     initialize_module();
     reset_preprocessor_state();
 
     this->reinitialize = false;
   }
+  this->first_sample_of_session = false;
 
   /* Check that the preprocessor module has not encountered an error. */
   if (this->preprocessor_wrapper->get_state() == WrapperState::ERROR) {
@@ -565,13 +574,6 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     preprocessed_sample.metadata.sampling_frequency = msg->metadata.sampling_frequency;
     preprocessed_sample.metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
     preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
-
-    /* 'First sample of session' field cannot be copied directly from the raw sample, as the preprocessing
-        only starts taking place when the sample buffer is full, and by that time the actual first sample
-        of the session has already passed through the preprocessor. Hence wait until the sample buffer is
-        full, and only then set the 'first sample of session' field to true. */
-    preprocessed_sample.metadata.first_sample_of_session = this->first_sample_of_session_received;
-    this->first_sample_of_session_received = false;
 
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();
