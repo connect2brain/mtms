@@ -6,11 +6,12 @@ from event_interfaces.msg import (
     ChargeError,
     Discharge,
     DischargeError,
-    EventInfo,
-    ExecutionCondition,
     Pulse,
     PulseError,
     TriggerOut,
+    TriggerOutError,
+    EventInfo,
+    ExecutionCondition,
     PulseFeedback,
     ChargeFeedback,
     DischargeFeedback,
@@ -29,6 +30,7 @@ from mtms_device_interfaces.srv import (
     SendSettings,
     StartDevice,
     StopDevice,
+    RequestEvents,
 )
 from system_interfaces.msg import (
     Session,
@@ -131,19 +133,8 @@ class MTMSSimulator(Node):
         self.stop_session_service = self.create_service(
             StopSession, "/mtms_device/session/stop", self.stop_session_handler
         )
-
-        # Subscribers
-        self.charge_subscriber = self.create_subscription(
-            Charge, "/event/send/charge", self.charge_handler, 10
-        )
-        self.discharge_subscriber = self.create_subscription(
-            Discharge, "/event/send/discharge", self.discharge_handler, 10
-        )
-        self.pulse_subscriber = self.create_subscription(
-            Pulse, "/event/send/pulse", self.pulse_handler, 10
-        )
-        self.trigger_out_subscriber = self.create_subscription(
-            TriggerOut, "event/send/trigger_out", self.trigger_out_handler, 10
+        self.request_events_service = self.create_service(
+            RequestEvents, "/mtms_device/request_events", self.request_events_handler
         )
 
         # Publisher
@@ -299,6 +290,28 @@ class MTMSSimulator(Node):
         response.success = True
         return response
 
+    def request_events_handler(self, request, response):
+        """
+        Handles the request events service.
+
+        Args:
+            request: The request containing arrays of events to process.
+            response: The response indicating the success or failure of processing.
+        """
+        self.get_logger().info("Received request to process events")
+
+        for pulse in request.pulses:
+            self.process_pulse(pulse)
+        for charge in request.charges:
+            self.process_charge(charge)
+        for discharge in request.discharges:
+            self.process_discharge(discharge)
+        for trigger_out in request.trigger_outs:
+            self.process_trigger_out(trigger_out)
+
+        response.success = True
+        return response
+
     def _is_session_started(self) -> bool:
         return self.session.state.value != SessionState.STARTED
 
@@ -374,9 +387,9 @@ class MTMSSimulator(Node):
                     % ExecutionCondition.value
                 )
 
-    def charge_handler(self, message: Charge) -> None:
+    def process_charge(self, message: Charge) -> None:
         """
-        Charges the given channel to desired voltage.
+        Processes a charge message and charges the given channel to the desired voltage.
 
         New voltage is not set immediately, and rather models the behaviour of a
         capacitor to change the voltage. Charging is done with constant power and the
@@ -416,9 +429,9 @@ class MTMSSimulator(Node):
 
         self.charge_feedback_publisher.publish(feedback_msg)
 
-    def discharge_handler(self, message: Discharge) -> None:
+    def process_discharge(self, message: Discharge) -> None:
         """
-        Discharges the given channel to given voltage.
+        Processes a discharge message and discharges the given channel to the desired voltage.
 
         New voltage is not set immediately, and rather models the behaviour of a
         capacitor to change the voltage. Discharge follows exponential decay.
@@ -531,9 +544,9 @@ class MTMSSimulator(Node):
 
         return total_duration, rising_duration, falling_duration
 
-    def pulse_handler(self, message: Pulse) -> None:
+    def process_pulse(self, message: Pulse) -> None:
         """
-        Simulates the behaviour of giving a pulse.
+        Processes a pulse message and simulates the behaviour of giving a pulse.
 
         Simulates the giving of a pulse by dropping the channel voltage by the amount of
         self.pulse_drop_proportion.
@@ -563,7 +576,7 @@ class MTMSSimulator(Node):
         feedback_msg = channel.pulse(event_info.id, total_duration)
         self.pulse_feedback_publisher.publish(feedback_msg)
 
-    def trigger_out_handler(self, message: TriggerOut):
+    def process_trigger_out(self, message: TriggerOut):
         self.get_logger().debug("Trigger out: %r" % message)
 
         event_info = message.event_info

@@ -18,10 +18,15 @@ class TrialLoggerNode(Node):
         "Trial index",
         "Number of attempts",
         "Trial start time (s)",
+        "Number of targets",
         "x (mm)",
         "y (mm)",
         "Angle (deg)",
         "Intensity (V/m)",
+        "x (mm, second target)",
+        "y (mm, second target)",
+        "Angle (deg, second target)",
+        "Intensity (V/m, second target)",
         "MEP amplitude (uV)",
         "MEP latency (s)",
     ]
@@ -102,18 +107,28 @@ class TrialLoggerNode(Node):
         file.write(header)
 
     def log_trial_row(self, file, trial_number, trial, trial_result, num_of_attempts):
-        assert len(trial.targets) == 1, "Does not support multiple targets yet!"
+        num_of_targets = len(trial.targets)
+        assert num_of_targets <= 2, "Does not support more than two targets."
 
-        target = trial.targets[0]
+        first_target = trial.targets[0]
+        if num_of_targets == 2:
+            second_target = trial.targets[1]
+        else:
+            second_target = None
 
-        row = "{};{};{:.3f};{};{};{};{};{:.1f};{:.4f}\n".format(
+        row = "{};{};{:.3f};{};{};{};{};{};{};{};{};{};{:.1f};{:.4f}\n".format(
             trial_number,
             num_of_attempts,
             trial_result.actual_start_time,
-            target.displacement_x,
-            target.displacement_y,
-            target.rotation_angle,
-            target.intensity,
+            num_of_targets,
+            first_target.displacement_x,
+            first_target.displacement_y,
+            first_target.rotation_angle,
+            first_target.intensity,
+            second_target.displacement_x if second_target else '',
+            second_target.displacement_y if second_target else '',
+            second_target.rotation_angle if second_target else '',
+            second_target.intensity if second_target else '',
             trial_result.mep.amplitude,
             trial_result.mep.latency,
         )
