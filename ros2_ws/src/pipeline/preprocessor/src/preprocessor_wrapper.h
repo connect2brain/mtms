@@ -49,6 +49,9 @@ public:
   /* Exposed to Python, defined in cpp_bindings.cpp. */
   static void log(const std::string& message);
 
+  /* Exposed to Python, defined in cpp_bindings.cpp. */
+  static void log_throttle(const std::string& message, const double_t period);
+
 private:
   /* XXX: Have a static ROS2 logger to expose it more easily to the Python side (see cpp_bindings.cpp). */
   static rclcpp::Logger* logger_ptr;
