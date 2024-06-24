@@ -20,7 +20,7 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
 
     % List algorithms with different intermediate points, which ensure the
     % hold phase is always equal length with the target mode.
-    for i = 3:-2:1
+    for i = [3,1,0]
         algorithm = struct( ...
             'algorithm', @obj.algorithm_alternating_hold_start_with_non_hold, ...
             'algorithm_name', 'alternating hold start with non-hold', ...
@@ -78,7 +78,6 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
     for m = 1:length(modes)
         wavelet = struct('mode', modes(m), 'duration', durations(m));
         wavelet_state_trajectory = state_trajectory(state_trajectory_start_ind:state_trajectory_inds(m));
-        state_trajectory_start_ind = state_trajectory_inds(m) + 1;
 
         % Choose algorithms to try
         if pre_hold
@@ -118,7 +117,9 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
             %struct('current_mode', current_mode, 'mode_index', i, 'segment_index', j, 'is_last_segment', is_last_segment);
 
             % Approximate the waveform.
-            [approximated_waveform, relative_errors] = obj.approximate(sampling_points, algorithm, initial_state);
+            [approximated_waveform, relative_errors] = obj.approximate(actual_voltage, sampling_points, algorithm, initial_state);
+            current_approximated_state_trajectory = obj.generate_state_trajectory_from_waveform(actual_voltage,[aggregated_approximated_waveform, approximated_waveform]);
+            approximated_wavelet_state_trajectory = current_approximated_state_trajectory(state_trajectory_start_ind:state_trajectory_inds(m));
 
             % Check that all waveform phases are ok, that is, they have a long enough duration.
             waveform_durations_ok = are_waveform_durations_ok(approximated_waveform, relative_errors);
@@ -126,12 +127,18 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
             % Check that all waveform phases are ok, that is, they have a small enough relative error.
             relative_errors_ok = are_relative_errors_ok(relative_errors);
 
+            if ~strcmp(algorithm_name,'micropulse')
+                % Check that the approximation doesn't overshoot the target
+                max_currents_ok = are_maximum_currents_ok(wavelet_state_trajectory, approximated_wavelet_state_trajectory);
+            else
+                max_currents_ok = true;
+            end
+
             % Plot solution
-            %current_approximated_state_trajectory = obj.generate_state_trajectory_from_waveform(actual_voltage,[aggregated_approximated_waveform, approximated_waveform]);
             %obj.plot_state_trajectories(state_trajectory, current_approximated_state_trajectory, sampling_points);
             
     
-            if (~check_duration || waveform_durations_ok) && (~check_relative_error || relative_errors_ok)
+            if (~check_duration || waveform_durations_ok) && (~check_relative_error || relative_errors_ok) && max_currents_ok
                 success = true;
                 disp('  The approximation was successful.');
     
@@ -146,9 +153,11 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
         else
             pre_hold = 1;
         end
-
+        
         % Update the initial state for the next wavelet iteration
         initial_state = obj.apply_waveform_to_state(initial_state, approximated_waveform);
+
+        state_trajectory_start_ind = state_trajectory_inds(m) + 1;
     end
 
 
@@ -191,6 +200,15 @@ function [aggregated_approximated_waveform, sampling_points, success] = approxim
                 is_ok = false;
                 break;
             end
+        end
+    end
+
+    function is_ok = are_maximum_currents_ok(target_wavelet_state_trajectory, approximate_wavelet_state_trajectory)
+        is_ok = true;
+        max_approximated_current = max(abs([approximate_wavelet_state_trajectory.I_coil]));
+        max_target_current = max(abs([target_wavelet_state_trajectory.I_coil]));
+        if  max_approximated_current > 1.1*max_target_current
+            is_ok = false;
         end
     end
 end

@@ -1,5 +1,5 @@
-function [approximated_waveform, relative_errors] = approximate(obj, sampling_points, algorithm, initial_state)
-    if nargin < 3
+function [approximated_waveform, relative_errors] = approximate(obj, actual_voltage, sampling_points, algorithm, initial_state)
+    if nargin < 5
         % Generate initial conditions.
         initial_state = obj.generate_initial_state(actual_voltage);
     end
