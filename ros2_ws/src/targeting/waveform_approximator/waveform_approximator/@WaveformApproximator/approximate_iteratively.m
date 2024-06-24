@@ -1,4 +1,7 @@
-function [approximated_waveform, sampling_points, success] = approximate_iteratively(obj, actual_voltage, target_voltage, target_waveform)
+function [aggregated_approximated_waveform, sampling_points, success] = approximate_iteratively(obj, actual_voltage, target_voltage, target_waveform)
+ 
+    % Generate initial conditions.
+    initial_state = obj.generate_initial_state(actual_voltage);
 
     % Check that the target voltage does not exceed the actual voltage.
     if target_voltage > actual_voltage
@@ -10,11 +13,14 @@ function [approximated_waveform, sampling_points, success] = approximate_iterati
     % Generate the state trajectory for the target waveform.
     state_trajectory = obj.generate_state_trajectory_from_waveform(target_voltage, target_waveform);
 
-    % Define the algorithms and corresponding intermediate points
-    algorithms = {};
+    % Define the separate algorithm options for modes pre and post hold
+    % phases.
+    algorithms_pre_hold = {};
+    algorithms_post_hold = {};
 
-    % Start from 3 intermediate points and decrease to 0.
-    for i = 3:-1:0
+    % List algorithms with different intermediate points, which ensure the
+    % hold phase is always equal length with the target mode.
+    for i = 3:-2:1
         algorithm = struct( ...
             'algorithm', @obj.algorithm_alternating_hold_start_with_non_hold, ...
             'algorithm_name', 'alternating hold start with non-hold', ...
@@ -22,8 +28,10 @@ function [approximated_waveform, sampling_points, success] = approximate_iterati
             'check_duration', true, ...
             'check_relative_error', true);
 
-        algorithms{end+1} = algorithm;
-
+        %algorithms{end+1} = algorithm;
+        algorithms_post_hold{end+1} = algorithm;
+    end
+    for i = 2:-2:0
         algorithm = struct( ...
             'algorithm', @obj.algorithm_alternating_hold_start_with_hold, ...
             'algorithm_name', 'alternating hold start with hold', ...
@@ -31,11 +39,12 @@ function [approximated_waveform, sampling_points, success] = approximate_iterati
             'check_duration', true, ...
             'check_relative_error', true);
 
-        algorithms{end+1} = algorithm;
+        %algorithms{end+1} = algorithm;
+        algorithms_pre_hold{end+1} = algorithm;
     end
 
     % Add the micropulse and constant hold algorithms with 0 intermediate points
-    algorithms{end+1} = struct( ...
+    micropulse_algorithm = struct( ...
         'algorithm', @obj.algorithm_micropulse, ...
         'algorithm_name', 'micropulse', ...
         'intermediate_points', 0, ...
@@ -44,46 +53,104 @@ function [approximated_waveform, sampling_points, success] = approximate_iterati
 
     % The constant hold is only used for very low target voltages, where the approximation
     % might contain large relative errors. For that reason, the relative errors are not checked.
-    algorithms{end+1} = struct( ...
+    constant_hold_algorithm = struct( ...
         'algorithm', @obj.algorithm_constant_hold, ...
         'algorithm_name', 'constant hold', ...
         'intermediate_points', 0, ...
         'check_duration', true, ...
         'check_relative_error', false);
 
+    algorithms_pre_hold{end+1} = micropulse_algorithm;
+    algorithms_pre_hold{end+1} = constant_hold_algorithm;
+    algorithms_post_hold{end+1} = micropulse_algorithm;
+    algorithms_post_hold{end+1} = constant_hold_algorithm;
+
+    % Loop through the modes and for each mode loop trough the algorithms
+    modes = [target_waveform.mode];
+    durations = [target_waveform.duration];
+    state_trajectory_inds = floor(cumsum(durations/obj.time_resolution))+1;
+    state_trajectory_start_ind = 1;
+    aggregated_approximated_waveform = struct('mode', {}, 'duration', {});
     success = false;
-    for i = 1:length(algorithms)
-        intermediate_points = algorithms{i}.intermediate_points;
-        algorithm = algorithms{i}.algorithm;
-        algorithm_name = algorithms{i}.algorithm_name;
-        check_duration = algorithms{i}.check_duration;
-        check_relative_error = algorithms{i}.check_relative_error;
+    pre_hold = 1;
 
-        disp(['Trying with ', num2str(intermediate_points), ' intermediate points per mode using ''', algorithm_name, ''' algorithm.']);
+    figure(1)
+    for m = 1:length(modes)
+        wavelet = struct('mode', modes(m), 'duration', durations(m));
+        wavelet_state_trajectory = state_trajectory(state_trajectory_start_ind:state_trajectory_inds(m));
+        state_trajectory_start_ind = state_trajectory_inds(m) + 1;
 
-        % Calculate the number of intermediate points for each mode.
-        num_of_intermediate_points_per_mode = calculate_num_of_intermediate_points_per_mode(target_waveform, intermediate_points);
-
-        % Sample the state trajectory using the waveform.
-        sampling_points = obj.sample_state_trajectory_by_waveform(state_trajectory, target_waveform, num_of_intermediate_points_per_mode);
-
-        % Approximate the waveform.
-        [approximated_waveform, relative_errors] = obj.approximate(actual_voltage, sampling_points, algorithm);
-
-        % Check that all waveform phases are ok, that is, they have a long enough duration.
-        waveform_durations_ok = are_waveform_durations_ok(approximated_waveform, relative_errors);
-
-        % Check that all waveform phases are ok, that is, they have a small enough relative error.
-        relative_errors_ok = are_relative_errors_ok(relative_errors);
-
-        if (~check_duration || waveform_durations_ok) && (~check_relative_error || relative_errors_ok)
-            success = true;
-            disp('  The approximation was successful.');
-
-            break;
+        % Choose algorithms to try
+        if pre_hold
+            algorithms = algorithms_pre_hold;
+        else
+            algorithms = algorithms_post_hold;
         end
-        disp('  The approximation failed.');
+
+        for i = 1:length(algorithms)
+            intermediate_points = algorithms{i}.intermediate_points;
+            algorithm = algorithms{i}.algorithm;
+            algorithm_name = algorithms{i}.algorithm_name;
+            check_duration = algorithms{i}.check_duration;
+            check_relative_error = algorithms{i}.check_relative_error;
+    
+            disp(['Trying with ', num2str(intermediate_points), ' intermediate points per mode using ''', algorithm_name, ''' algorithm.']);
+    
+            % Calculate the number of intermediate points for each mode.
+            num_of_intermediate_points_per_mode = calculate_num_of_intermediate_points_per_mode(wavelet, intermediate_points);
+    
+            % Sample the state trajectory using the waveform.
+            sampling_points = obj.sample_state_trajectory_by_waveform(wavelet_state_trajectory, wavelet, num_of_intermediate_points_per_mode);
+            
+            % Set mode position info
+            if m == 1
+                position = 1;
+            elseif m == length(modes)
+                position = 3;
+            else
+                position = 2;
+            end
+
+            for j = 1:length(sampling_points)
+                sampling_points(j).mode_info.position = position;
+            end
+
+            %struct('current_mode', current_mode, 'mode_index', i, 'segment_index', j, 'is_last_segment', is_last_segment);
+
+            % Approximate the waveform.
+            [approximated_waveform, relative_errors] = obj.approximate(sampling_points, algorithm, initial_state);
+
+            % Check that all waveform phases are ok, that is, they have a long enough duration.
+            waveform_durations_ok = are_waveform_durations_ok(approximated_waveform, relative_errors);
+    
+            % Check that all waveform phases are ok, that is, they have a small enough relative error.
+            relative_errors_ok = are_relative_errors_ok(relative_errors);
+
+            % Plot solution
+            %current_approximated_state_trajectory = obj.generate_state_trajectory_from_waveform(actual_voltage,[aggregated_approximated_waveform, approximated_waveform]);
+            %obj.plot_state_trajectories(state_trajectory, current_approximated_state_trajectory, sampling_points);
+            
+    
+            if (~check_duration || waveform_durations_ok) && (~check_relative_error || relative_errors_ok)
+                success = true;
+                disp('  The approximation was successful.');
+    
+                break;
+            end
+            disp('  The approximation failed.');
+        end
+        aggregated_approximated_waveform = [aggregated_approximated_waveform, approximated_waveform];
+
+        if strcmp(modes(m),'h')
+            pre_hold = 0;
+        else
+            pre_hold = 1;
+        end
+
+        % Update the initial state for the next wavelet iteration
+        initial_state = obj.apply_waveform_to_state(initial_state, approximated_waveform);
     end
+
 
     function num_of_intermediate_points_per_mode = calculate_num_of_intermediate_points_per_mode(target_waveform, num_of_intermediate_points_for_rising_and_falling_modes)
         % Create number of intermediate points for each mode by using as many as possible for falling and rising modes,
