@@ -93,6 +93,12 @@ services:
     build:
       context: .
       dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
+    # Enable GPU in the container.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
