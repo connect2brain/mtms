@@ -19,9 +19,12 @@ classdef WaveformApproximator < handle
             obj.time_resolution = time_resolution;
             obj.solutions = load(solutions_file);
 
-            % As of FPGA bitfile version 0.5.11, the minimum mode duration is 160 ticks on both Gen 1 and Gen 2 devices.
-            % One tick is 25 ns, do the conversion here.
-            obj.minimum_mode_duration = 160 * 25e-9;
+            % The minimum mode duration on the FPGA (as of bitfile version 0.5.12) is 160 ticks; however, this is
+            % incorrect and should be fixed, as feedback is requested 200 ticks after mode change because
+            % channel interference causes artifacts in the feedback signal for as long as 160 us after mode change.
+            % The correct minimum mode duration is therefore 200 ticks, corresponding to 5 us
+            % (1 tick is 25 ns). Use the correct value here. TODO: Fix on the FPGA side.
+            obj.minimum_mode_duration = 200 * 25e-9;
         end
 
         function select_coil(obj, index)
