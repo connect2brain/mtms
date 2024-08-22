@@ -1,5 +1,16 @@
 ## Version history
 
+### 0.5.12
+- MOD: Increase the maximum number of pulse pieces from 16 to 17.
+
+### 0.5.11
+- MOD: Set minimum mode duration to 160 ticks for both Gen 1 and 2 devices.
+- ADD: Event aggregation lock, allowing to aggregate events before performing them.
+
+### 0.5.10
+- MOD: Allow also last phase to be shorter than minimum duration if it is "Hold" phase.
+- MOD: Set default maximum number of pulse pieces to 16.
+
 ### 0.5.9
 - MOD: Change maximum number of pulse pieces to 16 to save space on FPGA.
 - FIX: Maximum voltage in charging/discharging was not inclusive, thus excluding 1500 V.

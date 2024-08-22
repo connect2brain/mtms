@@ -1,24 +1,39 @@
-FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
+FROM nvidia/cuda:12.2.0-base-ubuntu22.04
 
 SHELL ["/bin/bash", "-c"]
 
-# Install dependencies
+# Set up ROS2 repository.
+RUN apt-get update && apt-get install -y curl gnupg2 lsb-release && \
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
 
-RUN apt-get update && \
-    apt-get install -y \
-    dos2unix \
+# Set non-interactive mode to avoid prompts during ROS2 installation.
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    ros-iron-ros-base \
     python3-pip \
     python3-tk \
-    ros-iron-rmw-cyclonedds-cpp && \
-    rm -rf /var/lib/apt/lists/*
+    python3-colcon-common-extensions \
+    ros-iron-rmw-cyclonedds-cpp \
+    build-essential \
+    dos2unix \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
-# Note: Scikit-learn is needed for mneflow, used for machine learning.
-RUN pip3 install scikit-learn
+# Set up CUDA environment variables.
+ENV PATH=/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
 
-RUN pip3 install mneflow
+# Upgrade pip.
+RUN pip3 install --upgrade pip
 
-# Install statsmodels for the pipeline
-RUN pip3 install statsmodels
+# Install PyTorch.
+RUN pip3 install torch torchvision torchaudio
+
+# Install other Python packages.
+RUN pip3 install matplotlib wandb pyyaml omegaconf tqdm diffusers accelerate lovely-tensors \
+    numpy scipy ema-pytorch scikit-learn mne mne-realtime mne_icalabel pandas py_neuromodulation statsmodels mneflow
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
@@ -42,6 +57,9 @@ RUN source /opt/ros/iron/setup.bash && colcon build
 # ROS node
 COPY ros2_ws/src/pipeline/decider src/pipeline/decider/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select decider
+
+# Copy CUDA test script
+COPY ros2_ws/src/pipeline/decider/test_cuda.py /app
 
 # Copy entrypoint
 
