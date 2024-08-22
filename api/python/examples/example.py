@@ -3,7 +3,8 @@ from MTMSApi import MTMSApi
 from event_interfaces.msg import (
     ExecutionCondition,
     WaveformPhase,
-    WaveformPiece
+    WaveformPiece,
+    Waveform
 )
 from mep_interfaces.msg import (
     MepConfiguration,
@@ -329,20 +330,28 @@ latency = mep.latency
 
 ## Define custom waveform
 
-waveform = [
-    WaveformPiece(
-        waveform_phase=WaveformPhase.RISING,
-        duration_in_ticks=2400,
-    ),
-    WaveformPiece(
-        waveform_phase=WaveformPhase.HOLD,
-        duration_in_ticks=1200,
-    ),
-    WaveformPiece(
-        waveform_phase=WaveformPhase.FALLING,
-        duration_in_ticks=1480,
-    )
-]
+waveform = Waveform(
+    pieces=[
+        WaveformPiece(
+            waveform_phase=WaveformPhase(
+                value=WaveformPhase.RISING
+            ),
+            duration_in_ticks=2400,
+        ),
+        WaveformPiece(
+            waveform_phase=WaveformPhase(
+                value=WaveformPhase.HOLD
+            ),
+            duration_in_ticks=1200,
+        ),
+        WaveformPiece(
+            waveform_phase=WaveformPhase(
+                value=WaveformPhase.FALLING
+            ),
+            duration_in_ticks=1480,
+        ),
+    ]
+)
 
 ## Restart session
 api.stop_session()
