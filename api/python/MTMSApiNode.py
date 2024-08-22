@@ -41,7 +41,7 @@ class MTMSApiNode(Node):
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/request_events', RequestEvents)
-    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms_device/request_trigger', RequestTrigger)
+    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms_device/trigger', RequestTrigger)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
