@@ -138,6 +138,14 @@ export const DatasetDisplay: React.FC = () => {
             </SwitchWrapper>
           </StateRow>
         </GrayedOutPanel>
+        <br />
+        <br />
+        <StateRow>
+          <StateTitle>Status:</StateTitle>
+          <StateValue>
+            {eegSimulatorHealthcheck?.status_message}
+          </StateValue>
+        </StateRow>
       </DatasetPanel>
     </>
   )

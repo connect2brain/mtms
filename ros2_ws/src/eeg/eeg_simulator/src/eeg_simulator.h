@@ -73,15 +73,18 @@ private:
 
   project_interfaces::msg::Dataset dataset;
 
-  bool eeg_bridge_available;
+  bool eeg_bridge_available = false;
 
-  bool playback;
-  bool loop;
+  bool playback = false;
+  bool loop = false;
 
-  bool send_triggers;
+  bool send_triggers = false;
 
   bool session_started = false;
   bool triggers_left = false;
+
+  bool is_streaming = false;
+  bool is_loading = false;
 
   double_t latest_session_time;
   double_t time_offset;
