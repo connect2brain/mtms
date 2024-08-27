@@ -126,13 +126,13 @@ export const DatasetDisplay: React.FC = () => {
         </StateRow>
         <GrayedOutPanel isGrayedOut={!playback}>
           <StateRow>
-            <IndentedStateTitle>Loop:</IndentedStateTitle>
+            <IndentedStateTitle>Loop</IndentedStateTitle>
             <SwitchWrapper>
               <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
             </SwitchWrapper>
           </StateRow>
           <StateRow>
-            <IndentedStateTitle>Record:</IndentedStateTitle>
+            <IndentedStateTitle>Record</IndentedStateTitle>
             <SwitchWrapper>
               <ToggleSwitch type='flat' checked={recordData} onChange={handleRecordDataChange} disabled={!playback} />
             </SwitchWrapper>
