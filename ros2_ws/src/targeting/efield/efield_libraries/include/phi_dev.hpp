@@ -14,7 +14,7 @@
 #include "SoureVals_Dvec_LC.hpp"
 #include "A_LG.hpp"
 
-#ifdef USE_CUDA
+#ifdef USE_GPU
     #include "CUBLAS_Wrappers.hpp"
     #include "cudaCheck.hpp"
     #include "D_LC_GPU.cuh"

@@ -1,8 +1,8 @@
 //The functions in this file are partially based on hbftms_cpp library example codes written by M. Stenroos
 //This library is not free to use without written permission from the owner Matti Stenroos
-#define USE_CUDA
+#define USE_GPU
 #include "tms_cpp.hpp"
-#ifdef USE_CUDA
+#ifdef USE_GPU
 #include "TMS_GPU.hpp"
 #endif
 #include "TMS_CPU.hpp"
@@ -22,7 +22,7 @@ MatrixXf Phi;
 MatrixX3T_RM<float> spos;
 Timer timer;
 bool mtms_coil;
-#ifdef USE_CUDA
+#ifdef USE_GPU
 TMS_GPU *TMS_obj;
 #else
 TMS <float,float>*TMS_obj;
@@ -40,7 +40,7 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
     cortex =new Mesh<float>(cortexfile);
     spos= cortex->Points();
 
-#ifdef USE_CUDA
+#ifdef USE_GPU
     timer.Start();
     vector< MatrixXf > D = BEMOperatorsPhi_LC_GPU(meshes);
     MatrixXf TM = TM_Phi_LC_GPU(D, ci, co);
@@ -54,7 +54,7 @@ void init_efield(std::string cortexfile, std::vector<std::string> meshfile, std:
 #endif
     WeightedPhi(meshes, Phi, ci, co);
 
-#ifdef USE_CUDA
+#ifdef USE_GPU
     TMS_obj= new TMS_GPU(Phi, meshes, spos);
 #else
     TMS_obj=new TMS<float,float>(Phi, meshes, spos);
