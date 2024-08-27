@@ -212,7 +212,7 @@ class Decider:
         # A variable to store the ongoing training process. This is used to check if the training process is finished.
         self.training_process = None
 
-    def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial):
+    def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial, trigger):
         """The 'process' method is called by the pipeline for each new EEG/EMG sample. The method receives the following arguments:
 
            - current_time:
@@ -257,10 +257,16 @@ class Decider:
 
                The decider should not perform a trial if the pipeline is not ready. However, it can do other processing, such
                as logging, filtering, computing metrics, or training models. If the decider still decides to perform a trial,
-               the pipeline will print a warning and ignore the trial."""
+               the pipeline will print a warning and ignore the trial.
+               
+          - trigger:
+               A boolean indicating whether a trigger was given on that sample."""
 
         # Increment the sample count for each new sample.
         self.sample_count += 1
+
+        if trigger:
+            print("Trigger received at time {:.4f}".format(current_time))
 
         # As an example, print the value of the first EEG channel at the current sample index into the decider log. Note that
         # using 'print' function here would congest the log with too many messages. Instead, use 'print_throttle' to print

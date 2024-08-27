@@ -576,6 +576,10 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
     preprocessed_sample.metadata.is_simulation = msg->metadata.is_simulation;
 
+    /* XXX: Just copy trigger field into preprocessed sample; this is probably incorrect in case
+       samples are delayed by the preprocessor. */
+    preprocessed_sample.trigger = msg->trigger;
+
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();
     double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
