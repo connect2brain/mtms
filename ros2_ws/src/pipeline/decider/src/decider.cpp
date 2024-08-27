@@ -825,10 +825,24 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     return;
   }
 
-  this->samples_since_last_processing++;
+  bool process_current_sample = false;
 
-  /* Only proceed every N samples, where N is defined on the Python side. */
-  if (this->samples_since_last_processing < this->decider_wrapper->get_processing_interval_in_samples()) {
+  /* If process on trigger is enabled, proceed if the sample includes a trigger. */
+  if (this->decider_wrapper->is_process_on_trigger_enabled() && msg->trigger) {
+    process_current_sample = true;
+  } 
+
+  /* If processing interval is enabled, proceed every N samples, where N is defined on the Python side. */
+  if (this->decider_wrapper->is_processing_interval_enabled()) {
+    this->samples_since_last_processing++;
+
+    if (this->samples_since_last_processing == this->decider_wrapper->get_processing_interval_in_samples()) {
+      process_current_sample = true;
+    }
+  }
+
+  /* If neither condition is met, return early. */
+  if (!process_current_sample) {
     return;
   }
   this->samples_since_last_processing = 0;
