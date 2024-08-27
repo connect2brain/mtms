@@ -820,9 +820,18 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   /* Append the sample to the buffer. */
   this->sample_buffer.append(msg);
 
+  /* Only proceed if the buffer is full. This removes the inconvenience of handling partial buffers on the Python side. */
   if (!this->sample_buffer.is_full()) {
     return;
   }
+
+  this->samples_since_last_processing++;
+
+  /* Only proceed every N samples, where N is defined on the Python side. */
+  if (this->samples_since_last_processing < this->decider_wrapper->get_processing_interval_in_samples()) {
+    return;
+  }
+  this->samples_since_last_processing = 0;
 
   /* Determine if we are ready for a trial. */
   auto time_since_previous_trial = sample_time - this->previous_stimulation_time;

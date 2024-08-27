@@ -39,7 +39,6 @@ void DeciderWrapper::initialize_module(
   }
 
   /* Import the module and initialize the Decider instance. */
-
   try {
     auto imported_module = py::module::import(module_name.c_str());
     decider_module = std::make_unique<py::module>(imported_module);
@@ -72,11 +71,20 @@ void DeciderWrapper::initialize_module(
     RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the decider.");
   }
 
+  /* Extract the processing_interval_in_samples variable from decider_instance. */
+  if (py::hasattr(*decider_instance, "processing_interval_in_samples")) {
+    py::int_ processing_interval_in_samples_ = decider_instance->attr("processing_interval_in_samples").cast<py::int_>();
+    this->processing_interval_in_samples = processing_interval_in_samples_.cast<uint16_t>();
+  } else {
+    RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples class attribute not defined by the decider.");
+  }
+
   RCLCPP_INFO(*logger_ptr, "Decider set to: %s.", module_name.c_str());
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "Decider configuration");
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
+  RCLCPP_INFO(*logger_ptr, "  - Processing interval: %d (samples)", this->processing_interval_in_samples);
   RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
@@ -174,6 +182,10 @@ WrapperState DeciderWrapper::get_state() const {
 
 std::size_t DeciderWrapper::get_buffer_size() const {
   return this->buffer_size;
+}
+
+uint16_t DeciderWrapper::get_processing_interval_in_samples() const {
+  return this->processing_interval_in_samples;
 }
 
 std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool> DeciderWrapper::process(
