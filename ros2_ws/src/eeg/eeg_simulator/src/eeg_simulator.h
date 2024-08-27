@@ -35,7 +35,7 @@ public:
   ~EegSimulator();
 
 private:
-  void publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
+  void publish_healthcheck();
   void handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
   std::tuple<bool, int, double, bool> get_dataset_info(const std::string& data_file_path);
@@ -73,6 +73,8 @@ private:
 
   project_interfaces::msg::Dataset dataset;
 
+  bool eeg_bridge_available;
+
   bool playback;
   bool loop;
 
@@ -108,6 +110,7 @@ private:
 
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr eeg_bridge_healthcheck_subscriber;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DatasetList>::SharedPtr dataset_list_publisher;
