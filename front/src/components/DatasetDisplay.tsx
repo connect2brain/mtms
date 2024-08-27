@@ -14,7 +14,7 @@ import {
 } from 'styles/General'
 
 import { DatasetContext } from 'providers/DatasetProvider'
-import { setDatasetRos, setPlaybackRos, setLoopRos } from 'ros/ros'
+import { setDatasetRos, setPlaybackRos, setLoopRos, setRecordDataRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
@@ -49,7 +49,7 @@ const SwitchWrapper = styled.span`
 
 export const DatasetDisplay: React.FC = () => {
   const { eegSimulatorHealthcheck } = useContext(HealthcheckContext)
-  const { datasetList, dataset, playback, loop } = useContext(DatasetContext)
+  const { datasetList, dataset, playback, loop, recordData } = useContext(DatasetContext)
 
   const eegSimulatorHealthcheckOk = eegSimulatorHealthcheck?.status.value === HealthcheckStatus.READY
 
@@ -70,6 +70,12 @@ export const DatasetDisplay: React.FC = () => {
   const handleLoopChange = (loop: boolean) => {
     setLoopRos(loop, () => {
       console.log('Loop set to ' + loop)
+    })
+  }
+
+  const handleRecordDataChange = (recordData: boolean) => {
+    setRecordDataRos(recordData, () => {
+      console.log('Store data set to ' + recordData)
     })
   }
 
@@ -126,6 +132,12 @@ export const DatasetDisplay: React.FC = () => {
             </SwitchWrapper>
           </StateRow>
         </GrayedOutPanel>
+        <StateRow>
+          <StateTitle>Store data:</StateTitle>
+          <SwitchWrapper>
+            <ToggleSwitch type='flat' checked={recordData} onChange={handleRecordDataChange} disabled={false} />
+          </SwitchWrapper>
+        </StateRow>
       </DatasetPanel>
     </>
   )
