@@ -113,7 +113,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       eegSimulatorTimeout = setTimeout(() => {
         setEegSimulatorHealthcheck(null)
-      }, 1200)
+      }, 2000)
     })
 
     mtmsSubscriber.subscribe((message) => {
