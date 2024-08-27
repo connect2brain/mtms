@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(neuronavigation_interfaces)
+project(robot_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,7 +9,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(targeting_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -25,26 +24,14 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EulerAngles.msg"
-  "msg/OptitrackPoses.msg"
-  "msg/MarkersVisibilities.msg"
-  "msg/PoseUsingEulerAngles.msg"
-  "msg/PoseArray.msg"
-  "msg/ElectricField.msg"
-  "msg/CreateMarker.msg"
+  "msg/ConnectToRobot.msg"
+  "msg/SetTarget.msg"
+  "msg/TrackerFiducials.msg"
+  "msg/MatrixTrackerToRobot.msg"
+  "msg/Displacement.msg"
+  "msg/Objective.msg"
 
-  "srv/Efield.srv"
-  "srv/InitializeEfield.srv"
-  "srv/SetCoil.srv"
-  "srv/OpenOrientationDialog.srv"
-  "srv/EfieldNorm.srv"
-  "srv/EfieldRoi.srv"
-  "srv/EfieldRoiMax.srv"
-  "srv/Setdiperdt.srv"
-
-  "srv/VisualizeTargets.srv"
-
-  DEPENDENCIES geometry_msgs targeting_interfaces
+  DEPENDENCIES geometry_msgs
  )
 
 ament_package()

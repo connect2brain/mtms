@@ -11,16 +11,19 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, QoSProfile
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Pose
 from shape_msgs.msg import Mesh, MeshTriangle
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, MultiArrayDimension
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker, MarkersVisibilities, PoseArray
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
+from robot_interfaces.msg import ConnectToRobot, SetTarget, TrackerFiducials, MatrixTrackerToRobot, Displacement, Objective
 
 from invesalius3 import app
+import invesalius.data.transformations as tr
+import numpy as np
 import time
 from launch.substitutions import LaunchConfiguration
 
@@ -70,6 +73,7 @@ class NeuronavigationNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
+        callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
@@ -111,9 +115,44 @@ class NeuronavigationNode(Node):
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
                                                                     self.open_orientation_dialog_callback, callback_group=callback_group)
+        self._poses_publisher = self.create_publisher(PoseArray, "neuronavigation/poses", qos_persist_latest, callback_group=callback_group)
+        self._set_target_publisher = self.create_publisher(SetTarget, "neuronavigation/set_target",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._unset_target_publisher = self.create_publisher(Bool, "neuronavigation/unset_target",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._connect_to_robot_publisher = self.create_publisher(ConnectToRobot, "neuronavigation/connect_to_robot",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._set_tracker_fiducials_publisher = self.create_publisher(TrackerFiducials, "neuronavigation/set_tracker_fiducials",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._collect_robot_pose_publisher = self.create_publisher(Bool, "neuronavigation/collect_robot_pose",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._reset_robot_transformation_matrix_publisher = self.create_publisher(Bool, "neuronavigation/reset_robot_transformation_matrix",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._estimate_robot_transformation_matrix_publisher = self.create_publisher(Bool, "neuronavigation/estimate_robot_transformation_matrix",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._set_robot_transformation_matrix_publisher = self.create_publisher(MatrixTrackerToRobot, "neuronavigation/set_robot_transformation_matrix",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._update_displacement_to_target_publisher = self.create_publisher(Displacement, "neuronavigation/update_displacement_to_target",
+                                                                 qos_persist_latest, callback_group=callback_group)
+        self._set_objective_publisher = self.create_publisher(Objective, "neuronavigation/set_objective",
+                                                                 qos_persist_latest, callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
+
+        self._update_robot_status_subscription = self.create_subscription(Bool, "/robot/update_robot_status",
+                                                                  self.update_robot_status_callback, qos_persist_latest, callback_group=callback_group)
+        self._robot_connection_status_subscription = self.create_subscription(Bool, "/robot/robot_connection_status",
+                                                                  self.robot_connection_status_callback, qos_persist_latest, callback_group=callback_group)
+        self._robot_pose_collected_subscription = self.create_subscription(Bool, "/robot/robot_pose_collected",
+                                                                  self.robot_pose_collected_callback, qos_persist_latest, callback_group=callback_group)
+        self._set_objective_subscription = self.create_subscription(Objective, "/robot/set_objective",
+                                                                  self.set_objective_callback, qos_persist_latest, callback_group=callback_group)
+        self._close_robot_dialog_subscription = self.create_subscription(Bool, "/robot/close_robot_dialog",
+                                                                  self.close_robot_dialog_callback, qos_persist_latest, callback_group=callback_group)
+        self._update_robot_transformation_matrix_subscription = self.create_subscription(MatrixTrackerToRobot, "/robot/update_robot_transformation_matrix",
+                                                                  self.update_robot_transformation_matrix_callback, qos_persist_latest, callback_group=callback_group)
+
         if self.electric_field_enable:
             self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
@@ -165,6 +204,104 @@ class NeuronavigationNode(Node):
         response.success = True
         return response
 
+    def connect_to_robot(self, robot_ip):
+        msg = ConnectToRobot()
+        msg.robot_ip = robot_ip
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/connect_to_robot".format(msg))
+        self._connect_to_robot_publisher.publish(msg)
+
+    def set_target(self, target):
+        msg = SetTarget()
+        msg.target.data = [v for nested in target for v in nested]
+        # Specify the layout of the 2 dimensions
+        dim0 = MultiArrayDimension()
+        # First dimension size is the number of nested tuples
+        dim0.size = len(target)
+        # First stride is defined as the total data size
+        dim0.stride = len(msg.target.data)
+
+        dim1 = MultiArrayDimension()
+        # Second dimension size is the length of individual nested tuples
+        dim1.size = len([0])
+        # Second (last) stride is equal to the size when there is no padding
+        dim1.stride = dim1.size
+        msg.target.layout.dim = [dim0, dim1]
+
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/set_target".format(msg))
+        self._set_target_publisher.publish(msg)
+
+    def unset_target(self):
+        msg = Bool()
+        msg.data = False
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/unset_target".format(msg))
+        self._unset_target_publisher.publish(msg)
+
+    def update_set_tracker_fiducials(self, tracker_fiducials):
+        msg = TrackerFiducials()
+        # Flatten data
+        msg.fiducial_left.data = [v for nested in tracker_fiducials[0] for v in nested]
+        msg.fiducial_right.data = [v for nested in tracker_fiducials[1] for v in nested]
+        msg.fiducial_nasion.data = [v for nested in tracker_fiducials[2] for v in nested]
+        # Specify the layout of the 2 dimensions
+        dim0 = MultiArrayDimension()
+        # First dimension size is the number of nested tuples
+        dim0.size = len(tracker_fiducials[0])
+        # First stride is defined as the total data size
+        dim0.stride = len(msg.fiducial_left.data)
+
+        dim1 = MultiArrayDimension()
+        # Second dimension size is the length of individual nested tuples
+        dim1.size = len(tracker_fiducials[0][0])
+        # Second (last) stride is equal to the size when there is no padding
+        dim1.stride = dim1.size
+
+        msg.fiducial_left.layout.dim = [dim0, dim1]
+        msg.fiducial_right.layout.dim = [dim0, dim1]
+        msg.fiducial_nasion.layout.dim = [dim0, dim1]
+
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/set_tracker_fiducials".format(msg))
+        self._set_tracker_fiducials_publisher.publish(msg)
+
+    def collect_robot_pose(self):
+        msg = Bool()
+        msg.data = True
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/collect_robot_pose".format(msg))
+        self._collect_robot_pose_publisher.publish(msg)
+
+    def reset_robot_transformation_matrix(self):
+        msg = Bool()
+        msg.data = True
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/reset_robot_transformation_matrix".format(msg))
+        self._reset_robot_transformation_matrix_publisher.publish(msg)
+
+    def estimate_robot_transformation_matrix(self):
+        msg = Bool()
+        msg.data = True
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/estimate_robot_transformation_matrix".format(msg))
+        self._estimate_robot_transformation_matrix_publisher.publish(msg)
+
+    def set_robot_transformation_matrix(self, robotmatrix):
+        msg = MatrixTrackerToRobot()
+        msg.robotmatrix.data = robotmatrix
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/set_robot_transformation_matrix".format(msg))
+        self._set_robot_transformation_matrix_publisher.publish(msg)
+
+    def update_displacement_to_target(self, displacement):
+        msg = Displacement()
+        msg.displacement = displacement
+        #self.get_logger().info("Publishing value {} to the topic /neuronavigation/update_displacement_to_target".format(msg))
+        self._update_displacement_to_target_publisher.publish(msg)
+
+    def set_objective(self, objective):
+        msg = Objective()
+        msg.objective = objective
+        self.get_logger().info("Publishing value {} to the topic /neuronavigation/set_objective".format(msg))
+        self._set_objective_publisher.publish(msg)
+
+    def stimulus_feedback_callback(self, msg):
+        self.get_logger().info(f'Stimulation pulse received')
+        self._stimulation_pulse_received()
+
     def create_marker_callback(self, msg):
         self.get_logger().info(f'Creating a marker')
         # TODO: This should be renamed from 'stimulation_pulse_received' to something
@@ -210,6 +347,7 @@ class NeuronavigationNode(Node):
         self.get_logger().info('I heard optitrack: "%s"' % msg.probe)
         # Simulate a very slow consumer
         time.sleep(0.1)
+
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
         # Publisher.sendMessage('invesalius messages', arg=msg.data)
@@ -251,8 +389,22 @@ class NeuronavigationNode(Node):
     def update_coil_at_target(self, state):
         msg = Bool()
         msg.data = state
-        self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
+        #self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
         self._coil_at_target_publisher.publish(msg)
+
+    def update_poses(self, poses, visibilities):
+        msg = PoseArray()
+        msg.visibilities.probe, msg.visibilities.head, msg.visibilities.coil = bool(visibilities[0]), bool(visibilities[1]), bool(visibilities[2])
+        for marker_pose in poses:
+            pose = Pose()
+            pose.position.x, pose.position.y, pose.position.z = marker_pose[:3]
+            ai, aj, ak = np.deg2rad(marker_pose[3:])
+            quaternion = tr.quaternion_from_euler(ai, aj, ak)
+            pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion
+            msg.poses.append(pose)
+
+        #self.get_logger().info("Publishing to the topic /neuronavigation/poses")
+        self._poses_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
@@ -407,6 +559,48 @@ class NeuronavigationNode(Node):
 
         self._update_target_orientation_client.call_async(request)
 
+    def set_callback__update_robot_status(self, callback):
+        self._update_robot_status = callback
+
+    def update_robot_status_callback(self, msg):
+        self._update_robot_status(msg.data)
+        self.get_logger().info('I heard update_robot_status: "%s"' % msg)
+
+    def set_callback__robot_connection_status(self, callback):
+        self._robot_connection_status = callback
+
+    def robot_connection_status_callback(self, msg):
+        self._robot_connection_status(msg.data)
+        self.get_logger().info('I heard robot_connection_status: "%s"' % msg)
+
+    def set_callback__robot_pose_collected(self, callback):
+        self._robot_pose_collected = callback
+
+    def robot_pose_collected_callback(self, msg):
+        self._robot_pose_collected(msg.data)
+        self.get_logger().info('I heard robot_pose_collected: "%s"' % msg)
+
+    def set_callback__set_objective(self, callback):
+        self._set_objective = callback
+
+    def set_objective_callback(self, msg):
+        self._set_objective(msg.objective)
+        self.get_logger().info('I heard set_objective: "%s"' % msg)
+
+    def set_callback__close_robot_dialog(self, callback):
+        self._close_robot_dialog = callback
+
+    def close_robot_dialog_callback(self, msg):
+        self._close_robot_dialog(msg.data)
+        self.get_logger().info('I heard close_robot_dialog: "%s"' % msg)
+
+    def set_callback__update_robot_transformation_matrix(self, callback):
+        self._update_robot_transformation_matrix = callback
+
+    def update_robot_transformation_matrix_callback(self, msg):
+        self._update_robot_transformation_matrix(msg.robotmatrix.data)
+        self.get_logger().info('I heard robot/update_robot_transformation_matrix: "%s"' % msg)
+
 
 class Connection(Thread):
     def __init__(self):
@@ -430,6 +624,48 @@ class Connection(Thread):
         self.executor.spin()
         rclpy.shutdown()
 
+    def connect_to_robot(self, robot_ip):
+        self.node.connect_to_robot(
+            robot_ip=robot_ip,
+        )
+
+    def set_target(self, target):
+        self.node.set_target(
+            target=target,
+        )
+
+    def unset_target(self):
+        self.node.unset_target()
+
+    def update_set_tracker_fiducials(self, tracker_fiducials):
+        self.node.update_set_tracker_fiducials(
+            tracker_fiducials=tracker_fiducials,
+        )
+
+    def collect_robot_pose(self):
+        self.node.collect_robot_pose()
+
+    def reset_robot_transformation_matrix(self):
+        self.node.reset_robot_transformation_matrix()
+
+    def estimate_robot_transformation_matrix(self):
+        self.node.estimate_robot_transformation_matrix()
+
+    def set_robot_transformation_matrix(self, matrix_tracker_to_robot):
+        self.node.set_robot_transformation_matrix(
+            robotmatrix=matrix_tracker_to_robot,
+        )
+
+    def update_displacement_to_target(self, displacement):
+        self.node.update_displacement_to_target(
+            displacement=displacement,
+        )
+
+    def set_objective(self, objective):
+        self.node.set_objective(
+            objective=objective,
+        )
+
     def update_focus(self, position, orientation):
         self.node.update_focus(
             position=position,
@@ -449,6 +685,12 @@ class Connection(Thread):
     def update_coil_at_target(self, state):
         self.node.update_coil_at_target(
             state=state,
+        )
+
+    def update_tracker_poses(self, poses, visibilities):
+        self.node.update_poses(
+            poses=poses,
+            visibilities=visibilities,
         )
 
     def update_coil_pose(self, position, orientation):
@@ -542,6 +784,24 @@ class Connection(Thread):
 
     def remove_pedal_callback(self, name):
         self.pedal_bridge.remove_pedal_callback(name=name)
+
+    def set_callback__update_robot_status(self, callback):
+        self.node.set_callback__update_robot_status(callback)
+
+    def set_callback__robot_connection_status(self, callback):
+        self.node.set_callback__robot_connection_status(callback)
+
+    def set_callback__robot_pose_collected(self, callback):
+        self.node.set_callback__robot_pose_collected(callback)
+
+    def set_callback__set_objective(self, callback):
+        self.node.set_callback__set_objective(callback)
+
+    def set_callback__close_robot_dialog(self, callback):
+        self.node.set_callback__close_robot_dialog(callback)
+
+    def set_callback__update_robot_transformation_matrix(self, callback):
+        self.node.set_callback__update_robot_transformation_matrix(callback)
 
 
 class RosLoggerWrapper:

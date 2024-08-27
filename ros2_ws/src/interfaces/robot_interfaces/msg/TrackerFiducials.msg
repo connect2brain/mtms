@@ -1,0 +1,5 @@
+# Set TrackerFiducials
+
+std_msgs/Float64MultiArray fiducial_left
+std_msgs/Float64MultiArray fiducial_right
+std_msgs/Float64MultiArray fiducial_nasion
