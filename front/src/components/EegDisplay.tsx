@@ -26,12 +26,12 @@ export const EegDisplay: React.FC = () => {
   return (
     <EegPanel isGrayedOut={!eegHealthcheckOk}>
       <StateRow>
-        <StateTitle>Sampling rate</StateTitle>
+        <StateTitle>Sampling rate:</StateTitle>
         <StateValue>{formatFrequency(eegInfo?.sampling_frequency)}</StateValue>
       </StateRow>
       <br />
       <StateRow>
-        <StateTitle>Channels</StateTitle>
+        <StateTitle>Channels:</StateTitle>
       </StateRow>
       <StateRow>
         <IndentedStateTitle>EEG</IndentedStateTitle>
