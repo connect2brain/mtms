@@ -282,6 +282,11 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
       }
     }
   }
+  /* Sort datasets. */
+  std::sort(datasets.begin(), datasets.end(), [](const auto& a, const auto& b) {
+    return a.name < b.name;
+  });
+
   return datasets;
 }
 
