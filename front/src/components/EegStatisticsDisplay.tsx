@@ -40,16 +40,16 @@ export const EegStatisticsDisplay: React.FC = () => {
       <EegStatisticsPanelTitle>Statistics</EegStatisticsPanelTitle>
       <EegStatisticsPanel>
         <StateRow>
-          <StateTitle>Raw</StateTitle>
+          <StateTitle>Raw:</StateTitle>
           <StateValue>{eegStatistics?.num_of_raw_samples}</StateValue>
         </StateRow>
         <StateRow>
-          <StateTitle>Preprocessed</StateTitle>
+          <StateTitle>Preprocessed:</StateTitle>
           <StateValue>{eegStatistics?.num_of_preprocessed_samples}</StateValue>
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Processing time (µs)</StateTitle>
+          <StateTitle>Processing time (µs):</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Median</IndentedStateTitle>
@@ -65,7 +65,7 @@ export const EegStatisticsDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Max sample interval (µs)</StateTitle>
+          <StateTitle>Max sample interval (µs):</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Raw</IndentedStateTitle>
