@@ -31,7 +31,7 @@ const DatasetPanelTitle = styled.div`
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
-  height: 253px;
+  height: 356px;
   position: fixed;
   top: 928px;
   right: 380px;
@@ -75,7 +75,7 @@ export const DatasetDisplay: React.FC = () => {
 
   const handleRecordDataChange = (recordData: boolean) => {
     setRecordDataRos(recordData, () => {
-      console.log('Store data set to ' + recordData)
+      console.log('Record data set to ' + recordData)
     })
   }
 
@@ -99,11 +99,15 @@ export const DatasetDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
+          <StateTitle>Duration:</StateTitle>
+          <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
+        </StateRow>
+        <StateRow>
           <StateTitle>Sampling rate:</StateTitle>
           <StateValue>{formatFrequency(selectedDataset?.sampling_frequency)}</StateValue>
         </StateRow>
         <StateRow>
-          <StateTitle>Channels</StateTitle>
+          <StateTitle>Channels:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>EEG</IndentedStateTitle>
@@ -112,10 +116,6 @@ export const DatasetDisplay: React.FC = () => {
         <StateRow>
           <IndentedStateTitle>EMG</IndentedStateTitle>
           <StateValue>{selectedDataset?.num_of_emg_channels}</StateValue>
-        </StateRow>
-        <StateRow>
-          <IndentedStateTitle>Duration</IndentedStateTitle>
-          <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
         </StateRow>
         <br />
         <StateRow>
@@ -131,13 +131,13 @@ export const DatasetDisplay: React.FC = () => {
               <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
             </SwitchWrapper>
           </StateRow>
+          <StateRow>
+            <IndentedStateTitle>Record:</IndentedStateTitle>
+            <SwitchWrapper>
+              <ToggleSwitch type='flat' checked={recordData} onChange={handleRecordDataChange} disabled={!playback} />
+            </SwitchWrapper>
+          </StateRow>
         </GrayedOutPanel>
-        <StateRow>
-          <StateTitle>Store data:</StateTitle>
-          <SwitchWrapper>
-            <ToggleSwitch type='flat' checked={recordData} onChange={handleRecordDataChange} disabled={false} />
-          </SwitchWrapper>
-        </StateRow>
       </DatasetPanel>
     </>
   )
