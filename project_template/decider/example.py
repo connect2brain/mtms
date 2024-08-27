@@ -155,10 +155,20 @@ class Decider:
         # The pipeline uses the value of 'processing_interval_in_samples' to determine how frequently process method is
         # called. For example, call the process method every 100 samples.
         #
-        # An important special case is when 'processing_interval_in_samples' is set to 1. In this case, the process method
-        # is called for every new EEG/EMG sample. This is useful when the decider needs to continuously monitor the EEG/EMG
-        # stream.
+        # There are two special cases:
+        #
+        # 1) When 'processing_interval_in_samples' is set to 1, the process method is called for every
+        #    new EEG/EMG sample. This is useful when the decider needs to continuously monitor the EEG/EMG
+        #    stream.
+        #
+        # 2) When 'processing_interval_in_samples' is set to 0, the process method is not called periodically at all.
+        #    However, it may still be called if other conditions are met (currently, if process_on_trigger is set to True).
         self.processing_interval_in_samples = 100
+
+        # If the decider needs to process the EEG/EMG samples each time a trigger is received, set this to True. The
+        # condition is combined with 'processing_interval_in_samples' so that the process method is called if either
+        # condition is met.
+        self.process_on_trigger = True
 
         # Intertrial interval is defined in terms of calls to process method. For example, if processing interval
         # in samples is 100 and sampling rate is 1000 Hz, setting intertrial interval to 20 means that a trial is
