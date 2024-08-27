@@ -100,7 +100,7 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
       setLoop(message.data)
     })
 
-    /* Subscriber for store data. */
+    /* Subscriber for record data. */
     const recordDataSubscriber = new Topic<RosBoolean>({
       ros: ros,
       name: '/eeg_recorder/record_data',
