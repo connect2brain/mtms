@@ -95,6 +95,8 @@ private:
   void unset_decider_module();
 
   bool set_decider_enabled(bool enabled);
+  void handle_preprocessor_enabled(const std::shared_ptr<std_msgs::msg::Bool> msg);
+
   void handle_set_decider_enabled(
       const std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Request> request,
       std::shared_ptr<project_interfaces::srv::SetDeciderEnabled::Response> response);
@@ -111,7 +113,8 @@ private:
 
   void handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
 
-  void process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+  void process_preprocessed_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+  void process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
 
   void log_trial(const experiment_interfaces::msg::Trial& trial, size_t num_of_remaining_trials);
 
@@ -129,9 +132,12 @@ private:
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr preprocessor_enabled_subscriber;
+
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
 
   rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr preprocessed_eeg_subscriber;
+  rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr raw_eeg_subscriber;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DeciderList>::SharedPtr decider_list_publisher;
@@ -193,6 +199,8 @@ private:
 
   bool performing_trial = false;
   bool triggering_labjack = false;
+
+  bool preprocessor_enabled = false;
 
   /* ROS parameters */
   double_t minimum_intertrial_interval;
