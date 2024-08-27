@@ -30,6 +30,7 @@ interface DatasetContextType {
   dataset: string
   playback: boolean
   loop: boolean
+  recordData: boolean
 }
 
 const defaultDatasetState: DatasetContextType = {
@@ -37,6 +38,7 @@ const defaultDatasetState: DatasetContextType = {
   dataset: '',
   playback: false,
   loop: false,
+  recordData: false,
 }
 
 export const DatasetContext = React.createContext<DatasetContextType>(defaultDatasetState)
@@ -51,6 +53,7 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
 
   const [playback, setPlayback] = useState<boolean>(false)
   const [loop, setLoop] = useState<boolean>(false)
+  const [recordData, setRecordData] = useState<boolean>(false)
 
   useEffect(() => {
     /* Subscriber for dataset list. */
@@ -97,6 +100,17 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
       setLoop(message.data)
     })
 
+    /* Subscriber for store data. */
+    const recordDataSubscriber = new Topic<RosBoolean>({
+      ros: ros,
+      name: '/eeg_recorder/record_data',
+      messageType: 'std_msgs/Bool',
+    })
+
+    recordDataSubscriber.subscribe((message) => {
+      setRecordData(message.data)
+    })
+    
     /* Unsubscribers */
     return () => {
       datasetListSubscriber.unsubscribe()
@@ -104,6 +118,7 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
 
       playbackSubscriber.unsubscribe()
       loopSubscriber.unsubscribe()
+      recordDataSubscriber.unsubscribe()
     }
   }, [])
 
@@ -114,6 +129,7 @@ export const DatasetProvider: React.FC<DatasetProviderProps> = ({ children }) =>
         dataset,
         playback,
         loop,
+        recordData,
       }}
     >
       {children}
