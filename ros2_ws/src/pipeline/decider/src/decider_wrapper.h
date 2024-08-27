@@ -49,7 +49,8 @@ public:
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
-    bool ready_for_trial);
+    bool ready_for_trial,
+    bool trigger);
 
   WrapperState get_state() const;
 

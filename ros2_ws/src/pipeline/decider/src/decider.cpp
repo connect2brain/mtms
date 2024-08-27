@@ -735,6 +735,7 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_msg->emg_data = msg->emg_data;
 
   preprocessed_msg->time = msg->time;
+  preprocessed_msg->trigger = msg->trigger;
 
   /* Always mark sample as valid if preprocessor is bypassed. */
   preprocessed_msg->valid = true;
@@ -832,12 +833,15 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
                          this->trial_queue.empty() &&
                          has_minimum_intertrial_interval_passed;
 
+  bool trigger = msg->trigger;
+
   /* Process the sample. */
   auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
-    ready_for_trial);
+    ready_for_trial,
+    trigger);
 
   /* Log and return early if the Python call failed. */
   if (!success) {
