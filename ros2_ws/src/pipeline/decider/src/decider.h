@@ -163,6 +163,8 @@ private:
   bool first_sample_ever = true;
   bool first_sample_of_session = false;
 
+  uint16_t samples_since_last_processing = 0;
+
   /* Used for keeping track of the time of the previous trigger time to ensure that the minimum pulse
      interval is respected. */
   double_t previous_stimulation_time = UNSET_PREVIOUS_TIME;

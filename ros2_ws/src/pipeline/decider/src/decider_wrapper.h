@@ -55,6 +55,7 @@ public:
   WrapperState get_state() const;
 
   std::size_t get_buffer_size() const;
+  uint16_t get_processing_interval_in_samples() const;
 
   /* Exposed to Python, defined in cpp_bindings.cpp. */
   static void log(const std::string& message);
@@ -81,6 +82,7 @@ private:
   int earliest_sample;
   int latest_sample;
   uint16_t sampling_frequency;
+  uint16_t processing_interval_in_samples;
 
   std::size_t buffer_size = 0;
   std::size_t eeg_data_size;

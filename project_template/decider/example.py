@@ -144,19 +144,26 @@ class Decider:
     # provided by the pipeline. They are determined based on how the EEG device is configured.
     def __init__(self, num_of_eeg_channels, num_of_emg_channels, sampling_frequency):
 
-        # It is a good practice to store the number of EEG and EMG channels and the sampling frequency for later use.
+        # Store the number of EEG and EMG channels and the sampling frequency for potential later use.
         self.num_of_eeg_channels = num_of_eeg_channels
         self.num_of_emg_channels = num_of_emg_channels
         self.sampling_frequency = sampling_frequency
 
-        # Define an example value for the intertrial interval in seconds.
-        self.intertrial_interval = 2.0  # seconds
+        # Initialize state variable to keep track of the number of EEG/EMG buffers processed so far.
+        self.buffer_count = 0
 
-        # Compute the intertrial interval in samples, as it is more convenient to use that in the code.
-        self.intertrial_interval_in_samples = int(self.sampling_frequency * self.intertrial_interval)
+        # The pipeline uses the value of 'processing_interval_in_samples' to determine how frequently process method is
+        # called. For example, call the process method every 100 samples.
+        #
+        # An important special case is when 'processing_interval_in_samples' is set to 1. In this case, the process method
+        # is called for every new EEG/EMG sample. This is useful when the decider needs to continuously monitor the EEG/EMG
+        # stream.
+        self.processing_interval_in_samples = 100
 
-        # Initialize state variable to keep track of the number of samples processed so far.
-        self.sample_count = 0
+        # Intertrial interval is defined in terms of calls to process method. For example, if processing interval
+        # in samples is 100 and sampling rate is 1000 Hz, setting intertrial interval to 20 means that a trial is
+        # performed every 2 seconds.
+        self.intertrial_interval = 20
 
         # The pipeline automatically manages a buffer of the previous EEG and EMG samples. When initialized,
         # the decider can provide pipeline with information about the desired length of the sample window,
@@ -206,8 +213,8 @@ class Decider:
         # continued while a long-standing computation is performed in the background.
         self.pool = multiprocessing.Pool(processes=1)
 
-        self.model_training_interval = 10  # seconds
-        self.model_training_interval_in_samples = int(self.sampling_frequency * self.model_training_interval)
+        # Model training is performed only occasionally; the interval is defined as calls to process method.
+        self.model_training_interval = 10
 
         # A variable to store the ongoing training process. This is used to check if the training process is finished.
         self.training_process = None
@@ -262,8 +269,10 @@ class Decider:
           - trigger:
                A boolean indicating whether a trigger was given on that sample."""
 
-        # Increment the sample count for each new sample.
-        self.sample_count += 1
+        print("Processing EEG/EMG samples at time {:.4f}".format(current_time))
+
+        # Increment the buffer count for each received buffer.
+        self.buffer_count += 1
 
         if trigger:
             print("Trigger received at time {:.4f}".format(current_time))
@@ -273,7 +282,7 @@ class Decider:
         # the message once every second.
         #
         # Beware of using 'print_throttle' in several places in the code, as the throttling interval is shared among all calls.
-        print_throttle(eeg_samples[1, current_sample_index])
+        print_throttle("Printed once every second: current EEG sample is {:.4f}".format(eeg_samples[0, current_sample_index]))
 
         # Silently return without performing a trial if the pipeline is not ready for a trial. Usually it is good to be verbose
         # and log the reason for not performing a trial, but not being ready for a trial is a common situation that does not
@@ -287,12 +296,12 @@ class Decider:
         if not np.all(valid_samples):
             return
 
-        # Start training a model every 10 seconds, as defined by self.model_training_interval_in_samples.
+        # Start training a model every 10 'process' method calls, as defined by self.model_training_interval.
         #
         # See Python's multiprocessing documentation for more information on how to use the multiprocessing module:
         # https://docs.python.org/3/library/multiprocessing.html
         #
-        if self.sample_count % self.model_training_interval_in_samples == 0:
+        if self.buffer_count % self.model_training_interval == 0:
             print("Starting to train a model at time {:.4f}".format(current_time))
             self.training_process = self.pool.apply_async(train_model, (
                 eeg_samples,
@@ -315,8 +324,8 @@ class Decider:
             except multiprocessing.TimeoutError as e:
                 pass
 
-        # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval_in_samples.
-        if self.sample_count % self.intertrial_interval_in_samples != 0:
+        # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval.
+        if self.buffer_count % self.intertrial_interval != 0:
             return
 
         # Write the decision time into a file.
