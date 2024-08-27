@@ -79,12 +79,25 @@ void DeciderWrapper::initialize_module(
     RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples class attribute not defined by the decider.");
   }
 
+  /* Extract the process_on_trigger variable from decider_instance. */
+  if (py::hasattr(*decider_instance, "process_on_trigger")) {
+    py::bool_ process_on_trigger_ = decider_instance->attr("process_on_trigger").cast<py::bool_>();
+    this->process_on_trigger = process_on_trigger_.cast<bool>();
+  } else {
+    RCLCPP_WARN(*logger_ptr, "process_on_trigger class attribute not defined by the decider.");
+  }
+
   RCLCPP_INFO(*logger_ptr, "Decider set to: %s.", module_name.c_str());
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "Decider configuration");
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
-  RCLCPP_INFO(*logger_ptr, "  - Processing interval: %d (samples)", this->processing_interval_in_samples);
+  if (this->processing_interval_in_samples == 0) {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: Disabled");
+  } else {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %d (samples)", this->processing_interval_in_samples);
+  }
+  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s", this->process_on_trigger ? "True" : "False");
   RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
@@ -186,6 +199,14 @@ std::size_t DeciderWrapper::get_buffer_size() const {
 
 uint16_t DeciderWrapper::get_processing_interval_in_samples() const {
   return this->processing_interval_in_samples;
+}
+
+bool DeciderWrapper::is_processing_interval_enabled() const {
+  return this->processing_interval_in_samples > 0;
+}
+
+bool DeciderWrapper::is_process_on_trigger_enabled() const {
+  return this->process_on_trigger;
 }
 
 std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool> DeciderWrapper::process(
