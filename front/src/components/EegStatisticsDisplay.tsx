@@ -32,6 +32,9 @@ export const EegStatisticsDisplay: React.FC = () => {
     if (typeof timeInSeconds === 'undefined' || timeInSeconds === null) {
       return undefined
     }
+    if (timeInSeconds === 0) {
+      return '\u2013'
+    }
     return `${(timeInSeconds * 1_000_000).toFixed(0)}`
   }
 
