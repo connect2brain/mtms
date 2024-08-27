@@ -128,6 +128,10 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   /* Create a timer callback to poll inotify. */
   this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
                                                 std::bind(&EegSimulator::inotify_timer_callback, this));
+
+  /* Create a timer for publishing healthcheck. */
+  this->healthcheck_publisher_timer = this->create_wall_timer(
+      std::chrono::milliseconds(500), [this] { publish_healthcheck(); });
 }
 
 EegSimulator::~EegSimulator() {
@@ -135,30 +139,26 @@ EegSimulator::~EegSimulator() {
   close(inotify_descriptor);
 }
 
-void EegSimulator::publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message) {
+void EegSimulator::publish_healthcheck() {
   auto healthcheck = system_interfaces::msg::Healthcheck();
 
-  healthcheck.status.value = status;
-  healthcheck.status_message = status_message;
-  healthcheck.actionable_message = actionable_message;
-
+  if (this->eeg_bridge_available) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+    healthcheck.status_message = "EEG bridge is available, which is mutually exclusive with the EEG simulator.";
+    healthcheck.actionable_message = "Turn off the EEG bridge to use the EEG simulator.";
+  } else {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Ready";
+    healthcheck.actionable_message = "";
+  }
   this->healthcheck_publisher->publish(healthcheck);
 }
 
 void EegSimulator::handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
-  bool eeg_bridge_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
-
+  this->eeg_bridge_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
   if (eeg_bridge_available) {
-    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
-                             "EEG bridge is available, which is mutually exclusive with the EEG simulator.",
-                             "Turn off the EEG bridge to use the EEG simulator.");
     this->set_playback(false);
-
     RCLCPP_INFO(this->get_logger(), "EEG simulator disabled because EEG bridge is available.");
-  } else {
-    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
-                             "Ready",
-                             "");
   }
 }
 
