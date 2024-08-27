@@ -22,6 +22,8 @@ export const EegDisplay: React.FC = () => {
   const { eegHealthcheck } = useContext(HealthcheckContext)
 
   const eegHealthcheckOk = eegHealthcheck?.status.value === HealthcheckStatus.READY
+  const numOfEegChannels = eegInfo?.num_of_eeg_channels || 0
+  const numOfEmgChannels = eegInfo?.num_of_emg_channels || 0
 
   return (
     <EegPanel isGrayedOut={!eegHealthcheckOk}>
@@ -35,11 +37,11 @@ export const EegDisplay: React.FC = () => {
       </StateRow>
       <StateRow>
         <IndentedStateTitle>EEG</IndentedStateTitle>
-        <StateValue>{eegInfo?.num_of_eeg_channels}</StateValue>
+        <StateValue>{numOfEegChannels > 0 ? numOfEegChannels : '\u2013'}</StateValue>
       </StateRow>
       <StateRow>
         <IndentedStateTitle>EMG</IndentedStateTitle>
-        <StateValue>{eegInfo?.num_of_emg_channels}</StateValue>
+        <StateValue>{numOfEmgChannels > 0 ? numOfEmgChannels : '\u2013'}</StateValue>
       </StateRow>
     </EegPanel>
   )
