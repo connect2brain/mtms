@@ -155,9 +155,11 @@ For instance, the data set `test_data` would be defined by the files `test_data.
 ```json
 {
     "name": "Test data from experiment 1",
-    "data_filename": "test_data.csv",
-    "num_of_eeg_channels": 3,
-    "num_of_emg_channels": 1
+    "data_file": "test_data.csv",
+    "channels": {
+        "eeg": 3,
+        "emg": 1
+    }
 }
 ```
 
