@@ -16,7 +16,7 @@
 #include "WeightedPhi.hpp"
 //DONT INCLUDE json.hpp
 
-#ifdef USE_CUDA
+#ifdef USE_GPU
     #include "GPU_helpers.hpp"
     #include "cudaCheck.hpp"
     #include "TMS_GPU.hpp"
@@ -87,7 +87,7 @@
 // Misc
 #include "Timer.hpp"
 
-#ifdef USE_CUDA
+#ifdef USE_GPU
     // Direct solve and LU headers, GPU versions, LG and LC 
     #include  "LFMLU_Phi_GPU.hpp"
     #include  "LFMinv_Phi_GPU.hpp"
