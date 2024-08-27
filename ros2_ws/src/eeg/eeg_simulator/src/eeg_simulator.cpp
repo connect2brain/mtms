@@ -37,12 +37,18 @@ const uint16_t EEG_QUEUE_LENGTH = 65535;
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
      side yet. For a previous Python reference implementation, see commit c0afb515b. */
 EegSimulator::EegSimulator() : Node("eeg_simulator") {
+  callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
+  /* Create a single SubscriptionOptions object */
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.callback_group = callback_group;
 
   /* Subscriber for EEG bridge healthcheck. */
   this->eeg_bridge_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
     "/eeg/healthcheck",
     10,
-    std::bind(&EegSimulator::handle_eeg_bridge_healthcheck, this, _1));
+    std::bind(&EegSimulator::handle_eeg_bridge_healthcheck, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG simulator healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(
@@ -57,7 +63,8 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
     qos_persist_latest,
-    std::bind(&EegSimulator::handle_set_active_project, this, _1));
+    std::bind(&EegSimulator::handle_set_active_project, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG datasets. */
   dataset_list_publisher = this->create_publisher<project_interfaces::msg::DatasetList>(
@@ -67,17 +74,23 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   /* Service for changing dataset. */
   this->set_dataset_service = this->create_service<project_interfaces::srv::SetDataset>(
     "/eeg_simulator/dataset/set",
-    std::bind(&EegSimulator::handle_set_dataset, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_dataset, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Service for changing playback. */
   this->set_playback_service = this->create_service<project_interfaces::srv::SetPlayback>(
     "/eeg_simulator/playback/set",
-    std::bind(&EegSimulator::handle_set_playback, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_playback, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Service for changing loop. */
   this->set_loop_service = this->create_service<project_interfaces::srv::SetLoop>(
     "/eeg_simulator/loop/set",
-    std::bind(&EegSimulator::handle_set_loop, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_loop, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Publisher for dataset. */
   this->dataset_publisher = this->create_publisher<std_msgs::msg::String>(
@@ -107,7 +120,8 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   this->session_subscriber = create_subscription<system_interfaces::msg::Session>(
     "/system/session",
     qos_session,
-    std::bind(&EegSimulator::handle_session, this, _1));
+    std::bind(&EegSimulator::handle_session, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG samples. */
   eeg_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
@@ -127,11 +141,14 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
 
   /* Create a timer callback to poll inotify. */
   this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
-                                                std::bind(&EegSimulator::inotify_timer_callback, this));
+                                                std::bind(&EegSimulator::inotify_timer_callback, this),
+                                                callback_group);
 
   /* Create a timer for publishing healthcheck. */
   this->healthcheck_publisher_timer = this->create_wall_timer(
-      std::chrono::milliseconds(500), [this] { publish_healthcheck(); });
+      std::chrono::milliseconds(500), 
+      [this] { publish_healthcheck(); }, 
+      callback_group);
 }
 
 EegSimulator::~EegSimulator() {
@@ -687,7 +704,10 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::spin(node);
+  auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  executor->add_node(node);
+  executor->spin();
+
   rclcpp::shutdown();
   return 0;
 }

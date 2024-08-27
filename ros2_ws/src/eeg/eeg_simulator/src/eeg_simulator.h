@@ -108,6 +108,8 @@ private:
 
   std::string current_data_file_path = UNSET_STRING;
 
+  rclcpp::CallbackGroup::SharedPtr callback_group;
+
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr eeg_bridge_healthcheck_subscriber;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
