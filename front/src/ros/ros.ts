@@ -606,7 +606,7 @@ export const setLoopRos = (loop: boolean, callback: () => void) => {
   )
 }
 
-/* Set store data service */
+/* Set record data service */
 const setRecordDataService = new ROSLIB.Service({
   ros: ros,
   name: '/eeg_recorder/record_data/set',

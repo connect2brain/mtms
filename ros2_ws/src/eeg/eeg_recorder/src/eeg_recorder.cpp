@@ -64,12 +64,12 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
     EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
 
-  /* Service for changing store data. */
+  /* Service for changing record data. */
   this->set_record_data_service = this->create_service<project_interfaces::srv::SetRecordData>(
     "/eeg_recorder/record_data/set",
     std::bind(&EegRecorder::handle_set_record_data, this, _1, _2));
 
-  /* Publisher for status of store data. */
+  /* Publisher for status of record data. */
   this->record_data_publisher = this->create_publisher<std_msgs::msg::Bool>(
     "/eeg_recorder/record_data",
     qos_persist_latest);
