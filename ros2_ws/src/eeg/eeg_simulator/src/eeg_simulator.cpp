@@ -161,12 +161,20 @@ void EegSimulator::publish_healthcheck() {
 
   if (this->eeg_bridge_available) {
     healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
-    healthcheck.status_message = "EEG bridge is available, which is mutually exclusive with the EEG simulator.";
+    healthcheck.status_message = "Not ready";
     healthcheck.actionable_message = "Turn off the EEG bridge to use the EEG simulator.";
+  } else if (this->is_streaming) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Streaming...";
+    healthcheck.actionable_message = "End the session to stop streaming.";
+  } else if (this->is_loading) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Loading...";
+    healthcheck.actionable_message = "Wait until loading is finished.";
   } else {
     healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
     healthcheck.status_message = "Ready";
-    healthcheck.actionable_message = "";
+    healthcheck.actionable_message = "Start a session to stream data.";
   }
   this->healthcheck_publisher->publish(healthcheck);
 }
@@ -329,7 +337,7 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   this->active_project = msg->data;
 
   std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << "/" << this->active_project << "/" << EEG_SIMULATOR_DATA_SUBDIRECTORY;
+  oss << PROJECTS_DIRECTORY << this->active_project << "/" << EEG_SIMULATOR_DATA_SUBDIRECTORY;
   this->data_directory = oss.str();
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s", this->active_project.c_str());
@@ -432,7 +440,7 @@ void EegSimulator::initialize_streaming() {
 
   /* Open and read data file. */
   std::string data_filename = this->dataset.data_filename;
-  std::string data_file_path = data_directory + "/" + data_filename;
+  std::string data_file_path = data_directory + data_filename;
 
   data_file.open(data_file_path, std::ios::in);
 
@@ -444,8 +452,9 @@ void EegSimulator::initialize_streaming() {
   RCLCPP_INFO(this->get_logger(), "Reading data from file: %s", data_file_path.c_str());
 
   if (this->current_data_file_path != data_file_path) {
-    dataset_buffer.clear();
+    this->is_loading = true;
 
+    dataset_buffer.clear();
     std::string line;
     while (std::getline(data_file, line)) {
       std::stringstream ss(line);
@@ -456,6 +465,8 @@ void EegSimulator::initialize_streaming() {
       }
       dataset_buffer.push_back(data);
     }
+
+    this->is_loading = false;
   }
   current_sample_index = 0;
 
@@ -467,7 +478,7 @@ void EegSimulator::initialize_streaming() {
 
   /* Open trigger file. */
   std::string trigger_filename = this->dataset.trigger_filename;
-  std::string trigger_file_path = data_directory + "/" + trigger_filename;
+  std::string trigger_file_path = data_directory + trigger_filename;
 
   this->send_triggers = false;
   if (trigger_filename != UNSET_STRING) {
@@ -504,6 +515,7 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
     }
 
     this->session_started = false;
+    this->is_streaming = false;
     return;
   }
 
@@ -517,8 +529,11 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
 
   /* Return if the simulator is not set to playback dataset. */
   if (!playback) {
+    this->is_streaming = false;
     return;
   }
+
+  this->is_streaming = true;
 
   bool stop = false;
   bool looped;
