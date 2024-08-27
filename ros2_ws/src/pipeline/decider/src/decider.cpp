@@ -18,6 +18,7 @@ using namespace std::chrono;
 using namespace std::placeholders;
 
 const std::string EEG_PREPROCESSED_TOPIC = "/eeg/preprocessed";
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string HEALTHCHECK_TOPIC = "/eeg/decider/healthcheck";
 
 const std::string PROJECTS_DIRECTORY = "/app/projects";
@@ -91,7 +92,16 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     EEG_PREPROCESSED_TOPIC,
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     EEG_QUEUE_LENGTH,
-    std::bind(&EegDecider::process_sample, this, _1));
+    std::bind(&EegDecider::process_preprocessed_sample, this, _1));
+
+  /* Subscriber for raw EEG data. Used only when preprocessor is disabled. */
+  this->raw_eeg_subscriber = create_subscription<eeg_interfaces::msg::Sample>(
+    EEG_RAW_TOPIC,
+    /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
+    EEG_QUEUE_LENGTH,
+    std::bind(&EegDecider::process_raw_sample, this, _1));
+
+  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
 
   RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
 
@@ -115,6 +125,12 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->decider_list_publisher = this->create_publisher<project_interfaces::msg::DeciderList>(
     "/pipeline/decider/list",
     qos_persist_latest);
+
+  /* Subscriber for preprocessor enabled message. */
+  this->preprocessor_enabled_subscriber = this->create_subscription<std_msgs::msg::Bool>(
+    "/pipeline/preprocessor/enabled",
+    qos_persist_latest,
+    std::bind(&EegDecider::handle_preprocessor_enabled, this, _1));
 
   /* Service for changing decider module. */
   this->set_decider_module_service = this->create_service<project_interfaces::srv::SetDeciderModule>(
@@ -453,6 +469,12 @@ void EegDecider::empty_trial_queue() {
   }
 }
 
+void EegDecider::handle_preprocessor_enabled(const std::shared_ptr<std_msgs::msg::Bool> msg) {
+  this->preprocessor_enabled = msg->data;
+
+  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", this->preprocessor_enabled ? "enabled" : "disabled");
+}
+
 /* Listing and setting EEG deciders. */
 bool EegDecider::set_decider_enabled(bool enabled) {
 
@@ -701,7 +723,37 @@ void EegDecider::handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interf
   this->latency_publisher->publish(msg);
 }
 
-void EegDecider::process_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
+void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
+  /* Only process raw sample if preprocessor is bypassed. */
+  if (this->preprocessor_enabled) {
+    return;
+  }
+
+  /* Copy the raw sample to a preprocessed sample message. There might be a cleaner way to do this. */
+  auto preprocessed_msg = std::make_shared<eeg_interfaces::msg::PreprocessedSample>();
+  preprocessed_msg->eeg_data = msg->eeg_data;
+  preprocessed_msg->emg_data = msg->emg_data;
+
+  preprocessed_msg->time = msg->time;
+
+  /* Always mark sample as valid if preprocessor is bypassed. */
+  preprocessed_msg->valid = true;
+
+  auto preprocessed_metadata = eeg_interfaces::msg::PreprocessedSampleMetadata();
+  preprocessed_metadata.sampling_frequency = msg->metadata.sampling_frequency;
+  preprocessed_metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
+  preprocessed_metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
+  preprocessed_metadata.is_simulation = msg->metadata.is_simulation;
+
+  /* XXX: Use dummy value for processing time if not available. */
+  preprocessed_metadata.processing_time = 0.0;
+
+  preprocessed_msg->metadata = preprocessed_metadata;
+
+  process_preprocessed_sample(preprocessed_msg);
+}
+
+void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg) {
   auto start_time = std::chrono::high_resolution_clock::now();
 
   double_t sample_time = msg->time;
