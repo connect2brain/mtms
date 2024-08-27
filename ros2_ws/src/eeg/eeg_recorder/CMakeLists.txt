@@ -10,6 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
+find_package(project_interfaces REQUIRED)
 
 add_executable(
   eeg_recorder
@@ -23,6 +24,7 @@ ament_target_dependencies(
   std_msgs
   eeg_interfaces
   system_interfaces
+  project_interfaces
 )
 
 install(TARGETS

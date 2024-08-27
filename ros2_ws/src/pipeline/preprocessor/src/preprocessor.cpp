@@ -574,6 +574,7 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     preprocessed_sample.metadata.sampling_frequency = msg->metadata.sampling_frequency;
     preprocessed_sample.metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
     preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
+    preprocessed_sample.metadata.is_simulation = msg->metadata.is_simulation;
 
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();

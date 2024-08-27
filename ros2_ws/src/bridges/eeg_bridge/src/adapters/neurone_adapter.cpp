@@ -226,9 +226,11 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
 
   sample.time = sample_time_s;
   sample.index = sample_index;
+
   sample.metadata.num_of_emg_channels = this->num_of_emg_channels;
   sample.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
   sample.metadata.sampling_frequency = this->sampling_frequency;
+  sample.metadata.is_simulation = false;
 
   return {sample, sync_trigger_received};
 }

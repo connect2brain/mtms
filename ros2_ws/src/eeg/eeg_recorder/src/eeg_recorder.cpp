@@ -64,6 +64,16 @@ EegRecorder::EegRecorder() : Node("eeg_recorder") {
     EEG_QUEUE_LENGTH,
     std::bind(&EegRecorder::handle_preprocessed_eeg_sample, this, _1));
 
+  /* Service for changing store data. */
+  this->set_record_data_service = this->create_service<project_interfaces::srv::SetRecordData>(
+    "/eeg_recorder/record_data/set",
+    std::bind(&EegRecorder::handle_set_record_data, this, _1, _2));
+
+  /* Publisher for status of store data. */
+  this->record_data_publisher = this->create_publisher<std_msgs::msg::Bool>(
+    "/eeg_recorder/record_data",
+    qos_persist_latest);
+
   /* Timer for writing the buffers periodically. */
   this->timer = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&EegRecorder::write_buffers, this));
 }
@@ -101,11 +111,12 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
     std::ostringstream timestamp_stream;
     timestamp_stream << std::put_time(std::localtime(&now_time), "%Y-%m-%d-%H-%M-%S");
 
-    /* TODO: Experiment name and subject name are empty strings for now, make them configurable via UI. */
+    /* TODO: Experiment name and subject name are empty strings for now, make them configurable via UI when using real-time pipeline. */
+    std::string is_simulation_str = this->is_simulation ? "_simulation" : "";
     if (experiment_name != "" && subject_name != "") {
-      filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + ".csv";
+      filename = timestamp_stream.str() + "_" + experiment_name + "_" + subject_name + is_simulation_str + ".csv";
     } else {
-      filename = timestamp_stream.str() + ".csv";
+      filename = timestamp_stream.str() + is_simulation_str + ".csv";
     }
     raw_file_path = raw_data_directory + "/" + filename;
     preprocessed_file_path = preprocessed_data_directory + "/" + filename;
@@ -113,6 +124,24 @@ void EegRecorder::handle_session(const std::shared_ptr<system_interfaces::msg::S
     RCLCPP_INFO(this->get_logger(), "Recording session into file: %s", filename.c_str());
   }
   current_session_state = session_state;
+}
+
+void EegRecorder::handle_set_record_data(
+      const std::shared_ptr<project_interfaces::srv::SetRecordData::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetRecordData::Response> response) {
+
+  /* XXX: Slight mismatch in naming; maybe it should be record_simulation_data throughout the code. */
+  this->record_simulation_data= request->record_data;
+
+  RCLCPP_INFO(this->get_logger(), "Storing simulation data %s.", this->record_simulation_data ? "enabled" : "disabled");
+
+  /* Update ROS state variable. */
+  auto msg = std_msgs::msg::Bool();
+  msg.data = this->record_simulation_data;
+
+  this->record_data_publisher->publish(msg);
+
+  response->success = true;
 }
 
 void EegRecorder::write_preprocessed_buffer() {
@@ -162,6 +191,7 @@ void EegRecorder::update_eeg_info(const eeg_interfaces::msg::SampleMetadata& msg
   this->sampling_frequency = msg.sampling_frequency;
   this->num_of_eeg_channels = msg.num_of_eeg_channels;
   this->num_of_emg_channels = msg.num_of_emg_channels;
+  this->is_simulation = msg.is_simulation;
 
   this->sampling_period = 1.0 / this->sampling_frequency;
 }
@@ -204,7 +234,7 @@ void EegRecorder::handle_raw_eeg_sample([[maybe_unused]] const std::shared_ptr<e
   /* TODO: Duplicating the code from handle_preprocessed_eeg_sample function for now. Later, unify if it turns out that
        they did not diverge too much. */
 
-  if (!raw_file.is_open()) {
+  if (!raw_file.is_open() && (!this->is_simulation || this->record_simulation_data)) {
     raw_file.open(raw_file_path);
     /* Check if file was opened successfully. */
     if (!raw_file.is_open()) {
@@ -245,7 +275,7 @@ void EegRecorder::handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_inter
   this->check_dropped_samples(sample_time, this->previous_sample_time_preprocessed);
   this->previous_sample_time_preprocessed = sample_time;
 
-  if (!preprocessed_file.is_open()) {
+  if (!preprocessed_file.is_open() && (!this->is_simulation || this->record_simulation_data)) {
     preprocessed_file.open(preprocessed_file_path);
 
     /* Check if file was opened successfully. */
