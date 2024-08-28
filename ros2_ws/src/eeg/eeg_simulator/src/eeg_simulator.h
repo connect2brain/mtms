@@ -35,7 +35,7 @@ public:
   ~EegSimulator();
 
 private:
-  void publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message);
+  void publish_healthcheck();
   void handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
   std::tuple<bool, int, double, bool> get_dataset_info(const std::string& data_file_path);
@@ -73,13 +73,18 @@ private:
 
   project_interfaces::msg::Dataset dataset;
 
-  bool playback;
-  bool loop;
+  bool eeg_bridge_available = false;
 
-  bool send_triggers;
+  bool playback = false;
+  bool loop = false;
+
+  bool send_triggers = false;
 
   bool session_started = false;
   bool triggers_left = false;
+
+  bool is_streaming = false;
+  bool is_loading = false;
 
   double_t latest_session_time;
   double_t time_offset;
@@ -106,8 +111,11 @@ private:
 
   std::string current_data_file_path = UNSET_STRING;
 
+  rclcpp::CallbackGroup::SharedPtr callback_group;
+
   rclcpp::Subscription<system_interfaces::msg::Healthcheck>::SharedPtr eeg_bridge_healthcheck_subscriber;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr active_project_subscriber;
   rclcpp::Publisher<project_interfaces::msg::DatasetList>::SharedPtr dataset_list_publisher;

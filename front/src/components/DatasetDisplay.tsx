@@ -14,7 +14,7 @@ import {
 } from 'styles/General'
 
 import { DatasetContext } from 'providers/DatasetProvider'
-import { setDatasetRos, setPlaybackRos, setLoopRos } from 'ros/ros'
+import { setDatasetRos, setPlaybackRos, setLoopRos, setRecordDataRos } from 'ros/ros'
 import { formatTime, formatFrequency } from 'utils/utils'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
@@ -31,7 +31,7 @@ const DatasetPanelTitle = styled.div`
 
 const DatasetPanel = styled(StyledPanel)`
   width: 300px;
-  height: 253px;
+  height: 356px;
   position: fixed;
   top: 928px;
   right: 380px;
@@ -49,7 +49,7 @@ const SwitchWrapper = styled.span`
 
 export const DatasetDisplay: React.FC = () => {
   const { eegSimulatorHealthcheck } = useContext(HealthcheckContext)
-  const { datasetList, dataset, playback, loop } = useContext(DatasetContext)
+  const { datasetList, dataset, playback, loop, recordData } = useContext(DatasetContext)
 
   const eegSimulatorHealthcheckOk = eegSimulatorHealthcheck?.status.value === HealthcheckStatus.READY
 
@@ -73,6 +73,12 @@ export const DatasetDisplay: React.FC = () => {
     })
   }
 
+  const handleRecordDataChange = (recordData: boolean) => {
+    setRecordDataRos(recordData, () => {
+      console.log('Record data set to ' + recordData)
+    })
+  }
+
   const selectedDataset = datasetList.find((d) => d.json_filename === dataset)
 
   return (
@@ -93,11 +99,15 @@ export const DatasetDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
+          <StateTitle>Duration:</StateTitle>
+          <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
+        </StateRow>
+        <StateRow>
           <StateTitle>Sampling rate:</StateTitle>
           <StateValue>{formatFrequency(selectedDataset?.sampling_frequency)}</StateValue>
         </StateRow>
         <StateRow>
-          <StateTitle>Channels</StateTitle>
+          <StateTitle>Channels:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>EEG</IndentedStateTitle>
@@ -106,10 +116,6 @@ export const DatasetDisplay: React.FC = () => {
         <StateRow>
           <IndentedStateTitle>EMG</IndentedStateTitle>
           <StateValue>{selectedDataset?.num_of_emg_channels}</StateValue>
-        </StateRow>
-        <StateRow>
-          <IndentedStateTitle>Duration</IndentedStateTitle>
-          <StateValue>{formatTime(selectedDataset?.duration)}</StateValue>
         </StateRow>
         <br />
         <StateRow>
@@ -120,12 +126,26 @@ export const DatasetDisplay: React.FC = () => {
         </StateRow>
         <GrayedOutPanel isGrayedOut={!playback}>
           <StateRow>
-            <IndentedStateTitle>Loop:</IndentedStateTitle>
+            <IndentedStateTitle>Loop</IndentedStateTitle>
             <SwitchWrapper>
               <ToggleSwitch type='flat' checked={loop} onChange={handleLoopChange} disabled={!playback} />
             </SwitchWrapper>
           </StateRow>
+          <StateRow>
+            <IndentedStateTitle>Record</IndentedStateTitle>
+            <SwitchWrapper>
+              <ToggleSwitch type='flat' checked={recordData} onChange={handleRecordDataChange} disabled={!playback} />
+            </SwitchWrapper>
+          </StateRow>
         </GrayedOutPanel>
+        <br />
+        <br />
+        <StateRow>
+          <StateTitle>Status:</StateTitle>
+          <StateValue>
+            {eegSimulatorHealthcheck?.status_message}
+          </StateValue>
+        </StateRow>
       </DatasetPanel>
     </>
   )
