@@ -6,10 +6,13 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/eeg_info.hpp"
+
+#include "project_interfaces/srv/set_record_data.hpp"
 
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
@@ -31,6 +34,9 @@ private:
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::PreprocessedSample>::SharedPtr eeg_preprocessed_subscriber;
 
+  rclcpp::Service<project_interfaces::srv::SetRecordData>::SharedPtr set_record_data_service;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr record_data_publisher;
+
   rclcpp::TimerBase::SharedPtr timer;
 
   void handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg);
@@ -41,6 +47,10 @@ private:
 
   void handle_raw_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
   void handle_preprocessed_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+
+  void handle_set_record_data(
+      const std::shared_ptr<project_interfaces::srv::SetRecordData::Request> request,
+      std::shared_ptr<project_interfaces::srv::SetRecordData::Response> response);
 
   void write_raw_buffer();
   void write_preprocessed_buffer();
@@ -75,6 +85,9 @@ private:
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
   uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
   uint8_t num_of_emg_channels = UNSET_NUM_OF_CHANNELS;
+  bool is_simulation = false;
+
+  bool record_simulation_data = false;
 
   double_t sampling_period;
 

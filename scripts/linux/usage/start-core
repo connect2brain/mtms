@@ -24,5 +24,11 @@ done
 # Allow docker to connect to the X server
 xhost +local:docker
 
-# Start the containers defined in docker-compose.yml
-docker-compose -f docker-compose.yml up
+# Start containers
+if [ "$USE_GPU" = "true" ]; then
+  # XXX: Unfortunately, another overriding docker-compose yaml file is needed to
+  #   specify the GPU device to be used by the container.
+  docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up
+else
+  docker-compose up
+fi
