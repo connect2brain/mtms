@@ -271,19 +271,44 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         file >> json_data;
 
         dataset_msg.json_filename = filename;
-        dataset_msg.name = json_data.value("name", "Unknown");
-        dataset_msg.data_filename = json_data.value("data_file", "");
-        dataset_msg.trigger_filename = json_data.value("trigger_file", "");
 
-        if (json_data.contains("channels") && json_data["channels"].is_object()) {
-            dataset_msg.num_of_eeg_channels = json_data["channels"].value("eeg", 0);
-            dataset_msg.num_of_emg_channels = json_data["channels"].value("emg", 0);
+        /* Validate "name" field */
+        if (json_data.contains("name") && json_data["name"].is_string()) {
+          dataset_msg.name = json_data["name"];
         } else {
-            dataset_msg.num_of_eeg_channels = 0;
-            dataset_msg.num_of_emg_channels = 0;
+          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'name' is missing or invalid in dataset %s", filename.c_str());
+          continue;
         }
 
-        /* Get the sampling frequency and duration from the data file. */
+        /* Validate "data_file" field. */
+        if (json_data.contains("data_file") && json_data["data_file"].is_string()) {
+          dataset_msg.data_filename = json_data["data_file"];
+        } else {
+          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'data_file' is missing or invalid in dataset %s", filename.c_str());
+          continue;
+        }
+
+        /* Validate "channels" object and its fields "eeg" and "emg". */
+        if (json_data.contains("channels") && json_data["channels"].is_object()) {
+          if (json_data["channels"].contains("eeg") && json_data["channels"]["eeg"].is_number_integer()) {
+            dataset_msg.num_of_eeg_channels = json_data["channels"]["eeg"];
+          } else {
+            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.eeg' is missing or invalid in dataset %s", filename.c_str());
+            continue;
+          }
+
+          if (json_data["channels"].contains("emg") && json_data["channels"]["emg"].is_number_integer()) {
+            dataset_msg.num_of_emg_channels = json_data["channels"]["emg"];
+          } else {
+            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.emg' is missing or invalid in dataset %s", filename.c_str());
+            continue;
+          }
+        } else {
+          RCLCPP_ERROR(this->get_logger(), "Mandatory object 'channels' is missing or invalid in dataset %s", filename.c_str());
+          continue;
+        }
+
+        /* Calculate the sampling frequency and duration from the data file. */
         std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
         auto [success, sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
 
@@ -307,6 +332,7 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
       }
     }
   }
+
   /* Sort datasets. */
   std::sort(datasets.begin(), datasets.end(), [](const auto& a, const auto& b) {
     return a.name < b.name;
