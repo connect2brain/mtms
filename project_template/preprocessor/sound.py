@@ -1,9 +1,9 @@
 # ------------------- NB! -----------------------------------
 # This is a beta version of the online Sound algorithm and is not yet fully validated.
-# The given lead field matrix LFM_Aalto_ReftepPP.csv only works with the Aalto Reftep++ 64-ch channel configuration. 
-# If your channel configuration is different, please make your own lead field.
-# If you are planning to use this code for experiments, please contact Tuomas Mutanen and Matilda Makkonen.
-# The optimal parameters might be different for your use case.
+# The given lead field matrix LFM_Aalto_ReftepPP.csv only works with the Aalto Reftep++ 64-ch channel
+# configuration (reference channel TP10). If your channel configuration is different, please make your own
+# lead field or re-reference your data to TP10. If you are planning to use this code for experiments, please
+# contact Tuomas Mutanen and Matilda Makkonen. The optimal parameters might be different for your use case.
 # ------------------- NB! -----------------------------------
 
 # Authors: Tuomas Mutanen, Olli-Pekka Kahilakoski, Matilda Makkonen, Johanna Metsomaa
@@ -113,7 +113,7 @@ class Preprocessor:
 
             except multiprocessing.TimeoutError as e:
                 pass
-        
+
         # Define baseline correction for single-sample use
         self.baseline_correction = (1-self.baseline_update_rate)*self.baseline_correction + self.baseline_update_rate*eeg_samples[current_sample_index, :]
 
@@ -157,7 +157,7 @@ def sound(eeg_samples, baseline_correction, sigmas, num_of_channels, lfm, iterat
     # See Metsomaa et al. 2024 Brain Topography for equations
 
     dataCov = np.matmul(data, data.T) / data.shape[1] # Estimate the data covariance matrix as sample covariance
-    
+
     # Estimate the neuronal covariance
     LL = lfm @ (lfm.T)
     regularization_term = lambda0*np.trace(LL) / num_of_channels
@@ -173,7 +173,7 @@ def sound(eeg_samples, baseline_correction, sigmas, num_of_channels, lfm, iterat
         # Update noise estimate values
         GAMMA = np.linalg.pinv(LL_reg + np.diagflat(np.square(sigmas))) # Eq. 18 in Metsomaa et al. 2024
         sigmas = [(GAMMA[:, i] / GAMMA[i, i]).T @ (dataCov @ (GAMMA[:, i] / GAMMA[i, i])) for i in range(num_of_channels)] # Eq. 20 in Metsomaa et al. 2024
-        
+
         # Following and storing the convergence of the algorithm
         max_noise_estimate_change = np.max(np.abs(sigmas_old - sigmas) / sigmas_old)
         #print("Output: Max noise estimate change = {}".format(max_noise_estimate_change))
