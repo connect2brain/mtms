@@ -241,10 +241,10 @@ export const PipelineView = () => {
         <Arrow style={{ left: '734px', top: '234px', width: '44px', transform: 'rotate(45deg)' }} />
         <EegCircle>EEG</EegCircle>
         <PreprocessorPanel>
-          <SmallerTitle>Preprocessor</SmallerTitle>
+          <SmallerTitle>Preprocessor {preprocessorEnabled ? '' : '(bypass)'}</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={preprocessorEnabled} onChange={handlePreprocessorEnabled} disabled={true} />
+            <ToggleSwitch type='flat' checked={preprocessorEnabled} onChange={handlePreprocessorEnabled} />
           </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Module:</ConfigLabel>

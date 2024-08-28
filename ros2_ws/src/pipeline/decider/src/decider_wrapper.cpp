@@ -39,7 +39,6 @@ void DeciderWrapper::initialize_module(
   }
 
   /* Import the module and initialize the Decider instance. */
-
   try {
     auto imported_module = py::module::import(module_name.c_str());
     decider_module = std::make_unique<py::module>(imported_module);
@@ -72,11 +71,33 @@ void DeciderWrapper::initialize_module(
     RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the decider.");
   }
 
+  /* Extract the processing_interval_in_samples variable from decider_instance. */
+  if (py::hasattr(*decider_instance, "processing_interval_in_samples")) {
+    py::int_ processing_interval_in_samples_ = decider_instance->attr("processing_interval_in_samples").cast<py::int_>();
+    this->processing_interval_in_samples = processing_interval_in_samples_.cast<uint16_t>();
+  } else {
+    RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples class attribute not defined by the decider.");
+  }
+
+  /* Extract the process_on_trigger variable from decider_instance. */
+  if (py::hasattr(*decider_instance, "process_on_trigger")) {
+    py::bool_ process_on_trigger_ = decider_instance->attr("process_on_trigger").cast<py::bool_>();
+    this->process_on_trigger = process_on_trigger_.cast<bool>();
+  } else {
+    RCLCPP_WARN(*logger_ptr, "process_on_trigger class attribute not defined by the decider.");
+  }
+
   RCLCPP_INFO(*logger_ptr, "Decider set to: %s.", module_name.c_str());
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "Decider configuration");
   RCLCPP_INFO(*logger_ptr, " ");
   RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
+  if (this->processing_interval_in_samples == 0) {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: Disabled");
+  } else {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %d (samples)", this->processing_interval_in_samples);
+  }
+  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s", this->process_on_trigger ? "True" : "False");
   RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
@@ -176,11 +197,24 @@ std::size_t DeciderWrapper::get_buffer_size() const {
   return this->buffer_size;
 }
 
+uint16_t DeciderWrapper::get_processing_interval_in_samples() const {
+  return this->processing_interval_in_samples;
+}
+
+bool DeciderWrapper::is_processing_interval_enabled() const {
+  return this->processing_interval_in_samples > 0;
+}
+
+bool DeciderWrapper::is_process_on_trigger_enabled() const {
+  return this->process_on_trigger;
+}
+
 std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool> DeciderWrapper::process(
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
-    bool ready_for_trial) {
+    bool ready_for_trial,
+    bool trigger) {
 
   bool success = true;
   std::shared_ptr<experiment_interfaces::msg::Trial> trial = nullptr;
@@ -219,7 +253,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial);
+    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial, trigger);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());

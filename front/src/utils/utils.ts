@@ -24,8 +24,8 @@ export const formatTime = (time: number | undefined): string => {
 }
 
 export function formatFrequency(frequency: number | undefined): string {
-  if (frequency === undefined) {
-    return ''
+  if (frequency === undefined || frequency === 0) {
+    return '\u2013'
   }
 
   if (frequency < 1000) {

@@ -37,12 +37,18 @@ const uint16_t EEG_QUEUE_LENGTH = 65535;
 /* TODO: Simulating the EEG device to the level of sending UDP packets not implemented on the C++
      side yet. For a previous Python reference implementation, see commit c0afb515b. */
 EegSimulator::EegSimulator() : Node("eeg_simulator") {
+  callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
+  /* Create a single SubscriptionOptions object */
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.callback_group = callback_group;
 
   /* Subscriber for EEG bridge healthcheck. */
   this->eeg_bridge_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
     "/eeg/healthcheck",
     10,
-    std::bind(&EegSimulator::handle_eeg_bridge_healthcheck, this, _1));
+    std::bind(&EegSimulator::handle_eeg_bridge_healthcheck, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG simulator healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(
@@ -57,7 +63,8 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   this->active_project_subscriber = create_subscription<std_msgs::msg::String>(
     "/projects/active",
     qos_persist_latest,
-    std::bind(&EegSimulator::handle_set_active_project, this, _1));
+    std::bind(&EegSimulator::handle_set_active_project, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG datasets. */
   dataset_list_publisher = this->create_publisher<project_interfaces::msg::DatasetList>(
@@ -67,17 +74,23 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   /* Service for changing dataset. */
   this->set_dataset_service = this->create_service<project_interfaces::srv::SetDataset>(
     "/eeg_simulator/dataset/set",
-    std::bind(&EegSimulator::handle_set_dataset, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_dataset, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Service for changing playback. */
   this->set_playback_service = this->create_service<project_interfaces::srv::SetPlayback>(
     "/eeg_simulator/playback/set",
-    std::bind(&EegSimulator::handle_set_playback, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_playback, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Service for changing loop. */
   this->set_loop_service = this->create_service<project_interfaces::srv::SetLoop>(
     "/eeg_simulator/loop/set",
-    std::bind(&EegSimulator::handle_set_loop, this, _1, _2));
+    std::bind(&EegSimulator::handle_set_loop, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    callback_group);
 
   /* Publisher for dataset. */
   this->dataset_publisher = this->create_publisher<std_msgs::msg::String>(
@@ -107,7 +120,8 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
   this->session_subscriber = create_subscription<system_interfaces::msg::Session>(
     "/system/session",
     qos_session,
-    std::bind(&EegSimulator::handle_session, this, _1));
+    std::bind(&EegSimulator::handle_session, this, std::placeholders::_1),
+    subscription_options);
 
   /* Publisher for EEG samples. */
   eeg_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
@@ -127,7 +141,14 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
 
   /* Create a timer callback to poll inotify. */
   this->inotify_timer = this->create_wall_timer(std::chrono::milliseconds(100),
-                                                std::bind(&EegSimulator::inotify_timer_callback, this));
+                                                std::bind(&EegSimulator::inotify_timer_callback, this),
+                                                callback_group);
+
+  /* Create a timer for publishing healthcheck. */
+  this->healthcheck_publisher_timer = this->create_wall_timer(
+      std::chrono::milliseconds(500), 
+      [this] { publish_healthcheck(); }, 
+      callback_group);
 }
 
 EegSimulator::~EegSimulator() {
@@ -135,30 +156,34 @@ EegSimulator::~EegSimulator() {
   close(inotify_descriptor);
 }
 
-void EegSimulator::publish_healthcheck(uint8_t status, std::string status_message, std::string actionable_message) {
+void EegSimulator::publish_healthcheck() {
   auto healthcheck = system_interfaces::msg::Healthcheck();
 
-  healthcheck.status.value = status;
-  healthcheck.status_message = status_message;
-  healthcheck.actionable_message = actionable_message;
-
+  if (this->eeg_bridge_available) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+    healthcheck.status_message = "Not ready";
+    healthcheck.actionable_message = "Turn off the EEG bridge to use the EEG simulator.";
+  } else if (this->is_streaming) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Streaming...";
+    healthcheck.actionable_message = "End the session to stop streaming.";
+  } else if (this->is_loading) {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Loading...";
+    healthcheck.actionable_message = "Wait until loading is finished.";
+  } else {
+    healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+    healthcheck.status_message = "Ready";
+    healthcheck.actionable_message = "Start a session to stream data.";
+  }
   this->healthcheck_publisher->publish(healthcheck);
 }
 
 void EegSimulator::handle_eeg_bridge_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
-  bool eeg_bridge_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
-
+  this->eeg_bridge_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
   if (eeg_bridge_available) {
-    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::NOT_READY,
-                             "EEG bridge is available, which is mutually exclusive with the EEG simulator.",
-                             "Turn off the EEG bridge to use the EEG simulator.");
     this->set_playback(false);
-
     RCLCPP_INFO(this->get_logger(), "EEG simulator disabled because EEG bridge is available.");
-  } else {
-    this->publish_healthcheck(system_interfaces::msg::HealthcheckStatus::READY,
-                             "Ready",
-                             "");
   }
 }
 
@@ -246,19 +271,44 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         file >> json_data;
 
         dataset_msg.json_filename = filename;
-        dataset_msg.name = json_data.value("name", "Unknown");
-        dataset_msg.data_filename = json_data.value("data_file", "");
-        dataset_msg.trigger_filename = json_data.value("trigger_file", "");
 
-        if (json_data.contains("channels") && json_data["channels"].is_object()) {
-            dataset_msg.num_of_eeg_channels = json_data["channels"].value("eeg", 0);
-            dataset_msg.num_of_emg_channels = json_data["channels"].value("emg", 0);
+        /* Validate "name" field */
+        if (json_data.contains("name") && json_data["name"].is_string()) {
+          dataset_msg.name = json_data["name"];
         } else {
-            dataset_msg.num_of_eeg_channels = 0;
-            dataset_msg.num_of_emg_channels = 0;
+          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'name' is missing or invalid in dataset %s", filename.c_str());
+          continue;
         }
 
-        /* Get the sampling frequency and duration from the data file. */
+        /* Validate "data_file" field. */
+        if (json_data.contains("data_file") && json_data["data_file"].is_string()) {
+          dataset_msg.data_filename = json_data["data_file"];
+        } else {
+          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'data_file' is missing or invalid in dataset %s", filename.c_str());
+          continue;
+        }
+
+        /* Validate "channels" object and its fields "eeg" and "emg". */
+        if (json_data.contains("channels") && json_data["channels"].is_object()) {
+          if (json_data["channels"].contains("eeg") && json_data["channels"]["eeg"].is_number_integer()) {
+            dataset_msg.num_of_eeg_channels = json_data["channels"]["eeg"];
+          } else {
+            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.eeg' is missing or invalid in dataset %s", filename.c_str());
+            continue;
+          }
+
+          if (json_data["channels"].contains("emg") && json_data["channels"]["emg"].is_number_integer()) {
+            dataset_msg.num_of_emg_channels = json_data["channels"]["emg"];
+          } else {
+            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.emg' is missing or invalid in dataset %s", filename.c_str());
+            continue;
+          }
+        } else {
+          RCLCPP_ERROR(this->get_logger(), "Mandatory object 'channels' is missing or invalid in dataset %s", filename.c_str());
+          continue;
+        }
+
+        /* Calculate the sampling frequency and duration from the data file. */
         std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
         auto [success, sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
 
@@ -282,6 +332,12 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
       }
     }
   }
+
+  /* Sort datasets. */
+  std::sort(datasets.begin(), datasets.end(), [](const auto& a, const auto& b) {
+    return a.name < b.name;
+  });
+
   return datasets;
 }
 
@@ -307,7 +363,7 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
   this->active_project = msg->data;
 
   std::ostringstream oss;
-  oss << PROJECTS_DIRECTORY << "/" << this->active_project << "/" << EEG_SIMULATOR_DATA_SUBDIRECTORY;
+  oss << PROJECTS_DIRECTORY << this->active_project << "/" << EEG_SIMULATOR_DATA_SUBDIRECTORY;
   this->data_directory = oss.str();
 
   RCLCPP_INFO(this->get_logger(), "Active project set to: %s", this->active_project.c_str());
@@ -410,7 +466,7 @@ void EegSimulator::initialize_streaming() {
 
   /* Open and read data file. */
   std::string data_filename = this->dataset.data_filename;
-  std::string data_file_path = data_directory + "/" + data_filename;
+  std::string data_file_path = data_directory + data_filename;
 
   data_file.open(data_file_path, std::ios::in);
 
@@ -422,8 +478,9 @@ void EegSimulator::initialize_streaming() {
   RCLCPP_INFO(this->get_logger(), "Reading data from file: %s", data_file_path.c_str());
 
   if (this->current_data_file_path != data_file_path) {
-    dataset_buffer.clear();
+    this->is_loading = true;
 
+    dataset_buffer.clear();
     std::string line;
     while (std::getline(data_file, line)) {
       std::stringstream ss(line);
@@ -434,6 +491,8 @@ void EegSimulator::initialize_streaming() {
       }
       dataset_buffer.push_back(data);
     }
+
+    this->is_loading = false;
   }
   current_sample_index = 0;
 
@@ -445,7 +504,7 @@ void EegSimulator::initialize_streaming() {
 
   /* Open trigger file. */
   std::string trigger_filename = this->dataset.trigger_filename;
-  std::string trigger_file_path = data_directory + "/" + trigger_filename;
+  std::string trigger_file_path = data_directory + trigger_filename;
 
   this->send_triggers = false;
   if (trigger_filename != UNSET_STRING) {
@@ -482,6 +541,7 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
     }
 
     this->session_started = false;
+    this->is_streaming = false;
     return;
   }
 
@@ -495,8 +555,11 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
 
   /* Return if the simulator is not set to playback dataset. */
   if (!playback) {
+    this->is_streaming = false;
     return;
   }
+
+  this->is_streaming = true;
 
   bool stop = false;
   bool looped;
@@ -573,6 +636,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   msg.metadata.sampling_frequency = this->sampling_frequency;
   msg.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
   msg.metadata.num_of_emg_channels = this->num_of_emg_channels;
+  msg.metadata.is_simulation = true;
 
   msg.time = time;
 
@@ -681,7 +745,10 @@ int main(int argc, char *argv[]) {
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
 
-  rclcpp::spin(node);
+  auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  executor->add_node(node);
+  executor->spin();
+
   rclcpp::shutdown();
   return 0;
 }
