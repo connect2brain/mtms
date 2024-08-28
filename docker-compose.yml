@@ -1,4 +1,4 @@
-version: '2'
+version: '3.9'
 
 services:
   busylight_manager:
@@ -89,16 +89,11 @@ services:
     privileged: true
     network_mode: host
 
+  # XXX: See docker-compose.gpu.yml for configuration that includes GPU support.
   decider:
     build:
       context: .
       dockerfile: ros2_ws/src/pipeline/decider/Dockerfile
-    # Enable GPU in the container.
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
     env_file:
       - ${SITE_ENV_FILE}
     volumes:

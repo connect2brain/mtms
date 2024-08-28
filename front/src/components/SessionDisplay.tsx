@@ -64,16 +64,16 @@ export const SessionDisplay: React.FC = () => {
   return (
     <SessionPanel>
       <StateRow>
-        <StateTitle>Time</StateTitle>
+        <StateTitle>Time:</StateTitle>
         <StateValue>{latestUpdate ? formatDate(latestUpdate.toISOString()) : ''}</StateValue>
       </StateRow>
       <br />
       <StateRow>
-        <StateTitle>Session</StateTitle>
+        <StateTitle>Session:</StateTitle>
         <StateValue>{getHumanReadableSessionState(SessionState, session?.state.value)}</StateValue>
       </StateRow>
       <StateRow>
-        <StateTitle>Session time</StateTitle>
+        <StateTitle>Session time:</StateTitle>
         <StateValue>{session?.time.toFixed(1)} s</StateValue>
       </StateRow>
       <br />

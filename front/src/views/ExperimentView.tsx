@@ -1332,10 +1332,10 @@ export const ExperimentView = () => {
           </ConfigRow>
           <GrayedOutPanel isGrayedOut={waitForPedalPress || numOfTrials === null || numOfTrials < 2}>
             <ConfigRow>
-              <ConfigLabel>Interval (s)</ConfigLabel>
+              <ConfigLabel>Interval (s):</ConfigLabel>
             </ConfigRow>
             <CloseConfigRow>
-              <IndentedLabel>Min:</IndentedLabel>
+              <IndentedLabel>Min</IndentedLabel>
               <ValidatedInput
                 type='number'
                 value={itiMin}
@@ -1347,7 +1347,7 @@ export const ExperimentView = () => {
               />
             </CloseConfigRow>
             <CloseConfigRow>
-              <IndentedLabel>Max:</IndentedLabel>
+              <IndentedLabel>Max</IndentedLabel>
               <ValidatedInput
                 type='number'
                 value={itiMax}
@@ -1368,7 +1368,7 @@ export const ExperimentView = () => {
           </ConfigRow>
           <GrayedOutPanel isGrayedOut={!autopause}>
             <ConfigRow>
-              <IndentedLabel>Interval (min):</IndentedLabel>
+              <IndentedLabel>Interval (min)</IndentedLabel>
               <ValidatedInput
                 type='number'
                 value={autopauseIntervalMinutes}
@@ -1383,21 +1383,21 @@ export const ExperimentView = () => {
         <ExperimentPanel>
           <SmallerTitle>Experiment</SmallerTitle>
           <ConfigRow>
-            <ConfigLabel>Trials</ConfigLabel>
+            <ConfigLabel>Trials:</ConfigLabel>
           </ConfigRow>
           <CloseConfigRow>
-            <IndentedLabel>Total:</IndentedLabel>
+            <IndentedLabel>Total</IndentedLabel>
             <ConfigLabel>{numOfTrials !== null ? numOfTrials : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow>
-            <IndentedLabel>Valid:</IndentedLabel>
+            <IndentedLabel>Valid</IndentedLabel>
             <ConfigLabel>{numOfValidTrials !== null ? numOfValidTrials : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
           <ConfigRow>
-            <ConfigLabel>Experiment</ConfigLabel>
+            <ConfigLabel>Experiment:</ConfigLabel>
           </ConfigRow>
           <CloseConfigRow>
-            <IndentedLabel>Duration:</IndentedLabel>
+            <IndentedLabel>Duration</IndentedLabel>
             <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow></CloseConfigRow>
@@ -1408,15 +1408,15 @@ export const ExperimentView = () => {
         <StatusPanel>
           <SmallerTitle>Status</SmallerTitle>
           <ConfigRow>
-            <ConfigLabel>Experiment</ConfigLabel>
+            <ConfigLabel>Experiment:</ConfigLabel>
             <ConfigLabel>{formatExperimentState()} </ConfigLabel>
           </ConfigRow>
           <ConfigRow>
-            <IndentedLabel>Trial:</IndentedLabel>
+            <IndentedLabel>Trial</IndentedLabel>
             <ConfigLabel>{formatTrialNumber()} </ConfigLabel>
           </ConfigRow>
           <CloseConfigRow>
-            <IndentedLabel>Attempt:</IndentedLabel>
+            <IndentedLabel>Attempt</IndentedLabel>
             <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow></CloseConfigRow>

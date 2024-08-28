@@ -605,3 +605,31 @@ export const setLoopRos = (loop: boolean, callback: () => void) => {
     },
   )
 }
+
+/* Set record data service */
+const setRecordDataService = new ROSLIB.Service({
+  ros: ros,
+  name: '/eeg_recorder/record_data/set',
+  serviceType: 'project_interfaces/SetRecordData',
+})
+
+export const setRecordDataRos = (recordData: boolean, callback: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    record_data: recordData,
+  }) as any
+
+  setRecordDataService.callService(
+    request,
+    (response) => {
+      if (!response.success) {
+        console.log('ERROR: Failed to set loop: success field was false.')
+      } else {
+        callback()
+      }
+    },
+    (error) => {
+      console.log('ERROR: Failed to set loop, error:')
+      console.log(error)
+    },
+  )
+}
