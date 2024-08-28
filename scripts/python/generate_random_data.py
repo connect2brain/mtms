@@ -19,6 +19,7 @@ def save_to_csv(output_directory, base_filename, data):
 
 def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_emg_channels, data_filename):
     json_filename = base_filename + ".json"
+    trigger_filename = base_filename + "_triggers"
     json_data = {
         "name": name,
         "channels": {
@@ -26,7 +27,7 @@ def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_em
             "emg": num_emg_channels
         },
         "data_file": data_filename + ".csv",
-        "trigger_file": ""
+        "trigger_file": trigger_filename + ".csv"
     }
 
     output_path = os.path.join(output_directory, json_filename)
@@ -48,6 +49,9 @@ if __name__ == "__main__":
 
     data = generate_random_data(args.eeg_channels, args.emg_channels, args.sampling_frequency, args.duration)
     save_to_csv(args.output_directory, args.output_filename, data)
+
+    triggers = np.array([1.0, 2.0, 5.0])
+    save_to_csv(args.output_directory, args.output_filename + "_triggers", triggers)
 
     save_to_json(args.output_directory, args.output_filename, args.dataset_name, args.eeg_channels, args.emg_channels, args.output_filename)
 
