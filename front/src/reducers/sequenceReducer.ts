@@ -6,7 +6,6 @@ interface SequenceState {
   expandedSequences: Record<string, boolean>
 }
 
-
 interface SetExpandedSequencePayload {
   index: number
   expanded: boolean
@@ -33,8 +32,5 @@ const sequenceSlice = createSlice({
   },
 })
 
-export const {
-  setExpandedSequence,
-  setPulseSequences,
-} = sequenceSlice.actions
+export const { setExpandedSequence, setPulseSequences } = sequenceSlice.actions
 export default sequenceSlice.reducer

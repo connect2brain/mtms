@@ -7,7 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_interfaces/msg/eeg_datapoint.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 
 using namespace std::chrono_literals;
 
@@ -31,7 +31,7 @@ class MockEegBridge : public rclcpp::Node {
 
         auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
-        publisher_data_ = this->create_publisher<mtms_interfaces::msg::EegDatapoint>("/eeg/raw_data", 10);
+        publisher_data_ = this->create_publisher<eeg_interfaces::msg::Sample>("/eeg/raw", 10);
         publisher_streaming_ = this->create_publisher<std_msgs::msg::Bool>("/eeg/is_streaming", qos);
 
         this->declare_parameter<float>("sampling_frequency", DEFAULT_FREQUENCY_VALUE);
@@ -51,7 +51,7 @@ class MockEegBridge : public rclcpp::Node {
 
     void timer_callback() {
 
-        auto message = mtms_interfaces::msg::EegDatapoint();
+        auto message = eeg_interfaces::msg::Sample();
 
         for (int channel = 1; channel <= NUMBER_OF_CHANNELS; channel++) {
 
@@ -61,18 +61,9 @@ class MockEegBridge : public rclcpp::Node {
                 result -= 2 * RANDOM_MAX;
             }
 
-            message.eeg_channels.push_back(result);
+            message.eeg_data.push_back(result);
             RCLCPP_INFO(this->get_logger(), "EEG channel: %d, Result: %f", channel, result);
         }
-
-        if (this->time_ == 0) {
-          message.first_sample_of_experiment = true;
-        }
-
-        else {
-          message.first_sample_of_experiment = false;
-        }
-
         message.time = this->time_;
         this->time_ += this->sampling_interval_;
 
@@ -85,7 +76,7 @@ class MockEegBridge : public rclcpp::Node {
 
   private:
     rclcpp::TimerBase::SharedPtr timer_;
-    rclcpp::Publisher<mtms_interfaces::msg::EegDatapoint>::SharedPtr publisher_data_;
+    rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr publisher_data_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_streaming_;
     float sampling_frequency_;
     double_t sampling_interval_;

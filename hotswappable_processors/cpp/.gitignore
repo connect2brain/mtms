@@ -1,8 +1,0 @@
-cmake_install.cmake
-cmake-build-debug
-cmake-build-release
-CMakeCache.txt
-CMakeFiles
-libprocessor_factory.so*
-Makefile
-processor_factory_exec

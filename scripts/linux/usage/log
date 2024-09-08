@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Usage examples:
+# ./log [container_name] --from "YYYY-MM-DD HH:MM:SS" --to "YYYY-MM-DD HH:MM:SS"
+# ./log [container_name] --last-hour
+# ./log [container_name] --save output.log
+# ./log [container_name] -n 50
+
+CONTAINER_NAME=""
+FROM=""
+TO=""
+FOLLOW=true          # Default to follow mode
+SAVE_TO=""
+TIME_FILTERS=false   # Indicator for specific time filters
+TAIL_LINES="100"     # Default to the last 100 lines
+
+# Print usage
+function print_usage() {
+    echo ""
+    echo "Usage examples:"
+    echo "./log [container_name] -n 1000       # Show the last 1000 lines, default is 100"
+    echo "./log [container_name] --save output.log  # Save logs to a file"
+    echo "./log [container_name] --last-hour        # Show logs from the last hour"
+    echo "./log [container_name] --from \"YYYY-MM-DD HH:MM:SS\" --to \"YYYY-MM-DD HH:MM:SS\""
+    echo ""
+    echo "If no container name is provided, logs from all containers will be shown."
+    echo ""
+    echo "Container names include:"
+    echo ""
+    echo "  - preprocessor"
+    echo "  - decider"
+    echo "  - presenter"
+    echo ""
+    echo "See docker-compose.yml for a complete list."
+    exit 0
+}
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --from) FROM=$2; FOLLOW=false; TIME_FILTERS=true; shift 2;;
+        --to) TO=$2; FOLLOW=false; TIME_FILTERS=true; shift 2;;
+        --last-hour) FROM="1 hour ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --last-day) FROM="1 day ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --last-minute) FROM="1 minute ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        --save) SAVE_TO=$2; shift 2;;
+        --follow) FOLLOW=true; shift;;
+        -n) TAIL_LINES=$2; shift 2;;
+        --help|-h) print_usage;;
+        *)
+            if [[ -z "$CONTAINER_NAME" ]]; then
+                CONTAINER_NAME=$1
+            else
+                echo "Unknown parameter passed: $1"; exit 1;
+            fi
+            shift;;
+    esac
+done
+
+# Check if the save file exists and prompt for overwrite if necessary
+if [ ! -z "$SAVE_TO" ] && [ -f "$SAVE_TO" ]; then
+    read -p "$SAVE_TO exists. Overwrite? (y/N) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Operation cancelled."
+        exit 1
+    fi
+fi
+
+# Define sed command for timestamp formatting
+FORMAT_CMD="sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})[0-9]{0,6}Z/\\1 \\2/' --unbuffered"
+
+# Use docker-compose logs if a container name is provided, otherwise use journalctl. This is because it is
+# difficult to filter the last n lines of logs outputted by a given container using journalctl.
+if [ -n "$CONTAINER_NAME" ]; then
+    LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
+    [ "$FOLLOW" = true ] && LOG_CMD="$LOG_CMD -f"
+    LOG_CMD="$LOG_CMD $CONTAINER_NAME"
+
+    # XXX: Use a custom script to convert UTC to local time. This is a workaround for docker-compose not
+    #   supporting local timezones in logs.
+    LOG_CMD="$LOG_CMD | docker-compose-logs-localtime"
+
+    LOG_CMD="$LOG_CMD | $FORMAT_CMD"
+    [ ! -z "$SAVE_TO" ] && LOG_CMD="$LOG_CMD | tee $SAVE_TO"
+
+    eval $LOG_CMD
+else
+    # If no container name is provided, use journalctl
+    CMD="journalctl -u mtms-core-containers --lines $TAIL_LINES"
+    [ ! -z "$FROM" ] && CMD="$CMD --since \"$FROM\""
+    [ ! -z "$TO" ] && CMD="$CMD --until \"$TO\""
+    [ "$FOLLOW" = true ] && CMD="$CMD -f"
+    [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
+
+    eval $CMD
+fi

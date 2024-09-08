@@ -1,5 +1,5 @@
-export interface ExperimentMessage {
-  experiment: IExperiment
+export interface SessionMessage {
+  session: ISession
 }
 
 export interface PulseSequence {
@@ -20,7 +20,7 @@ export interface Train {
   ibi: number
 }
 
-export interface IExperiment {
+export interface ISession {
   train: Train
   nofTrains: number
   iti: number
@@ -48,7 +48,7 @@ export interface ChannelInfoWithEnabled {
 }
 
 export const pulseSequenceChangeableKeys = ['name', 'selected', 'isi', 'intensity'] as const
-export type PulseSequenceChangeableKey = typeof pulseSequenceChangeableKeys[number]
+export type PulseSequenceChangeableKey = (typeof pulseSequenceChangeableKeys)[number]
 
 export const pulseChangeableKeys = ['selected', 'isi', 'intensity', 'visible'] as const
-export type PulseChangeableKey = typeof pulseChangeableKeys[number]
+export type PulseChangeableKey = (typeof pulseChangeableKeys)[number]

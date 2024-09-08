@@ -1,5 +1,5 @@
 import rclpy
-from mtms_interfaces.srv import RemovePulse
+from ui_interfaces.srv import RemovePulse
 
 from .state_node import StateNode
 

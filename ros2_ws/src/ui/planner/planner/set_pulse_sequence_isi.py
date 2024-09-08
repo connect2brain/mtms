@@ -1,8 +1,8 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import PlannerState, PulseSequence
-from mtms_interfaces.srv import SetPulseSequenceIsi
+from ui_interfaces.msg import PlannerState, PulseSequence
+from ui_interfaces.srv import SetPulseSequenceIsi
 
 from .state_node import StateNode
 

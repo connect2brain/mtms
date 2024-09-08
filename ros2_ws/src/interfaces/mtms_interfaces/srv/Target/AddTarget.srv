@@ -1,5 +1,0 @@
-# ROS service for adding a new target.
-
-PoseUsingEulerAngles target
----
-bool success

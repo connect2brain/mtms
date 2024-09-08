@@ -1,6 +1,0 @@
-#include "D_LC.hpp"
-#include "TM_Phi_LC.hpp"
-#include "Phi_inf_LC.hpp"
-#include "LFM_Phi_LC.hpp"
-#include "Phi_inf_LC.hpp"
-#include "BEMOperatorsPhi_LC.hpp"

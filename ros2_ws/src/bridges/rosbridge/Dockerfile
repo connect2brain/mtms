@@ -1,38 +1,44 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
 
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
-
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     dos2unix \
-    python3-pip
+    python3-pip \
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install \
     pymongo \
     tornado
 
-# Copy ROS workspace for rosbridge
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
+# Copy ROS workspace and build packages
 
 WORKDIR /app/ros2_ws
-COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge_suite
-COPY ros2_ws/src/interfaces/mtms_interfaces src/interfaces/mtms_interfaces
-COPY ros2_ws/src/interfaces/fpga_interfaces src/fpga_interfaces
-COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces src/interfaces
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/bridges/rosbridge/rosbridge_suite src/bridges/rosbridge/rosbridge_suite
+
+# Change line endings in files under rosbridge
+RUN find src/bridges/rosbridge -type f -exec dos2unix {} +
+
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-up-to rosbridge_server
+
+# Copy ROS entrypoint
 
 COPY ros2_ws/src/bridges/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
-
-# Change line endings in all files in rosbridge
-
-RUN shopt -s globstar && dos2unix **
-
-# Build ROS packages
-
-RUN source /opt/ros/galactic/setup.bash && \
-    colcon build
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux
 

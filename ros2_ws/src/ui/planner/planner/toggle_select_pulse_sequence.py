@@ -1,6 +1,6 @@
 import rclpy
 
-from mtms_interfaces.srv import ToggleSelectPulseSequence
+from ui_interfaces.srv import ToggleSelectPulseSequence
 
 from .state_node import StateNode
 

@@ -1,9 +1,9 @@
 import rclpy
 from rclpy.node import Node
 
-from mtms_interfaces.msg import PlannerState, Target
+from ui_interfaces.msg import PlannerState, Target
 from std_msgs.msg import Bool, Float64, String
-from mtms_interfaces.srv import AddTarget
+from ui_interfaces.srv import AddTarget
 
 from .state_node import StateNode
 

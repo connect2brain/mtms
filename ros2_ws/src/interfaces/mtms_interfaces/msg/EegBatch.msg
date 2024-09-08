@@ -1,3 +1,0 @@
-# Eeg batch
-
-EegDatapoint[] batch

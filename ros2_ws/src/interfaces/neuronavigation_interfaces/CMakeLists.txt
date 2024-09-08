@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(targeting_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -26,9 +28,21 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/OptitrackPoses.msg"
   "msg/PoseUsingEulerAngles.msg"
+  "msg/ElectricField.msg"
+  "msg/CreateMarker.msg"
+
   "srv/Efield.srv"
+  "srv/InitializeEfield.srv"
+  "srv/SetCoil.srv"
   "srv/OpenOrientationDialog.srv"
-  DEPENDENCIES geometry_msgs
+  "srv/EfieldNorm.srv"
+  "srv/EfieldRoi.srv"
+  "srv/EfieldRoiMax.srv"
+  "srv/Setdiperdt.srv"
+
+  "srv/VisualizeTargets.srv"
+
+  DEPENDENCIES geometry_msgs targeting_interfaces
  )
 
 ament_package()

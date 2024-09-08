@@ -4,28 +4,35 @@ export const EventTypes = {
   CHARGE: 0,
   PULSE: 1,
   DISCHARGE: 2,
-  SIGNAL_OUT: 3,
+  TRIGGER_OUT: 3,
 }
 
-export interface EegDatapoint {
-  eeg_channels: number[]
-  emg_channels: number[]
+/* TODO: Not up-to-date. */
+export interface Sample {
+  eeg_data: number[]
+  emg_data: number[]
   time: number
-  first_sample_of_experiment: boolean
 }
 
-export interface EegDatapointMessage extends ROSLIB.Message {
-  eeg_channels: number[]
+export interface SampleMetadata extends ROSLIB.Message {
+  sampling_frequency: number
+  num_of_eeg_channels: number
+  num_of_emg_channels: number
+}
+
+export interface SampleMessage extends ROSLIB.Message {
+  eeg_data: number[]
+  emg_data: number[]
   time: number
-  first_sample_of_experiment: boolean
+  metadata: SampleMetadata
 }
 
 export interface EegBatch extends ROSLIB.Message {
-  batch: EegDatapoint[]
+  batch: Sample[]
 }
 
 export interface EegBatchMessage extends ROSLIB.Message {
-  batch: EegDatapoint[]
+  batch: Sample[]
 }
 
 export interface EegTrigger {
@@ -39,11 +46,13 @@ export interface EegTriggerMessage extends ROSLIB.Message {
 }
 
 export interface MTMSEvent {
-  time: number
+  whenToExecute: number
+  processingStartTime: number
   eventType: number
 }
 
 export interface MTMSEventMessage extends ROSLIB.Message {
-  time: number
+  when_to_execute: number
+  processing_start_time: number
   event_type: number
 }

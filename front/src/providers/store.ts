@@ -1,14 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 import targetReducer from 'reducers/targetReducer'
 import sequenceReducer from 'reducers/sequenceReducer'
-import experimentReducer from 'reducers/experimentReducer'
+import sessionReducer from 'reducers/sessionReducer'
 import eegReducer from 'reducers/eegReducer'
 
 export const store = configureStore({
   reducer: {
     targets: targetReducer,
     sequences: sequenceReducer,
-    experiment: experimentReducer,
+    session: sessionReducer,
     eegData: eegReducer,
   },
   middleware: (getDefaultMiddleware) => {

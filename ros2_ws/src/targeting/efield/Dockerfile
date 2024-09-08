@@ -1,20 +1,29 @@
-FROM osrf/ros:galactic-desktop
+FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
 
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
 
-RUN apt-get update
+RUN apt-get update && \
+    apt-get install -y \
+    dos2unix \
+    wget \
+    ros-iron-rmw-cyclonedds-cpp && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y \
-    dos2unix
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
+
+RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
 WORKDIR /app/ros2_ws
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Build interfaces
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
-RUN source /opt/ros/galactic/setup.bash && colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 
 # Copy efield packages
@@ -22,12 +31,14 @@ COPY ros2_ws/src/targeting/efield src/targeting/efield/
 
 # Required so efield and efield_library can find their dependencies
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/ros2_ws/src/targeting/efield/efield_libraries/lib"
+ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
+
 
 # Build efield library
 RUN cd src/targeting/efield/efield_libraries && cmake . && make
 
 # Build efield packages
-RUN source /opt/ros/galactic/setup.bash && colcon build --packages-select efield
+RUN source /opt/ros/iron/setup.bash && colcon build --packages-select efield
 
 
 COPY ros2_ws/src/targeting/efield/ros_entrypoint.sh .

@@ -1,15 +1,15 @@
-//
-// Created by Kalle Jyrkinen on 13.12.2021.
-//
+#pragma once
 
-#ifndef TMS_CPP_BEMOPERATORSPHI_LC_HPP
-#define TMS_CPP_BEMOPERATORSPHI_LC_HPP
+#include "Mesh.hpp"
 
-#include <tmsutil>
 
-// Makes the double-layer (D) matrices for LC BEM
-// Returns the blocks in an std::vector, in column-major ordering
-std::vector<Matrix<float>> BEMOperatorsPhi_LC(const std::vector<Mesh<float>> &meshes // BEM geometry
+/**
+ * @brief  Makes the double-layer (D) matrices for LC BEM
+ * @details Auto-solid angle is set for diagonal blocks
+ * 
+ * @param meshes BEM geometry
+ * @return D blocks in an std::vector, in column-major ordering
+ * @ingroup bem_group
+ */
+std::vector<Eigen::MatrixXf> BEMOperatorsPhi_LC(const std::vector<Mesh<float>> &meshes // BEM geometry
 );
-
-#endif //TMS_CPP_BEMOPERATORSPHI_LC_HPP

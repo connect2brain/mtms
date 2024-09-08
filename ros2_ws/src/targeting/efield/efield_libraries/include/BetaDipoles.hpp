@@ -1,37 +1,56 @@
 #pragma once
 
 #include <stdexcept>
-#include <linalg>
+#include "eigen_defines.hpp"
 
-// A class representing a group of N beta dipoles.
+
+/**
+ * @brief A container class representing quadrature points and moments used in secondary E-field calculation
+ */
 template <typename T>
 class BetaDipoles {
 
 public:
+    /**
+     * @brief Default constructor for creating empty BetaDipoles object
+     */
     BetaDipoles() = default;
 
-    BetaDipoles(Matrix<T, RowMajor> dpos, Matrix<T, RowMajor> dmom): points(dpos), moments(dmom) {
-        if (dpos.Rows() != dmom.Rows()){
+    /**
+     * @brief Array constructor
+     * 
+     * @param dpos Quadrature points as Eigen Row-major matrix [NoP x 3] 
+     * @param dmom Quadrature moments as Eigen Row-major matrix [NoP x 3] 
+     */
+    BetaDipoles(MatrixX3T_RM<T> dpos, MatrixX3T_RM<T> dmom): points(dpos), moments(dmom) {
+        if (dpos.rows() != dmom.rows()){
             throw std::invalid_argument("The number of dipole positions and dipole moments must match");
-        }else if(dpos.Cols() != 3 || dmom.Cols() != 3){
+        }else if(dpos.cols() != 3 || dmom.cols() != 3){
             throw std::invalid_argument("BetaDipole positions and moments must have 3 columns");
         }
-        nop = dpos.Rows();
+        nop = dpos.rows();
     }
-
+    /**
+     * @return Number of points
+     */
     int32_t Nop() const {return nop;}
-
-    const Matrix<T, RowMajor>& Points() const {
+    /**
+     * @return Quadrature points asEigen Row-major matrix [NoP x 3]
+     */
+    const MatrixX3T_RM<T>& Points() const {
         return points;
     }
-    const Matrix<T, RowMajor>& Moments() const {
+     /**
+     * @return Quadrature moments as Eigen Row-major matrix [NoP x 3]
+     */
+    const MatrixX3T_RM<T>& Moments() const {
         return moments;
     }
 
 private:
     int32_t nop;
-    Matrix<T, RowMajor> points;  // dipole positions, [n x 3]
-    Matrix<T, RowMajor> moments; // dipole moments, [n x 3]
+    MatrixX3T_RM<T> points;  // dipole positions, [n x 3]
+    MatrixX3T_RM<T> moments; // dipole moments, [n x 3]
 };
 
 

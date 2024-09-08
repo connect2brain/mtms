@@ -1,5 +1,5 @@
 import rclpy
-from mtms_interfaces.srv import ChangePulseIndex
+from ui_interfaces.srv import ChangePulseIndex
 
 from .state_node import StateNode
 

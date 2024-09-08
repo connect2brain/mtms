@@ -1,10 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { eegDataSubscriber } from 'services/ros'
+import styled from 'styled-components'
+
 import { EegBatchMessage, MTMSEvent, MTMSEventMessage } from 'types/eeg'
 import { Datapoint } from 'components/EegChartStreaming'
 import { WebGLPlot } from 'components/WebGLPlot'
-import styled from 'styled-components'
-import { eventSubscriber } from 'services/experiment'
+
+import { eegDataSubscriber } from 'ros/ros'
+import { eventSubscriber } from 'ros/subscribers/feedback'
+
 import { objectKeysToCamelCase } from 'utils'
 
 const DataVisualizeWebGL = () => {
@@ -22,7 +25,7 @@ const DataVisualizeWebGL = () => {
   const [pulsePoints, setPulsePoints] = useState<Datapoint[]>([])
   const [chargePoints, setChargePoints] = useState<Datapoint[]>([])
   const [dischargePoints, setDischargePoints] = useState<Datapoint[]>([])
-  const [signalOutPoints, setSignalOutPoints] = useState<Datapoint[]>([])
+  const [triggerOutPoints, setTriggerOutPoints] = useState<Datapoint[]>([])
 
   const [latestTimestamps, setLatestTimestamps] = useState<number[]>([])
 
@@ -45,7 +48,7 @@ const DataVisualizeWebGL = () => {
       const point = message.batch[i]
       eegTimestamps.push(point.time)
 
-      const filtered = c3(point.eeg_channels)
+      const filtered = c3(point.eeg_data)
       const y = scaleY(filtered)
 
       const finalPoint = {
@@ -72,9 +75,9 @@ const DataVisualizeWebGL = () => {
     const newPulseData = initData()
     const newChargeData = initData()
     const newDischargeData = initData()
-    const newSignalOutData = initData()
+    const newTriggerOutData = initData()
 
-    const allData = [newPulseData, newChargeData, newDischargeData, newSignalOutData]
+    const allData = [newPulseData, newChargeData, newDischargeData, newTriggerOutData]
 
     const newEvents: MTMSEvent[] = []
 
@@ -83,8 +86,8 @@ const DataVisualizeWebGL = () => {
       let removeThisEvent = false
       for (let i = 0; i < latestTimestamps.length; i++) {
         const ts = latestTimestamps[i]
-        if (event.time < ts) {
-          console.log(`event: ${event.eventType}, ${event.time}, ${ts}`)
+        if (event.whenToExecute < ts) {
+          console.log(`event: ${event.eventType}, ${event.whenToExecute}, ${ts}`)
           allData[event.eventType][i].y = 1
           removeThisEvent = true
           break
@@ -101,7 +104,7 @@ const DataVisualizeWebGL = () => {
     setChargePoints(newChargeData)
     setPulsePoints(newPulseData)
     setDischargePoints(newDischargeData)
-    setSignalOutPoints(newSignalOutData)
+    setTriggerOutPoints(newTriggerOutData)
   }, [latestTimestamps])
 
   useEffect(() => {
@@ -139,7 +142,7 @@ const DataVisualizeWebGL = () => {
         pulseData={pulsePoints}
         chargeData={chargePoints}
         dischargeData={dischargePoints}
-        signalOutData={signalOutPoints}
+        triggerOutData={triggerOutPoints}
       />
     </ChartContainer>
   )

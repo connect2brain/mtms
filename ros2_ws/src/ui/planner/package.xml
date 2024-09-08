@@ -9,7 +9,7 @@
 
   <depend>rclpy</depend>
 
-  <depend>mtms_interfaces</depend>
+  <depend>ui_interfaces</depend>
 
   <exec_depend>ros2launch</exec_depend>
 

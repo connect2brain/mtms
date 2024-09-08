@@ -10,11 +10,11 @@ import {
   setNofBurstsInTrains,
   setNofPulsesInBursts,
   setNofTrains,
-} from 'reducers/experimentReducer'
+} from 'reducers/sessionReducer'
 
 const Channel = (props: ChannelInfoWithEnabled) => {
   const { channelIndex, enabled, voltage } = props
-  const { channels } = useAppSelector((state) => state.experiment)
+  const { channels } = useAppSelector((state) => state.session)
   const dispatch = useAppDispatch()
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +51,7 @@ const ChannelContainer = styled.div<{
 /** TODO: button to add additional channels */
 const PulseSequenceConfiguration = () => {
   const { channels, iti, ibi, nofBurstsInTrains, nofTrains, isis, nofPulsesInBursts } = useAppSelector(
-    (state) => state.experiment,
+    (state) => state.session,
   )
   const dispatch = useAppDispatch()
 

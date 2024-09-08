@@ -37,7 +37,7 @@ int OptitrackClient::create_client(NatNetFrameReceivedCallback data_received_cal
 int OptitrackClient::discover_motive_servers() {
   RCLCPP_INFO(rclcpp::get_logger("optitrack_bridge"), "Looking for servers on the local network.");
 
-  const int max_discovers = 1;
+  const int max_discovers = 10;
   sNatNetDiscoveredServer servers[max_discovers];
   int actual_number_of_discovers = max_discovers;
 
