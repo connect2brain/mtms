@@ -116,14 +116,19 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
       .deadline(DEADLINE_NS)
       .lifespan(DEADLINE_NS);
 
-  /* Subscriber for session. */
+  /* Subscriber for session.
+
+     NB: It is crucial to not use the shared, re-entrant callback group for this subscriber, as the session
+       messages are time-critical and using the shared callback group seems to hinder the performance. */
   this->session_subscriber = create_subscription<system_interfaces::msg::Session>(
     "/system/session",
     qos_session,
-    std::bind(&EegSimulator::handle_session, this, std::placeholders::_1),
-    subscription_options);
+    std::bind(&EegSimulator::handle_session, this, std::placeholders::_1));
 
-  /* Publisher for EEG samples. */
+  /* Publisher for EEG samples.
+
+     NB: It is crucial to not use the shared, re-entrant callback group for this publisher, as EEG sample messages
+       are time-critical and using the shared callback group seems to hinder the performance. */
   eeg_publisher = this->create_publisher<eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC,
     EEG_QUEUE_LENGTH);
@@ -146,8 +151,8 @@ EegSimulator::EegSimulator() : Node("eeg_simulator") {
 
   /* Create a timer for publishing healthcheck. */
   this->healthcheck_publisher_timer = this->create_wall_timer(
-      std::chrono::milliseconds(500), 
-      [this] { publish_healthcheck(); }, 
+      std::chrono::milliseconds(500),
+      [this] { publish_healthcheck(); },
       callback_group);
 }
 
@@ -308,19 +313,19 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
           continue;
         }
 
-        
+
         /* Parse "trigger_file" field if it exists */
 	if (json_data.contains("trigger_file") && json_data["trigger_file"].is_string()) {
 	  dataset_msg.trigger_filename = json_data["trigger_file"];
-	  RCLCPP_INFO(this->get_logger(), "Trigger file found in JSON for dataset %s: %s", 
+	  RCLCPP_INFO(this->get_logger(), "Trigger file found in JSON for dataset %s: %s",
 		      filename.c_str(), dataset_msg.trigger_filename.c_str());
 	} else {
 	  dataset_msg.trigger_filename = ""; // Set to empty string if not present
 	  RCLCPP_WARN(this->get_logger(), "No trigger file found in JSON for dataset: %s", filename.c_str());
 	}
-		
-        
-       
+
+
+
         /* Calculate the sampling frequency and duration from the data file. */
         std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
         auto [success, sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
@@ -480,7 +485,7 @@ void EegSimulator::initialize_streaming() {
   /* Open and read data file. */
   std::string data_filename = this->dataset.data_filename;
   std::string data_file_path = data_directory + data_filename;
-  
+
    // Add debug logging here
   RCLCPP_INFO(this->get_logger(), "Data directory: %s", data_directory.c_str());
   RCLCPP_INFO(this->get_logger(), "Data filename: %s", data_filename.c_str());
@@ -524,7 +529,7 @@ void EegSimulator::initialize_streaming() {
 
   std::string trigger_filename = this->dataset.trigger_filename;
   std::string trigger_file_path = data_directory + trigger_filename;
-  
+
   // Add more debug logging here
   RCLCPP_INFO(this->get_logger(), "Trigger filename: %s", trigger_filename.c_str());
   RCLCPP_INFO(this->get_logger(), "Trigger file path: %s", trigger_file_path.c_str());
