@@ -33,7 +33,7 @@ RUN pip3 install torch torchvision torchaudio
 
 # Install other Python packages.
 RUN pip3 install matplotlib wandb pyyaml omegaconf tqdm diffusers accelerate lovely-tensors \
-    numpy scipy ema-pytorch scikit-learn mne mne-realtime mne_icalabel pandas py_neuromodulation statsmodels mneflow
+    numpy scipy ema-pytorch scikit-learn mne mne-realtime mne_icalabel pandas py_neuromodulation statsmodels mneflow torchinfo joblib accelerate einops
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
