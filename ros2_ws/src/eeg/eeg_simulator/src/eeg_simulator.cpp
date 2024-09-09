@@ -308,6 +308,19 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
           continue;
         }
 
+        
+        /* Parse "trigger_file" field if it exists */
+	if (json_data.contains("trigger_file") && json_data["trigger_file"].is_string()) {
+	  dataset_msg.trigger_filename = json_data["trigger_file"];
+	  RCLCPP_INFO(this->get_logger(), "Trigger file found in JSON for dataset %s: %s", 
+		      filename.c_str(), dataset_msg.trigger_filename.c_str());
+	} else {
+	  dataset_msg.trigger_filename = ""; // Set to empty string if not present
+	  RCLCPP_WARN(this->get_logger(), "No trigger file found in JSON for dataset: %s", filename.c_str());
+	}
+		
+        
+       
         /* Calculate the sampling frequency and duration from the data file. */
         std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
         auto [success, sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
@@ -379,7 +392,6 @@ void EegSimulator::handle_set_active_project(const std::shared_ptr<std_msgs::msg
 bool EegSimulator::set_dataset(std::string json_filename) {
   if (dataset_map.find(json_filename) == dataset_map.end()) {
     RCLCPP_ERROR(this->get_logger(), "Dataset not found: %s.", json_filename.c_str());
-
     return false;
   }
   /* Update ROS state variable. */
@@ -391,12 +403,13 @@ bool EegSimulator::set_dataset(std::string json_filename) {
   /* Update dataset internally. */
   this->dataset = dataset_map[json_filename];
 
+  RCLCPP_INFO(this->get_logger(), "Dataset JSON set to: %s", json_filename.c_str());
+  RCLCPP_INFO(this->get_logger(), "Dataset trigger file: %s", this->dataset.trigger_filename.c_str());
+
   /* If playback is set to true, re-initialize streaming. */
   if (this->playback) {
     initialize_streaming();
   }
-
-  RCLCPP_INFO(this->get_logger(), "Dataset JSON set to: %s", json_filename.c_str());
 
   return true;
 }
@@ -467,6 +480,11 @@ void EegSimulator::initialize_streaming() {
   /* Open and read data file. */
   std::string data_filename = this->dataset.data_filename;
   std::string data_file_path = data_directory + data_filename;
+  
+   // Add debug logging here
+  RCLCPP_INFO(this->get_logger(), "Data directory: %s", data_directory.c_str());
+  RCLCPP_INFO(this->get_logger(), "Data filename: %s", data_filename.c_str());
+  RCLCPP_INFO(this->get_logger(), "Data file path: %s", data_file_path.c_str());
 
   data_file.open(data_file_path, std::ios::in);
 
@@ -503,29 +521,36 @@ void EegSimulator::initialize_streaming() {
   data_file.close();
 
   /* Open trigger file. */
+
   std::string trigger_filename = this->dataset.trigger_filename;
   std::string trigger_file_path = data_directory + trigger_filename;
+  
+  // Add more debug logging here
+  RCLCPP_INFO(this->get_logger(), "Trigger filename: %s", trigger_filename.c_str());
+  RCLCPP_INFO(this->get_logger(), "Trigger file path: %s", trigger_file_path.c_str());
 
   this->send_triggers = false;
-  if (trigger_filename != UNSET_STRING) {
+  if (!trigger_filename.empty()) {
     if (trigger_file.is_open()) {
         trigger_file.close();
     }
     trigger_file.open(trigger_file_path, std::ios::in);
 
     if (!trigger_file.is_open()) {
-      RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", trigger_file_path.c_str());
+      RCLCPP_ERROR(this->get_logger(), "Error opening trigger file: %s", trigger_file_path.c_str());
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Reading triggers from file: %s", trigger_file_path.c_str());
+
+      /* Read the next trigger time from the file already here so the session handler loop doesn't have to worry about it. */
+      read_next_trigger_time();
+
+      this->send_triggers = true;
     }
-    RCLCPP_INFO(this->get_logger(), "Reading triggers from file: %s", trigger_file_path.c_str());
-
-    /* Read the next trigger time from the file already here so the session handler loop doesn't have to worry about it. */
-    read_next_trigger_time();
-
-    this->send_triggers = true;
   } else {
-    RCLCPP_INFO(this->get_logger(), "No trigger file defined.");
+    RCLCPP_INFO(this->get_logger(), "No trigger file defined in the dataset JSON.");
   }
 }
+
 
 void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
   auto current_time = msg->time;
