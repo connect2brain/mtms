@@ -750,7 +750,6 @@ export const ExperimentView = () => {
 
   const validateTrials = () => {
     const experiment: Experiment = formExperiment()
-    console.log(experiment)
     updateValidTrials(experiment)
   }
 
