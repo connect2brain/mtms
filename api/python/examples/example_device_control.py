@@ -16,12 +16,7 @@ from targeting_interfaces.msg import (
     ElectricTarget
 )
 
-
 api = MTMSApi()
-
-api.start_device()
-api.start_session()
-
 
 ## Single events
 
