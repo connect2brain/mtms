@@ -12,6 +12,15 @@ DeciderWrapper::DeciderWrapper(rclcpp::Logger& logger) {
   logger_ptr = &logger;
   state = WrapperState::UNINITIALIZED;
   guard = std::make_unique<py::scoped_interpreter>();
+
+  /* Capture the initial state of sys.modules when the interpreter starts. */
+  py::module sys_module = py::module::import("sys");
+  py::dict sys_modules = sys_module.attr("modules");
+
+  for (auto item : sys_modules) {
+    std::string module_name_str = std::string(py::str(item.first));
+    initial_sys_modules.push_back(module_name_str);
+  }
 }
 
 void DeciderWrapper::initialize_module(
@@ -32,25 +41,35 @@ void DeciderWrapper::initialize_module(
   py::list sys_path = sys_module.attr("path");
   sys_path.append(directory);
 
-  /* Remove the module from sys.modules if it exists, to ensure it is reloaded. */
-  py::dict sys_modules = sys_module.attr("modules");
-  if (sys_modules.contains(module_name.c_str())) {
-    sys_modules.attr("__delitem__")(module_name.c_str());
+  /* Capture the current state of sys.modules after importing the module. */
+  py::dict current_sys_modules = sys_module.attr("modules");
+
+  /* Loop through current_sys_modules and remove any module that wasn't in initial_sys_modules.
+
+     This ensures that all the modules that were imported during the initialization of the decider are removed
+     when the decider is reset. Otherwise Python interpreter keeps a reference to the old module in sys.modules,
+     which prevents re-importing. */
+  for (auto item : current_sys_modules) {
+    std::string module_name_str = std::string(py::str(item.first));
+
+    if (std::find(initial_sys_modules.begin(), initial_sys_modules.end(), module_name_str) == initial_sys_modules.end()) {
+      RCLCPP_INFO(*logger_ptr, "Removing newly imported module: %s", module_name_str.c_str());
+      current_sys_modules.attr("__delitem__")(item.first);
+    }
   }
 
   /* Import the module and initialize the Decider instance. */
   try {
     auto imported_module = py::module::import(module_name.c_str());
+
     decider_module = std::make_unique<py::module>(imported_module);
     auto instance = decider_module->attr("Decider")(eeg_data_size, emg_data_size, sampling_frequency);
     decider_instance = std::make_unique<py::object>(instance);
-
-  } catch(const py::error_already_set& e) {
+  } catch (const py::error_already_set &e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
     state = WrapperState::ERROR;
     return;
-
-  } catch(const std::exception& e) {
+  } catch (const std::exception &e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     state = WrapperState::ERROR;
     return;
