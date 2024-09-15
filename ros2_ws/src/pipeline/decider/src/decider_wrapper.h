@@ -24,6 +24,9 @@
 
 namespace py = pybind11;
 
+const std::string bold_on = "\033[1m";
+const std::string bold_off = "\033[0m";
+
 enum class WrapperState {
   UNINITIALIZED,
   READY,
