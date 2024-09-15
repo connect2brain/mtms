@@ -211,3 +211,18 @@ class MTMSApiPrinter():
     def print_heading(self, text):
         print('')
         print('{}{}{}{}{}{}'.format("", bcolors.HEADER, "\033[1m", text, "\033[0m", bcolors.ENDC))
+
+    def print_experiment(self, experiment):
+        metadata = experiment.metadata
+        print('Experiment: {}'.format(metadata.experiment_name))
+        print('Subject: {}'.format(metadata.subject_name))
+
+    def print_experiment_feedback(self, feedback):
+        attempt_number = feedback.attempt_number
+        trial_number = feedback.trial_number
+        total_trials = feedback.total_trials
+        experiment_state = feedback.experiment_state.value
+
+        print('Trial: {}/{}, Attempt: {}'.format(
+            trial_number, total_trials, attempt_number,
+        ))

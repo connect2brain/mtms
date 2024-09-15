@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.action import ActionClient
+from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
@@ -33,6 +34,8 @@ from targeting_interfaces.srv import (
 from stimulation_interfaces.srv import IsStimulationAllowed
 
 from MTMSApiPrinter import MTMSApiPrinter
+from ExperimentHandler import ExperimentHandler
+
 
 class MTMSApiNode(Node):
     # To mTMS device
@@ -77,12 +80,16 @@ class MTMSApiNode(Node):
         ROS_ACTION_ANALYZE_MEP,
     )
 
-    def __init__(self, channel_count):
+    def __init__(self, channel_count, verbose):
         super().__init__('mtms_api_node')
+        self.logger = self.get_logger()
 
+        self.verbose = verbose
         self.printer = MTMSApiPrinter(
             channel_count=channel_count,
         )
+
+        self.experiment_handler = ExperimentHandler(self)
 
         self.system_state = None
         self.session = None
@@ -94,7 +101,7 @@ class MTMSApiNode(Node):
         for topic, service_type in self.ROS_SERVICES:
             client = self.create_client(service_type, topic)
             while not client.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('Service {} not available, waiting...'.format(topic))
+                self.logger.info('Service {} not available, waiting...'.format(topic))
 
             self.ros_service_clients[topic] = client
 
@@ -103,9 +110,10 @@ class MTMSApiNode(Node):
         self.ros_action_clients = {}
 
         for topic, action_type in self.ROS_ACTIONS:
-            client = ActionClient(self, action_type, topic)
+            # Use ReentrantCallbackGroup to allow multiple actions to be executed simultaneously.
+            client = ActionClient(self, action_type, topic, callback_group=ReentrantCallbackGroup())
             while not client.wait_for_server(timeout_sec=1.0):
-                self.get_logger().info('Action {} not available, waiting...'.format(topic))
+                self.logger.info('Action {} not available, waiting...'.format(topic))
 
             self.ros_action_clients[topic] = client
 
@@ -312,19 +320,27 @@ class MTMSApiNode(Node):
         return self.event_feedback[id]
 
     def handle_pulse_feedback(self, feedback):
-        self.printer.print_feedback('Pulse', feedback)
+        if self.verbose:
+            self.printer.print_feedback('Pulse', feedback)
+
         self.update_event_feedback(feedback)
 
     def handle_charge_feedback(self, feedback):
-        self.printer.print_feedback('Charge', feedback)
+        if self.verbose:
+            self.printer.print_feedback('Charge', feedback)
+
         self.update_event_feedback(feedback)
 
     def handle_discharge_feedback(self, feedback):
-        self.printer.print_feedback('Discharge', feedback)
+        if self.verbose:
+            self.printer.print_feedback('Discharge', feedback)
+
         self.update_event_feedback(feedback)
 
     def handle_trigger_out_feedback(self, feedback):
-        self.printer.print_feedback('Trigger out', feedback)
+        if self.verbose:
+            self.printer.print_feedback('Trigger out', feedback)
+
         self.update_event_feedback(feedback)
 
     # Targeting
@@ -430,7 +446,7 @@ class MTMSApiNode(Node):
 
         goal_handle = send_goal_future.result()
         if not goal_handle.accepted:
-            self.get_logger().info('Analyze MEP goal rejected.')
+            self.logger.info('Analyze MEP goal rejected.')
             return None, None
 
         # Get result from ROS action.
@@ -445,10 +461,14 @@ class MTMSApiNode(Node):
 
         result = get_result_future.result()
         if result is None:
-            self.get_logger().info('Analyze MEP result failed.')
+            self.logger.info('Analyze MEP result failed.')
             return None, None
 
         return result.result.mep, result.result.errors
+
+    # Experiment
+    def get_experiment_handler(self):
+        return self.experiment_handler
 
     # System state
 
