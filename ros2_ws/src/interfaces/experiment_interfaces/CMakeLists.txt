@@ -25,6 +25,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   # Experiment
+  "msg/Experiment.msg"
   "msg/ExperimentMetadata.msg"
   "msg/ExperimentState.msg"
   "msg/IntertrialInterval.msg"
