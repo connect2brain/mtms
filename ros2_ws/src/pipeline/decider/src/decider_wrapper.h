@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <vector>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -75,6 +76,7 @@ private:
   std::unique_ptr<py::object> decider_instance;
 
   std::unique_ptr<py::scoped_interpreter> guard;
+  std::vector<std::string> initial_sys_modules;
 
   std::unique_ptr<py::array_t<double>> py_timestamps;
   std::unique_ptr<py::array_t<bool>> py_valid;
