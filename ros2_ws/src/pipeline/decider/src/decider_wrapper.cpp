@@ -53,7 +53,6 @@ void DeciderWrapper::initialize_module(
     std::string module_name_str = std::string(py::str(item.first));
 
     if (std::find(initial_sys_modules.begin(), initial_sys_modules.end(), module_name_str) == initial_sys_modules.end()) {
-      RCLCPP_INFO(*logger_ptr, "Removing newly imported module: %s", module_name_str.c_str());
       current_sys_modules.attr("__delitem__")(item.first);
     }
   }
