@@ -175,7 +175,11 @@ export const performExperiment = (
   done_callback: (trialResults: any, success: boolean) => void,
   feedback_callback: (response: any) => void,
 ) => {
-  const goal: any = new (ROSLIB as any).ActionGoal(experiment)
+  console.log('simo')
+  const goal: any = new (ROSLIB as any).ActionGoal({
+    experiment: experiment,
+  })
+  console.log('esko')
 
   performExperimentActionClient.sendGoal(
     goal,

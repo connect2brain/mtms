@@ -46,6 +46,7 @@ class MTMSApi:
 
         self.node = MTMSApiNode(
             channel_count=channel_count,
+            verbose=verbose,
         )
 
         self.channel_count = channel_count
@@ -944,6 +945,10 @@ class MTMSApi:
             mep.latency = None
 
         return mep, errors
+
+    # Experiment
+    def get_experiment_handler(self):
+        return self.node.get_experiment_handler()
 
     # Other
 

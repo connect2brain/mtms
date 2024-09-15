@@ -343,14 +343,15 @@ class ExperimentPerformerNode(Node):
 
     def perform_experiment_action_handler(self, goal_handle):
         request = goal_handle.request
+        experiment = request.experiment
 
-        metadata = request.metadata
-        trials = request.trials
-        intertrial_interval = request.intertrial_interval
-        wait_for_pedal_press = request.wait_for_pedal_press
-        randomize_trials = request.randomize_trials
-        autopause = request.autopause
-        autopause_interval = request.autopause_interval
+        metadata = experiment.metadata
+        trials = experiment.trials
+        intertrial_interval = experiment.intertrial_interval
+        wait_for_pedal_press = experiment.wait_for_pedal_press
+        randomize_trials = experiment.randomize_trials
+        autopause = experiment.autopause
+        autopause_interval = experiment.autopause_interval
 
         # Use short version of goal ID (2 first bytes as hex) for logging.
         #
@@ -364,7 +365,7 @@ class ExperimentPerformerNode(Node):
         #   to be passed directly.
         self.log_experiment_config(
             goal_id=goal_id,
-            experiment=request
+            experiment=experiment
         )
 
         valid_trials = self.get_valid_trials(
@@ -619,22 +620,24 @@ class ExperimentPerformerNode(Node):
                 self.logger.info('{}: Experiment resumed.'.format(goal_id))
                 last_resume_time = self.get_current_time()
 
+                # Re-send feedback after pausing has been finished.
+                #
+                # XXX: Is this needed? If it is, please document why.
+                self.send_feedback(
+                    goal_handle=goal_handle,
+                    experiment_state=experiment_state,
+                    trial=trial,
+                    num_of_attempts=num_of_attempts,
+                    trial_number=trial_number,
+                    total_trials=num_of_valid_trials,
+                )
+
             # Check if the experiment was canceled.
             if experiment_state == ExperimentState.CANCELED:
                 self.logger.info('{}: Experiment canceled.'.format(goal_id))
 
                 success = False
                 break
-
-            # Send feedback again after pausing has been finished.
-            self.send_feedback(
-                goal_handle=goal_handle,
-                experiment_state=experiment_state,
-                trial=trial,
-                num_of_attempts=num_of_attempts,
-                trial_number=trial_number,
-                total_trials=num_of_valid_trials,
-            )
 
             # The starting time of the first trial is handled differently, hence the check.
             is_first_trial = i == 0
