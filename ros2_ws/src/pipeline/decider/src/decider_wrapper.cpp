@@ -53,7 +53,6 @@ void DeciderWrapper::initialize_module(
     std::string module_name_str = std::string(py::str(item.first));
 
     if (std::find(initial_sys_modules.begin(), initial_sys_modules.end(), module_name_str) == initial_sys_modules.end()) {
-      RCLCPP_INFO(*logger_ptr, "Removing newly imported module: %s", module_name_str.c_str());
       current_sys_modules.attr("__delitem__")(item.first);
     }
   }
@@ -106,17 +105,15 @@ void DeciderWrapper::initialize_module(
     RCLCPP_WARN(*logger_ptr, "process_on_trigger class attribute not defined by the decider.");
   }
 
-  RCLCPP_INFO(*logger_ptr, "Decider set to: %s.", module_name.c_str());
+  RCLCPP_INFO(*logger_ptr, "Configuration:");
   RCLCPP_INFO(*logger_ptr, " ");
-  RCLCPP_INFO(*logger_ptr, "Decider configuration");
-  RCLCPP_INFO(*logger_ptr, " ");
-  RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
+  RCLCPP_INFO(*logger_ptr, "  - Sample window: %s[%d, %d]%s", bold_on.c_str(), this->earliest_sample, this->latest_sample, bold_off.c_str());
   if (this->processing_interval_in_samples == 0) {
-    RCLCPP_INFO(*logger_ptr, "  - Processing interval: Disabled");
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %sDisabled%s", bold_on.c_str(), bold_off.c_str());
   } else {
-    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %d (samples)", this->processing_interval_in_samples);
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %s%d%s (samples)", bold_on.c_str(), this->processing_interval_in_samples, bold_off.c_str());
   }
-  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s", this->process_on_trigger ? "True" : "False");
+  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s%s%s", bold_on.c_str(), this->process_on_trigger ? "Enabled" : "Disabled", bold_off.c_str());
   RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
@@ -160,7 +157,6 @@ std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> DeciderWrapp
   std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> targets;
 
   if (state != WrapperState::READY) {
-    RCLCPP_ERROR(*logger_ptr, "Decider not ready.");
     return targets;
   }
 

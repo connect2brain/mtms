@@ -46,16 +46,16 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   /* Log the minimum pulse interval. */
   RCLCPP_INFO(this->get_logger(), "Configuration:");
   RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
-  RCLCPP_INFO(this->get_logger(), " ");
 
   /* Validate the minimum pulse interval. */
   if (this->minimum_intertrial_interval <= 0) {
+    RCLCPP_INFO(this->get_logger(), " ");
     RCLCPP_ERROR(this->get_logger(), "Invalid minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
     exit(1);
   }
   if (this->minimum_intertrial_interval < 0.5) {
+    RCLCPP_INFO(this->get_logger(), " ");
     RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_intertrial_interval);
-    RCLCPP_WARN(this->get_logger(), " ");
   }
 
   /* Publisher for healthcheck. */
@@ -100,10 +100,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     /* TODO: Should the queue be 1 samples long to make it explicit if we are too slow? */
     EEG_QUEUE_LENGTH,
     std::bind(&EegDecider::process_raw_sample, this, _1));
-
-  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
-
-  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_PREPROCESSED_TOPIC.c_str());
 
   /* Subscriber for EEG trigger. */
   this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
@@ -271,9 +267,19 @@ void EegDecider::initialize_module() {
   if (this->working_directory == UNSET_STRING ||
       this->module_name == UNSET_STRING) {
 
-    RCLCPP_INFO(this->get_logger(), "Not initializing decider module, module unset.");
+    RCLCPP_INFO(this->get_logger(), "Not initializing, decider module unset.");
     return;
   }
+
+  RCLCPP_INFO(this->get_logger(), "");
+
+  /* Print underlined, bolded text. */
+  std::string decider_text_str = "Loading decider module: " + this->module_name;
+  std::wstring underline_str(decider_text_str.size(), L'–');
+  RCLCPP_INFO(this->get_logger(), "%s%s%s", bold_on.c_str(), decider_text_str.c_str(), bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), "%s%ls%s", bold_on.c_str(), underline_str.c_str(), bold_off.c_str());
+
+  RCLCPP_INFO(this->get_logger(), "");
 
   this->decider_wrapper->initialize_module(
     this->working_directory,
@@ -283,20 +289,17 @@ void EegDecider::initialize_module() {
     this->sampling_frequency);
 
   if (this->decider_wrapper->get_state() != WrapperState::READY) {
-    RCLCPP_INFO(this->get_logger(), "Failed to initialize decider.");
+    RCLCPP_ERROR(this->get_logger(), "Failed to load.");
     return;
   }
 
   size_t buffer_size = this->decider_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Initialized decider with the following parameters:");
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
-  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %zu", buffer_size);
+  RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %s%d%s Hz", bold_on.c_str(), this->sampling_frequency, bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %s%d%s", bold_on.c_str(), this->num_of_eeg_channels, bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %s%d%s", bold_on.c_str(), this->num_of_emg_channels, bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %s%zu%s", bold_on.c_str(), buffer_size, bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
@@ -310,7 +313,7 @@ void EegDecider::precompute_trials() {
     return;
   }
 
-  RCLCPP_INFO(this->get_logger(), "Pre-computing %zu trials.", num_of_trials);
+  RCLCPP_INFO(this->get_logger(), "Pre-computing %s%zu%s trials.", bold_on.c_str(), num_of_trials, bold_off.c_str());
 
   for (auto targets : trials) {
     auto trial = experiment_interfaces::msg::Trial();
@@ -399,13 +402,13 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
   bool success = result.code == rclcpp_action::ResultCode::SUCCEEDED && result.result->success;
 
   if (!success) {
-    RCLCPP_ERROR(this->get_logger(), "Trial failed");
+    RCLCPP_ERROR(this->get_logger(), "Trial %sfailed%s", bold_on.c_str(), bold_off.c_str());
 
     /* If the trial failed, return early without computing the latency. */
     return;
   }
   RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Trial succeeded");
+  RCLCPP_INFO(this->get_logger(), "Trial %ssucceeded%s", bold_on.c_str(), bold_off.c_str());
 
   /* If the trial was a dry run, return early without computing the latency. */
   auto trial_config = metadata.trial.config;
@@ -420,7 +423,7 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
   /* Calculate the time difference between the earliest possible start time for the trial and the time based on which
      the decision was made. */
   double_t time_difference = earliest_start_time - decision_time;
-  RCLCPP_INFO(this->get_logger(), "  - End-to-end latency of the trial: %.1f (ms)", time_difference * 1000);
+  RCLCPP_INFO(this->get_logger(), "  - End-to-end latency of the trial: %s%.1f%s (ms)", bold_on.c_str(), time_difference * 1000, bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), " ");
 
   /* Publish latency ROS message. */
@@ -472,7 +475,11 @@ void EegDecider::empty_trial_queue() {
 void EegDecider::handle_preprocessor_enabled(const std::shared_ptr<std_msgs::msg::Bool> msg) {
   this->preprocessor_enabled = msg->data;
 
-  RCLCPP_INFO(this->get_logger(), "Preprocessor %s.", this->preprocessor_enabled ? "enabled" : "disabled");
+  if (this->preprocessor_enabled) {
+    RCLCPP_INFO(this->get_logger(), "Reading %spreprocessed%s EEG data.", bold_on.c_str(), bold_off.c_str());
+  } else {
+    RCLCPP_INFO(this->get_logger(), "Reading %sraw%s EEG data.", bold_on.c_str(), bold_off.c_str());
+  }
 }
 
 /* Listing and setting EEG deciders. */
@@ -501,8 +508,6 @@ bool EegDecider::set_decider_enabled(bool enabled) {
 
   /* Reset decider state. */
   reset_decider_state();
-
-  RCLCPP_INFO(this->get_logger(), "Decider %s.", this->enabled ? "enabled" : "disabled");
 
   return true;
 }
@@ -535,7 +540,7 @@ void EegDecider::unset_decider_module() {
 bool EegDecider::set_decider_module(const std::string module) {
   this->module_name = module;
 
-  RCLCPP_INFO(this->get_logger(), "Decider set to: %s.", this->module_name.c_str());
+  RCLCPP_INFO(this->get_logger(), "Decider set to: %s%s%s.", bold_on.c_str(), this->module_name.c_str(), bold_off.c_str());
 
   /* Update ROS state variable. */
   auto msg = std_msgs::msg::String();
@@ -558,7 +563,8 @@ void EegDecider::handle_set_decider_module(
 
 void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
-  RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
+  RCLCPP_INFO(this->get_logger(), "");
+  RCLCPP_INFO(this->get_logger(), "Project set to: %s%s%s.", bold_on.c_str(), this->active_project.c_str(), bold_off.c_str());
 
   this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/decider");
   update_decider_list();
@@ -571,7 +577,7 @@ void EegDecider::handle_set_active_project(const std::shared_ptr<std_msgs::msg::
       this->set_decider_module(this->modules[0]);
     }
   } else {
-    RCLCPP_WARN(this->get_logger(), "No deciders found in project: %s.", this->active_project.c_str());
+    RCLCPP_WARN(this->get_logger(), "No deciders found in project: %s%s%s.", bold_on.c_str(), this->active_project.c_str(), bold_off.c_str());
     this->unset_decider_module();
   }
 
@@ -644,7 +650,7 @@ void EegDecider::inotify_timer_callback() {
       if ((event->mask & IN_MODIFY) &&
           (event_name == this->module_name + ".py")) {
 
-        RCLCPP_INFO(this->get_logger(), "The current module '%s' was modified, re-initializing.", this->module_name.c_str());
+        RCLCPP_INFO(this->get_logger(), "Module '%s' was modified, re-loading.", this->module_name.c_str());
         this->reinitialize = true;
       }
       if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
@@ -810,10 +816,9 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   if (this->decider_wrapper->get_state() == WrapperState::ERROR) {
     this->decider_state = DeciderState::MODULE_ERROR;
 
-    RCLCPP_INFO_THROTTLE(this->get_logger(),
-                         *this->get_clock(),
-                         1000,
-                         "An error occurred in decider module.");
+    if (this->decider_state != DeciderState::MODULE_ERROR) {
+      RCLCPP_INFO(this->get_logger(), "An error occurred in decider module.");
+    }
     return;
   }
 
@@ -830,7 +835,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   /* If process on trigger is enabled, proceed if the sample includes a trigger. */
   if (this->decider_wrapper->is_process_on_trigger_enabled() && msg->trigger) {
     process_current_sample = true;
-  } 
+  }
 
   /* If processing interval is enabled, proceed every N samples, where N is defined on the Python side. */
   if (this->decider_wrapper->is_processing_interval_enabled()) {
@@ -990,7 +995,6 @@ int main(int argc, char *argv[]) {
   auto node = std::make_shared<EegDecider>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("decider"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
