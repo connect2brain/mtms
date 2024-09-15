@@ -1,14 +1,15 @@
 import torch
 
+bold_on = "\033[1m"
+bold_off = "\033[0m"
+
 def test_cuda():
     if torch.cuda.is_available():
-        print("CUDA is available!")
-        print(f"Device count: {torch.cuda.device_count()}")
-        print(f"Current device: {torch.cuda.current_device()}")
-        print(f"Device name: {torch.cuda.get_device_name(torch.cuda.current_device())}")
+        print(f"CUDA is {bold_on}available{bold_off}.")
+        print(f"GPU: {bold_on}{torch.cuda.get_device_name(torch.cuda.current_device())}{bold_off}")
         return True
     else:
-        print("CUDA is not available.")
+        print("CUDA is {bold_on}not available{bold_off}.")
         return False
 
 if __name__ == "__main__":
