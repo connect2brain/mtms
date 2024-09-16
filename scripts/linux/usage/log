@@ -72,7 +72,7 @@ FORMAT_CMD="sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.
 
 # Use docker-compose logs if a container name is provided, otherwise use journalctl. This is because it is
 # difficult to filter the last n lines of logs outputted by a given container using journalctl.
-if [ -n "$CONTAINER_NAME" ]; then
+if [ -n "$CONTAINER_NAME" ] && [ "$TIME_FILTERS" = false ]; then
     LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
     [ "$FOLLOW" = true ] && LOG_CMD="$LOG_CMD -f"
     LOG_CMD="$LOG_CMD $CONTAINER_NAME"
@@ -86,11 +86,17 @@ if [ -n "$CONTAINER_NAME" ]; then
 
     eval $LOG_CMD
 else
-    # If no container name is provided, use journalctl
-    CMD="journalctl -u mtms-core-containers --lines $TAIL_LINES"
+    CMD="journalctl -u mtms-core-containers"
+    if [ "$TIME_FILTERS" = false ]; then
+        CMD="$CMD --lines $TAIL_LINES"
+    fi
     [ ! -z "$FROM" ] && CMD="$CMD --since \"$FROM\""
     [ ! -z "$TO" ] && CMD="$CMD --until \"$TO\""
     [ "$FOLLOW" = true ] && CMD="$CMD -f"
+
+    if [ -n "$CONTAINER_NAME" ]; then
+        CMD="$CMD | grep $CONTAINER_NAME"
+    fi
     [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
 
     eval $CMD
