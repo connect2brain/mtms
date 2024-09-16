@@ -170,11 +170,6 @@ class Decider:
         # condition is met.
         self.process_on_trigger = True
 
-        # Intertrial interval is defined in terms of calls to process method. For example, if processing interval
-        # in samples is 100 and sampling rate is 1000 Hz, setting intertrial interval to 20 means that a trial is
-        # performed every 2 seconds.
-        self.intertrial_interval = 20
-
         # The pipeline automatically manages a buffer of the previous EEG and EMG samples. When initialized,
         # the decider can provide pipeline with information about the desired length of the sample window,
         # done by setting the 'sample_window' attribute (see below).
