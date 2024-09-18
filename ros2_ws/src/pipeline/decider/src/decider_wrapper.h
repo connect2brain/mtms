@@ -39,6 +39,7 @@ public:
   ~DeciderWrapper();
 
   void remove_modules(const std::string& base_directory);
+  void update_internal_imports(const std::string& base_directory);
 
   void initialize_module(
       const std::string& project_directory,
@@ -60,6 +61,7 @@ public:
     bool trigger);
 
   WrapperState get_state() const;
+  std::vector<std::string> get_internal_imports() const;
 
   std::size_t get_buffer_size() const;
   uint16_t get_processing_interval_in_samples() const;
@@ -95,6 +97,8 @@ private:
   uint16_t sampling_frequency;
   uint16_t processing_interval_in_samples = 0;
   bool process_on_trigger = false;
+
+  std::vector<std::string> internal_imports;
 
   std::size_t buffer_size = 0;
   std::size_t eeg_data_size;
