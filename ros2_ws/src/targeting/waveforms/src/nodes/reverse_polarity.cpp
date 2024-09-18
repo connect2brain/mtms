@@ -13,6 +13,9 @@ const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
   {event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
   {event_interfaces::msg::WaveformPhase::RISING, event_interfaces::msg::WaveformPhase::FALLING},
   {event_interfaces::msg::WaveformPhase::FALLING, event_interfaces::msg::WaveformPhase::RISING},
+
+  /* HOLD is mapped to ALTERNATIVE_HOLD and vice versa so that the IGBT bridges for both are used roughly
+     equally, making them wear out at the same rate. */
   {event_interfaces::msg::WaveformPhase::HOLD, event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
   {event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, event_interfaces::msg::WaveformPhase::HOLD}
 };
