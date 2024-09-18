@@ -2,6 +2,7 @@
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <rcpputils/filesystem_helper.hpp>
 
 #include "decider_wrapper.h"
 #include <eeg_interfaces/msg/sample.hpp>
@@ -11,20 +12,139 @@ namespace py = pybind11;
 DeciderWrapper::DeciderWrapper(rclcpp::Logger& logger) {
   logger_ptr = &logger;
   state = WrapperState::UNINITIALIZED;
-  guard = std::make_unique<py::scoped_interpreter>();
 
-  /* Capture the initial state of sys.modules when the interpreter starts. */
+  /* Initialize the Python interpreter. */
+  interpreter = std::make_unique<py::scoped_interpreter>();
+  setup_custom_print();
+}
+
+void DeciderWrapper::setup_custom_print() {
+    py::exec(R"(
+import builtins
+import cpp_bindings
+
+def custom_print(*args, sep=' ', end='\n', file=None, flush=False):
+    output = sep.join(map(str, args))
+    cpp_bindings.log(output)
+    if file is not None:
+        file.write(output + end)
+        if flush:
+            file.flush()
+
+def print_throttle(*args, period=1.0, sep=' ', end='\n', file=None, flush=False):
+    assert period > 0.0, 'The period must be greater than zero.'
+    output = sep.join(map(str, args))
+    cpp_bindings.log_throttle(output, period)
+    if file is not None:
+        file.write(output + end)
+        if flush:
+            file.flush()
+
+builtins.print = custom_print
+builtins.print_throttle = print_throttle
+    )", py::globals());
+}
+
+void DeciderWrapper::remove_modules(const std::string& base_directory) {
   py::module sys_module = py::module::import("sys");
   py::dict sys_modules = sys_module.attr("modules");
+  py::module os_module = py::module::import("os");
+  py::object path_obj = os_module.attr("path");
 
+  std::vector<std::string> modules_to_remove;
+
+  /* Ensure directory is an absolute path. */
+  std::string abs_directory = py::str(path_obj.attr("abspath")(base_directory));
+
+  /* Find modules that are in the specified directory or its subdirectories. */
   for (auto item : sys_modules) {
-    std::string module_name_str = std::string(py::str(item.first));
-    initial_sys_modules.push_back(module_name_str);
+    std::string module_name_str = py::str(item.first).cast<std::string>();
+    py::handle module_handle = item.second;
+
+    try {
+      if (py::hasattr(module_handle, "__file__")) {
+        py::str module_file = module_handle.attr("__file__");
+        std::string abs_module_file = py::str(path_obj.attr("abspath")(module_file));
+
+        if (abs_module_file.find(abs_directory) == 0) {
+          modules_to_remove.push_back(module_name_str);
+          RCLCPP_DEBUG(*logger_ptr, "Marking module for removal: %s", module_name_str.c_str());
+        }
+      }
+    } catch (const py::error_already_set& e) {
+      RCLCPP_WARN(*logger_ptr, "Error processing module %s: %s", module_name_str.c_str(), e.what());
+    }
+  }
+
+  /* Remove the modules. */
+  for (const auto& module_name_str : modules_to_remove) {
+    try {
+      if (sys_modules.contains(module_name_str.c_str())) {
+        sys_modules.attr("__delitem__")(module_name_str.c_str());
+      } else {
+        RCLCPP_WARN(*logger_ptr, "Module %s no longer in sys.modules, skipping removal", module_name_str.c_str());
+      }
+    } catch (const py::error_already_set& e) {
+      RCLCPP_ERROR(*logger_ptr, "Failed to remove module %s: %s", module_name_str.c_str(), e.what());
+    }
+  }
+}
+
+void DeciderWrapper::update_internal_imports(const std::string& base_directory) {
+  internal_imports.clear();
+
+  /* TODO: Modify this to use rcpputils instead of these ad-hoc lambda functions. */
+  auto has_prefix = [](const std::string& str, const std::string& prefix) -> bool {
+    return str.size() >= prefix.size() && str.compare(0, prefix.size(), prefix) == 0;
+  };
+
+  auto has_suffix = [](const std::string& str, const std::string& suffix) -> bool {
+    return str.size() >= suffix.size() && str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+  };
+
+  auto normalize_path = [](const std::string& path) -> std::string {
+    std::string normalized = path;
+    std::replace(normalized.begin(), normalized.end(), '\\', '/');
+    return normalized;
+  };
+
+  auto get_filename = [](const std::string& path) -> std::string {
+    size_t pos = path.find_last_of("/\\");
+    return (pos == std::string::npos) ? path : path.substr(pos + 1);
+  };
+
+  py::module sys = py::module::import("sys");
+  py::dict modules = sys.attr("modules");
+
+  std::string normalized_base_dir = normalize_path(base_directory);
+
+  for (const auto& item : modules) {
+    py::handle key = item.first;
+    py::handle value = item.second;
+
+    if (py::hasattr(value, "__file__")) {
+      std::string file_path = py::str(value.attr("__file__"));
+      std::string normalized_file_path = normalize_path(file_path);
+
+      /* Basic check if the file is within the base directory. */
+      if (has_prefix(normalized_file_path, normalized_base_dir) &&
+          has_suffix(normalized_file_path, ".py")) {
+
+        /* Store only the filename for tracking. */
+        std::string filename = get_filename(file_path);
+        internal_imports.push_back(filename);
+      }
+    }
+  }
+
+  for (const auto& file : internal_imports) {
+    RCLCPP_DEBUG(*logger_ptr, "Tracking file: %s", file.c_str());
   }
 }
 
 void DeciderWrapper::initialize_module(
-    const std::string& directory,
+    const std::string& project_directory,
+    const std::string& module_directory,
     const std::string& module_name,
     const size_t eeg_data_size,
     const size_t emg_data_size,
@@ -32,89 +152,105 @@ void DeciderWrapper::initialize_module(
 
   this->sampling_frequency = sampling_frequency;
 
-  /* If we have an existing decider instance, release it which will call the destructor */
+  /* Reset module-specific objects. */
   decider_instance = nullptr;
   decider_module = nullptr;
 
-  /* Set the sys.path to include the directory of the module. */
+  /* Set up the Python environment. */
   py::module sys_module = py::module::import("sys");
   py::list sys_path = sys_module.attr("path");
-  sys_path.append(directory);
+  sys_path.append(module_directory);
 
-  /* Capture the current state of sys.modules after importing the module. */
-  py::dict current_sys_modules = sys_module.attr("modules");
+  /* Remove already loaded modules to ensure their reloading. Only remove modules under the
+     specified base directory to ensure that third-party imports such as NumPy are not reloaded -
+     attempting to reload them may result in errors.
 
-  /* Loop through current_sys_modules and remove any module that wasn't in initial_sys_modules.
+     Furthermore, use project directory as the base directory to ensure that previously loaded
+     modules are removed even when the project is changed.
 
-     This ensures that all the modules that were imported during the initialization of the decider are removed
-     when the decider is reset. Otherwise Python interpreter keeps a reference to the old module in sys.modules,
-     which prevents re-importing. */
-  for (auto item : current_sys_modules) {
-    std::string module_name_str = std::string(py::str(item.first));
+     TODO: Add tests. */
+  remove_modules(project_directory);
 
-    if (std::find(initial_sys_modules.begin(), initial_sys_modules.end(), module_name_str) == initial_sys_modules.end()) {
-      current_sys_modules.attr("__delitem__")(item.first);
-    }
-  }
-
-  /* Import the module and initialize the Decider instance. */
+  /* Import the module. */
   try {
     auto imported_module = py::module::import(module_name.c_str());
-
     decider_module = std::make_unique<py::module>(imported_module);
-    auto instance = decider_module->attr("Decider")(eeg_data_size, emg_data_size, sampling_frequency);
-    decider_instance = std::make_unique<py::object>(instance);
+
   } catch (const py::error_already_set &e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
     state = WrapperState::ERROR;
     return;
+
   } catch (const std::exception &e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     state = WrapperState::ERROR;
     return;
   }
 
-  /* Extract the sample_window from decider_instance. */
-  if (py::hasattr(*decider_instance, "sample_window")) {
-    py::list sample_window = decider_instance->attr("sample_window").cast<py::list>();
-    if (sample_window.size() == 2) {
-      this->earliest_sample = sample_window[0].cast<int>();
-      this->latest_sample = sample_window[1].cast<int>();
+  /* Update the list of internal imports to watch for changes. */
+  update_internal_imports(module_directory);
 
-      this->buffer_size = this->latest_sample - this->earliest_sample + 1;
+  /* Initialize Decider instance. */
+  try {
+    auto instance = decider_module->attr("Decider")(eeg_data_size, emg_data_size, sampling_frequency);
+    decider_instance = std::make_unique<py::object>(instance);
+
+  } catch (const py::error_already_set &e) {
+    RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    state = WrapperState::ERROR;
+    return;
+
+  } catch (const std::exception &e) {
+    RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    state = WrapperState::ERROR;
+    return;
+  }
+
+  /* Extract the configuration from decider_instance. */
+  if (py::hasattr(*decider_instance, "get_configuration")) {
+    py::dict config = decider_instance->attr("get_configuration")().cast<py::dict>();
+
+    /* Extract sample_window. */
+    if (config.contains("sample_window")) {
+      py::list sample_window = config["sample_window"].cast<py::list>();
+      if (sample_window.size() == 2) {
+        this->earliest_sample = sample_window[0].cast<int>();
+        this->latest_sample = sample_window[1].cast<int>();
+        this->buffer_size = this->latest_sample - this->earliest_sample + 1;
+      } else {
+        RCLCPP_ERROR(*logger_ptr, "sample_window in configuration is of incorrect length (should be two elements).");
+        state = WrapperState::ERROR;
+        return;
+      }
+
     } else {
-      RCLCPP_WARN(*logger_ptr, "sample_window class attribute is of incorrect length (should be two elements).");
+      RCLCPP_ERROR(*logger_ptr, "sample_window not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
+    }
+
+    /* Extract processing_interval_in_samples. */
+    if (config.contains("processing_interval_in_samples")) {
+      this->processing_interval_in_samples = config["processing_interval_in_samples"].cast<uint16_t>();
+    } else {
+      RCLCPP_ERROR(*logger_ptr, "processing_interval_in_samples not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
+    }
+
+    /* Extract process_on_trigger. */
+    if (config.contains("process_on_trigger")) {
+      this->process_on_trigger = config["process_on_trigger"].cast<bool>();
+    } else {
+      RCLCPP_ERROR(*logger_ptr, "process_on_trigger not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
     }
   } else {
-    RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the decider.");
+    RCLCPP_ERROR(*logger_ptr, "get_configuration method not found in the Decider instance.");
+    state = WrapperState::ERROR;
+    return;
   }
-
-  /* Extract the processing_interval_in_samples variable from decider_instance. */
-  if (py::hasattr(*decider_instance, "processing_interval_in_samples")) {
-    py::int_ processing_interval_in_samples_ = decider_instance->attr("processing_interval_in_samples").cast<py::int_>();
-    this->processing_interval_in_samples = processing_interval_in_samples_.cast<uint16_t>();
-  } else {
-    RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples class attribute not defined by the decider.");
-  }
-
-  /* Extract the process_on_trigger variable from decider_instance. */
-  if (py::hasattr(*decider_instance, "process_on_trigger")) {
-    py::bool_ process_on_trigger_ = decider_instance->attr("process_on_trigger").cast<py::bool_>();
-    this->process_on_trigger = process_on_trigger_.cast<bool>();
-  } else {
-    RCLCPP_WARN(*logger_ptr, "process_on_trigger class attribute not defined by the decider.");
-  }
-
-  RCLCPP_INFO(*logger_ptr, "Configuration:");
-  RCLCPP_INFO(*logger_ptr, " ");
-  RCLCPP_INFO(*logger_ptr, "  - Sample window: %s[%d, %d]%s", bold_on.c_str(), this->earliest_sample, this->latest_sample, bold_off.c_str());
-  if (this->processing_interval_in_samples == 0) {
-    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %sDisabled%s", bold_on.c_str(), bold_off.c_str());
-  } else {
-    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %s%d%s (samples)", bold_on.c_str(), this->processing_interval_in_samples, bold_off.c_str());
-  }
-  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s%s%s", bold_on.c_str(), this->process_on_trigger ? "Enabled" : "Disabled", bold_off.c_str());
-  RCLCPP_INFO(*logger_ptr, " ");
 
   /* Initialize numpy arrays. */
   py_timestamps = std::make_unique<py::array_t<double>>(buffer_size);
@@ -131,6 +267,18 @@ void DeciderWrapper::initialize_module(
   this->emg_data_size = emg_data_size;
 
   state = WrapperState::READY;
+
+  /* Log the configuration. */
+  RCLCPP_INFO(*logger_ptr, "Configuration:");
+  RCLCPP_INFO(*logger_ptr, " ");
+  RCLCPP_INFO(*logger_ptr, "  - Sample window: %s[%d, %d]%s", bold_on.c_str(), this->earliest_sample, this->latest_sample, bold_off.c_str());
+  if (this->processing_interval_in_samples == 0) {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %sDisabled%s", bold_on.c_str(), bold_off.c_str());
+  } else {
+    RCLCPP_INFO(*logger_ptr, "  - Processing interval: %s%d%s (samples)", bold_on.c_str(), this->processing_interval_in_samples, bold_off.c_str());
+  }
+  RCLCPP_INFO(*logger_ptr, "  - Process on trigger: %s%s%s", bold_on.c_str(), this->process_on_trigger ? "Enabled" : "Disabled", bold_off.c_str());
+  RCLCPP_INFO(*logger_ptr, " ");
 }
 
 void DeciderWrapper::reset_module_state() {
@@ -202,6 +350,10 @@ std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> DeciderWrapp
     return targets;
   }
   return targets;
+}
+
+std::vector<std::string> DeciderWrapper::get_internal_imports() const {
+  return this->internal_imports;
 }
 
 WrapperState DeciderWrapper::get_state() const {

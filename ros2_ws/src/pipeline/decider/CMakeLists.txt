@@ -12,6 +12,7 @@ find_package(ament_cmake REQUIRED)
 find_package(pybind11_vendor REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rcpputils REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
@@ -39,6 +40,7 @@ ament_target_dependencies(
   decider
   rclcpp
   rclcpp_action
+  rcpputils
   std_msgs
   eeg_interfaces
   event_interfaces
@@ -79,6 +81,7 @@ ament_target_dependencies(
   pybind11_vendor
   rclcpp
   rclcpp_action
+  rcpputils
   std_msgs
   eeg_interfaces
   event_interfaces
