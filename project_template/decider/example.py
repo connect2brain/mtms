@@ -31,24 +31,6 @@ import time
 
 import numpy as np
 
-# 'print' and 'print_throttle' are custom functions that log messages to the decider log.
-# 'print_throttle' function logs messages to the console at most once every 'period' seconds.
-#
-# The decider log can be accessed from the command line by running: `log decider`. See `log --help`
-# for more information on how to use the `log` command.
-#
-# Usage of 'print' and 'print_throttle' functions:
-#
-#  print("Hello, world!")
-#  print_throttle("This message will be printed at most once every second.")
-#  print_throttle("This message will be printed at most once every 0.5 seconds.", period=0.5)
-#
-# Note that the 'print' function overrides Python's built-in 'print' function, so you can use it
-# in the same way as the built-in 'print' function.
-#
-from common.utils import print, print_throttle
-
-
 # Define a few target types.
 #
 # Each target is a list of dictionaries, each dictionary with the following keys:
@@ -270,7 +252,7 @@ class Decider:
                The decider should not perform a trial if the pipeline is not ready. However, it can do other processing, such
                as logging, filtering, computing metrics, or training models. If the decider still decides to perform a trial,
                the pipeline will print a warning and ignore the trial.
-               
+
           - trigger:
                A boolean indicating whether a trigger was given on that sample."""
 

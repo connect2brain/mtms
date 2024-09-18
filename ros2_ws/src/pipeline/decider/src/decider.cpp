@@ -282,6 +282,7 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), "");
 
   this->decider_wrapper->initialize_module(
+    PROJECTS_DIRECTORY,
     this->working_directory,
     this->module_name,
     this->num_of_eeg_channels,

@@ -38,8 +38,11 @@ public:
   DeciderWrapper(rclcpp::Logger& logger);
   ~DeciderWrapper();
 
+  void remove_modules(const std::string& base_directory);
+
   void initialize_module(
-      const std::string& directory,
+      const std::string& project_directory,
+      const std::string& module_directory,
       const std::string& module_name,
       const size_t eeg_data_size,
       const size_t emg_data_size,
@@ -63,10 +66,10 @@ public:
   bool is_processing_interval_enabled() const;
   bool is_process_on_trigger_enabled() const;
 
-  /* Exposed to Python, defined in cpp_bindings.cpp. */
-  static void log(const std::string& message);
+  void setup_custom_print();
 
-  /* Exposed to Python, defined in cpp_bindings.cpp. */
+  /* log and log_throttle are exposed to Python, defined in cpp_bindings.cpp. */
+  static void log(const std::string& message);
   static void log_throttle(const std::string& message, const double_t period);
 
 private:
@@ -78,13 +81,14 @@ private:
   std::unique_ptr<py::module> decider_module;
   std::unique_ptr<py::object> decider_instance;
 
-  std::unique_ptr<py::scoped_interpreter> guard;
-  std::vector<std::string> initial_sys_modules;
+  std::unique_ptr<py::scoped_interpreter> interpreter;
 
   std::unique_ptr<py::array_t<double>> py_timestamps;
   std::unique_ptr<py::array_t<bool>> py_valid;
   std::unique_ptr<py::array_t<double>> py_eeg_data;
   std::unique_ptr<py::array_t<double>> py_emg_data;
+
+  std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_log_time;
 
   int earliest_sample;
   int latest_sample;
