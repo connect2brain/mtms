@@ -31,24 +31,6 @@ import time
 
 import numpy as np
 
-# 'print' and 'print_throttle' are custom functions that log messages to the decider log.
-# 'print_throttle' function logs messages to the console at most once every 'period' seconds.
-#
-# The decider log can be accessed from the command line by running: `log decider`. See `log --help`
-# for more information on how to use the `log` command.
-#
-# Usage of 'print' and 'print_throttle' functions:
-#
-#  print("Hello, world!")
-#  print_throttle("This message will be printed at most once every second.")
-#  print_throttle("This message will be printed at most once every 0.5 seconds.", period=0.5)
-#
-# Note that the 'print' function overrides Python's built-in 'print' function, so you can use it
-# in the same way as the built-in 'print' function.
-#
-from common.utils import print, print_throttle
-
-
 # Define a few target types.
 #
 # Each target is a list of dictionaries, each dictionary with the following keys:
@@ -152,53 +134,6 @@ class Decider:
         # Initialize state variable to keep track of the number of EEG/EMG buffers processed so far.
         self.buffer_count = 0
 
-        # The pipeline uses the value of 'processing_interval_in_samples' to determine how frequently process method is
-        # called. For example, call the process method every 100 samples.
-        #
-        # There are two special cases:
-        #
-        # 1) When 'processing_interval_in_samples' is set to 1, the process method is called for every
-        #    new EEG/EMG sample. This is useful when the decider needs to continuously monitor the EEG/EMG
-        #    stream.
-        #
-        # 2) When 'processing_interval_in_samples' is set to 0, the process method is not called periodically at all.
-        #    However, it may still be called if other conditions are met (currently, if process_on_trigger is set to True).
-        self.processing_interval_in_samples = 100
-
-        # If the decider needs to process the EEG/EMG samples each time a trigger is received, set this to True. The
-        # condition is combined with 'processing_interval_in_samples' so that the process method is called if either
-        # condition is met.
-        self.process_on_trigger = True
-
-        # Intertrial interval is defined in terms of calls to process method. For example, if processing interval
-        # in samples is 100 and sampling rate is 1000 Hz, setting intertrial interval to 20 means that a trial is
-        # performed every 2 seconds.
-        self.intertrial_interval = 20
-
-        # The pipeline automatically manages a buffer of the previous EEG and EMG samples. When initialized,
-        # the decider can provide pipeline with information about the desired length of the sample window,
-        # done by setting the 'sample_window' attribute (see below).
-        #
-        # The sample window is defined as a list with two elements: the first element is the earliest sample
-        # kept in the buffer, and the second element is the latest sample kept in the buffer, relative to 0,
-        # which is the current sample.
-        #
-        # Examples:
-        #
-        #   - If the sample window is [-5, 0], the buffer will keep the latest 5 samples and the current
-        #     sample, for a total of 6 samples. The buffer will discard older samples.
-        #
-        #   - Using a sampling frequency of 1000 Hz, defining the sample window as [-999, 0] will keep the
-        #     last second of samples in the buffer.
-        #
-        #   - If the sample window is [0, 0], the buffer will keep only the current sample.
-        #
-        #   - If the sample window is [-5, -5], the buffer will keep the 5 past samples but will also 'look'
-        #     5 samples into the future. In practice, this means that the incoming EEG/EMG samples will be
-        #     delayed by 5 samples. This can be useful, e.g., for various kinds of filtering.
-        #
-        self.sample_window = [-5, 0]
-
         # To work in real-time, the pipeline will precompute the capacitor voltages and pulse parameters for the targets used
         # in the experiment. For that purpose, the decider needs to provide the pipeline with a list of targets via the
         # 'targets' attribute below.
@@ -215,6 +150,11 @@ class Decider:
         # paired-pulse targets.
         self.target_type = 0
 
+        # Perform a trial once every two seconds. (Note that the processing interval, defined in get_configuration method,
+        # is 100 samples, so with a sampling frequency of 1000 Hz, the interval is 0.1 seconds, implying that performing the
+        # trial every 20 process calls is equivalent to performing it every two seconds.)
+        self.intertrial_interval_in_process_calls = 20
+
         # As an example, write the decision times (= time of the EEG sample based on which the trial was decided to be performed)
         # into a file. Other information about the analysis can be written into a file, as well, for later analysis.
         self.file = open("decision_times.txt", "a")
@@ -229,8 +169,56 @@ class Decider:
         # A variable to store the ongoing training process. This is used to check if the training process is finished.
         self.training_process = None
 
+    def get_configuration(self):
+        """The 'get_configuration' method is called by the pipeline when the decider is initialized. The method should return
+        a dictionary with the following keys:
+
+        - 'processing_interval_in_samples': An integer indicating how frequently the process method is called. The pipeline
+          uses this value to determine how often the process method is called. For example, if the value is 100, the process
+          method is called every 100 samples.
+
+          There are two special cases:
+
+          1) When 'processing_interval_in_samples' is set to 1, the process method is called for every
+             new EEG/EMG sample. This is useful when the decider needs to continuously monitor the EEG/EMG
+             stream.
+
+          2) When 'processing_interval_in_samples' is set to 0, the process method is not called periodically at all.
+             However, it may still be called if other conditions are met (currently, if process_on_trigger is set to True).
+
+        - 'process_on_trigger': A boolean indicating whether the process method is called each time a trigger is received.
+           If set to True, the process method is called each time a trigger is received, in addition to the periodic calls
+           defined by 'processing_interval_in_samples'.
+
+        - 'sample_window': A list with two elements indicating the earliest and latest samples kept in the buffer relative
+          to the current sample. The buffer is managed by the pipeline and is used to store the previous EEG and EMG samples.
+
+          The sample window is defined in samples, not in seconds. The earliest sample is always negative. The current sample
+          is always 0.
+
+          Examples:
+
+           - If the sample window is [-5, 0], the buffer will keep the latest 5 samples and the current
+             sample, for a total of 6 samples. The buffer will discard older samples.
+
+           - Using a sampling frequency of 1000 Hz, defining the sample window as [-999, 0] will keep the
+             last second of samples in the buffer.
+
+           - If the sample window is [0, 0], the buffer will keep only the current sample.
+
+           - If the sample window is [-5, -5], the buffer will keep the 5 past samples but will also 'look'
+             5 samples into the future. In practice, this means that the incoming EEG/EMG samples will be
+             delayed by 5 samples. This can be useful, e.g., for various kinds of filtering.
+        """
+        return {
+            'processing_interval_in_samples': 100,
+            'process_on_trigger': True,
+            'sample_window': [-5, 0],
+        }
+
     def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial, trigger):
-        """The 'process' method is called by the pipeline for each new EEG/EMG sample. The method receives the following arguments:
+        """The 'process' method is called by the pipeline for new EEG/EMG samples with a specified interval (see get_configuration method).
+        This method receives the following arguments:
 
            - current_time:
                The time of the current sample in seconds.
@@ -275,7 +263,7 @@ class Decider:
                The decider should not perform a trial if the pipeline is not ready. However, it can do other processing, such
                as logging, filtering, computing metrics, or training models. If the decider still decides to perform a trial,
                the pipeline will print a warning and ignore the trial.
-               
+
           - trigger:
                A boolean indicating whether a trigger was given on that sample."""
 
@@ -334,8 +322,8 @@ class Decider:
             except multiprocessing.TimeoutError as e:
                 pass
 
-        # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval.
-        if self.buffer_count % self.intertrial_interval != 0:
+        # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval_in_process_calls.
+        if self.buffer_count % self.intertrial_interval_in_process_calls != 0:
             return
 
         # Write the decision time into a file.
