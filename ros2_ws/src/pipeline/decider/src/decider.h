@@ -218,7 +218,7 @@ private:
   /* Inotify variables */
   rclcpp::TimerBase::SharedPtr inotify_timer;
   int inotify_descriptor;
-  int watch_descriptor;
+  std::vector<int> watch_descriptors;
   char inotify_buffer[1024];
 
   /* When determining if samples have been dropped by comparing the timestamps of two consecutive
