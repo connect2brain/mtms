@@ -675,7 +675,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
     if (msg.trigger) {
       read_next_trigger_time();
 
-      RCLCPP_INFO(this->get_logger(), "Publishing trigger with timestamp %.4f s.", sample_time);
+      RCLCPP_INFO(this->get_logger(), "Published trigger with timestamp %.4f s.", sample_time);
     }
   }
 
@@ -686,10 +686,8 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   RCLCPP_INFO_THROTTLE(this->get_logger(),
                        *this->get_clock(),
-                       1000,
-                       "Published EEG datapoint in topic %s with timestamp %.4f s.",
-                       EEG_RAW_TOPIC.c_str(),
-                       time);
+                       2000,
+                       "Still streaming at %.1f s.", time);
 
   return {false, looped, sample_time};
 }
