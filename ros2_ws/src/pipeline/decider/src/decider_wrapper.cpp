@@ -171,17 +171,16 @@ void DeciderWrapper::initialize_module(
      TODO: Add tests. */
   remove_modules(project_directory);
 
-  /* Import the module and initialize the Decider instance. */
+  /* Import the module. */
   try {
     auto imported_module = py::module::import(module_name.c_str());
-
     decider_module = std::make_unique<py::module>(imported_module);
-    auto instance = decider_module->attr("Decider")(eeg_data_size, emg_data_size, sampling_frequency);
-    decider_instance = std::make_unique<py::object>(instance);
+
   } catch (const py::error_already_set &e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
     state = WrapperState::ERROR;
     return;
+
   } catch (const std::exception &e) {
     RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
     state = WrapperState::ERROR;
@@ -190,6 +189,22 @@ void DeciderWrapper::initialize_module(
 
   /* Update the list of internal imports to watch for changes. */
   update_internal_imports(module_directory);
+
+  /* Initialize Decider instance. */
+  try {
+    auto instance = decider_module->attr("Decider")(eeg_data_size, emg_data_size, sampling_frequency);
+    decider_instance = std::make_unique<py::object>(instance);
+
+  } catch (const py::error_already_set &e) {
+    RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
+    state = WrapperState::ERROR;
+    return;
+
+  } catch (const std::exception &e) {
+    RCLCPP_ERROR(*logger_ptr, "C++ error: %s", e.what());
+    state = WrapperState::ERROR;
+    return;
+  }
 
   /* Extract the configuration from decider_instance. */
   if (py::hasattr(*decider_instance, "get_configuration")) {
@@ -327,7 +342,7 @@ std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> DeciderWrapp
 }
 
 std::vector<std::string> DeciderWrapper::get_internal_imports() const {
-  return internal_imports;
+  return this->internal_imports;
 }
 
 WrapperState DeciderWrapper::get_state() const {
