@@ -648,9 +648,11 @@ void EegDecider::inotify_timer_callback() {
     struct inotify_event *event = (struct inotify_event *)&inotify_buffer[i];
     if (event->len) {
       std::string event_name = event->name;
-      if ((event->mask & IN_MODIFY) &&
-          (event_name == this->module_name + ".py")) {
 
+      std::vector<std::string> internal_imports = this->decider_wrapper->get_internal_imports();
+      bool is_internal_import = std::find(internal_imports.begin(), internal_imports.end(), event_name) != internal_imports.end();
+
+      if ((event->mask & IN_MODIFY) && is_internal_import) {
         RCLCPP_INFO(this->get_logger(), "Module '%s' was modified, re-loading.", this->module_name.c_str());
         this->reinitialize = true;
       }
