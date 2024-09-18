@@ -201,7 +201,9 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
 }
 
 EegDecider::~EegDecider() {
-  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+  for (int wd : watch_descriptors) {
+    inotify_rm_watch(inotify_descriptor, wd);
+  }
   close(inotify_descriptor);
 }
 
@@ -274,7 +276,7 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), "");
 
   /* Print underlined, bolded text. */
-  std::string decider_text_str = "Loading decider module: " + this->module_name;
+  std::string decider_text_str = "Loading decider: " + this->module_name;
   std::wstring underline_str(decider_text_str.size(), L'–');
   RCLCPP_INFO(this->get_logger(), "%s%s%s", bold_on.c_str(), decider_text_str.c_str(), bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), "%s%ls%s", bold_on.c_str(), underline_str.c_str(), bold_off.c_str());
@@ -282,6 +284,7 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), "");
 
   this->decider_wrapper->initialize_module(
+    PROJECTS_DIRECTORY,
     this->working_directory,
     this->module_name,
     this->num_of_eeg_channels,
@@ -618,14 +621,30 @@ std::vector<std::string> EegDecider::list_python_modules_in_working_directory() 
 }
 
 void EegDecider::update_inotify_watch() {
-  /* Remove the old watch. */
-  inotify_rm_watch(inotify_descriptor, watch_descriptor);
+  /* Remove all old watches. */
+  for (int wd : watch_descriptors) {
+    inotify_rm_watch(inotify_descriptor, wd);
+  }
 
-  /* Add a new watch. */
-  watch_descriptor = inotify_add_watch(inotify_descriptor, this->working_directory.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
-  if (watch_descriptor == -1) {
-      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", this->working_directory.c_str());
-      return;
+  /* Collect working directory and its subdirectories. */
+  std::vector<std::filesystem::path> directories;
+  directories.push_back(std::filesystem::path(this->working_directory));
+
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(this->working_directory)) {
+    if (std::filesystem::is_directory(entry)) {
+      directories.push_back(entry.path());
+    }
+  }
+
+  /* Add watches for all collected directories. */
+  for (const auto& dir : directories) {
+    int wd = inotify_add_watch(inotify_descriptor, dir.c_str(), IN_MODIFY | IN_CREATE | IN_DELETE | IN_MOVE);
+    if (wd == -1) {
+      RCLCPP_ERROR(this->get_logger(), "Error adding watch for: %s", dir.c_str());
+    } else {
+      watch_descriptors.push_back(wd);
+      RCLCPP_DEBUG(this->get_logger(), "Added watch for: %s", dir.c_str());
+    }
   }
 }
 
@@ -647,14 +666,22 @@ void EegDecider::inotify_timer_callback() {
     struct inotify_event *event = (struct inotify_event *)&inotify_buffer[i];
     if (event->len) {
       std::string event_name = event->name;
-      if ((event->mask & IN_MODIFY) &&
-          (event_name == this->module_name + ".py")) {
 
-        RCLCPP_INFO(this->get_logger(), "Module '%s' was modified, re-loading.", this->module_name.c_str());
+      std::vector<std::string> internal_imports = this->decider_wrapper->get_internal_imports();
+      bool is_internal_import = std::find(internal_imports.begin(), internal_imports.end(), event_name) != internal_imports.end();
+
+      /* Check if the file ends with .py. */
+      bool is_python_file = false;
+      if (event_name.length() >= 3) {
+        is_python_file = (event_name.substr(event_name.length() - 3) == ".py");
+      }
+
+      if ((event->mask & IN_MODIFY) && (is_internal_import || event_name == this->module_name + ".py")) {
+        RCLCPP_INFO(this->get_logger(), "Module %s was modified, re-loading.", event_name.c_str());
         this->reinitialize = true;
       }
-      if (event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) {
-        RCLCPP_INFO(this->get_logger(), "File '%s' created, deleted, or moved, updating decider list.", event_name.c_str());
+      if ((event->mask & (IN_CREATE | IN_DELETE | IN_MOVE)) && is_python_file) {
+        RCLCPP_INFO(this->get_logger(), "File %s created, deleted, or moved, updating decider list.", event_name.c_str());
         this->update_decider_list();
       }
     }
