@@ -218,27 +218,38 @@ void DeciderWrapper::initialize_module(
         this->latest_sample = sample_window[1].cast<int>();
         this->buffer_size = this->latest_sample - this->earliest_sample + 1;
       } else {
-        RCLCPP_WARN(*logger_ptr, "sample_window in configuration is of incorrect length (should be two elements).");
+        RCLCPP_ERROR(*logger_ptr, "sample_window in configuration is of incorrect length (should be two elements).");
+        state = WrapperState::ERROR;
+        return;
       }
+
     } else {
-      RCLCPP_WARN(*logger_ptr, "sample_window not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "sample_window not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
     }
 
     /* Extract processing_interval_in_samples. */
     if (config.contains("processing_interval_in_samples")) {
       this->processing_interval_in_samples = config["processing_interval_in_samples"].cast<uint16_t>();
     } else {
-      RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "processing_interval_in_samples not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
     }
 
     /* Extract process_on_trigger. */
     if (config.contains("process_on_trigger")) {
       this->process_on_trigger = config["process_on_trigger"].cast<bool>();
     } else {
-      RCLCPP_WARN(*logger_ptr, "process_on_trigger not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "process_on_trigger not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
     }
   } else {
     RCLCPP_ERROR(*logger_ptr, "get_configuration method not found in the Decider instance.");
+    state = WrapperState::ERROR;
+    return;
   }
 
   /* Initialize numpy arrays. */
