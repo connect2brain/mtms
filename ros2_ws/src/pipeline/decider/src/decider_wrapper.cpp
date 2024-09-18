@@ -136,32 +136,38 @@ void DeciderWrapper::initialize_module(
   }
 
   /* Extract the configuration from decider_instance. */
-  if (py::hasattr(*decider_instance, "sample_window")) {
-    py::list sample_window = decider_instance->attr("sample_window").cast<py::list>();
-    if (sample_window.size() == 2) {
-      this->earliest_sample = sample_window[0].cast<int>();
-      this->latest_sample = sample_window[1].cast<int>();
+  if (py::hasattr(*decider_instance, "get_configuration")) {
+    py::dict config = decider_instance->attr("get_configuration")().cast<py::dict>();
 
-      this->buffer_size = this->latest_sample - this->earliest_sample + 1;
+    /* Extract sample_window. */
+    if (config.contains("sample_window")) {
+      py::list sample_window = config["sample_window"].cast<py::list>();
+      if (sample_window.size() == 2) {
+        this->earliest_sample = sample_window[0].cast<int>();
+        this->latest_sample = sample_window[1].cast<int>();
+        this->buffer_size = this->latest_sample - this->earliest_sample + 1;
+      } else {
+        RCLCPP_WARN(*logger_ptr, "sample_window in configuration is of incorrect length (should be two elements).");
+      }
     } else {
-      RCLCPP_WARN(*logger_ptr, "sample_window class attribute is of incorrect length (should be two elements).");
+      RCLCPP_WARN(*logger_ptr, "sample_window not found in configuration dictionary.");
+    }
+
+    /* Extract processing_interval_in_samples. */
+    if (config.contains("processing_interval_in_samples")) {
+      this->processing_interval_in_samples = config["processing_interval_in_samples"].cast<uint16_t>();
+    } else {
+      RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples not found in configuration dictionary.");
+    }
+
+    /* Extract process_on_trigger. */
+    if (config.contains("process_on_trigger")) {
+      this->process_on_trigger = config["process_on_trigger"].cast<bool>();
+    } else {
+      RCLCPP_WARN(*logger_ptr, "process_on_trigger not found in configuration dictionary.");
     }
   } else {
-    RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the decider.");
-  }
-
-  if (py::hasattr(*decider_instance, "processing_interval_in_samples")) {
-    py::int_ processing_interval_in_samples_ = decider_instance->attr("processing_interval_in_samples").cast<py::int_>();
-    this->processing_interval_in_samples = processing_interval_in_samples_.cast<uint16_t>();
-  } else {
-    RCLCPP_WARN(*logger_ptr, "processing_interval_in_samples class attribute not defined by the decider.");
-  }
-
-  if (py::hasattr(*decider_instance, "process_on_trigger")) {
-    py::bool_ process_on_trigger_ = decider_instance->attr("process_on_trigger").cast<py::bool_>();
-    this->process_on_trigger = process_on_trigger_.cast<bool>();
-  } else {
-    RCLCPP_WARN(*logger_ptr, "process_on_trigger class attribute not defined by the decider.");
+    RCLCPP_ERROR(*logger_ptr, "get_configuration method not found in the Decider instance.");
   }
 
   /* Initialize numpy arrays. */
