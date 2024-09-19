@@ -13,6 +13,7 @@ if [ "$USE_GPU" = "true" ]; then
 else
     echo "GPU is not enabled."
 fi
+echo " "
 
 set -e
 

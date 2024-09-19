@@ -72,13 +72,6 @@ void PreprocessorWrapper::initialize_module(
     RCLCPP_WARN(*logger_ptr, "sample_window class attribute not defined by the preprocessor.");
   }
 
-  RCLCPP_INFO(*logger_ptr, "Preprocessor set to: %s.", module_name.c_str());
-  RCLCPP_INFO(*logger_ptr, " ");
-  RCLCPP_INFO(*logger_ptr, "Preprocessor configuration");
-  RCLCPP_INFO(*logger_ptr, " ");
-  RCLCPP_INFO(*logger_ptr, "  - Sample window: [%d, %d]", this->earliest_sample, this->latest_sample);
-  RCLCPP_INFO(*logger_ptr, " ");
-
   /* Initialize numpy arrays. */
   py_timestamps = std::make_unique<py::array_t<double>>(buffer_size);
 
@@ -92,6 +85,12 @@ void PreprocessorWrapper::initialize_module(
   this->emg_data_size = emg_data_size;
 
   state = WrapperState::READY;
+
+  /* Log the configuration. */
+  RCLCPP_INFO(*logger_ptr, "Configuration:");
+  RCLCPP_INFO(*logger_ptr, " ");
+  RCLCPP_INFO(*logger_ptr, "  - Sample window: %s[%d, %d]%s", bold_on.c_str(), this->earliest_sample, this->latest_sample, bold_off.c_str());
+  RCLCPP_INFO(*logger_ptr, " ");
 }
 
 void PreprocessorWrapper::reset_module_state() {
