@@ -44,6 +44,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->get_parameter("minimum-intertrial-interval", this->minimum_intertrial_interval);
 
   /* Log the minimum pulse interval. */
+  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Configuration:");
   RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
 
@@ -276,9 +277,9 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), "");
 
   /* Print underlined, bolded text. */
-  std::string decider_text_str = "Loading decider: " + this->module_name;
-  std::wstring underline_str(decider_text_str.size(), L'–');
-  RCLCPP_INFO(this->get_logger(), "%s%s%s", bold_on.c_str(), decider_text_str.c_str(), bold_off.c_str());
+  std::string text_str = "Loading decider: " + this->module_name;
+  std::wstring underline_str(text_str.size(), L'–');
+  RCLCPP_INFO(this->get_logger(), "%s%s%s", bold_on.c_str(), text_str.c_str(), bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), "%s%ls%s", bold_on.c_str(), underline_str.c_str(), bold_off.c_str());
 
   RCLCPP_INFO(this->get_logger(), "");
@@ -299,10 +300,11 @@ void EegDecider::initialize_module() {
   size_t buffer_size = this->decider_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
+  RCLCPP_INFO(this->get_logger(), "EEG configuration:");
+  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %s%d%s Hz", bold_on.c_str(), this->sampling_frequency, bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %s%d%s", bold_on.c_str(), this->num_of_eeg_channels, bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %s%d%s", bold_on.c_str(), this->num_of_emg_channels, bold_off.c_str());
-  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %s%zu%s", bold_on.c_str(), buffer_size, bold_off.c_str());
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
@@ -404,14 +406,16 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
 
   bool success = result.code == rclcpp_action::ResultCode::SUCCEEDED && result.result->success;
 
+  RCLCPP_INFO(this->get_logger(), " ");
   if (!success) {
     RCLCPP_ERROR(this->get_logger(), "Trial %sfailed%s", bold_on.c_str(), bold_off.c_str());
+    RCLCPP_INFO(this->get_logger(), " ");
 
     /* If the trial failed, return early without computing the latency. */
     return;
   }
-  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Trial %ssucceeded%s", bold_on.c_str(), bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), " ");
 
   /* If the trial was a dry run, return early without computing the latency. */
   auto trial_config = metadata.trial.config;
