@@ -43,7 +43,7 @@ function toIsoString(date) {
       'T' + pad(date.getHours()) +
       ':' + pad(date.getMinutes()) +
       ':' + pad(date.getSeconds()) +
-      '.' + pad(date.getMilliseconds()) +
+      '.' + (date.getMilliseconds() / 1000).toFixed(3).slice(2, 5) +
       dif + pad(Math.floor(Math.abs(tzo) / 60)) +
       ':' + pad(Math.abs(tzo) % 60);
 }
