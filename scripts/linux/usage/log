@@ -67,24 +67,71 @@ if [ ! -z "$SAVE_TO" ] && [ -f "$SAVE_TO" ]; then
     fi
 fi
 
+# XXX: Use a non-breaking space to add padding between the timestamp and the log message. For some reason,
+#   the default space character does not work as expected.
+
 # Define sed command for timestamp formatting
-FORMAT_CMD="sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})[0-9]{0,6}Z/\\1 \\2/' --unbuffered"
+
+# Define ANSI color codes
+COLOR_RESET=$(echo -e '\033[0m')
+COLOR_CONTAINER=$(echo -e '\033[0;36m')  # Cyan for container name
+COLOR_TIMESTAMP=$(echo -e '\033[0;33m')  # Yellow for timestamp
+COLOR_DEFAULT=$(echo -e '\033[0;37m')    # White for the rest of the text
+COLOR_HIGH_INTENSITY_WHITE=$(echo -e '\033[0;97m')  # High-intensity white
+
+# XXX: Use a non-breaking space to add padding between the timestamp and the log message. For some reason,
+#   the default space character does not work as expected.
+NON_BREAKING_SPACE=$(echo -e '\xC2\xA0')
+
+# Remove "-1" suffix from container name and add color (handles underscores and hyphens correctly)
+REMOVE_SUFFIX_CMD="sed -E \"s/^([[:alnum:]_-]+)-1(\s+\|)/${COLOR_CONTAINER}\1\2${COLOR_DEFAULT}/\" --unbuffered"
+
+# Format timestamp, add non-breaking spaces, and color
+FORMAT_TIMESTAMP_CMD="sed -E \"s/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3})\+[0-9]{2}:[0-9]{2}/${COLOR_TIMESTAMP}\1 \2${COLOR_DEFAULT}${NON_BREAKING_SPACE}${NON_BREAKING_SPACE}${NON_BREAKING_SPACE}/g\" --unbuffered"
+
+# Remove numeric suffixes from log labels (e.g., "[decider-1]" becomes "[decider]")
+CLEAN_LABELS_CMD="sed -E 's/\[([[:alnum:]_-]+)-[0-9]+\]/[\1]/g' --unbuffered"
+
+# Remove ROS2 timestamps (e.g., "[1726757089.965811963]")
+REMOVE_ROS_TIMESTAMPS_CMD="sed -E 's/\[[0-9]+\.[0-9]+\]\s+//g' --unbuffered"
+
+# Pad INFO and WARN messages to align with ERROR
+PAD_MESSAGE_TYPES_CMD="sed -E 's/\[(INFO|WARN)\]/[\1 ]/g' --unbuffered"
+
+# Change color to high-intensity white after the third colon
+HIGHLIGHT_AFTER_THIRD_COLON_CMD="sed \"s/\\(:[^:]*:[^:]*:\\)\\(.*\\)$/\\1${COLOR_HIGH_INTENSITY_WHITE}\\2/\" --unbuffered"
+
+# Add default color to the beginning of each line
+ADD_DEFAULT_COLOR_CMD="sed \"s/^/${COLOR_DEFAULT}/\" --unbuffered"
+
+# Reset color at the end of each line
+RESET_COLOR_CMD="sed \"s/$/${COLOR_RESET}/\" --unbuffered"
+
+# Combine all formatting commands
+FORMAT_CMD="$REMOVE_SUFFIX_CMD | $FORMAT_TIMESTAMP_CMD | $CLEAN_LABELS_CMD | $REMOVE_ROS_TIMESTAMPS_CMD | $PAD_MESSAGE_TYPES_CMD | $HIGHLIGHT_AFTER_THIRD_COLON_CMD | $ADD_DEFAULT_COLOR_CMD | $RESET_COLOR_CMD"
+
 
 # Use docker-compose logs if a container name is provided, otherwise use journalctl. This is because it is
 # difficult to filter the last n lines of logs outputted by a given container using journalctl.
 if [ -n "$CONTAINER_NAME" ] && [ "$TIME_FILTERS" = false ]; then
-    LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
-    [ "$FOLLOW" = true ] && LOG_CMD="$LOG_CMD -f"
-    LOG_CMD="$LOG_CMD $CONTAINER_NAME"
+    CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
+    [ "$FOLLOW" = true ] && CMD="$CMD -f"
+    CMD="$CMD $CONTAINER_NAME"
 
     # XXX: Use a custom script to convert UTC to local time. This is a workaround for docker-compose not
     #   supporting local timezones in logs.
-    LOG_CMD="$LOG_CMD | docker-compose-logs-localtime"
+    CMD="$CMD | docker-compose-logs-localtime"
 
-    LOG_CMD="$LOG_CMD | $FORMAT_CMD"
-    [ ! -z "$SAVE_TO" ] && LOG_CMD="$LOG_CMD | tee $SAVE_TO"
+    CMD="$CMD | $FORMAT_CMD"
 
-    eval $LOG_CMD
+    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
+    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
+    #   still uses ROS2 Humble).
+    CMD="$CMD | grep -v 'Failed to parse type hash'"
+
+    [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
+
+    eval $CMD
 else
     CMD="journalctl -u mtms-core-containers"
     if [ "$TIME_FILTERS" = false ]; then
@@ -97,6 +144,12 @@ else
     if [ -n "$CONTAINER_NAME" ]; then
         CMD="$CMD | grep $CONTAINER_NAME"
     fi
+
+    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
+    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
+    #   still uses ROS2 Humble).
+    CMD="$CMD | grep -v 'Failed to parse type hash'"
+
     [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
 
     eval $CMD

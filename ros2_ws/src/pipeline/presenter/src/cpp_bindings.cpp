@@ -8,7 +8,7 @@
 namespace py = pybind11;
 
 void PresenterWrapper::log(const std::string& message) {
-  RCLCPP_INFO(*logger_ptr, "From Python: %s", message.c_str());
+  RCLCPP_INFO(*logger_ptr, "[Python]: %s", message.c_str());
 }
 
 void PresenterWrapper::log_throttle(const std::string& message, const double_t period) {
@@ -18,7 +18,7 @@ void PresenterWrapper::log_throttle(const std::string& message, const double_t p
   if (current_time - last_log_time < period) {
     return;
   }
-  RCLCPP_INFO(*logger_ptr, "From Python (throttled): %s", message.c_str());
+  RCLCPP_INFO(*logger_ptr, "[Python, throttled]: %s", message.c_str());
 
   last_log_time = current_time;
 }

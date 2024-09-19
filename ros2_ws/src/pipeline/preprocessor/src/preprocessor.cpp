@@ -67,8 +67,6 @@ EegPreprocessor::EegPreprocessor() : Node("preprocessor"), logger(rclcpp::get_lo
     EEG_QUEUE_LENGTH,
     std::bind(&EegPreprocessor::process_sample, this, _1));
 
-  RCLCPP_INFO(this->get_logger(), "Listening to EEG data on topic %s.", EEG_RAW_TOPIC.c_str());
-
   /* Subscriber for pulse feedback. */
   this->pulse_feedback_subscriber = create_subscription<event_interfaces::msg::PulseFeedback>(
     "/event/pulse_feedback",
@@ -202,6 +200,16 @@ void EegPreprocessor::initialize_module() {
     return;
   }
 
+  RCLCPP_INFO(this->get_logger(), " ");
+
+  /* Print underlined, bolded text. */
+  std::string text_str = "Loading preprocessor: " + this->module_name;
+  std::wstring underline_str(text_str.size(), L'–');
+  RCLCPP_INFO(this->get_logger(), "%s%s%s", bold_on.c_str(), text_str.c_str(), bold_off.c_str());
+  RCLCPP_INFO(this->get_logger(), "%s%ls%s", bold_on.c_str(), underline_str.c_str(), bold_off.c_str());
+
+  RCLCPP_INFO(this->get_logger(), "");
+
   this->preprocessor_wrapper->initialize_module(
     this->working_directory,
     this->module_name,
@@ -217,13 +225,11 @@ void EegPreprocessor::initialize_module() {
   size_t buffer_size = this->preprocessor_wrapper->get_buffer_size();
   this->sample_buffer.reset(buffer_size);
 
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Initialized preprocessor with the following parameters:");
+  RCLCPP_INFO(this->get_logger(), "EEG configuration:");
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "  - Sampling frequency: %d Hz", this->sampling_frequency);
   RCLCPP_INFO(this->get_logger(), "  - # of EEG channels: %d", this->num_of_eeg_channels);
   RCLCPP_INFO(this->get_logger(), "  - # of EMG channels: %d", this->num_of_emg_channels);
-  RCLCPP_INFO(this->get_logger(), "  - Sample buffer size: %lu", buffer_size);
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
@@ -315,7 +321,7 @@ void EegPreprocessor::handle_set_preprocessor_module(
 void EegPreprocessor::handle_set_active_project(const std::shared_ptr<std_msgs::msg::String> msg) {
   this->active_project = msg->data;
 
-  RCLCPP_INFO(this->get_logger(), "Active project set to: %s.", this->active_project.c_str());
+  RCLCPP_INFO(this->get_logger(), "Project set to: %s.", this->active_project.c_str());
 
   this->is_working_directory_set = change_working_directory(PROJECTS_DIRECTORY + "/" + this->active_project + "/preprocessor");
   update_preprocessor_list();
@@ -521,8 +527,9 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
   if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
                          *this->get_clock(),
-                         1000,
-                         "Preprocessor not enabled");
+                         2000,
+                         "Preprocessor disabled, not processing EEG sample at time %.1f (s).",
+                         sample_time);
     return;
   }
 
@@ -609,7 +616,6 @@ int main(int argc, char *argv[]) {
   auto node = std::make_shared<EegPreprocessor>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("preprocessor"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif
