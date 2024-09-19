@@ -73,18 +73,24 @@ FORMAT_CMD="sed -E 's/([0-9]{4}-[0-9]{2}-[0-9]{2})T([0-9]{2}:[0-9]{2}:[0-9]{2}\.
 # Use docker-compose logs if a container name is provided, otherwise use journalctl. This is because it is
 # difficult to filter the last n lines of logs outputted by a given container using journalctl.
 if [ -n "$CONTAINER_NAME" ] && [ "$TIME_FILTERS" = false ]; then
-    LOG_CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
-    [ "$FOLLOW" = true ] && LOG_CMD="$LOG_CMD -f"
-    LOG_CMD="$LOG_CMD $CONTAINER_NAME"
+    CMD="docker-compose -f $MTMS_ROOT/docker-compose.yml logs --timestamps --tail $TAIL_LINES"
+    [ "$FOLLOW" = true ] && CMD="$CMD -f"
+    CMD="$CMD $CONTAINER_NAME"
 
     # XXX: Use a custom script to convert UTC to local time. This is a workaround for docker-compose not
     #   supporting local timezones in logs.
-    LOG_CMD="$LOG_CMD | docker-compose-logs-localtime"
+    CMD="$CMD | docker-compose-logs-localtime"
 
-    LOG_CMD="$LOG_CMD | $FORMAT_CMD"
-    [ ! -z "$SAVE_TO" ] && LOG_CMD="$LOG_CMD | tee $SAVE_TO"
+    CMD="$CMD | $FORMAT_CMD"
 
-    eval $LOG_CMD
+    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
+    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
+    #   still uses ROS2 Humble).
+    CMD="$CMD | grep -v 'Failed to parse type hash'"
+
+    [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
+
+    eval $CMD
 else
     CMD="journalctl -u mtms-core-containers"
     if [ "$TIME_FILTERS" = false ]; then
@@ -97,6 +103,12 @@ else
     if [ -n "$CONTAINER_NAME" ]; then
         CMD="$CMD | grep $CONTAINER_NAME"
     fi
+
+    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
+    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
+    #   still uses ROS2 Humble).
+    CMD="$CMD | grep -v 'Failed to parse type hash'"
+
     [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
 
     eval $CMD
