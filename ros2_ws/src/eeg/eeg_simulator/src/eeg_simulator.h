@@ -63,7 +63,7 @@ private:
 
   std::tuple<bool, bool, double_t> publish_sample(double_t current_time);
 
-  void read_next_trigger_time();
+  void read_next_trigger();
 
   void update_inotify_watch();
   void inotify_timer_callback();
@@ -93,6 +93,8 @@ private:
   double_t sampling_period;
 
   double_t next_trigger_time;
+  uint16_t next_trigger_type;
+
   double_t latest_sample_time;
 
   uint16_t sampling_frequency;

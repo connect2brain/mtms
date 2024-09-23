@@ -21,6 +21,9 @@ check_disk_space_and_clean() {
             # Remove all images except the latest mtms_* images
             docker images --format '{{.Repository}}:{{.Tag}}' | grep 'mtms_' | sort | uniq -c | sort -rn | awk '$1 > 1 {print $2}' | xargs -I {} docker rmi {}
 
+            # Remove dangling images
+            docker image prune -f
+
             # Remove all other non-mtms images
             docker images --format '{{.Repository}}:{{.Tag}}' | grep -v 'mtms_' | xargs docker rmi
 
