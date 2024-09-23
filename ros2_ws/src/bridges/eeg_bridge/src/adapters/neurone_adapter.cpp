@@ -205,10 +205,10 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
       break;
     case ChannelType::TRIGGER_CHANNEL: {
       auto triggers = std::bitset<32>(value);
-      sample.trigger = triggers[TriggerBits::B_IN];
+      sample.is_trigger = triggers[TriggerBits::B_IN];
       sync_trigger_received = triggers[TriggerBits::A_IN];
 
-      if (sample.trigger) {
+      if (sample.is_trigger) {
         RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Trigger received with sample %lu",
                     sample_index);
       }
@@ -220,7 +220,7 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
   }
 
   if (this->trigger_in_next_sample && this->trigger_sample_index >= sample_index) {
-    sample.trigger = true;
+    sample.is_trigger = true;
     this->trigger_in_next_sample = false;
   }
 

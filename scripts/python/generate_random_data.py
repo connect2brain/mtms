@@ -12,10 +12,10 @@ def generate_random_data(num_eeg_channels, num_emg_channels, sampling_frequency,
 
     return data_with_timestamps
 
-def save_to_csv(output_directory, base_filename, data):
+def save_to_csv(output_directory, base_filename, data, fmt='%.5f'):
     csv_filename = base_filename + ".csv"
     output_path = os.path.join(output_directory, csv_filename)
-    np.savetxt(output_path, data, delimiter=",", fmt='%.5f')
+    np.savetxt(output_path, data, delimiter=",", fmt=fmt)
 
 def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_emg_channels, data_filename):
     json_filename = base_filename + ".json"
@@ -50,8 +50,12 @@ if __name__ == "__main__":
     data = generate_random_data(args.eeg_channels, args.emg_channels, args.sampling_frequency, args.duration)
     save_to_csv(args.output_directory, args.output_filename, data)
 
-    triggers = np.array([1.0, 2.0, 5.0])
-    save_to_csv(args.output_directory, args.output_filename + "_triggers", triggers)
+    triggers = np.array([
+        [1.0, 1],
+        [2.0, 2],
+        [5.0, 1],
+    ])
+    save_to_csv(args.output_directory, args.output_filename + "_triggers", triggers, fmt=['%.5f', '%d'])
 
     save_to_json(args.output_directory, args.output_filename, args.dataset_name, args.eeg_channels, args.emg_channels, args.output_filename)
 
