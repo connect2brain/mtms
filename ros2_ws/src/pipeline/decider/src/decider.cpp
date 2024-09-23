@@ -772,7 +772,8 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_msg->emg_data = msg->emg_data;
 
   preprocessed_msg->time = msg->time;
-  preprocessed_msg->trigger = msg->trigger;
+  preprocessed_msg->is_trigger = msg->is_trigger;
+  preprocessed_msg->trigger_type = msg->trigger_type;
 
   /* Always mark sample as valid if preprocessor is bypassed. */
   preprocessed_msg->valid = true;
@@ -864,7 +865,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   bool process_current_sample = false;
 
   /* If process on trigger is enabled, proceed if the sample includes a trigger. */
-  if (this->decider_wrapper->is_process_on_trigger_enabled() && msg->trigger) {
+  if (this->decider_wrapper->is_process_on_trigger_enabled() && msg->is_trigger) {
     process_current_sample = true;
   }
 
@@ -892,7 +893,8 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
                          this->trial_queue.empty() &&
                          has_minimum_intertrial_interval_passed;
 
-  bool trigger = msg->trigger;
+  bool trigger = msg->is_trigger;
+  uint16_t trigger_type = msg->trigger_type;
 
   /* Process the sample. */
   auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
@@ -900,7 +902,8 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     this->sample_buffer,
     sample_time,
     ready_for_trial,
-    trigger);
+    trigger,
+    trigger_type);
 
   /* Log and return early if the Python call failed. */
   if (!success) {
