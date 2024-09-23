@@ -122,10 +122,10 @@ std::tuple<eeg_interfaces::msg::Sample, bool> TurboLinkAdapter::handle_packet() 
   }
 
   auto triggers = std::bitset<32>(trigger_bits);
-  sample.trigger = triggers[TriggerBitPosition::PULSE_TRIGGER_BIT];
+  sample.is_trigger = triggers[TriggerBitPosition::PULSE_TRIGGER_BIT];
   sync_trigger_received = triggers[TriggerBitPosition::SYNC_TRIGGER_BIT];
 
-  if (sample.trigger) {
+  if (sample.is_trigger) {
     RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Trigger received with sample %d", sample_index);
   }
 

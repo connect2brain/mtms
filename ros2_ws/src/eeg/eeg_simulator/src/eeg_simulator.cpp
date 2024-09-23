@@ -547,7 +547,7 @@ void EegSimulator::initialize_streaming() {
       RCLCPP_INFO(this->get_logger(), "Reading triggers from file: %s", trigger_file_path.c_str());
 
       /* Read the next trigger time from the file already here so the session handler loop doesn't have to worry about it. */
-      read_next_trigger_time();
+      read_next_trigger();
 
       this->send_triggers = true;
     }
@@ -606,7 +606,7 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
         trigger_file.clear();
         trigger_file.seekg(0, std::ios::beg);
 
-        read_next_trigger_time();
+        read_next_trigger();
       }
     }
 
@@ -671,11 +671,12 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   msg.time = time;
 
   if (this->send_triggers && this->triggers_left) {
-    msg.trigger = next_trigger_time <= sample_time;
-    if (msg.trigger) {
-      read_next_trigger_time();
+    msg.is_trigger = next_trigger_time <= sample_time;
+    if (msg.is_trigger) {
+      msg.trigger_type = next_trigger_type;
+      read_next_trigger();
 
-      RCLCPP_INFO(this->get_logger(), "Published trigger with timestamp %.4f s.", sample_time);
+      RCLCPP_INFO(this->get_logger(), "Published trigger of type %d with timestamp %.4f s.", msg.trigger_type, time);
     }
   }
 
@@ -692,7 +693,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   return {false, looped, sample_time};
 }
 
-void EegSimulator::read_next_trigger_time() {
+void EegSimulator::read_next_trigger() {
   triggers_left = false;
   std::string line;
 
@@ -704,14 +705,23 @@ void EegSimulator::read_next_trigger_time() {
   }
 
   try {
-    next_trigger_time = std::stod(line);
+    /* Split the line at the comma. */
+    size_t comma_pos = line.find(',');
+    if (comma_pos == std::string::npos) {
+      throw std::invalid_argument("Missing comma in trigger file.");
+    }
+
+    /* Extract and convert the first and second columns. */
+    next_trigger_time = std::stod(line.substr(0, comma_pos));
+    next_trigger_type = std::stoi(line.substr(comma_pos + 1)); // Assuming trigger type is an integer
+
     triggers_left = true;
 
   } catch (const std::invalid_argument& e) {
-    RCLCPP_ERROR(this->get_logger(), "Invalid number in trigger file.");
+    RCLCPP_ERROR(this->get_logger(), "Invalid data in trigger file: %s", e.what());
 
   } catch (const std::out_of_range& e) {
-    RCLCPP_ERROR(this->get_logger(), "Number out of range in trigger file.");
+    RCLCPP_ERROR(this->get_logger(), "Number out of range in trigger file: %s", e.what());
   }
 }
 

@@ -58,7 +58,8 @@ public:
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
     bool ready_for_trial,
-    bool trigger);
+    bool is_trigger,
+    uint16_t trigger_type);
 
   WrapperState get_state() const;
   std::vector<std::string> get_internal_imports() const;
