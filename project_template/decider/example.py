@@ -216,7 +216,7 @@ class Decider:
             'sample_window': [-5, 0],
         }
 
-    def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial, trigger):
+    def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial, is_trigger, trigger_type):
         """The 'process' method is called by the pipeline for new EEG/EMG samples with a specified interval (see get_configuration method).
         This method receives the following arguments:
 
@@ -264,16 +264,19 @@ class Decider:
                as logging, filtering, computing metrics, or training models. If the decider still decides to perform a trial,
                the pipeline will print a warning and ignore the trial.
 
-          - trigger:
-               A boolean indicating whether a trigger was given on that sample."""
+          - is_trigger:
+               A boolean indicating whether a trigger was given on that sample.
+
+          - trigger_type:
+               An integer indicating the type of the trigger."""
 
         print("Processing EEG/EMG samples at time {:.4f}".format(current_time))
 
         # Increment the buffer count for each received buffer.
         self.buffer_count += 1
 
-        if trigger:
-            print("Trigger received at time {:.4f}".format(current_time))
+        if is_trigger:
+            print("Trigger of type {} received at time {:.4f}".format(trigger_type, current_time))
 
         # As an example, print the value of the first EEG channel at the current sample index into the decider log. Note that
         # using 'print' function here would congest the log with too many messages. Instead, use 'print_throttle' to print
