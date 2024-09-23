@@ -381,7 +381,8 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,
     bool ready_for_trial,
-    bool trigger) {
+    bool is_trigger,
+    uint16_t trigger_type) {
 
   bool success = true;
   std::shared_ptr<experiment_interfaces::msg::Trial> trial = nullptr;
@@ -420,7 +421,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial, trigger);
+    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial, is_trigger, trigger_type);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
