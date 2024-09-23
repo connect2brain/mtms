@@ -5,6 +5,8 @@ float64[] emg_data
 float64 time
 # Should 'index' field be here also, as it is in Sample.msg?
 bool valid
-bool trigger
+
+bool is_trigger
+uint16 trigger_type
 
 PreprocessedSampleMetadata metadata

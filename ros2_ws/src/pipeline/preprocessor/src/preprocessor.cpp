@@ -558,11 +558,11 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     return;
   }
 
-  if (msg->trigger) {
+  if (msg->is_trigger) {
     RCLCPP_INFO(this->get_logger(), "Registered trigger at: %.5f (s).", sample_time);
   }
 
-  bool pulse_given = is_pulse_feedback_received(sample_time) || msg->trigger;
+  bool pulse_given = is_pulse_feedback_received(sample_time) || msg->is_trigger;
 
   this->sample_buffer.append(msg);
 
@@ -585,7 +585,8 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
 
     /* XXX: Just copy trigger field into preprocessed sample; this is probably incorrect in case
        samples are delayed by the preprocessor. */
-    preprocessed_sample.trigger = msg->trigger;
+    preprocessed_sample.is_trigger = msg->is_trigger;
+    preprocessed_sample.trigger_type = msg->trigger_type;
 
     /* Measure and store the processing time for the sample. */
     auto end_time = std::chrono::high_resolution_clock::now();
