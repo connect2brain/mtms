@@ -521,8 +521,6 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     this->first_sample_ever = false;
   }
 
-  check_dropped_samples(sample_time);
-
   /* Check that the preprocessor is enabled. */
   if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -532,6 +530,8 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
                          sample_time);
     return;
   }
+
+  check_dropped_samples(sample_time);
 
   /* Assert that module name is set - we shouldn't otherwise allow to enable the preprocessor. */
   assert(this->module_name != UNSET_STRING);
