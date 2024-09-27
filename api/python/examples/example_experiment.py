@@ -147,8 +147,6 @@ experiment = Experiment(
 api.start_device()
 api.start_session()
 
-handler = api.get_experiment_handler()
-
 handler.perform_experiment(experiment)
 
 while not handler.is_done():
