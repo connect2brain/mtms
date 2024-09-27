@@ -25,7 +25,7 @@ ARG LICENSE_SERVER
 
 # When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.
 # To check the available matlab-deps images, see: https://hub.docker.com/r/mathworks/matlab-deps
-FROM mathworks/matlab-deps:${MATLAB_RELEASE}
+FROM mathworks/matlab-deps:${MATLAB_RELEASE}@sha256:80f22634c26f7c894b279fdcf16624a59ee8af4984c40d66705254cdd9bb60a3
 
 # Declare build arguments to use at the current build stage.
 ARG MATLAB_RELEASE
