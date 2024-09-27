@@ -817,8 +817,6 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     this->first_sample_ever = false;
   }
 
-  check_dropped_samples(sample_time);
-
   /* Check that the decider is enabled. */
   if (!this->enabled) {
     RCLCPP_INFO_THROTTLE(this->get_logger(),
@@ -827,6 +825,8 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
                          "Decider not enabled");
     return;
   }
+
+  check_dropped_samples(sample_time);
 
   /* Assert that module name is set - we shouldn't otherwise allow to enable the decider. */
   assert(this->module_name != UNSET_STRING);
