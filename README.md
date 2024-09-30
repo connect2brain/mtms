@@ -156,7 +156,7 @@ For instance, the data set `test_data` would be defined by the files `test_data.
 {
     "name": "Test data from experiment 1",
     "data_file": "test_data.csv",
-    "trigger_file": "test_triggers.csv",
+    "event_file": "test_events.csv",
     "channels": {
         "eeg": 3,
         "emg": 1
@@ -177,13 +177,14 @@ The first column is the time in seconds, and the following columns are the EEG a
 channels in that order. The number of EEG and EMG channels should match the numbers
 given in the JSON file.
 
-The trigger CSV file is optional; if the field is undefined, the dataset won't contain any triggers. If defined,
-the file should contain timestamps for the triggers, one timestamp per line. For example:
+The event CSV file is optional; if the field is undefined, the dataset won't contain any events. If defined,
+the file should contain timestamps for the events, one timestamp per line, followed by the event type (an unsigned
+integer). For example:
 
 ```csv
-1.0
-2.0
-5.0
+1.0,1
+2.0,2
+5.0,3
 ```
 
 After creating a new data set, you can select it from the dropdown menu in the mTMS panel

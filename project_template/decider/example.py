@@ -28,6 +28,7 @@
 
 import multiprocessing
 import time
+from enum import Enum
 
 import numpy as np
 
@@ -82,6 +83,10 @@ PAIRED_PULSE_TARGET = [
         'algorithm': 'least_squares',
     },
 ]
+
+class Event(Enum):
+    PREPULSE = 1
+    POSTPULSE = 2
 
 
 # The mTMS device allows coinciding the TMS pulse with one or two output triggers.
@@ -209,14 +214,43 @@ class Decider:
            - If the sample window is [-5, -5], the buffer will keep the 5 past samples but will also 'look'
              5 samples into the future. In practice, this means that the incoming EEG/EMG samples will be
              delayed by 5 samples. This can be useful, e.g., for various kinds of filtering.
+
+        - 'events': A list of dictionaries, each dictionary with the following keys:
+           - 'type': An integer indicating the type of the event.
+           - 'time': A float indicating the time of the event in seconds, relative to the start of the session.
+
+           Events can be used to trigger processing in the decider, in addition to the periodic processing defined by
+           'processing_interval_in_samples' and triggers received from the EEG device (if 'process_on_trigger' is set
+           to True).
+
+           For example, an event can be used to trigger processing prior to a pre-defined pulse time so that the decider
+           can then decide whether to perform a trial at that time, or alternatively always perform a trial at a fixed time
+           after the event.
+
+           Events can also be used to trigger post-pulse processing, such as logging or model training based on the received
+           EEG/EMG samples after the pulse.
+
+           If an empty list or not provided, the pipeline will not trigger processing based on events.
         """
+        events = [
+            {
+                'type': Event.PREPULSE.value,
+                'time': 2.0,
+            },
+            {
+                'type': Event.POSTPULSE.value,
+                'time': 3.0,
+            },
+        ]
+
         return {
-            'processing_interval_in_samples': 100,
+            'processing_interval_in_samples': 1000,
             'process_on_trigger': True,
             'sample_window': [-5, 0],
+            'events': events,
         }
 
-    def process(self, current_time, timestamps, valid_samples, eeg_samples, emg_samples, current_sample_index, ready_for_trial, is_trigger, trigger_type):
+    def process(self, current_time, timestamps, valid_samples, eeg_buffer, emg_buffer, current_sample_index, ready_for_trial, is_trigger, is_event, event_type):
         """The 'process' method is called by the pipeline for new EEG/EMG samples with a specified interval (see get_configuration method).
         This method receives the following arguments:
 
@@ -234,17 +268,17 @@ class Decider:
                The example preprocessor (used as the default) marks all samples as valid, except for one second after
                each pulse.
 
-          - eeg_samples:
+          - eeg_buffer:
                A NumPy array of shape (num_of_eeg_channels, num_of_samples), where num_of_eeg_channels is the number of EEG
                channels and num_of_samples is the number of samples in the buffer defined by self.sample_window.
 
-          - emg_samples:
+          - emg_buffer:
                A NumPy array of shape (num_of_emg_channels, num_of_samples), where num_of_emg_channels is the number of EMG
                channels and num_of_samples is the number of samples in the buffer defined by self.sample_window.
 
           - current_sample_index:
-               The index of the current sample in the buffer. It always points to the last sample of eeg_samples and
-               emg_samples buffers if self.sample_window is set to [-n, 0]. However, if self.sample_window is set,
+               The index of the current sample in the buffer. It always points to the last sample of 'eeg_buffer' and
+               'emg_buffer' buffers if self.sample_window is set to [-n, 0]. However, if self.sample_window is set,
                e.g., to [-10, 5], current_sample_index would be 10 while the buffers would contain 16 samples.
 
                Note that this is redundant information, as the current sample can be calculated from self.sample_window,
@@ -265,25 +299,31 @@ class Decider:
                the pipeline will print a warning and ignore the trial.
 
           - is_trigger:
-               A boolean indicating whether a trigger was given on that sample.
+                A boolean indicating whether a trigger was received on that sample. The trigger comes from the EEG device and
+                it cannot currently be used with simulated data. However, events behave similarly to triggers and can be used
+                for the same purpose.
 
-          - trigger_type:
-               An integer indicating the type of the trigger."""
+          - is_event:
+               A boolean indicating whether a event was received on that sample. See get_configuration method for more information
+               on events.
+
+          - event_type:
+               An unsigned integer indicating the event type. See get_configuration method for more information on events."""
 
         print("Processing EEG/EMG samples at time {:.4f}".format(current_time))
 
         # Increment the buffer count for each received buffer.
         self.buffer_count += 1
 
-        if is_trigger:
-            print("Trigger of type {} received at time {:.4f}".format(trigger_type, current_time))
+        if is_event:
+            print("Event of type {} received at time {:.4f}".format(event_type, current_time))
 
         # As an example, print the value of the first EEG channel at the current sample index into the decider log. Note that
         # using 'print' function here would congest the log with too many messages. Instead, use 'print_throttle' to print
         # the message once every second.
         #
         # Beware of using 'print_throttle' in several places in the code, as the throttling interval is shared among all calls.
-        print_throttle("Printed once every second: current EEG sample is {:.4f}".format(eeg_samples[0, current_sample_index]))
+        print_throttle("Printed once every second: current EEG sample is {:.4f}".format(eeg_buffer[0, current_sample_index]))
 
         # Silently return without performing a trial if the pipeline is not ready for a trial. Usually it is good to be verbose
         # and log the reason for not performing a trial, but not being ready for a trial is a common situation that does not
@@ -305,7 +345,7 @@ class Decider:
         if self.buffer_count % self.model_training_interval == 0:
             print("Starting to train a model at time {:.4f}".format(current_time))
             self.training_process = self.pool.apply_async(train_model, (
-                eeg_samples,
+                eeg_buffer,
             ))
 
         # If the training is finished, get the model parameters and execution time.
