@@ -1253,7 +1253,7 @@ export const ExperimentView = () => {
       </StimulationParametersPanel>
       <ConfigPanel>
         <TriggerPanel>
-          <SmallerTitle>Triggers</SmallerTitle>
+          <SmallerTitle>Triggers out</SmallerTitle>
           <TriggerRow>
             <TriggerLabel>1</TriggerLabel>
             <ToggleSwitch type='flat' checked={trigger1Enabled} onChange={setTrigger1Enabled} />
