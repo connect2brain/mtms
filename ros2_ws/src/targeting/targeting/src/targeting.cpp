@@ -21,7 +21,7 @@ const uint8_t NUM_OF_CHANNELS = 5;
 /* Allow targeting inside the area x \in [-18, ..., 18], y \in [-18, ..., 18] (in millimeters) and
  * rotating the e-field within the angles [0, ..., 359].
  *
- * The upper limit for stimulation intensity is 120 V/m - an arbitrary value which can be changed if desired,
+ * The upper limit for stimulation intensity is 135 V/m - an arbitrary value which can be changed if desired,
  * but gives some added safety, compared to not having the targeting restrict the stimulation intensity.
  * (The maximum capacitor voltages constrain the stimulation intensity regardless of this additional
  * constraint implemented by the targeting.)
@@ -30,7 +30,7 @@ const uint8_t NUM_OF_CHANNELS = 5;
 const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 18;
 const uint16_t MAX_ROTATION_ANGLE = 359;
 
-const uint8_t INTENSITY_LIMIT = 120;
+const uint8_t INTENSITY_LIMIT = 135;
 
 /* HACK: Instead of hard-coding this, it should probably be received from the mTMS device via a ROS message. */
 const uint16_t VOLTAGE_LIMIT = 1490;

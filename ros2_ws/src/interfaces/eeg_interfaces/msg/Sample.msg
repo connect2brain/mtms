@@ -6,6 +6,8 @@ float64 time
 uint64 index
 
 bool is_trigger
-uint16 trigger_type
+
+bool is_event
+uint16 event_type
 
 SampleMetadata metadata
