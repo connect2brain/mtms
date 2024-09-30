@@ -218,13 +218,13 @@ void DeciderWrapper::initialize_module(
         this->latest_sample = sample_window[1].cast<int>();
         this->buffer_size = this->latest_sample - this->earliest_sample + 1;
       } else {
-        RCLCPP_ERROR(*logger_ptr, "sample_window in configuration is of incorrect length (should be two elements).");
+        RCLCPP_ERROR(*logger_ptr, "'sample_window' value in configuration is of incorrect length (should be two elements).");
         state = WrapperState::ERROR;
         return;
       }
 
     } else {
-      RCLCPP_ERROR(*logger_ptr, "sample_window not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "'sample_window' key not found in configuration dictionary.");
       state = WrapperState::ERROR;
       return;
     }
@@ -233,7 +233,7 @@ void DeciderWrapper::initialize_module(
     if (config.contains("processing_interval_in_samples")) {
       this->processing_interval_in_samples = config["processing_interval_in_samples"].cast<uint16_t>();
     } else {
-      RCLCPP_ERROR(*logger_ptr, "processing_interval_in_samples not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "'processing_interval_in_samples' key not found in configuration dictionary.");
       state = WrapperState::ERROR;
       return;
     }
@@ -242,7 +242,24 @@ void DeciderWrapper::initialize_module(
     if (config.contains("process_on_trigger")) {
       this->process_on_trigger = config["process_on_trigger"].cast<bool>();
     } else {
-      RCLCPP_ERROR(*logger_ptr, "process_on_trigger not found in configuration dictionary.");
+      RCLCPP_ERROR(*logger_ptr, "'process_on_trigger' key not found in configuration dictionary.");
+      state = WrapperState::ERROR;
+      return;
+    }
+
+    /* Extract events. */
+    if (config.contains("events")) {
+      py::list events = config["events"].cast<py::list>();
+      for (const auto& event : events) {
+        py::dict event_dict = event.cast<py::dict>();
+
+        uint16_t event_type = event_dict["type"].cast<uint16_t>();
+        double event_time = event_dict["time"].cast<double>();
+
+        event_queue.push(std::make_pair(event_time, event_type));
+      }
+    } else {
+      RCLCPP_ERROR(*logger_ptr, "'events' key not found in configuration dictionary.");
       state = WrapperState::ERROR;
       return;
     }
@@ -292,6 +309,19 @@ void DeciderWrapper::reset_module_state() {
   state = WrapperState::UNINITIALIZED;
 
   RCLCPP_INFO(*logger_ptr, "Decider reset.");
+}
+
+std::pair <double_t, uint16_t> DeciderWrapper::get_next_event() const {
+  if (event_queue.empty()) {
+    return std::make_pair(std::numeric_limits<double_t>::infinity(), 0);
+  }
+  return event_queue.top();
+}
+
+void DeciderWrapper::pop_event() {
+  if (!event_queue.empty()) {
+    event_queue.pop();
+  }
 }
 
 DeciderWrapper::~DeciderWrapper() {
@@ -382,7 +412,8 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
     double_t sample_time,
     bool ready_for_trial,
     bool is_trigger,
-    uint16_t trigger_type) {
+    bool is_event,
+    uint16_t event_type) {
 
   bool success = true;
   std::shared_ptr<experiment_interfaces::msg::Trial> trial = nullptr;
@@ -421,7 +452,7 @@ std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool>
   /* Call the Python function. */
   py::object result;
   try {
-    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial, is_trigger, trigger_type);
+    result = decider_instance->attr("process")(current_time, *py_timestamps, *py_valid, *py_eeg_data, *py_emg_data, current_sample_index, ready_for_trial, is_trigger, is_event, event_type);
 
   } catch(const py::error_already_set& e) {
     RCLCPP_ERROR(*logger_ptr, "Python error: %s", e.what());
