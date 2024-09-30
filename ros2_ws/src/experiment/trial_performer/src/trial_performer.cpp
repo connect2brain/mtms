@@ -683,19 +683,19 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
     /* Fill in the earliest start time of the trial as the time right after requesting events. */
     trial_result.earliest_start_time = this->get_current_time();
 
+    /* Analyze MEP if needed. */
+    if (trial.analyze_mep) {
+      auto mep_result = analyze_mep(trial.mep_config, start_time);
+      trial_result.mep = mep_result->mep;
+      success = success && mep_result->success;
+
+      if (!mep_result->success) {
+        RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
+      }
+    }
+
     /* Wait for events to finish. */
     success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
-  }
-
-  /* Analyze MEP if needed. */
-  if (trial.analyze_mep) {
-    auto mep_result = analyze_mep(trial.mep_config, start_time);
-    trial_result.mep = mep_result->mep;
-    success = success && mep_result->success;
-
-    if (!mep_result->success) {
-      RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
-    }
   }
 
   /* Fill trial result. */
