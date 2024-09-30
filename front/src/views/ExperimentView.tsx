@@ -762,15 +762,35 @@ export const ExperimentView = () => {
 
   /* Updates the maximum intensity display. */
   useEffect(() => {
-    if (selectedPoints.length === 1 && selectedAngles.length === 1) {
-      const x: number = selectedPoints[0].x
-      const y: number = selectedPoints[0].y
-      const angle: number = selectedAngles[0]
-      getMaximumIntensity(x, y, angle, targetingAlgorithm, (maximum_intensity) => {
-        setMaximumIntensity(maximum_intensity)
-      })
+    let x: number
+    let y: number
+    let angle: number
+    if (activeTab === ExperimentTab.PairedPulse) {
+      x = selectedPulse === 1 ? selectedPointFirstPulse[0].x : selectedPointSecondPulse[0].x
+      y = selectedPulse === 1 ? selectedPointFirstPulse[0].y : selectedPointSecondPulse[0].y
+      angle = selectedPulse === 1 ? selectedAngleFirstPulse[0] : selectedAngleSecondPulse[0]
+    } else {
+      if (selectedPoints.length === 1 && selectedAngles.length === 1) {
+        x = selectedPoints[0].x
+        y = selectedPoints[0].y
+        angle = selectedAngles[0]
+      } else {
+        return
+      }
     }
-  }, [selectedAngles, selectedPoints, targetingAlgorithm])
+    getMaximumIntensity(x, y, angle, targetingAlgorithm, (maximum_intensity) => {
+      setMaximumIntensity(maximum_intensity)
+    })
+  }, [
+    selectedAngles,
+    selectedPoints,
+    targetingAlgorithm,
+    selectedAngleFirstPulse,
+    selectedAngleSecondPulse,
+    selectedPointFirstPulse,
+    selectedPointSecondPulse,
+    selectedPulse,
+  ])
 
   /* Updates the target visualization in neuronavigation for single location or multiple locations (paired pulse
      is handled separately). */
@@ -1253,7 +1273,7 @@ export const ExperimentView = () => {
       </StimulationParametersPanel>
       <ConfigPanel>
         <TriggerPanel>
-          <SmallerTitle>Triggers</SmallerTitle>
+          <SmallerTitle>Triggers out</SmallerTitle>
           <TriggerRow>
             <TriggerLabel>1</TriggerLabel>
             <ToggleSwitch type='flat' checked={trigger1Enabled} onChange={setTrigger1Enabled} />

@@ -39,8 +39,8 @@ const DatasetPanel = styled(StyledPanel)`
 `
 
 const DatasetSelect = styled(Select)`
-  margin-left: 30px;
-  width: 175px;
+  margin-left: 10px;
+  width: 210px;
 `
 
 const SwitchWrapper = styled.span`
@@ -142,9 +142,7 @@ export const DatasetDisplay: React.FC = () => {
         <br />
         <StateRow>
           <StateTitle>Status:</StateTitle>
-          <StateValue>
-            {eegSimulatorHealthcheck?.status_message}
-          </StateValue>
+          <StateValue>{eegSimulatorHealthcheck?.status_message}</StateValue>
         </StateRow>
       </DatasetPanel>
     </>
