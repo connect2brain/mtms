@@ -3,7 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "eeg_interfaces/msg/preprocessed_sample.hpp"
+#include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/time_window.hpp"
 #include "eeg_interfaces/msg/gather_eeg_error.hpp"
 
@@ -22,10 +22,10 @@ class EegGatherer {
 
 public:
   EegGatherer(std::string goal_id, double_t start_time, double_t end_time);
-  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+  void handle_eeg_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
   bool is_finished();
   bool success();
-  std::vector<eeg_interfaces::msg::PreprocessedSample>& get_eeg_buffer();
+  std::vector<eeg_interfaces::msg::Sample>& get_eeg_buffer();
   eeg_interfaces::msg::GatherEegError::SharedPtr get_error();
 
 private:
@@ -33,9 +33,9 @@ private:
 
   bool handle_state__check_if_valid_request(double_t current_time);
   bool handle_state__wait_for_mep(double_t current_time);
-  bool handle_state__gather_data(double_t current_time, const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
+  bool handle_state__gather_data(double_t current_time, const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
 
-  std::vector<eeg_interfaces::msg::PreprocessedSample> eeg_buffer;
+  std::vector<eeg_interfaces::msg::Sample> eeg_buffer;
 
   std::string goal_id;
 
