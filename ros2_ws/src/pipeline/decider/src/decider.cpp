@@ -772,8 +772,10 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_msg->emg_data = msg->emg_data;
 
   preprocessed_msg->time = msg->time;
+
   preprocessed_msg->is_trigger = msg->is_trigger;
-  preprocessed_msg->trigger_type = msg->trigger_type;
+  preprocessed_msg->is_event = msg->is_event;
+  preprocessed_msg->event_type = msg->event_type;
 
   /* Always mark sample as valid if preprocessor is bypassed. */
   preprocessed_msg->valid = true;
@@ -862,20 +864,60 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     return;
   }
 
+  /* Infer whether the sample is an event. */
+  bool is_event = false;
+  uint16_t event_type = 0;
+
+  auto [next_event_time, next_event_type] = this->decider_wrapper->get_next_event();
+
+  /* Skip events that we are past by at least one sampling period. */
+  while (sample_time - this->sampling_period >= next_event_time - this->TOLERANCE_S) {
+    RCLCPP_INFO(this->get_logger(), "Current time (%.3f s) is past event at %.3f (s), skipping...", sample_time, next_event_time);
+
+    this->decider_wrapper->pop_event();
+    std::tie(next_event_time, next_event_type) = this->decider_wrapper->get_next_event();
+  }
+
+  /* If decider module defines events and we are past the event time, consider the current sample an event
+     (and override the is_event flag from the message). */
+  if (sample_time >= next_event_time - this->TOLERANCE_S) {
+    is_event = true;
+    event_type = next_event_type;
+
+    RCLCPP_INFO(this->get_logger(), "Decider-defined event (time: %.4f s, type: %d) occurred at time %.4f (s)", next_event_time, next_event_type, sample_time);
+
+    this->decider_wrapper->pop_event();
+
+  } else {
+    /* Otherwise, use the is_event flag from the message. */
+    is_event = msg->is_event;
+    event_type = msg->event_type;
+
+    if (is_event) {
+      RCLCPP_INFO(this->get_logger(), "Received event at time %.4f (s), event type: %d", sample_time, event_type);
+    }
+  }
+
   bool process_current_sample = false;
 
-  /* If process on trigger is enabled, proceed if the sample includes a trigger. */
-  if (this->decider_wrapper->is_process_on_trigger_enabled() && msg->is_trigger) {
+  /* If process on trigger is enabled, process if the sample includes a trigger. */
+  bool is_trigger = msg->is_trigger;
+  if (this->decider_wrapper->is_process_on_trigger_enabled() && is_trigger) {
     process_current_sample = true;
   }
 
-  /* If processing interval is enabled, proceed every N samples, where N is defined on the Python side. */
+  /* If processing interval is enabled, process every N samples, where N is defined on the Python side. */
   if (this->decider_wrapper->is_processing_interval_enabled()) {
     this->samples_since_last_processing++;
 
     if (this->samples_since_last_processing == this->decider_wrapper->get_processing_interval_in_samples()) {
       process_current_sample = true;
     }
+  }
+
+  /* Always process if the sample is considered an event. */
+  if (is_event) {
+    process_current_sample = true;
   }
 
   /* If neither condition is met, return early. */
@@ -893,17 +935,15 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
                          this->trial_queue.empty() &&
                          has_minimum_intertrial_interval_passed;
 
-  bool trigger = msg->is_trigger;
-  uint16_t trigger_type = msg->trigger_type;
-
   /* Process the sample. */
   auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
     ready_for_trial,
-    trigger,
-    trigger_type);
+    is_trigger,
+    is_event,
+    event_type);
 
   /* Log and return early if the Python call failed. */
   if (!success) {
