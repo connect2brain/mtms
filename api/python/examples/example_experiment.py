@@ -149,13 +149,13 @@ api.start_session()
 
 handler.perform_experiment(experiment)
 
-while not handler.is_done():
+while not handler.is_done() and not api.is_interrupted():
     # XXX: Note that this is pretrial feedback, not posttrial feedback. They should be separated in the future.
     feedback = handler.wait_for_feedback()
 
-    # Feedback is None only when the experiment has been canceled. Check that case separately.
+    # Feedback is None only when the experiment has been aborted. Check that case separately.
     #
-    # TODO: Implement feedback in the mTMS software even when the experiment is canceled.
+    # TODO: Implement feedback in the mTMS software even when the experiment is aborted.
     if feedback is None:
         continue
 
@@ -173,8 +173,12 @@ while not handler.is_done():
         handler.resume_experiment()
 
     if attempt_number == 4:
-        print("Too many failed attempts, canceling experiment after the next attempt.")
+        print("Too many failed attempts, aborting experiment after the next attempt.")
         handler.cancel_experiment()
+
+if api.is_interrupted():
+    print("Experiment was interrupted, aborting experiment.")
+    handler.cancel_experiment()
 
 # 'results' is a list containing TrialResults objects, each including the actual start time of each trial
 # and the results of the MEP analysis if it was enabled. The MEP analysis results also include the raw EMG buffer
