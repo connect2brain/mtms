@@ -47,14 +47,14 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
 
   auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time);
 
-  auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::PreprocessedSample>(
-    "/eeg/preprocessed",
+  auto eeg_subscription = this->create_subscription<eeg_interfaces::msg::Sample>(
+    "/eeg/raw",
     EEG_DATA_SUBSCRIBER_QUEUE_SIZE,
-    [this, &eeg_gatherer](const eeg_interfaces::msg::PreprocessedSample::SharedPtr msg) {
+    [this, &eeg_gatherer](const eeg_interfaces::msg::Sample::SharedPtr msg) {
       RCLCPP_INFO_THROTTLE(rclcpp::get_logger("eeg_gatherer"),
                           *this->get_clock(),
                           1000,
-                          "Received preprocessed EEG datapoint with timestamp %.4f.",
+                          "Received raw EEG datapoint with timestamp %.4f.",
                           msg->time);
       eeg_gatherer.handle_eeg_sample(msg);
     });

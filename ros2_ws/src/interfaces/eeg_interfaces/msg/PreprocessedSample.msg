@@ -7,6 +7,8 @@ float64 time
 bool valid
 
 bool is_trigger
-uint16 trigger_type
+
+bool is_event
+uint16 event_type
 
 PreprocessedSampleMetadata metadata

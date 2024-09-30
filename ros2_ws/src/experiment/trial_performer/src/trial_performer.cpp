@@ -520,19 +520,19 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
 
   /* Wait for the goal handle. */
   if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to send goal");
+    RCLCPP_ERROR(this->get_logger(), "Failed to send 'set voltages' goal");
     return false;
   }
 
   auto goal_handle = future_goal_handle.get();
   if (!goal_handle) {
-    RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+    RCLCPP_ERROR(this->get_logger(), "'Set voltages' goal was rejected by server");
     return false;
   }
 
   auto future_result = set_voltages_client->async_get_result(goal_handle);
   if (future_result.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to get result");
+    RCLCPP_ERROR(this->get_logger(), "Failed to get 'set voltages' result");
     return false;
   }
 
@@ -567,19 +567,19 @@ std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::
 
   /* Wait for the goal handle. */
   if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to send goal");
+    RCLCPP_ERROR(this->get_logger(), "Failed to send MEP goal");
     return nullptr;
   }
 
   auto goal_handle = future_goal_handle.get();
   if (!goal_handle) {
-    RCLCPP_ERROR(this->get_logger(), "Goal was rejected by server");
+    RCLCPP_ERROR(this->get_logger(), "MEP goal was rejected by server");
     return nullptr;
   }
 
   auto future_result = analyze_mep_client->async_get_result(goal_handle);
   if (future_result.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to get result");
+    RCLCPP_ERROR(this->get_logger(), "Failed to get MEP result");
     return nullptr;
   }
 
@@ -683,19 +683,22 @@ std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::per
     /* Fill in the earliest start time of the trial as the time right after requesting events. */
     trial_result.earliest_start_time = this->get_current_time();
 
+    /* Analyze MEP if needed. */
+    if (trial.analyze_mep) {
+      auto mep_result = analyze_mep(trial.mep_config, start_time);
+      if (mep_result == nullptr) {
+        return {false, trial_result};
+      }
+      trial_result.mep = mep_result->mep;
+      success = success && mep_result->success;
+
+      if (!mep_result->success) {
+        RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
+      }
+    }
+
     /* Wait for events to finish. */
     success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
-  }
-
-  /* Analyze MEP if needed. */
-  if (trial.analyze_mep) {
-    auto mep_result = analyze_mep(trial.mep_config, start_time);
-    trial_result.mep = mep_result->mep;
-    success = success && mep_result->success;
-
-    if (!mep_result->success) {
-      RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
-    }
   }
 
   /* Fill trial result. */

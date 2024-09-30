@@ -263,13 +263,16 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
   }
 
   /* List all .json files in the directory and fetch their attributes. */
+  RCLCPP_INFO(this->get_logger(), "Reading datasets...");
+  RCLCPP_INFO(this->get_logger(), " ");
+
   for (const auto &entry : std::filesystem::directory_iterator(path)) {
     if (entry.is_regular_file() && entry.path().extension() == ".json") {
       std::ifstream file(entry.path());
       nlohmann::json json_data;
 
       std::string filename = entry.path().filename().string();
-      RCLCPP_INFO(this->get_logger(), "Found the dataset: %s", filename.c_str());
+      RCLCPP_INFO(this->get_logger(), "%s", filename.c_str());
 
       try {
         project_interfaces::msg::Dataset dataset_msg;
@@ -281,7 +284,7 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         if (json_data.contains("name") && json_data["name"].is_string()) {
           dataset_msg.name = json_data["name"];
         } else {
-          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'name' is missing or invalid in dataset %s", filename.c_str());
+          RCLCPP_ERROR(this->get_logger(), "  • Mandatory field 'name' is missing or invalid");
           continue;
         }
 
@@ -289,7 +292,7 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         if (json_data.contains("data_file") && json_data["data_file"].is_string()) {
           dataset_msg.data_filename = json_data["data_file"];
         } else {
-          RCLCPP_ERROR(this->get_logger(), "Mandatory field 'data_file' is missing or invalid in dataset %s", filename.c_str());
+          RCLCPP_ERROR(this->get_logger(), "  • Mandatory field 'data_file' is missing or invalid");
           continue;
         }
 
@@ -298,46 +301,43 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
           if (json_data["channels"].contains("eeg") && json_data["channels"]["eeg"].is_number_integer()) {
             dataset_msg.num_of_eeg_channels = json_data["channels"]["eeg"];
           } else {
-            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.eeg' is missing or invalid in dataset %s", filename.c_str());
+            RCLCPP_ERROR(this->get_logger(), "  • Mandatory field 'channels.eeg' is missing or invalid");
             continue;
           }
 
           if (json_data["channels"].contains("emg") && json_data["channels"]["emg"].is_number_integer()) {
             dataset_msg.num_of_emg_channels = json_data["channels"]["emg"];
           } else {
-            RCLCPP_ERROR(this->get_logger(), "Mandatory field 'channels.emg' is missing or invalid in dataset %s", filename.c_str());
+            RCLCPP_ERROR(this->get_logger(), "  • Mandatory field 'channels.emg' is missing or invalid");
             continue;
           }
         } else {
-          RCLCPP_ERROR(this->get_logger(), "Mandatory object 'channels' is missing or invalid in dataset %s", filename.c_str());
+          RCLCPP_ERROR(this->get_logger(), "  • Mandatory object 'channels' is missing or invalid");
           continue;
         }
 
 
-        /* Parse "trigger_file" field if it exists */
-	if (json_data.contains("trigger_file") && json_data["trigger_file"].is_string()) {
-	  dataset_msg.trigger_filename = json_data["trigger_file"];
-	  RCLCPP_INFO(this->get_logger(), "Trigger file found in JSON for dataset %s: %s",
-		      filename.c_str(), dataset_msg.trigger_filename.c_str());
-	} else {
-	  dataset_msg.trigger_filename = ""; // Set to empty string if not present
-	  RCLCPP_WARN(this->get_logger(), "No trigger file found in JSON for dataset: %s", filename.c_str());
-	}
-
-
+        /* Parse "event_file" field if it exists */
+        if (json_data.contains("event_file") && json_data["event_file"].is_string()) {
+          dataset_msg.event_filename = json_data["event_file"];
+          RCLCPP_INFO(this->get_logger(), "  • Event file: %s", dataset_msg.event_filename.c_str());
+        } else {
+          dataset_msg.event_filename = ""; // Set to empty string if not present
+          RCLCPP_WARN(this->get_logger(), "  • No events");
+        }
 
         /* Calculate the sampling frequency and duration from the data file. */
         std::string data_file_path = entry.path().parent_path().string() + "/" + dataset_msg.data_filename;
         auto [success, sampling_frequency, duration, samples_dropped] = get_dataset_info(data_file_path);
 
         if (!success) {
-          RCLCPP_ERROR(this->get_logger(), "Error reading dataset %s, skipping.", filename.c_str());
+          RCLCPP_ERROR(this->get_logger(), "  • Error reading the dataset, skipping...");
           continue;
         }
 
         if (samples_dropped) {
           /* TODO: Should this fail harder? */
-          RCLCPP_WARN(this->get_logger(), "Warning: Dropped samples found in dataset %s.", filename.c_str());
+          RCLCPP_WARN(this->get_logger(), "  • Warning: Dropped samples found");
         }
 
         dataset_msg.sampling_frequency = sampling_frequency;
@@ -346,8 +346,9 @@ std::vector<project_interfaces::msg::Dataset> EegSimulator::list_datasets(const 
         datasets.push_back(dataset_msg);
 
       } catch (const nlohmann::json::parse_error& ex) {
-        RCLCPP_ERROR(this->get_logger(), "JSON parse error with dataset %s: %s", filename.c_str(), ex.what());
+        RCLCPP_ERROR(this->get_logger(), "  • JSON parse error: %s", ex.what());
       }
+      RCLCPP_INFO(this->get_logger(), " ");
     }
   }
 
@@ -408,8 +409,7 @@ bool EegSimulator::set_dataset(std::string json_filename) {
   /* Update dataset internally. */
   this->dataset = dataset_map[json_filename];
 
-  RCLCPP_INFO(this->get_logger(), "Dataset JSON set to: %s", json_filename.c_str());
-  RCLCPP_INFO(this->get_logger(), "Dataset trigger file: %s", this->dataset.trigger_filename.c_str());
+  RCLCPP_INFO(this->get_logger(), "Dataset selected: %s", json_filename.c_str());
 
   /* If playback is set to true, re-initialize streaming. */
   if (this->playback) {
@@ -486,10 +486,8 @@ void EegSimulator::initialize_streaming() {
   std::string data_filename = this->dataset.data_filename;
   std::string data_file_path = data_directory + data_filename;
 
-   // Add debug logging here
-  RCLCPP_INFO(this->get_logger(), "Data directory: %s", data_directory.c_str());
-  RCLCPP_INFO(this->get_logger(), "Data filename: %s", data_filename.c_str());
-  RCLCPP_INFO(this->get_logger(), "Data file path: %s", data_file_path.c_str());
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Initializing streaming of dataset: %s", data_filename.c_str());
 
   data_file.open(data_file_path, std::ios::in);
 
@@ -497,8 +495,6 @@ void EegSimulator::initialize_streaming() {
     RCLCPP_ERROR(this->get_logger(), "Error opening file: %s", data_file_path.c_str());
     return;
   }
-
-  RCLCPP_INFO(this->get_logger(), "Reading data from file: %s", data_file_path.c_str());
 
   if (this->current_data_file_path != data_file_path) {
     this->is_loading = true;
@@ -525,37 +521,30 @@ void EegSimulator::initialize_streaming() {
 
   data_file.close();
 
-  /* Open trigger file. */
+  /* Open event file. */
 
-  std::string trigger_filename = this->dataset.trigger_filename;
-  std::string trigger_file_path = data_directory + trigger_filename;
+  std::string event_filename = this->dataset.event_filename;
+  std::string event_file_path = data_directory + event_filename;
 
-  // Add more debug logging here
-  RCLCPP_INFO(this->get_logger(), "Trigger filename: %s", trigger_filename.c_str());
-  RCLCPP_INFO(this->get_logger(), "Trigger file path: %s", trigger_file_path.c_str());
-
-  this->send_triggers = false;
-  if (!trigger_filename.empty()) {
-    if (trigger_file.is_open()) {
-        trigger_file.close();
+  this->send_events = false;
+  if (!event_filename.empty()) {
+    if (event_file.is_open()) {
+        event_file.close();
     }
-    trigger_file.open(trigger_file_path, std::ios::in);
+    event_file.open(event_file_path, std::ios::in);
 
-    if (!trigger_file.is_open()) {
-      RCLCPP_ERROR(this->get_logger(), "Error opening trigger file: %s", trigger_file_path.c_str());
+    if (!event_file.is_open()) {
+      RCLCPP_ERROR(this->get_logger(), "Error opening event file: %s", event_file_path.c_str());
     } else {
-      RCLCPP_INFO(this->get_logger(), "Reading triggers from file: %s", trigger_file_path.c_str());
+      RCLCPP_INFO(this->get_logger(), "Reading events from file: %s", event_file_path.c_str());
 
-      /* Read the next trigger time from the file already here so the session handler loop doesn't have to worry about it. */
-      read_next_trigger();
+      /* Read the next event time from the file already here so the session handler loop doesn't have to worry about it. */
+      read_next_event();
 
-      this->send_triggers = true;
+      this->send_events = true;
     }
-  } else {
-    RCLCPP_INFO(this->get_logger(), "No trigger file defined in the dataset JSON.");
   }
 }
-
 
 void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
   auto current_time = msg->time;
@@ -601,12 +590,12 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
     std::tie(stop, looped, sample_time) = publish_sample(current_time);
 
     if (looped) {
-      /* If dataset looped, reset the trigger file. */
-      if (this->send_triggers) {
-        trigger_file.clear();
-        trigger_file.seekg(0, std::ios::beg);
+      /* If dataset looped, reset the event file. */
+      if (this->send_events) {
+        event_file.clear();
+        event_file.seekg(0, std::ios::beg);
 
-        read_next_trigger();
+        read_next_event();
       }
     }
 
@@ -614,8 +603,8 @@ void EegSimulator::handle_session(const std::shared_ptr<system_interfaces::msg::
          after the sample is published. Doing this properly would require a "look-ahead" mechanism, where the time to publish
          next sample would be peeked in advance.
 
-         On the other hand, because triggers and samples are sent asynchronously, being a bit ahead in time ensures that both
-         the trigger and the corresponding sample have arrived to the subscriber before the session reaches that time. */
+         On the other hand, because events and samples are sent asynchronously, being a bit ahead in time ensures that both
+         the event and the corresponding sample have arrived to the subscriber before the session reaches that time. */
     dataset_time = sample_time;
   }
 
@@ -670,13 +659,13 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
 
   msg.time = time;
 
-  if (this->send_triggers && this->triggers_left) {
-    msg.is_trigger = next_trigger_time <= sample_time;
-    if (msg.is_trigger) {
-      msg.trigger_type = next_trigger_type;
-      read_next_trigger();
+  if (this->send_events && this->events_left) {
+    msg.is_event = next_event_time <= sample_time;
+    if (msg.is_event) {
+      msg.event_type = next_event_type;
+      read_next_event();
 
-      RCLCPP_INFO(this->get_logger(), "Published trigger of type %d with timestamp %.4f s.", msg.trigger_type, time);
+      RCLCPP_INFO(this->get_logger(), "Published event of type %d with timestamp %.4f s.", msg.event_type, time);
     }
   }
 
@@ -693,13 +682,13 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   return {false, looped, sample_time};
 }
 
-void EegSimulator::read_next_trigger() {
-  triggers_left = false;
+void EegSimulator::read_next_event() {
+  events_left = false;
   std::string line;
 
-  if (!std::getline(trigger_file, line)) {
-    if (trigger_file.eof()) {
-      RCLCPP_INFO(this->get_logger(), "Reached the end of trigger file.");
+  if (!std::getline(event_file, line)) {
+    if (event_file.eof()) {
+      RCLCPP_INFO(this->get_logger(), "Reached the end of event file.");
       return;
     }
   }
@@ -708,20 +697,20 @@ void EegSimulator::read_next_trigger() {
     /* Split the line at the comma. */
     size_t comma_pos = line.find(',');
     if (comma_pos == std::string::npos) {
-      throw std::invalid_argument("Missing comma in trigger file.");
+      throw std::invalid_argument("Missing comma in event file.");
     }
 
     /* Extract and convert the first and second columns. */
-    next_trigger_time = std::stod(line.substr(0, comma_pos));
-    next_trigger_type = std::stoi(line.substr(comma_pos + 1)); // Assuming trigger type is an integer
+    next_event_time = std::stod(line.substr(0, comma_pos));
+    next_event_type = std::stoi(line.substr(comma_pos + 1)); // Assuming event type is an integer
 
-    triggers_left = true;
+    events_left = true;
 
   } catch (const std::invalid_argument& e) {
-    RCLCPP_ERROR(this->get_logger(), "Invalid data in trigger file: %s", e.what());
+    RCLCPP_ERROR(this->get_logger(), "Invalid data in event file: %s", e.what());
 
   } catch (const std::out_of_range& e) {
-    RCLCPP_ERROR(this->get_logger(), "Number out of range in trigger file: %s", e.what());
+    RCLCPP_ERROR(this->get_logger(), "Number out of range in event file: %s", e.what());
   }
 }
 

@@ -12,23 +12,22 @@ def generate_random_data(num_eeg_channels, num_emg_channels, sampling_frequency,
 
     return data_with_timestamps
 
-def save_to_csv(output_directory, base_filename, data, fmt='%.5f'):
-    csv_filename = base_filename + ".csv"
-    output_path = os.path.join(output_directory, csv_filename)
+def save_to_csv(output_directory, filename, data, fmt='%.5f'):
+    output_path = os.path.join(output_directory, filename)
     np.savetxt(output_path, data, delimiter=",", fmt=fmt)
 
-def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_emg_channels, data_filename):
+def save_to_json(output_directory, base_filename, name, num_eeg_channels, num_emg_channels, data_filename, event_filename=None):
     json_filename = base_filename + ".json"
-    trigger_filename = base_filename + "_triggers"
     json_data = {
         "name": name,
         "channels": {
             "eeg": num_eeg_channels,
             "emg": num_emg_channels
         },
-        "data_file": data_filename + ".csv",
-        "trigger_file": trigger_filename + ".csv"
+        "data_file": data_filename,
     }
+    if event_filename:
+        json_data["event_file"] = event_filename
 
     output_path = os.path.join(output_directory, json_filename)
     with open(output_path, 'w') as json_file:
@@ -44,20 +43,43 @@ if __name__ == "__main__":
     parser.add_argument("--output_directory", type=str, default=".", help="Output directory for files")
     parser.add_argument("--output_filename", type=str, default="random_data", help="Output base filename without extension")
     parser.add_argument("--dataset_name", type=str, default="Random data", help="Name of the dataset")
+    parser.add_argument("--no_events", action="store_true", help="Do not generate events")
 
     args = parser.parse_args()
 
     data = generate_random_data(args.eeg_channels, args.emg_channels, args.sampling_frequency, args.duration)
-    save_to_csv(args.output_directory, args.output_filename, data)
 
-    triggers = np.array([
-        [1.0, 1],
-        [2.0, 2],
-        [5.0, 1],
-    ])
-    save_to_csv(args.output_directory, args.output_filename + "_triggers", triggers, fmt=['%.5f', '%d'])
+    data_filename = args.output_filename + ".csv"
+    save_to_csv(
+        output_directory=args.output_directory,
+        filename=data_filename,
+        data=data,
+    )
 
-    save_to_json(args.output_directory, args.output_filename, args.dataset_name, args.eeg_channels, args.emg_channels, args.output_filename)
+    event_filename = None
+    if not args.no_events:
+        events = np.array([
+            [1.0, 1],
+            [2.0, 2],
+            [5.0, 1],
+        ])
+        event_filename = args.output_filename + "_events.csv" if not args.no_events else None
+        save_to_csv(
+            output_directory=args.output_directory,
+            filename=event_filename,
+            data=events,
+            fmt=['%.5f', '%d'],
+        )
+
+    save_to_json(
+        output_directory=args.output_directory,
+        base_filename=args.output_filename,
+        name=args.dataset_name,
+        num_eeg_channels=args.eeg_channels,
+        num_emg_channels=args.emg_channels,
+        data_filename=data_filename,
+        event_filename=event_filename,
+    )
 
     print("Random data with {} EEG channels and {} EMG channels saved to {}/{}.csv".format(
         args.eeg_channels,

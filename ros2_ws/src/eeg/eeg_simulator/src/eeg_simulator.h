@@ -63,7 +63,7 @@ private:
 
   std::tuple<bool, bool, double_t> publish_sample(double_t current_time);
 
-  void read_next_trigger();
+  void read_next_event();
 
   void update_inotify_watch();
   void inotify_timer_callback();
@@ -78,10 +78,10 @@ private:
   bool playback = false;
   bool loop = false;
 
-  bool send_triggers = false;
+  bool send_events = false;
 
   bool session_started = false;
-  bool triggers_left = false;
+  bool events_left = false;
 
   bool is_streaming = false;
   bool is_loading = false;
@@ -92,8 +92,8 @@ private:
   double_t dataset_time;
   double_t sampling_period;
 
-  double_t next_trigger_time;
-  uint16_t next_trigger_type;
+  double_t next_event_time;
+  uint16_t next_event_type;
 
   double_t latest_sample_time;
 
@@ -103,7 +103,7 @@ private:
   uint8_t total_channels;
 
   std::ifstream data_file;
-  std::ifstream trigger_file;
+  std::ifstream event_file;
 
   std::vector<std::vector<double_t>> dataset_buffer;
   size_t current_sample_index = 0;
