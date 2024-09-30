@@ -48,6 +48,7 @@ class MTMSApi:
             channel_count=channel_count,
             verbose=verbose,
         )
+        self.interrupted = False
 
         self.channel_count = channel_count
         self.verbose = verbose
@@ -64,7 +65,11 @@ class MTMSApi:
         signal.signal(signal.SIGINT, self.handle_sigint)
 
     def handle_sigint(self, signum, frame):
+        self.interrupted = True
         raise KeyboardInterrupt
+
+    def is_interrupted(self):
+        return self.interrupted
 
     # General
 
