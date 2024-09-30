@@ -59,7 +59,8 @@ public:
     double_t sample_time,
     bool ready_for_trial,
     bool is_trigger,
-    uint16_t trigger_type);
+    bool is_event,
+    uint16_t event_type);
 
   WrapperState get_state() const;
   std::vector<std::string> get_internal_imports() const;
@@ -68,6 +69,9 @@ public:
   uint16_t get_processing_interval_in_samples() const;
   bool is_processing_interval_enabled() const;
   bool is_process_on_trigger_enabled() const;
+
+  std::pair<double, uint16_t> get_next_event() const;
+  void pop_event();
 
   void setup_custom_print();
 
@@ -90,6 +94,10 @@ private:
   std::unique_ptr<py::array_t<bool>> py_valid;
   std::unique_ptr<py::array_t<double>> py_eeg_data;
   std::unique_ptr<py::array_t<double>> py_emg_data;
+
+  std::priority_queue<std::pair<double, uint16_t>,
+                      std::vector<std::pair<double, uint16_t>>,
+                      std::greater<std::pair<double, uint16_t>>> event_queue;
 
   std::unordered_map<std::string, std::chrono::steady_clock::time_point> last_log_time;
 
