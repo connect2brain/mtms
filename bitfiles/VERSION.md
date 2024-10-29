@@ -1,5 +1,8 @@
 ## Version history
 
+### 0.5.13
+- MOD: Disable IGBT feedback check on Gen 2 devices due to issues with cross-channel interference.
+
 ### 0.5.12
 - MOD: Increase the maximum number of pulse pieces from 16 to 17.
 
