@@ -255,14 +255,15 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
        currently. */
     uint8_t trigger_channel = (type >> 4);
 
-    /* Trigger channel 1 (Isolated port A) is for sync trigger and trigger
-       channel 2 (Isolated port B) is for other trigger port between mTMS and
-       EEG device */
+    /* Trigger channel 1 (Isolated port A) is for sync/latency measurement trigger and
+       trigger channel 2 (Isolated port B) is for other trigger port. */
     if (trigger_channel == 1) {
       sync_trigger = true;
       sync_trigger_time = be64toh(*reinterpret_cast<uint64_t *>(buffer + trigger_event_base_index +
                                                                 TriggerEvent::MICROTIME));
     } else if (trigger_channel == 2) {
+      /* XXX: This is incorrect; trigger should not be in the next received sample, but the sample
+         whose time is closest to the trigger time. */
       this->trigger_in_next_sample = true;
       this->trigger_sample_index = sample_index;
 
@@ -292,6 +293,7 @@ NeurOneAdapter::read_eeg_data_packet() {
     RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Timeout while reading EEG data");
     return {PacketResult::ERROR, sample, -1.0};
   }
+
 
   uint8_t frame_type = this->buffer[0];
 

@@ -14,6 +14,11 @@ using namespace std::placeholders;
 const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
+const double_t latency_measurement_interval = 0.1;
+
+const char* tms_trigger_fio = "FIO5";
+const char* latency_measurement_trigger_fio = "FIO4";
+
 TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger("trigger_timer")) {
   /* Subscriber for mTMS device healthcheck. */
   this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
@@ -82,13 +87,25 @@ void TriggerTimer::handle_mtms_device_healthcheck(const std::shared_ptr<system_i
 void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
   double_t current_time = msg->time;
 
+  if (msg->is_latency_measurement_trigger) {
+    /* Log time between receiving the trigger and the current time. */
+    double_t difference = current_time - last_latency_measurement_time;
+    RCLCPP_INFO(logger, "Latency measurement trigger received. Latency: %.4f", difference);
+  }
+
   std::lock_guard<std::mutex> lock(queue_mutex);
 
   /* Trigger all events that are due. */
   while (!trigger_queue.empty() && trigger_queue.top() <= current_time) {
     RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f)", trigger_queue.top(), current_time);
-    trigger_labjack();
+    trigger_labjack(tms_trigger_fio);
     trigger_queue.pop();
+  }
+
+  /* Trigger latency measurement event at specific intervals. */
+  if (current_time - last_latency_measurement_time >= latency_measurement_interval) {
+    trigger_labjack(latency_measurement_trigger_fio);
+    last_latency_measurement_time = current_time;
   }
 }
 
@@ -108,13 +125,11 @@ void TriggerTimer::request_timed_trigger(
   response->success = true;
 }
 
-void TriggerTimer::trigger_labjack() {
+void TriggerTimer::trigger_labjack(const char* name) {
   if (labjack_handle == -1) {
     RCLCPP_WARN(logger, "LabJack is not connected. Skipping trigger.");
     return;
   }
-
-  const char* name = "FIO4";
 
   /* Set output port state to high. */
   int err = LJM_eWriteName(labjack_handle, name, 1);
