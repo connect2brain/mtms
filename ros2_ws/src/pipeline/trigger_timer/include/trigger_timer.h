@@ -32,7 +32,9 @@ private:
   int labjack_handle = -1;
   bool mtms_device_available = false;
 
-  // Priority queue for trigger times (min-heap).
+  double_t last_latency_measurement_time = 0.0;
+
+  /* Priority queue for trigger times. */
   std::priority_queue<double_t, std::vector<double_t>, std::greater<double_t>> trigger_queue;
   std::mutex queue_mutex;
 
@@ -42,7 +44,7 @@ private:
   void request_timed_trigger(
     const std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request,
     std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Response> response);
-  void trigger_labjack();
+  void trigger_labjack(const char* name);
   bool safe_error_check(int err, const char* action);
 
   /* Healthcheck */
