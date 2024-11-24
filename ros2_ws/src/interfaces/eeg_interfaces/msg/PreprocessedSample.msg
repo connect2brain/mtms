@@ -7,6 +7,7 @@ float64 time
 bool valid
 
 bool is_trigger
+bool is_latency_measurement_trigger
 
 bool is_event
 uint16 event_type

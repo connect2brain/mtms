@@ -58,6 +58,17 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   std::string eeg_device_type;
   this->get_parameter("eeg-device", eeg_device_type);
 
+  /* Is mTMS device enabled.
+
+     XXX: This overlaps with "mtms_device_available", which is inferred from healthcheck.
+       Choose one or the other. Currently unused. */
+  auto mtms_device_enabled_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  mtms_device_enabled_descriptor.description = "Is mTMS device enabled";
+  mtms_device_enabled_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_BOOL;
+  this->declare_parameter("mtms-device-enabled", false, mtms_device_enabled_descriptor);
+
+  this->get_parameter("mtms-device-enabled", this->is_mtms_device_enabled);
+
   /* The number of tolerated dropped samples */
   auto num_of_tolerated_dropped_samples_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
   num_of_tolerated_dropped_samples_descriptor.description = "The number of tolerated dropped samples";
@@ -377,6 +388,9 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 void EegBridge::process_eeg_data_packet() {
   auto [result_type, sample, sync_time] = this->eeg_adapter->read_eeg_data_packet();
 
+  /* TODO: Could timestamp even earlier. */
+  sample.metadata.system_time = this->get_clock()->now();
+
   auto eeg_info = this->eeg_adapter->get_eeg_info();
 
   if (eeg_info.sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
@@ -386,9 +400,16 @@ void EegBridge::process_eeg_data_packet() {
 
   switch (result_type) {
 
+  /* XXX: Misnomer, "sync" refers to sync trigger when mTMS device is enabled, but the same trigger
+     is used for automatic latency correction. */
   case PacketResult::SAMPLE_WITH_SYNC:
-    /* Handle sync before sample, as sync will update time_correction */
-    handle_sync_trigger(sync_time);
+    if (this->mtms_device_available) {
+      /* Handle sync before sample, as sync will update time_correction */
+      handle_sync_trigger(sync_time);
+    } else {
+      RCLCPP_INFO(this->get_logger(), "Received latency measurement trigger at %.4f s.", sync_time);
+      sample.is_latency_measurement_trigger = true;
+    }
     handle_sample(sample);
     break;
 
@@ -397,7 +418,12 @@ void EegBridge::process_eeg_data_packet() {
     break;
 
   case PacketResult::SYNC_TRIGGER:
-    handle_sync_trigger(sync_time);
+    if (this->mtms_device_available) {
+      handle_sync_trigger(sync_time);
+    } else {
+      /* TODO: Implement support; this probably requires refactoring for stronger abstractions. */
+      RCLCPP_ERROR(this->get_logger(), "Sending trigger as packet currently not supported without mTMS device.");
+    }
     break;
 
   case PacketResult::INTERNAL:
