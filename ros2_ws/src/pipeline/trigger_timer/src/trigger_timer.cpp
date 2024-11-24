@@ -15,6 +15,7 @@ const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
 const double_t latency_measurement_interval = 0.1;
+const double_t maximum_triggering_error = 0.003;
 
 const char* tms_trigger_fio = "FIO5";
 const char* latency_measurement_trigger_fio = "FIO4";
@@ -89,16 +90,27 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
 
   if (msg->is_latency_measurement_trigger) {
     /* Log time between receiving the trigger and the current time. */
-    double_t difference = current_time - last_latency_measurement_time;
-    RCLCPP_INFO(logger, "Latency measurement trigger received. Latency: %.4f", difference);
+    current_latency = current_time - last_latency_measurement_time;
+    RCLCPP_INFO(logger, "Current latency: %.4f", current_latency);
   }
+
+  double_t latency_corrected_time = current_time - current_latency;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
 
   /* Trigger all events that are due. */
-  while (!trigger_queue.empty() && trigger_queue.top() <= current_time) {
-    RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f)", trigger_queue.top(), current_time);
-    trigger_labjack(tms_trigger_fio);
+  while (!trigger_queue.empty() && trigger_queue.top() <= latency_corrected_time) {
+    double_t scheduled_time = trigger_queue.top();
+    double_t error = latency_corrected_time - scheduled_time;
+
+    if (std::abs(error) <= maximum_triggering_error) {
+      RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f, error: %.4f)", scheduled_time, latency_corrected_time, error);
+      trigger_labjack(tms_trigger_fio);
+    } else {
+      RCLCPP_WARN(logger, "Skipping trigger at time: %.4f (current time: %.4f, error: %.4f exceeds threshold: %.4f)",
+                  scheduled_time, latency_corrected_time, error, maximum_triggering_error);
+    }
+
     trigger_queue.pop();
   }
 
