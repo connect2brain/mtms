@@ -28,9 +28,12 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SessionState.msg"
   "msg/Session.msg"
 
+  "msg/TimedTrigger.msg"
+
   "srv/StartSession.srv"
   "srv/StopSession.srv"
 
+  "srv/RequestTimedTrigger.srv"
   "srv/RequestTrigger.srv"
 )
 

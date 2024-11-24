@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(labjack_triggerer)
+project(trigger_timer)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(eeg_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
@@ -17,32 +18,33 @@ include_directories(include include/labjack)
 find_library(LABJACKM_LIBRARY NAMES LabJackM)
 
 add_executable(
-        labjack_triggerer
+        trigger_timer
 
-        src/labjack_triggerer.cpp
+        src/trigger_timer.cpp
 
         src/memory_utils.cpp
         src/scheduling_utils.cpp
 )
 
-target_include_directories(labjack_triggerer
+target_include_directories(trigger_timer
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
-target_link_libraries(labjack_triggerer ${LABJACKM_LIBRARY})
+target_link_libraries(trigger_timer ${LABJACKM_LIBRARY})
 
 ament_target_dependencies(
-  labjack_triggerer
+  trigger_timer
   rclcpp
   rclcpp_action
   std_msgs
+  eeg_interfaces
   event_interfaces
   system_interfaces
 )
 
 install(TARGETS
-        labjack_triggerer
+        trigger_timer
         DESTINATION lib/${PROJECT_NAME}
         )
 

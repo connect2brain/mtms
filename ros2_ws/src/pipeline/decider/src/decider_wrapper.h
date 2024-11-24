@@ -17,6 +17,7 @@
 #include "experiment_interfaces/msg/trial.hpp"
 #include "targeting_interfaces/msg/electric_target.hpp"
 #include "pipeline_interfaces/msg/sensory_stimulus.hpp"
+#include "system_interfaces/msg/timed_trigger.hpp"
 
 #include "std_msgs/msg/string.hpp"
 
@@ -53,7 +54,7 @@ public:
 
   std::vector<std::vector<targeting_interfaces::msg::ElectricTarget>> get_targets();
 
-  std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, bool, bool> process(
+  std::tuple<bool, std::shared_ptr<experiment_interfaces::msg::Trial>, std::shared_ptr<system_interfaces::msg::TimedTrigger>, bool> process(
     pipeline_interfaces::msg::SensoryStimulus& output_sensory_stimulus,
     const RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>>& buffer,
     double_t sample_time,

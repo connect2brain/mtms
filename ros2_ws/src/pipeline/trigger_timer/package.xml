@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>labjack_triggerer</name>
+  <name>trigger_timer</name>
   <version>0.0.1</version>
-  <description>EEG labjack_triggerer</description>
+  <description>Trigger timer</description>
   <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>TODO</license>
 
@@ -12,6 +12,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
 
+  <depend>eeg_interfaces</depend>
   <depend>event_interfaces</depend>
   <depend>system_interfaces</depend>
 
