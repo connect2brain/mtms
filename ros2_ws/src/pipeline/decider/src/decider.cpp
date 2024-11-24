@@ -167,11 +167,11 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     RCLCPP_INFO(get_logger(), "Action /trial/perform not available, waiting...");
   }
 
-  /* Service client for LabJack trigger. */
-  this->labjack_trigger_client = this->create_client<system_interfaces::srv::RequestTrigger>("/labjack/trigger");
+  /* Service client for timed trigger. */
+  this->timed_trigger_client = this->create_client<system_interfaces::srv::RequestTimedTrigger>("/pipeline/timed_trigger");
 
-  while (!labjack_trigger_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /labjack/trigger not available, waiting...");
+  while (!timed_trigger_client->wait_for_service(2s)) {
+    RCLCPP_INFO(get_logger(), "Service /pipeline/timed_trigger not available, waiting...");
   }
 
   /* Initialize variables. */
@@ -443,28 +443,30 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
 
 /* Service clients */
 
-void EegDecider::trigger_labjack() {
-  auto request = std::make_shared<system_interfaces::srv::RequestTrigger::Request>();
+void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time) {
+  auto request = std::make_shared<system_interfaces::srv::RequestTimedTrigger::Request>();
+  request->timed_trigger = *timed_trigger;
+  request->system_time_for_sample = system_time;
 
-  using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest;
+  using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest;
 
   auto response_received_callback = [this](ServiceResponseFuture future) {
-    this->labjack_triggered_callback(future);
+    this->timed_trigger_callback(future);
   };
 
-  auto future_result = this->labjack_trigger_client->async_send_request(request, response_received_callback);
+  auto future_result = this->timed_trigger_client->async_send_request(request, response_received_callback);
 
-  this->triggering_labjack = true;
+  this->processing_timed_trigger = true;
 }
 
-void EegDecider::labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future) {
+void EegDecider::timed_trigger_callback(rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest future) {
   auto result = future.get().second;
   if (result->success) {
-    RCLCPP_INFO(this->get_logger(), "Successfully triggered LabJack.");
+    RCLCPP_INFO(this->get_logger(), "Successfully sent timed trigger.");
   } else {
-    RCLCPP_ERROR(this->get_logger(), "Failed to trigger LabJack.");
+    RCLCPP_ERROR(this->get_logger(), "Failed to send timed trigger.");
   }
-  this->triggering_labjack = false;
+  this->processing_timed_trigger = false;
 }
 
 /* Initialization and reset functions */
@@ -735,27 +737,29 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle incoming trigger from the EEG device, indicating a pulse when using LabJack to trigger an external TMS device. */
+/* Handle incoming trigger from the EEG device, indicating a pulse when using timed triggers to trigger an external TMS device. */
 void EegDecider::handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> trigger_msg) {
   auto eeg_trigger_time = trigger_msg->time;
 
-  if (this->labjack_decision_times.empty()) {
+  if (this->trigger_times.empty()) {
     return;
   }
   RCLCPP_INFO(this->get_logger(), "Registered trigger from EEG device at: %.4f (s), interpreting as feedback from TMS.", eeg_trigger_time);
 
-  double_t decision_time = this->labjack_decision_times.front();
-  this->labjack_decision_times.pop();
+  double_t next_trigger_time = this->trigger_times.front();
+  this->trigger_times.pop();
 
-  /* Calculate the time difference between the incoming EEG trigger and the decision time. */
-  double_t time_difference = eeg_trigger_time - decision_time;
+  /* Calculate the time difference between the incoming EEG trigger and the trigger time. */
+  double_t time_difference = eeg_trigger_time - next_trigger_time;
 
-  RCLCPP_INFO(this->get_logger(), "Time difference between deciding to trigger LabJack and the incoming EEG trigger: %.4f (s)", time_difference);
+  RCLCPP_INFO(this->get_logger(), "Time difference between trigger time and the incoming EEG trigger: %.4f (s)", time_difference);
 
   /* Publish latency ROS message. */
   auto msg = pipeline_interfaces::msg::Latency();
   msg.latency = time_difference;
-  msg.decision_time = decision_time;
+
+  /* XXX: Might be misnamed, should it rather be trigger_time? */
+  msg.decision_time = next_trigger_time;
 
   this->latency_publisher->publish(msg);
 }
@@ -774,6 +778,7 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_msg->time = msg->time;
 
   preprocessed_msg->is_trigger = msg->is_trigger;
+  preprocessed_msg->is_latency_measurement_trigger = msg->is_latency_measurement_trigger;
   preprocessed_msg->is_event = msg->is_event;
   preprocessed_msg->event_type = msg->event_type;
 
@@ -785,6 +790,7 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
   preprocessed_metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
   preprocessed_metadata.is_simulation = msg->metadata.is_simulation;
+  preprocessed_metadata.system_time = msg->metadata.system_time;
 
   /* XXX: Use dummy value for processing time if not available. */
   preprocessed_metadata.processing_time = 0.0;
@@ -931,12 +937,12 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   auto has_minimum_intertrial_interval_passed = std::isnan(this->previous_stimulation_time) ||
                                                 time_since_previous_trial >= this->minimum_intertrial_interval;
   auto ready_for_trial = !performing_trial &&
-                         !triggering_labjack &&
+                         !processing_timed_trigger &&
                          this->trial_queue.empty() &&
                          has_minimum_intertrial_interval_passed;
 
   /* Process the sample. */
-  auto [success, trial, trigger_labjack, request_sensory_stimulus] = this->decider_wrapper->process(
+  auto [success, trial, timed_trigger, request_sensory_stimulus] = this->decider_wrapper->process(
     this->sensory_stimulus,
     this->sample_buffer,
     sample_time,
@@ -957,14 +963,14 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
 
   bool is_trial_requested = trial != nullptr;
 
-  /* Note: 'Stimulation' encompasses both trial and LabJack trigger. */
-  bool is_stimulation_requested = is_trial_requested || trigger_labjack;
+  /* Note: 'Stimulation' includes both trials (for mTMS device) and timed triggers (for other TMS devices). */
+  bool is_stimulation_requested = is_trial_requested || timed_trigger;
 
-  bool is_already_stimulating = this->performing_trial || this->triggering_labjack;
+  bool is_already_stimulating = this->performing_trial || this->processing_timed_trigger;
 
   /* Check that the decider is not already stimulating. */
   if (is_stimulation_requested && is_already_stimulating) {
-    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or triggering LabJack, ignoring the request.");
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or timed trigger, ignoring the request.");
     return;
   }
 
@@ -988,16 +994,15 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     this->previous_stimulation_time = sample_time;
   }
 
-  /* Trigger LabJack if requested. */
-  if (trigger_labjack) {
-    this->labjack_decision_times.push(sample_time);
+  /* Send timed trigger if requested. */
+  if (timed_trigger) {
+    double_t trigger_time = timed_trigger->time;
+    this->trigger_times.push(trigger_time);
 
-    RCLCPP_INFO(this->get_logger(), "Triggering LabJack at time %.3f (s).", sample_time);
-
-    this->trigger_labjack();
+    this->request_timed_trigger(timed_trigger, msg->metadata.system_time);
 
     /* Update the previous stimulation time. */
-    this->previous_stimulation_time = sample_time;
+    this->previous_stimulation_time = trigger_time;
   }
 
   /* Request sensory stimulus if requested. */

@@ -17,7 +17,7 @@
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
 #include "eeg_interfaces/msg/trigger.hpp"
 
-#include "system_interfaces/srv/request_trigger.hpp"
+#include "system_interfaces/srv/request_timed_trigger.hpp"
 
 #include "experiment_interfaces/msg/trial.hpp"
 #include "experiment_interfaces/action/perform_trial.hpp"
@@ -84,8 +84,8 @@ private:
   void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
   void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
   void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
-  void trigger_labjack();
-  void labjack_triggered_callback(rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedFutureWithRequest future);
+  void request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time);
+  void timed_trigger_callback(rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest future);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
   void initialize_module();
@@ -148,7 +148,7 @@ private:
   rclcpp::Service<project_interfaces::srv::SetDeciderEnabled>::SharedPtr set_decider_enabled_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr decider_enabled_publisher;
 
-  rclcpp::Client<system_interfaces::srv::RequestTrigger>::SharedPtr labjack_trigger_client;
+  rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedPtr timed_trigger_client;
 
   rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
 
@@ -188,8 +188,8 @@ private:
   /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
 
-  /* For latency calculation using LabJack, store the times of triggering LabJack in a queue. */
-  std::queue<double_t> labjack_decision_times;
+  /* For latency calculation using timed triggers, store the trigger times in a queue. */
+  std::queue<double_t> trigger_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
@@ -200,7 +200,7 @@ private:
   std::map<std::string, GoalMetadata> goal_to_metadata_map;
 
   bool performing_trial = false;
-  bool triggering_labjack = false;
+  bool processing_timed_trigger = false;
 
   bool preprocessor_enabled = false;
 
