@@ -1,0 +1,7 @@
+# Used in the real-time pipeline for timed trigger using LabJack.
+TimedTrigger timed_trigger
+
+# System time when the sample was taken.
+builtin_interfaces/Time system_time_for_sample
+---
+bool success
