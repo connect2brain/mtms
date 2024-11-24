@@ -34,19 +34,20 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
+COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/pipeline/labjack_triggerer src/pipeline/labjack_triggerer/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select labjack_triggerer
+COPY ros2_ws/src/pipeline/trigger_timer src/pipeline/trigger_timer/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select trigger_timer
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/pipeline/labjack_triggerer/ros_entrypoint.sh .
+COPY ros2_ws/src/pipeline/trigger_timer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
