@@ -1,0 +1,4 @@
+# Used in the real-time pipeline for timed trigger using LabJack.
+TimedTrigger timed_trigger
+---
+bool success

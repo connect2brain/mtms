@@ -4,26 +4,33 @@
 #include <LabJackM.h>
 #include "LJM_Utilities.h"
 
-#include "labjack_triggerer.h"
+#include "trigger_timer.h"
 
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
 using namespace std::placeholders;
 
-const std::string LABJACK_TRIGGER_SERVICE = "/labjack/trigger";
+const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
+const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
-LabjackTriggerer::LabjackTriggerer() : Node("labjack_triggerer"), logger(rclcpp::get_logger("labjack_triggerer")) {
+TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger("trigger_timer")) {
   /* Subscriber for mTMS device healthcheck. */
   this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
     "/mtms_device/healthcheck",
     10,
-    std::bind(&LabjackTriggerer::handle_mtms_device_healthcheck, this, _1));
+    std::bind(&TriggerTimer::handle_mtms_device_healthcheck, this, _1));
+
+  /* Subscriber for EEG raw data. */
+  this->eeg_raw_subscriber = create_subscription<eeg_interfaces::msg::Sample>(
+    EEG_RAW_TOPIC,
+    10,
+    std::bind(&TriggerTimer::handle_eeg_raw, this, _1));
 
   /* Service for trigger request. */
-  this->trigger_request_service = create_service<system_interfaces::srv::RequestTrigger>(
-    LABJACK_TRIGGER_SERVICE,
-    std::bind(&LabjackTriggerer::request_trigger, this, _1, _2));
+  this->trigger_request_service = create_service<system_interfaces::srv::RequestTimedTrigger>(
+    TIMED_TRIGGER_SERVICE,
+    std::bind(&TriggerTimer::request_timed_trigger, this, _1, _2));
 
   /* Attempt initial connection to LabJack. */
   attempt_labjack_connection();
@@ -31,16 +38,16 @@ LabjackTriggerer::LabjackTriggerer() : Node("labjack_triggerer"), logger(rclcpp:
   /* Set up a timer to attempt reconnection every second. */
   timer = this->create_wall_timer(
     std::chrono::seconds(1),
-    std::bind(&LabjackTriggerer::attempt_labjack_connection, this));
+    std::bind(&TriggerTimer::attempt_labjack_connection, this));
 }
 
-LabjackTriggerer::~LabjackTriggerer() {
+TriggerTimer::~TriggerTimer() {
   if (labjack_handle != -1) {
     CloseOrDie(labjack_handle);
   }
 }
 
-void LabjackTriggerer::attempt_labjack_connection() {
+void TriggerTimer::attempt_labjack_connection() {
   if (labjack_handle == -1) {
     /* Attempt to open a connection to the LabJack device. */
     int err = LJM_Open(LJM_dtANY, LJM_ctANY, "LJM_idANY", &labjack_handle);
@@ -55,7 +62,7 @@ void LabjackTriggerer::attempt_labjack_connection() {
   }
 }
 
-bool LabjackTriggerer::safe_error_check(int err, const char* action) {
+bool TriggerTimer::safe_error_check(int err, const char* action) {
   if (err != LJME_NOERROR) {
     RCLCPP_ERROR(logger, "%s failed with error code: %d", action, err);
     if (err == LJME_RECONNECT_FAILED) {
@@ -68,19 +75,42 @@ bool LabjackTriggerer::safe_error_check(int err, const char* action) {
   return true;
 }
 
-void LabjackTriggerer::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
+void TriggerTimer::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
   this->mtms_device_available = msg->status.value == system_interfaces::msg::HealthcheckStatus::READY;
 }
 
-void LabjackTriggerer::request_trigger(
-    [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::RequestTrigger::Request> request,
-    std::shared_ptr<system_interfaces::srv::RequestTrigger::Response> response) {
+void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
+  double_t current_time = msg->time;
 
-  RCLCPP_INFO(logger, "LabJack trigger requested.");
+  std::lock_guard<std::mutex> lock(queue_mutex);
 
+  /* Trigger all events that are due. */
+  while (!trigger_queue.empty() && trigger_queue.top() <= current_time) {
+    RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f)", trigger_queue.top(), current_time);
+    trigger_labjack();
+    trigger_queue.pop();
+  }
+}
+
+void TriggerTimer::request_timed_trigger(
+    const std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request,
+    std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Response> response) {
+
+  double_t trigger_time = request->timed_trigger.time;
+
+  /* Add the trigger time to the queue. */
+  {
+    std::lock_guard<std::mutex> lock(queue_mutex);
+    trigger_queue.push(trigger_time);
+  }
+
+  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f", trigger_time);
+  response->success = true;
+}
+
+void TriggerTimer::trigger_labjack() {
   if (labjack_handle == -1) {
-    RCLCPP_WARN(logger, "LabJack is not connected. Unable to trigger.");
-    response->success = false;
+    RCLCPP_WARN(logger, "LabJack is not connected. Skipping trigger.");
     return;
   }
 
@@ -89,7 +119,6 @@ void LabjackTriggerer::request_trigger(
   /* Set output port state to high. */
   int err = LJM_eWriteName(labjack_handle, name, 1);
   if (!safe_error_check(err, "Setting digital output on LabJack")) {
-    response->success = false;
     return;
   }
 
@@ -99,26 +128,24 @@ void LabjackTriggerer::request_trigger(
   /* Set output port state to low. */
   err = LJM_eWriteName(labjack_handle, name, 0);
   if (!safe_error_check(err, "Setting digital output on LabJack")) {
-    response->success = false;
     return;
   }
 
   RCLCPP_INFO(logger, "Triggered LabJack on output port %s", name);
-  response->success = true;
 }
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("labjack_triggerer"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_timer"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
 
-  auto node = std::make_shared<LabjackTriggerer>();
+  auto node = std::make_shared<TriggerTimer>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("labjack_triggerer"), "Locking memory");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_timer"), "Locking memory");
   lock_memory();
   preallocate_memory(1024 * 1024 * 10); //10 MB
 #endif

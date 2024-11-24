@@ -157,7 +157,7 @@ class Decider:
 
         # Perform a trial once every two seconds. (Note that the processing interval, defined in get_configuration method,
         # is 100 samples, so with a sampling frequency of 1000 Hz, the interval is 0.1 seconds, implying that performing the
-        # trial every 20 process calls is equivalent to performing it every two seconds.)
+        # trial every 20 process calls is equivalent to performing it every four seconds.)
         self.intertrial_interval_in_process_calls = 20
 
         # As an example, write the decision times (= time of the EEG sample based on which the trial was decided to be performed)
@@ -365,7 +365,7 @@ class Decider:
             except multiprocessing.TimeoutError as e:
                 pass
 
-        # Otherwise, perform trial once every two seconds, as defined by self.intertrial_interval_in_process_calls.
+        # Otherwise, perform trial once every four seconds, as defined by self.intertrial_interval_in_process_calls.
         if self.buffer_count % self.intertrial_interval_in_process_calls != 0:
             return
 
@@ -404,12 +404,10 @@ class Decider:
         return {
             'trial': trial,
 
-            # In addition to performing a trial using the mTMS device, the decider can create a trigger
-            # signal using LabJack T4. This is useful for triggering commercial TMS devices or other
-            # devices that require a trigger signal, and when the mTMS device is not available. For
-            # now, timing the LabJack trigger into the future is not supported, so the trigger is
-            # always timed as soon as possible.
-            'trigger_labjack': False,
+            # In addition to performing a trial using the mTMS device, the decider can create timed triggers
+            # using LabJack T4. This is useful for triggering commercial TMS devices or other
+            # devices that require a trigger signal, and when the mTMS device is not available.
+            'timed_trigger': current_time + 0.1,
         }
 
 
