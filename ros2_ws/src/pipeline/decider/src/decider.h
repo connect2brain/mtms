@@ -84,7 +84,7 @@ private:
   void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
   void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
   void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
-  void request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger);
+  void request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time);
   void timed_trigger_callback(rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest future);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);

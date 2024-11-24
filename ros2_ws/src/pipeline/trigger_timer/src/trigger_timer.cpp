@@ -133,7 +133,11 @@ void TriggerTimer::request_timed_trigger(
     trigger_queue.push(trigger_time);
   }
 
-  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f", trigger_time);
+  rclcpp::Time now = this->get_clock()->now();
+  rclcpp::Time sample_time_rcl(request->system_time_for_sample);
+  double_t time_diff = now.seconds() - sample_time_rcl.seconds();
+
+  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f, decision-making latency: %.4f", trigger_time, time_diff);
   response->success = true;
 }
 

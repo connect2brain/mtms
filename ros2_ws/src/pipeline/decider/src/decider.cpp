@@ -443,9 +443,10 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
 
 /* Service clients */
 
-void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger) {
+void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time) {
   auto request = std::make_shared<system_interfaces::srv::RequestTimedTrigger::Request>();
   request->timed_trigger = *timed_trigger;
+  request->system_time_for_sample = system_time;
 
   using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest;
 
@@ -998,8 +999,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     double_t trigger_time = timed_trigger->time;
     this->trigger_times.push(trigger_time);
 
-    RCLCPP_INFO(this->get_logger(), "Sending timed trigger (time: %.4f s) at time %.4f (s).", timed_trigger->time, sample_time);
-    this->request_timed_trigger(timed_trigger);
+    this->request_timed_trigger(timed_trigger, msg->metadata.system_time);
 
     /* Update the previous stimulation time. */
     this->previous_stimulation_time = trigger_time;
