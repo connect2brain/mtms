@@ -583,10 +583,12 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     preprocessed_sample.metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
     preprocessed_sample.metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
     preprocessed_sample.metadata.is_simulation = msg->metadata.is_simulation;
+    preprocessed_sample.metadata.system_time = msg->metadata.system_time;
 
     /* XXX: Just copy trigger and event fields into preprocessed sample; this is probably incorrect
        in case samples are delayed by the preprocessor. */
     preprocessed_sample.is_trigger = msg->is_trigger;
+    preprocessed_sample.is_latency_measurement_trigger = msg->is_latency_measurement_trigger;
     preprocessed_sample.is_event = msg->is_event;
     preprocessed_sample.event_type = msg->event_type;
 

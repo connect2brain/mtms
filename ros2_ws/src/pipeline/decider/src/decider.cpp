@@ -777,6 +777,7 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_msg->time = msg->time;
 
   preprocessed_msg->is_trigger = msg->is_trigger;
+  preprocessed_msg->is_latency_measurement_trigger = msg->is_latency_measurement_trigger;
   preprocessed_msg->is_event = msg->is_event;
   preprocessed_msg->event_type = msg->event_type;
 
@@ -788,6 +789,7 @@ void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::S
   preprocessed_metadata.num_of_eeg_channels = msg->metadata.num_of_eeg_channels;
   preprocessed_metadata.num_of_emg_channels = msg->metadata.num_of_emg_channels;
   preprocessed_metadata.is_simulation = msg->metadata.is_simulation;
+  preprocessed_metadata.system_time = msg->metadata.system_time;
 
   /* XXX: Use dummy value for processing time if not available. */
   preprocessed_metadata.processing_time = 0.0;
