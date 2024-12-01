@@ -69,6 +69,11 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
     TIMED_TRIGGER_SERVICE,
     std::bind(&TriggerTimer::handle_request_timed_trigger, this, _1, _2));
 
+  /* Publisher for trigger info. */
+  this->trigger_info_publisher = this->create_publisher<pipeline_interfaces::msg::TriggerInfo>(
+    "/pipeline/trigger_info",
+    10);
+
   /* Publisher for timing latency. */
   this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
     "/pipeline/timing/latency",
@@ -154,7 +159,7 @@ void TriggerTimer::handle_mtms_device_healthcheck(const std::shared_ptr<system_i
 void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
   double_t current_time = msg->time;
 
-  double_t latency_corrected_time = current_time + current_latency;
+  double_t latency_corrected_time = current_time + this->current_latency;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
 
@@ -162,8 +167,9 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   while (!trigger_queue.empty() && trigger_queue.top() <= latency_corrected_time) {
     double_t scheduled_time = trigger_queue.top();
     double_t error = latency_corrected_time - scheduled_time;
+    bool success = std::abs(error) <= maximum_triggering_error;
 
-    if (std::abs(error) <= maximum_triggering_error) {
+    if (success) {
       RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f, error: %.4f)", scheduled_time, latency_corrected_time, error);
       trigger_labjack(tms_trigger_fio);
     } else {
@@ -172,6 +178,15 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
     }
 
     trigger_queue.pop();
+
+    /* Publish trigger info. */
+    auto msg = pipeline_interfaces::msg::TriggerInfo();
+    msg.success = success;
+    msg.scheduled_time = scheduled_time;
+    msg.current_latency = this->current_latency;
+    msg.latency_corrected_actual_time = latency_corrected_time;
+
+    this->trigger_info_publisher->publish(msg);
   }
 
   /* Trigger latency measurement event at specific intervals. */
