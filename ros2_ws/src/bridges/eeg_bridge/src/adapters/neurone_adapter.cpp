@@ -209,7 +209,7 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
       sync_trigger_received = triggers[TriggerBits::A_IN];
 
       if (sample.is_trigger) {
-        RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Trigger received with sample %lu",
+        RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger with sample %lu",
                     sample_index);
       }
       break;
@@ -225,9 +225,12 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
   while (!trigger_queue.empty() && trigger_queue.top().timestamp <= sample_time_s) {
     trigger_queue.pop();
 
-    // Set the flag to tag the sample
+    /* Set the flag to tag the sample. */
     tag_sample_with_trigger = true;
+
+    RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Flagging sample %lu with trigger", sample_index);
   }
+  sample.is_trigger = tag_sample_with_trigger;
 
   sample.time = sample_time_s;
   sample.index = sample_index;
@@ -271,7 +274,7 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
       trigger_event.timestamp = trigger_time_s;
       trigger_queue.push(trigger_event);
 
-      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger at time: %f",
+      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger packet at time: %f",
           trigger_time_s);
     } else {
       RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown trigger port: %u", trigger_channel);

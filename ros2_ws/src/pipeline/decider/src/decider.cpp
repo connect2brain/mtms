@@ -155,7 +155,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
 
   /* Publisher for timing error. */
   this->timing_error_publisher = this->create_publisher<pipeline_interfaces::msg::TimingError>(
-    "/pipeline/timing_error",
+    "/pipeline/timing/error",
     10);
 
   /* Publisher for decision info. */
@@ -170,7 +170,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
 
   /* Publisher for timing latency. */
   this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
-    "/pipeline/timing_latency",
+    "/pipeline/timing/latency",
     10);
 
   /* Publisher for sensory stimulus. */
@@ -265,6 +265,7 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->first_sample_of_session = true;
     this->total_dropped_samples = 0;
+    update_dropped_sample_count();
 
     this->reinitialize = true;
     this->previous_stimulation_time = UNSET_PREVIOUS_TIME;
@@ -479,9 +480,7 @@ void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::srv::R
 
 void EegDecider::timed_trigger_callback(rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest future) {
   auto result = future.get().second;
-  if (result->success) {
-    RCLCPP_INFO(this->get_logger(), "Successfully sent timed trigger.");
-  } else {
+  if (!result->success) {
     RCLCPP_ERROR(this->get_logger(), "Failed to send timed trigger.");
   }
   this->processing_timed_trigger = false;
@@ -726,6 +725,12 @@ void EegDecider::update_decider_list() {
 }
 
 /* EEG functions */
+void EegDecider::update_dropped_sample_count() {
+  auto msg = std_msgs::msg::Int32();
+  msg.data = this->total_dropped_samples;
+
+  this->dropped_sample_count_publisher->publish(msg);
+}
 
 void EegDecider::check_dropped_samples(double_t sample_time) {
   if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
@@ -767,10 +772,7 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
             "Dropped samples detected. Time difference: %.5f, Dropped samples: %d",
             time_diff, dropped_samples);
       }
-      /* Publish dropped sample count. */
-      auto msg = std_msgs::msg::Int32();
-      msg.data = this->total_dropped_samples;
-      dropped_sample_count_publisher->publish(msg);
+      this->update_dropped_sample_count();
 
     } else {
       RCLCPP_DEBUG(this->get_logger(),
@@ -784,16 +786,14 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
 
 /* Note: This method is only relevant in the non-mTMS context, where triggers are sent to the TMS device to deliver pulses. */
 void EegDecider::handle_trigger_from_eeg_device(const double_t actual_trigger_time) {
-  if (this->expected_trigger_times.empty()) {
+  if (this->previous_stimulation_time == UNSET_PREVIOUS_TIME) {
     return;
   }
-  double_t expected_trigger_time = this->expected_trigger_times.top();
-  this->expected_trigger_times.pop();
 
   /* Calculate the time difference between the incoming EEG trigger and the trigger time. */
-  double_t timing_error = actual_trigger_time - expected_trigger_time;
+  double_t timing_error = actual_trigger_time - previous_stimulation_time;
 
-  RCLCPP_INFO(this->get_logger(), "Actual trigger from EEG device at: %.4f (s), excepted trigger at: %.4f (s), timing error: %.4f (s)", actual_trigger_time, expected_trigger_time, timing_error);
+  RCLCPP_INFO(this->get_logger(), "Actual trigger from EEG device at: %.4f (s), excepted trigger at: %.4f (s), timing error: %.4f (s)", actual_trigger_time, previous_stimulation_time, timing_error);
 
   /* Publish timing error ROS message. */
   auto msg = pipeline_interfaces::msg::TimingError();
@@ -1063,9 +1063,6 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   if (timed_trigger) {
     double_t trigger_time = timed_trigger->time;
 
-    /* Add the expected trigger time to the queue for determining the timing error. */
-    this->expected_trigger_times.push(trigger_time);
-
     auto request = std::make_shared<system_interfaces::srv::RequestTimedTrigger::Request>();
     request->timed_trigger = *timed_trigger;
     request->decision_time = sample_time;
@@ -1074,6 +1071,8 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     request->decider_latency = decider_processing_time;
 
     this->request_timed_trigger(request);
+
+    RCLCPP_INFO(this->get_logger(), "Timing trigger at time %.3f (s).", trigger_time);
 
     /* Update the previous stimulation time. */
     this->previous_stimulation_time = trigger_time;

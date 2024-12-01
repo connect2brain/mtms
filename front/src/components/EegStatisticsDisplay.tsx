@@ -58,7 +58,7 @@ export const EegStatisticsDisplay: React.FC = () => {
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Dropped:</IndentedStateTitle>
-          <StateValue>{droppedSamples ?? '\u2013'}</StateValue>
+          <StateValue>{droppedSamples !== null && droppedSamples > 0 ? droppedSamples : '\u2013'}</StateValue>
         </StateRow>
         <br />
         <StateRow>

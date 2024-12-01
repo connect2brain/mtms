@@ -62,7 +62,7 @@ export const LatencyDisplay: React.FC = () => {
 
   const formattedError =
     timingError && sessionState?.value === SessionState.STARTED
-      ? (timingError.error * 1000).toFixed(1) + ' ms'
+      ? (Math.abs(timingError.error) * 1000).toFixed(1) + ' ms'
       : '\u2013'
 
   // Positive Decision Stats
