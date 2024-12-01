@@ -59,6 +59,11 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
     std::bind(&TriggerTimer::handle_session, this, _1),
     subscription_options);
 
+  this->latency_measurement_trigger_subscriber = create_subscription<system_interfaces::msg::TimedTrigger>(
+    "/pipeline/latency_measurement_trigger",
+    10,
+    std::bind(&TriggerTimer::handle_latency_measurement_trigger, this, _1));
+
   /* Service for trigger request. */
   this->trigger_request_service = create_service<system_interfaces::srv::RequestTimedTrigger>(
     TIMED_TRIGGER_SERVICE,
@@ -102,6 +107,18 @@ void TriggerTimer::handle_session(const std::shared_ptr<system_interfaces::msg::
   }
 }
 
+void TriggerTimer::handle_latency_measurement_trigger(const std::shared_ptr<system_interfaces::msg::TimedTrigger> msg) {
+  double_t trigger_time = msg->time;
+
+  current_latency = trigger_time - last_latency_measurement_time;
+
+  /* Publish latency ROS message. */
+  auto msg_ = pipeline_interfaces::msg::TimingLatency();
+  msg_.latency = current_latency;
+
+  this->timing_latency_publisher->publish(msg_);
+}
+
 void TriggerTimer::attempt_labjack_connection() {
   if (labjack_handle == -1) {
     /* Attempt to open a connection to the LabJack device. */
@@ -136,16 +153,6 @@ void TriggerTimer::handle_mtms_device_healthcheck(const std::shared_ptr<system_i
 
 void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
   double_t current_time = msg->time;
-
-  if (msg->is_latency_measurement_trigger) {
-    current_latency = current_time - last_latency_measurement_time;
-
-    /* Publish latency ROS message. */
-    auto msg = pipeline_interfaces::msg::TimingLatency();
-    msg.latency = current_latency;
-
-    this->timing_latency_publisher->publish(msg);
-  }
 
   double_t latency_corrected_time = current_time - current_latency;
 

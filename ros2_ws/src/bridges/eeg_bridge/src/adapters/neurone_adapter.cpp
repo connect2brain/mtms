@@ -6,6 +6,7 @@
 
 const std::string LOGGER_NAME = "neurone_adapter";
 
+
 NeurOneAdapter::NeurOneAdapter(uint16_t port) {
   this->port = port;
   bool success = init_socket();
@@ -161,7 +162,6 @@ void NeurOneAdapter::handle_measurement_start_packet() {
 }
 
 std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_packet() {
-  /* Return variables */
   auto sample = eeg_interfaces::msg::Sample();
   bool sync_trigger_received = false;
 
@@ -219,9 +219,14 @@ std::tuple<eeg_interfaces::msg::Sample, bool> NeurOneAdapter::handle_sample_pack
     }
   }
 
-  if (this->trigger_in_next_sample && this->trigger_sample_index >= sample_index) {
-    sample.is_trigger = true;
-    this->trigger_in_next_sample = false;
+  bool tag_sample_with_trigger = false;
+
+  /* Process all triggers with timestamps <= sample_time_s. */
+  while (!trigger_queue.empty() && trigger_queue.top().timestamp <= sample_time_s) {
+    trigger_queue.pop();
+
+    // Set the flag to tag the sample
+    tag_sample_with_trigger = true;
   }
 
   sample.time = sample_time_s;
@@ -250,32 +255,31 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
     uint64_t sample_index = be64toh(*reinterpret_cast<uint64_t *>(
         buffer + trigger_event_base_index + TriggerEvent::SAMPLE_INDEX));
 
-    /* Upper 4 bits indicate source channel of the trigger, the lower 4 bits
-       indicate The lower 4 bits indicate the trigger mode, which are ignored
-       currently. */
+    uint64_t trigger_microtime = be64toh(*reinterpret_cast<uint64_t *>(
+      buffer + trigger_event_base_index + TriggerEvent::MICROTIME));
+
+    double trigger_time_s = static_cast<double>(trigger_microtime) * 1e-6;
+
     uint8_t trigger_channel = (type >> 4);
 
-    /* Trigger channel 1 (Isolated port A) is for sync/latency measurement trigger and
-       trigger channel 2 (Isolated port B) is for other trigger port. */
     if (trigger_channel == 1) {
       sync_trigger = true;
-      sync_trigger_time = be64toh(*reinterpret_cast<uint64_t *>(buffer + trigger_event_base_index +
-                                                                TriggerEvent::MICROTIME));
+      sync_trigger_time = trigger_microtime;
     } else if (trigger_channel == 2) {
-      /* XXX: This is incorrect; trigger should not be in the next received sample, but the sample
-         whose time is closest to the trigger time. */
-      this->trigger_in_next_sample = true;
-      this->trigger_sample_index = sample_index;
+      /* Store the trigger timestamp in the min-heap. */
+      Trigger trigger_event;
+      trigger_event.timestamp = trigger_time_s;
+      trigger_queue.push(trigger_event);
 
-      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Publishing a trigger with sample idx: %lu",
-                  this->trigger_sample_index);
+      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger at time: %f",
+          trigger_time_s);
     } else {
       RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown trigger port: %u", trigger_channel);
     }
   }
 
-  double trigger_time_s = (double)sync_trigger_time * 1e-6;
-  return {sync_trigger, trigger_time_s};
+  double sync_trigger_time_s = static_cast<double>(sync_trigger_time) * 1e-6;
+  return {sync_trigger, sync_trigger_time_s};
 }
 
 std::tuple<PacketResult, eeg_interfaces::msg::Sample, double>
@@ -320,6 +324,7 @@ NeurOneAdapter::read_eeg_data_packet() {
     RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Measurement ended on the EEG device.");
     result_type = PacketResult::END;
     break;
+
   case FrameType::HARDWARE_STATE:
     RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME),
                 "Hardware state packet received. Currently no effect");
