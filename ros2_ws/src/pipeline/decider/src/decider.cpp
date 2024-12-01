@@ -55,17 +55,19 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   RCLCPP_INFO(this->get_logger(), "Configuration:");
   RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
 
+  RCLCPP_INFO(this->get_logger(), "  Dropped sample threshold per second: %d", this->dropped_sample_threshold);
+
   /* Validate the minimum pulse interval. */
   if (this->minimum_intertrial_interval <= 0) {
     RCLCPP_INFO(this->get_logger(), " ");
     RCLCPP_ERROR(this->get_logger(), "Invalid minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
     exit(1);
   }
+
   if (this->minimum_intertrial_interval < 0.5) {
     RCLCPP_INFO(this->get_logger(), " ");
     RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_intertrial_interval);
   }
-  RCLCPP_INFO(this->get_logger(), " Dropped sample threshold per second: %d", this->dropped_sample_threshold);
 
   /* Publisher for healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
