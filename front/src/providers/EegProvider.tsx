@@ -9,6 +9,10 @@ interface EegInfo extends Message {
   num_of_emg_channels: number
 }
 
+interface Int32 extends Message {
+  data: number
+}
+
 interface EegStatistics extends Message {
   num_of_raw_samples: number
   max_time_between_raw_samples: number
@@ -24,11 +28,13 @@ interface EegStatistics extends Message {
 interface EegContextType {
   eegInfo: EegInfo | null
   eegStatistics: EegStatistics | null
+  droppedSamples: number | null
 }
 
 const defaultEegState: EegContextType = {
   eegInfo: null,
   eegStatistics: null,
+  droppedSamples: null,
 }
 
 export const EegContext = React.createContext<EegContextType>(defaultEegState)
@@ -40,6 +46,7 @@ interface EegProviderProps {
 export const EegProvider: React.FC<EegProviderProps> = ({ children }) => {
   const [eegInfo, setEegInfo] = useState<EegInfo | null>(null)
   const [eegStatistics, setEegStatistics] = useState<EegStatistics | null>(null)
+  const [droppedSamples, setDroppedSamples] = useState<number | null>(null)
 
   useEffect(() => {
     /* Subscriber for EEG info. */
@@ -64,12 +71,25 @@ export const EegProvider: React.FC<EegProviderProps> = ({ children }) => {
       setEegStatistics(message)
     })
 
+    /* Subscriber for dropped sample count. */
+    const droppedSamplesSubscriber = new Topic<Int32>({
+      ros: ros,
+      name: '/pipeline/dropped_samples',
+      messageType: 'std_msgs/Int32',
+    })
+
+    droppedSamplesSubscriber.subscribe((message) => {
+      console.log('Dropped samples:', message.data)
+      setDroppedSamples(message.data)
+    })
+
     /* Unsubscribers */
     return () => {
       eegInfoSubscriber.unsubscribe()
       eegStatisticsSubscriber.unsubscribe()
+      droppedSamplesSubscriber.unsubscribe()
     }
   }, [])
 
-  return <EegContext.Provider value={{ eegInfo, eegStatistics }}>{children}</EegContext.Provider>
+  return <EegContext.Provider value={{ eegInfo, eegStatistics, droppedSamples }}>{children}</EegContext.Provider>
 }
