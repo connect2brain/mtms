@@ -27,6 +27,9 @@ check_disk_space_and_clean() {
             # Remove all other non-mtms images
             docker images --format '{{.Repository}}:{{.Tag}}' | grep -v 'mtms_' | xargs docker rmi
 
+            # Remove builder images older than 2 weeks
+            docker builder prune -f --filter "until=336h"
+
             echo "Cleanup completed."
 
             # Show reclaimed space
