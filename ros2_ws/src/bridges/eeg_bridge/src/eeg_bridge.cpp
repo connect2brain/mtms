@@ -568,7 +568,7 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_DEBUG(rclcpp::get_logger("eeg_bridge"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Setting real-time priority (%d)", DEFAULT_REALTIME_SCHEDULING_PRIORITY);
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY,
                         DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
