@@ -11,6 +11,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
 find_package(event_interfaces REQUIRED)
+find_package(pipeline_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
 include_directories(include include/labjack)
@@ -40,6 +41,7 @@ ament_target_dependencies(
   std_msgs
   eeg_interfaces
   event_interfaces
+  pipeline_interfaces
   system_interfaces
 )
 
