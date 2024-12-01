@@ -83,6 +83,7 @@ private:
 
   void empty_trial_queue();
   void precompute_trials();
+  void update_dropped_sample_count();
 
   void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
   void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
@@ -196,9 +197,6 @@ private:
 
   /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
-
-  /* Use custom comparator to have smallest value on top (= implement min-heap). */
-  std::priority_queue<double_t, std::vector<double_t>, std::greater<double_t>> expected_trigger_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;
