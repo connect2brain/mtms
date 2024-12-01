@@ -19,6 +19,8 @@
 
 #include "system_interfaces/msg/timed_trigger.hpp"
 #include "system_interfaces/srv/request_timed_trigger.hpp"
+#include "system_interfaces/msg/session.hpp"
+
 
 class TriggerTimer : public rclcpp::Node {
 public:
@@ -32,6 +34,7 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::TimingLatency>::SharedPtr timing_latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::DecisionInfo>::SharedPtr decision_info_publisher;
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
+  rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
   rclcpp::TimerBase::SharedPtr timer;
 
   int labjack_handle = -1;
@@ -44,6 +47,7 @@ private:
   std::priority_queue<double_t, std::vector<double_t>, std::greater<double_t>> trigger_queue;
   std::mutex queue_mutex;
 
+  void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
   void attempt_labjack_connection();
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
   void handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
@@ -52,6 +56,10 @@ private:
     std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Response> response);
   void trigger_labjack(const char* name);
   bool safe_error_check(int err, const char* action);
+
+  /* Session management */
+  bool session_received = false;
+  system_interfaces::msg::SessionState session_state;
 
   /* Healthcheck */
   uint8_t status;

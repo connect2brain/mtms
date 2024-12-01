@@ -9,6 +9,8 @@
 #include "memory_utils.h"
 #include "scheduling_utils.h"
 
+using namespace std::chrono;
+using namespace std::chrono_literals;
 using namespace std::placeholders;
 
 const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
@@ -16,6 +18,10 @@ const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
 const double_t latency_measurement_interval = 0.1;
 const double_t maximum_triggering_error = 0.003;
+
+/* Note: Needs to match the values in session_bridge.cpp. */
+const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 5ms;
 
 const char* tms_trigger_fio = "FIO5";
 const char* latency_measurement_trigger_fio = "FIO4";
@@ -32,6 +38,26 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
     EEG_RAW_TOPIC,
     10,
     std::bind(&TriggerTimer::handle_eeg_raw, this, _1));
+
+  /* Subscriber for session. */
+  const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
+
+  auto qos_session = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+      .deadline(DEADLINE_NS)
+      .lifespan(DEADLINE_NS);
+
+  rclcpp::SubscriptionOptions subscription_options;
+  subscription_options.event_callbacks.deadline_callback = [this]([[maybe_unused]] rclcpp::QOSDeadlineRequestedInfo & event) {
+      RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Session not received within deadline.");
+  };
+
+  this->session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
+    "/system/session",
+    qos_session,
+    std::bind(&TriggerTimer::handle_session, this, _1),
+    subscription_options);
 
   /* Service for trigger request. */
   this->trigger_request_service = create_service<system_interfaces::srv::RequestTimedTrigger>(
@@ -60,6 +86,19 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
 TriggerTimer::~TriggerTimer() {
   if (labjack_handle != -1) {
     CloseOrDie(labjack_handle);
+  }
+}
+
+void TriggerTimer::handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg) {
+  bool state_changed = this->session_state.value != msg->state.value;
+  this->session_state = msg->state;
+
+  if (state_changed) {
+    if (this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
+      RCLCPP_INFO(this->get_logger(), "Session stopped, resetting.");
+      this->current_latency = 0.0;
+      this->last_latency_measurement_time = 0.0;
+    }
   }
 }
 
