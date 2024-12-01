@@ -3,9 +3,20 @@ import { Topic, Message } from 'roslib'
 
 import { ros } from 'ros/ros'
 
-interface Latency extends ROSLIB.Message {
+interface TimingLatency extends ROSLIB.Message {
   latency: number
+}
+
+interface TimingError extends ROSLIB.Message {
+  error: number
+}
+
+interface DecisionInfo extends ROSLIB.Message {
+  stimulate: boolean
   decision_time: number
+  decider_latency: number
+  preprocessor_latency: number
+  total_latency: number
 }
 
 interface PreprocessorList extends ROSLIB.Message {
@@ -41,8 +52,13 @@ interface PipelineContextType {
   presenterModule: string
   presenterEnabled: boolean
 
-  latency: Latency | null
-  setLatency: React.Dispatch<React.SetStateAction<Latency | null>>
+  timingLatency: TimingLatency | null
+  timingError: TimingError | null
+  decisionInfo: DecisionInfo | null
+
+  setTimingLatency: React.Dispatch<React.SetStateAction<TimingLatency | null>>
+  setTimingError: React.Dispatch<React.SetStateAction<TimingError | null>>
+  setDecisionInfo: React.Dispatch<React.SetStateAction<DecisionInfo | null>>
 }
 
 const defaultPipelineState: PipelineContextType = {
@@ -58,9 +74,18 @@ const defaultPipelineState: PipelineContextType = {
   presenterModule: '',
   presenterEnabled: false,
 
-  latency: null,
-  setLatency: () => {
-    console.warn('setLatency is not yet initialized.')
+  timingLatency: null,
+  timingError: null,
+  decisionInfo: null,
+
+  setTimingLatency: () => {
+    console.warn('setTimingLatency is not yet initialized.')
+  },
+  setTimingError: () => {
+    console.warn('setTimingError is not yet initialized.')
+  },
+  setDecisionInfo: () => {
+    console.warn('setDecisionInfo is not yet initialized.')
   },
 }
 
@@ -83,7 +108,9 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
   const [presenterModule, setPresenterModule] = useState<string>('')
   const [presenterEnabled, setPresenterEnabled] = useState<boolean>(false)
 
-  const [latency, setLatency] = useState<Latency | null>(null)
+  const [timingLatency, setTimingLatency] = useState<TimingLatency | null>(null)
+  const [timingError, setTimingError] = useState<TimingError | null>(null)
+  const [decisionInfo, setDecisionInfo] = useState<DecisionInfo | null>(null)
 
   useEffect(() => {
     /* Subscriber for preprocessor list. */
@@ -185,17 +212,37 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
       setPresenterEnabled(message.data)
     })
 
-    /* Subscriber for latency. */
-    const latencySubscriber = new Topic<Latency>({
+    /* Subscriber for timing latency. */
+    const timingLatencySubscriber = new Topic<TimingLatency>({
       ros: ros,
-      name: '/pipeline/latency',
-      messageType: 'pipeline_interfaces/Latency',
+      name: '/pipeline/timing/latency',
+      messageType: 'pipeline_interfaces/TimingLatency',
     })
 
-    latencySubscriber.subscribe((message) => {
-      console.log(message)
-      console.log('somo')
-      setLatency(message)
+    timingLatencySubscriber.subscribe((message) => {
+      setTimingLatency(message)
+    })
+
+    /* Subscriber for timing error. */
+    const timingErrorSubscriber = new Topic<TimingError>({
+      ros: ros,
+      name: '/pipeline/timing/error',
+      messageType: 'pipeline_interfaces/TimingError',
+    })
+
+    timingErrorSubscriber.subscribe((message) => {
+      setTimingError(message)
+    })
+
+    /* Subscriber for decision info. */
+    const decisionInfoSubscriber = new Topic<DecisionInfo>({
+      ros: ros,
+      name: '/pipeline/decision_info',
+      messageType: 'pipeline_interfaces/DecisionInfo',
+    })
+
+    decisionInfoSubscriber.subscribe((message) => {
+      setDecisionInfo(message)
     })
 
     /* Unsubscribers */
@@ -212,7 +259,9 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
       presenterModuleSubscriber.unsubscribe()
       presenterEnabledSubscriber.unsubscribe()
 
-      latencySubscriber.unsubscribe()
+      timingLatencySubscriber.unsubscribe()
+      timingErrorSubscriber.unsubscribe()
+      decisionInfoSubscriber.unsubscribe()
     }
   }, [])
 
@@ -228,8 +277,12 @@ export const PipelineProvider: React.FC<PipelineProviderProps> = ({ children }) 
         presenterList,
         presenterModule,
         presenterEnabled,
-        latency,
-        setLatency,
+        timingLatency,
+        timingError,
+        decisionInfo,
+        setTimingLatency,
+        setTimingError,
+        setDecisionInfo,
       }}
     >
       {children}
