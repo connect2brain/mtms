@@ -43,6 +43,13 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->declare_parameter("minimum-intertrial-interval", 0.0, minimum_intertrial_interval_descriptor);
   this->get_parameter("minimum-intertrial-interval", this->minimum_intertrial_interval);
 
+  /* Read ROS parameter: dropped sample threshold */
+  auto dropped_sample_threshold_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  dropped_sample_threshold_descriptor.description = "The threshold for the number of dropped samples before the decider enters an error state";
+  dropped_sample_threshold_descriptor.type = rcl_interfaces::msg::ParameterType::PARAMETER_INTEGER;
+  this->declare_parameter("dropped-sample-threshold", 4, dropped_sample_threshold_descriptor);
+  this->get_parameter("dropped-sample-threshold", this->dropped_sample_threshold);
+
   /* Log the minimum pulse interval. */
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Configuration:");
@@ -58,6 +65,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     RCLCPP_INFO(this->get_logger(), " ");
     RCLCPP_WARN(this->get_logger(), "Note: Minimum pulse interval is very low: %.1f (s)", this->minimum_intertrial_interval);
   }
+  RCLCPP_INFO(this->get_logger(), " Dropped sample threshold per second: %d", this->dropped_sample_threshold);
 
   /* Publisher for healthcheck. */
   this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
@@ -153,6 +161,11 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decision_info",
     10);
 
+  /* Publisher for dropped sample count. */
+  this->dropped_sample_count_publisher = this->create_publisher<std_msgs::msg::Int32>(
+    "/pipeline/dropped_samples",
+    10);
+
   /* Publisher for timing latency. */
   this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
     "/pipeline/timing_latency",
@@ -228,10 +241,10 @@ void EegDecider::publish_healthcheck() {
       healthcheck.actionable_message = "Ready";
       break;
 
-    case DeciderState::SAMPLES_DROPPED:
+    case DeciderState::DROPPED_SAMPLE_THRESHOLD_EXCEEDED:
       healthcheck.status.value = system_interfaces::msg::HealthcheckStatus::ERROR;
-      healthcheck.status_message = "Samples dropped";
-      healthcheck.actionable_message = "Sample(s) dropped in decider.";
+      healthcheck.status_message = "Dropped sample threshold exceeded";
+      healthcheck.actionable_message = "Dropped sample threshold (" + std::to_string(this->dropped_sample_threshold) + " per second) exceeded.";
       break;
 
     case DeciderState::MODULE_ERROR:
@@ -249,6 +262,7 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
 
   if (state_changed && this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
     this->first_sample_of_session = true;
+    this->total_dropped_samples = 0;
 
     this->reinitialize = true;
     this->previous_stimulation_time = UNSET_PREVIOUS_TIME;
@@ -711,31 +725,58 @@ void EegDecider::update_decider_list() {
 
 /* EEG functions */
 
-/* XXX: Very close to a similar check in eeg_gatherer.cpp and other pipeline stages. Unify? */
 void EegDecider::check_dropped_samples(double_t sample_time) {
   if (this->sampling_frequency == UNSET_SAMPLING_FREQUENCY) {
     RCLCPP_WARN(this->get_logger(), "Sampling frequency not received, cannot check for dropped samples.");
+    return;
   }
 
-  if (this->sampling_frequency != UNSET_SAMPLING_FREQUENCY &&
-      this->previous_time) {
-
+  if (this->previous_time) {
     auto time_diff = sample_time - this->previous_time;
     auto threshold = this->sampling_period + this->TOLERANCE_S;
 
-    if (time_diff > threshold) {
-      /* Err if sample(s) were dropped. */
-      this->decider_state = DeciderState::SAMPLES_DROPPED;
+    /* Calculate number of dropped samples. */
+    int dropped_samples = std::max(0, static_cast<int>(std::round((time_diff - this->sampling_period) * this->sampling_frequency)));
 
-      RCLCPP_ERROR(this->get_logger(),
-          "Sample(s) dropped. Time difference between consecutive samples: %.5f, should be: %.5f, limit: %.5f", time_diff, this->sampling_period, threshold);
+    if (time_diff > threshold) {
+      /* Accumulate dropped samples. */
+      this->total_dropped_samples += dropped_samples;
+
+      /* Sliding window: add dropped samples and clean up entries older than 1 second. */
+      this->dropped_samples_window.push_back({sample_time, dropped_samples});
+      while (!this->dropped_samples_window.empty() &&
+             (sample_time - this->dropped_samples_window.front().first > 1.0)) {
+        this->dropped_samples_window.pop_front();
+      }
+
+      /* Sum of dropped samples in the last second. */
+      int recent_dropped_samples = 0;
+      for (const auto& entry : this->dropped_samples_window) {
+        recent_dropped_samples += entry.second;
+      }
+
+      if (recent_dropped_samples > this->dropped_sample_threshold) {
+        this->decider_state = DeciderState::DROPPED_SAMPLE_THRESHOLD_EXCEEDED;
+        RCLCPP_ERROR(this->get_logger(),
+            "Dropped samples exceeded threshold! Recent dropped samples: %d, Threshold: %d",
+            recent_dropped_samples, this->dropped_sample_threshold);
+      } else {
+        RCLCPP_WARN(this->get_logger(),
+            "Dropped samples detected. Time difference: %.5f, Dropped samples: %d",
+            time_diff, dropped_samples);
+      }
+      /* Publish dropped sample count. */
+      auto msg = std_msgs::msg::Int32();
+      msg.data = this->total_dropped_samples;
+      dropped_sample_count_publisher->publish(msg);
 
     } else {
-      /* If log-level is set to DEBUG, print time difference for all samples, regardless of if samples were dropped or not. */
       RCLCPP_DEBUG(this->get_logger(),
         "Time difference between consecutive samples: %.5f", time_diff);
     }
   }
+
+  /* Update the previous time. */
   this->previous_time = sample_time;
 }
 
