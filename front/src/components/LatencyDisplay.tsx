@@ -17,7 +17,7 @@ const LatencyPanel = styled(StyledPanel)`
   width: 300px;
   height: 500px; // Adjusted height to accommodate more content
   position: fixed;
-  top: 1255px;
+  top: 1290px;
   right: 5px;
   z-index: 1000;
 `

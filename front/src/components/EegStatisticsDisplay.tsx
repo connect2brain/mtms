@@ -18,7 +18,7 @@ const EegStatisticsPanelTitle = styled.div`
 
 const EegStatisticsPanel = styled(StyledPanel)`
   width: 300px;
-  height: 250px;
+  height: 280px;
   position: fixed;
   top: 928px;
   right: 5px;
@@ -26,7 +26,7 @@ const EegStatisticsPanel = styled(StyledPanel)`
 `
 
 export const EegStatisticsDisplay: React.FC = () => {
-  const { eegStatistics } = useContext(EegContext)
+  const { eegStatistics, droppedSamples } = useContext(EegContext)
 
   const formatValue = (value: number | undefined, formatter: (value: number) => string): string => {
     if (value === undefined || value === null || value === 0) {
@@ -55,6 +55,10 @@ export const EegStatisticsDisplay: React.FC = () => {
         <StateRow>
           <IndentedStateTitle>Preprocessed:</IndentedStateTitle>
           <StateValue>{eegStatistics?.num_of_preprocessed_samples ?? '\u2013'}</StateValue>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>Dropped:</IndentedStateTitle>
+          <StateValue>{droppedSamples ?? '\u2013'}</StateValue>
         </StateRow>
         <br />
         <StateRow>
