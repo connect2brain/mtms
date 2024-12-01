@@ -5,6 +5,7 @@
 #ifndef EEG_PROCESSOR_DECIDER_H
 #define EEG_PROCESSOR_DECIDER_H
 
+#include <deque>
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
@@ -12,6 +13,7 @@
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
 
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
@@ -46,7 +48,7 @@ const std::string UNSET_STRING = "";
 enum class DeciderState {
   WAITING_FOR_ENABLED,
   READY,
-  SAMPLES_DROPPED,
+  DROPPED_SAMPLE_THRESHOLD_EXCEEDED,
   MODULE_ERROR
 };
 
@@ -155,6 +157,7 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::TimingLatency>::SharedPtr timing_latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::DecisionInfo>::SharedPtr decision_info_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_sample_count_publisher;
 
   bool enabled = false;
 
@@ -179,6 +182,11 @@ private:
   std::string module_name = UNSET_STRING;
 
   std::vector<std::string> modules;
+
+  std::deque<std::pair<double_t, int>> dropped_samples_window;
+
+  uint16_t total_dropped_samples = 0;
+  uint16_t dropped_sample_threshold;
 
   /* Information about the EEG device configuration. */
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
