@@ -13,6 +13,7 @@
 
 #include "pipeline_interfaces/msg/timing_latency.hpp"
 #include "pipeline_interfaces/msg/decision_info.hpp"
+#include "pipeline_interfaces/msg/trigger_info.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -33,6 +34,7 @@ private:
   rclcpp::Service<system_interfaces::srv::RequestTimedTrigger>::SharedPtr trigger_request_service;
   rclcpp::Publisher<pipeline_interfaces::msg::TimingLatency>::SharedPtr timing_latency_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::DecisionInfo>::SharedPtr decision_info_publisher;
+  rclcpp::Publisher<pipeline_interfaces::msg::TriggerInfo>::SharedPtr trigger_info_publisher;
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
   rclcpp::Subscription<system_interfaces::msg::TimedTrigger>::SharedPtr latency_measurement_trigger_subscriber;
