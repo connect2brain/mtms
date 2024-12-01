@@ -102,12 +102,6 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     EEG_QUEUE_LENGTH,
     std::bind(&EegDecider::process_raw_sample, this, _1));
 
-  /* Subscriber for EEG trigger. */
-  this->eeg_trigger_subscriber = create_subscription<eeg_interfaces::msg::Trigger>(
-    "/eeg/trigger",
-    10,
-    std::bind(&EegDecider::handle_trigger_from_eeg_device, this, _1));
-
   /* Subscriber for active project. */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -149,9 +143,19 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/decider/enabled",
     qos_persist_latest);
 
-  /* Publisher for latency. */
-  this->latency_publisher = this->create_publisher<pipeline_interfaces::msg::Latency>(
-    "/pipeline/latency",
+  /* Publisher for timing error. */
+  this->timing_error_publisher = this->create_publisher<pipeline_interfaces::msg::TimingError>(
+    "/pipeline/timing_error",
+    10);
+
+  /* Publisher for decision info. */
+  this->decision_info_publisher = this->create_publisher<pipeline_interfaces::msg::DecisionInfo>(
+    "/pipeline/decision_info",
+    10);
+
+  /* Publisher for timing latency. */
+  this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
+    "/pipeline/timing_latency",
     10);
 
   /* Publisher for sensory stimulus. */
@@ -308,6 +312,7 @@ void EegDecider::initialize_module() {
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
+/* Note: This method is only relevant in the mTMS context. */
 void EegDecider::precompute_trials() {
   /* XXX: Naming is a bit confusing here. */
   auto trials = this->decider_wrapper->get_targets();
@@ -365,6 +370,7 @@ std::string EegDecider::goal_id_to_string(const rclcpp_action::GoalUUID &uuid) {
 
 /* Action clients */
 
+/* Note: This method is only called in the mTMS context. */
 void EegDecider::perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time) {
   auto goal = experiment_interfaces::action::PerformTrial::Goal();
   goal.trial = trial;
@@ -390,6 +396,7 @@ void EegDecider::goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoa
   }
 }
 
+/* Note: This method is only called in the mTMS context. */
 void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result) {
   this->performing_trial = false;
 
@@ -434,20 +441,15 @@ void EegDecider::trial_performed_callback(const rclcpp_action::ClientGoalHandle<
   RCLCPP_INFO(this->get_logger(), " ");
 
   /* Publish latency ROS message. */
-  auto msg = pipeline_interfaces::msg::Latency();
+  auto msg = pipeline_interfaces::msg::TimingLatency();
   msg.latency = time_difference;
-  msg.decision_time = decision_time;
 
-  this->latency_publisher->publish(msg);
+  this->timing_latency_publisher->publish(msg);
 }
 
 /* Service clients */
 
-void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time) {
-  auto request = std::make_shared<system_interfaces::srv::RequestTimedTrigger::Request>();
-  request->timed_trigger = *timed_trigger;
-  request->system_time_for_sample = system_time;
-
+void EegDecider::request_timed_trigger(std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request) {
   using ServiceResponseFuture = rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest;
 
   auto response_received_callback = [this](ServiceResponseFuture future) {
@@ -737,31 +739,24 @@ void EegDecider::check_dropped_samples(double_t sample_time) {
   this->previous_time = sample_time;
 }
 
-/* Handle incoming trigger from the EEG device, indicating a pulse when using timed triggers to trigger an external TMS device. */
-void EegDecider::handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> trigger_msg) {
-  auto eeg_trigger_time = trigger_msg->time;
-
-  if (this->trigger_times.empty()) {
+/* Note: This method is only relevant in the non-mTMS context, where triggers are sent to the TMS device to deliver pulses. */
+void EegDecider::handle_trigger_from_eeg_device(const double_t actual_trigger_time) {
+  if (this->expected_trigger_times.empty()) {
     return;
   }
-  RCLCPP_INFO(this->get_logger(), "Registered trigger from EEG device at: %.4f (s), interpreting as feedback from TMS.", eeg_trigger_time);
-
-  double_t next_trigger_time = this->trigger_times.front();
-  this->trigger_times.pop();
+  double_t expected_trigger_time = this->expected_trigger_times.top();
+  this->expected_trigger_times.pop();
 
   /* Calculate the time difference between the incoming EEG trigger and the trigger time. */
-  double_t time_difference = eeg_trigger_time - next_trigger_time;
+  double_t timing_error = actual_trigger_time - expected_trigger_time;
 
-  RCLCPP_INFO(this->get_logger(), "Time difference between trigger time and the incoming EEG trigger: %.4f (s)", time_difference);
+  RCLCPP_INFO(this->get_logger(), "Actual trigger from EEG device at: %.4f (s), excepted trigger at: %.4f (s), timing error: %.4f (s)", actual_trigger_time, expected_trigger_time, timing_error);
 
-  /* Publish latency ROS message. */
-  auto msg = pipeline_interfaces::msg::Latency();
-  msg.latency = time_difference;
+  /* Publish timing error ROS message. */
+  auto msg = pipeline_interfaces::msg::TimingError();
+  msg.error = timing_error;
 
-  /* XXX: Might be misnamed, should it rather be trigger_time? */
-  msg.decision_time = next_trigger_time;
-
-  this->latency_publisher->publish(msg);
+  this->timing_error_publisher->publish(msg);
 }
 
 void EegDecider::process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
@@ -862,6 +857,11 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     return;
   }
 
+  /* If the sample includes a trigger, handle it acoordingly. */
+  if (msg->is_trigger) {
+    handle_trigger_from_eeg_device(sample_time);
+  }
+
   /* Append the sample to the buffer. */
   this->sample_buffer.append(msg);
 
@@ -921,7 +921,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     }
   }
 
-  /* Always process if the sample is considered an event. */
+  /* Always processing if the sample is considered an event. */
   if (is_event) {
     process_current_sample = true;
   }
@@ -961,33 +961,56 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
     return;
   }
 
-  bool is_trial_requested = trial != nullptr;
+  /* Calculate the total latency of the decider. */
+  auto end_time = std::chrono::high_resolution_clock::now();
+  double_t decider_processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
 
-  /* Note: 'Stimulation' includes both trials (for mTMS device) and timed triggers (for other TMS devices). */
-  bool is_stimulation_requested = is_trial_requested || timed_trigger;
+  /* Combine both trials (for mTMS device) and timed triggers (for other TMS devices). */
+  bool is_decision_positive = trial || timed_trigger;
 
+  /* Create decision info, but only publish in Decider if the pathway doesn't reach the Trigger Timer. */
+  auto decision_info = pipeline_interfaces::msg::DecisionInfo();
+  decision_info.stimulate = is_decision_positive;
+
+  decision_info.decision_time = sample_time;
+  decision_info.decider_latency = decider_processing_time;
+  decision_info.preprocessor_latency = msg->metadata.processing_time;
+
+  rclcpp::Time now = this->get_clock()->now();
+  rclcpp::Time sample_time_rcl(msg->metadata.system_time);
+  double_t total_latency = now.seconds() - sample_time_rcl.seconds();
+
+  decision_info.total_latency = total_latency;
+
+  /* Check if a trial or timed trigger has already been requested. */
   bool is_already_stimulating = this->performing_trial || this->processing_timed_trigger;
 
   /* Check that the decider is not already stimulating. */
-  if (is_stimulation_requested && is_already_stimulating) {
+  if (is_decision_positive && is_already_stimulating) {
+    this->decision_info_publisher->publish(decision_info);
+
     RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or timed trigger, ignoring the request.");
     return;
   }
 
   /* Check that the minimum pulse interval is respected. */
-  if (is_stimulation_requested && !has_minimum_intertrial_interval_passed) {
+  if (is_decision_positive && !has_minimum_intertrial_interval_passed) {
+    this->decision_info_publisher->publish(decision_info);
+
     RCLCPP_ERROR(this->get_logger(), "Stimulation requested but minimum intertrial interval (%.1f s) not respected (time since previous stimulation: %.3f s), ignoring the request.",
                  this->minimum_intertrial_interval,
                  time_since_previous_trial);
     return;
   }
 
-  /* Measure the processing time of the sample.  TODO: Unused at the moment. */
-  auto end_time = std::chrono::high_resolution_clock::now();
-  double_t processing_time = std::chrono::duration<double_t>(end_time - start_time).count();
+  /* In case of a positive stimulation decision including a timed trigger, the decision-making pathway extends to
+     Trigger Timer; hence, only publish the decision here if it is not a timed trigger. */
+  if (!timed_trigger) {
+    this->decision_info_publisher->publish(decision_info);
+  }
 
   /* Add trial to the queue if requested. */
-  if (is_trial_requested) {
+  if (trial) {
     this->trial_queue.push({*trial, sample_time});
 
     /* Update the previous stimulation time. */
@@ -997,9 +1020,18 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   /* Send timed trigger if requested. */
   if (timed_trigger) {
     double_t trigger_time = timed_trigger->time;
-    this->trigger_times.push(trigger_time);
 
-    this->request_timed_trigger(timed_trigger, msg->metadata.system_time);
+    /* Add the expected trigger time to the queue for determining the timing error. */
+    this->expected_trigger_times.push(trigger_time);
+
+    auto request = std::make_shared<system_interfaces::srv::RequestTimedTrigger::Request>();
+    request->timed_trigger = *timed_trigger;
+    request->decision_time = sample_time;
+    request->system_time_for_sample = msg->metadata.system_time;
+    request->preprocessor_latency = msg->metadata.processing_time;
+    request->decider_latency = decider_processing_time;
+
+    this->request_timed_trigger(request);
 
     /* Update the previous stimulation time. */
     this->previous_stimulation_time = trigger_time;
@@ -1065,12 +1097,11 @@ void EegDecider::log_trial(const experiment_interfaces::msg::Trial& trial, size_
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-/*
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
   RCLCPP_INFO(rclcpp::get_logger("decider"), "Setting thread scheduling");
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
-*/
+
   auto node = std::make_shared<EegDecider>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)

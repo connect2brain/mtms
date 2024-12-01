@@ -11,7 +11,6 @@
 
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
-#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
