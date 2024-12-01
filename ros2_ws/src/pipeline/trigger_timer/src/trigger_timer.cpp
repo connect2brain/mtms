@@ -36,7 +36,17 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
   /* Service for trigger request. */
   this->trigger_request_service = create_service<system_interfaces::srv::RequestTimedTrigger>(
     TIMED_TRIGGER_SERVICE,
-    std::bind(&TriggerTimer::request_timed_trigger, this, _1, _2));
+    std::bind(&TriggerTimer::handle_request_timed_trigger, this, _1, _2));
+
+  /* Publisher for timing latency. */
+  this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
+    "/pipeline/timing/latency",
+    10);
+
+  /* Publisher for decision info. */
+  this->decision_info_publisher = this->create_publisher<pipeline_interfaces::msg::DecisionInfo>(
+    "/pipeline/decision_info",
+    10);
 
   /* Attempt initial connection to LabJack. */
   attempt_labjack_connection();
@@ -89,9 +99,13 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   double_t current_time = msg->time;
 
   if (msg->is_latency_measurement_trigger) {
-    /* Log time between receiving the trigger and the current time. */
     current_latency = current_time - last_latency_measurement_time;
-    RCLCPP_INFO(logger, "Current latency: %.4f", current_latency);
+
+    /* Publish latency ROS message. */
+    auto msg = pipeline_interfaces::msg::TimingLatency();
+    msg.latency = current_latency;
+
+    this->timing_latency_publisher->publish(msg);
   }
 
   double_t latency_corrected_time = current_time - current_latency;
@@ -121,7 +135,7 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   }
 }
 
-void TriggerTimer::request_timed_trigger(
+void TriggerTimer::handle_request_timed_trigger(
     const std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request,
     std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Response> response) {
 
@@ -133,11 +147,25 @@ void TriggerTimer::request_timed_trigger(
     trigger_queue.push(trigger_time);
   }
 
+  /* Create and publish decision info. */
+  auto msg = pipeline_interfaces::msg::DecisionInfo();
+  msg.stimulate = true;
+
+  msg.decision_time = request->decision_time;
+  msg.decider_latency = request->decider_latency;
+  msg.preprocessor_latency = request->preprocessor_latency;
+
+  /* In case of a positive stimulation decision, the total latency can only be added Trigger Timer -
+     it cannot be calculated by Decider due to the additional component (Trigger Timer) on the pathway. */
   rclcpp::Time now = this->get_clock()->now();
   rclcpp::Time sample_time_rcl(request->system_time_for_sample);
-  double_t time_diff = now.seconds() - sample_time_rcl.seconds();
+  double_t total_latency = now.seconds() - sample_time_rcl.seconds();
 
-  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f, decision-making latency: %.4f", trigger_time, time_diff);
+  msg.total_latency = total_latency;
+
+  this->decision_info_publisher->publish(msg);
+
+  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f, total decision-making latency: %.4f", trigger_time, total_latency);
   response->success = true;
 }
 
