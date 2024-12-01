@@ -34,7 +34,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "msg/EegBatch.msg"
 
-  "msg/Trigger.msg"
   "srv/TriggerPulse.srv"
 
   "msg/GatherEegError.msg"

@@ -22,7 +22,9 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Latency.msg"
+  "msg/TimingError.msg"
+  "msg/TimingLatency.msg"
+  "msg/DecisionInfo.msg"
   "msg/SensoryStimulus.msg"
 )
 
