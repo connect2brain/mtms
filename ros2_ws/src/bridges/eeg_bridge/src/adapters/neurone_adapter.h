@@ -5,6 +5,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+#include <queue>
+#include <vector>
+#include <functional>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "eeg_adapter.h"
@@ -81,6 +85,16 @@ enum ChannelType {
   TRIGGER_CHANNEL,
 };
 
+struct Trigger {
+  double timestamp;
+};
+
+struct TriggerComparator {
+  bool operator()(const Trigger& lhs, const Trigger& rhs) const {
+    return lhs.timestamp > rhs.timestamp;
+  }
+};
+
 class NeurOneAdapter : public EegAdapter {
 
 public:
@@ -133,8 +147,7 @@ private:
   bool measurement_start_packet_received = false;
   uint16_t packets_since_measurement_start_packet_requested = 0;
 
-  bool trigger_in_next_sample = false;
-  uint64_t trigger_sample_index = 0;
+  std::priority_queue<Trigger, std::vector<Trigger>, TriggerComparator> trigger_queue;
 };
 
 #endif // MTMS_ROS2_WS_SRC_BRIDGES_EEG_BRIDGE_SRC_ADAPTERS_NEURONE_ADAPTER_H

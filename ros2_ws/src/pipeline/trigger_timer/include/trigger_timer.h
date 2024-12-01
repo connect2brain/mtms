@@ -35,6 +35,7 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::DecisionInfo>::SharedPtr decision_info_publisher;
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_raw_subscriber;
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
+  rclcpp::Subscription<system_interfaces::msg::TimedTrigger>::SharedPtr latency_measurement_trigger_subscriber;
   rclcpp::TimerBase::SharedPtr timer;
 
   int labjack_handle = -1;
@@ -54,6 +55,7 @@ private:
   void handle_request_timed_trigger(
     const std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request,
     std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Response> response);
+  void handle_latency_measurement_trigger(const std::shared_ptr<system_interfaces::msg::TimedTrigger> msg);
   void trigger_labjack(const char* name);
   bool safe_error_check(int err, const char* action);
 
