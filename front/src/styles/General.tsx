@@ -146,6 +146,11 @@ export const IndentedStateTitle = styled(StateTitle)`
   font-weight: normal;
 `
 
+export const DoubleIndentedStateTitle = styled(StateTitle)`
+  margin-left: 40px;
+  font-weight: normal;
+`
+
 export const StateValue = styled.span``
 
 /* If enabled, grays out all elements inside the panel. */

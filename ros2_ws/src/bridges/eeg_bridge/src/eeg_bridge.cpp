@@ -23,6 +23,7 @@ using namespace std::placeholders;
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 const std::string EEG_INFO_TOPIC = "/eeg/info";
 const std::string HEALTHCHECK_TOPIC = "/eeg/healthcheck";
+const std::string LATENCY_MEASUREMENT_TRIGGER_TOPIC = "/pipeline/latency_measurement_trigger";
 
 /* Subscriber topics */
 const std::string MTMS_DEVICE_HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
@@ -132,6 +133,9 @@ void EegBridge::create_publishers() {
 
   this->eeg_info_publisher =
       this->create_publisher<eeg_interfaces::msg::EegInfo>(EEG_INFO_TOPIC, qos_persist_latest);
+
+  this->latency_measurement_trigger_publisher =
+      this->create_publisher<system_interfaces::msg::TimedTrigger>(LATENCY_MEASUREMENT_TRIGGER_TOPIC, 10);
 
   this->healthcheck_publisher =
       this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
@@ -408,7 +412,10 @@ void EegBridge::process_eeg_data_packet() {
       handle_sync_trigger(sync_time);
     } else {
       RCLCPP_INFO(this->get_logger(), "Received latency measurement trigger at %.4f s.", sync_time);
-      sample.is_latency_measurement_trigger = true;
+
+      auto msg = system_interfaces::msg::TimedTrigger();
+      msg.time = sync_time - this->time_offset;
+      this->latency_measurement_trigger_publisher->publish(msg);
     }
     handle_sample(sample);
     break;
@@ -421,8 +428,15 @@ void EegBridge::process_eeg_data_packet() {
     if (this->mtms_device_available) {
       handle_sync_trigger(sync_time);
     } else {
-      /* TODO: Implement support; this probably requires refactoring for stronger abstractions. */
-      RCLCPP_ERROR(this->get_logger(), "Sending trigger as packet currently not supported without mTMS device.");
+      /* Without mTMS device, "sync trigger" (i.e., the trigger that comes to input port A in the EEG device) is
+         used for automatic latency correction.
+
+         TODO: Implement better abstractions so that it can be renamed properly (such as "trigger_port_a") and used
+          for both mTMS and non-mTMS devices. Currently, the problem is that neurone_adapter.cpp knows about the
+          "sync trigger" concept, which is specific to mTMS devices. */
+      auto msg = system_interfaces::msg::TimedTrigger();
+      msg.time = sync_time - this->time_offset;
+      this->latency_measurement_trigger_publisher->publish(msg);
     }
     break;
 
@@ -568,7 +582,7 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_DEBUG(rclcpp::get_logger("eeg_bridge"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("eeg_bridge"), "Setting real-time priority (%d)", DEFAULT_REALTIME_SCHEDULING_PRIORITY);
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY,
                         DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
