@@ -588,7 +588,6 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
     /* XXX: Just copy trigger and event fields into preprocessed sample; this is probably incorrect
        in case samples are delayed by the preprocessor. */
     preprocessed_sample.is_trigger = msg->is_trigger;
-    preprocessed_sample.is_latency_measurement_trigger = msg->is_latency_measurement_trigger;
     preprocessed_sample.is_event = msg->is_event;
     preprocessed_sample.event_type = msg->event_type;
 
@@ -612,12 +611,12 @@ void EegPreprocessor::process_sample(const std::shared_ptr<eeg_interfaces::msg::
 
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
-/*
+
 #if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("preprocessor"), "Setting thread scheduling");
+  RCLCPP_INFO(rclcpp::get_logger("preprocessor"), "Setting real-time priority (%d)", DEFAULT_REALTIME_SCHEDULING_PRIORITY);
   set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
 #endif
-*/
+
   auto node = std::make_shared<EegPreprocessor>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)

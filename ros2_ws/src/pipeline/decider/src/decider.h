@@ -5,6 +5,7 @@
 #ifndef EEG_PROCESSOR_DECIDER_H
 #define EEG_PROCESSOR_DECIDER_H
 
+#include <deque>
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
@@ -12,10 +13,10 @@
 
 #include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/int32.hpp"
 
 #include "eeg_interfaces/msg/sample.hpp"
 #include "eeg_interfaces/msg/preprocessed_sample.hpp"
-#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "system_interfaces/srv/request_timed_trigger.hpp"
 
@@ -28,8 +29,10 @@
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
 
-#include "pipeline_interfaces/msg/latency.hpp"
+#include "pipeline_interfaces/msg/timing_error.hpp"
+#include "pipeline_interfaces/msg/timing_latency.hpp"
 #include "pipeline_interfaces/msg/sensory_stimulus.hpp"
+#include "pipeline_interfaces/msg/decision_info.hpp"
 
 #include "project_interfaces/msg/decider_list.hpp"
 #include "project_interfaces/srv/set_decider_module.hpp"
@@ -45,7 +48,7 @@ const std::string UNSET_STRING = "";
 enum class DeciderState {
   WAITING_FOR_ENABLED,
   READY,
-  SAMPLES_DROPPED,
+  DROPPED_SAMPLE_THRESHOLD_EXCEEDED,
   MODULE_ERROR
 };
 
@@ -80,11 +83,12 @@ private:
 
   void empty_trial_queue();
   void precompute_trials();
+  void update_dropped_sample_count();
 
   void perform_trial(const experiment_interfaces::msg::Trial& trial, double decision_time);
   void goal_response_callback(std::shared_ptr<rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle, const experiment_interfaces::msg::Trial& trial, double decision_time);
   void trial_performed_callback(const rclcpp_action::ClientGoalHandle<experiment_interfaces::action::PerformTrial>::WrappedResult &result);
-  void request_timed_trigger(std::shared_ptr<system_interfaces::msg::TimedTrigger> timed_trigger, builtin_interfaces::msg::Time system_time);
+  void request_timed_trigger(std::shared_ptr<system_interfaces::srv::RequestTimedTrigger::Request> request);
   void timed_trigger_callback(rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedFutureWithRequest future);
 
   void update_eeg_info(const eeg_interfaces::msg::PreprocessedSampleMetadata& msg);
@@ -111,7 +115,7 @@ private:
 
   void check_dropped_samples(double_t sample_time);
 
-  void handle_trigger_from_eeg_device(const std::shared_ptr<eeg_interfaces::msg::Trigger> msg);
+  void handle_trigger_from_eeg_device(const double_t trigger_time);
 
   void process_preprocessed_sample(const std::shared_ptr<eeg_interfaces::msg::PreprocessedSample> msg);
   void process_raw_sample(const std::shared_ptr<eeg_interfaces::msg::Sample> msg);
@@ -150,10 +154,11 @@ private:
 
   rclcpp::Client<system_interfaces::srv::RequestTimedTrigger>::SharedPtr timed_trigger_client;
 
-  rclcpp::Subscription<eeg_interfaces::msg::Trigger>::SharedPtr eeg_trigger_subscriber;
-
-  rclcpp::Publisher<pipeline_interfaces::msg::Latency>::SharedPtr latency_publisher;
+  rclcpp::Publisher<pipeline_interfaces::msg::TimingError>::SharedPtr timing_error_publisher;
+  rclcpp::Publisher<pipeline_interfaces::msg::TimingLatency>::SharedPtr timing_latency_publisher;
+  rclcpp::Publisher<pipeline_interfaces::msg::DecisionInfo>::SharedPtr decision_info_publisher;
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
+  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_sample_count_publisher;
 
   bool enabled = false;
 
@@ -179,6 +184,11 @@ private:
 
   std::vector<std::string> modules;
 
+  std::deque<std::pair<double_t, int>> dropped_samples_window;
+
+  uint16_t total_dropped_samples = 0;
+  uint16_t dropped_sample_threshold;
+
   /* Information about the EEG device configuration. */
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
   uint8_t num_of_eeg_channels = UNSET_NUM_OF_CHANNELS;
@@ -187,9 +197,6 @@ private:
 
   /* For checking if samples have been dropped, store the time of the previous sample received. */
   double_t previous_time = UNSET_PREVIOUS_TIME;
-
-  /* For latency calculation using timed triggers, store the trigger times in a queue. */
-  std::queue<double_t> trigger_times;
 
   RingBuffer<std::shared_ptr<eeg_interfaces::msg::PreprocessedSample>> sample_buffer;
   pipeline_interfaces::msg::SensoryStimulus sensory_stimulus;

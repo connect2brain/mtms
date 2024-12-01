@@ -656,6 +656,7 @@ std::tuple<bool, bool, double_t> EegSimulator::publish_sample(double_t current_t
   msg.metadata.num_of_eeg_channels = this->num_of_eeg_channels;
   msg.metadata.num_of_emg_channels = this->num_of_emg_channels;
   msg.metadata.is_simulation = true;
+  msg.metadata.system_time = this->get_clock()->now();
 
   msg.time = time;
 
