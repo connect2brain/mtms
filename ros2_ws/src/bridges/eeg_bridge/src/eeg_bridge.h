@@ -11,10 +11,10 @@
 
 #include "eeg_interfaces/msg/eeg_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
-#include "eeg_interfaces/msg/trigger.hpp"
 
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
+#include "system_interfaces/msg/timed_trigger.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
@@ -101,6 +101,7 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegInfo>::SharedPtr eeg_info_publisher;
   rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::Publisher<system_interfaces::msg::TimedTrigger>::SharedPtr latency_measurement_trigger_publisher;
 
   rclcpp::TimerBase::SharedPtr healthcheck_publisher_timer;
 

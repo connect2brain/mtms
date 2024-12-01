@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext } from 'react'
 import styled from 'styled-components'
 
 import { StyledPanel, StateRow, StateTitle, IndentedStateTitle, StateValue } from 'styles/General'
@@ -18,7 +18,7 @@ const EegStatisticsPanelTitle = styled.div`
 
 const EegStatisticsPanel = styled(StyledPanel)`
   width: 300px;
-  height: 250px;
+  height: 280px;
   position: fixed;
   top: 928px;
   right: 5px;
@@ -26,33 +26,43 @@ const EegStatisticsPanel = styled(StyledPanel)`
 `
 
 export const EegStatisticsDisplay: React.FC = () => {
-  const { eegStatistics } = useContext(EegContext)
+  const { eegStatistics, droppedSamples } = useContext(EegContext)
 
-  const formatTimeToMicroseconds = (timeInSeconds?: number): string | undefined => {
-    if (typeof timeInSeconds === 'undefined' || timeInSeconds === null) {
-      return undefined
-    }
-    if (timeInSeconds === 0) {
+  const formatValue = (value: number | undefined, formatter: (value: number) => string): string => {
+    if (value === undefined || value === null || value === 0) {
       return '\u2013'
     }
-    return `${(timeInSeconds * 1_000_000).toFixed(0)}`
+    return formatter(value)
   }
+
+  const formatTimeToMicroseconds = (timeInSeconds?: number): string =>
+    formatValue(timeInSeconds, (time) => `${(time * 1_000_000).toFixed(0)} µs`)
+
+  const formatTimeToMilliseconds = (timeInSeconds?: number, precision = 1): string =>
+    formatValue(timeInSeconds, (time) => `${(time * 1_000).toFixed(precision)} ms`)
 
   return (
     <>
       <EegStatisticsPanelTitle>Statistics</EegStatisticsPanelTitle>
       <EegStatisticsPanel>
         <StateRow>
-          <StateTitle>Raw:</StateTitle>
-          <StateValue>{eegStatistics?.num_of_raw_samples}</StateValue>
+          <StateTitle>Samples:</StateTitle>
         </StateRow>
         <StateRow>
-          <StateTitle>Preprocessed:</StateTitle>
-          <StateValue>{eegStatistics?.num_of_preprocessed_samples}</StateValue>
+          <IndentedStateTitle>Raw:</IndentedStateTitle>
+          <StateValue>{eegStatistics?.num_of_raw_samples ?? '\u2013'}</StateValue>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>Preprocessed:</IndentedStateTitle>
+          <StateValue>{eegStatistics?.num_of_preprocessed_samples ?? '\u2013'}</StateValue>
+        </StateRow>
+        <StateRow>
+          <IndentedStateTitle>Dropped:</IndentedStateTitle>
+          <StateValue>{droppedSamples !== null && droppedSamples > 0 ? droppedSamples : '\u2013'}</StateValue>
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Processing time (µs):</StateTitle>
+          <StateTitle>Processing time:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Median</IndentedStateTitle>
@@ -68,15 +78,15 @@ export const EegStatisticsDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Max sample interval (µs):</StateTitle>
+          <StateTitle>Max sample interval:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Raw</IndentedStateTitle>
-          <StateValue>{formatTimeToMicroseconds(eegStatistics?.max_time_between_raw_samples)}</StateValue>
+          <StateValue>{formatTimeToMilliseconds(eegStatistics?.max_time_between_raw_samples)}</StateValue>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Preprocessed</IndentedStateTitle>
-          <StateValue>{formatTimeToMicroseconds(eegStatistics?.max_time_between_preprocessed_samples)}</StateValue>
+          <StateValue>{formatTimeToMilliseconds(eegStatistics?.max_time_between_preprocessed_samples)}</StateValue>
         </StateRow>
       </EegStatisticsPanel>
     </>

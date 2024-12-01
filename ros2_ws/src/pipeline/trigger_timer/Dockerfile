@@ -36,6 +36,7 @@ WORKDIR /app/ros2_ws
 # ROS interfaces
 COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/pipeline_interfaces src/interfaces/pipeline_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
