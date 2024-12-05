@@ -50,12 +50,18 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->declare_parameter("dropped-sample-threshold", 4, dropped_sample_threshold_descriptor);
   this->get_parameter("dropped-sample-threshold", this->dropped_sample_threshold);
 
+  /* Read ROS parameter: timing latency threshold */
+  auto timing_latency_threshold_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  timing_latency_threshold_descriptor.description = "The threshold for the timing latency (in seconds) before stimulation is prevented";
+  this->declare_parameter("timing-latency-threshold", 0.005, timing_latency_threshold_descriptor);
+  this->get_parameter("timing-latency-threshold", this->timing_latency_threshold);
+
   /* Log the minimum pulse interval. */
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Configuration:");
   RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
-
-  RCLCPP_INFO(this->get_logger(), "  Dropped sample threshold per second: %d", this->dropped_sample_threshold);
+  RCLCPP_INFO(this->get_logger(), "  Dropped samples per second threshold: %d", this->dropped_sample_threshold);
+  RCLCPP_INFO(this->get_logger(), "  Timing latency threshold (ms): %d", 1000 * this->timing_latency_threshold);
 
   /* Validate the minimum pulse interval. */
   if (this->minimum_intertrial_interval <= 0) {
@@ -168,6 +174,12 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
     "/pipeline/dropped_samples",
     10);
 
+  /* Subscriber for timing latency. */
+  this->timing_latency_subscriber = this->create_subscription<pipeline_interfaces::msg::TimingLatency>(
+    "/pipeline/timing/latency",
+    10,
+    std::bind(&EegDecider::handle_timing_latency, this, _1));
+
   /* Publisher for timing latency. */
   this->timing_latency_publisher = this->create_publisher<pipeline_interfaces::msg::TimingLatency>(
     "/pipeline/timing/latency",
@@ -273,6 +285,10 @@ void EegDecider::handle_session(const std::shared_ptr<system_interfaces::msg::Se
     /* Reset the decider state when the session is stopped. */
     reset_decider_state();
   }
+}
+
+void EegDecider::handle_timing_latency(const std::shared_ptr<pipeline_interfaces::msg::TimingLatency> msg) {
+  this->timing_latency = msg->latency;
 }
 
 void EegDecider::handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg) {
@@ -1024,6 +1040,14 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
 
   decision_info.total_latency = total_latency;
 
+  /* Check timing latency threshold. */
+  if (this->timing_latency > this->timing_latency_threshold) {
+    this->decision_info_publisher->publish(decision_info);
+
+    RCLCPP_ERROR(this->get_logger(), "Timing latency (%.1f ms) exceeds threshold (%.1f ms), ignoring stimulation request.", this->timing_latency * 1000, this->timing_latency_threshold * 1000);
+    return;
+  }
+
   /* Check if a trial or timed trigger has already been requested. */
   bool is_already_stimulating = this->performing_trial || this->processing_timed_trigger;
 
@@ -1031,7 +1055,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   if (is_decision_positive && is_already_stimulating) {
     this->decision_info_publisher->publish(decision_info);
 
-    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or timed trigger, ignoring the request.");
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but already performing trial or timed trigger, ignoring request.");
     return;
   }
 
@@ -1039,7 +1063,7 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   if (is_decision_positive && !has_minimum_intertrial_interval_passed) {
     this->decision_info_publisher->publish(decision_info);
 
-    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but minimum intertrial interval (%.1f s) not respected (time since previous stimulation: %.3f s), ignoring the request.",
+    RCLCPP_ERROR(this->get_logger(), "Stimulation requested but minimum intertrial interval (%.1f s) not respected (time since previous stimulation: %.3f s), ignoring request.",
                  this->minimum_intertrial_interval,
                  time_since_previous_trial);
     return;
