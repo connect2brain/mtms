@@ -78,6 +78,7 @@ private:
   void handle_mtms_device_healthcheck(const std::shared_ptr<system_interfaces::msg::Healthcheck> msg);
 
   void handle_session(const std::shared_ptr<system_interfaces::msg::Session> msg);
+  void handle_timing_latency(const std::shared_ptr<pipeline_interfaces::msg::TimingLatency> msg);
 
   std::string goal_id_to_string(const rclcpp_action::GoalUUID &uuid);
 
@@ -160,6 +161,8 @@ private:
   rclcpp::Publisher<pipeline_interfaces::msg::SensoryStimulus>::SharedPtr sensory_stimulus_publisher;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_sample_count_publisher;
 
+  rclcpp::Subscription<pipeline_interfaces::msg::TimingLatency>::SharedPtr timing_latency_subscriber;
+
   bool enabled = false;
 
   DeciderState decider_state = DeciderState::WAITING_FOR_ENABLED;
@@ -188,6 +191,7 @@ private:
 
   uint16_t total_dropped_samples = 0;
   uint16_t dropped_sample_threshold;
+  double_t timing_latency_threshold;
 
   /* Information about the EEG device configuration. */
   uint16_t sampling_frequency = UNSET_SAMPLING_FREQUENCY;
@@ -210,6 +214,8 @@ private:
   bool processing_timed_trigger = false;
 
   bool preprocessor_enabled = false;
+
+  double_t timing_latency = 0.0;
 
   /* ROS parameters */
   double_t minimum_intertrial_interval;
