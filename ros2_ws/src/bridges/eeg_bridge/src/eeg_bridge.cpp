@@ -392,6 +392,11 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 void EegBridge::process_eeg_data_packet() {
   auto [result_type, sample, sync_time] = this->eeg_adapter->read_eeg_data_packet();
 
+  /* Ignore the packets if session has not started. */
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    return;
+  }
+
   /* TODO: Could timestamp even earlier. */
   sample.metadata.system_time = this->get_clock()->now();
 
