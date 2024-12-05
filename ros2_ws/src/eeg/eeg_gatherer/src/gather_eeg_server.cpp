@@ -94,11 +94,6 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_gatherer"), "Setting thread scheduling");
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_SCHEDULING_PRIORITY);
-#endif
-
   auto node = std::make_shared<GatherEegServer>();
 
 #if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
