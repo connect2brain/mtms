@@ -274,7 +274,7 @@ std::tuple<bool, double> NeurOneAdapter::handle_trigger_packet() {
       trigger_event.timestamp = trigger_time_s;
       trigger_queue.push(trigger_event);
 
-      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger packet at time: %f",
+      RCLCPP_INFO(rclcpp::get_logger(LOGGER_NAME), "Received a trigger packet to port B at time: %f",
           trigger_time_s);
     } else {
       RCLCPP_WARN(rclcpp::get_logger(LOGGER_NAME), "Unknown trigger port: %u", trigger_channel);
