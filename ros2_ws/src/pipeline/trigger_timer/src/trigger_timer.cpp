@@ -157,8 +157,12 @@ void TriggerTimer::handle_mtms_device_healthcheck(const std::shared_ptr<system_i
 }
 
 void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sample> msg) {
-  double_t current_time = msg->time;
+  /* Ignore EEG sample if session has not started. */
+  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+    return;
+  }
 
+  double_t current_time = msg->time;
   double_t latency_corrected_time = current_time + this->current_latency;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
