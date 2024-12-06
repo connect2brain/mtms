@@ -39,6 +39,12 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
     10,
     std::bind(&TriggerTimer::handle_eeg_raw, this, _1));
 
+  /* Subscriber for timing error. */
+  this->timing_error_subscriber = this->create_subscription<pipeline_interfaces::msg::TimingError>(
+    "/pipeline/timing/error",
+    10,
+    std::bind(&TriggerTimer::handle_timing_error, this, _1));
+
   /* Subscriber for session. */
   const auto DEADLINE_NS = std::chrono::nanoseconds(SESSION_PUBLISHING_INTERVAL + SESSION_PUBLISHING_INTERVAL_TOLERANCE);
 
@@ -107,7 +113,7 @@ void TriggerTimer::handle_session(const std::shared_ptr<system_interfaces::msg::
     if (this->session_state.value == system_interfaces::msg::SessionState::STOPPED) {
       RCLCPP_INFO(this->get_logger(), "Session stopped, resetting.");
       this->current_latency = 0.0;
-      this->last_latency_measurement_time = 0.0;
+      this->latest_latency_measurement_time = 0.0;
     }
   }
 }
@@ -115,13 +121,17 @@ void TriggerTimer::handle_session(const std::shared_ptr<system_interfaces::msg::
 void TriggerTimer::handle_latency_measurement_trigger(const std::shared_ptr<system_interfaces::msg::TimedTrigger> msg) {
   double_t trigger_time = msg->time;
 
-  current_latency = trigger_time - last_latency_measurement_time;
+  current_latency = trigger_time - latest_latency_measurement_time;
 
   /* Publish latency ROS message. */
   auto msg_ = pipeline_interfaces::msg::TimingLatency();
   msg_.latency = current_latency;
 
   this->timing_latency_publisher->publish(msg_);
+}
+
+void TriggerTimer::handle_timing_error(const std::shared_ptr<pipeline_interfaces::msg::TimingError> msg) {
+  this->latest_timing_error = msg->error;
 }
 
 void TriggerTimer::attempt_labjack_connection() {
@@ -163,7 +173,7 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   }
 
   double_t current_time = msg->time;
-  double_t latency_corrected_time = current_time + this->current_latency;
+  double_t latency_corrected_time = current_time + this->current_latency + this->latest_timing_error;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
 
@@ -194,9 +204,9 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   }
 
   /* Trigger latency measurement event at specific intervals. */
-  if (current_time - last_latency_measurement_time >= latency_measurement_interval) {
+  if (current_time - latest_latency_measurement_time >= latency_measurement_interval) {
     trigger_labjack(latency_measurement_trigger_fio);
-    last_latency_measurement_time = current_time;
+    latest_latency_measurement_time = current_time;
   }
 }
 
