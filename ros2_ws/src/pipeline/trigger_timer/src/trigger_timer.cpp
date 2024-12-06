@@ -254,8 +254,6 @@ void TriggerTimer::trigger_labjack(const char* name) {
   if (!safe_error_check(err, "Setting digital output on LabJack")) {
     return;
   }
-
-  RCLCPP_INFO(logger, "Triggered LabJack on output port %s", name);
 }
 
 int main(int argc, char *argv[]) {
