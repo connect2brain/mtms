@@ -809,7 +809,7 @@ void EegDecider::handle_trigger_from_eeg_device(const double_t actual_trigger_ti
   /* Calculate the time difference between the incoming EEG trigger and the trigger time. */
   double_t timing_error = actual_trigger_time - previous_stimulation_time;
 
-  RCLCPP_INFO(this->get_logger(), "Actual trigger from EEG device at: %.4f (s), excepted trigger at: %.4f (s), timing error: %.4f (s)", actual_trigger_time, previous_stimulation_time, timing_error);
+  RCLCPP_INFO(this->get_logger(), "Actual trigger from EEG device at: %.4f (s), excepted trigger at: %.4f (s), timing error: %.1f (ms)", actual_trigger_time, previous_stimulation_time, 1000 * timing_error);
 
   /* Publish timing error ROS message. */
   auto msg = pipeline_interfaces::msg::TimingError();
