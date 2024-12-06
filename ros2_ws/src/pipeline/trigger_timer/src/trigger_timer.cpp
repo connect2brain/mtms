@@ -17,7 +17,7 @@ const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
 const double_t latency_measurement_interval = 0.1;
-const double_t maximum_triggering_error = 0.003;
+const double_t maximum_triggering_error = 0.001;
 
 /* Note: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
