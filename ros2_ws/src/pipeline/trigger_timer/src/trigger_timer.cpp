@@ -32,6 +32,13 @@ TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger(
   this->declare_parameter("triggering-tolerance", 0.0, triggering_tolerance_descriptor);
   this->get_parameter("triggering-tolerance", this->triggering_tolerance);
 
+  /* Check that the triggering tolerance is non-negative. */
+  if (this->triggering_tolerance < 0.0) {
+    RCLCPP_ERROR(this->get_logger(), "Triggering tolerance must be non-negative.");
+    rclcpp::shutdown();
+    return;
+  }
+
   /* Log the configuration. */
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Configuration:");
@@ -184,17 +191,17 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   }
 
   double_t current_time = msg->time;
-  double_t latency_corrected_time = current_time + this->current_latency;
+  this->current_latency_corrected_time = current_time + this->current_latency;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
 
   /* Trigger all events that are due. */
-  while (!trigger_queue.empty() && trigger_queue.top() <= latency_corrected_time) {
+  while (!trigger_queue.empty() && trigger_queue.top() <= this->current_latency_corrected_time) {
     double_t scheduled_time = trigger_queue.top();
-    double_t error = latency_corrected_time - scheduled_time;
+    double_t error = this->current_latency_corrected_time - scheduled_time;
 
     RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f, error: %.4f)",
-                scheduled_time, latency_corrected_time, error);
+                scheduled_time, this->current_latency_corrected_time, error);
     trigger_labjack(tms_trigger_fio);
 
     trigger_queue.pop();
@@ -204,7 +211,7 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
     trigger_info_msg.success = true;
     trigger_info_msg.scheduled_time = scheduled_time;
     trigger_info_msg.current_latency = this->current_latency;
-    trigger_info_msg.latency_corrected_actual_time = latency_corrected_time;
+    trigger_info_msg.latency_corrected_actual_time = this->current_latency_corrected_time;
 
     this->trigger_info_publisher->publish(trigger_info_msg);
   }
@@ -222,11 +229,8 @@ void TriggerTimer::handle_request_timed_trigger(
 
   double_t trigger_time = request->timed_trigger.time;
 
-  /* Get the current ROS time in seconds. */
-  double_t current_ros_time = this->get_clock()->now().seconds();
-
-  /* Check if requested trigger time is less than current time + tolerance. */
-  bool feasible = trigger_time <= current_ros_time + this->triggering_tolerance;
+  /* Check if requested trigger time is less than current time - tolerance. */
+  bool feasible = trigger_time > this->current_latency_corrected_time - this->triggering_tolerance;
 
   /* Create and publish decision info. */
   auto msg = pipeline_interfaces::msg::DecisionInfo();
@@ -248,8 +252,8 @@ void TriggerTimer::handle_request_timed_trigger(
   /* If not within acceptable range, log and return. */
   if (!feasible) {
     RCLCPP_WARN(logger,
-      "Requested trigger time %.4f is greater than %.4f s after the current time %.4f. Not scheduling trigger.",
-      trigger_time, this->triggering_tolerance, current_ros_time);
+      "Requested trigger time %.4f (s) is too late (current time: %.4f s, tolerance: %.1f ms). Not scheduling.",
+      trigger_time, this->current_latency_corrected_time, 1000 * this->triggering_tolerance);
     response->success = false;
     return;
   }
