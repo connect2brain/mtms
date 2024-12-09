@@ -49,6 +49,8 @@ private:
   double_t latest_latency_measurement_time = 0.0;
   double_t current_latency = 0.0;
 
+  double_t triggering_tolerance = 0.0;
+
   /* Priority queue for trigger times. */
   std::priority_queue<double_t, std::vector<double_t>, std::greater<double_t>> trigger_queue;
   std::mutex queue_mutex;
