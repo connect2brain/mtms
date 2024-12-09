@@ -184,7 +184,7 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   }
 
   double_t current_time = msg->time;
-  double_t latency_corrected_time = current_time + this->current_latency + this->latest_timing_error;
+  double_t latency_corrected_time = current_time + this->current_latency;
 
   std::lock_guard<std::mutex> lock(queue_mutex);
 
