@@ -62,7 +62,7 @@ export const EegStatisticsDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Processing time:</StateTitle>
+          <StateTitle>Preprocessing time:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Median</IndentedStateTitle>
@@ -78,7 +78,7 @@ export const EegStatisticsDisplay: React.FC = () => {
         </StateRow>
         <br />
         <StateRow>
-          <StateTitle>Max sample interval:</StateTitle>
+          <StateTitle>Maximum sample interval:</StateTitle>
         </StateRow>
         <StateRow>
           <IndentedStateTitle>Raw</IndentedStateTitle>
