@@ -48,6 +48,7 @@ private:
   double_t latest_timing_error = 0.0;
   double_t latest_latency_measurement_time = 0.0;
   double_t current_latency = 0.0;
+  double_t current_latency_corrected_time = 0.0;
 
   double_t triggering_tolerance = 0.0;
 
