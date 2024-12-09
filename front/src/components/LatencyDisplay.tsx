@@ -110,7 +110,7 @@ export const LatencyDisplay: React.FC = () => {
         <StateValue>{formattedLatestDecisionTime}</StateValue>
       </StateRow>
       <StateRow>
-        <IndentedStateTitle>Latencies</IndentedStateTitle>
+        <IndentedStateTitle>Latency</IndentedStateTitle>
       </StateRow>
       <StateRow>
         <DoubleIndentedStateTitle>Decider</DoubleIndentedStateTitle>
@@ -127,7 +127,7 @@ export const LatencyDisplay: React.FC = () => {
       <br />
       {/* Positive Decision Info */}
       <StateRow>
-        <IndentedStateTitle>Latest stimulation</IndentedStateTitle>
+        <IndentedStateTitle>Latest stimulation time</IndentedStateTitle>
         <StateValue>{formattedPositiveDecisionTime}</StateValue>
       </StateRow>
       <StateRow>
