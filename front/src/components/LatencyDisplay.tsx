@@ -62,8 +62,25 @@ export const LatencyDisplay: React.FC = () => {
 
   const formattedError =
     timingError && sessionState?.value === SessionState.STARTED
-      ? (Math.abs(timingError.error) * 1000).toFixed(1) + ' ms'
+      ? (timingError.error * 1000).toFixed(1) + ' ms'
       : '\u2013'
+
+  // Latest Decision Stats
+  const formattedLatestDecisionTime = latestDecision?.decision_time
+    ? latestDecision.decision_time.toFixed(1) + ' s'
+    : '\u2013'
+
+  const formattedLatestDeciderLatency = latestDecision?.decider_latency
+    ? (latestDecision.decider_latency * 1000).toFixed(1) + ' ms'
+    : '\u2013'
+
+  const formattedLatestPreprocessorLatency = latestDecision?.preprocessor_latency
+    ? (latestDecision.preprocessor_latency * 1000).toFixed(1) + ' ms'
+    : '\u2013'
+
+  const formattedLatestTotalLatency = latestDecision?.total_latency
+    ? (latestDecision.total_latency * 1000).toFixed(1) + ' ms'
+    : '\u2013'
 
   // Positive Decision Stats
   const formattedPositiveDecisionTime = positiveDecision?.decision_time
@@ -71,35 +88,15 @@ export const LatencyDisplay: React.FC = () => {
     : '\u2013'
 
   const formattedPositiveDeciderLatency = positiveDecision?.decider_latency
-    ? (positiveDecision.decider_latency * 1e6).toFixed(0) + ' µs'
+    ? (positiveDecision.decider_latency * 1000).toFixed(1) + ' ms'
     : '\u2013'
 
   const formattedPositivePreprocessorLatency = positiveDecision?.preprocessor_latency
-    ? (positiveDecision.preprocessor_latency * 1e6).toFixed(0) + ' µs'
+    ? (positiveDecision.preprocessor_latency * 1000).toFixed(1) + ' ms'
     : '\u2013'
 
   const formattedPositiveTotalLatency = positiveDecision?.total_latency
-    ? (positiveDecision.total_latency * 1e6).toFixed(0) + ' µs'
-    : '\u2013'
-
-  // Latest Decision Stats
-  const formattedLatestDecisionTime = latestDecision?.decision_time
-    ? latestDecision.decision_time.toFixed(1) + ' s'
-    : '\u2013'
-
-  const formattedLatestStimulate =
-    latestDecision?.stimulate !== undefined ? (latestDecision.stimulate ? 'Yes' : 'No') : '\u2013'
-
-  const formattedLatestDeciderLatency = latestDecision?.decider_latency
-    ? (latestDecision.decider_latency * 1e6).toFixed(0) + ' µs'
-    : '\u2013'
-
-  const formattedLatestPreprocessorLatency = latestDecision?.preprocessor_latency
-    ? (latestDecision.preprocessor_latency * 1e6).toFixed(0) + ' µs'
-    : '\u2013'
-
-  const formattedLatestTotalLatency = latestDecision?.total_latency
-    ? (latestDecision.total_latency * 1e6).toFixed(0) + ' µs'
+    ? (positiveDecision.total_latency * 1000).toFixed(1) + ' ms'
     : '\u2013'
 
   return (
@@ -113,7 +110,7 @@ export const LatencyDisplay: React.FC = () => {
         <StateValue>{formattedLatestDecisionTime}</StateValue>
       </StateRow>
       <StateRow>
-        <IndentedStateTitle>Latencies (µs)</IndentedStateTitle>
+        <IndentedStateTitle>Latency</IndentedStateTitle>
       </StateRow>
       <StateRow>
         <DoubleIndentedStateTitle>Decider</DoubleIndentedStateTitle>
@@ -130,7 +127,7 @@ export const LatencyDisplay: React.FC = () => {
       <br />
       {/* Positive Decision Info */}
       <StateRow>
-        <IndentedStateTitle>Latest stimulation</IndentedStateTitle>
+        <IndentedStateTitle>Latest stimulation time</IndentedStateTitle>
         <StateValue>{formattedPositiveDecisionTime}</StateValue>
       </StateRow>
       <StateRow>
@@ -144,6 +141,10 @@ export const LatencyDisplay: React.FC = () => {
       <StateRow>
         <DoubleIndentedStateTitle>Total</DoubleIndentedStateTitle>
         <StateValue>{formattedPositiveTotalLatency}</StateValue>
+      </StateRow>
+      <StateRow>
+        <DoubleIndentedStateTitle>Feasible</DoubleIndentedStateTitle>
+        <StateValue>{positiveDecision?.feasible ? '\u2714' : '\u2718'}</StateValue>
       </StateRow>
       <br />
       {/* Timing Info */}
