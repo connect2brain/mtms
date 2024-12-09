@@ -17,7 +17,6 @@ const std::string TIMED_TRIGGER_SERVICE = "/pipeline/timed_trigger";
 const std::string EEG_RAW_TOPIC = "/eeg/raw";
 
 const double_t latency_measurement_interval = 0.1;
-const double_t maximum_triggering_error = 0.001;
 
 /* Note: Needs to match the values in session_bridge.cpp. */
 const milliseconds SESSION_PUBLISHING_INTERVAL = 20ms;
@@ -27,6 +26,18 @@ const char* tms_trigger_fio = "FIO5";
 const char* latency_measurement_trigger_fio = "FIO4";
 
 TriggerTimer::TriggerTimer() : Node("trigger_timer"), logger(rclcpp::get_logger("trigger_timer")) {
+  /* Read ROS parameter: Maximum triggering error */
+  auto triggering_tolerance_descriptor = rcl_interfaces::msg::ParameterDescriptor{};
+  triggering_tolerance_descriptor.description = "The maximum triggering error (in seconds)";
+  this->declare_parameter("triggering-tolerance", 0.0, triggering_tolerance_descriptor);
+  this->get_parameter("triggering-tolerance", this->triggering_tolerance);
+
+  /* Log the configuration. */
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Configuration:");
+  RCLCPP_INFO(this->get_logger(), "  Triggering tolerance (ms): %.1f", 1000 * this->triggering_tolerance);
+  RCLCPP_INFO(this->get_logger(), " ");
+
   /* Subscriber for mTMS device healthcheck. */
   this->mtms_device_healthcheck_subscriber = create_subscription<system_interfaces::msg::Healthcheck>(
     "/mtms_device/healthcheck",
@@ -181,26 +192,21 @@ void TriggerTimer::handle_eeg_raw(const std::shared_ptr<eeg_interfaces::msg::Sam
   while (!trigger_queue.empty() && trigger_queue.top() <= latency_corrected_time) {
     double_t scheduled_time = trigger_queue.top();
     double_t error = latency_corrected_time - scheduled_time;
-    bool success = std::abs(error) <= maximum_triggering_error;
 
-    if (success) {
-      RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f, error: %.4f)", scheduled_time, latency_corrected_time, error);
-      trigger_labjack(tms_trigger_fio);
-    } else {
-      RCLCPP_WARN(logger, "Skipping trigger at time: %.4f (current time: %.4f, error: %.4f exceeds threshold: %.4f)",
-                  scheduled_time, latency_corrected_time, error, maximum_triggering_error);
-    }
+    RCLCPP_INFO(logger, "Triggering at time: %.4f (current time: %.4f, error: %.4f)",
+                scheduled_time, latency_corrected_time, error);
+    trigger_labjack(tms_trigger_fio);
 
     trigger_queue.pop();
 
     /* Publish trigger info. */
-    auto msg = pipeline_interfaces::msg::TriggerInfo();
-    msg.success = success;
-    msg.scheduled_time = scheduled_time;
-    msg.current_latency = this->current_latency;
-    msg.latency_corrected_actual_time = latency_corrected_time;
+    auto trigger_info_msg = pipeline_interfaces::msg::TriggerInfo();
+    trigger_info_msg.success = true;
+    trigger_info_msg.scheduled_time = scheduled_time;
+    trigger_info_msg.current_latency = this->current_latency;
+    trigger_info_msg.latency_corrected_actual_time = latency_corrected_time;
 
-    this->trigger_info_publisher->publish(msg);
+    this->trigger_info_publisher->publish(trigger_info_msg);
   }
 
   /* Trigger latency measurement event at specific intervals. */
@@ -216,16 +222,25 @@ void TriggerTimer::handle_request_timed_trigger(
 
   double_t trigger_time = request->timed_trigger.time;
 
-  /* Add the trigger time to the queue. */
-  {
-    std::lock_guard<std::mutex> lock(queue_mutex);
-    trigger_queue.push(trigger_time);
+  /* Get the current ROS time in seconds. */
+  double_t current_ros_time = this->get_clock()->now().seconds();
+
+  /* Check if requested trigger time is less than current time + tolerance. */
+  if (trigger_time > current_ros_time + this->triggering_tolerance) {
+    RCLCPP_WARN(logger,
+      "Requested trigger time %.4f is greater than %.4f s after the current time %.4f. Not scheduling trigger.",
+      trigger_time, this->triggering_tolerance, current_ros_time);
+    response->success = false;
+    return;
   }
+
+  /* Within acceptable range, schedule the trigger. */
+  std::lock_guard<std::mutex> lock(queue_mutex);
+  trigger_queue.push(trigger_time);
 
   /* Create and publish decision info. */
   auto msg = pipeline_interfaces::msg::DecisionInfo();
   msg.stimulate = true;
-
   msg.decision_time = request->decision_time;
   msg.decider_latency = request->decider_latency;
   msg.preprocessor_latency = request->preprocessor_latency;
@@ -237,10 +252,9 @@ void TriggerTimer::handle_request_timed_trigger(
   double_t total_latency = now.seconds() - sample_time_rcl.seconds();
 
   msg.total_latency = total_latency;
-
   this->decision_info_publisher->publish(msg);
 
-  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f, total decision-making latency: %.4f", trigger_time, total_latency);
+  RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f (request accepted)", trigger_time);
   response->success = true;
 }
 
