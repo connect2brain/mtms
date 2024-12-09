@@ -226,21 +226,12 @@ void TriggerTimer::handle_request_timed_trigger(
   double_t current_ros_time = this->get_clock()->now().seconds();
 
   /* Check if requested trigger time is less than current time + tolerance. */
-  if (trigger_time > current_ros_time + this->triggering_tolerance) {
-    RCLCPP_WARN(logger,
-      "Requested trigger time %.4f is greater than %.4f s after the current time %.4f. Not scheduling trigger.",
-      trigger_time, this->triggering_tolerance, current_ros_time);
-    response->success = false;
-    return;
-  }
-
-  /* Within acceptable range, schedule the trigger. */
-  std::lock_guard<std::mutex> lock(queue_mutex);
-  trigger_queue.push(trigger_time);
+  bool feasible = trigger_time <= current_ros_time + this->triggering_tolerance;
 
   /* Create and publish decision info. */
   auto msg = pipeline_interfaces::msg::DecisionInfo();
   msg.stimulate = true;
+  msg.feasible = feasible;
   msg.decision_time = request->decision_time;
   msg.decider_latency = request->decider_latency;
   msg.preprocessor_latency = request->preprocessor_latency;
@@ -253,6 +244,19 @@ void TriggerTimer::handle_request_timed_trigger(
 
   msg.total_latency = total_latency;
   this->decision_info_publisher->publish(msg);
+
+  /* If not within acceptable range, log and return. */
+  if (!feasible) {
+    RCLCPP_WARN(logger,
+      "Requested trigger time %.4f is greater than %.4f s after the current time %.4f. Not scheduling trigger.",
+      trigger_time, this->triggering_tolerance, current_ros_time);
+    response->success = false;
+    return;
+  }
+
+  /* Within acceptable range, schedule the trigger. */
+  std::lock_guard<std::mutex> lock(queue_mutex);
+  trigger_queue.push(trigger_time);
 
   RCLCPP_INFO(logger, "Scheduled trigger at time: %.4f (request accepted)", trigger_time);
   response->success = true;
