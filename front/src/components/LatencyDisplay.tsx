@@ -142,6 +142,10 @@ export const LatencyDisplay: React.FC = () => {
         <DoubleIndentedStateTitle>Total</DoubleIndentedStateTitle>
         <StateValue>{formattedPositiveTotalLatency}</StateValue>
       </StateRow>
+      <StateRow>
+        <DoubleIndentedStateTitle>Feasible</DoubleIndentedStateTitle>
+        <StateValue>{positiveDecision?.feasible ? '\u2714' : '\u2718'}</StateValue>
+      </StateRow>
       <br />
       {/* Timing Info */}
       <StateRow>

@@ -56,7 +56,7 @@ EegDecider::EegDecider() : Node("decider"), logger(rclcpp::get_logger("decider")
   this->declare_parameter("timing-latency-threshold", 0.005, timing_latency_threshold_descriptor);
   this->get_parameter("timing-latency-threshold", this->timing_latency_threshold);
 
-  /* Log the minimum pulse interval. */
+  /* Log the configuration. */
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Configuration:");
   RCLCPP_INFO(this->get_logger(), "  Minimum pulse interval: %.1f (s)", this->minimum_intertrial_interval);
@@ -1029,6 +1029,9 @@ void EegDecider::process_preprocessed_sample(const std::shared_ptr<eeg_interface
   /* Create decision info, but only publish in Decider if the pathway doesn't reach the Trigger Timer. */
   auto decision_info = pipeline_interfaces::msg::DecisionInfo();
   decision_info.stimulate = is_decision_positive;
+
+  /* Ultimately, Trigger Timer knows if the decision is feasible. Use a dummy value here. */
+  decision_info.feasible = true;
 
   decision_info.decision_time = sample_time;
   decision_info.decider_latency = decider_processing_time;
