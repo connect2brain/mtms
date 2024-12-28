@@ -29,6 +29,7 @@ const uint8_t NUM_OF_CHANNELS = 5;
 
 const uint8_t MAX_ABSOLUTE_DISPLACEMENT = 18;
 const uint16_t MAX_ROTATION_ANGLE = 359;
+const uint16_t MIN_ROTATION_ANGLE = 0;
 
 const uint8_t INTENSITY_LIMIT = 135;
 
@@ -97,7 +98,7 @@ public:
 
       int8_t displacement_x = request->target.displacement_x;
       int8_t displacement_y = request->target.displacement_y;
-      uint16_t rotation_angle = request->target.rotation_angle;
+      int16_t rotation_angle = request->target.rotation_angle;
       uint8_t algorithm = request->target.algorithm.value;
       uint8_t intensity = request->target.intensity;
 
@@ -147,7 +148,7 @@ public:
         std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Response> response) -> void {
       int8_t displacement_x = request->displacement_x;
       int8_t displacement_y = request->displacement_y;
-      uint16_t rotation_angle = request->rotation_angle;
+      int16_t rotation_angle = request->rotation_angle;
       uint8_t algorithm = request->algorithm.value;
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d) with algorithm %s",
@@ -211,6 +212,10 @@ private:
       RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too large rotation angle, the limit is: %d.", MAX_ROTATION_ANGLE);
       return false;
     }
+    if (rotation_angle < MIN_ROTATION_ANGLE) {
+      RCLCPP_WARN(rclcpp::get_logger("targeting"), "Invalid request: Too small rotation angle, the limit is: %d.", MIN_ROTATION_ANGLE);
+      return false;
+    }
     return true;
   }
   bool validate_intensity(int8_t intensity) {
@@ -221,13 +226,13 @@ private:
     return true;
   }
 
-  bool validate_channel_voltages_request(int8_t displacement_x, int8_t displacement_y, uint16_t rotation_angle, uint8_t intensity) {
+  bool validate_channel_voltages_request(int8_t displacement_x, int8_t displacement_y, int16_t rotation_angle, uint8_t intensity) {
     return validate_displacement(displacement_x, displacement_y) &&
            validate_rotation_angle(rotation_angle) &&
            validate_intensity(intensity);
   }
 
-  bool validate_maximum_intensity_request(int8_t displacement_x, int8_t displacement_y, uint16_t rotation_angle) {
+  bool validate_maximum_intensity_request(int8_t displacement_x, int8_t displacement_y, int16_t rotation_angle) {
     return validate_displacement(displacement_x, displacement_y) &&
            validate_rotation_angle(rotation_angle);
   }
@@ -258,7 +263,7 @@ private:
         int8_t displacement_y = stoi(value_str);
 
         getline(str, value_str, ',');
-        uint16_t rotation_angle = stoi(value_str);
+        int16_t rotation_angle = stoi(value_str);
 
         double voltages[NUM_OF_CHANNELS];
         for (uint8_t j = 0; j < NUM_OF_CHANNELS; j++) {
