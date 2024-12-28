@@ -392,8 +392,15 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 void EegBridge::process_eeg_data_packet() {
   auto [result_type, sample, sync_time] = this->eeg_adapter->read_eeg_data_packet();
 
-  /* Ignore the packets if session has not started. */
-  if (this->session_state.value != system_interfaces::msg::SessionState::STARTED) {
+  /* Ignore the packets if session has not started. Exception: sync trigger packets are always processed if
+     mTMS device is available, as they are used for drift correction.
+
+     XXX: This is a bit of a hack, done because the first sync trigger can arrive before the session starts. */
+  bool is_sync_trigger = result_type == PacketResult::SYNC_TRIGGER || result_type == PacketResult::SAMPLE_WITH_SYNC;
+  bool ignore_packet = this->session_state.value != system_interfaces::msg::SessionState::STARTED &&
+                       !(is_sync_trigger && this->mtms_device_available);
+
+  if (ignore_packet) {
     return;
   }
 
