@@ -1,0 +1,154 @@
+---
+- name: Setup mTMS environment
+  hosts: all
+  become: yes
+
+  vars:
+    # The user that owns the repository and runs the services:
+    target_user: "{{ ansible_user | default('mtms') }}"
+    target_home: "/home/{{ target_user }}"
+
+    # The main repository root.
+    mtms_root: "{{ target_home }}/mtms"
+
+    # ROS distro
+    ros_distro: "iron"
+
+  tasks:
+    ########################################################################
+    # 0. List and validate allowed site names
+    ########################################################################
+    - name: Gather allowed site names
+      find:
+        paths: "{{ mtms_root }}/sites"
+        file_type: directory
+        depth: 1
+      register: site_directories
+
+    - name: Validate target_site
+      fail:
+        msg: >
+          The variable 'target_site' must be one of the following values:
+          {{ site_directories.files | map('basename') | join(', ') }}.
+      when: target_site not in (site_directories.files | map('basename') | list)
+
+    ########################################################################
+    # 1. Update sudoers for container restart (no password)
+    ########################################################################
+    - name: Allow user to restart mtms-core-containers without sudo password
+      lineinfile:
+        path: /etc/sudoers.d/restart_mtms_core
+        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-core-containers"
+        create: yes
+        mode: '0440'
+
+    ########################################################################
+    # 2. Copy & enable systemd services (mtms-core-containers & device bridge)
+    ########################################################################
+    - name: Copy mtms-core-containers.service
+      copy:
+        src: files/mtms-core-containers.service
+        dest: /etc/systemd/system/mtms-core-containers.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy mtms-device-bridge.service
+      copy:
+        src: files/mtms-device-bridge.service
+        dest: /etc/systemd/system/mtms-device-bridge.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start mtms-core-containers.service
+      systemd:
+        name: mtms-core-containers.service
+        enabled: yes
+        state: started
+
+    - name: Enable and start mtms-device-bridge.service
+      systemd:
+        name: mtms-device-bridge.service
+        enabled: yes
+        state: started
+
+    ########################################################################
+    # 3. Update environment variables in .bashrc
+    ########################################################################
+
+    - name: Export SITE in .bashrc
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export SITE={{ target_site }}"
+        state: present
+
+    - name: Ensure MTMS_ROOT is exported
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export MTMS_ROOT={{ mtms_root }}"
+        state: present
+
+    - name: Ensure SITE_ENV_FILE points to the .env file
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env"
+        state: present
+
+    - name: Ensure script directory is in PATH
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export PATH=$PATH:{{ repo_dir }}/scripts/"
+        state: present
+
+    - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+        state: present
+
+    - name: Ensure CYCLONEDDS_URI is set
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'export CYCLONEDDS_URI=file://$MTMS_ROOT/config/cyclonedds.xml'
+        state: present
+
+    - name: Ensure ROS is sourced
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source /opt/ros/{{ ros_distro }}/setup.bash"
+        state: present
+
+    - name: Ensure local ROS workspace is sourced
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source $MTMS_ROOT/ros2_ws/install/local_setup.bash"
+        state: present
+
+    - name: Ensure PYTHONPATH for the Python API
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH'
+        state: present
+
+    - name: Ensure LD_PRELOAD for C++ library (MATLAB compatibility)
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6'
+        state: present
+
+    - name: Ensure LD_LIBRARY_PATH for custom Python (MATLAB compatibility)
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'export LD_LIBRARY_PATH=/opt/python3.9.5/lib:$LD_LIBRARY_PATH'
+        state: present
+
+    - name: Append "instructions" command to .bashrc
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'instructions'
+        state: present
