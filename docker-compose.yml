@@ -13,19 +13,6 @@ services:
     # Note: Just mapping the device /dev/hidraw4 inside the container does not work properly.
     privileged: true
 
-  front:
-    build:
-      context: .
-      dockerfile: front/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    volumes:
-      - './front/src:/app/src'
-      - './front/public:/app/public'
-    network_mode: host
-
   eeg_bridge:
     build:
       context: .
@@ -130,14 +117,6 @@ services:
       - '$PROJECTS_ROOT:/app/projects'
     # The container needs to be privileged to set real-time priority.
     privileged: true
-    network_mode: host
-
-  rosbridge:
-    build:
-      context: .
-      dockerfile: ros2_ws/src/bridges/rosbridge/Dockerfile
-    env_file:
-      - ${SITE_ENV_FILE}
     network_mode: host
 
   presenter:
