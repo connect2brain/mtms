@@ -606,6 +606,7 @@ classdef MTMSApi < handle
                 assert(ismember(mode, allowed_modes), ['Mode must be one of ' strjoin(allowed_modes, ', ')]);
 
                 piece = ros2message('event_interfaces/WaveformPiece');
+                assert (duration_in_ticks >= 0 && duration_in_ticks <= 65535, 'Duration in ticks must be in range 0-65535.');
                 piece.duration_in_ticks = uint16(duration_in_ticks);
 
                 % TODO: Unify terms mode and phase.
@@ -680,11 +681,11 @@ classdef MTMSApi < handle
         % Return the maximum intensity given the displacements and rotation angle.
         %
         % :param displacement_x: Displacement in the x direction.
-        % :type displacement_x: float
+        % :type displacement_x: int
         % :param displacement_y: Displacement in the y direction.
-        % :type displacement_y: float
+        % :type displacement_y: int
         % :param rotation_angle: Rotation angle in degrees.
-        % :type rotation_angle: float
+        % :type rotation_angle: int
         %
         % :return: The maximum intensity.
         % :rtype: float
@@ -794,10 +795,24 @@ classdef MTMSApi < handle
 
             target = ros2message('targeting_interfaces/ElectricTarget');
 
+            % Check that the values are within the allowed ranges to avoid MATLAB's int8 and int16 silently
+            % casting the values to the nearest allowed value. Also check that the values are integers.
+            assert(displacement_x >= -128 && displacement_x <= 127 && mod(displacement_x, 1) == 0, ...
+                "Displacement x must be an integer in range -128-127.");
             target.displacement_x = int8(displacement_x);
+
+            assert(displacement_y >= -128 && displacement_y <= 127 && mod(displacement_y, 1) == 0, ...
+                "Displacement y must be an integer in range -128-127.");
             target.displacement_y = int8(displacement_y);
-            target.rotation_angle = uint16(rotation_angle);
+
+            assert(rotation_angle >= -32768 && rotation_angle <= 32767 && mod(rotation_angle, 1) == 0, ...
+                "Rotation angle must be an integer in range -32768-32767.");
+            target.rotation_angle = int16(rotation_angle);
+
+            assert(intensity >= 0 && intensity <= 255 && mod(intensity, 1) == 0, ...
+                "Intensity must be an integer in range 0-255.");
             target.intensity = uint8(intensity);
+
             target.algorithm = algorithm;
         end
 
