@@ -163,7 +163,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
 
   /* Loop through each pulse and coil, computing the approximated waveforms. */
   for (uint8_t i = 0; i < num_of_targets; i++) {
-    event_msgs::msg::WaveformsForCoilSet approximated_waveforms_for_coil_set;
+    waveform_msgs::msg::WaveformsForCoilSet approximated_waveforms_for_coil_set;
     for (uint8_t j = 0; j < NUM_OF_COILS; j++) {
       uint16_t actual_voltage = coil_voltages[j];
       uint16_t target_voltage = target_voltages[i][j];
@@ -231,7 +231,7 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
 const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> GetMultipulseWaveforms::approximate_waveform(
     const uint16_t actual_voltage,
     const uint16_t target_voltage,
-    const event_msgs::msg::Waveform& target_waveform,
+    const waveform_msgs::msg::Waveform& target_waveform,
     const uint8_t coil_number) {
 
   auto request = std::make_shared<targeting_services::srv::ApproximateWaveform::Request>();
@@ -249,7 +249,7 @@ const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> Ge
 }
 
 const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> GetMultipulseWaveforms::reverse_polarity(
-    const event_msgs::msg::Waveform& waveform) {
+    const waveform_msgs::msg::Waveform& waveform) {
 
   auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
   request->waveform = waveform;
@@ -264,7 +264,7 @@ const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> GetMul
 
 const std::shared_ptr<targeting_services::srv::EstimateVoltageAfterPulse::Response> GetMultipulseWaveforms::estimate_voltage_after_pulse(
     const uint16_t voltage_before,
-    const event_msgs::msg::Waveform& waveform,
+    const waveform_msgs::msg::Waveform& waveform,
     const uint8_t coil_number) {
 
   auto request = std::make_shared<targeting_services::srv::EstimateVoltageAfterPulse::Request>();
