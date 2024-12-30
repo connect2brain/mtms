@@ -14,7 +14,7 @@ using namespace std::placeholders;
 const uint16_t EEG_DATA_SUBSCRIBER_QUEUE_SIZE = 1024;
 
 GatherEegServer::GatherEegServer() : Node("eeg_gatherer") {
-  this->gather_eeg_action_server = rclcpp_action::create_server<eeg_interfaces::action::GatherEeg>(
+  this->gather_eeg_action_server = rclcpp_action::create_server<mep_interfaces::action::GatherEeg>(
     this,
     "/eeg/gather",
     std::bind(&GatherEegServer::handle_goal, this, _1, _2),
@@ -61,7 +61,7 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
 
   RCLCPP_INFO(this->get_logger(), "Executing goal");
 
-  auto result = std::make_shared<eeg_interfaces::action::GatherEeg::Result>();
+  auto result = std::make_shared<mep_interfaces::action::GatherEeg::Result>();
 
   while (!(eeg_gatherer.is_finished() || goal_handle->is_canceling())) {
     rclcpp::sleep_for(std::chrono::milliseconds(5));

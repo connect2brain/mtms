@@ -5,11 +5,12 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 
 #include "eeg_interfaces/msg/sample.hpp"
-#include "eeg_interfaces/msg/gather_eeg_error.hpp"
-#include "eeg_interfaces/action/gather_eeg.hpp"
 
-using GatherEeg = eeg_interfaces::action::GatherEeg;
-using GoalHandleGatherEeg = rclcpp_action::ServerGoalHandle<eeg_interfaces::action::GatherEeg>;
+#include "mep_interfaces/msg/gather_eeg_error.hpp"
+#include "mep_interfaces/action/gather_eeg.hpp"
+
+using GatherEeg = mep_interfaces::action::GatherEeg;
+using GoalHandleGatherEeg = rclcpp_action::ServerGoalHandle<mep_interfaces::action::GatherEeg>;
 
 class GatherEegServer : public rclcpp::Node {
 public:
@@ -23,7 +24,7 @@ private:
 
   std::vector<eeg_interfaces::msg::Sample> eeg_buffer;
 
-  rclcpp_action::Server<eeg_interfaces::action::GatherEeg>::SharedPtr gather_eeg_action_server;
+  rclcpp_action::Server<mep_interfaces::action::GatherEeg>::SharedPtr gather_eeg_action_server;
 };
 
 #endif //GATHER_EEG_SERVER_GATHER_EEG_SERVER_H
