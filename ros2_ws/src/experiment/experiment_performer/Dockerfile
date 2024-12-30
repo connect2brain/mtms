@@ -23,7 +23,7 @@ COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_inte
 COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY ros2_ws/src/shared_interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/interfaces/shared_interfaces src/interfaces/shared_interfaces/
+COPY ros2_ws/src/shared_interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 COPY ros2_ws/src/shared_interfaces/system_interfaces src/shared_interfaces/system_interfaces/
 COPY ros2_ws/src/shared_interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 COPY ros2_ws/src/interfaces/targeting_services src/interfaces/targeting_services/
