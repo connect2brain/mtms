@@ -3,7 +3,9 @@ from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 from experiment_interfaces.action import PerformExperiment
-from experiment_interfaces.srv import ValidateTrial, CancelExperiment, PauseExperiment, ResumeExperiment
+from experiment_interfaces.srv import CancelExperiment, PauseExperiment, ResumeExperiment
+
+from trial_interfaces.srv import ValidateTrial
 
 
 class ExperimentHandler:
