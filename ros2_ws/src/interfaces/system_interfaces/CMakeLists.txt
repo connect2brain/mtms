@@ -34,7 +34,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/StopSession.srv"
 
   "srv/RequestTimedTrigger.srv"
-  "srv/RequestTrigger.srv"
 )
 
 ament_package()
