@@ -1,6 +1,6 @@
 # ROS service for getting channel voltages.
 
-ElectricTarget target
+targeting_msgs/ElectricTarget target
 ---
 bool success
 float64[] voltages

@@ -20,7 +20,8 @@ COPY ros2_ws/src/mtms/stimulation_allower ros2_ws/src/mtms/stimulation_allower/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/interfaces/targeting_interfaces ros2_ws/src/interfaces/targeting_interfaces/
+COPY ros2_ws/src/interfaces/targeting_msgs ros2_ws/src/interfaces/targeting_msgs/
+COPY ros2_ws/src/interfaces/targeting_services ros2_ws/src/interfaces/targeting_services/
 
 # Build ROS packages
 

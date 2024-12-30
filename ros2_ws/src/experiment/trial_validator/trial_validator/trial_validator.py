@@ -7,7 +7,7 @@ from experiment_interfaces.msg import Trial
 from experiment_interfaces.srv import ValidateTrial
 
 from event_interfaces.msg import WaveformsForCoilSet
-from targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
+from targeting_services.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup

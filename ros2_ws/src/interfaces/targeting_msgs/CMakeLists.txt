@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(trial_interfaces)
+project(targeting_msgs)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,8 +7,6 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(mep_interfaces REQUIRED)
-find_package(targeting_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -24,17 +22,8 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Trial.msg"
-  "msg/TrialTiming.msg"
-  "msg/TrialConfig.msg"
-  "msg/TrialResult.msg"
-  "msg/TriggerConfig.msg"
-
-  "srv/ValidateTrial.srv"
-
-  "action/PerformTrial.action"
-
-  DEPENDENCIES mep_interfaces targeting_msgs
+  "msg/ElectricTarget.msg"
+  "msg/TargetingAlgorithm.msg"
 )
 
 ament_package()

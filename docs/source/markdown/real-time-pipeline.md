@@ -23,7 +23,7 @@ If only simulating, the situation becomes simpler. EEG bridge is replaced with E
 2. Run the installation script `install_ros.sh` from the mtms/scripts directory
 3. Source ros
 4. Go to mtms/ros2_ws directory
-5. `colcon build --packages-select event_interfaces mtms_device_interfaces targeting_interfaces`
+5. `colcon build --packages-select event_interfaces mtms_device_interfaces targeting_services`
 6. `colcon build --packages-select eeg_processor --cmake-args -DCMAKE_BUILD_TYPE=Release`
 7. `colcon build --packages-select eeg_simulator`
 
