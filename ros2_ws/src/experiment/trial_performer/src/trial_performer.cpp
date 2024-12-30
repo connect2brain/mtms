@@ -46,14 +46,14 @@ void TrialPerformerNode::initialize_actions() {
 }
 
 void TrialPerformerNode::initialize_service_clients() {
-  targeting_client = this->create_client<targeting_interfaces::srv::GetTargetVoltages>("/targeting/get_target_voltages");
+  targeting_client = this->create_client<targeting_services::srv::GetTargetVoltages>("/targeting/get_target_voltages");
 
-  reverse_polarity_client = this->create_client<targeting_interfaces::srv::ReversePolarity>("/waveforms/reverse_polarity");
+  reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>("/waveforms/reverse_polarity");
   while (!reverse_polarity_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /waveforms/reverse_polarity not available, waiting...");
   }
 
-  get_default_waveform_client = this->create_client<targeting_interfaces::srv::GetDefaultWaveform>(
+  get_default_waveform_client = this->create_client<targeting_services::srv::GetDefaultWaveform>(
       "/waveforms/get_default",
       rclcpp::QoS(rclcpp::ServicesQoS()),
       reentrant_callback_group);
@@ -61,7 +61,7 @@ void TrialPerformerNode::initialize_service_clients() {
     RCLCPP_INFO(get_logger(), "Service /waveforms/get_default not available, waiting...");
   }
 
-  get_multipulse_waveforms_client = this->create_client<targeting_interfaces::srv::GetMultipulseWaveforms>("/waveforms/get_multipulse_waveforms");
+  get_multipulse_waveforms_client = this->create_client<targeting_services::srv::GetMultipulseWaveforms>("/waveforms/get_multipulse_waveforms");
   while (!get_multipulse_waveforms_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /waveforms/get_multipulse_waveforms not available, waiting...");
   }
@@ -328,18 +328,18 @@ void TrialPerformerNode::toc(const std::string &prefix) {
 /* Service requests */
 
 std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
-    const std::vector<targeting_interfaces::msg::ElectricTarget> &targets,
+    const std::vector<targeting_msgs::msg::ElectricTarget> &targets,
     const std::vector<event_interfaces::msg::WaveformsForCoilSet> &target_waveforms) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::GetMultipulseWaveforms::Request>();
+  auto request = std::make_shared<targeting_services::srv::GetMultipulseWaveforms::Request>();
   request->targets = targets;
   request->target_waveforms = target_waveforms;
 
   /* Use promise and future to handle the async response. */
-  std::promise<targeting_interfaces::srv::GetMultipulseWaveforms::Response::SharedPtr> promise;
+  std::promise<targeting_services::srv::GetMultipulseWaveforms::Response::SharedPtr> promise;
   auto future = promise.get_future();
 
-  auto response_callback = [&promise](rclcpp::Client<targeting_interfaces::srv::GetMultipulseWaveforms>::SharedFuture future_response) {
+  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetMultipulseWaveforms>::SharedFuture future_response) {
     try {
       auto response = future_response.get();
       promise.set_value(response);
@@ -368,16 +368,16 @@ std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsFor
 }
 
 std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_target_voltages(
-    const targeting_interfaces::msg::ElectricTarget &target) {
+    const targeting_msgs::msg::ElectricTarget &target) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::GetTargetVoltages::Request>();
+  auto request = std::make_shared<targeting_services::srv::GetTargetVoltages::Request>();
   request->target = target;
 
   /* Use promise and future to handle the async response. */
-  std::promise<targeting_interfaces::srv::GetTargetVoltages::Response::SharedPtr> promise;
+  std::promise<targeting_services::srv::GetTargetVoltages::Response::SharedPtr> promise;
   auto future = promise.get_future();
 
-  auto response_callback = [&promise](rclcpp::Client<targeting_interfaces::srv::GetTargetVoltages>::SharedFuture future_response) {
+  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedFuture future_response) {
     try {
       auto response = future_response.get();
       promise.set_value(response);
@@ -403,14 +403,14 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
 }
 
 event_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
-  auto request = std::make_shared<targeting_interfaces::srv::GetDefaultWaveform::Request>();
+  auto request = std::make_shared<targeting_services::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
 
   /* Use promise and future to handle the async response. */
-  std::promise<targeting_interfaces::srv::GetDefaultWaveform::Response::SharedPtr> promise;
+  std::promise<targeting_services::srv::GetDefaultWaveform::Response::SharedPtr> promise;
   auto future = promise.get_future();
 
-  auto response_callback = [&promise](rclcpp::Client<targeting_interfaces::srv::GetDefaultWaveform>::SharedFuture future_response) {
+  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetDefaultWaveform>::SharedFuture future_response) {
     try {
       auto response = future_response.get();
       promise.set_value(response);
@@ -433,14 +433,14 @@ event_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t
 }
 
 event_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const event_interfaces::msg::Waveform &waveform) {
-  auto request = std::make_shared<targeting_interfaces::srv::ReversePolarity::Request>();
+  auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
   /* Use promise and future to handle the async response. */
-  std::promise<targeting_interfaces::srv::ReversePolarity::Response::SharedPtr> promise;
+  std::promise<targeting_services::srv::ReversePolarity::Response::SharedPtr> promise;
   auto future = promise.get_future();
 
-  auto response_callback = [&promise](rclcpp::Client<targeting_interfaces::srv::ReversePolarity>::SharedFuture future_response) {
+  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::ReversePolarity>::SharedFuture future_response) {
     try {
       auto response = future_response.get();
       promise.set_value(response);
@@ -723,7 +723,7 @@ std::pair<bool, trial_interfaces::msg::TrialResult> TrialPerformerNode::perform_
   return {success, trial_result};
 }
 
-std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
+std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
   std::vector<event_interfaces::msg::WaveformsForCoilSet> target_waveforms;
   for (uint8_t i = 0; i < targets.size(); ++i) {
     event_interfaces::msg::WaveformsForCoilSet waveforms;
@@ -746,7 +746,7 @@ std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsFor
   }
 }
 
-std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const targeting_interfaces::msg::ElectricTarget &target, const event_interfaces::msg::WaveformsForCoilSet &target_waveforms) {
+std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const targeting_msgs::msg::ElectricTarget &target, const event_interfaces::msg::WaveformsForCoilSet &target_waveforms) {
   auto [desired_voltages_float, reversed_polarities] = get_target_voltages(target);
 
   /* Convert initial voltages from float to integer.

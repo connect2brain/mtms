@@ -12,35 +12,35 @@ const bool ENABLE_CACHING = true;
 GetMultipulseWaveforms::GetMultipulseWaveforms() : Node("get_multipulse_waveforms"), logger(rclcpp::get_logger("get_multipulse_waveforms")) {
   callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
-  get_multipulse_waveforms_service = this->create_service<targeting_interfaces::srv::GetMultipulseWaveforms>(
+  get_multipulse_waveforms_service = this->create_service<targeting_services::srv::GetMultipulseWaveforms>(
       "/waveforms/get_multipulse_waveforms",
       std::bind(&GetMultipulseWaveforms::handle_get_multipulse_waveforms, this, _1, _2),
       rclcpp::QoS(10),
       callback_group);
 
-  get_target_voltages_client = this->create_client<targeting_interfaces::srv::GetTargetVoltages>(
+  get_target_voltages_client = this->create_client<targeting_services::srv::GetTargetVoltages>(
       "/targeting/get_target_voltages",
       rclcpp::QoS(10),
       callback_group);
 
-  approximate_waveform_client = this->create_client<targeting_interfaces::srv::ApproximateWaveform>(
+  approximate_waveform_client = this->create_client<targeting_services::srv::ApproximateWaveform>(
       "/targeting/approximate_waveform",
       rclcpp::QoS(10),
       callback_group);
 
-  estimate_voltage_after_pulse_client = this->create_client<targeting_interfaces::srv::EstimateVoltageAfterPulse>(
+  estimate_voltage_after_pulse_client = this->create_client<targeting_services::srv::EstimateVoltageAfterPulse>(
       "/targeting/estimate_voltage_after_pulse",
       rclcpp::QoS(10),
       callback_group);
 
-  reverse_polarity_client = this->create_client<targeting_interfaces::srv::ReversePolarity>(
+  reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>(
       "/waveforms/reverse_polarity",
       rclcpp::QoS(10),
       callback_group);
 }
 
-std::string generate_md5_hash(const std::shared_ptr<targeting_interfaces::srv::GetMultipulseWaveforms_Request> request) {
-    rclcpp::Serialization<targeting_interfaces::srv::GetMultipulseWaveforms_Request> serializer;
+std::string generate_md5_hash(const std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms_Request> request) {
+    rclcpp::Serialization<targeting_services::srv::GetMultipulseWaveforms_Request> serializer;
     rclcpp::SerializedMessage serialized_msg;
 
     /* Serialize the request. */
@@ -61,8 +61,8 @@ std::string generate_md5_hash(const std::shared_ptr<targeting_interfaces::srv::G
 }
 
 void GetMultipulseWaveforms::handle_get_multipulse_waveforms(
-    const std::shared_ptr<targeting_interfaces::srv::GetMultipulseWaveforms::Request> request,
-    std::shared_ptr<targeting_interfaces::srv::GetMultipulseWaveforms::Response> response) {
+    const std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Request> request,
+    std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Response> response) {
 
   std::string key = generate_md5_hash(request);
 
@@ -93,8 +93,8 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms(
 };
 
 void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
-    const std::shared_ptr<targeting_interfaces::srv::GetMultipulseWaveforms::Request>& request,
-    std::shared_ptr<targeting_interfaces::srv::GetMultipulseWaveforms::Response>& response) {
+    const std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Request>& request,
+    std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Response>& response) {
 
   uint8_t num_of_targets = request->targets.size();
 
@@ -228,13 +228,13 @@ void GetMultipulseWaveforms::handle_get_multipulse_waveforms_no_cache(
   response->success = true;
 }
 
-const std::shared_ptr<targeting_interfaces::srv::ApproximateWaveform::Response> GetMultipulseWaveforms::approximate_waveform(
+const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> GetMultipulseWaveforms::approximate_waveform(
     const uint16_t actual_voltage,
     const uint16_t target_voltage,
     const event_interfaces::msg::Waveform& target_waveform,
     const uint8_t coil_number) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::ApproximateWaveform::Request>();
+  auto request = std::make_shared<targeting_services::srv::ApproximateWaveform::Request>();
   request->actual_voltage = actual_voltage;
   request->target_voltage = target_voltage;
   request->target_waveform = target_waveform;
@@ -248,10 +248,10 @@ const std::shared_ptr<targeting_interfaces::srv::ApproximateWaveform::Response> 
   return result;
 }
 
-const std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Response> GetMultipulseWaveforms::reverse_polarity(
+const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> GetMultipulseWaveforms::reverse_polarity(
     const event_interfaces::msg::Waveform& waveform) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::ReversePolarity::Request>();
+  auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
   reverse_polarity_client->wait_for_service();
@@ -262,12 +262,12 @@ const std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Response> GetM
   return result;
 }
 
-const std::shared_ptr<targeting_interfaces::srv::EstimateVoltageAfterPulse::Response> GetMultipulseWaveforms::estimate_voltage_after_pulse(
+const std::shared_ptr<targeting_services::srv::EstimateVoltageAfterPulse::Response> GetMultipulseWaveforms::estimate_voltage_after_pulse(
     const uint16_t voltage_before,
     const event_interfaces::msg::Waveform& waveform,
     const uint8_t coil_number) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::EstimateVoltageAfterPulse::Request>();
+  auto request = std::make_shared<targeting_services::srv::EstimateVoltageAfterPulse::Request>();
   request->voltage_before = voltage_before;
   request->waveform = waveform;
   request->coil_number = coil_number;
@@ -280,10 +280,10 @@ const std::shared_ptr<targeting_interfaces::srv::EstimateVoltageAfterPulse::Resp
   return result;
 }
 
-const std::shared_ptr<targeting_interfaces::srv::GetTargetVoltages::Response> GetMultipulseWaveforms::get_target_voltages(
-    const targeting_interfaces::msg::ElectricTarget& target) {
+const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> GetMultipulseWaveforms::get_target_voltages(
+    const targeting_msgs::msg::ElectricTarget& target) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::GetTargetVoltages::Request>();
+  auto request = std::make_shared<targeting_services::srv::GetTargetVoltages::Request>();
   request->target = target;
 
   get_target_voltages_client->wait_for_service();

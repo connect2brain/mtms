@@ -25,7 +25,8 @@ COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/shared_interfaces src/interfaces/shared_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
-COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
+COPY ros2_ws/src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
+COPY ros2_ws/src/interfaces/targeting_services src/interfaces/targeting_services/
 COPY ros2_ws/src/interfaces/trial_interfaces src/interfaces/trial_interfaces/
 
 RUN source /opt/ros/iron/setup.bash && colcon build

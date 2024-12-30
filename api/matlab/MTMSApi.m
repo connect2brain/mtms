@@ -655,7 +655,7 @@ classdef MTMSApi < handle
         % :return: Targeting algorithm.
         % :rtype: ROS message (TargetingAlgorithm)
 
-            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+            algorithm = ros2message('targeting_msgs/TargetingAlgorithm');
             if strcmp(algorithm_str, 'least_squares')
                 algorithm.value = algorithm.LEAST_SQUARES;
             elseif strcmp(algorithm_str, 'genetic')
@@ -793,7 +793,7 @@ classdef MTMSApi < handle
             % :return: Target message.
             % :rtype: ROS message (ElectricTarget)
 
-            target = ros2message('targeting_interfaces/ElectricTarget');
+            target = ros2message('targeting_msgs/ElectricTarget');
 
             % Check that the values are within the allowed ranges to avoid MATLAB's int8 and int16 silently
             % casting the values to the nearest allowed value. Also check that the values are integers.

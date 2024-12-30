@@ -2,7 +2,7 @@
 #include "memory_utils.h"
 
 #include "rclcpp/rclcpp.hpp"
-#include "targeting_interfaces/srv/get_default_waveform.hpp"
+#include "targeting_services/srv/get_default_waveform.hpp"
 #include "event_interfaces/msg/waveform_phase.hpp"
 #include "event_interfaces/msg/waveform_piece.hpp"
 
@@ -24,8 +24,8 @@ public:
   GetDefaultWaveform() : Node("get_default_waveform") {
 
     auto service_callback = [this](
-        const std::shared_ptr<targeting_interfaces::srv::GetDefaultWaveform::Request> request,
-        std::shared_ptr<targeting_interfaces::srv::GetDefaultWaveform::Response> response) -> void {
+        const std::shared_ptr<targeting_services::srv::GetDefaultWaveform::Request> request,
+        std::shared_ptr<targeting_services::srv::GetDefaultWaveform::Response> response) -> void {
 
       int8_t channel = request->channel;
 
@@ -56,12 +56,12 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("get_default_waveform"), "Responded to request.");
     };
 
-    get_default_waveform_service = this->create_service<targeting_interfaces::srv::GetDefaultWaveform>(
+    get_default_waveform_service = this->create_service<targeting_services::srv::GetDefaultWaveform>(
         "/waveforms/get_default", service_callback);
   }
 
 private:
-  rclcpp::Service<targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_service;
+  rclcpp::Service<targeting_services::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_service;
 };
 
 
