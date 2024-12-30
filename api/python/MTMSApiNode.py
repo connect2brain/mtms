@@ -9,7 +9,7 @@ from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession
 
-from event_interfaces.msg import (
+from event_msgs.msg import (
     Charge,
     ChargeFeedback,
     Discharge,

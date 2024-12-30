@@ -14,7 +14,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
-find_package(event_interfaces REQUIRED)
+find_package(event_msgs REQUIRED)
 find_package(system_interfaces REQUIRED)
 
 # Run_fpga executable
@@ -172,7 +172,7 @@ target_include_directories(event_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_device_interfaces)
+ament_target_dependencies(event_handler rclcpp std_msgs event_msgs mtms_device_interfaces)
 
 # Request trigger handler
 
@@ -187,7 +187,7 @@ target_include_directories(request_trigger_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_interfaces mtms_device_interfaces)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_msgs mtms_device_interfaces)
 
 # Feedback monitor bridge
 
@@ -202,7 +202,7 @@ target_include_directories(feedback_monitor_bridge
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_interfaces)
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_msgs)
 
 # Settings handler
 

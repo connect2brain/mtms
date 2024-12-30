@@ -71,7 +71,7 @@ RUN rm setup.py
 # Copy and build ROS interfaces
 
 WORKDIR /app/ros2_ws
-COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
 COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/

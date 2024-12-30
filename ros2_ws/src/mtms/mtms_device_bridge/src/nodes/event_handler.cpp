@@ -2,10 +2,10 @@
 
 #include "mtms_device_interfaces/srv/request_events.hpp"
 
-#include "event_interfaces/msg/pulse.hpp"
-#include "event_interfaces/msg/charge.hpp"
-#include "event_interfaces/msg/discharge.hpp"
-#include "event_interfaces/msg/trigger_out.hpp"
+#include "event_msgs/msg/pulse.hpp"
+#include "event_msgs/msg/charge.hpp"
+#include "event_msgs/msg/discharge.hpp"
+#include "event_msgs/msg/trigger_out.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -29,10 +29,10 @@ private:
   void handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                              std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response);
 
-  void process_pulse(const event_interfaces::msg::Pulse &pulse);
-  void process_charge(const event_interfaces::msg::Charge &charge);
-  void process_discharge(const event_interfaces::msg::Discharge &discharge);
-  void process_trigger_out(const event_interfaces::msg::TriggerOut &trigger_out);
+  void process_pulse(const event_msgs::msg::Pulse &pulse);
+  void process_charge(const event_msgs::msg::Charge &charge);
+  void process_discharge(const event_msgs::msg::Discharge &discharge);
+  void process_trigger_out(const event_msgs::msg::TriggerOut &trigger_out);
 
   rclcpp::Service<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_service;
   SerializedMessage serialized_message;
@@ -73,10 +73,10 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
   response->success = true;
 }
 
-void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
+void EventHandler::process_pulse(const event_msgs::msg::Pulse &pulse) {
   /* Unpack and log pulse message. */
   uint8_t channel = pulse.channel;
-  event_interfaces::msg::EventInfo event_info = pulse.event_info;
+  event_msgs::msg::EventInfo event_info = pulse.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
@@ -107,7 +107,7 @@ void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
   serialized_message.add_byte(num_of_waveform_pieces);
 
   for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
-    event_interfaces::msg::WaveformPiece piece = pulse.waveform.pieces[i];
+    event_msgs::msg::WaveformPiece piece = pulse.waveform.pieces[i];
     serialized_message.add_byte(piece.waveform_phase.value);
     serialized_message.add_uint16(piece.duration_in_ticks);
   }
@@ -124,10 +124,10 @@ void EventHandler::process_pulse(const event_interfaces::msg::Pulse &pulse) {
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::process_charge(const event_interfaces::msg::Charge &charge) {
+void EventHandler::process_charge(const event_msgs::msg::Charge &charge) {
   /* Unpack and log charge message. */
   uint8_t channel = charge.channel;
-  event_interfaces::msg::EventInfo event_info = charge.event_info;
+  event_msgs::msg::EventInfo event_info = charge.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
@@ -168,10 +168,10 @@ void EventHandler::process_charge(const event_interfaces::msg::Charge &charge) {
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::process_discharge(const event_interfaces::msg::Discharge &discharge) {
+void EventHandler::process_discharge(const event_msgs::msg::Discharge &discharge) {
   /* Unpack and log discharge message. */
   uint8_t channel = discharge.channel;
-  event_interfaces::msg::EventInfo event_info = discharge.event_info;
+  event_msgs::msg::EventInfo event_info = discharge.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;
@@ -211,10 +211,10 @@ void EventHandler::process_discharge(const event_interfaces::msg::Discharge &dis
                                                  serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
-void EventHandler::process_trigger_out(const event_interfaces::msg::TriggerOut &trigger_out) {
+void EventHandler::process_trigger_out(const event_msgs::msg::TriggerOut &trigger_out) {
   /* Unpack and log trigger out message. */
   uint8_t port = trigger_out.port;
-  event_interfaces::msg::EventInfo event_info = trigger_out.event_info;
+  event_msgs::msg::EventInfo event_info = trigger_out.event_info;
   uint16_t id = event_info.id;
   uint8_t execution_condition = event_info.execution_condition.value;
   double_t execution_time = event_info.execution_time;

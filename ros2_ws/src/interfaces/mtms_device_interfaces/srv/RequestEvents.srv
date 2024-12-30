@@ -2,9 +2,9 @@
 #
 # Response: Boolean indicating if requesting was successful.
 
-event_interfaces/Pulse[] pulses
-event_interfaces/Charge[] charges
-event_interfaces/Discharge[] discharges
-event_interfaces/TriggerOut[] trigger_outs
+event_msgs/Pulse[] pulses
+event_msgs/Charge[] charges
+event_msgs/Discharge[] discharges
+event_msgs/TriggerOut[] trigger_outs
 ---
 bool success

@@ -48,7 +48,7 @@ classdef MTMSApi < handle
         %   * 'incomplete_events' - An empty list.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
         %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
-        %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
+        %   * 'execution_conditions' - A ROS2 message object, of type "event_msgs/ExecutionCondition".
 
             % TODO: Should receive channel count automatically from .env so that the user of the API wouldn't have to care.
 
@@ -68,7 +68,7 @@ classdef MTMSApi < handle
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
             obj.session_states = ros2message("system_interfaces/SessionState");
 
-            obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
+            obj.execution_conditions = ros2message("event_msgs/ExecutionCondition");
 
             % Print configuration
             disp("Configuration:")
@@ -587,7 +587,7 @@ classdef MTMSApi < handle
 
             assert(length(modes) == length(durations), 'Length of modes must be equal to the length of durations.');
 
-            waveform = ros2message('event_interfaces/Waveform');
+            waveform = ros2message('event_msgs/Waveform');
             for i = 1:length(modes)
                 mode = modes{i};
                 duration_in_ticks = durations{i} / 25e-9;
@@ -605,7 +605,7 @@ classdef MTMSApi < handle
                 allowed_modes = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
                 assert(ismember(mode, allowed_modes), ['Mode must be one of ' strjoin(allowed_modes, ', ')]);
 
-                piece = ros2message('event_interfaces/WaveformPiece');
+                piece = ros2message('event_msgs/WaveformPiece');
                 assert (duration_in_ticks >= 0 && duration_in_ticks <= 65535, 'Duration in ticks must be in range 0-65535.');
                 piece.duration_in_ticks = uint16(duration_in_ticks);
 
@@ -625,7 +625,7 @@ classdef MTMSApi < handle
         % :return: A WaveformsForCoilSet object.
         % :rtype: ROS message (WaveformsForCoilSet)
 
-            waveforms_for_coil_set = ros2message('event_interfaces/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('event_msgs/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = waveforms(channel + 1);
             end
@@ -636,7 +636,7 @@ classdef MTMSApi < handle
         end
 
         function waveforms_for_coil_set = get_default_waveforms_for_coil_set(obj)
-            waveforms_for_coil_set = ros2message('event_interfaces/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('event_msgs/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = obj.get_default_waveform(channel);
             end
