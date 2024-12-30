@@ -21,7 +21,7 @@ WORKDIR /app/ros2_ws
 # ROS interfaces
 COPY ros2_ws/src/interfaces/event_msgs ros2_ws/src/interfaces/event_msgs/
 COPY ros2_ws/src/interfaces/targeting_services ros2_ws/src/interfaces/targeting_services/
-COPY ros2_ws/src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
+COPY ros2_ws/src/shared_interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
