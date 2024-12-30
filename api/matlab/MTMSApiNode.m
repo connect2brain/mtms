@@ -74,10 +74,10 @@ classdef MTMSApiNode < handle
             obj.stop_session_client = ros2svcclient(obj.node, "/system/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
-            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
-            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
-            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_interfaces/DischargeFeedback", @obj.handle_discharge_feedback);
-            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/event/trigger_out_feedback", "event_interfaces/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
+            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_msgs/PulseFeedback", @obj.handle_pulse_feedback);
+            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
+            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
+            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/event/trigger_out_feedback", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
 
             % To other parts of the system.
 
@@ -187,12 +187,12 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
 
-            pulse = ros2message("event_interfaces/Pulse");
+            pulse = ros2message("event_msgs/Pulse");
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
             pulse.waveform = waveform;
@@ -222,7 +222,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
@@ -256,7 +256,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
@@ -290,7 +290,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);

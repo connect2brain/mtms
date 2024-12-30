@@ -13,7 +13,7 @@ import rclpy
 
 from system_interfaces.msg import SessionState
 from mtms_device_interfaces.msg import DeviceState
-from event_interfaces.msg import ExecutionCondition, WaveformsForCoilSet
+from event_msgs.msg import ExecutionCondition, WaveformsForCoilSet
 
 from MTMSApiNode import MTMSApiNode
 

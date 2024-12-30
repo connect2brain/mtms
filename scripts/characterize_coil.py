@@ -2,7 +2,7 @@ import time
 
 from MTMSApi import MTMSApi
 
-from event_interfaces.msg import (
+from event_msgs.msg import (
     ExecutionCondition,
 )
 from targeting_msgs.msg import (
