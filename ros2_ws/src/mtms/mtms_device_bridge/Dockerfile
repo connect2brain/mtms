@@ -41,7 +41,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/bridges/mtms_device_bridge ros2_ws/src/bridges/mtms_device_bridge/
+COPY ros2_ws/src/mtms/mtms_device_bridge ros2_ws/src/mtms/mtms_device_bridge/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces ros2_ws/src/interfaces/system_interfaces/
@@ -54,7 +54,7 @@ RUN source /opt/ros/iron/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/bridges/mtms_device_bridge/ros_entrypoint.sh .
+COPY ros2_ws/src/mtms/mtms_device_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

@@ -17,7 +17,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/bridges/optitrack_bridge ros2_ws/src/bridges/optitrack_bridge/
+COPY ros2_ws/src/utility/optitrack_bridge ros2_ws/src/utility/optitrack_bridge/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 
 # Build ROS packages
@@ -28,7 +28,7 @@ RUN source /opt/ros/iron/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/bridges/optitrack_bridge/ros_entrypoint.sh .
+COPY ros2_ws/src/utility/optitrack_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
