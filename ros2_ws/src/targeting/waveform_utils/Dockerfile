@@ -28,12 +28,12 @@ COPY ros2_ws/src/shared_interfaces/targeting_msgs src/shared_interfaces/targetin
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/targeting/waveforms src/targeting/waveforms/
+COPY ros2_ws/src/targeting/waveform_utils src/targeting/waveform_utils/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select waveforms
 
 # Copy entrypoint
 
-COPY ros2_ws/src/targeting/waveforms/ros_entrypoint.sh .
+COPY ros2_ws/src/targeting/waveform_utils/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
