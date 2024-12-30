@@ -107,7 +107,7 @@ void EventHandler::process_pulse(const event_msgs::msg::Pulse &pulse) {
   serialized_message.add_byte(num_of_waveform_pieces);
 
   for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
-    event_msgs::msg::WaveformPiece piece = pulse.waveform.pieces[i];
+    waveform_msgs::msg::WaveformPiece piece = pulse.waveform.pieces[i];
     serialized_message.add_byte(piece.waveform_phase.value);
     serialized_message.add_uint16(piece.duration_in_ticks);
   }

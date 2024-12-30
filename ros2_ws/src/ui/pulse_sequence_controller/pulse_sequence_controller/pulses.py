@@ -1,4 +1,4 @@
-from event_msgs.msg import WaveformPiece
+from waveform_msgs.msg import WaveformPiece
 
 fullEvent = {
     'pulse': {

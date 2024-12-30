@@ -15,19 +15,22 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
-WORKDIR /app
-COPY ros2_ws/src/mtms/stimulation_allower ros2_ws/src/mtms/stimulation_allower/
-COPY ros2_ws/src/interfaces/event_msgs ros2_ws/src/interfaces/event_msgs/
+WORKDIR /app/ros2_ws
+
+# ROS interfaces
+COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY ros2_ws/src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces ros2_ws/src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/shared_interfaces/targeting_msgs ros2_ws/src/shared_interfaces/targeting_msgs/
 COPY ros2_ws/src/interfaces/targeting_services ros2_ws/src/interfaces/targeting_services/
 
-# Build ROS packages
+COPY ros2_ws/src/shared_interfaces/targeting_msgs ros2_ws/src/shared_interfaces/targeting_msgs/
 
-WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
-    colcon build
+RUN source /opt/ros/iron/setup.bash && colcon build
+
+# ROS node
+COPY ros2_ws/src/mtms/stimulation_allower src/mtms/stimulation_allower/
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select stimulation_allower
 
 # Copy entrypoint
 

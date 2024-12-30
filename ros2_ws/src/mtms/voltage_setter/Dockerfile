@@ -20,8 +20,11 @@ WORKDIR /app/ros2_ws
 
 # ROS interfaces
 COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY ros2_ws/src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+
 COPY ros2_ws/src/shared_interfaces/system_interfaces src/shared_interfaces/system_interfaces/
+
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node

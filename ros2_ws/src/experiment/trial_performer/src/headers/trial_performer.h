@@ -88,9 +88,9 @@ private:
 
   /* ROS message creation */
   std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> create_pulses(
-      const std::vector<event_msgs::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time);
+      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time);
 
-  event_msgs::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const event_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition);
+  event_msgs::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const waveform_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition);
 
   std::pair<std::vector<event_msgs::msg::TriggerOut>, std::vector<uint16_t>> create_trigger_outs(
       const std::vector<trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time);
@@ -98,15 +98,15 @@ private:
   event_msgs::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 
   /* Service calls */
-  std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> get_approximated_waveforms(
+  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_approximated_waveforms(
       const std::vector<targeting_msgs::msg::ElectricTarget> &targets,
-      const std::vector<event_msgs::msg::WaveformsForCoilSet> &target_waveforms);
+      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &target_waveforms);
 
   std::pair<std::vector<double_t>, std::vector<bool>> get_target_voltages(
       const targeting_msgs::msg::ElectricTarget &target);
 
-  event_msgs::msg::Waveform get_default_waveform(uint8_t channel);
-  event_msgs::msg::Waveform reverse_polarity(const event_msgs::msg::Waveform &waveform);
+  waveform_msgs::msg::Waveform get_default_waveform(uint8_t channel);
+  waveform_msgs::msg::Waveform reverse_polarity(const waveform_msgs::msg::Waveform &waveform);
   void request_events(const std::vector<event_msgs::msg::Pulse> &pulses, const std::vector<event_msgs::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
@@ -138,10 +138,10 @@ private:
 
   std::pair<bool, trial_interfaces::msg::TrialResult> perform_trial(const trial_interfaces::msg::Trial &trial);
 
-  std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
-      const targeting_msgs::msg::ElectricTarget &target, const event_msgs::msg::WaveformsForCoilSet &target_waveforms);
+  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
+      const targeting_msgs::msg::ElectricTarget &target, const waveform_msgs::msg::WaveformsForCoilSet &target_waveforms);
 
-  std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
+  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
       const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
 };
 

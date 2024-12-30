@@ -16,9 +16,9 @@
 #include "targeting_services/srv/estimate_voltage_after_pulse.hpp"
 #include "targeting_services/srv/reverse_polarity.hpp"
 
-#include "event_msgs/msg/waveform_phase.hpp"
-#include "event_msgs/msg/waveform_piece.hpp"
-#include "event_msgs/msg/waveforms_for_coil_set.hpp"
+#include "waveform_msgs/msg/waveform_phase.hpp"
+#include "waveform_msgs/msg/waveform_piece.hpp"
+#include "waveform_msgs/msg/waveforms_for_coil_set.hpp"
 
 #include "scheduling_utils.h"
 #include "memory_utils.h"
@@ -43,15 +43,15 @@ private:
   const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> approximate_waveform(
     const uint16_t actual_voltage,
     const uint16_t target_voltage,
-    const event_msgs::msg::Waveform& target_waveform,
+    const waveform_msgs::msg::Waveform& target_waveform,
     const uint8_t coil_number);
 
   const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> reverse_polarity(
-    const event_msgs::msg::Waveform& waveform);
+    const waveform_msgs::msg::Waveform& waveform);
 
   const std::shared_ptr<targeting_services::srv::EstimateVoltageAfterPulse::Response> estimate_voltage_after_pulse(
     const uint16_t voltage_before,
-    const event_msgs::msg::Waveform& waveform,
+    const waveform_msgs::msg::Waveform& waveform,
     const uint8_t coil_number);
 
   const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> get_target_voltages(

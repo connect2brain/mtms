@@ -186,7 +186,7 @@ std::vector<uint16_t> TrialPerformerNode::get_actual_voltages() const {
 
 /* ROS message creation */
 
-std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<event_msgs::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time) {
+std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time) {
   std::vector<uint16_t> pulse_ids;
   std::vector<event_msgs::msg::Pulse> pulses;
 
@@ -204,7 +204,7 @@ std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> TrialPerfo
   return {pulses, pulse_ids};
 }
 
-event_msgs::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8_t channel, const event_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition) {
+event_msgs::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8_t channel, const waveform_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition) {
   event_msgs::msg::EventInfo event_info;
   event_info.id = id;
   event_info.execution_condition.value = execution_condition;
@@ -327,9 +327,9 @@ void TrialPerformerNode::toc(const std::string &prefix) {
 
 /* Service requests */
 
-std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
+std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
     const std::vector<targeting_msgs::msg::ElectricTarget> &targets,
-    const std::vector<event_msgs::msg::WaveformsForCoilSet> &target_waveforms) {
+    const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &target_waveforms) {
 
   auto request = std::make_shared<targeting_services::srv::GetMultipulseWaveforms::Request>();
   request->targets = targets;
@@ -361,7 +361,7 @@ std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSe
     throw std::runtime_error("Call to GetMultipulseWaveforms service failed");
   }
 
-  std::vector<event_msgs::msg::WaveformsForCoilSet> approximated_waveforms(
+  std::vector<waveform_msgs::msg::WaveformsForCoilSet> approximated_waveforms(
       response->approximated_waveforms.begin(), response->approximated_waveforms.end());
 
   return {response->initial_voltages, approximated_waveforms};
@@ -402,7 +402,7 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
   return {response->voltages, response->reversed_polarities};
 }
 
-event_msgs::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
+waveform_msgs::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
   auto request = std::make_shared<targeting_services::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
 
@@ -432,7 +432,7 @@ event_msgs::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t chann
   return waveform;
 }
 
-event_msgs::msg::Waveform TrialPerformerNode::reverse_polarity(const event_msgs::msg::Waveform &waveform) {
+waveform_msgs::msg::Waveform TrialPerformerNode::reverse_polarity(const waveform_msgs::msg::Waveform &waveform) {
   auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
@@ -723,10 +723,10 @@ std::pair<bool, trial_interfaces::msg::TrialResult> TrialPerformerNode::perform_
   return {success, trial_result};
 }
 
-std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
-  std::vector<event_msgs::msg::WaveformsForCoilSet> target_waveforms;
+std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
+  std::vector<waveform_msgs::msg::WaveformsForCoilSet> target_waveforms;
   for (uint8_t i = 0; i < targets.size(); ++i) {
-    event_msgs::msg::WaveformsForCoilSet waveforms;
+    waveform_msgs::msg::WaveformsForCoilSet waveforms;
     for (uint8_t channel = 0; channel < NUM_OF_CHANNELS; ++channel) {
       waveforms.waveforms.push_back(get_default_waveform(channel));
     }
@@ -746,7 +746,7 @@ std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSe
   }
 }
 
-std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const targeting_msgs::msg::ElectricTarget &target, const event_msgs::msg::WaveformsForCoilSet &target_waveforms) {
+std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const targeting_msgs::msg::ElectricTarget &target, const waveform_msgs::msg::WaveformsForCoilSet &target_waveforms) {
   auto [desired_voltages_float, reversed_polarities] = get_target_voltages(target);
 
   /* Convert initial voltages from float to integer.
@@ -766,7 +766,7 @@ std::pair<std::vector<uint16_t>, std::vector<event_msgs::msg::WaveformsForCoilSe
   }
 
   /* Create the approximated waveforms. */
-  std::vector<event_msgs::msg::WaveformsForCoilSet> approximated_waveforms(1);
+  std::vector<waveform_msgs::msg::WaveformsForCoilSet> approximated_waveforms(1);
   approximated_waveforms[0].waveforms = target_waveforms_reversed;
 
   return {desired_voltages, approximated_waveforms};
