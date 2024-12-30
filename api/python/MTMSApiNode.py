@@ -4,10 +4,10 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents
+from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents, RequestTrigger
 
 from system_interfaces.msg import Session
-from system_interfaces.srv import StartSession, StopSession, RequestTrigger
+from system_interfaces.srv import StartSession, StopSession
 
 from event_interfaces.msg import (
     Charge,
