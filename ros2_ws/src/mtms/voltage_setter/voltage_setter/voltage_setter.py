@@ -43,11 +43,11 @@ class VoltageSetterNode(Node):
         # Service client for requesting events.
         self.request_events_client = self.create_client(
             RequestEvents,
-            '/mtms_device/request_events',
+            '/mtms_device/events/request',
             callback_group=self.reentrant_callback_group)
 
         while not self.request_events_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms_device/request_events not available, waiting...')
+            self.get_logger().info('Service /mtms_device/events/request not available, waiting...')
 
         # Subscriber for system state
 
@@ -74,14 +74,14 @@ class VoltageSetterNode(Node):
         # Publishers for feedbacks.
         self.charge_feedback_subscriber = self.create_subscription(
             ChargeFeedback,
-            '/event/charge_feedback',
+            '/mtms_device/events/feedback/charge',
             self.update_event_feedback,
             10,
             callback_group=self.reentrant_callback_group)
 
         self.discharge_feedback_subscriber = self.create_subscription(
             DischargeFeedback,
-            '/event/discharge_feedback',
+            '/mtms_device/events/feedback/discharge',
             self.update_event_feedback,
             10,
             callback_group=self.reentrant_callback_group)

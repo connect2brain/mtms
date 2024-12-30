@@ -134,21 +134,21 @@ class MTMSSimulator(Node):
             StopSession, "/system/session/stop", self.stop_session_handler
         )
         self.request_events_service = self.create_service(
-            RequestEvents, "/mtms_device/request_events", self.request_events_handler
+            RequestEvents, "/mtms_device/events/request", self.request_events_handler
         )
 
         # Publisher
         self.pulse_feedback_publisher = self.create_publisher(
-            PulseFeedback, "/event/pulse_feedback", 10
+            PulseFeedback, "/mtms_device/events/feedback/pulse", 10
         )
         self.charge_feedback_publisher = self.create_publisher(
-            ChargeFeedback, "/event/charge_feedback", 10
+            ChargeFeedback, "/mtms_device/events/feedback/charge", 10
         )
         self.discharge_feedback_publisher = self.create_publisher(
-            DischargeFeedback, "/event/discharge_feedback", 10
+            DischargeFeedback, "/mtms_device/events/feedback/discharge", 10
         )
         self.trigger_out_feedback_publisher = self.create_publisher(
-            TriggerOutFeedback, "/event/trigger_out_feedback", 10
+            TriggerOutFeedback, "/mtms_device/events/feedback/trigger_out", 10
         )
         self.node_message_publisher = self.create_publisher(String, "/node/message", 10)
 
