@@ -84,12 +84,12 @@ classdef WaveformApproximatorWrapper < handle
             durations = [waveform_struct.duration];
 
             % Create the waveform ROS message
-            waveform = ros2message("event_interfaces/Waveform");
+            waveform = ros2message("event_msgs/Waveform");
 
             % Loop through the modes and durations
             waveform.pieces = [];
             for i = 1:length(modes)
-                piece = ros2message("event_interfaces/WaveformPiece");
+                piece = ros2message("event_msgs/WaveformPiece");
                 phase = piece.waveform_phase;
 
                 % Map the character to the waveform phase in ROS message
