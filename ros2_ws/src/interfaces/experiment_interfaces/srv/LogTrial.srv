@@ -2,8 +2,8 @@ ExperimentMetadata metadata
 
 uint16 trial_number
 
-Trial trial
-TrialResult trial_result
+trial_interfaces/Trial trial
+trial_interfaces/TrialResult trial_result
 
 uint16 num_of_attempts
 ---

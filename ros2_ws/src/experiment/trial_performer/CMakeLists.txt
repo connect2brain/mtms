@@ -16,6 +16,7 @@ find_package(mep_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
+find_package(trial_interfaces REQUIRED)
 
 add_executable(
         trial_performer
@@ -46,6 +47,7 @@ ament_target_dependencies(
         mtms_device_interfaces
         neuronavigation_interfaces
         system_interfaces
+        trial_interfaces
 )
 
 install(
