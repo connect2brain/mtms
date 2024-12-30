@@ -6,7 +6,7 @@ import numpy as np
 from experiment_interfaces.msg import Trial
 from experiment_interfaces.srv import ValidateTrial
 
-from event_msgs.msg import WaveformsForCoilSet
+from waveform_msgs.msg import WaveformsForCoilSet
 from targeting_services.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
 import rclpy

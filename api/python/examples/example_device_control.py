@@ -2,6 +2,8 @@ from MTMSApi import MTMSApi
 
 from event_msgs.msg import (
     ExecutionCondition,
+)
+from waveform_msgs.msg import (
     WaveformPhase,
     WaveformPiece,
     Waveform

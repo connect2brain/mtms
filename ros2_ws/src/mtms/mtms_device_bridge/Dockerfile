@@ -42,8 +42,11 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 WORKDIR /app
 COPY ros2_ws/src/mtms/mtms_device_bridge ros2_ws/src/mtms/mtms_device_bridge/
+
 COPY ros2_ws/src/interfaces/mtms_device_interfaces ros2_ws/src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/event_msgs ros2_ws/src/interfaces/event_msgs/
+COPY ros2_ws/src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+
 COPY ros2_ws/src/shared_interfaces/system_interfaces ros2_ws/src/shared_interfaces/system_interfaces/
 
 # Build ROS packages

@@ -3,17 +3,17 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "targeting_services/srv/get_default_waveform.hpp"
-#include "event_msgs/msg/waveform_phase.hpp"
-#include "event_msgs/msg/waveform_piece.hpp"
+#include "waveform_msgs/msg/waveform_phase.hpp"
+#include "waveform_msgs/msg/waveform_piece.hpp"
 
 using namespace std;
 
 const uint8_t N_CHANNELS = 5;
 
 const uint16_t DEFAULT_WAVEFORM[][2] = {
-  {event_msgs::msg::WaveformPhase::RISING, 2400},
-  {event_msgs::msg::WaveformPhase::HOLD, 1200},
-  {event_msgs::msg::WaveformPhase::FALLING, 0}
+  {waveform_msgs::msg::WaveformPhase::RISING, 2400},
+  {waveform_msgs::msg::WaveformPhase::HOLD, 1200},
+  {waveform_msgs::msg::WaveformPhase::FALLING, 0}
 };
 
 const uint16_t LAST_WAVEFORM_PHASE_DURATION[N_CHANNELS] = {1480, 1480, 1564, 1564, 1776};
@@ -38,7 +38,7 @@ public:
         return;
       }
 
-      event_msgs::msg::WaveformPiece piece;
+      waveform_msgs::msg::WaveformPiece piece;
       for (uint8_t i = 0; i < std::size(DEFAULT_WAVEFORM); i++) {
         piece.waveform_phase.value = DEFAULT_WAVEFORM[i][0];
 

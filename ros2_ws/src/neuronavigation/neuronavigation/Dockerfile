@@ -71,12 +71,15 @@ RUN rm setup.py
 # Copy and build ROS interfaces
 
 WORKDIR /app/ros2_ws
+
 COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
-COPY ros2_ws/src/shared_interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 COPY ros2_ws/src/interfaces/targeting_services src/interfaces/targeting_services/
 COPY ros2_ws/src/interfaces/ui_interfaces src/interfaces/ui_interfaces/
+COPY ros2_ws/src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+
+COPY ros2_ws/src/shared_interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 
 RUN source /opt/ros/iron/setup.bash && colcon build --base-paths src/interfaces
 
