@@ -11,7 +11,7 @@ from mep_interfaces.msg import (
     PreactivationCheck
 )
 from mep_interfaces.msg import TimeWindow
-from targeting_interfaces.msg import (
+from targeting_msgs.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )
