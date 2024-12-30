@@ -43,7 +43,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
-    ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/request_events', RequestEvents)
+    ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/events/request', RequestEvents)
     ROS_SERVICE_REQUEST_TRIGGER = ('/mtms_device/trigger', RequestTrigger)
 
     # To other parts of the system
@@ -123,10 +123,10 @@ class MTMSApiNode(Node):
         # Similarly with session.
         self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
 
-        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/event/pulse_feedback', self.handle_pulse_feedback, 10)
-        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/event/charge_feedback', self.handle_charge_feedback, 10)
-        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/event/discharge_feedback', self.handle_discharge_feedback, 10)
-        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/event/trigger_out_feedback', self.handle_trigger_out_feedback, 10)
+        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/mtms_device/events/feedback/pulse', self.handle_pulse_feedback, 10)
+        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/mtms_device/events/feedback/charge', self.handle_charge_feedback, 10)
+        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/mtms_device/events/feedback/discharge', self.handle_discharge_feedback, 10)
+        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/mtms_device/events/feedback/trigger_out', self.handle_trigger_out_feedback, 10)
 
         self.event_feedback = {}
 
