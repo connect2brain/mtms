@@ -8,10 +8,11 @@
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  
+
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>eeg_interfaces</depend>
+  <depend>mep_interfaces</depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
