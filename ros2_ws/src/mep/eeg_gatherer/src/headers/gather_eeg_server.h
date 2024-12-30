@@ -4,7 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
-#include "shared_interfaces/msg/sample.hpp"
+#include "eeg_msgs/msg/sample.hpp"
 
 #include "mep_interfaces/msg/gather_eeg_error.hpp"
 #include "mep_interfaces/action/gather_eeg.hpp"
@@ -22,7 +22,7 @@ private:
   void handle_accepted(const std::shared_ptr<GoalHandleGatherEeg> goal_handle);
   void execute(const std::shared_ptr<GoalHandleGatherEeg> goal_handle);
 
-  std::vector<shared_interfaces::msg::Sample> eeg_buffer;
+  std::vector<eeg_msgs::msg::Sample> eeg_buffer;
 
   rclcpp_action::Server<mep_interfaces::action::GatherEeg>::SharedPtr gather_eeg_action_server;
 };

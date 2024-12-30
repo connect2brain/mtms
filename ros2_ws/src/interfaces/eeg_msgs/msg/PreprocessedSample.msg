@@ -3,9 +3,10 @@
 float64[] eeg_data
 float64[] emg_data
 float64 time
-uint64 index
+# Should 'index' field be here also, as it is in Sample.msg?
+bool valid
 
-# The second trigger-in port of the EEG device (port B) is used for triggers
+# The second trigger-in port of the EEG device is used for triggers
 # that indicate simultaneous pulses (at least in case of conventional
 # TMS devices for measuring the timing error - with mTMS device, it can be
 # used more flexibly). Use this field to indicate that case.
@@ -18,4 +19,4 @@ bool is_trigger
 bool is_event
 uint16 event_type
 
-SampleMetadata metadata
+PreprocessedSampleMetadata metadata
