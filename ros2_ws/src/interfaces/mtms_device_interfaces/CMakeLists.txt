@@ -40,6 +40,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
         "srv/AllowStimulation.srv"
         "srv/AllowTriggerOut.srv"
+        "srv/IsStimulationAllowed.srv"
 
         "srv/SendSettings.srv"
 
