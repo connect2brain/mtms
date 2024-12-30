@@ -25,14 +25,14 @@ COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/eeg/mep_analyzer src/eeg/mep_analyzer/
+COPY ros2_ws/src/mep/mep_analyzer src/mep/mep_analyzer/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/eeg/mep_analyzer/ros_entrypoint.sh .
+COPY ros2_ws/src/mep/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

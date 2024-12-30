@@ -4,8 +4,9 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "eeg_interfaces/msg/sample.hpp"
-#include "eeg_interfaces/msg/time_window.hpp"
-#include "eeg_interfaces/msg/gather_eeg_error.hpp"
+
+#include "mep_interfaces/msg/time_window.hpp"
+#include "mep_interfaces/msg/gather_eeg_error.hpp"
 
 const double_t UNSET_PREVIOUS_TIME = std::numeric_limits<double_t>::quiet_NaN();
 
@@ -26,7 +27,7 @@ public:
   bool is_finished();
   bool success();
   std::vector<eeg_interfaces::msg::Sample>& get_eeg_buffer();
-  eeg_interfaces::msg::GatherEegError::SharedPtr get_error();
+  mep_interfaces::msg::GatherEegError::SharedPtr get_error();
 
 private:
   void check_dropped_samples(double_t current_time, uint16_t sampling_frequency);

@@ -4,7 +4,7 @@ from mep_interfaces.msg import (
     MepConfiguration,
     PreactivationCheck
 )
-from eeg_interfaces.msg import TimeWindow
+from mep_interfaces.msg import TimeWindow
 from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget

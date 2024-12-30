@@ -3,14 +3,11 @@ from threading import Event
 
 import numpy as np
 
-from eeg_interfaces.msg import EegInfo, GatherEegError
-from eeg_interfaces.action import GatherEeg
-
-from mep_interfaces.msg import AnalyzeMepErrors, MepError
-from mep_interfaces.action import AnalyzeMep
+from mep_interfaces.msg import AnalyzeMepErrors, MepError, GatherEegError
+from mep_interfaces.action import AnalyzeMep, GatherEeg
 from mep_interfaces.srv import AnalyzeMepService
 
-from system_interfaces.msg import Healthcheck, HealthcheckStatus
+from system_interfaces.msg import Healthcheck
 
 import rclpy
 from rclpy.action import ActionClient, ActionServer
@@ -18,8 +15,6 @@ from rclpy.node import Node
 
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
-
-from rclpy.qos import QoSProfile, DurabilityPolicy, HistoryPolicy, ReliabilityPolicy
 
 
 class GatheredEegBuffer():
