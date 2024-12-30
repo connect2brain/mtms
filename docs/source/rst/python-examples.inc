@@ -3,7 +3,7 @@ Initialize device and session
 
 .. code-block::
 
-    from event_interfaces.msg import ExecutionCondition, WaveformPhase
+    from event_msgs.msg import ExecutionCondition, WaveformPhase
 
     from mep_interfaces.msg import MepConfiguration, PreactivationCheck, TimeWindow
 
@@ -257,7 +257,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
 .. code-block::
 
-    from event_interfaces.msg import ExecutionCondition
+    from event_msgs.msg import ExecutionCondition
 
     from MTMSApi import MTMSApi
 

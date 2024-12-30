@@ -1,7 +1,7 @@
 import time
 
 import rclpy
-from event_interfaces.msg import (
+from event_msgs.msg import (
     Charge,
     ChargeError,
     Discharge,

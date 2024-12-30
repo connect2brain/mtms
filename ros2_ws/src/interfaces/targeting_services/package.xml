@@ -14,8 +14,8 @@
 
   <build_depend>std_msgs</build_depend>
 
-  <build_depend>event_interfaces</build_depend>
-  <exec_depend>event_interfaces</exec_depend>
+  <build_depend>event_msgs</build_depend>
+  <exec_depend>event_msgs</exec_depend>
 
   <build_depend>targeting_msgs</build_depend>
   <exec_depend>targeting_msgs</exec_depend>

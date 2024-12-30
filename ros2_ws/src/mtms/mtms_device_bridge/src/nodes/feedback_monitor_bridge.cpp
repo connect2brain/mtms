@@ -3,10 +3,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/msg/pulse_feedback.hpp"
-#include "event_interfaces/msg/charge_feedback.hpp"
-#include "event_interfaces/msg/discharge_feedback.hpp"
-#include "event_interfaces/msg/trigger_out_feedback.hpp"
+#include "event_msgs/msg/pulse_feedback.hpp"
+#include "event_msgs/msg/charge_feedback.hpp"
+#include "event_msgs/msg/discharge_feedback.hpp"
+#include "event_msgs/msg/trigger_out_feedback.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -29,13 +29,13 @@ class FeedbackMonitorBridge : public rclcpp::Node {
 public:
   FeedbackMonitorBridge()
       : Node("feedback_monitor_bridge") {
-    pulse_feedback_publisher_ = this->create_publisher<event_interfaces::msg::PulseFeedback>(
+    pulse_feedback_publisher_ = this->create_publisher<event_msgs::msg::PulseFeedback>(
         "/event/pulse_feedback", 10);
-    charge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::ChargeFeedback>(
+    charge_feedback_publisher_ = this->create_publisher<event_msgs::msg::ChargeFeedback>(
         "/event/charge_feedback", 10);
-    discharge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::DischargeFeedback>(
+    discharge_feedback_publisher_ = this->create_publisher<event_msgs::msg::DischargeFeedback>(
         "/event/discharge_feedback", 10);
-    trigger_out_feedback_publisher_ = this->create_publisher<event_interfaces::msg::TriggerOutFeedback>(
+    trigger_out_feedback_publisher_ = this->create_publisher<event_msgs::msg::TriggerOutFeedback>(
         "/event/trigger_out_feedback", 10);
 
     timer_ = this->create_wall_timer(20ms, std::bind(&FeedbackMonitorBridge::update_feedback_topics, this));
@@ -173,7 +173,7 @@ private:
 
       /* Create and publish charge feedback message. */
 
-      event_interfaces::msg::ChargeFeedback feedback;
+      event_msgs::msg::ChargeFeedback feedback;
       feedback.id = id;
       feedback.error.value = error;
       feedback.charging_time = charging_time;
@@ -199,21 +199,21 @@ private:
          For a better solution, reading FIFOs and publishing feedbacks would probably need to be decoupled
          first. */
     if (event_type == "Pulse") {
-      event_interfaces::msg::PulseFeedback feedback;
+      event_msgs::msg::PulseFeedback feedback;
       feedback.id = id;
       feedback.error.value = error;
       feedback.execution_time = execution_time;
       pulse_feedback_publisher_->publish(feedback);
 
     } else if (event_type == "Discharge") {
-      event_interfaces::msg::DischargeFeedback feedback;
+      event_msgs::msg::DischargeFeedback feedback;
       feedback.id = id;
       feedback.error.value = error;
       feedback.execution_time = execution_time;
       discharge_feedback_publisher_->publish(feedback);
 
     } else if (event_type == "Trigger out") {
-      event_interfaces::msg::TriggerOutFeedback feedback;
+      event_msgs::msg::TriggerOutFeedback feedback;
       feedback.id = id;
       feedback.error.value = error;
       feedback.execution_time = execution_time;
@@ -241,10 +241,10 @@ private:
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
-  rclcpp::Publisher<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
+  rclcpp::Publisher<event_msgs::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
+  rclcpp::Publisher<event_msgs::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
+  rclcpp::Publisher<event_msgs::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
+  rclcpp::Publisher<event_msgs::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
 
   //channel index, data
   std::map<uint8_t, std::vector<uint8_t>> pulse_data = {};

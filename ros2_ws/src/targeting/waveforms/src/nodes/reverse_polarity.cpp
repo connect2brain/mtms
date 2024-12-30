@@ -3,21 +3,21 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "targeting_services/srv/reverse_polarity.hpp"
-#include "event_interfaces/msg/waveform_phase.hpp"
-#include "event_interfaces/msg/waveform_piece.hpp"
-#include "event_interfaces/msg/waveform.hpp"
+#include "event_msgs/msg/waveform_phase.hpp"
+#include "event_msgs/msg/waveform_piece.hpp"
+#include "event_msgs/msg/waveform.hpp"
 
 using namespace std;
 
 const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
-  {event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, event_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
-  {event_interfaces::msg::WaveformPhase::RISING, event_interfaces::msg::WaveformPhase::FALLING},
-  {event_interfaces::msg::WaveformPhase::FALLING, event_interfaces::msg::WaveformPhase::RISING},
+  {event_msgs::msg::WaveformPhase::NON_CONDUCTIVE, event_msgs::msg::WaveformPhase::NON_CONDUCTIVE},
+  {event_msgs::msg::WaveformPhase::RISING, event_msgs::msg::WaveformPhase::FALLING},
+  {event_msgs::msg::WaveformPhase::FALLING, event_msgs::msg::WaveformPhase::RISING},
 
   /* HOLD is mapped to ALTERNATIVE_HOLD and vice versa so that the IGBT bridges for both are used roughly
      equally, making them wear out at the same rate. */
-  {event_interfaces::msg::WaveformPhase::HOLD, event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
-  {event_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, event_interfaces::msg::WaveformPhase::HOLD}
+  {event_msgs::msg::WaveformPhase::HOLD, event_msgs::msg::WaveformPhase::ALTERNATIVE_HOLD},
+  {event_msgs::msg::WaveformPhase::ALTERNATIVE_HOLD, event_msgs::msg::WaveformPhase::HOLD}
 };
 
 class ReversePolarity : public rclcpp::Node {
@@ -31,8 +31,8 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
-      event_interfaces::msg::Waveform waveform = request->waveform;
-      event_interfaces::msg::WaveformPiece piece;
+      event_msgs::msg::Waveform waveform = request->waveform;
+      event_msgs::msg::WaveformPiece piece;
 
       uint8_t num_of_pieces = std::size(waveform.pieces);
       for (uint8_t i = 0; i < num_of_pieces; i++) {

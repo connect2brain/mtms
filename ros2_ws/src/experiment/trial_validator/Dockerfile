@@ -20,7 +20,7 @@ WORKDIR /app/ros2_ws
 
 # ROS interfaces
 COPY ros2_ws/src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
-COPY ros2_ws/src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY ros2_ws/src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY ros2_ws/src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
