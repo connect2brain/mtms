@@ -187,7 +187,7 @@ target_include_directories(request_trigger_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_interfaces system_interfaces)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_interfaces mtms_device_interfaces)
 
 # Feedback monitor bridge
 
