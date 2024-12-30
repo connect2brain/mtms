@@ -58,7 +58,7 @@ services:
       - cinetwork
     build:
       context: ..
-      dockerfile: ros2_ws/src/targeting/waveforms/Dockerfile
+      dockerfile: ros2_ws/src/targeting/waveform_utils/Dockerfile
 
   trial_logger:
     networks:
