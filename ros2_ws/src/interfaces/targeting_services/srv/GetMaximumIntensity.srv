@@ -4,7 +4,7 @@ int8 displacement_x
 int8 displacement_y
 int16 rotation_angle
 
-TargetingAlgorithm algorithm
+targeting_msgs/TargetingAlgorithm algorithm
 ---
 bool success
 uint8 maximum_intensity

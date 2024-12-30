@@ -5,7 +5,7 @@ from MTMSApi import MTMSApi
 from event_interfaces.msg import (
     ExecutionCondition,
 )
-from targeting_interfaces.msg import (
+from targeting_msgs.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )

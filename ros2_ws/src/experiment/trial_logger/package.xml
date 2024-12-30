@@ -10,6 +10,8 @@
   <depend>rclpy</depend>
 
   <depend>mep_interfaces</depend>
+  <depend>targeting_interfaces</depend>
+  <depend>targeting_msgs</depend>
   <depend>mtms_device_interfaces</depend>
   <depend>experiment_interfaces</depend>
 

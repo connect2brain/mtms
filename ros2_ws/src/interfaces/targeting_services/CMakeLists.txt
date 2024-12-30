@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(targeting_interfaces)
+project(targeting_services)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(event_interfaces REQUIRED)
+find_package(targeting_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -24,9 +25,6 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/ElectricTarget.msg"
-  "msg/TargetingAlgorithm.msg"
-
   "srv/ApproximateWaveform.srv"
   "srv/EstimateVoltageAfterPulse.srv"
   "srv/GetMultipulseWaveforms.srv"
@@ -35,7 +33,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetMaximumIntensity.srv"
   "srv/GetDefaultWaveform.srv"
   "srv/ReversePolarity.srv"
-  DEPENDENCIES event_interfaces
+
+  DEPENDENCIES event_interfaces targeting_msgs
  )
 
 ament_package()

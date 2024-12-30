@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>trial_interfaces</name>
+  <name>targeting_services</name>
   <version>0.0.1</version>
-  <description>Trial interfaces</description>
+  <description>Targeting interfaces</description>
   <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>TODO</license>
 
@@ -12,14 +12,13 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <build_depend>mep_interfaces</build_depend>
-  <exec_depend>mep_interfaces</exec_depend>
+  <build_depend>std_msgs</build_depend>
+
+  <build_depend>event_interfaces</build_depend>
+  <exec_depend>event_interfaces</exec_depend>
 
   <build_depend>targeting_msgs</build_depend>
   <exec_depend>targeting_msgs</exec_depend>
-
-  <build_depend>std_msgs</build_depend>
-  <depend>action_msgs</depend>
 
   <build_depend>rosidl_default_generators</build_depend>
 
