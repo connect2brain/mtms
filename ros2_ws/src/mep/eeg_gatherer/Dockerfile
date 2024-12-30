@@ -20,17 +20,18 @@ WORKDIR /app/ros2_ws
 
 # ROS interfaces
 COPY ros2_ws/src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
+COPY ros2_ws/src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/eeg/eeg_gatherer src/eeg/eeg_gatherer/
+COPY ros2_ws/src/mep/eeg_gatherer src/mep/eeg_gatherer/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select eeg_gatherer
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/eeg/eeg_gatherer/ros_entrypoint.sh .
+COPY ros2_ws/src/mep/eeg_gatherer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

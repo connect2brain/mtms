@@ -140,19 +140,19 @@ bool EegGatherer::success() {
   return this->state == DataGatheringState::FINAL_STATE__SUCCESS;
 }
 
-eeg_interfaces::msg::GatherEegError::SharedPtr EegGatherer::get_error() {
-  auto error = std::make_shared<eeg_interfaces::msg::GatherEegError>();
+mep_interfaces::msg::GatherEegError::SharedPtr EegGatherer::get_error() {
+  auto error = std::make_shared<mep_interfaces::msg::GatherEegError>();
   switch (this->state) {
     case DataGatheringState::FINAL_STATE__SUCCESS:
-      error->value = eeg_interfaces::msg::GatherEegError::NO_ERROR;
+      error->value = mep_interfaces::msg::GatherEegError::NO_ERROR;
       break;
 
     case DataGatheringState::FINAL_STATE__LATE:
-      error->value = eeg_interfaces::msg::GatherEegError::LATE;
+      error->value = mep_interfaces::msg::GatherEegError::LATE;
       break;
 
     case DataGatheringState::FINAL_STATE__SAMPLES_DROPPED:
-      error->value = eeg_interfaces::msg::GatherEegError::SAMPLES_DROPPED;
+      error->value = mep_interfaces::msg::GatherEegError::SAMPLES_DROPPED;
       break;
 
     default:

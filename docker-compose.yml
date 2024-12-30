@@ -13,6 +13,7 @@ services:
     # Note: Just mapping the device /dev/hidraw4 inside the container does not work properly.
     privileged: true
 
+
   experiment_performer:
     build:
       context: .
@@ -123,7 +124,7 @@ services:
       context: .
       dockerfile: ros2_ws/src/mep/eeg_gatherer/Dockerfile
     env_file:
-      - ${ENV_FILE}
+      - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -133,5 +134,5 @@ services:
       context: .
       dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
     env_file:
-      - ${ENV_FILE}
+      - ${SITE_ENV_FILE}
     network_mode: host
