@@ -31,7 +31,7 @@ from targeting_interfaces.srv import (
     GetMultipulseWaveforms
 )
 
-from stimulation_interfaces.srv import IsStimulationAllowed
+from mtms_device_interfaces.srv import IsStimulationAllowed
 
 from MTMSApiPrinter import MTMSApiPrinter
 from ExperimentHandler import ExperimentHandler
