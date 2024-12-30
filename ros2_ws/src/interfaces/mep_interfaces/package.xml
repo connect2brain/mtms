@@ -12,8 +12,8 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <build_depend>shared_interfaces</build_depend>
-  <exec_depend>shared_interfaces</exec_depend>
+  <build_depend>eeg_msgs</build_depend>
+  <exec_depend>eeg_msgs</exec_depend>
 
   <build_depend>std_msgs</build_depend>
   <depend>action_msgs</depend>

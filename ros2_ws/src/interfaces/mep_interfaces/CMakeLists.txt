@@ -7,7 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(shared_interfaces REQUIRED)
+find_package(eeg_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -36,7 +36,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/AnalyzeMep.action"
   "action/GatherEeg.action"
 
-  DEPENDENCIES shared_interfaces
+  DEPENDENCIES eeg_msgs
 )
 
 ament_package()
