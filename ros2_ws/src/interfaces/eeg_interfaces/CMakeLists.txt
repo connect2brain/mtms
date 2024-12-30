@@ -35,10 +35,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EegBatch.msg"
 
   "srv/TriggerPulse.srv"
-
-  "msg/GatherEegError.msg"
-  "action/GatherEeg.action"
-  "msg/TimeWindow.msg"
- )
+)
 
 ament_package()

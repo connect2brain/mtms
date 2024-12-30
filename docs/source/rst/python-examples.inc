@@ -5,8 +5,7 @@ Initialize device and session
 
     from event_interfaces.msg import ExecutionCondition, WaveformPhase
 
-    from mep_interfaces.msg import MepConfiguration, PreactivationCheck
-    from eeg_interfaces.msg import TimeWindow
+    from mep_interfaces.msg import MepConfiguration, PreactivationCheck, TimeWindow
 
     from MTMSApi import MTMSApi
 
