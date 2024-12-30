@@ -1,7 +1,7 @@
 # ROS service for estimating the capacitor voltage after giving a pulse using the given waveform.
 
 uint16 voltage_before
-event_msgs/Waveform waveform
+waveform_msgs/Waveform waveform
 uint8 coil_number
 ---
 bool success
