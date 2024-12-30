@@ -68,8 +68,8 @@ classdef MTMSApiNode < handle
 
             obj.session_subscriber = ros2subscriber(obj.node, "/system/session", "system_interfaces/Session", @obj.handle_session);
 
-            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "system_interfaces/StartSession");
-            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
+            obj.start_session_client = ros2svcclient(obj.node, "/system/session/start", "system_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/system/session/stop", "system_interfaces/StopSession");
 
             obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "system_interfaces/RequestTrigger");
 
