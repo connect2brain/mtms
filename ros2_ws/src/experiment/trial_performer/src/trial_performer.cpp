@@ -66,9 +66,9 @@ void TrialPerformerNode::initialize_service_clients() {
     RCLCPP_INFO(get_logger(), "Service /waveforms/get_multipulse_waveforms not available, waiting...");
   }
 
-  request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms_device/request_events");
+  request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms_device/events/request");
   while (!request_events_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /mtms_device/request_events not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Service /mtms_device/events/request not available, waiting...");
   }
 }
 
@@ -84,11 +84,11 @@ void TrialPerformerNode::initialize_subscribers() {
       std::bind(&TrialPerformerNode::handle_session, this, std::placeholders::_1));
 
   pulse_feedback_subscriber = this->create_subscription<event_msgs::msg::PulseFeedback>(
-      "/event/pulse_feedback", 10,
+      "/mtms_device/events/feedback/pulse", 10,
       std::bind(&TrialPerformerNode::update_pulse_feedback, this, std::placeholders::_1));
 
   trigger_out_feedback_subscriber = this->create_subscription<event_msgs::msg::TriggerOutFeedback>(
-      "/event/trigger_out_feedback", 10,
+      "/mtms_device/events/feedback/trigger_out", 10,
       std::bind(&TrialPerformerNode::update_trigger_out_feedback, this, std::placeholders::_1));
 }
 
