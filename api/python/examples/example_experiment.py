@@ -9,7 +9,8 @@ from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )
-from experiment_interfaces.msg import Experiment, ExperimentMetadata, Trial, IntertrialInterval, TrialConfig, TriggerConfig
+from experiment_interfaces.msg import Experiment, ExperimentMetadata, IntertrialInterval
+from trial_interfaces.msg import Trial, TrialConfig, TriggerConfig
 
 
 api = MTMSApi(

@@ -27,6 +27,7 @@ COPY ros2_ws/src/interfaces/neuronavigation_interfaces src/interfaces/neuronavig
 COPY ros2_ws/src/interfaces/shared_interfaces src/interfaces/shared_interfaces/
 COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 COPY ros2_ws/src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
+COPY ros2_ws/src/interfaces/trial_interfaces src/interfaces/trial_interfaces/
 
 RUN source /opt/ros/iron/setup.bash && colcon build
 
