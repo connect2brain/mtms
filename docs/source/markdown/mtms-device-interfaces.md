@@ -32,11 +32,11 @@ policies and other behaviour will be described in their own sections.
 | `/mtms_device/stop_device`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
-| `/mtms_device/request_events`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
-| `/event/charge_feedback`         | Publisher    | `event_msgs.msg.ChargeFeedback`         |
-| `/event/discharge_feedback`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
-| `/event/pulse_feedback`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
-| `/event/trigger_out_feedback`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
+| `/mtms_device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
+| `/mtms_device/events/feedback/charge`         | Publisher    | `event_msgs.msg.ChargeFeedback`         |
+| `/mtms_device/events/feedback/discharge`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
+| `/mtms_device/events/feedback/pulse`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
+| `/mtms_device/events/feedback/trigger_out`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
 | `/node/message`                  | Publisher    | `std_msgs.msg.String`                         |
 | `/mtms_device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
 
@@ -138,7 +138,7 @@ likewise when session stop request is made and complete, the session state will 
 `session_state.value=SessionState.STOPPED`
 
 #### Charging
-Charging works by requesting a service `/mtms_device/request_events` with a message of type `Charge`
+Charging works by requesting a service `/mtms_device/events/request` with a message of type `Charge`
 in `charges` field. The message type `Charge` consists of the following fields:
 
     uint8 channel
@@ -159,7 +159,7 @@ This event will start the charging process once the given execution condition in
 
 When the execution condition is met the charging process of a given `channel` to the
 `target_voltage` will start. Once the charging process is finished or disrupted by some
-error a message to the topic `/event/charge_feedback` is sent, containing the event id,
+error a message to the topic `/mtms_device/events/feedback/charge` is sent, containing the event id,
 given in the charge message and possible error raised.
 
     uint16 id
@@ -168,7 +168,7 @@ given in the charge message and possible error raised.
 #### Discharging
 The discharging process is similar to the charging process by having the service
 `mtms_device/request_events` for updating the channel voltage and will return
-feedback message `/event/discharge_feedback` once complete or disrupted by error.
+feedback message `/mtms_device/events/feedback/discharge` once complete or disrupted by error.
 
 #### Device configuration and settings
 The device needs to have setting sent to it with topic `/mtms_device/send_settings` that
@@ -179,8 +179,8 @@ controlled with topic `/mtms_device/allow_stimulation`.
 
 #### Pulses
 Pulses, also work similarly to the charging and discharging processes in the regard that
-pulses are requested in service `/mtms_device/request_events` and once finished or disrupted
-by error return with `/event/pulse_feedback`.
+pulses are requested in service `/mtms_device/events/request` and once finished or disrupted
+by error return with `/mtms_device/events/feedback/pulse`.
 
     uint8 channel
     WaveformPiece[] waveform
@@ -191,7 +191,7 @@ works similarly to the charging and discharging properties.
 
 #### Trigger out
 Trigger out messages work also similarly to the charging and once the trigger out message
-is completed message to the topic `/event/trigger_out_feedback` is sent:
+is completed message to the topic `/mtms_device/events/feedback/trigger_out` is sent:
 
     uint8 port  # The index of the signal port.
     uint32 duration_us  # Duration of the pulse in microseconds.
@@ -246,7 +246,7 @@ Stop device. Response: Boolean indicating if stopping was successful.
     ---
     bool success
 
-### Topic: `/mtms_device/request_events`
+### Topic: `/mtms_device/events/request`
 #### Service: `mtms_device_interfaces.srv.RequestEvents`
 QoS: ROS2 Default
 
@@ -261,7 +261,7 @@ Request events. Response: Boolean indicating if request was successful.
 
 ## Publishers
 
-### Topic: `/event/pulse_feedback`
+### Topic: `/mtms_device/events/feedback/pulse`
 #### Message: `event_msgs.msg.PulseFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -270,7 +270,7 @@ Contains feedback of an event
     uint16 id
     PulseError error
 
-### Topic: `/event/charge_feedback`
+### Topic: `/mtms_device/events/feedback/charge`
 #### Message: `event_msgs.msg.ChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -279,7 +279,7 @@ Contains feedback of an event
     uint16 id
     ChargeError error
 
-### Topic: `/event/discharge_feedback`
+### Topic: `/mtms_device/events/feedback/discharge`
 #### Message: `event_msgs.msg.DisChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -288,7 +288,7 @@ Contains feedback of an event
 uint16 id
 DischargeError error
 
-### Topic: `/event/trigger_out_feedback`
+### Topic: `/mtms_device/events/feedback/trigger_out`
 #### Message: `event_msgs.msg.TriggerOutFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 

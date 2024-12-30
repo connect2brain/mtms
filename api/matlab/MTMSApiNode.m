@@ -60,7 +60,7 @@ classdef MTMSApiNode < handle
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
-            obj.request_events_client = ros2svcclient(obj.node, "/mtms_device/request_events", "mtms_device_interfaces/RequestEvents");
+            obj.request_events_client = ros2svcclient(obj.node, "/mtms_device/events/request", "mtms_device_interfaces/RequestEvents");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
@@ -74,10 +74,10 @@ classdef MTMSApiNode < handle
             obj.stop_session_client = ros2svcclient(obj.node, "/system/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
-            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_msgs/PulseFeedback", @obj.handle_pulse_feedback);
-            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
-            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
-            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/event/trigger_out_feedback", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
+            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/pulse", "event_msgs/PulseFeedback", @obj.handle_pulse_feedback);
+            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/charge", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
+            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/discharge", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
+            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/trigger_out", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
 
             % To other parts of the system.
 
