@@ -1,5 +1,5 @@
 TimeWindow time_window
 ---
-shared_interfaces/Sample[] eeg_buffer
+eeg_msgs/Sample[] eeg_buffer
 GatherEegError error
 ---
