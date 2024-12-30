@@ -16,7 +16,7 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
 
 void TrialPerformerNode::initialize_actions() {
   /* Action server for performing trial. */
-  action_server = rclcpp_action::create_server<experiment_interfaces::action::PerformTrial>(
+  action_server = rclcpp_action::create_server<trial_interfaces::action::PerformTrial>(
       get_node_base_interface(),
       get_node_clock_interface(),
       get_node_logging_interface(),
@@ -186,7 +186,7 @@ std::vector<uint16_t> TrialPerformerNode::get_actual_voltages() const {
 
 /* ROS message creation */
 
-std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<event_interfaces::msg::WaveformsForCoilSet> &waveforms, const experiment_interfaces::msg::Trial &trial, double start_time) {
+std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<event_interfaces::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time) {
   std::vector<uint16_t> pulse_ids;
   std::vector<event_interfaces::msg::Pulse> pulses;
 
@@ -218,7 +218,7 @@ event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8
   return pulse;
 }
 
-std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const std::vector<experiment_interfaces::msg::TriggerConfig> &triggers, double pulse_time) {
+std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const std::vector<trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time) {
   std::vector<uint16_t> trigger_out_ids;
   std::vector<event_interfaces::msg::TriggerOut> trigger_outs;
 
@@ -291,7 +291,7 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 
 /* Logging */
 
-void TrialPerformerNode::log_trial(const experiment_interfaces::msg::Trial &trial) {
+void TrialPerformerNode::log_trial(const trial_interfaces::msg::Trial &trial) {
   auto timing = trial.timing;
   RCLCPP_INFO(this->get_logger(), "Trial:");
   if (trial.config.dry_run) {
@@ -590,25 +590,25 @@ std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::
 
 rclcpp_action::GoalResponse TrialPerformerNode::handle_goal(
     [[maybe_unused]] const rclcpp_action::GoalUUID &uuid,
-    [[maybe_unused]] std::shared_ptr<const experiment_interfaces::action::PerformTrial::Goal> goal) {
+    [[maybe_unused]] std::shared_ptr<const trial_interfaces::action::PerformTrial::Goal> goal) {
   RCLCPP_INFO(get_logger(), "Received goal request");
   return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
 }
 
 rclcpp_action::CancelResponse TrialPerformerNode::handle_cancel(
-    [[maybe_unused]] const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+    [[maybe_unused]] const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle) {
   RCLCPP_INFO(get_logger(), "Received request to cancel goal");
   return rclcpp_action::CancelResponse::ACCEPT;
 }
 
-void TrialPerformerNode::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+void TrialPerformerNode::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle) {
   std::thread{std::bind(&TrialPerformerNode::execute, this, std::placeholders::_1), goal_handle}.detach();
 }
 
-void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<experiment_interfaces::action::PerformTrial>> goal_handle) {
+void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle) {
   RCLCPP_INFO(this->get_logger(), "Executing goal...");
   const auto goal = goal_handle->get_goal();
-  auto result = std::make_shared<experiment_interfaces::action::PerformTrial::Result>();
+  auto result = std::make_shared<trial_interfaces::action::PerformTrial::Result>();
 
   /* Log trial details. */
   log_trial(goal->trial);
@@ -636,11 +636,11 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
   goal_handle->succeed(result);
 }
 
-std::pair<bool, experiment_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const experiment_interfaces::msg::Trial &trial) {
+std::pair<bool, trial_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const trial_interfaces::msg::Trial &trial) {
   tic();
 
   bool success = true;
-  experiment_interfaces::msg::TrialResult trial_result;
+  trial_interfaces::msg::TrialResult trial_result;
   double_t start_time;
 
   auto timing = trial.timing;
