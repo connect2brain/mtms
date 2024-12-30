@@ -116,3 +116,22 @@ services:
       # docker-compose.yml, but only for Dockerfile.
       - '/usr/local/MATLAB:/usr/local/MATLAB'
     network_mode: host
+
+  # MEP-related services
+  eeg_gatherer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/mep/eeg_gatherer/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
+    network_mode: host
+
+  mep_analyzer:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
+    env_file:
+      - ${ENV_FILE}
+    network_mode: host
