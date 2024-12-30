@@ -19,7 +19,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
-COPY ros2_ws/src/interfaces/event_interfaces ros2_ws/src/interfaces/event_interfaces/
+COPY ros2_ws/src/interfaces/event_msgs ros2_ws/src/interfaces/event_msgs/
 COPY ros2_ws/src/interfaces/targeting_services ros2_ws/src/interfaces/targeting_services/
 COPY ros2_ws/src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
 RUN source /opt/ros/iron/setup.bash && colcon build

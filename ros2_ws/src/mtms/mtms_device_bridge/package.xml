@@ -10,7 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>mtms_device_interfaces</depend>
-  <depend>event_interfaces</depend>
+  <depend>event_msgs</depend>
   <depend>system_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>

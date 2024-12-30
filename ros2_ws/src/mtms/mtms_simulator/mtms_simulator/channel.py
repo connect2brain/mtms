@@ -1,7 +1,7 @@
 import math
 import time
 
-from event_interfaces.msg import (
+from event_msgs.msg import (
     ChargeFeedback,
     ChargeError,
     DischargeFeedback,

@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 
 from ui_interfaces.srv import StartPulseSequence
-from event_interfaces.msg import Pulse, EventInfo
+from event_msgs.msg import Pulse, EventInfo
 from .pulses import generate_pulse, pulse_duration_in_us
 from .testResult import TestResult
 

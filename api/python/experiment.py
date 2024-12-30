@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy as np
 from pytimedinput import timedKey
 
-from event_interfaces.msg import ExecutionCondition, PulseError
+from event_msgs.msg import ExecutionCondition, PulseError
 from targeting_msgs.msg import TargetingAlgorithm
 
 
