@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(event_msgs)
+project(waveform_msgs)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,7 +7,6 @@ endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(waveform_msgs REQUIRED)
 
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
@@ -23,28 +22,10 @@ endif ()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-    "msg/Charge.msg"
-    "msg/ChargeFeedback.msg"
-    "msg/ChargeError.msg"
-
-    "msg/Discharge.msg"
-    "msg/DischargeFeedback.msg"
-    "msg/DischargeError.msg"
-
-    "msg/Pulse.msg"
-    "msg/PulseFeedback.msg"
-    "msg/PulseError.msg"
-
-    "msg/TriggerOut.msg"
-    "msg/TriggerOutFeedback.msg"
-    "msg/TriggerOutError.msg"
-
-    "msg/Stimulus.msg"
-
-    "msg/EventInfo.msg"
-    "msg/ExecutionCondition.msg"
-
-    DEPENDENCIES waveform_msgs
+    "msg/WaveformsForCoilSet.msg"
+    "msg/WaveformPiece.msg"
+    "msg/WaveformPhase.msg"
+    "msg/Waveform.msg"
 )
 
 ament_package()

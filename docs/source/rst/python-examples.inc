@@ -3,7 +3,8 @@ Initialize device and session
 
 .. code-block::
 
-    from event_msgs.msg import ExecutionCondition, WaveformPhase
+    from event_msgs.msg import ExecutionCondition
+    from waveform_msgs.msg import WaveformPhase
 
     from mep_interfaces.msg import MepConfiguration, PreactivationCheck, TimeWindow
 
