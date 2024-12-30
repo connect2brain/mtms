@@ -25,12 +25,12 @@ COPY ros2_ws/src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/mtms_device/voltage_setter src/mtms_device/voltage_setter/
+COPY ros2_ws/src/mtms/voltage_setter src/mtms/voltage_setter/
 RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select voltage_setter
 
 # Copy entrypoint
 
-COPY ros2_ws/src/mtms_device/voltage_setter/ros_entrypoint.sh .
+COPY ros2_ws/src/mtms/voltage_setter/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
