@@ -22,7 +22,7 @@ services:
   mtms_device_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/bridges/mtms_device_bridge/Dockerfile
+      dockerfile: ros2_ws/src/mtms/mtms_device_bridge/Dockerfile
     # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
@@ -58,7 +58,7 @@ services:
   optitrack_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/bridges/optitrack_bridge/Dockerfile
+      dockerfile: ros2_ws/src/utility/optitrack_bridge/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
