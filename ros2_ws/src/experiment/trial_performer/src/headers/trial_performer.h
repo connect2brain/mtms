@@ -23,10 +23,10 @@
 #include "neuronavigation_interfaces/msg/create_marker.hpp"
 #include "system_interfaces/msg/session.hpp"
 #include "system_interfaces/msg/session_state.hpp"
-#include "targeting_interfaces/srv/get_target_voltages.hpp"
-#include "targeting_interfaces/srv/reverse_polarity.hpp"
-#include "targeting_interfaces/srv/get_default_waveform.hpp"
-#include "targeting_interfaces/srv/get_multipulse_waveforms.hpp"
+#include "targeting_services/srv/get_target_voltages.hpp"
+#include "targeting_services/srv/reverse_polarity.hpp"
+#include "targeting_services/srv/get_default_waveform.hpp"
+#include "targeting_services/srv/get_multipulse_waveforms.hpp"
 #include "event_interfaces/msg/event_info.hpp"
 #include "event_interfaces/msg/pulse.hpp"
 #include "event_interfaces/msg/pulse_feedback.hpp"
@@ -48,10 +48,10 @@ private:
   rclcpp_action::Server<trial_interfaces::action::PerformTrial>::SharedPtr action_server;
   rclcpp_action::Client<mtms_device_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp_action::Client<mep_interfaces::action::AnalyzeMep>::SharedPtr analyze_mep_client;
-  rclcpp::Client<targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
-  rclcpp::Client<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
-  rclcpp::Client<targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
-  rclcpp::Client<targeting_interfaces::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
+  rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedPtr targeting_client;
+  rclcpp::Client<targeting_services::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
+  rclcpp::Client<targeting_services::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
+  rclcpp::Client<targeting_services::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_statesubscriber;
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
@@ -99,11 +99,11 @@ private:
 
   /* Service calls */
   std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> get_approximated_waveforms(
-      const std::vector<targeting_interfaces::msg::ElectricTarget> &targets,
+      const std::vector<targeting_msgs::msg::ElectricTarget> &targets,
       const std::vector<event_interfaces::msg::WaveformsForCoilSet> &target_waveforms);
 
   std::pair<std::vector<double_t>, std::vector<bool>> get_target_voltages(
-      const targeting_interfaces::msg::ElectricTarget &target);
+      const targeting_msgs::msg::ElectricTarget &target);
 
   event_interfaces::msg::Waveform get_default_waveform(uint8_t channel);
   event_interfaces::msg::Waveform reverse_polarity(const event_interfaces::msg::Waveform &waveform);
@@ -139,10 +139,10 @@ private:
   std::pair<bool, trial_interfaces::msg::TrialResult> perform_trial(const trial_interfaces::msg::Trial &trial);
 
   std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
-      const targeting_interfaces::msg::ElectricTarget &target, const event_interfaces::msg::WaveformsForCoilSet &target_waveforms);
+      const targeting_msgs::msg::ElectricTarget &target, const event_interfaces::msg::WaveformsForCoilSet &target_waveforms);
 
   std::pair<std::vector<uint16_t>, std::vector<event_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
-      const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
+      const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
 };
 
 #endif // TRIAL_PERFORMER_H

@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(targeting_interfaces REQUIRED)
+find_package(targeting_services REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -42,7 +42,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/VisualizeTargets.srv"
 
-  DEPENDENCIES geometry_msgs targeting_interfaces
+  DEPENDENCIES geometry_msgs targeting_services
  )
 
 ament_package()

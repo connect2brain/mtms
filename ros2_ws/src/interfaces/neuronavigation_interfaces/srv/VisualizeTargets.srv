@@ -1,4 +1,4 @@
-targeting_interfaces/ElectricTarget[] targets
+targeting_msgs/ElectricTarget[] targets
 bool is_ordered
 ---
 bool success
