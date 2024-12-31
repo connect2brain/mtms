@@ -4,7 +4,7 @@ services:
   busylight_manager:
     build:
       context: .
-      dockerfile: ros2_ws/src/utility/busylight_manager/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/utility/busylight_manager/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -17,7 +17,7 @@ services:
   experiment_performer:
     build:
       context: .
-      dockerfile: ros2_ws/src/experiment/experiment_performer/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/experiment/experiment_performer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -27,7 +27,7 @@ services:
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/utility/pedal_listener/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/utility/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
@@ -37,7 +37,7 @@ services:
   stimulation_allower:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms/stimulation_allower/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mtms/stimulation_allower/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -47,7 +47,7 @@ services:
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/targeting/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/targeting/targeting/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -57,7 +57,7 @@ services:
   trial_logger:
     build:
       context: .
-      dockerfile: ros2_ws/src/experiment/trial_logger/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_logger/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
@@ -67,7 +67,7 @@ services:
   trial_performer:
     build:
       context: .
-      dockerfile: ros2_ws/src/experiment/trial_performer/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_performer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -77,7 +77,7 @@ services:
   trial_validator:
     build:
       context: .
-      dockerfile: ros2_ws/src/experiment/trial_validator/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_validator/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -87,7 +87,7 @@ services:
   voltage_setter:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms/voltage_setter/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mtms/voltage_setter/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -97,7 +97,7 @@ services:
   waveforms:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/waveform_utils/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_utils/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -105,7 +105,7 @@ services:
   waveform_approximator:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/waveform_approximator/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_approximator/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
@@ -122,7 +122,7 @@ services:
   eeg_gatherer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mep/eeg_gatherer/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mep/eeg_gatherer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     # The container needs to be privileged to set real-time priority.
@@ -132,7 +132,7 @@ services:
   mep_analyzer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mep/mep_analyzer/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mep/mep_analyzer/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
