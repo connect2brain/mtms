@@ -4,7 +4,7 @@ services:
   efield:
     build:
       context: .
-      dockerfile: ros2_ws/src/targeting/efield/Dockerfile.cuda2
+      dockerfile: ros2_ws/src/mtms_packages/targeting/efield/Dockerfile.cuda2
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
@@ -22,7 +22,7 @@ services:
   mtms_device_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms/mtms_device_bridge/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mtms/mtms_device_bridge/Dockerfile
     # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
@@ -32,7 +32,7 @@ services:
   mtms_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/simulators/mtms_simulator/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/simulators/mtms_simulator/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -40,7 +40,7 @@ services:
   neuronavigation:
     build:
       context: .
-      dockerfile: ros2_ws/src/neuronavigation/neuronavigation/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     environment:
@@ -58,7 +58,7 @@ services:
   optitrack_bridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/scratch/optitrack_bridge/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/scratch/optitrack_bridge/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
@@ -66,9 +66,9 @@ services:
   planner:
     build:
       context: .
-      dockerfile: ros2_ws/src/ui/planner/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/ui/planner/Dockerfile
     env_file:
       - ${SITE_ENV_FILE}
     volumes:
-      - './ros2_ws/src/ui/planner:/app/ros2_ws/src/ui/planner/'
+      - './ros2_ws/src/mtms_packages/ui/planner:/app/ros2_ws/src/mtms_packages/ui/planner/'
     network_mode: host

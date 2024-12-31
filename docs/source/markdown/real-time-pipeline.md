@@ -69,10 +69,10 @@ The ROS launch arguments for these nodes are automatically read from .env file, 
 ### Without Docker
 Each of the ROS nodes needs to be started in its own terminal. On each new terminal, you need to source ROS and source the ROS nodes before you can launch the ROS node.
 
-Fill in the launch arguments as needed. In particular, pay attention to the number of channels in EEG bridge. See `mtms/ros2_ws/src/eeg/eeg_processor/README.md` for details about the launch arguments regarding pipeline stages.
+Fill in the launch arguments as needed. In particular, pay attention to the number of channels in EEG bridge. See `mtms/ros2_ws/src/mtms_packages/eeg/eeg_processor/README.md` for details about the launch arguments regarding pipeline stages.
 
 #### EEG simulator
-`ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=info data-file:=/path/to/mtms/ros2_ws/src/eeg/eeg_simulator/data/random_data.csv sampling-frequency:=5000 loop:=true`
+`ros2 launch eeg_simulator eeg_simulator.launch.py log-level:=info data-file:=/path/to/mtms/ros2_ws/src/mtms_packages/eeg/eeg_simulator/data/random_data.csv sampling-frequency:=5000 loop:=true`
 
 
 #### EEG bridge
