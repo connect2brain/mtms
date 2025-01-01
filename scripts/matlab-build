@@ -9,25 +9,32 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
-# Run the MATLAB commands non-interactively
+# Create a temporary directory for all the interfaces
+mkdir -p /home/mtms/mtms/ros2_ws/src/temp_interfaces
+ln -s /home/mtms/mtms/ros2_ws/src/shared_packages/interfaces/* /home/mtms/mtms/ros2_ws/src/temp_interfaces/
+ln -s /home/mtms/mtms/ros2_ws/src/mtms_packages/interfaces/* /home/mtms/mtms/ros2_ws/src/temp_interfaces/
+
+# Generate the MATLAB message files
 matlab -nodisplay -nosplash -nodesktop -r " \
-pyenv('Version', '/opt/python3.9.5/bin/python3.9'); \
-ros2genmsg('/home/mtms/mtms/ros2_ws/src/mtms_packages/interfaces', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns'); \
+ros2genmsg('/home/mtms/mtms/ros2_ws/src/temp_interfaces', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns'); \
 exit;"
 
 # Check if the .zip file exists and then move it
-if [ -f "$MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/matlab_msg_gen.zip" ]; then
-    mv "$MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/matlab_msg_gen.zip" "$MTMS_ROOT/api/matlab/"
+if [ -f "$MTMS_ROOT/ros2_ws/src/temp_interfaces/matlab_msg_gen.zip" ]; then
+    mv "$MTMS_ROOT/ros2_ws/src/temp_interfaces/matlab_msg_gen.zip" "$MTMS_ROOT/api/matlab/"
 else
     echo "matlab_msg_gen.zip does not exist."
 fi
 
 # Delete the matlab_msg_gen directory
-if [ -d "$MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/matlab_msg_gen" ]; then
-    rm -rf "$MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/matlab_msg_gen"
+if [ -d "$MTMS_ROOT/ros2_ws/src/temp_interfaces/matlab_msg_gen" ]; then
+    rm -rf "$MTMS_ROOT/ros2_ws/src/temp_interfaces/matlab_msg_gen"
 else
     echo "matlab_msg_gen directory does not exist."
 fi
+
+# Remove the temporary directory
+rm -rf /home/mtms/mtms/ros2_ws/src/temp_interfaces
 
 echo "Done."
 echo ""
