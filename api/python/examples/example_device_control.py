@@ -20,6 +20,9 @@ from targeting_msgs.msg import (
 
 api = MTMSApi()
 
+api.start_device()
+api.start_session()
+
 ## Single events
 
 # Charge channel 0 to 20 V.
