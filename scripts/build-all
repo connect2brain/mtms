@@ -27,7 +27,7 @@ echo "Building the ROS workspace:"
 echo "  • ${BOLD}Building interfaces...${RESET}"
 
 cd $MTMS_ROOT/ros2_ws
-colcon build --base-paths src/interfaces
+colcon build --base-paths src/shared_packages/interfaces src/mtms_packages/interfaces
 
 # Build mTMS device bridge
 echo "  • ${BOLD}Building mTMS device bridge...${RESET}"

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(waveforms)
+project(waveform_utils)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -31,7 +31,7 @@ ament_target_dependencies(get_default_waveform rclcpp std_msgs event_msgs target
 # Install get_multipulse_waveforms executable.
 
 add_executable(get_multipulse_waveforms
-  src/nodes/get_multipulse_waveforms.cpp
+  src/get_multipulse_waveforms.cpp
 )
 
 target_include_directories(get_multipulse_waveforms
@@ -46,7 +46,7 @@ target_link_libraries(get_multipulse_waveforms Boost::boost)
 # Install reverse_polarity executable.
 
 add_executable(reverse_polarity
-  src/nodes/reverse_polarity.cpp
+  src/reverse_polarity.cpp
 )
 
 target_include_directories(reverse_polarity

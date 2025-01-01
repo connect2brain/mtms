@@ -54,6 +54,11 @@ RUN adduser --shell /bin/bash --disabled-password --gecos "" matlab \
 USER matlab
 WORKDIR /home/matlab
 
+# Create .matlab directory and set ownership
+RUN mkdir -p /home/matlab/.matlab/R2024a && \
+    chmod -R 755 /home/matlab/.matlab && \
+    chown -R matlab:matlab /home/matlab/.matlab
+
 # Run mpm to install MATLAB in the target location and delete the mpm installation afterwards.
 # If mpm fails to install successfully, then print the logfile in the terminal, otherwise clean up.
 # Pass in $HOME variable to install support packages into the user's HOME folder.
