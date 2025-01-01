@@ -379,7 +379,7 @@ classdef MTMSApiNode < handle
 
             request.displacement_x = int8(displacement_x);
             request.displacement_y = int8(displacement_y);
-            request.rotation_angle = uint16(rotation_angle);
+            request.rotation_angle = int16(rotation_angle);
             request.algorithm = algorithm;
 
             response = call(client, request);
