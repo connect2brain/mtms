@@ -7,6 +7,8 @@
 #include "event_msgs/msg/discharge.hpp"
 #include "event_msgs/msg/trigger_out.hpp"
 
+#include "realtime_utils/utils.h"
+
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
@@ -252,6 +254,25 @@ void EventHandler::process_trigger_out(const event_msgs::msg::TriggerOut &trigge
 
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
+
+  auto logger = rclcpp::get_logger("event_handler");
+
+  realtime_utils::MemoryConfig mem_config;
+  mem_config.enable_memory_optimization = true;
+  mem_config.preallocate_size = 10 * 1024 * 1024; // 10 MB
+
+  realtime_utils::SchedulingConfig sched_config;
+  sched_config.enable_scheduling_optimization = true;
+  sched_config.scheduling_policy = SCHED_RR;
+  sched_config.priority_level = realtime_utils::PriorityLevel::HIGHEST_REALTIME;
+
+  try {
+    realtime_utils::initialize_scheduling(sched_config, logger);
+    realtime_utils::initialize_memory(mem_config, logger);
+  } catch (const std::exception& e) {
+    RCLCPP_FATAL(logger, "Initialization failed: %s", e.what());
+    return -1;
+  }
 
   auto node = std::make_shared<EventHandler>();
 
