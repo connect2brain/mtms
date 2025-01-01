@@ -18,19 +18,12 @@ if [ ! -f "$SITE_ENV_FILE" ]; then
 fi
 
 # Load and export the environment variables
-export $(grep "^MTMS_DEVICE_ENABLED=" $SITE_ENV_FILE | xargs)
 export $(grep "^MTMS_DEVICE_GENERATION=" $SITE_ENV_FILE | xargs)
 export $(grep "^BITFILE_VERSION=" $SITE_ENV_FILE | xargs)
 export $(grep "^RESOURCE=" $SITE_ENV_FILE | xargs)
 export $(grep "^CHANNEL_COUNT=" $SITE_ENV_FILE | xargs)
 
 # Ensure that the environment variables are set
-if [ -z "$MTMS_DEVICE_ENABLED" ]; then
-    echo "Error: MTMS_DEVICE_ENABLED environment variable is unset."
-    echo ""
-    exit 1
-fi
-
 if [ -z "$CHANNEL_COUNT" ]; then
     echo "Error: CHANNEL_COUNT environment variable is unset."
     echo ""
@@ -50,7 +43,6 @@ if [ -z "$BITFILE_VERSION" ]; then
 fi
 
 # Print the environment variables
-echo "mTMS device enabled: $MTMS_DEVICE_ENABLED"
 echo "mTMS device generation: $MTMS_DEVICE_GENERATION"
 echo "Bitfile version: $BITFILE_VERSION"
 echo "Channel count: $CHANNEL_COUNT"
@@ -80,4 +72,4 @@ colcon build --packages-select mtms_device_bridge
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
 # Start mTMS bridge
-ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false enabled:=$MTMS_DEVICE_ENABLED channel-count:=$CHANNEL_COUNT
+ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false channel-count:=$CHANNEL_COUNT
