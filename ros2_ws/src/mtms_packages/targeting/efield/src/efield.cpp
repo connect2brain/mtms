@@ -1,8 +1,6 @@
 //
 // Created by alqio on 11.11.2022.
 //
-#include "scheduling_utils.h"
-#include "memory_utils.h"
 #include "rclcpp/rclcpp.hpp"
 #include "neuronavigation_interfaces/srv/efield.hpp"
 #include "neuronavigation_interfaces/srv/initialize_efield.hpp"
@@ -137,18 +135,7 @@ private:
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("efield"), "Setting thread scheduling");
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
-#endif
-
   auto node = std::make_shared<EField>();
-
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("efield"), "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
 
   rclcpp::spin(node);
   rclcpp::shutdown();
