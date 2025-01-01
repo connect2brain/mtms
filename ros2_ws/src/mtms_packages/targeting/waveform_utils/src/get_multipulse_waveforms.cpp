@@ -1,8 +1,5 @@
 #include "get_multipulse_waveforms.h"
 
-#include "memory_utils.h"
-#include "scheduling_utils.h"
-
 const uint8_t NUM_OF_COILS = 5;
 
 const uint16_t INITIAL_VOLTAGE = 1500;
@@ -298,18 +295,7 @@ const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> GetM
 int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
-#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(logger, "Setting thread scheduling");
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
-#endif
-
   auto node = std::make_shared<GetMultipulseWaveforms>();
-
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(logger, "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
 
   auto executor = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
   executor->add_node(node);

@@ -20,12 +20,6 @@ add_executable(
 
         src/eeg_gatherer.cpp
         src/headers/eeg_gatherer.h
-
-        src/memory_utils.cpp
-        src/headers/memory_utils.h
-
-        src/scheduling_utils.cpp
-        src/headers/scheduling_utils.h
 )
 
 target_include_directories(eeg_gatherer

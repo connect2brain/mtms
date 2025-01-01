@@ -16,6 +16,7 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
 find_package(event_msgs REQUIRED)
 find_package(system_interfaces REQUIRED)
+find_package(realtime_utils REQUIRED)
 
 # Run_fpga executable
 
@@ -25,12 +26,16 @@ add_executable(run_fpga
   src/lib/NiFpga.c
 )
 
+target_link_libraries(run_fpga
+  realtime_utils::utils
+)
+
 target_include_directories(run_fpga
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces system_interfaces)
+ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
 
 # System state bridge
 
@@ -38,14 +43,18 @@ add_executable(system_state_bridge
         src/nodes/system_state_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(system_state_bridge
+  realtime_utils::utils
+)
 
 target_include_directories(system_state_bridge
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
 
 # Session bridge
 
@@ -53,14 +62,18 @@ add_executable(session_bridge
         src/nodes/session_bridge.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(session_bridge
+  realtime_utils::utils
+)
 
 target_include_directories(session_bridge
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(session_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces)
+ament_target_dependencies(session_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
 
 # Start device handler
 
@@ -68,15 +81,18 @@ add_executable(start_device_handler
   src/nodes/start_device_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(start_device_handler
+  realtime_utils::utils
+)
 
 target_include_directories(start_device_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
 
 # Start session handler
 
@@ -84,15 +100,18 @@ add_executable(start_session_handler
         src/nodes/start_session_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(start_session_handler
+  realtime_utils::utils
+)
 
 target_include_directories(start_session_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces)
+ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
 
 # Stop session handler
 
@@ -100,15 +119,18 @@ add_executable(stop_session_handler
         src/nodes/stop_session_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(stop_session_handler
+  realtime_utils::utils
+)
 
 target_include_directories(stop_session_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces)
+ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
 
 # Stop device handler
 
@@ -116,15 +138,18 @@ add_executable(stop_device_handler
         src/nodes/stop_device_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(stop_device_handler
+  realtime_utils::utils
+)
 
 target_include_directories(stop_device_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
 
 # Allow stimulation handler
 
@@ -132,15 +157,18 @@ add_executable(allow_stimulation_handler
   src/nodes/allow_stimulation_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(allow_stimulation_handler
+  realtime_utils::utils
+)
 
 target_include_directories(allow_stimulation_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(allow_stimulation_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(allow_stimulation_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
 
 # Allow trigger out handler
 
@@ -148,15 +176,18 @@ add_executable(allow_trigger_out_handler
   src/nodes/allow_trigger_out_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
 
+target_link_libraries(allow_trigger_out_handler
+  realtime_utils::utils
+)
 
 target_include_directories(allow_trigger_out_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(allow_trigger_out_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(allow_trigger_out_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
 
 # Event handler
 
@@ -165,14 +196,18 @@ add_executable(event_handler
   src/lib/serdes.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(event_handler
+  realtime_utils::utils
+)
 
 target_include_directories(event_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_handler rclcpp std_msgs event_msgs mtms_device_interfaces)
+ament_target_dependencies(event_handler rclcpp std_msgs event_msgs mtms_device_interfaces realtime_utils)
 
 # Request trigger handler
 
@@ -180,14 +215,18 @@ add_executable(request_trigger_handler
   src/nodes/request_trigger_handler.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(request_trigger_handler
+  realtime_utils::utils
+)
 
 target_include_directories(request_trigger_handler
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_msgs mtms_device_interfaces)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_msgs mtms_device_interfaces realtime_utils)
 
 # Feedback monitor bridge
 
@@ -195,14 +234,18 @@ add_executable(feedback_monitor_bridge
   src/nodes/feedback_monitor_bridge.cpp
   src/lib/fpga.cpp
   src/lib/NiFpga.c
-  src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(feedback_monitor_bridge
+  realtime_utils::utils
+)
 
 target_include_directories(feedback_monitor_bridge
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_msgs)
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_msgs realtime_utils)
 
 # Settings handler
 
@@ -210,14 +253,18 @@ add_executable(settings_handler
         src/nodes/settings_handler.cpp
         src/lib/fpga.cpp
         src/lib/NiFpga.c
-        src/lib/memory_utils.cpp include/memory_utils.h src/lib/scheduling_utils.cpp include/scheduling_utils.h)
+)
+
+target_link_libraries(settings_handler
+  realtime_utils::utils
+)
 
 target_include_directories(settings_handler
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(settings_handler rclcpp std_msgs mtms_device_interfaces)
+ament_target_dependencies(settings_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
 
 
 install(TARGETS

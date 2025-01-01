@@ -1,3 +1,5 @@
+# Note: NI FPGA drivers do not work in Docker as of the last time it was tried, so this Dockerfile is work in progress.
+
 FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
 
 SHELL ["/bin/bash", "-c"]
@@ -48,6 +50,7 @@ COPY ros2_ws/src/mtms_packages/interfaces/event_msgs ros2_ws/src/mtms_packages/i
 COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
 COPY ros2_ws/src/shared_packages/interfaces/system_interfaces ros2_ws/src/shared_packages/interfaces/system_interfaces/
+COPY ros2_ws/src/shared_packages/realtime_utils ros2_ws/src/shared_packages/realtime_utils/
 
 # Build ROS packages
 
