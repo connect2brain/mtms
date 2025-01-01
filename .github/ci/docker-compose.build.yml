@@ -53,7 +53,7 @@ services:
       context: ..
       dockerfile: ros2_ws/src/mtms_packages/mtms/voltage_setter/Dockerfile
 
-  waveforms:
+  waveform_utils:
     networks:
       - cinetwork
     build:
