@@ -90,24 +90,25 @@ class AnalyzeMepNode(Node):
             10,
             callback_group=self.callback_group,
         )
+        self.is_eeg_receiver_available = False
 
     # Healthcheck
 
     def publish_healthcheck(self):
         msg = Healthcheck()
-        if self.eeg_available:
+        if self.is_eeg_receiver_available:
             msg.status.value = msg.status.READY
             msg.status_message = ""
             msg.actionable_message = ""
         else:
             msg.status.value = msg.status.DISABLED
-            msg.status_message = "EEG not available"
+            msg.status_message = "EEG receiver not available"
             msg.actionable_message = ""
 
         self.healthcheck_publisher.publish(msg)
 
     def eeg_healthcheck_handler(self, msg):
-        self.eeg_available = msg.status.value == msg.status.READY
+        self.is_eeg_receiver_available = msg.status.value == msg.status.READY
         self.publish_healthcheck()
 
     # ROS callbacks and callers
@@ -261,13 +262,15 @@ class AnalyzeMepNode(Node):
         errors = AnalyzeMepErrors()
 
         # Check that EEG is available.
-        if not self.eeg_available:
-            self.logger.error('{}: EEG not available, aborting.'.format(goal_id))
+        if not self.is_eeg_receiver_available:
+            self.logger.error('{}: EEG receiver not available, aborting.'.format(goal_id))
 
             success = False
             amplitude = None
             latency = None
             channel_data = None
+
+            errors.mep_error = MepError(value=MepError.EEG_RECEIVER_NOT_AVAILABLE)
 
             return success, errors, amplitude, latency, channel_data
 
