@@ -803,6 +803,8 @@ bool TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &des
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
+  /* TODO: Should this be set to real-time priority, as it's a part of the RT pathway to the mTMS device? */
+
   auto trial_performer_node = std::make_shared<TrialPerformerNode>();
 
   /* Note: Use SingleThreadedExecutor here for several reasons:
