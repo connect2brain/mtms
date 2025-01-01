@@ -18,11 +18,6 @@ def generate_launch_description():
         description="Run in safe mode (boolean)",
     )
 
-    enabled_arg = DeclareLaunchArgument(
-        "enabled",
-        description="Is mTMS device enabled (boolean)",
-    )
-
     channel_count_arg = DeclareLaunchArgument(
         "channel-count",
         description="The channel count of the mTMS device",
@@ -30,7 +25,6 @@ def generate_launch_description():
 
     logger = LaunchConfiguration("log-level")
     safe_mode = LaunchConfiguration("safe-mode")
-    enabled = LaunchConfiguration("enabled")
     channel_count = LaunchConfiguration("channel-count")
 
     node_executables = [
@@ -62,7 +56,6 @@ def generate_launch_description():
                 {
                     "safe-mode": safe_mode,
                     "channel-count": channel_count,
-                    "enabled": enabled,
                 }
             ],
             arguments=['--ros-args', '--log-level', logger]
