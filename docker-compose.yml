@@ -94,7 +94,7 @@ services:
     privileged: true
     network_mode: host
 
-  waveforms:
+  waveform_utils:
     build:
       context: .
       dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_utils/Dockerfile

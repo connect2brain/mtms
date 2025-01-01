@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>waveforms</name>
+  <name>waveform_utils</name>
   <version>0.1.0</version>
-  <description>Waveforms</description>
+  <description>Waveform-related utilities</description>
   <maintainer email="connect2brain@aalto.fi">connect2brain</maintainer>
   <license>TODO</license>
 

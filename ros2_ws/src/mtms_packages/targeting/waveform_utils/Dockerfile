@@ -29,7 +29,7 @@ RUN source /opt/ros/iron/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/targeting/waveform_utils src/targeting/waveform_utils/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select waveforms
+RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select waveform_utils
 
 # Copy entrypoint
 
