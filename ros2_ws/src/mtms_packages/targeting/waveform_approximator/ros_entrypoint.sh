@@ -26,6 +26,6 @@ echo "Starting ROS node in MATLAB..."
 #  matlab -nodisplay -nosplash -nodesktop -r "run"
 #
 # seems to be very slow, taking more than 1 minute to start in MATLAB
-# version R2024a. Instead, we can use the -batch option to run a MATLAB
+# version R2024b. Instead, we can use the -batch option to run a MATLAB
 # script directly, which seems to be much faster.
 matlab -batch "run"

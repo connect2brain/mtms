@@ -12,7 +12,7 @@
 
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
 # Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
-ARG MATLAB_RELEASE=r2024a
+ARG MATLAB_RELEASE=r2024b
 
 # Specify the list of products to install into MATLAB.
 ARG MATLAB_PRODUCT_LIST="MATLAB ROS_Toolbox Symbolic_Math_Toolbox"
@@ -55,8 +55,7 @@ USER matlab
 WORKDIR /home/matlab
 
 # Create .matlab directory and set ownership
-RUN mkdir -p /home/matlab/.matlab/R2024a && \
-    chmod -R 755 /home/matlab/.matlab && \
+RUN mkdir -p /home/matlab/.matlab && \
     chown -R matlab:matlab /home/matlab/.matlab
 
 # Run mpm to install MATLAB in the target location and delete the mpm installation afterwards.
