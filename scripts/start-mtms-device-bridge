@@ -24,6 +24,32 @@ export $(grep "^BITFILE_VERSION=" $SITE_ENV_FILE | xargs)
 export $(grep "^RESOURCE=" $SITE_ENV_FILE | xargs)
 export $(grep "^CHANNEL_COUNT=" $SITE_ENV_FILE | xargs)
 
+# Ensure that the environment variables are set
+if [ -z "$MTMS_DEVICE_ENABLED" ]; then
+    echo "Error: MTMS_DEVICE_ENABLED environment variable is unset."
+    echo ""
+    exit 1
+fi
+
+if [ -z "$CHANNEL_COUNT" ]; then
+    echo "Error: CHANNEL_COUNT environment variable is unset."
+    echo ""
+    exit 1
+fi
+
+if [ -z "$MTMS_DEVICE_GENERATION" ]; then
+    echo "Error: MTMS_DEVICE_GENERATION environment variable is unset."
+    echo ""
+    exit 1
+fi
+
+if [ -z "$BITFILE_VERSION" ]; then
+    echo "Error: BITFILE_VERSION environment variable is unset."
+    echo ""
+    exit 1
+fi
+
+# Print the environment variables
 echo "mTMS device enabled: $MTMS_DEVICE_ENABLED"
 echo "mTMS device generation: $MTMS_DEVICE_GENERATION"
 echo "Bitfile version: $BITFILE_VERSION"
