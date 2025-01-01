@@ -10,8 +10,6 @@
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 #include "serdes.h"
-#include "memory_utils.h"
-#include "scheduling_utils.h"
 
 const NiFpga_mTMS_HostToTargetFifoU8 channel_pulse_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetPulseFIFO;
 const NiFpga_mTMS_HostToTargetFifoU8 charge_fifo = NiFpga_mTMS_HostToTargetFifoU8_HosttoTargetChargeFIFO;
@@ -255,18 +253,8 @@ void EventHandler::process_trigger_out(const event_msgs::msg::TriggerOut &trigge
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
-#if defined(ON_UNIX) && defined(SCHEDULING_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Setting thread scheduling");
-  set_thread_scheduling(pthread_self(), DEFAULT_SCHEDULING_POLICY, DEFAULT_REALTIME_SCHEDULING_PRIORITY);
-#endif
-
   auto node = std::make_shared<EventHandler>();
 
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Event handler ready.");
 
   init_fpga();

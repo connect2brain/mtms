@@ -14,11 +14,8 @@ find_package(mtms_device_interfaces REQUIRED)
 # Install stimulation_allower executable.
 
 add_executable(stimulation_allower
-  src/nodes/stimulation_allower.cpp
-  src/lib/memory_utils.cpp
-  include/memory_utils.h
-  src/lib/scheduling_utils.cpp
-  include/scheduling_utils.h)
+  src/stimulation_allower.cpp
+)
 
 target_include_directories(stimulation_allower
   PUBLIC

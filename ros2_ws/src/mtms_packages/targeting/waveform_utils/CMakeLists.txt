@@ -18,11 +18,8 @@ find_package(Boost REQUIRED)
 # Install get_default_waveform executable.
 
 add_executable(get_default_waveform
-  src/nodes/get_default_waveform.cpp
-  src/lib/memory_utils.cpp
-  include/memory_utils.h
-  src/lib/scheduling_utils.cpp
-  include/scheduling_utils.h)
+  src/get_default_waveform.cpp
+)
 
 target_include_directories(get_default_waveform
   PUBLIC
@@ -35,10 +32,7 @@ ament_target_dependencies(get_default_waveform rclcpp std_msgs event_msgs target
 
 add_executable(get_multipulse_waveforms
   src/nodes/get_multipulse_waveforms.cpp
-  src/lib/memory_utils.cpp
-  include/memory_utils.h
-  src/lib/scheduling_utils.cpp
-  include/scheduling_utils.h)
+)
 
 target_include_directories(get_multipulse_waveforms
   PUBLIC
@@ -53,10 +47,7 @@ target_link_libraries(get_multipulse_waveforms Boost::boost)
 
 add_executable(reverse_polarity
   src/nodes/reverse_polarity.cpp
-  src/lib/memory_utils.cpp
-  include/memory_utils.h
-  src/lib/scheduling_utils.cpp
-  include/scheduling_utils.h)
+)
 
 target_include_directories(reverse_polarity
 PUBLIC

@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "scheduling_utils.h"
-#include "memory_utils.h"
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -311,12 +309,6 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<Targeting>();
-
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("targeting"), "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
 
   rclcpp::spin(node);
   rclcpp::shutdown();

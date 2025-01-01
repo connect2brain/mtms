@@ -3,9 +3,6 @@
 #include "headers/gather_eeg_server.h"
 #include "headers/eeg_gatherer.h"
 
-#include "headers/scheduling_utils.h"
-#include "headers/memory_utils.h"
-
 using namespace std::chrono_literals;
 using namespace std::chrono;
 using namespace std::placeholders;
@@ -95,12 +92,6 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<GatherEegServer>();
-
-#if defined(ON_UNIX) && defined(MEMORY_OPTIMIZATION)
-  RCLCPP_INFO(rclcpp::get_logger("eeg_gatherer"), "Locking memory");
-  lock_memory();
-  preallocate_memory(1024 * 1024 * 10); //10 MB
-#endif
 
   rclcpp::spin(node);
 

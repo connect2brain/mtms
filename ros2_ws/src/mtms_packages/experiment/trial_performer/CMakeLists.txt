@@ -23,12 +23,6 @@ add_executable(
 
         src/trial_performer.cpp
         src/headers/trial_performer.h
-
-        src/memory_utils.cpp
-        src/headers/memory_utils.h
-
-        src/scheduling_utils.cpp
-        src/headers/scheduling_utils.h
 )
 
 target_include_directories(trial_performer
