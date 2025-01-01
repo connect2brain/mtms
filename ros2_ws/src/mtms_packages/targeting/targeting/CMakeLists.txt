@@ -12,11 +12,7 @@ find_package(targeting_services REQUIRED)
 
 add_executable(targeting
         src/targeting.cpp
-        src/memory_utils.cpp
-        src/memory_utils.h
-        src/scheduling_utils.cpp
-        src/scheduling_utils.h
-        )
+)
 ament_target_dependencies(targeting rclcpp std_msgs targeting_services)
 
 install(TARGETS

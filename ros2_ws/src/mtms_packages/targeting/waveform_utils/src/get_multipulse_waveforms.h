@@ -20,9 +20,6 @@
 #include "waveform_msgs/msg/waveform_piece.hpp"
 #include "waveform_msgs/msg/waveforms_for_coil_set.hpp"
 
-#include "scheduling_utils.h"
-#include "memory_utils.h"
-
 using namespace std::placeholders;
 using boost::uuids::detail::md5;
 
