@@ -150,7 +150,6 @@ class MTMSSimulator(Node):
         self.trigger_out_feedback_publisher = self.create_publisher(
             TriggerOutFeedback, "/mtms_device/events/feedback/trigger_out", 10
         )
-        self.node_message_publisher = self.create_publisher(String, "/node/message", 10)
 
         # QoS definition for session.
         deadline_ns = 1000 * (

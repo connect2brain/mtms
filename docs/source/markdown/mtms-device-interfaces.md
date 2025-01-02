@@ -37,7 +37,6 @@ policies and other behaviour will be described in their own sections.
 | `/mtms_device/events/feedback/discharge`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
 | `/mtms_device/events/feedback/pulse`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
 | `/mtms_device/events/feedback/trigger_out`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
-| `/node/message`                  | Publisher    | `std_msgs.msg.String`                         |
 | `/mtms_device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
 
 ### Interface description
@@ -200,10 +199,6 @@ is completed message to the topic `/mtms_device/events/feedback/trigger_out` is 
 The trigger out message will send a trigger to physical `port` with given `duration_us`
 when the `event_info` condition it met.
 
-#### FPGA status
-The FPGA status is published to the topic `/node/message`, which tells the current
-status of the device in human-readable format.
-
 ## Interface specification
 This section goes over the implementation details of different interface messages.
 
@@ -295,12 +290,6 @@ QoS: ROS2 Defaults with KEEP_LAST with depth 10
     uint8 port # The index of the signal port.
     uint32 duration_us # Duration of the pulse in microseconds.
     EventInfo event_info
-
-### Topic: `/node/message`
-#### Message: `std_msgs.msg.String`
-QoS: ROS2 Defaults with KEEP_LAST with depth 10
-
-Standard message string
 
 ### Topic: `/mtms_device/system_state`
 #### Message: `mtms_device_interfaces.msg.SystemState
