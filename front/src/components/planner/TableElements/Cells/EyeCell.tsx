@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 import { useAppSelector } from 'providers/reduxHooks'
 
-import Eye from '../../Eye'
+import Eye from '../Eye'
 import { CellProps } from 'types/table'
 import { updateTargetInRos } from 'ros/target'
 

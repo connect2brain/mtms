@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useState } from 'react'
 import styled from 'styled-components'
 
 import { getSequenceIndexFromRowId, useFocusMemo } from 'utils'
-import Rectangle from '../../Rectangle'
+import Rectangle from '../Rectangle'
 import { CellProps } from 'types/table'
 import { useAppSelector } from 'providers/reduxHooks'
 import { updateTargetInRos } from 'ros/target'

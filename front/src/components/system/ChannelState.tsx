@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 
 import { ChannelState as ChannelStateType } from 'providers/SystemProvider'
-import { getTrueKeys } from '../utils'
+import { getTrueKeys } from '../../utils'
 
 export const ChannelState = (state: ChannelStateType) => {
   const getListValue = (object: any) => {

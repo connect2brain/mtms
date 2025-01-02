@@ -1,5 +1,5 @@
 import React from 'react'
-import { Color } from '../styles/theme'
+import { Color } from '../../../styles/theme'
 import styled from 'styled-components'
 
 interface RectangleProps {
