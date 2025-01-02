@@ -6,8 +6,8 @@ import { useAppSelector } from 'providers/reduxHooks'
 import { getSequenceIndexFromRowId } from 'utils'
 import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import Dots from '../Dots'
-import { updatePulseSequenceInRos } from 'ros/services/pulseSequence'
-import { updatePulseIndexInRos, updatePulseInRos } from 'ros/services/pulse'
+import { updatePulseSequenceInRos } from 'ros/pulseSequence'
+import { updatePulseIndexInRos, updatePulseInRos } from 'ros/pulse'
 
 interface Props {
   index: number

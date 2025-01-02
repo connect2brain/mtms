@@ -6,7 +6,7 @@ import { Datapoint } from 'components/EegChartStreaming'
 import { WebGLPlot } from 'components/WebGLPlot'
 
 import { eegDataSubscriber } from 'ros/ros'
-import { eventSubscriber } from 'ros/subscribers/feedback'
+import { eventSubscriber } from 'ros/feedback'
 
 import { objectKeysToCamelCase } from 'utils'
 

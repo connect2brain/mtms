@@ -7,7 +7,7 @@ import { ISession, SessionMessage, Train } from '../types/pulseSequence'
 import { objectKeysToSnakeCase } from '../utils'
 import { useAppDispatch, useAppSelector } from 'providers/reduxHooks'
 import { setDescription } from 'reducers/sessionReducer'
-import { startSessionService } from 'ros/services/session'
+import { startSessionService } from 'ros/session'
 
 const Session = () => {
   const { description, channels, iti, ibi, nofBurstsInTrains, nofTrains } = useAppSelector((state) => state.session)
@@ -71,7 +71,7 @@ const Session = () => {
         console.error(error)
         setStatus('ERROR')
         setStatusMessage(`Failed to start sequence! Error: ${error}`)
-      },
+      }
     )
   }
 
