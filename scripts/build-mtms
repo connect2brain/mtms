@@ -18,17 +18,15 @@ check_disk_space_and_clean() {
         if [[ $response =~ ^[Yy]$ ]]; then
             echo "Cleaning up Docker images..."
 
-            # Remove all images except the latest mtms_* images
-            docker images --format '{{.Repository}}:{{.Tag}}' | grep 'mtms_' | sort | uniq -c | sort -rn | awk '$1 > 1 {print $2}' | xargs -I {} docker rmi {}
+            # Remove unused build cache layers
+            docker builder prune -a -f --keep-storage=10GB
 
             # Remove dangling images
             docker image prune -f
 
-            # Remove all other non-mtms images
-            docker images --format '{{.Repository}}:{{.Tag}}' | grep -v 'mtms_' | xargs docker rmi
-
-            # Remove builder images older than 2 weeks
-            docker builder prune -f --filter "until=336h"
+            # Remove unused containers and volumes
+            docker container prune -f
+            docker volume prune -f
 
             echo "Cleanup completed."
 
