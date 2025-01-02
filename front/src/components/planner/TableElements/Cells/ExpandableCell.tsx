@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import Expand from '../../Expand'
+import Expand from '../Expand'
 import { EditableSequenceTableCell } from './EditableCell'
 import { CellProps } from 'types/table'
 import { useAppDispatch } from 'providers/reduxHooks'
-import { setExpandedSequence } from 'reducers/sequenceReducer'
+import { setExpandedSequence } from 'reducers/planner/sequenceReducer'
 
 const ExpandableCell = ({ value, row, column }: CellProps) => {
   const { canExpand, depth } = row
@@ -23,7 +23,7 @@ const ExpandableCell = ({ value, row, column }: CellProps) => {
       setExpandedSequence({
         index: row.index,
         expanded: !isExpanded,
-      }),
+      })
     )
   }
   const expandElement = canExpand ? <Expand onClick={handleClickExpand} expanded={isExpanded} /> : null
