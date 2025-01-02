@@ -15,7 +15,6 @@ import {
   StyledPanel,
   StyledButton,
   StyledRedButton,
-  ProjectRow,
   ConfigRow,
   CloseConfigRow,
   ConfigLabel,
@@ -32,10 +31,7 @@ import {
   getMaximumIntensity,
 } from 'ros/experiment'
 
-import { setActiveProject, listProjects } from 'ros/project'
-
 import { SystemContext } from 'providers/SystemProvider'
-import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 
@@ -383,15 +379,11 @@ const getKey = (key: string, defaultValue: any): any => {
 }
 
 export const ExperimentView = () => {
-  const { activeProject } = useContext(ProjectContext)
-
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
   const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
-
-  const [projects, setProjects] = useState<string[]>([])
 
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
@@ -499,13 +491,6 @@ export const ExperimentView = () => {
       setExperimentState(feedback.experiment_state.value)
     }
     performExperiment(experiment, done_callback, feedback_callback)
-  }
-
-  const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newActiveProject = event.target.value
-    setActiveProject(newActiveProject, () => {
-      console.log('Active project set to ' + newActiveProject)
-    })
   }
 
   const handleIntensityChange = (intensity: number) => {
@@ -752,13 +737,6 @@ export const ExperimentView = () => {
     const experiment: Experiment = formExperiment()
     updateValidTrials(experiment)
   }
-
-  /* Set list of projects. */
-  useEffect(() => {
-    listProjects((projects) => {
-      setProjects(projects)
-    })
-  }, [])
 
   /* Updates the maximum intensity display. */
   useEffect(() => {
@@ -1118,17 +1096,6 @@ export const ExperimentView = () => {
   return (
     <>
       <ExperimentMetadata>
-        <ProjectRow>
-          <Label>Project:</Label>
-          <Select onChange={handleProjectChange} value={activeProject}>
-            {projects.map((project, index) => (
-              <option key={index} value={project}>
-                {project}
-              </option>
-            ))}
-          </Select>
-        </ProjectRow>
-
         <InputRow>
           <Label>Experiment:</Label>
           <Input
