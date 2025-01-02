@@ -14,7 +14,7 @@ import { addTargetToRos } from 'ros/services/target'
 
 import { clearRosState, coilPositionSubscriber, plannerStateSubscriber } from 'ros/ros'
 
-const Targets = () => {
+export const TargetView = () => {
   const [position, setPosition] = useState<Position>({
     x: 0,
     y: 0,
@@ -109,5 +109,3 @@ const TabButton = styled.button<{
   padding: 0.3rem;
   border: 1px solid ${(p) => p.theme.colors.gray};
 `
-
-export default Targets
