@@ -30,7 +30,7 @@ RUN yarn global add react-scripts@5.0.0
 # https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 
-# Add app.
+# Copy the rest of the app.
 COPY /front/ /app
 
 # Start app.
