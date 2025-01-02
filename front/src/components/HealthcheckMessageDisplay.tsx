@@ -8,7 +8,7 @@ const HealthcheckMessagePanel = styled(StyledPanel)`
   width: 400px;
   height: 45px;
   position: fixed;
-  top: 122px;
+  top: 85px;
   right: 5px;
   z-index: 1000;
 `
@@ -29,12 +29,11 @@ const Message = styled.div`
 `
 
 export const HealthcheckMessageDisplay: React.FC = () => {
-  const { eegHealthcheck, mtmsDeviceHealthcheck, preprocessorHealthcheck, deciderHealthcheck } =
-    useContext(HealthcheckContext)
+  const { eegHealthcheck, mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
 
   let displayMessage
 
-  // Prioritize mtmsDeviceHealthcheck > eegHealthcheck > preprocessorHealthcheck
+  // Prioritize mtmsDeviceHealthcheck > eegHealthcheck
   if (
     mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY &&
     mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED
@@ -42,16 +41,6 @@ export const HealthcheckMessageDisplay: React.FC = () => {
     displayMessage = mtmsDeviceHealthcheck?.actionable_message
   } else if (eegHealthcheck?.status.value !== HealthcheckStatus.READY) {
     displayMessage = eegHealthcheck?.actionable_message
-  } else if (
-    preprocessorHealthcheck?.status.value === HealthcheckStatus.DISABLED ||
-    preprocessorHealthcheck?.status.value === HealthcheckStatus.ERROR
-  ) {
-    displayMessage = preprocessorHealthcheck?.actionable_message
-  } else if (
-    deciderHealthcheck?.status.value === HealthcheckStatus.DISABLED ||
-    deciderHealthcheck?.status.value === HealthcheckStatus.ERROR
-  ) {
-    displayMessage = deciderHealthcheck?.actionable_message
   } else {
     displayMessage = 'Ready'
   }
