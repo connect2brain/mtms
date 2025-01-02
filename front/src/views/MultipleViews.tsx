@@ -12,7 +12,6 @@ import { SmallHeader } from '../styles/StyledTypography'
 import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
-import { PipelineView } from './PipelineView'
 import { TargetView } from './TargetView'
 
 /* Session storage utilities. */
@@ -56,9 +55,6 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('visualize')} className={currentView === 'visualize' ? 'active' : ''}>
           Visualize
         </a>
-        <a href='#' onClick={() => setCurrentView('pipeline')} className={currentView === 'pipeline' ? 'active' : ''}>
-          Pipeline
-        </a>
         <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
           <FontAwesomeIcon icon={faCog} />
         </ConfigIcon>
@@ -79,10 +75,6 @@ export const MultipleViews = () => {
         <Wrapper style={{ display: currentView === 'visualize' ? 'block' : 'none' }}>
           <SmallHeader>Visualize</SmallHeader>
           <DataVisualize />
-        </Wrapper>
-        <Wrapper style={{ display: currentView === 'pipeline' ? 'block' : 'none' }}>
-          <SmallHeader>Pipeline</SmallHeader>
-          <PipelineView />
         </Wrapper>
         <Wrapper style={{ display: currentView === 'config' ? 'block' : 'none' }}>
           <SmallHeader>Config</SmallHeader>

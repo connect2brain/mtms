@@ -10,7 +10,7 @@ interface StatusSquareProps {
 
 const HealthcheckPanel = styled(StyledPanel)`
   width: 300px;
-  height: 40px;
+  height: 0px;
   position: fixed;
   top: 10px;
   right: 5px;
@@ -50,8 +50,7 @@ const StatusLine = styled.div`
 `
 
 export const HealthcheckStatusDisplay: React.FC = () => {
-  const { eegHealthcheck, mtmsDeviceHealthcheck, preprocessorHealthcheck, deciderHealthcheck } =
-    useContext(HealthcheckContext)
+  const { eegHealthcheck, mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
 
   return (
     <HealthcheckPanel>
@@ -70,32 +69,12 @@ export const HealthcheckStatusDisplay: React.FC = () => {
       <StatusLine>
         <StatusSquare
           status={
-            preprocessorHealthcheck?.status.value !== undefined && preprocessorHealthcheck?.status.value !== null
-              ? preprocessorHealthcheck?.status.value
-              : -1
-          }
-        />
-        Preprocessor
-      </StatusLine>
-      <StatusLine>
-        <StatusSquare
-          status={
             eegHealthcheck?.status.value !== undefined && eegHealthcheck?.status.value !== null
               ? eegHealthcheck?.status.value
               : -1
           }
         />
         EEG
-      </StatusLine>
-      <StatusLine>
-        <StatusSquare
-          status={
-            deciderHealthcheck?.status.value !== undefined && deciderHealthcheck?.status.value !== null
-              ? deciderHealthcheck?.status.value
-              : -1
-          }
-        />
-        Decider
       </StatusLine>
     </HealthcheckPanel>
   )

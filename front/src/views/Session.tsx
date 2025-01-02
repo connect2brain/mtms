@@ -71,7 +71,7 @@ const Session = () => {
         console.error(error)
         setStatus('ERROR')
         setStatusMessage(`Failed to start sequence! Error: ${error}`)
-      }
+      },
     )
   }
 
