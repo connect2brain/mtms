@@ -6,7 +6,7 @@ import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import { menuSelector, menuItemSelector, menuDividerSelector } from '@szhsin/react-menu/style-utils'
 
 import '@szhsin/react-menu/dist/index.css'
-import NotEditableCell from '../TableElements/Cells/NotEditableCell'
+import NotEditableCell from './TableElements/Cells/NotEditableCell'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { useAppSelector } from '../../providers/reduxHooks'
