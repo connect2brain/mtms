@@ -15,15 +15,15 @@ import { StyledPanel, ProjectRow, ConfigRow, ConfigLabel, Select } from 'styles/
 import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
 
 import {
-  listProjects,
-  setActiveProject,
   setPreprocessorModuleRos,
   setPreprocessorEnabledRos,
   setDeciderModuleRos,
   setDeciderEnabledRos,
   setPresenterModuleRos,
   setPresenterEnabledRos,
-} from 'ros/ros'
+} from 'ros/pipeline'
+
+import { listProjects, setActiveProject } from 'ros/project'
 
 import { PipelineContext } from 'providers/PipelineProvider'
 import { ProjectContext } from 'providers/ProjectProvider'

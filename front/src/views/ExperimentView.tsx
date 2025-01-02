@@ -24,16 +24,15 @@ import {
 
 import {
   countValidTrials,
-  listProjects,
   performExperiment,
   pauseExperiment,
   resumeExperiment,
   cancelExperiment,
-  setActiveProject,
   visualizeTargets,
-} from 'ros/ros'
+  getMaximumIntensity,
+} from 'ros/experiment'
 
-import { getMaximumIntensity } from 'ros/targeting'
+import { setActiveProject, listProjects } from 'ros/project'
 
 import { SystemContext } from 'providers/SystemProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
