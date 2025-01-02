@@ -5,10 +5,7 @@ import styled from 'styled-components'
 import './App.css'
 
 import Providers from './providers/Providers'
-import { DatasetProvider } from './providers/DatasetProvider'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
-import { PipelineProvider } from './providers/PipelineProvider'
-import { EegProvider } from './providers/EegProvider'
 import { ConfigProvider } from './providers/ConfigProvider'
 import { SystemProvider } from './providers/SystemProvider'
 
@@ -16,31 +13,22 @@ import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
 import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 import { Header as StyledHeader } from 'styles/StyledTypography'
-import { ProjectProvider } from 'providers/ProjectProvider'
 
 const App = () => {
   return (
     <Providers>
-      <ProjectProvider>
-        <SystemProvider>
-          <PipelineProvider>
-            <ConfigProvider>
-              <EegProvider>
-                <DatasetProvider>
-                  <HealthcheckProvider>
-                    <Header>mTMS control panel</Header>
-                    <HealthcheckStatusDisplay />
-                    <HealthcheckMessageDisplay />
-                    <Wrapper>
-                      <MultipleViews />
-                    </Wrapper>
-                  </HealthcheckProvider>
-                </DatasetProvider>
-              </EegProvider>
-            </ConfigProvider>
-          </PipelineProvider>
-        </SystemProvider>
-      </ProjectProvider>
+      <SystemProvider>
+        <ConfigProvider>
+          <HealthcheckProvider>
+            <Header>mTMS control panel</Header>
+            <HealthcheckStatusDisplay />
+            <HealthcheckMessageDisplay />
+            <Wrapper>
+              <MultipleViews />
+            </Wrapper>
+          </HealthcheckProvider>
+        </ConfigProvider>
+      </SystemProvider>
     </Providers>
   )
 }
