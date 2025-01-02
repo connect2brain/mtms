@@ -5,7 +5,7 @@ import { useAppSelector } from 'providers/reduxHooks'
 
 import Eye from '../../Eye'
 import { CellProps } from 'types/table'
-import { updateTargetInRos } from 'ros/services/target'
+import { updateTargetInRos } from 'ros/target'
 
 export const EyeCell = ({ value: initialValue, row, column }: CellProps) => {
   const [visible, setVisible] = useState(initialValue)

@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 
-import { startSession, stopSession } from 'ros/services/session'
+import { startSession, stopSession } from 'ros/session'
 import { StyledButton } from 'styles/General'
 
 import { SystemContext, SessionState, DeviceState } from 'providers/SystemProvider'

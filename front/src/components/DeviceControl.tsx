@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 
-import { startDevice, stopDevice } from 'ros/services/device'
+import { startDevice, stopDevice } from 'ros/device'
 import { StyledButton } from 'styles/General'
 
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
@@ -42,7 +42,8 @@ export const DeviceControl = () => {
       disabled={
         deviceState?.value === DeviceState.STARTUP ||
         deviceState?.value === DeviceState.SHUTDOWN ||
-        deviceState?.value === undefined}
+        deviceState?.value === undefined
+      }
     >
       {deviceText()}
     </StyledButton>

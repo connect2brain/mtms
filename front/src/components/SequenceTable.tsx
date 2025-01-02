@@ -12,8 +12,8 @@ import SelectableSequenceTableRow from './TableElements/SelectableSequenceTableR
 import { useAppSelector } from 'providers/reduxHooks'
 import { PulseSequence } from 'types/pulseSequence'
 import styled from 'styled-components'
-import { removePulseInRos } from 'ros/services/pulse'
-import { addPulseToPulseSequenceInRos, removePulseSequenceInRos } from 'ros/services/pulseSequence'
+import { removePulseInRos } from 'ros/pulse'
+import { addPulseToPulseSequenceInRos, removePulseSequenceInRos } from 'ros/pulseSequence'
 
 const SequenceTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -52,7 +52,7 @@ const SequenceTable = () => {
         Cell: EditableSequenceTableCell,
       },
     ],
-    [],
+    []
   )
   const filterSequenceKeys = () => {
     return sequences.map((seq) => {

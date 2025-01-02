@@ -1,14 +1,14 @@
 import ROSLIB from 'roslib'
-import { ros } from '../ros'
+import { ros } from './ros'
 
 import {
   ChargeFeedbackMessage,
   DischargeFeedbackMessage,
   PulseFeedbackMessage,
   TriggerOutFeedbackMessage,
-} from '../../types/event'
+} from '../types/event'
 
-import { MTMSEventMessage } from '../../types/eeg'
+import { MTMSEventMessage } from '../types/eeg'
 
 export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
   ros: ros,
