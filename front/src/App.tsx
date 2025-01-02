@@ -9,8 +9,8 @@ import { HealthcheckProvider } from './providers/HealthcheckProvider'
 import { ConfigProvider } from './providers/ConfigProvider'
 import { SystemProvider } from './providers/SystemProvider'
 
-import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
-import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
+import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
+import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 import { Header as StyledHeader } from 'styles/StyledTypography'
 

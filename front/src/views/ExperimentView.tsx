@@ -3,12 +3,12 @@ import styled from 'styled-components'
 
 import { TabBar, Select, GrayedOutPanel, ActiveProps } from 'styles/General'
 
-import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
-import { AngleSelector } from 'components/Experiment/AngleSelector'
-import { IntensitySelector } from 'components/Experiment/IntensitySelector'
-import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
+import { LocationSelector, Point } from 'components/experiment/LocationSelector'
+import { AngleSelector } from 'components/experiment/AngleSelector'
+import { IntensitySelector } from 'components/experiment/IntensitySelector'
+import { ToggleSwitch } from 'components/experiment/ToggleSwitch'
 
-import { ValidatedInput } from 'components/ValidatedInput'
+import { ValidatedInput } from 'components/experiment/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
 import {

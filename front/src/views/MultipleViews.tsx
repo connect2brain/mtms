@@ -52,8 +52,12 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
           Targets
         </a>
-        <a href='#' onClick={() => setCurrentView('visualize')} className={currentView === 'visualize' ? 'active' : ''}>
-          Visualize
+        <a
+          href='#'
+          onClick={() => setCurrentView('visualizer')}
+          className={currentView === 'visualizer' ? 'active' : ''}
+        >
+          Visualizer
         </a>
         <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
           <FontAwesomeIcon icon={faCog} />
@@ -72,8 +76,8 @@ export const MultipleViews = () => {
           <SmallHeader>Targets</SmallHeader>
           <TargetView />
         </Wrapper>
-        <Wrapper style={{ display: currentView === 'visualize' ? 'block' : 'none' }}>
-          <SmallHeader>Visualize</SmallHeader>
+        <Wrapper style={{ display: currentView === 'visualizer' ? 'block' : 'none' }}>
+          <SmallHeader>Visualizer</SmallHeader>
           <DataVisualize />
         </Wrapper>
         <Wrapper style={{ display: currentView === 'config' ? 'block' : 'none' }}>

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Feedback } from 'types/event'
 import { getKeyByValue } from 'utils'
-import { errorsByType } from '../types/eventErrors'
+import { errorsByType } from '../../types/eventErrors'
 
 type Props = {
   feedback: Feedback | undefined
