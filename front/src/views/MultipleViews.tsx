@@ -53,6 +53,9 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
           Targets
         </a>
+        <a href='#' onClick={() => setCurrentView('visualize')} className={currentView === 'visualize' ? 'active' : ''}>
+          Visualize
+        </a>
         <a href='#' onClick={() => setCurrentView('pipeline')} className={currentView === 'pipeline' ? 'active' : ''}>
           Pipeline
         </a>
@@ -72,6 +75,10 @@ export const MultipleViews = () => {
         <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
           <SmallHeader>Targets</SmallHeader>
           <TargetView />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'visualize' ? 'block' : 'none' }}>
+          <SmallHeader>Visualize</SmallHeader>
+          <DataVisualize />
         </Wrapper>
         <Wrapper style={{ display: currentView === 'pipeline' ? 'block' : 'none' }}>
           <SmallHeader>Pipeline</SmallHeader>
