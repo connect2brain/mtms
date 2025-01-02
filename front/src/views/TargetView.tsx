@@ -10,9 +10,10 @@ import SequenceTable from 'components/SequenceTable'
 import TargetTable from 'components/TargetTable'
 import { setTargets } from 'reducers/targetReducer'
 import { setPulseSequences } from 'reducers/sequenceReducer'
-import { addTargetToRos } from 'ros/services/target'
+import { addTargetToRos } from 'ros/target'
 
-import { clearRosState, coilPositionSubscriber, plannerStateSubscriber } from 'ros/ros'
+import { clearRosState, plannerStateSubscriber } from 'ros/ros'
+import { coilPositionSubscriber } from 'ros/coilPosition'
 
 export const TargetView = () => {
   const [position, setPosition] = useState<Position>({

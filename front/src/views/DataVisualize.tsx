@@ -6,7 +6,7 @@ import { EegBatchMessage, EegTriggerMessage, MTMSEvent, MTMSEventMessage } from 
 import { Datapoint, DatapointWithEventType, EegChartStreaming } from '../components/EegChartStreaming'
 import { WebGLPlot } from '../components/WebGLPlot'
 
-import { eventSubscriber } from '../ros/subscribers/feedback'
+import { eventSubscriber } from '../ros/feedback'
 
 import { objectKeysToCamelCase } from '../utils'
 
