@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import styled from 'styled-components'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { ValidatedInput } from 'components/ValidatedInput'
+import { ValidatedInput } from 'components/experiment/ValidatedInput'
 
 interface IntensitySelectorProps {
   value: number

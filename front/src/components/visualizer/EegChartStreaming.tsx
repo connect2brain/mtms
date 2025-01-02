@@ -16,7 +16,7 @@ import StreamingPlugin from 'chartjs-plugin-streaming'
 
 import { Line, Chart } from 'react-chartjs-2'
 import React, { useEffect, useRef, useState } from 'react'
-import theme from '../styles/theme'
+import theme from '../../styles/theme'
 import styled from 'styled-components'
 
 const defaultOptions: ChartOptions<'line' | 'bar'> = {
@@ -59,7 +59,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  StreamingPlugin,
+  StreamingPlugin
 )
 
 export type Datapoint = {

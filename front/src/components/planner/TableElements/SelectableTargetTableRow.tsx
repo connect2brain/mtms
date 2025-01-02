@@ -1,58 +1,28 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
+import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 
 import { useAppSelector } from 'providers/reduxHooks'
 
-import { getSequenceIndexFromRowId } from 'utils'
-import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
-import Dots from '../Dots'
-import { updatePulseSequenceInRos } from 'ros/pulseSequence'
-import { updatePulseIndexInRos, updatePulseInRos } from 'ros/pulse'
+import Dots from './Dots'
+import { changeTargetIndexInRos, updateTargetInRos } from 'ros/target'
 
-interface Props {
-  index: number
-  isTarget: boolean
-  rowId: string
-  children: ReactNode
-}
-
-interface DragItem {
-  type: 'row'
-  index: number
-  sequenceIndex: number
-}
-
-const SelectableSequenceTableRow = (props: Props) => {
-  const { index, isTarget, rowId } = props
-
-  const { sequences } = useAppSelector((state) => state.sequences)
-
-  const sequenceIndex = isTarget ? getSequenceIndexFromRowId(rowId) : index
-
-  const sequence = sequences[sequenceIndex]
-  const [selected, setSelected] = useState(isTarget ? sequence.pulses[index]?.selected : sequence.selected)
+const SelectableTargetTableRow = (props: any) => {
+  const { index } = props
+  const { targets } = useAppSelector((state) => state.targets)
+  const [selected, setSelected] = useState(targets[index].selected)
 
   const dropRef = useRef<HTMLTableRowElement>(null)
   const dragRef = useRef<HTMLTableCellElement>(null)
 
-  useEffect(() => {
-    if (isTarget) {
-      setSelected(sequences[sequenceIndex].pulses[index].selected)
-    } else {
-      setSelected(sequence.selected)
-    }
-  }, [sequences])
-
   const moveRow = (dragIndex: number, hoverIndex: number) => {
-    updatePulseIndexInRos(sequence, dragIndex, hoverIndex)
+    const target = targets[dragIndex]
+    changeTargetIndexInRos(target, hoverIndex)
   }
 
   const [, drop] = useDrop({
     accept: 'row',
-    hover: (item: DragItem, monitor) => {
-      //disable moving targets across sequences
-      if (item.sequenceIndex !== sequenceIndex) return
-
+    hover(item: any, monitor) {
       if (!dropRef.current) {
         return
       }
@@ -97,41 +67,35 @@ const SelectableSequenceTableRow = (props: Props) => {
     },
   })
 
+  useEffect(() => {
+    setSelected(targets[index].selected)
+  }, [targets[index].selected])
+
   const onClick = (event: any) => {
     event.preventDefault()
 
-    if (isTarget) {
-      updatePulseInRos(sequence, index, 'selected', !selected, true)
-    } else {
-      updatePulseSequenceInRos(sequence, 'selected', !selected, true)
-    }
+    const target = targets[index]
+    updateTargetInRos(target, 'selected', !selected, true)
   }
 
   const [{ isDragging }, drag, preview] = useDrag({
-    item: {
-      type: 'row',
-      index,
-      sequenceIndex,
-    },
+    item: { type: 'row', index },
     type: 'row',
     collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
   })
 
+  const opacity = isDragging ? 0 : 1
+
   preview(drop(dropRef))
   drag(dragRef)
 
   return (
-    <TableRow {...props} selected={selected} onClick={onClick} ref={dropRef}>
-      {isTarget ? (
-        <td ref={dragRef}>
-          <Dots />
-        </td>
-      ) : (
-        <td></td>
-      )}
-
+    <TableRow id={`target-${index}`} {...props} selected={selected} opacity={opacity} onClick={onClick} ref={dropRef}>
+      <td ref={dragRef}>
+        <Dots />
+      </td>
       {props.children}
     </TableRow>
   )
@@ -139,9 +103,11 @@ const SelectableSequenceTableRow = (props: Props) => {
 
 const TableRow = styled.tr<{
   selected: boolean
+  opacity: number
 }>`
   border-bottom: 1px solid ${(p) => p.theme.colors.gray};
   background-color: ${(p) => (p.selected ? p.theme.colors.lightgray : p.theme.colors.white)};
+  opacity: ${(p) => p.opacity};
 `
 
-export default SelectableSequenceTableRow
+export default SelectableTargetTableRow

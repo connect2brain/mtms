@@ -5,8 +5,8 @@ import '@szhsin/react-menu/dist/index.css'
 
 import { useAppSelector } from 'providers/reduxHooks'
 
-import { Pulse, PulseSequence } from '../types/pulseSequence'
-import Eye from './Eye'
+import { Pulse, PulseSequence } from '../../types/pulseSequence'
+import Eye from './TableElements/Eye'
 import { EyeCell } from './TableElements/Cells/EyeCell'
 import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'

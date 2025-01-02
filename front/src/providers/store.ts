@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
-import targetReducer from 'reducers/targetReducer'
-import sequenceReducer from 'reducers/sequenceReducer'
+import targetReducer from 'reducers/planner/targetReducer'
+import sequenceReducer from 'reducers/planner/sequenceReducer'
 import sessionReducer from 'reducers/sessionReducer'
-import eegReducer from 'reducers/eegReducer'
+import eegReducer from 'reducers/visualizer/eegReducer'
 
 export const store = configureStore({
   reducer: {

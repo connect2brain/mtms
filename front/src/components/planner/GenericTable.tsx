@@ -6,10 +6,10 @@ import { ControlledMenu, MenuItem, useMenuState } from '@szhsin/react-menu'
 import { menuSelector, menuItemSelector, menuDividerSelector } from '@szhsin/react-menu/style-utils'
 
 import '@szhsin/react-menu/dist/index.css'
-import NotEditableCell from './TableElements/Cells/NotEditableCell'
+import NotEditableCell from '../TableElements/Cells/NotEditableCell'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { useAppSelector } from '../providers/reduxHooks'
+import { useAppSelector } from '../../providers/reduxHooks'
 
 const defaultColumn = {
   Cell: NotEditableCell,
@@ -39,7 +39,7 @@ export const GenericTable = ({ columns, data, createMenu, SelectableRow }: Table
       autoResetExpanded: false,
       initialState: { expanded: expandedSequences },
     },
-    useExpanded,
+    useExpanded
   )
 
   const [menuProps, toggleMenu] = useMenuState()
