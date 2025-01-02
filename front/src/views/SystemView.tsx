@@ -8,7 +8,7 @@ import {
   dischargeFeedbackSubscriber,
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
-} from 'ros/subscribers/feedback'
+} from 'ros/feedback'
 
 import {
   PulseFeedbackMessage,

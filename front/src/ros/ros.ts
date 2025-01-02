@@ -19,54 +19,8 @@ ros.on('close', () => {
   console.log('ROS closed ws connection')
 })
 
-
-import { PositionMessage, StateMessage } from '../types/target'
+import { StateMessage } from '../types/target'
 import { EegBatchMessage, SampleMessage, EegTriggerMessage } from '../types/eeg'
-
-export const coilPositionSubscriber = new ROSLIB.Topic<PositionMessage>({
-  ros: ros,
-  name: '/neuronavigation/focus',
-  messageType: 'neuronavigation_interfaces/PoseUsingEulerAngles',
-})
-
-/* Get maximum intensity service */
-const getMaximumIntensityService = new ROSLIB.Service({
-  ros: ros,
-  name: '/targeting/get_maximum_intensity',
-  serviceType: 'targeting_interfaces/GetMaximumIntensity',
-})
-
-export const getMaximumIntensity = (
-  x: number,
-  y: number,
-  angle: number,
-  algorithm: number,
-  callback: (maximum_intensity: number) => void,
-) => {
-  const request = new ROSLIB.ServiceRequest({
-    displacement_x: x,
-    displacement_y: y,
-    rotation_angle: angle,
-    algorithm: {
-      value: algorithm,
-    },
-  }) as any
-
-  getMaximumIntensityService.callService(
-    request,
-    (response) => {
-      if (!response.success) {
-        console.log('ERROR: Failed to get maximum intensity')
-      } else {
-        callback(response.maximum_intensity)
-      }
-    },
-    (error) => {
-      console.log('ERROR: Failed to get maximum intensity, error:')
-      console.log(error)
-    },
-  )
-}
 
 /* Toggle navigation service */
 const toggleNavigationService = new ROSLIB.Service({
@@ -130,7 +84,7 @@ export const clearRosState = () => {
     (error) => {
       console.log('ERROR: Failed to clear state, error:')
       console.error(error)
-    },
+    }
   )
 }
 
@@ -158,7 +112,7 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
     (error) => {
       console.log('ERROR: Failed to count valid trials, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -175,7 +129,7 @@ const performExperimentActionClient: any = new (ROSLIB as any).Action({
 export const performExperiment = (
   experiment: any,
   done_callback: (trialResults: any, success: boolean) => void,
-  feedback_callback: (response: any) => void,
+  feedback_callback: (response: any) => void
 ) => {
   console.log('simo')
   const goal: any = new (ROSLIB as any).ActionGoal({
@@ -195,7 +149,7 @@ export const performExperiment = (
     },
     (feedback: any) => {
       feedback_callback(feedback)
-    },
+    }
   )
 }
 
@@ -224,7 +178,7 @@ export const visualizeTargets = (targets: any, is_ordered: boolean, callback: ()
     (error) => {
       console.log('ERROR: Failed to visualize targets, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -250,7 +204,7 @@ export const pauseExperiment = (callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to pause experiment, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -276,7 +230,7 @@ export const resumeExperiment = (callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to resume experiment, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -302,7 +256,7 @@ export const cancelExperiment = (callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to cancel experiment, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -328,7 +282,7 @@ export const listProjects = (callback: (projects: string[]) => void) => {
     (error) => {
       console.log('ERROR: Failed to list projects, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -356,7 +310,7 @@ export const setActiveProject = (project: string, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set active project, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -384,7 +338,7 @@ export const setPreprocessorModuleRos = (module: string, callback: () => void) =
     (error) => {
       console.log('ERROR: Failed to set preprocessor, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -412,7 +366,7 @@ export const setPreprocessorEnabledRos = (enabled: boolean, callback: () => void
     (error) => {
       console.log('ERROR: Failed to set preprocessor enabled, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -440,7 +394,7 @@ export const setDeciderModuleRos = (module: string, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set decider, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -468,7 +422,7 @@ export const setDeciderEnabledRos = (enabled: boolean, callback: () => void) => 
     (error) => {
       console.log('ERROR: Failed to set decider enabled, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -496,7 +450,7 @@ export const setPresenterModuleRos = (module: string, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set presenter, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -524,7 +478,7 @@ export const setPresenterEnabledRos = (enabled: boolean, callback: () => void) =
     (error) => {
       console.log('ERROR: Failed to set presenter enabled, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -552,7 +506,7 @@ export const setDatasetRos = (filename: string, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set dataset, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -580,7 +534,7 @@ export const setPlaybackRos = (playback: boolean, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set playback, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -608,7 +562,7 @@ export const setLoopRos = (loop: boolean, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set loop, error:')
       console.log(error)
-    },
+    }
   )
 }
 
@@ -636,6 +590,6 @@ export const setRecordDataRos = (recordData: boolean, callback: () => void) => {
     (error) => {
       console.log('ERROR: Failed to set loop, error:')
       console.log(error)
-    },
+    }
   )
 }

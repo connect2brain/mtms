@@ -1,5 +1,5 @@
 import ROSLIB from 'roslib'
-import { ros } from '../ros'
+import { ros } from './ros'
 
 /* XXX: This shouldn't be exported; only needed in Session.tsx. Should be refactored to
      not duplicate session-starting logic there. */
@@ -27,7 +27,7 @@ export const startSession = () => {
     (error) => {
       console.log('ERROR: Failed to start session')
       console.error(error)
-    },
+    }
   )
 }
 
@@ -43,6 +43,6 @@ export const stopSession = () => {
     (error) => {
       console.log('ERROR: Failed to stop session')
       console.error(error)
-    },
+    }
   )
 }

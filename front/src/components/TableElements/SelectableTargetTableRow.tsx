@@ -5,7 +5,7 @@ import { DragSourceMonitor, useDrag, useDrop } from 'react-dnd'
 import { useAppSelector } from 'providers/reduxHooks'
 
 import Dots from '../Dots'
-import { changeTargetIndexInRos, updateTargetInRos } from 'ros/services/target'
+import { changeTargetIndexInRos, updateTargetInRos } from 'ros/target'
 
 const SelectableTargetTableRow = (props: any) => {
   const { index } = props
