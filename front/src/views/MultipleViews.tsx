@@ -7,13 +7,13 @@ import { faCog } from '@fortawesome/free-solid-svg-icons'
 import DataVisualize from './DataVisualize'
 import DataVisualizeWebGL from './DataVisualizeWebGL'
 
-import Targets from './Targets'
 import { SmallHeader } from '../styles/StyledTypography'
 
 import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
 import { PipelineView } from './PipelineView'
+import { TargetView } from './TargetView'
 
 /* Session storage utilities. */
 
@@ -50,6 +50,9 @@ export const MultipleViews = () => {
         >
           Experiment
         </a>
+        <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
+          Targets
+        </a>
         <a href='#' onClick={() => setCurrentView('pipeline')} className={currentView === 'pipeline' ? 'active' : ''}>
           Pipeline
         </a>
@@ -65,6 +68,10 @@ export const MultipleViews = () => {
         <Wrapper style={{ display: currentView === 'experiment' ? 'block' : 'none' }}>
           <SmallHeader>Experiment</SmallHeader>
           <ExperimentView />
+        </Wrapper>
+        <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
+          <SmallHeader>Targets</SmallHeader>
+          <TargetView />
         </Wrapper>
         <Wrapper style={{ display: currentView === 'pipeline' ? 'block' : 'none' }}>
           <SmallHeader>Pipeline</SmallHeader>
