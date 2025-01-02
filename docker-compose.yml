@@ -136,3 +136,27 @@ services:
     env_file:
       - ${SITE_ENV_FILE}
     network_mode: host
+
+  # Frontend-related services
+  front:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+    env_file:
+      - ${SITE_ENV_FILE}
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - './front/src:/app/src'
+      - './front/public:/app/public'
+    network_mode: host
+
+  rosbridge:
+    build:
+      context: .
+      dockerfile: ros2_ws/src/shared_packages/rosbridge/Dockerfile
+      args:
+        INTERFACES_PATH: ros2_ws/src/mtms_packages/interfaces
+    env_file:
+      - ${SITE_ENV_FILE}
+    network_mode: host
