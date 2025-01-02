@@ -12,8 +12,8 @@ import { setTargets } from 'reducers/targetReducer'
 import { setPulseSequences } from 'reducers/sequenceReducer'
 import { addTargetToRos } from 'ros/target'
 
-import { clearRosState, plannerStateSubscriber } from 'ros/ros'
-import { coilPositionSubscriber } from 'ros/coilPosition'
+import { clearRosState, plannerStateSubscriber } from 'ros/planner'
+import { coilPositionSubscriber } from 'ros/neuronavigation'
 
 export const TargetView = () => {
   const [position, setPosition] = useState<Position>({
