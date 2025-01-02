@@ -1,5 +1,5 @@
 import ROSLIB from 'roslib'
-import { ros } from '../ros'
+import { ros } from './ros'
 
 const startDeviceService = new ROSLIB.Service({
   ros: ros,
@@ -25,7 +25,7 @@ export const startDevice = () => {
     (error) => {
       console.log('ERROR: Failed to start session')
       console.error(error)
-    },
+    }
   )
 }
 
@@ -41,6 +41,6 @@ export const stopDevice = () => {
     (error) => {
       console.log('ERROR: Failed to stop experiment')
       console.error(error)
-    },
+    }
   )
 }

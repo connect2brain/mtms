@@ -23,7 +23,6 @@ import {
 } from 'styles/General'
 
 import {
-  getMaximumIntensity,
   countValidTrials,
   listProjects,
   performExperiment,
@@ -33,6 +32,8 @@ import {
   setActiveProject,
   visualizeTargets,
 } from 'ros/ros'
+
+import { getMaximumIntensity } from 'ros/targeting'
 
 import { SystemContext } from 'providers/SystemProvider'
 import { ProjectContext } from 'providers/ProjectProvider'
@@ -402,17 +403,17 @@ export const ExperimentView = () => {
   const [selectedPulse, setSelectedPulse] = useState<number>(() => getKey('selectedPulse', 1))
 
   const [selectedPointFirstPulse, setSelectedPointFirstPulse] = useState<Point[]>(() =>
-    getKey('selectedPointFirstPulse', [{ x: 0, y: 0 }]),
+    getKey('selectedPointFirstPulse', [{ x: 0, y: 0 }])
   )
   const [selectedPointSecondPulse, setSelectedPointSecondPulse] = useState<Point[]>(() =>
-    getKey('selectedPointSecondPulse', [{ x: 0, y: 0 }]),
+    getKey('selectedPointSecondPulse', [{ x: 0, y: 0 }])
   )
 
   const [selectedAngleFirstPulse, setSelectedAngleFirstPulse] = useState<number[]>(() =>
-    getKey('selectedAngleFirstPulse', [0]),
+    getKey('selectedAngleFirstPulse', [0])
   )
   const [selectedAngleSecondPulse, setSelectedAngleSecondPulse] = useState<number[]>(() =>
-    getKey('selectedAngleSecondPulse', [0]),
+    getKey('selectedAngleSecondPulse', [0])
   )
 
   const [intensityFirstPulse, setIntensityFirstPulse] = useState<number>(() => getKey('intensityFirstPulse', 10))
@@ -449,7 +450,7 @@ export const ExperimentView = () => {
 
   const [autopause, setAutopause] = useState<boolean>(() => getKey('autopause', true))
   const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(() =>
-    getKey('autopauseIntervalMinutes', 10),
+    getKey('autopauseIntervalMinutes', 10)
   )
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)

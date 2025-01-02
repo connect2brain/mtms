@@ -12,8 +12,8 @@ import { EditableTargetTableCell } from './TableElements/Cells/EditableCell'
 import { GenericTable } from './GenericTable'
 import SelectableTargetTableRow from './TableElements/SelectableTargetTableRow'
 import { createPulsesFromSelectedTargets } from 'utils'
-import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'ros/services/pulseSequence'
-import { openTargetOrientationDialogInNeuronavigation, removeTargetInRos } from 'ros/services/target'
+import { addPulseSequenceToRos, addPulseToPulseSequenceInRos } from 'ros/pulseSequence'
+import { openTargetOrientationDialogInNeuronavigation, removeTargetInRos } from 'ros/target'
 
 const TargetTable = () => {
   const { sequences } = useAppSelector((state) => state.sequences)
@@ -45,7 +45,7 @@ const TargetTable = () => {
         Cell: EditableTargetTableCell,
       },
     ],
-    [],
+    []
   )
 
   const handleNewSequence = (event: any) => {
