@@ -14,7 +14,7 @@ import {
 } from 'styles/General'
 
 import { DatasetContext } from 'providers/DatasetProvider'
-import { setDatasetRos, setPlaybackRos, setLoopRos, setRecordDataRos } from 'ros/ros'
+import { setDatasetRos, setPlaybackRos, setLoopRos, setRecordDataRos } from 'ros/eeg_simulator'
 import { formatTime, formatFrequency } from 'utils/utils'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 
