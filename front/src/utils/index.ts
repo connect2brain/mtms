@@ -13,7 +13,7 @@ import {
 export const expand = (obj: any) =>
   obj
     ? Object.keys(obj)
-        .map((key) => obj[key].toFixed(3))
+        .map((key) => obj[key].toFixed(1))
         .join(', ')
     : ''
 
