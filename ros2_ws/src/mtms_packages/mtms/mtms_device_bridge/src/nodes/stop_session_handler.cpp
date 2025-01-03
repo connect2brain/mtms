@@ -38,13 +38,10 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("stop_session_handler"), "Stop session handler ready.");
 
-  init_fpga();
-
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
           if (!is_fpga_ok()) {
-              close_fpga();
               init_fpga();
           }
       }

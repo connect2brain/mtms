@@ -41,18 +41,14 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("request_trigger_handler"), "Request trigger handler ready.");
 
-  init_fpga();
-
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
           if (!is_fpga_ok()) {
-              close_fpga();
               init_fpga();
           }
       }
   );
-
   rclcpp::spin(node);
 
   close_fpga();

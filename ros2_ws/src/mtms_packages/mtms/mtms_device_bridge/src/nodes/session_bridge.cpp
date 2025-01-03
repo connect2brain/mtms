@@ -41,7 +41,6 @@ public:
 private:
   void publish_session() {
     if (!is_fpga_ok()) {
-      RCLCPP_WARN(rclcpp::get_logger("session_bridge"), "FPGA not in OK state while attempting to read session");
       return;
     }
 
@@ -78,13 +77,10 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("session_bridge"), "Session bridge ready.");
 
-  init_fpga();
-
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
           if (!is_fpga_ok()) {
-              close_fpga();
               init_fpga();
           }
       }
