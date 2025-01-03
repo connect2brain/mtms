@@ -6,7 +6,9 @@
 NiFpga_Session session;
 NiFpga_Status status;
 
-bool try_init_fpga() {
+bool fpga_initialized = false;
+
+bool init_fpga() {
   /* Must be called before any other calls. */
   status = NiFpga_Initialize();
   if (NiFpga_IsError(status)) {
@@ -55,21 +57,15 @@ bool try_init_fpga() {
   }
 
   RCLCPP_INFO(rclcpp::get_logger("run_fpga"), "Initialization successful.");
+  fpga_initialized = true;
+
   return true;
 }
 
-void init_fpga() {
-  while (true) {
-    if (try_init_fpga()) {
-      break;
-    }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
-  /* Sleep for a while longer to ensure that there is enough time for 'Run FPGA' node to start the FPGA program. */
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-}
-
 bool is_fpga_ok() {
+  if (!fpga_initialized) {
+    return false;
+  }
   NiFpga_Status status;
   NiFpga_FpgaViState state;
   uint32_t stateValue;
@@ -83,7 +79,10 @@ bool is_fpga_ok() {
 
   state = (NiFpga_FpgaViState)stateValue;
   if (state != NiFpga_FpgaViState_Running) {
-      return false;
+    fpga_initialized = false;
+    close_fpga();
+
+    return false;
   }
   return true;
 }
