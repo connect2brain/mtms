@@ -28,7 +28,7 @@ const App = () => {
 }
 
 const Header = styled(StyledHeader)`
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: #333;
   margin-bottom: 1rem;
   padding: 0.5rem;
