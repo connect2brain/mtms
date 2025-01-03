@@ -160,12 +160,6 @@
         line: 'export LD_LIBRARY_PATH=/opt/python3.9.5/lib:$LD_LIBRARY_PATH'
         state: present
 
-    - name: Append "instructions" command to .bashrc
-      lineinfile:
-        dest: "{{ target_home }}/.bashrc"
-        line: 'instructions'
-        state: present
-
     ########################################################################
     # 4. Install busylight-for-humans
     ########################################################################
