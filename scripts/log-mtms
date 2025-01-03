@@ -45,6 +45,7 @@ while [[ "$#" -gt 0 ]]; do
         --last-minute) FROM="1 minute ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
         --save) SAVE_TO=$2; shift 2;;
         --follow) FOLLOW=true; shift;;
+        -f) FOLLOW=true; shift;;
         -n) TAIL_LINES=$2; shift 2;;
         --help|-h) print_usage;;
         *)
