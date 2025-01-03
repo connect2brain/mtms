@@ -106,12 +106,6 @@
     # 3. Update environment variables in .bashrc
     ########################################################################
 
-    - name: Export SITE in .bashrc
-      lineinfile:
-        dest: "{{ target_home }}/.bashrc"
-        line: "export SITE={{ target_site }}"
-        state: present
-
     - name: Ensure MTMS_ROOT is exported
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
@@ -121,7 +115,7 @@
     - name: Ensure MTMS_ENV_FILE points to the .env file
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
-        line: "export MTMS_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env"
+        line: "export MTMS_ENV_FILE=$MTMS_ROOT/sites/{{ target_site }}/.env"
         state: present
 
     - name: Ensure script directory is in PATH
