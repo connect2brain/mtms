@@ -6,17 +6,17 @@ Wants=network-online.target
 [Service]
 User=mtms
 
-Environment=MTMS_ROOT={{ mtms_root }}
+Environment=MTMS_ROOT={{ repo_root }}
 Environment=SITE={{ target_site }}
-Environment=CYCLONEDDS_URI={{ mtms_root }}/config/cyclonedds.xml
+Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
 
 Type=simple
 User=mtms
-ExecStart={{ mtms_root }}/scripts/start-mtms-device-bridge
-ExecStop={{ mtms_root }}/scripts/stop-mtms-device-bridge
+ExecStart={{ repo_root }}/scripts/start-mtms-device-bridge
+ExecStop={{ repo_root }}/scripts/stop-mtms-device-bridge
 Restart=always
 
 [Install]
