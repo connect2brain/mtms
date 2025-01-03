@@ -130,12 +130,6 @@
         line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
         state: present
 
-    - name: Ensure CYCLONEDDS_URI is set
-      lineinfile:
-        dest: "{{ target_home }}/.bashrc"
-        line: 'export CYCLONEDDS_URI=file://$MTMS_ROOT/config/cyclonedds.xml'
-        state: present
-
     - name: Ensure ROS is sourced
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
