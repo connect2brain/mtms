@@ -1,7 +1,7 @@
 [Unit]
-Description=mTMS device bridge service
-After=network-online.target
-Wants=network-online.target
+Description=mTMS service
+After=docker.service
+Requires=docker.service
 
 [Service]
 User=mtms
@@ -9,14 +9,13 @@ User=mtms
 Environment=MTMS_ROOT={{ repo_root }}
 Environment=SITE={{ target_site }}
 Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
+Environment=PROJECTS_ROOT={{ target_home }}/projects
 
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
 
-Type=simple
-User=mtms
-ExecStart={{ repo_root }}/scripts/start-mtms-device-bridge
-ExecStop={{ repo_root }}/scripts/stop-mtms-device-bridge
+ExecStart={{ repo_root }}/scripts/start-mtms
+ExecStop={{ repo_root }}/scripts/stop-mtms
 Restart=always
 
 [Install]
