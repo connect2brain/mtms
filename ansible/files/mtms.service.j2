@@ -15,8 +15,11 @@ Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
 
-ExecStart={{ repo_root }}/scripts/start-mtms
-ExecStop={{ repo_root }}/scripts/stop-mtms
+WorkingDirectory={{ repo_root }}
+
+ExecStart=/usr/bin/docker-compose up
+ExecStop=/usr/bin/docker-compose down --remove-orphans
+
 Restart=always
 
 [Install]
