@@ -170,3 +170,26 @@
         dest: "{{ target_home }}/.bashrc"
         line: 'instructions'
         state: present
+
+    ########################################################################
+    # 4. Install busylight-for-humans
+    ########################################################################
+    - name: Install busylight-for-humans
+      pip:
+        name: busylight-for-humans
+
+    - name: Generate Busylight udev rules (locally)
+      shell: busylight udev-rules -o /tmp/99-busylights.rules
+      args:
+        creates: /tmp/99-busylights.rules
+
+    - name: Deploy 99-busylights.rules
+      copy:
+        src: /tmp/99-busylights.rules
+        dest: /etc/udev/rules.d/99-busylights.rules
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload udev rules
+      shell: udevadm control -R
