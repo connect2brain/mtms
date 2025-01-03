@@ -124,11 +124,6 @@ if [ -n "$CONTAINER_NAME" ] && [ "$TIME_FILTERS" = false ]; then
 
     CMD="$CMD | $FORMAT_CMD"
 
-    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
-    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
-    #   still uses ROS2 Humble).
-    CMD="$CMD | grep -v 'Failed to parse type hash'"
-
     [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
 
     eval $CMD
@@ -144,11 +139,6 @@ else
     if [ -n "$CONTAINER_NAME" ]; then
         CMD="$CMD | grep $CONTAINER_NAME"
     fi
-
-    # XXX: Filter out the "Failed to parse type hash" messages. These are not useful and are generated
-    #   by MATLAB's ROS toolbox apparently due to an incompatibility with ROS2 Iron (MATLAB version R2024a
-    #   still uses ROS2 Humble).
-    CMD="$CMD | grep -v 'Failed to parse type hash'"
 
     [ ! -z "$SAVE_TO" ] && CMD="$CMD | tee $SAVE_TO"
 
