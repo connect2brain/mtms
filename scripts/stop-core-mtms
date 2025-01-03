@@ -2,12 +2,12 @@
 
 cd $MTMS_ROOT
 
-# Set ENV_FILE to point to .env of the site
-export ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
+# Set MTMS_ENV_FILE to point to .env of the site
+export MTMS_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env
 
-# Source the environment variables from ENV_FILE
+# Source the environment variables from MTMS_ENV_FILE
 set -a
-source $ENV_FILE
+source $MTMS_ENV_FILE
 set +a
 
 # Stop the containers defined in docker-compose.yml
