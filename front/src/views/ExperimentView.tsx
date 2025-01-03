@@ -1,3 +1,5 @@
+/* TODO: This could be split into multiple files. */
+
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
@@ -35,7 +37,6 @@ import { SystemContext } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 
-import { formatTime } from 'utils/utils'
 import { set } from 'cypress/types/lodash'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
@@ -358,6 +359,33 @@ enum ExperimentTab {
   SingleLocation,
   MultipleLocations,
   PairedPulse,
+}
+
+/* Utility functions. */
+
+const formatTime = (time: number | undefined): string => {
+  if (time == undefined) {
+    return ''
+  }
+  time = Math.round(time)
+
+  const hours = Math.floor(time / 3600)
+  const minutes = Math.floor((time % 3600) / 60)
+  const seconds = time % 60
+
+  let result = ''
+
+  if (hours > 0) {
+    result += `${hours} h `
+  }
+  if (minutes > 0) {
+    result += `${minutes} min `
+  }
+  if (seconds > 0 || result === '') {
+    result += `${seconds} s`
+  }
+
+  return result.trim()
 }
 
 /* Session storage utilities. */
