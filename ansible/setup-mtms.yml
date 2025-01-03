@@ -53,20 +53,20 @@
         mode: '0440'
 
     ########################################################################
-    # 2. Copy & enable systemd services (mtms-core-containers & device bridge)
+    # 2. Copy & enable systemd services (mtms & mtms-bridge)
     ########################################################################
-    - name: Copy mtms-core-containers.service
+    - name: Copy mtms.service
       template:
-        src: files/mtms-core-containers.service.j2
-        dest: /etc/systemd/system/mtms-core-containers.service
+        src: files/mtms.service.j2
+        dest: /etc/systemd/system/mtms.service
         owner: root
         group: root
         mode: '0644'
 
-    - name: Copy mtms-device-bridge.service
+    - name: Copy mtms-bridge.service
       template:
-        src: files/mtms-device-bridge.service.j2
-        dest: /etc/systemd/system/mtms-device-bridge.service
+        src: files/mtms-bridge.service.j2
+        dest: /etc/systemd/system/mtms-bridge.service
         owner: root
         group: root
         mode: '0644'
@@ -75,15 +75,15 @@
       systemd:
         daemon_reload: yes
 
-    - name: Enable and restart mtms-core-containers.service
+    - name: Enable and restart mtms.service
       systemd:
-        name: mtms-core-containers.service
+        name: mtms.service
         enabled: yes
         state: restarted
 
-    - name: Enable and restart mtms-device-bridge.service
+    - name: Enable and restart mtms-bridge.service
       systemd:
-        name: mtms-device-bridge.service
+        name: mtms-bridge.service
         enabled: yes
         state: restarted
 
