@@ -35,16 +35,12 @@ int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
   auto node = std::make_shared<AllowTriggerOut>();
-
-  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out"), "Allow trigger out handler ready.");
-
-  init_fpga();
+  RCLCPP_INFO(rclcpp::get_logger("allow_trigger_out_handler"), "Allow trigger out handler ready.");
 
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
           if (!is_fpga_ok()) {
-              close_fpga();
               init_fpga();
           }
       }
