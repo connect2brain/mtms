@@ -8,6 +8,7 @@ User=mtms
 
 Environment=MTMS_ROOT={{ repo_root }}
 Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
+Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 Environment=CYCLONEDDS_URI={{ repo_root }}/ros2_ws/src/shared_packages/resources/cyclonedds.xml
 
 LimitRTPRIO=99
