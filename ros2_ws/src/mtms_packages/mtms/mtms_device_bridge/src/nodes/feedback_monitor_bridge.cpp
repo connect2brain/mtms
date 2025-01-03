@@ -228,7 +228,6 @@ private:
 
   void update_feedback_topics() {
     if (!is_fpga_ok()) {
-      RCLCPP_WARN(rclcpp::get_logger("feedback_monitor_bridge"), "FPGA not in OK state while attempting to read event feedback");
       return;
     }
     read_fifo_and_publish("Pulse", pulse_feedback_fifo, pulse_data);
@@ -257,13 +256,10 @@ int main(int argc, char **argv) {
 
   RCLCPP_INFO(rclcpp::get_logger("feedback_monitor_bridge"), "Feedback monitor bridge ready.");
 
-  init_fpga();
-
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
           if (!is_fpga_ok()) {
-              close_fpga();
               init_fpga();
           }
       }

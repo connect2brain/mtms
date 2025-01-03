@@ -37,7 +37,7 @@ void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first
 
   uint8_t status_value;
   while (rclcpp::ok()) {
-    if (try_init_fpga()) {
+    if (init_fpga()) {
       RCLCPP_INFO(node->get_logger(), "FPGA initialized successfully.");
       break;
     }
