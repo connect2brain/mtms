@@ -60,7 +60,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Restart core containers.
+# Restart containers.
 echo "${BOLD}Restarting...${RESET}"
 
 sudo systemctl restart mtms
