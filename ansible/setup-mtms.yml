@@ -93,10 +93,10 @@
         line: "export MTMS_ROOT={{ mtms_root }}"
         state: present
 
-    - name: Ensure SITE_ENV_FILE points to the .env file
+    - name: Ensure ENV_FILE points to the .env file
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
-        line: "export SITE_ENV_FILE=$MTMS_ROOT/sites/$SITE/.env"
+        line: "export ENV_FILE=$MTMS_ROOT/sites/$SITE/.env"
         state: present
 
     - name: Ensure script directory is in PATH
