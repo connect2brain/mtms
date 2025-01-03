@@ -146,6 +146,7 @@ services:
       - ${SITE_ENV_FILE}
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_ROSBRIDGE_URL=ws://localhost:9091
     volumes:
       - './front/src:/app/src'
       - './front/public:/app/public'
@@ -159,4 +160,6 @@ services:
         INTERFACES_PATH: ros2_ws/src/mtms_packages/interfaces
     env_file:
       - ${SITE_ENV_FILE}
+    environment:
+      - ROSBRIDGE_PORT=9091
     network_mode: host
