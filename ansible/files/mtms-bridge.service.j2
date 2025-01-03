@@ -7,9 +7,8 @@ Wants=network-online.target
 User=mtms
 
 Environment=MTMS_ROOT={{ repo_root }}
-Environment=SITE={{ target_site }}
-Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
+Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
