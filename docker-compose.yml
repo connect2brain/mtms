@@ -147,6 +147,7 @@ services:
     environment:
       - CHOKIDAR_USEPOLLING=true
       - REACT_APP_ROSBRIDGE_URL=ws://localhost:9091
+      - PORT=3001
     volumes:
       - './front/src:/app/src'
       - './front/public:/app/public'
