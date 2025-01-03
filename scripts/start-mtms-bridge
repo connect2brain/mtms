@@ -34,7 +34,7 @@ export BITFILE_PREFIX="NiFpga_mTMS_generation_${MTMS_DEVICE_GENERATION}_${BITFIL
 export BITFILE=$BITFILE_PREFIX.lvbitx
 export BITFILE_SIGNATURE="$(cat $BITFILE_DIRECTORY/$BITFILE_PREFIX.signature)"
 
-build-mtms-ros-workspace
+source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 
 # Start mTMS bridge
 RMW_IMPLEMENTATION=rmw_cyclonedds_cpp ros2 launch mtms_device_bridge mtms_device_bridge.launch.py log-level:=info safe-mode:=false channel-count:=$CHANNEL_COUNT

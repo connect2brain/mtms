@@ -20,11 +20,9 @@ colcon build --base-paths src/shared_packages/interfaces src/mtms_packages/inter
 # Build mTMS device bridge
 echo "  • ${BOLD}Building mTMS device bridge...${RESET}"
 
-colcon build --packages-up-to mtms_device_bridge
+colcon build --packages-select mtms_device_bridge
 
 # Source the workspace
-echo "  • ${BOLD}Sourcing the workspace...${RESET}"
-
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
 
 echo ""
