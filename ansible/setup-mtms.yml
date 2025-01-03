@@ -75,16 +75,24 @@
       systemd:
         daemon_reload: yes
 
-    - name: Enable and restart mtms.service
+    - name: Enable mtms.service
       systemd:
         name: mtms.service
         enabled: yes
-        state: restarted
 
-    - name: Enable and restart mtms-bridge.service
+    - name: Enable mtms-bridge.service
       systemd:
         name: mtms-bridge.service
         enabled: yes
+
+    - name: Restart mtms.service
+      systemd:
+        name: mtms.service
+        state: restarted
+
+    - name: Restart mtms-bridge.service
+      systemd:
+        name: mtms-bridge.service
         state: restarted
 
     ########################################################################
