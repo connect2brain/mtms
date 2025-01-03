@@ -1,7 +1,7 @@
 [Unit]
-Description=mTMS core containers
-After=docker.service
-Requires=docker.service
+Description=mTMS bridge service
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=mtms
@@ -13,8 +13,10 @@ Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 LimitRTPRIO=99
 LimitMEMLOCK=10000000000
 
-ExecStart={{ repo_root }}/scripts/linux/usage/start-core
-ExecStop={{ repo_root }}/scripts/linux/usage/stop-core
+Type=simple
+User=mtms
+ExecStart={{ repo_root }}/scripts/start-mtms-bridge
+ExecStop={{ repo_root }}/scripts/stop-mtms-bridge
 Restart=always
 
 [Install]
