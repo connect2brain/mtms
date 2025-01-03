@@ -45,10 +45,10 @@
     ########################################################################
     # 1. Update sudoers for container restart (no password)
     ########################################################################
-    - name: Allow user to restart mtms-core-containers without sudo password
+    - name: Allow user to restart mtms containers without sudo password
       lineinfile:
-        path: /etc/sudoers.d/restart_mtms_core
-        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-core-containers"
+        path: /etc/sudoers.d/restart_mtms
+        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms"
         create: yes
         mode: '0440'
 
