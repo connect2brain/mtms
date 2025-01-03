@@ -148,18 +148,6 @@
         line: 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH'
         state: present
 
-    - name: Ensure LD_PRELOAD for C++ library (MATLAB compatibility)
-      lineinfile:
-        dest: "{{ target_home }}/.bashrc"
-        line: 'export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6'
-        state: present
-
-    - name: Ensure LD_LIBRARY_PATH for custom Python (MATLAB compatibility)
-      lineinfile:
-        dest: "{{ target_home }}/.bashrc"
-        line: 'export LD_LIBRARY_PATH=/opt/python3.9.5/lib:$LD_LIBRARY_PATH'
-        state: present
-
     ########################################################################
     # 4. Install busylight-for-humans
     ########################################################################
