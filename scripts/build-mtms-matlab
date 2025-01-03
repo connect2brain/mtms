@@ -9,6 +9,8 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
+echo "  • ${BOLD}Building the MATLAB interfaces...${RESET}"
+
 # Create a temporary directory for all the interfaces
 mkdir -p /home/mtms/mtms/ros2_ws/src/temp_interfaces
 ln -s /home/mtms/mtms/ros2_ws/src/shared_packages/interfaces/* /home/mtms/mtms/ros2_ws/src/temp_interfaces/
@@ -36,13 +38,20 @@ fi
 # Remove the temporary directory
 rm -rf /home/mtms/mtms/ros2_ws/src/temp_interfaces
 
+
+echo "  • ${BOLD}Registering the MATLAB interfaces...${RESET}"
+
+# Register messages in MATLAB
+matlab -nodisplay -nosplash -nodesktop -r " \
+ros2RegisterMessages('/home/mtms/mtms/api/matlab'); \
+exit;"
+
+# Delete the unneeded interfaces directory, generated when running ros2RegisterMessages in MATLAB.
+rm -rf $MTMS_ROOT/api/matlab/*interfaces
+
 echo "Done."
 echo ""
-echo "• To register the MATLAB message files with MATLAB, run the following command:"
+echo "To commit the built MATLAB message files, run the following command:"
 echo ""
-echo "${BOLD}matlab-register${RESET}"
-echo ""
-echo "• To commit the built MATLAB message files, run the following command:"
-echo ""
-echo "${BOLD}matlab-commit${RESET}"
+echo "  git commit api/matlab/matlab_msg_gen.zip -m \""UPD: ROS interfaces in MATLAB API\""
 echo ""
