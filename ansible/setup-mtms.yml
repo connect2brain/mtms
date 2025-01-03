@@ -43,12 +43,19 @@
       when: target_site not in allowed_sites
 
     ########################################################################
-    # 1. Update sudoers for container restart (no password)
+    # 1. Update sudoers for systemd service restart without password
     ########################################################################
     - name: Allow user to restart mtms containers without sudo password
       lineinfile:
         path: /etc/sudoers.d/restart_mtms
         line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms"
+        create: yes
+        mode: '0440'
+
+    - name: Allow user to restart mtms bridge without sudo password
+      lineinfile:
+        path: /etc/sudoers.d/restart_mtms
+        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-bridge"
         create: yes
         mode: '0440'
 

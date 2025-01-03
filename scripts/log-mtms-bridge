@@ -36,11 +36,15 @@ if [ ! -z "$SAVE_TO" ] && [ -f "$SAVE_TO" ]; then
     fi
 fi
 
-CMD="journalctl -u mtms-device-bridge"
+CMD="journalctl -u mtms-bridge"
 [ ! -z "$FROM" ] && CMD="$CMD --since \"$FROM\""
 [ ! -z "$TO" ] && CMD="$CMD --until \"$TO\""
 [ "$FOLLOW" = true ] && CMD="$CMD -f"
 [ ! -z "$CONTAINER_NAME" ] && CMD="$CMD | grep \"mtms-$CONTAINER_NAME\""
 [ ! -z "$SAVE_TO" ] && CMD="$CMD > $SAVE_TO"
+
+# XXX: Filter out the "Failed to parse type hash" messages. These are not useful; should look more closely
+#   into what generates them.
+CMD="$CMD | grep -v 'Failed to parse type hash'"
 
 eval $CMD
