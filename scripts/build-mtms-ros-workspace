@@ -8,6 +8,9 @@ RESET=$(tput sgr0)
 echo ""
 echo "Building the ROS workspace:"
 
+# Source ROS
+source /opt/ros/iron/setup.bash
+
 # Build interfaces
 echo "  • ${BOLD}Building interfaces...${RESET}"
 
@@ -18,3 +21,12 @@ colcon build --base-paths src/shared_packages/interfaces src/mtms_packages/inter
 echo "  • ${BOLD}Building mTMS device bridge...${RESET}"
 
 colcon build --packages-up-to mtms_device_bridge
+
+# Source the workspace
+echo "  • ${BOLD}Sourcing the workspace...${RESET}"
+
+source $MTMS_ROOT/ros2_ws/install/local_setup.bash
+
+echo ""
+echo "Done."
+echo ""
