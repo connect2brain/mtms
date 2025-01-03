@@ -1,6 +1,7 @@
 ---
 - name: Setup mTMS environment
-  hosts: all
+  hosts: localhost
+  connection: local
   become: yes
 
   vars:
@@ -8,8 +9,8 @@
     target_user: "{{ ansible_user | default('mtms') }}"
     target_home: "/home/{{ target_user }}"
 
-    # The main repository root.
-    mtms_root: "{{ target_home }}/mtms"
+    # The repository root.
+    repo_root: "{{ playbook_dir | dirname }}"
 
     # ROS distro
     ros_distro: "iron"
@@ -18,19 +19,28 @@
     ########################################################################
     # 0. List and validate allowed site names
     ########################################################################
+    - name: Ensure target_site is defined
+      fail:
+        msg: "The 'target_site' variable must be provided as an extra variable (e.g., -e target_site=<site>)."
+      when: target_site is not defined
+
     - name: Gather allowed site names
       find:
-        paths: "{{ mtms_root }}/sites"
+        paths: "{{ repo_root }}/sites"
         file_type: directory
         depth: 1
       register: site_directories
+
+    - name: Extract allowed site names
+      set_fact:
+        allowed_sites: "{{ site_directories.files | map(attribute='path') | map('basename') | list }}"
 
     - name: Validate target_site
       fail:
         msg: >
           The variable 'target_site' must be one of the following values:
-          {{ site_directories.files | map('basename') | join(', ') }}.
-      when: target_site not in (site_directories.files | map('basename') | list)
+          {{ allowed_sites | join(', ') }}.
+      when: target_site not in allowed_sites
 
     ########################################################################
     # 1. Update sudoers for container restart (no password)
@@ -46,16 +56,16 @@
     # 2. Copy & enable systemd services (mtms-core-containers & device bridge)
     ########################################################################
     - name: Copy mtms-core-containers.service
-      copy:
-        src: files/mtms-core-containers.service
+      template:
+        src: files/mtms-core-containers.service.j2
         dest: /etc/systemd/system/mtms-core-containers.service
         owner: root
         group: root
         mode: '0644'
 
     - name: Copy mtms-device-bridge.service
-      copy:
-        src: files/mtms-device-bridge.service
+      template:
+        src: files/mtms-device-bridge.service.j2
         dest: /etc/systemd/system/mtms-device-bridge.service
         owner: root
         group: root
@@ -65,17 +75,17 @@
       systemd:
         daemon_reload: yes
 
-    - name: Enable and start mtms-core-containers.service
+    - name: Enable and restart mtms-core-containers.service
       systemd:
         name: mtms-core-containers.service
         enabled: yes
-        state: started
+        state: restarted
 
-    - name: Enable and start mtms-device-bridge.service
+    - name: Enable and restart mtms-device-bridge.service
       systemd:
         name: mtms-device-bridge.service
         enabled: yes
-        state: started
+        state: restarted
 
     ########################################################################
     # 3. Update environment variables in .bashrc
@@ -90,7 +100,7 @@
     - name: Ensure MTMS_ROOT is exported
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
-        line: "export MTMS_ROOT={{ mtms_root }}"
+        line: "export MTMS_ROOT={{ repo_root }}"
         state: present
 
     - name: Ensure MTMS_ENV_FILE points to the .env file
@@ -102,7 +112,7 @@
     - name: Ensure script directory is in PATH
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
-        line: "export PATH=$PATH:{{ repo_dir }}/scripts/"
+        line: "export PATH=$PATH:{{ repo_root }}/scripts/"
         state: present
 
     - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
