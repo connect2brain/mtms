@@ -17,18 +17,12 @@ import { Header as StyledHeader } from 'styles/StyledTypography'
 const App = () => {
   return (
     <Providers>
-      <SystemProvider>
-        <ConfigProvider>
-          <HealthcheckProvider>
-            <Header>mTMS control panel</Header>
-            <HealthcheckStatusDisplay />
-            <HealthcheckMessageDisplay />
-            <Wrapper>
-              <MultipleViews />
-            </Wrapper>
-          </HealthcheckProvider>
-        </ConfigProvider>
-      </SystemProvider>
+      <Header>mTMS control panel</Header>
+      <HealthcheckStatusDisplay />
+      <HealthcheckMessageDisplay />
+      <Wrapper>
+        <MultipleViews />
+      </Wrapper>
     </Providers>
   )
 }
