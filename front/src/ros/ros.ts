@@ -1,23 +1,26 @@
 import React from 'react'
 import ROSLIB from 'roslib'
 
-const ROS_URL =
-  process.env.REACT_APP_ENV === 'dev' || process.env.REACT_APP_ENV === 'prod'
-    ? 'ws://localhost:9090'
-    : 'ws://rosbridge_test:9090'
+const ROSBRIDGE_URL = `${process.env.REACT_APP_ROSBRIDGE_URL}`
+
+if (ROSBRIDGE_URL === 'undefined') {
+  throw new Error('ROSBRIDGE_URL environment variable is not set')
+}
+
+console.log('Connecting to ROS at', ROSBRIDGE_URL)
 
 export const ros = new ROSLIB.Ros({
-  url: ROS_URL,
+  url: ROSBRIDGE_URL,
 })
 
 ros.on('connection', () => {
-  console.log('ROS connected to', ROS_URL)
+  console.log('Connected to ROS', ROSBRIDGE_URL)
 })
 
 ros.on('error', (error) => {
-  console.log('Error connecting ROS to', ROS_URL, ',error:', error)
+  console.log('Error connecting to ROS, error:', error)
 })
 
 ros.on('close', () => {
-  console.log('ROS closed ws connection')
+  console.log('Connection to ROS closed')
 })
