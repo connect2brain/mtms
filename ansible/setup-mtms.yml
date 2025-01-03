@@ -5,8 +5,8 @@
   become: yes
 
   vars:
-    # The user that owns the repository and runs the services:
-    target_user: "{{ ansible_user | default('mtms') }}"
+    # The user that runs the playbook.
+    target_user: "{{ lookup('env', 'USER') }}"
     target_home: "/home/{{ target_user }}"
 
     # The repository root.
