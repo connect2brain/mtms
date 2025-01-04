@@ -1,6 +1,6 @@
-[submodule "ros2_ws/src/bridges/rosbridge/rosbridge_suite"]
-	path = ros2_ws/src/bridges/rosbridge/rosbridge_suite
-	url = https://github.com/RobotWebTools/rosbridge_suite
-[submodule "ros2_ws/src/neuronavigation/neuronavigation/invesalius3"]
-	path = ros2_ws/src/neuronavigation/neuronavigation/invesalius3
+[submodule "ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3"]
+	path = ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3
 	url = https://github.com/invesalius/invesalius3
+[submodule "ros2_ws/src/shared_packages"]
+	path = ros2_ws/src/shared_packages
+	url = https://github.com/NeuroSimo/shared_packages

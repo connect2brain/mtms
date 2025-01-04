@@ -1,0 +1,188 @@
+---
+- name: Setup mTMS environment
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # The user that runs the playbook.
+    target_user: "{{ lookup('env', 'USER') }}"
+    target_home: "/home/{{ target_user }}"
+
+    # The repository root.
+    repo_root: "{{ playbook_dir | dirname }}"
+
+    # ROS distro
+    ros_distro: "iron"
+
+  tasks:
+    ########################################################################
+    # 0. List and validate allowed site names
+    ########################################################################
+    - name: Ensure target_site is defined
+      fail:
+        msg: "The 'target_site' variable must be provided as an extra variable (e.g., -e target_site=<site>)."
+      when: target_site is not defined
+
+    - name: Gather allowed site names
+      find:
+        paths: "{{ repo_root }}/sites"
+        file_type: directory
+        depth: 1
+      register: site_directories
+
+    - name: Extract allowed site names
+      set_fact:
+        allowed_sites: "{{ site_directories.files | map(attribute='path') | map('basename') | list }}"
+
+    - name: Validate target_site
+      fail:
+        msg: >
+          The variable 'target_site' must be one of the following values:
+          {{ allowed_sites | join(', ') }}.
+      when: target_site not in allowed_sites
+
+    ########################################################################
+    # 1. Update sudoers for systemd service restart without password
+    ########################################################################
+    - name: Allow user to restart mtms containers without sudo password
+      lineinfile:
+        path: /etc/sudoers.d/restart_mtms
+        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms"
+        create: yes
+        mode: '0440'
+
+    - name: Allow user to restart mtms bridge without sudo password
+      lineinfile:
+        path: /etc/sudoers.d/restart_mtms
+        line: "{{ target_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart mtms-bridge"
+        create: yes
+        mode: '0440'
+
+    ########################################################################
+    # 2. Copy & enable systemd services (mtms & mtms-bridge)
+    ########################################################################
+    - name: Copy mtms.service
+      template:
+        src: files/mtms.service.j2
+        dest: /etc/systemd/system/mtms.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy mtms-bridge.service
+      template:
+        src: files/mtms-bridge.service.j2
+        dest: /etc/systemd/system/mtms-bridge.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable mtms.service
+      systemd:
+        name: mtms.service
+        enabled: yes
+
+    - name: Enable mtms-bridge.service
+      systemd:
+        name: mtms-bridge.service
+        enabled: yes
+
+    - name: Restart mtms.service
+      systemd:
+        name: mtms.service
+        state: restarted
+
+    - name: Restart mtms-bridge.service
+      systemd:
+        name: mtms-bridge.service
+        state: restarted
+
+    ########################################################################
+    # 3. Update environment variables in .bashrc
+    ########################################################################
+
+    - name: Ensure MTMS_ROOT is exported
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export MTMS_ROOT={{ repo_root }}"
+        state: present
+
+    - name: Ensure MTMS_ENV_FILE points to the .env file
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export MTMS_ENV_FILE=$MTMS_ROOT/sites/{{ target_site }}/.env"
+        state: present
+
+    - name: Ensure script directory is in PATH
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export PATH=$PATH:{{ repo_root }}/scripts/"
+        state: present
+
+    - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
+        state: present
+
+    - name: Ensure ROS is sourced
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source /opt/ros/{{ ros_distro }}/setup.bash"
+        state: present
+
+    - name: Ensure local ROS workspace is sourced
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source $MTMS_ROOT/ros2_ws/install/local_setup.bash"
+        state: present
+
+    - name: Ensure PYTHONPATH for the Python API
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH'
+        state: present
+
+    ########################################################################
+    # 4. Install busylight-for-humans
+    ########################################################################
+    - name: Install busylight-for-humans
+      pip:
+        name: busylight-for-humans
+
+    - name: Generate Busylight udev rules (locally)
+      shell: busylight udev-rules -o /tmp/99-busylights.rules
+      args:
+        creates: /tmp/99-busylights.rules
+
+    - name: Deploy 99-busylights.rules
+      copy:
+        src: /tmp/99-busylights.rules
+        dest: /etc/udev/rules.d/99-busylights.rules
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload udev rules
+      shell: udevadm control -R
+
+    ########################################################################
+    # 5. Install extra packages
+    ########################################################################
+    - name: Install extra packages
+      apt:
+        name:
+          - python3.10-venv  # Required for building ROS2 packages for MATLAB
+        state: present
+
+    ########################################################################
+    # 6. Install Sphinx requirements
+    ########################################################################
+    - name: Install Sphinx requirements
+      pip:
+        requirements: "{{ repo_root }}/docs/sphinx-requirements.txt"

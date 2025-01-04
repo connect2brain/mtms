@@ -10,7 +10,7 @@ WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
 
 # Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
+COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Install Git
@@ -30,7 +30,7 @@ RUN yarn global add react-scripts@5.0.0
 # https://stackoverflow.com/questions/67087735/eacces-permission-denied-mkdir-usr-app-node-modules-cache-how-can-i-creat
 RUN mkdir -p node_modules/.cache && chmod -R 777 node_modules/.cache
 
-# Add app.
+# Copy the rest of the app.
 COPY /front/ /app
 
 # Start app.

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ros2 service call /mtms_device/send_settings mtms_device_interfaces/srv/SendSettings "$(cat settings.json)"
