@@ -15,7 +15,7 @@ source /opt/ros/iron/setup.bash
 echo "  • ${BOLD}Building interfaces...${RESET}"
 
 cd $MTMS_ROOT/ros2_ws
-colcon build --base-paths src/shared_packages/interfaces src/mtms_packages/interfaces
+colcon build --base-paths src/mtms_packages/interfaces src/shared_packages/interfaces src/shared_packages/realtime_utils
 
 # Build mTMS device bridge
 echo "  • ${BOLD}Building mTMS device bridge...${RESET}"
