@@ -170,3 +170,12 @@
 
     - name: Reload udev rules
       shell: udevadm control -R
+
+    ########################################################################
+    # 5. Install extra packages
+    ########################################################################
+    - name: Install extra packages
+      apt:
+        name:
+          - python3.10-venv  # Required for building ROS2 packages for MATLAB
+        state: present
