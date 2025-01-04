@@ -7,3 +7,6 @@
 [submodule "ros2_ws/src/mtms_packages/targeting/efield"]
 	path = ros2_ws/src/mtms_packages/targeting/efield
 	url = https://github.com/connect2brain/e-field.git
+[submodule "ros2_ws/src/mtms_packages/targeting/waveform_approximator"]
+	path = ros2_ws/src/mtms_packages/targeting/waveform_approximator
+	url = https://github.com/connect2brain/waveform-approximator.git
