@@ -179,3 +179,10 @@
         name:
           - python3.10-venv  # Required for building ROS2 packages for MATLAB
         state: present
+
+    ########################################################################
+    # 6. Install Sphinx requirements
+    ########################################################################
+    - name: Install Sphinx requirements
+      pip:
+        requirements: "{{ repo_root }}/docs/sphinx-requirements.txt"
