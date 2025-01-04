@@ -7,3 +7,6 @@
 [submodule "ros2_ws/src/mtms_packages/targeting/efield"]
 	path = ros2_ws/src/mtms_packages/targeting/efield
 	url = https://github.com/connect2brain/e-field.git
+[submodule "ros2_ws/src/targeting/data"]
+	path = ros2_ws/src/targeting/data
+	url = https://github.com/connect2brain/targeting-tables.git
