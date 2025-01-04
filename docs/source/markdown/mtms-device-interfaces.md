@@ -3,6 +3,7 @@
 This specification document gives overview of the mTMS device control ROS2 interface and
 its functions, and gives the description of the required interfaces to be
 implemented and their expected behaviour for any device to be used.
+Note: May not be up-to-date as of January 2025.
 
 ### Operating environment
 TODO: Add information on the mTMS device and system requirements
