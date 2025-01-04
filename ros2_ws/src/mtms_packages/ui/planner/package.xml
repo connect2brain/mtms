@@ -3,9 +3,9 @@
 <package format="3">
   <name>planner</name>
   <version>0.0.1</version>
-  <description>mTMS planner</description>
-  <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
-  <license>TODO</license>
+  <description>Stimulation sequence planner (WIP)</description>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
 
