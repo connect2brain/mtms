@@ -17,9 +17,9 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Olli-Pekka Kahilakoski',
-    maintainer_email='olli-pekka.kahilakoski@aalto.fi',
-    description='mTMS planner',
+    maintainer='Connect2Brain',
+    maintainer_email='connect2brain@aalto.fi',
+    description='Stimulation sequence planner (WIP)',
     license='TODO',
     tests_require=['pytest'],
     entry_points={

@@ -5,7 +5,7 @@
   <version>0.1.0</version>
   <description>Waveform-related utilities</description>
   <maintainer email="connect2brain@aalto.fi">connect2brain</maintainer>
-  <license>TODO</license>
+  <license>GPL-3.0-only</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 

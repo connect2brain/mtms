@@ -6,7 +6,7 @@ package_name = 'mep_analyzer'
 
 setup(
     name=package_name,
-    version='0.0.1',
+    version='0.1.0',
     packages=[package_name],
     data_files=[
         (os.path.join('share', package_name, 'launch'),
@@ -19,8 +19,8 @@ setup(
     zip_safe=True,
     maintainer='Connect2Brain',
     maintainer_email='connect2brain@aalto.fi',
-    description='EMG analyzer',
-    license='TODO',
+    description='MEP analyzer',
+    license='GPL-3.0-only',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

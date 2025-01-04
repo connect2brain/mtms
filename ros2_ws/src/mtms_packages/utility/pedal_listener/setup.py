@@ -13,10 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Olli-Pekka Kahilakoski',
-    maintainer_email='olli-pekka.kahilakoski@aalto.fi',
+    maintainer='Connect2Brain',
+    maintainer_email='connect2brain@aalto.fi',
     description='Pedal listener',
-    license='TODO',
+    license='GPL-3.0-only',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [

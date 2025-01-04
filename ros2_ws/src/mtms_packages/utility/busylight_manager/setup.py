@@ -4,7 +4,7 @@ package_name = 'busylight_manager'
 
 setup(
     name=package_name,
-    version='0.0.1',
+    version='0.1.0',
     packages=[package_name],
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -14,7 +14,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     description='Busylight manager',
-    license='TODO',
+    license='GPL-3.0-only',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
