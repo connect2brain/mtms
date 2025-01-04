@@ -3,9 +3,9 @@
 <package format="3">
   <name>targeting</name>
   <version>0.0.1</version>
-  <description>ROS node for targeting</description>
-  <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
-  <license>TODO</license>
+  <description>Electric targeting of stimulation</description>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
