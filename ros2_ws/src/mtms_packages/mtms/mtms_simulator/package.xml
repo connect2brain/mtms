@@ -2,10 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>mtms_simulator</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>mTMS device simulator</description>
-  <maintainer email="connect2brain@aalto.fi">connect2brain</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
   <depend>mtms_interfaces</depend>

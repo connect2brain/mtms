@@ -2,11 +2,11 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>neuronavigation</name>
-  <version>0.0.1</version>
-  <description>ROS package for neuronavigation</description>
+  <version>0.1.0</version>
+  <description>Neuronavigation integration to mTMS</description>
 
-  <maintainer email="olli-pekka.kahilakoski@aalto.fi">Olli-Pekka Kahilakoski</maintainer>
-  <license>TODO</license>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
 

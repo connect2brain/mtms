@@ -4,11 +4,11 @@
   <name>optitrack_bridge</name>
   <version>0.0.1</version>
   <description>Optitrack bridge</description>
-  <maintainer email="kyosti.alkio@aalto.fi">Kyösti Alkio</maintainer>
-  <license>TODO</license>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  
+
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>neuronavigation_interfaces</depend>
