@@ -3,12 +3,25 @@ Initialize device and session
 
 .. code-block::
 
-    from event_interfaces.msg import ExecutionCondition, WaveformPhase
-
-    from mep_interfaces.msg import MepConfiguration, PreactivationCheck
-    from eeg_interfaces.msg import TimeWindow
-
     from MTMSApi import MTMSApi
+
+    from event_msgs.msg import (
+        ExecutionCondition,
+    )
+    from waveform_msgs.msg import (
+        WaveformPhase,
+        WaveformPiece,
+        Waveform
+    )
+    from mep_interfaces.msg import (
+        MepConfiguration,
+        PreactivationCheck
+    )
+    from mep_interfaces.msg import TimeWindow
+    from targeting_msgs.msg import (
+        TargetingAlgorithm,
+        ElectricTarget
+    )
 
     api = MTMSApi()
 
@@ -25,13 +38,11 @@ Execute single events
     channel = 1
     target_voltage = 20
     execution_condition = ExecutionCondition.IMMEDIATE
-    time = 10.0
 
     api.send_charge(
         channel=channel,
         target_voltage=target_voltage,
         execution_condition=execution_condition,
-        time=time,
     )
 
 
@@ -45,7 +56,6 @@ Execute single events
         channel=channel,
         waveform=waveform,
         execution_condition=execution_condition,
-        time=time,
         reverse_polarity=reverse_polarity,
     )
 
@@ -56,7 +66,6 @@ Execute single events
         channel=channel,
         target_voltage=0,
         execution_condition=execution_condition,
-        time=time,
     )
 
 .. rubric:: Send trigger out on port 1.
@@ -69,7 +78,6 @@ Execute single events
         port=port,
         duration_us=duration_us,
         execution_condition=execution_condition,
-        time=time,
     )
 
 
@@ -85,25 +93,23 @@ Send pulse on channel 1 and analyze MEP.
 .. rubric:: Generate a timed pulse.
 .. code-block::
 
-    channel = 1
-    execution_condition = ExecutionCondition.TIMED
-    time = api.get_time() + 3.0
-    wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
+channel = 1
+execution_condition = ExecutionCondition.TIMED
+time = api.get_time() + 5.0
 
-    api.send_pulse(
-        channel=channel,
-        waveform=waveform,
-        execution_condition=execution_condition,
-        time=time,
-        reverse_polarity=reverse_polarity,
-        wait_for_completion=wait_for_completion,
-    )
+api.send_pulse(
+    channel=channel,
+    waveform=waveform,
+    execution_condition=execution_condition,
+    time=time,
+    reverse_polarity=reverse_polarity,
+)
 
-.. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
+.. rubric:: Analyze MEP on the first EMG channel, coinciding with the pulse.
 .. code-block::
 
     mep_configuration = MepConfiguration(
-        emg_channel=1,
+        emg_channel=0,  # Indexing starts from 0
 
         time_window=TimeWindow(
             start=0.020,  # in ms, after the stimulation pulse
@@ -131,20 +137,26 @@ Send pulse on channel 1 and analyze MEP.
 Targeting
 ~~~~~~~~~
 
-.. rubric:: Get channel voltages
+.. rubric:: Get channel voltages for targeting
 .. code-block::
 
-    displacement_x = 5  # mm
-    displacement_y = 5  # mm
-    rotation_angle = 90  # deg
-    intensity = 20  # V/m
+    algorithm = TargetingAlgorithm(
+        value=TargetingAlgorithm.GENETIC
+    )
+    displacement_x = 0  # mm
+    displacement_y = 0  # mm
+    rotation_angle = 45  # deg
+    intensity = 10  # V/m
 
-    target_voltages, reverse_polarities = api.get_target_voltages(
+    target = ElectricTarget(
         displacement_x=displacement_x,
         displacement_y=displacement_y,
         rotation_angle=rotation_angle,
         intensity=intensity,
+        algorithm=algorithm,
     )
+
+    target_voltages, reverse_polarities = api.get_target_voltages(target)
 
 .. rubric:: Get maximum intensity
 .. code-block::
@@ -153,6 +165,7 @@ Targeting
         displacement_x=displacement_x,
         displacement_y=displacement_y,
         rotation_angle=rotation_angle,
+        algorithm=algorithm,
     )
 
 .. rubric:: Charge all channels to target voltages.
@@ -173,20 +186,26 @@ Targeting
 Targeting combined with MEP analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rubric:: Get channel voltages
+.. rubric:: Get channel voltages for targeting
 .. code-block::
 
+    algorithm = TargetingAlgorithm(
+        value=TargetingAlgorithm.GENETIC
+    )
     displacement_x = 5  # mm
     displacement_y = 5  # mm
     rotation_angle = 90  # deg
-    intensity = 20  # V/m
+    intensity = 10  # V/m
 
-    target_voltages, reverse_polarities = api.get_target_voltages(
+    target = ElectricTarget(
         displacement_x=displacement_x,
         displacement_y=displacement_y,
         rotation_angle=rotation_angle,
         intensity=intensity,
+        algorithm=algorithm,
     )
+
+    target_voltages, reverse_polarities = api.get_target_voltages(target)
 
 .. rubric:: Charge all channels to target voltages.
 .. code-block::
@@ -196,20 +215,18 @@ Targeting combined with MEP analysis
     )
 
     # Send default pulse to all channels.
-    wait_for_completion = False  # Note that this needs to be false so that MEP can be queried for before the pulse is executed.
     time = api.get_time() + 3.0
 
     api.send_timed_default_pulse_to_all_channels(
         reverse_polarities=reverse_polarities,
         time=time,
-        wait_for_completion=wait_for_completion,
     )
 
-.. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
+.. rubric:: Analyze MEP on the first EMG channel, coinciding with the pulse.
 .. code-block::
 
     mep_configuration = MepConfiguration(
-        emg_channel=1,
+        emg_channel=0,  # Indexing starts from 0
 
         time_window=TimeWindow(
             start=0.020,  # in ms, after the stimulation pulse
@@ -258,7 +275,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
 .. code-block::
 
-    from event_interfaces.msg import ExecutionCondition
+    from event_msgs.msg import ExecutionCondition
 
     from MTMSApi import MTMSApi
 
@@ -270,7 +287,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
     channel = 1
     target_voltage = 200
     execution_condition = ExecutionCondition.TIMED
-    time = 1.0
+    time = 2.0
 
     api.send_charge(
         channel=channel,
@@ -281,7 +298,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
     waveform = api.get_default_waveform(channel)
 
-    time = 2.0
+    time = 3.0
 
     api.send_pulse(
         channel=channel,
@@ -290,7 +307,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
         time=time,
     )
 
-    time = 2.5
+    time = 3.5
 
     api.wait_until(time)
 

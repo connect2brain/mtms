@@ -1,0 +1,10 @@
+# ROS service for getting maximum intensity for the given displacements, rotation angle, and targeting algorithm.
+
+int8 displacement_x
+int8 displacement_y
+int16 rotation_angle
+
+targeting_msgs/TargetingAlgorithm algorithm
+---
+bool success
+uint8 maximum_intensity

@@ -1,0 +1,23 @@
+[Unit]
+Description=mTMS bridge service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=mtms
+
+Environment=MTMS_ROOT={{ repo_root }}
+Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
+Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+Environment=CYCLONEDDS_URI={{ repo_root }}/ros2_ws/src/shared_packages/resources/cyclonedds.xml
+
+LimitRTPRIO=99
+LimitMEMLOCK=10000000000
+
+Type=simple
+User=mtms
+ExecStart={{ repo_root }}/scripts/start-mtms-bridge
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

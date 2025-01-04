@@ -60,32 +60,32 @@ classdef MTMSApiNode < handle
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms_device/stop_device", "mtms_device_interfaces/StopDevice");
 
             obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms_device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
-            obj.request_events_client = ros2svcclient(obj.node, "/mtms_device/request_events", "mtms_device_interfaces/RequestEvents");
+            obj.request_events_client = ros2svcclient(obj.node, "/mtms_device/events/request", "mtms_device_interfaces/RequestEvents");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms_device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
+
+            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "mtms_device_interfaces/RequestTrigger");
 
             % System-related
 
             obj.session_subscriber = ros2subscriber(obj.node, "/system/session", "system_interfaces/Session", @obj.handle_session);
 
-            obj.start_session_client = ros2svcclient(obj.node, "/mtms_device/session/start", "system_interfaces/StartSession");
-            obj.stop_session_client = ros2svcclient(obj.node, "/mtms_device/session/stop", "system_interfaces/StopSession");
-
-            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "system_interfaces/RequestTrigger");
+            obj.start_session_client = ros2svcclient(obj.node, "/system/session/start", "system_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/system/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
-            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/event/pulse_feedback", "event_interfaces/PulseFeedback", @obj.handle_pulse_feedback);
-            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/event/charge_feedback", "event_interfaces/ChargeFeedback", @obj.handle_charge_feedback);
-            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/event/discharge_feedback", "event_interfaces/DischargeFeedback", @obj.handle_discharge_feedback);
-            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/event/trigger_out_feedback", "event_interfaces/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
+            obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/pulse", "event_msgs/PulseFeedback", @obj.handle_pulse_feedback);
+            obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/charge", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
+            obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/discharge", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
+            obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/trigger_out", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
 
             % To other parts of the system.
 
-            obj.get_target_voltages_client = ros2svcclient(obj.node, "/targeting/get_target_voltages", "targeting_interfaces/GetTargetVoltages");
-            obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
-            obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
-            obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/waveforms/get_multipulse_waveforms", "targeting_interfaces/GetMultipulseWaveforms");
-            obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
+            obj.get_target_voltages_client = ros2svcclient(obj.node, "/targeting/get_target_voltages", "targeting_services/GetTargetVoltages");
+            obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/targeting/get_maximum_intensity", "targeting_services/GetMaximumIntensity");
+            obj.get_default_waveform_client = ros2svcclient(obj.node, "/waveforms/get_default", "targeting_services/GetDefaultWaveform");
+            obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/waveforms/get_multipulse_waveforms", "targeting_services/GetMultipulseWaveforms");
+            obj.reverse_polarity_client = ros2svcclient(obj.node, "/waveforms/reverse_polarity", "targeting_services/ReversePolarity");
 
             obj.analyze_mep_client = ros2svcclient(obj.node, "/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
         end
@@ -187,12 +187,12 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
 
-            pulse = ros2message("event_interfaces/Pulse");
+            pulse = ros2message("event_msgs/Pulse");
             pulse.event_info = event_info;
             pulse.channel = uint8(channel);
             pulse.waveform = waveform;
@@ -222,7 +222,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
@@ -256,7 +256,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
@@ -290,7 +290,7 @@ classdef MTMSApiNode < handle
                 time = 0;
             end
 
-            event_info = ros2message("event_interfaces/EventInfo");
+            event_info = ros2message("event_msgs/EventInfo");
             event_info.id = uint16(id);
             event_info.execution_condition.value = execution_condition;
             event_info.execution_time = double(time);
@@ -379,7 +379,7 @@ classdef MTMSApiNode < handle
 
             request.displacement_x = int8(displacement_x);
             request.displacement_y = int8(displacement_y);
-            request.rotation_angle = uint16(rotation_angle);
+            request.rotation_angle = int16(rotation_angle);
             request.algorithm = algorithm;
 
             response = call(client, request);

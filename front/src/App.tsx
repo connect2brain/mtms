@@ -5,48 +5,30 @@ import styled from 'styled-components'
 import './App.css'
 
 import Providers from './providers/Providers'
-import { DatasetProvider } from './providers/DatasetProvider'
 import { HealthcheckProvider } from './providers/HealthcheckProvider'
-import { PipelineProvider } from './providers/PipelineProvider'
-import { EegProvider } from './providers/EegProvider'
 import { ConfigProvider } from './providers/ConfigProvider'
 import { SystemProvider } from './providers/SystemProvider'
 
-import { HealthcheckMessageDisplay } from 'components/HealthcheckMessageDisplay'
-import { HealthcheckStatusDisplay } from 'components/HealthcheckStatusDisplay'
+import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
+import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 import { Header as StyledHeader } from 'styles/StyledTypography'
-import { ProjectProvider } from 'providers/ProjectProvider'
 
 const App = () => {
   return (
     <Providers>
-      <ProjectProvider>
-        <SystemProvider>
-          <PipelineProvider>
-            <ConfigProvider>
-              <EegProvider>
-                <DatasetProvider>
-                  <HealthcheckProvider>
-                    <Header>mTMS control panel</Header>
-                    <HealthcheckStatusDisplay />
-                    <HealthcheckMessageDisplay />
-                    <Wrapper>
-                      <MultipleViews />
-                    </Wrapper>
-                  </HealthcheckProvider>
-                </DatasetProvider>
-              </EegProvider>
-            </ConfigProvider>
-          </PipelineProvider>
-        </SystemProvider>
-      </ProjectProvider>
+      <Header>mTMS control panel</Header>
+      <HealthcheckStatusDisplay />
+      <HealthcheckMessageDisplay />
+      <Wrapper>
+        <MultipleViews />
+      </Wrapper>
     </Providers>
   )
 }
 
 const Header = styled(StyledHeader)`
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   color: #333;
   margin-bottom: 1rem;
   padding: 0.5rem;
