@@ -1,21 +1,22 @@
+/* TODO: This could be split into multiple files. */
+
 import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { TabBar, Select, GrayedOutPanel, ActiveProps } from 'styles/General'
 
-import { LocationSelector, Point } from 'components/Experiment/LocationSelector'
-import { AngleSelector } from 'components/Experiment/AngleSelector'
-import { IntensitySelector } from 'components/Experiment/IntensitySelector'
-import { ToggleSwitch } from 'components/Experiment/ToggleSwitch'
+import { LocationSelector, Point } from 'components/experiment/LocationSelector'
+import { AngleSelector } from 'components/experiment/AngleSelector'
+import { IntensitySelector } from 'components/experiment/IntensitySelector'
+import { ToggleSwitch } from 'components/experiment/ToggleSwitch'
 
-import { ValidatedInput } from 'components/ValidatedInput'
+import { ValidatedInput } from 'components/experiment/ValidatedInput'
 
 import { SmallerTitle } from 'styles/ExperimentStyles'
 import {
   StyledPanel,
   StyledButton,
   StyledRedButton,
-  ProjectRow,
   ConfigRow,
   CloseConfigRow,
   ConfigLabel,
@@ -23,23 +24,19 @@ import {
 } from 'styles/General'
 
 import {
-  getMaximumIntensity,
   countValidTrials,
-  listProjects,
   performExperiment,
   pauseExperiment,
   resumeExperiment,
   cancelExperiment,
-  setActiveProject,
   visualizeTargets,
-} from 'ros/ros'
+  getMaximumIntensity,
+} from 'ros/experiment'
 
 import { SystemContext } from 'providers/SystemProvider'
-import { ProjectContext } from 'providers/ProjectProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 
-import { formatTime } from 'utils/utils'
 import { set } from 'cypress/types/lodash'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
@@ -364,6 +361,33 @@ enum ExperimentTab {
   PairedPulse,
 }
 
+/* Utility functions. */
+
+const formatTime = (time: number | undefined): string => {
+  if (time == undefined) {
+    return ''
+  }
+  time = Math.round(time)
+
+  const hours = Math.floor(time / 3600)
+  const minutes = Math.floor((time % 3600) / 60)
+  const seconds = time % 60
+
+  let result = ''
+
+  if (hours > 0) {
+    result += `${hours} h `
+  }
+  if (minutes > 0) {
+    result += `${minutes} min `
+  }
+  if (seconds > 0 || result === '') {
+    result += `${seconds} s`
+  }
+
+  return result.trim()
+}
+
 /* Session storage utilities. */
 
 const getData = (): any => {
@@ -383,15 +407,11 @@ const getKey = (key: string, defaultValue: any): any => {
 }
 
 export const ExperimentView = () => {
-  const { activeProject } = useContext(ProjectContext)
-
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
   const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
-
-  const [projects, setProjects] = useState<string[]>([])
 
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
@@ -402,17 +422,17 @@ export const ExperimentView = () => {
   const [selectedPulse, setSelectedPulse] = useState<number>(() => getKey('selectedPulse', 1))
 
   const [selectedPointFirstPulse, setSelectedPointFirstPulse] = useState<Point[]>(() =>
-    getKey('selectedPointFirstPulse', [{ x: 0, y: 0 }]),
+    getKey('selectedPointFirstPulse', [{ x: 0, y: 0 }])
   )
   const [selectedPointSecondPulse, setSelectedPointSecondPulse] = useState<Point[]>(() =>
-    getKey('selectedPointSecondPulse', [{ x: 0, y: 0 }]),
+    getKey('selectedPointSecondPulse', [{ x: 0, y: 0 }])
   )
 
   const [selectedAngleFirstPulse, setSelectedAngleFirstPulse] = useState<number[]>(() =>
-    getKey('selectedAngleFirstPulse', [0]),
+    getKey('selectedAngleFirstPulse', [0])
   )
   const [selectedAngleSecondPulse, setSelectedAngleSecondPulse] = useState<number[]>(() =>
-    getKey('selectedAngleSecondPulse', [0]),
+    getKey('selectedAngleSecondPulse', [0])
   )
 
   const [intensityFirstPulse, setIntensityFirstPulse] = useState<number>(() => getKey('intensityFirstPulse', 10))
@@ -449,7 +469,7 @@ export const ExperimentView = () => {
 
   const [autopause, setAutopause] = useState<boolean>(() => getKey('autopause', true))
   const [autopauseIntervalMinutes, setAutopauseIntervalMinutes] = useState<number>(() =>
-    getKey('autopauseIntervalMinutes', 10),
+    getKey('autopauseIntervalMinutes', 10)
   )
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
@@ -499,13 +519,6 @@ export const ExperimentView = () => {
       setExperimentState(feedback.experiment_state.value)
     }
     performExperiment(experiment, done_callback, feedback_callback)
-  }
-
-  const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newActiveProject = event.target.value
-    setActiveProject(newActiveProject, () => {
-      console.log('Active project set to ' + newActiveProject)
-    })
   }
 
   const handleIntensityChange = (intensity: number) => {
@@ -752,13 +765,6 @@ export const ExperimentView = () => {
     const experiment: Experiment = formExperiment()
     updateValidTrials(experiment)
   }
-
-  /* Set list of projects. */
-  useEffect(() => {
-    listProjects((projects) => {
-      setProjects(projects)
-    })
-  }, [])
 
   /* Updates the maximum intensity display. */
   useEffect(() => {
@@ -1118,17 +1124,6 @@ export const ExperimentView = () => {
   return (
     <>
       <ExperimentMetadata>
-        <ProjectRow>
-          <Label>Project:</Label>
-          <Select onChange={handleProjectChange} value={activeProject}>
-            {projects.map((project, index) => (
-              <option key={index} value={project}>
-                {project}
-              </option>
-            ))}
-          </Select>
-        </ProjectRow>
-
         <InputRow>
           <Label>Experiment:</Label>
           <Input

@@ -1,6 +1,0 @@
-# ROS service for getting default waveform.
-
-int8 channel
----
-bool success
-event_interfaces/Waveform waveform

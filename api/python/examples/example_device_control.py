@@ -1,7 +1,9 @@
 from MTMSApi import MTMSApi
 
-from event_interfaces.msg import (
+from event_msgs.msg import (
     ExecutionCondition,
+)
+from waveform_msgs.msg import (
     WaveformPhase,
     WaveformPiece,
     Waveform
@@ -10,13 +12,16 @@ from mep_interfaces.msg import (
     MepConfiguration,
     PreactivationCheck
 )
-from eeg_interfaces.msg import TimeWindow
-from targeting_interfaces.msg import (
+from mep_interfaces.msg import TimeWindow
+from targeting_msgs.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )
 
 api = MTMSApi()
+
+api.start_device()
+api.start_session()
 
 ## Single events
 
@@ -130,9 +135,9 @@ api.send_pulse(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on EMG channel 1, coinciding with the pulse.
+# Analyze MEP on the first EMG channel, coinciding with the pulse.
 mep_configuration = MepConfiguration(
-    emg_channel=1,
+    emg_channel=0,  # Indexing starts from 0
 
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse
@@ -297,9 +302,9 @@ api.send_timed_default_pulse_to_all_channels(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on EMG channel 1, coinciding with the pulse.
+# Analyze MEP on the first EMG channel, coinciding with the pulse.
 mep_configuration = MepConfiguration(
-    emg_channel=0,  # The EMG channel to analyze, indexing starts from 0
+    emg_channel=0,  # Indexing starts from 0
 
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse

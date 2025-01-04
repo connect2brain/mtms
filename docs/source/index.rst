@@ -12,9 +12,9 @@ Contents
    :maxdepth: 1
 
    Deployment environment <markdown/deployment-environment.md>
-   Real-time pipeline <markdown/real-time-pipeline.md>
    Python API <rst/python-api.rst>
    Matlab API <rst/matlab-api.rst>
+   mTMS device interfaces <markdown/mtms-device-interfaces.md>
 
 Indices and tables
 ==================
