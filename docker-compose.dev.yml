@@ -7,6 +7,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/targeting/efield/Dockerfile.cuda2
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - './data/neuronavigation:/app/data/neuronavigation/'
     network_mode: host
@@ -27,6 +29,8 @@ services:
     privileged: true
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   mtms_simulator:
@@ -35,6 +39,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/simulators/mtms_simulator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   neuronavigation:
@@ -45,6 +51,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - DISPLAY
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - './data/neuronavigation:/app/data/neuronavigation/'
@@ -61,6 +68,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/scratch/optitrack_bridge/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   planner:
@@ -69,6 +78,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/ui/planner/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - './ros2_ws/src/mtms_packages/ui/planner:/app/ros2_ws/src/mtms_packages/ui/planner/'
     network_mode: host
