@@ -4,12 +4,17 @@ from mep_interfaces.msg import (
     MepConfiguration,
     PreactivationCheck
 )
-from eeg_interfaces.msg import TimeWindow
-from targeting_interfaces.msg import (
+from mep_interfaces.msg import TimeWindow
+from experiment_interfaces.msg import Experiment, ExperimentMetadata, IntertrialInterval
+from targeting_msgs.msg import (
     TargetingAlgorithm,
-    ElectricTarget
+    ElectricTarget,
 )
-from experiment_interfaces.msg import Experiment, ExperimentMetadata, Trial, IntertrialInterval, TrialConfig, TriggerConfig
+from mtms_trial_interfaces.msg import (
+    Trial,
+    TrialConfig,
+    TriggerConfig,
+)
 
 
 api = MTMSApi(

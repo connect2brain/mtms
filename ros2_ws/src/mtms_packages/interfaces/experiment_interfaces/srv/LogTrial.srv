@@ -1,0 +1,10 @@
+ExperimentMetadata metadata
+
+uint16 trial_number
+
+mtms_trial_interfaces/Trial trial
+mtms_trial_interfaces/TrialResult trial_result
+
+uint16 num_of_attempts
+---
+bool success
