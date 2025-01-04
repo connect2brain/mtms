@@ -18,7 +18,7 @@ RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 WORKDIR /app/ros2_ws
 
 # Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
+COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Build interfaces
