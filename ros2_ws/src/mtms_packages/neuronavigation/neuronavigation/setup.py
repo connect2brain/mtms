@@ -60,16 +60,16 @@ def generate_data_files():
 
 setup(
     name='neuronavigation',
-    version='0.0.1',
+    version='0.1.0',
     packages=packages,
     package_dir=package_dir,
     install_requires=['setuptools'],
     data_files=generate_data_files(),
     zip_safe=True,
-    author='Olli-Pekka Kahilakoski',
-    author_email='olli-pekka.kahilakoski@aalto.fi',
-    description='Python packages for neuronavigation',
-    license='TODO',
+    author='Connect2Brain',
+    author_email='connect2brain@aalto.fi',
+    description='Neuronavigation integration to mTMS',
+    license='GPL-3.0-only',
     entry_points={
         'console_scripts': [
             "start = bridge.bridge:main",
