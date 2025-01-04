@@ -43,12 +43,14 @@ matlab -nodisplay -nosplash -nodesktop -r " \
 ros2RegisterMessages('/home/mtms/mtms/api/matlab'); \
 exit;"
 
-# Delete the unneeded interfaces directory, generated when running ros2RegisterMessages in MATLAB.
+# Delete the unneeded package directories, generated when running ros2RegisterMessages in MATLAB.
 rm -rf $MTMS_ROOT/api/matlab/*interfaces
+rm -rf $MTMS_ROOT/api/matlab/*msgs
+rm -rf $MTMS_ROOT/api/matlab/*services
 
 echo "Done."
 echo ""
 echo "To commit the built MATLAB message files, run the following command:"
 echo ""
-echo "  git commit api/matlab/matlab_msg_gen.zip -m \""UPD: ROS interfaces in MATLAB API\""
+echo "  git commit api/matlab/matlab_msg_gen.zip -m \"UPD: ROS interfaces in MATLAB API\""
 echo ""
