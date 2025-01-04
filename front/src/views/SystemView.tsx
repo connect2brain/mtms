@@ -8,7 +8,7 @@ import {
   dischargeFeedbackSubscriber,
   pulseFeedbackSubscriber,
   triggerOutFeedbackSubscriber,
-} from 'ros/subscribers/feedback'
+} from 'ros/feedback'
 
 import {
   PulseFeedbackMessage,
@@ -18,9 +18,9 @@ import {
   TriggerOutFeedbackMessage,
 } from 'types/event'
 
-import { SystemState } from 'components/SystemState'
-import { DeviceControl } from 'components/DeviceControl'
-import { EventFeedbacks } from 'components/EventFeedbacks'
+import { SystemState } from 'components/system/SystemState'
+import { DeviceControl } from 'components/system/DeviceControl'
+import { EventFeedbacks } from 'components/system/EventFeedbacks'
 
 const initialState = {
   channel_states: [],

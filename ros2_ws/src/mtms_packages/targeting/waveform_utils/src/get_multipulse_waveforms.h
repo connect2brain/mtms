@@ -1,0 +1,68 @@
+#include <unordered_map>
+
+#include <boost/uuid/detail/md5.hpp>
+#include <boost/algorithm/hex.hpp>
+
+#include "rclcpp/serialization.hpp" // Make sure this include is at the top of your file
+#include "rclcpp/serialized_message.hpp"
+
+#include "rclcpp/rclcpp.hpp"
+
+#include "targeting_msgs/msg/electric_target.hpp"
+
+#include "targeting_services/srv/get_multipulse_waveforms.hpp"
+#include "targeting_services/srv/get_target_voltages.hpp"
+#include "targeting_services/srv/approximate_waveform.hpp"
+#include "targeting_services/srv/estimate_voltage_after_pulse.hpp"
+#include "targeting_services/srv/reverse_polarity.hpp"
+
+#include "waveform_msgs/msg/waveform_phase.hpp"
+#include "waveform_msgs/msg/waveform_piece.hpp"
+#include "waveform_msgs/msg/waveforms_for_coil_set.hpp"
+
+using namespace std::placeholders;
+using boost::uuids::detail::md5;
+
+
+class GetMultipulseWaveforms : public rclcpp::Node {
+public:
+  GetMultipulseWaveforms();
+
+private:
+  void handle_get_multipulse_waveforms(
+    const std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Request> request,
+    std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Response> response);
+
+  void handle_get_multipulse_waveforms_no_cache(
+    const std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Request>& request,
+    std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Response>& response);
+
+  const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> approximate_waveform(
+    const uint16_t actual_voltage,
+    const uint16_t target_voltage,
+    const waveform_msgs::msg::Waveform& target_waveform,
+    const uint8_t coil_number);
+
+  const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> reverse_polarity(
+    const waveform_msgs::msg::Waveform& waveform);
+
+  const std::shared_ptr<targeting_services::srv::EstimateVoltageAfterPulse::Response> estimate_voltage_after_pulse(
+    const uint16_t voltage_before,
+    const waveform_msgs::msg::Waveform& waveform,
+    const uint8_t coil_number);
+
+  const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> get_target_voltages(
+    const targeting_msgs::msg::ElectricTarget& target);
+
+  rclcpp::Logger logger;
+  rclcpp::CallbackGroup::SharedPtr callback_group;
+
+  rclcpp::Service<targeting_services::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_service;
+
+  rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedPtr get_target_voltages_client;
+  rclcpp::Client<targeting_services::srv::ApproximateWaveform>::SharedPtr approximate_waveform_client;
+  rclcpp::Client<targeting_services::srv::EstimateVoltageAfterPulse>::SharedPtr estimate_voltage_after_pulse_client;
+  rclcpp::Client<targeting_services::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
+
+  std::unordered_map<std::string, std::shared_ptr<targeting_services::srv::GetMultipulseWaveforms::Response>> cache;
+};

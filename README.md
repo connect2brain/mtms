@@ -12,11 +12,9 @@ The software also uses external software and libraries, which reside in their ow
 repository using Git submodules, and have their own copyright owners. Here is the list of the external repositories
 and where they are located in the directory structure:
 
-[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/neuronavigation/neuronavigation/invesalius3`
+[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3`
 
-[rosbridge_suite](https://github.com/RobotWebTools/rosbridge_suite/), `ros2_ws/src/bridges/rosbridge_suite`
-
-e-field library, `ros2_ws/src/targeting/efield/src`
+e-field library, `ros2_ws/src/mtms_packages/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
 
