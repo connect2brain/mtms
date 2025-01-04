@@ -1,4 +1,4 @@
-trial_interfaces/Trial[] trials
+mtms_trial_interfaces/Trial[] trials
 ---
 bool success
 uint16 num_of_valid_trials

@@ -29,7 +29,7 @@ COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_m
 COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
-COPY ros2_ws/src/shared_packages/interfaces/trial_interfaces src/shared_interfaces/trial_interfaces/
+COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
 
 RUN source /opt/ros/iron/setup.bash && colcon build
 
