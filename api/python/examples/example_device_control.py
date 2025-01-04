@@ -135,9 +135,9 @@ api.send_pulse(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on EMG channel 1, coinciding with the pulse.
+# Analyze MEP on the first EMG channel, coinciding with the pulse.
 mep_configuration = MepConfiguration(
-    emg_channel=1,
+    emg_channel=0,  # Indexing starts from 0
 
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse
@@ -302,9 +302,9 @@ api.send_timed_default_pulse_to_all_channels(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on EMG channel 1, coinciding with the pulse.
+# Analyze MEP on the first EMG channel, coinciding with the pulse.
 mep_configuration = MepConfiguration(
-    emg_channel=0,  # The EMG channel to analyze, indexing starts from 0
+    emg_channel=0,  # Indexing starts from 0
 
     time_window=TimeWindow(
         start=0.020,  # in ms, after the stimulation pulse
