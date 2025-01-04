@@ -7,6 +7,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/utility/busylight_manager/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
     # The container needs to be privileged to access the USB device.
     #
@@ -19,6 +21,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/experiment/experiment_performer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -31,6 +35,8 @@ services:
     privileged: true
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   stimulation_allower:
@@ -39,6 +45,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/mtms/stimulation_allower/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -49,6 +57,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/targeting/targeting/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -59,6 +69,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/experiment/trial_logger/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       - '$PROJECTS_ROOT:/app/projects'
     network_mode: host
@@ -69,6 +81,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/experiment/trial_performer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -79,6 +93,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/experiment/trial_validator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -89,6 +105,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/mtms/voltage_setter/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -99,6 +117,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_utils/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   waveform_approximator:
@@ -107,6 +127,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_approximator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     volumes:
       # Mount the whole MATLAB installation into the container; this is needed for the container
       # to be able to find MATLAB license (located in /usr/local/MATLAB/[version]/licenses/).
@@ -124,6 +146,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/mep/eeg_gatherer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -134,6 +158,8 @@ services:
       dockerfile: ros2_ws/src/mtms_packages/mep/mep_analyzer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
   # Frontend-related services
@@ -162,4 +188,5 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - ROSBRIDGE_PORT=9091
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
