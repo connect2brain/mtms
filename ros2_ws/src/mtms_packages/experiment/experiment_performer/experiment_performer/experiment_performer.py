@@ -7,9 +7,9 @@ from experiment_interfaces.msg import ExperimentState
 from experiment_interfaces.action import PerformExperiment
 from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
 
-from trial_interfaces.action import PerformTrial
-from trial_interfaces.srv import ValidateTrial
-from trial_interfaces.msg import TrialTiming, TrialConfig
+from mtms_trial_interfaces.action import PerformTrial
+from mtms_trial_interfaces.srv import ValidateTrial
+from mtms_trial_interfaces.msg import TrialTiming, TrialConfig
 
 from std_msgs.msg import Bool
 

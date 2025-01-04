@@ -12,8 +12,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 
-#include "trial_interfaces/msg/trial_result.hpp"
-#include "trial_interfaces/action/perform_trial.hpp"
+#include "mtms_trial_interfaces/msg/trial_result.hpp"
+#include "mtms_trial_interfaces/action/perform_trial.hpp"
 
 #include "mep_interfaces/action/analyze_mep.hpp"
 #include "mtms_device_interfaces/action/set_voltages.hpp"
@@ -45,7 +45,7 @@ public:
 private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
-  rclcpp_action::Server<trial_interfaces::action::PerformTrial>::SharedPtr action_server;
+  rclcpp_action::Server<mtms_trial_interfaces::action::PerformTrial>::SharedPtr action_server;
   rclcpp_action::Client<mtms_device_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp_action::Client<mep_interfaces::action::AnalyzeMep>::SharedPtr analyze_mep_client;
   rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedPtr targeting_client;
@@ -88,12 +88,12 @@ private:
 
   /* ROS message creation */
   std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> create_pulses(
-      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time);
+      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &waveforms, const mtms_trial_interfaces::msg::Trial &trial, double start_time);
 
   event_msgs::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const waveform_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition);
 
   std::pair<std::vector<event_msgs::msg::TriggerOut>, std::vector<uint16_t>> create_trigger_outs(
-      const std::vector<trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time);
+      const std::vector<mtms_trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time);
 
   event_msgs::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 
@@ -117,18 +117,18 @@ private:
   /* Action handlers */
   rclcpp_action::GoalResponse handle_goal(
       const rclcpp_action::GoalUUID &uuid,
-      std::shared_ptr<const trial_interfaces::action::PerformTrial::Goal> goal);
+      std::shared_ptr<const mtms_trial_interfaces::action::PerformTrial::Goal> goal);
   rclcpp_action::CancelResponse handle_cancel(
-      const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle);
-  void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle);
+      const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
+  void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
 
-  void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<trial_interfaces::action::PerformTrial>> goal_handle);
+  void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
 
   /* Publishers */
   void create_marker();
 
   /* Logging */
-  void log_trial(const trial_interfaces::msg::Trial &trial);
+  void log_trial(const mtms_trial_interfaces::msg::Trial &trial);
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
 
   /* Timing */
@@ -136,7 +136,7 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  std::pair<bool, trial_interfaces::msg::TrialResult> perform_trial(const trial_interfaces::msg::Trial &trial);
+  std::pair<bool, mtms_trial_interfaces::msg::TrialResult> perform_trial(const mtms_trial_interfaces::msg::Trial &trial);
 
   std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
       const targeting_msgs::msg::ElectricTarget &target, const waveform_msgs::msg::WaveformsForCoilSet &target_waveforms);

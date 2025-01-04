@@ -10,7 +10,7 @@ from targeting_msgs.msg import (
     TargetingAlgorithm,
     ElectricTarget,
 )
-from trial_interfaces.msg import (
+from mtms_trial_interfaces.msg import (
     Trial,
     TrialConfig,
     TriggerConfig,
