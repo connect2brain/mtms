@@ -11,7 +11,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
+COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
