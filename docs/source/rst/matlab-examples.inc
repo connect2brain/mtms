@@ -11,30 +11,32 @@ Initialize device and session
 Execute single events
 ~~~~~~~~~~~~~~~~~~~~~
 
-.. rubric:: Charge channel 1 to 20 V
+.. rubric:: Charge the first channel to 20 V
 .. code-block:: matlab
 
-    channel = 1;
+    channel = 0;  % Channel numbering starts from 0
     target_voltage = 20;
     execution_condition = api.execution_conditions.IMMEDIATE;
-    time = 10.0;
-    wait_for_completion = true;
 
-    api.send_charge(channel, target_voltage, execution_condition, time, wait_for_completion);
+    api.send_charge(channel, target_voltage, execution_condition);
+    api.wait_for_completion();
 
 
-.. rubric:: Send pulse on channel 1, using the default waveform
+.. rubric:: Send pulse on the first channel, using the default waveform
 .. code-block:: matlab
 
     waveform = api.get_default_waveform(channel);
     reverse_polarity = false;
 
-    api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
+    api.send_pulse(channel, waveform, reverse_polarity, execution_condition);
+    api.wait_for_completion();
+
 
 .. rubric:: Discharge channel 1 completely
 .. code-block:: matlab
 
-    api.send_discharge(channel, 0, execution_condition, time, wait_for_completion);
+    api.send_discharge(channel, 0, execution_condition);
+    api.wait_for_completion();
 
 
 .. rubric:: Send trigger out on port 1.
@@ -43,10 +45,11 @@ Execute single events
     port = 1;
     duration_us = 1000;
 
-    api.send_trigger_out(port, duration_us, execution_condition, time, wait_for_completion);
+    api.send_trigger_out(port, duration_us, execution_condition);
+    api.wait_for_completion();
 
 
-Send pulse on channel 1 and analyze MEP.
+Send pulse on the first channel and analyze MEP.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. rubric:: Use default waveform for the pulse.
@@ -59,17 +62,17 @@ Send pulse on channel 1 and analyze MEP.
 .. rubric:: Generate a timed pulse.
 .. code-block:: matlab
 
-    channel = 1;
+    channel = 0;  % Channel numbering starts from 0
     execution_condition = api.execution_conditions.TIMED;
     time = api.get_time() + 3.0;
-    wait_for_completion = false;  % Note that this needs to be false so that MEP can be queried for before the pulse is executed.
 
-    api.send_pulse(channel, waveform, execution_condition, time, reverse_polarity, wait_for_completion);
+    api.send_pulse(channel, waveform, reverse_polarity, execution_condition, time);
+    % Note that there is no wait_for_completion() call here, as we will analyze the MEP after the pulse has been sent.
 
-.. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
+.. rubric:: Analyze MEP on the first EMG channel, coinciding with the pulse.
 .. code-block:: matlab
 
-    emg_channel = 1;
+    emg_channel = 0;  % Channel numbering starts from 0
 
     mep_start_time = 0.02;  % in ms, after the stimulation pulse
     mep_end_time = 0.04;  % in ms
@@ -89,66 +92,73 @@ Send pulse on channel 1 and analyze MEP.
 Targeting
 ~~~~~~~~~
 
-.. rubric:: Get channel voltages
+.. rubric:: Get channel voltages for a target
 .. code-block:: matlab
 
     displacement_x = 5;  % mm
     displacement_y = 5;  % mm
     rotation_angle = 90;  % deg
-    intensity = 20;  % V/m
+    intensity = 10;  % V/m
+    algorithm = api.get_targeting_algorithm('genetic');
 
-    [target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity);
+    target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+    [target_voltages, reverse_polarities] = api.get_target_voltages(target);
 
 .. rubric:: Get maximum intensity
 .. code-block:: matlab
 
-    maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, rotation_angle);
+    maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
 
 
 .. rubric:: Charge all channels to target voltages.
 .. code-block:: matlab
 
-    wait_for_completion = true;
-    api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
+    api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
+    api.wait_for_completion();
 
 .. rubric:: Send default pulse to all channels.
 .. code-block:: matlab
 
-    api.send_immediate_default_pulse_to_all_channels(reverse_polarities, wait_for_completion);
+    api.send_immediate_default_pulse_to_all_channels(reverse_polarities);
+    api.wait_for_completion();
 
 
 Targeting combined with MEP analysis
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. rubric:: Get channel voltages
+.. rubric:: Get channel voltages for a target
 .. code-block:: matlab
 
     displacement_x = 5;  % mm
     displacement_y = 5;  % mm
     rotation_angle = 90;  % deg
-    intensity = 20;  % V/m
+    intensity = 10;  % V/m
+    algorithm = api.get_targeting_algorithm('genetic');
 
-    [target_voltages, reverse_polarities] = api.get_target_voltages(displacement_x, displacement_y, rotation_angle, intensity);
+    target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+
+    [target_voltages, reverse_polarities] = api.get_target_voltages(target);
 
 .. rubric:: Charge all channels to target voltages.
 .. code-block:: matlab
 
-    wait_for_completion = true;
-    api.send_immediate_charge_or_discharge_to_all_channels(target_voltages, wait_for_completion);
+    api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
+    api.wait_for_completion();
 
 
 .. rubric:: Send default pulse to all channels.
 .. code-block:: matlab
 
-    wait_for_completion = false;
     time = api.get_time() + 3.0;
 
-    api.send_timed_default_pulse_to_all_channels(reverse_polarities, time, wait_for_completion);
+    api.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
+    api.wait_for_completion();
 
-.. rubric:: Analyze MEP on EMG channel 1, coinciding with the pulse.
+.. rubric:: Analyze MEP on the first EMG channel, coinciding with the pulse.
 .. code-block:: matlab
 
-    emg_channel = 1;
+    emg_channel = 0;  % Channel numbering starts from 0
 
     mep_start_time = 0.02;  % in ms, after the stimulation pulse
     mep_end_time = 0.04;  % in ms
