@@ -254,3 +254,59 @@
     - name: Install Sphinx requirements
       pip:
         requirements: "{{ repo_root }}/docs/sphinx-requirements.txt"
+
+    ########################################################################
+    # 9. Install Google Chrome (for Web-UI)
+    ########################################################################
+    - name: Download Google Chrome .deb package
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
+
+    - name: Install Google Chrome
+      ansible.builtin.apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+
+    # XXX: Unfortunately, creating the progressive web app (PWA) shortcut on the
+    #   desktop is not possible with Ansible. This must be done manually.
+
+    ########################################################################
+    # 10. Configure GRUB timeout
+    ########################################################################
+    - name: Ensure GRUB timeout is set to 1
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_TIMEOUT='
+        line: 'GRUB_TIMEOUT=1'
+
+    - name: Update GRUB configuration
+      ansible.builtin.command:
+        cmd: update-grub
+
+    ########################################################################
+    # 11. Configure log rotation for rsyslog
+    #
+    # Allows at most four rotated log files, each sized at most 5G, resulting
+    # in at most 20G of each log and its rotations, and checks daily if the logs
+    # should be rotated.
+    ########################################################################
+    - name: Ensure logrotate configuration for rsyslog has 'rotate 4'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*rotate\s+\d+'
+        line: '        rotate 4'
+        backup: yes
+
+    - name: Ensure logrotate configuration for rsyslog has 'daily'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*weekly'
+        line: '        daily'
+        backup: yes
+
+    - name: Ensure logrotate configuration for rsyslog has 'size 5G'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*size\s+\d+[KMG]?'
+        line: '        size 5G'
+        backup: yes
