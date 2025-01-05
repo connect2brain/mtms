@@ -28,3 +28,7 @@ After the installation, you can open "mTMS panel" on the desktop to access some 
 
 Other features, such as the Python and MATLAB APIs to control the mTMS device, are documented on
 a web page, to which there is a link on the computer desktop ("mtms documentation" icon).
+
+## Known Differences Between Installations
+
+For site-specific configurations and known issues, see the [Known Differences](docs/source/markdown/known-differences.md) document.
