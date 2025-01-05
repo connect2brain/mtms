@@ -20,14 +20,39 @@ Please see the repository roots of the external repositories for their respectiv
 
 ## Installation Guide
 
-For detailed installation instructions, see the [Installation Guide](docs/source/markdown/installation-guide.md).
+For installation instructions for the computer, operating system, and external software required for the mTMS system,
+see the [Installation Guide](docs/source/markdown/installation-guide.md).
+
+After those steps, you can install the mTMS software by running the installation script:
+
+```
+source scripts/install.sh [site]
+```
+
+where valid values for `[site]` can be found by listing the contents of the `sites` directory:
+
+```
+ls sites
+```
+
+The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace.
+
+### Web UI Setup
+Create a desktop link to the mTMS panel by following these steps:
+   - Open Chrome and navigate to https://localhost:3001
+   - Click "Install mTMS panel"
+   - Enable launching for desktop shortcut
 
 ## Getting started
 
-After the installation, you can open "mTMS panel" on the desktop to access some features of the system, such as the real-time pipeline.
+After the installation, you can open "mTMS panel" on the desktop to access features of the system, such as the
+experiment control panel.
 
-Other features, such as the Python and MATLAB APIs to control the mTMS device, are documented on
-a web page, to which there is a link on the computer desktop ("mtms documentation" icon).
+See the directories `api/python/examples` and `api/matlab/examples` for example scripts on how to use the APIs
+to control the mTMS device.
+
+Comprehensive API documentation can be found on a web page, to which there is a link on the computer
+desktop ("mtms documentation" icon).
 
 ## Known Differences Between Installations
 

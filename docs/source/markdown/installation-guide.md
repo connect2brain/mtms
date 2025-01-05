@@ -2,6 +2,9 @@
 
 This guide provides step-by-step instructions for installing and configuring an mTMS real-time computer system. Some steps are specific to the lab computer installation, while others (marked with *) are required for both lab computers and mobile laptops.
 
+Note that the software installation steps are in `README.md`, while the hardware, operating system, and other pre-requisite steps are
+in this guide.
+
 ## Prerequisites
 
 - Windows 11 pre-installed on the computer
@@ -158,12 +161,6 @@ This guide provides step-by-step instructions for installing and configuring an 
    ```bash
    git clone git@github.com:connect2brain/mtms.git --recurse-submodules
    ```
-
-### Web UI Setup
-1. Create Desktop Link
-   - Open Chrome and navigate to https://localhost:3000
-   - Click "Install mTMS panel"
-   - Enable launching for desktop shortcut
 
 ### MATLAB Installation
 1. Download and Install
