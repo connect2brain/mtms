@@ -310,3 +310,33 @@
         regexp: '^\s*size\s+\d+[KMG]?'
         line: '        size 5G'
         backup: yes
+
+    ########################################################################
+    # 12. Install Git Credential Manager
+    ########################################################################
+    - name: Check if Git Credential Manager is already installed
+      ansible.builtin.command: "git-credential-manager --version"
+      register: gcm_check
+      ignore_errors: true
+
+    - name: Download Git Credential Manager .deb file
+      ansible.builtin.get_url:
+        url: "https://github.com/GitCredentialManager/git-credential-manager/releases/download/v2.0.935/gcm-linux_amd64.2.0.935.deb"
+        dest: "/tmp/gcmcore.deb"
+      when: gcm_check.failed
+
+    - name: Install Git Credential Manager
+      ansible.builtin.apt:
+        deb: "/tmp/gcmcore.deb"
+        state: present
+      when: gcm_check.failed
+
+    - name: Configure Git Credential Manager
+      ansible.builtin.shell:
+        cmd: "git-credential-manager configure"
+      when: gcm_check.failed
+
+    - name: Set Git credential store to secretservice
+      ansible.builtin.shell:
+        cmd: "git config --global credential.credentialStore secretservice"
+      when: gcm_check.failed
