@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# create-site script for setting up a new site environment
+
+if [ -z "$1" ]; then
+  echo "Usage: $0 <new-site-name> [template-site-name]"
+  exit 1
+fi
+
+NEW_SITE=$1
+TEMPLATE_SITE=${2:-aalto} # Default template site is Aalto
+
+# Go to the root of the repository
+cd $MTMS_ROOT
+
+# Create the directory for the new site
+NEW_SITE_DIR="sites/$NEW_SITE"
+if [ -d "$NEW_SITE_DIR" ]; then
+  echo "Error: Directory $NEW_SITE_DIR already exists."
+  exit 1
+fi
+mkdir -p "$NEW_SITE_DIR"
+echo "Created directory $NEW_SITE_DIR"
+
+# Copy the .env file from the template site
+TEMPLATE_ENV="sites/$TEMPLATE_SITE/.env"
+NEW_ENV="$NEW_SITE_DIR/.env"
+if [ ! -f "$TEMPLATE_ENV" ]; then
+  echo "Error: Template .env file $TEMPLATE_ENV does not exist."
+  exit 1
+fi
+cp "$TEMPLATE_ENV" "$NEW_ENV"
+echo "Copied .env file from $TEMPLATE_ENV to $NEW_ENV"
+echo ""
+
+# Commit the changes
+git add "$NEW_SITE_DIR"
+git commit -m "ADD: New site: $NEW_SITE"
+
+# Provide instructions for pushing and merging
+echo ""
+echo "Done. Next steps:"
+echo "    git push origin [branch-name]"

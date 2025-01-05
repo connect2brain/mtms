@@ -1,0 +1,44 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Please provide the target site as an argument."
+    exit 1
+fi
+
+# Set target_site
+export target_site=$1
+
+# Ensure that MATLAB is installed
+if ! which matlab > /dev/null; then
+    echo "MATLAB is not installed or not in the PATH."
+    echo "Please install MATLAB and ensure that the executable is in the PATH."
+    exit 1
+fi
+
+# Run the Ansible playbook
+echo "Installing required Ansible collections..."
+ansible-galaxy collection install -r ansible/requirements.yml
+ansible-playbook ansible/setup-mtms.yml --ask-become-pass -e target_site=$target_site
+
+# Check that the playbook ran successfully
+if [ $? -ne 0 ]; then
+    echo "Error: Ansible playbook failed."
+    exit 1
+fi
+
+source $HOME/.bashrc
+
+# Build documentation
+source scripts/build-docs
+
+# Build MATLAB ROS interfaces if requested
+echo "Do you want to build the MATLAB ROS interfaces? (Y/n) (Note: This takes a few minutes to complete.)"
+read -r response
+
+if [ "$response" != "n" ]; then
+    source scripts/build-mtms-matlab
+else
+    echo "Skipping MATLAB ROS interfaces build."
+fi
+
+echo "Done."

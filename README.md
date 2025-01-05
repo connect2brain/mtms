@@ -1,35 +1,71 @@
-# mTMS project
+# mTMS Project
 
-## Copyright and permitted use
+The mTMS software project is an open-source software for multi-locus transcranial magnetic stimulation (mTMS), used for
+flexible stimulation targeting for research and clinical applications [Koponen et al., 2018]. The software has been
+developed within the Connect2Brain project.
 
-All rights to the code in this repository (excluding the submodules) belongs to Aalto University.
-
-Currently, its permitted use is limited to people in Connect2Brain project in Aalto University, the Eberhard Karl University of Tübingen,
-and D'Annunzio University of Chieti–Pescara, and Aalto University students and employees performing research assignments in Aalto C2B laboratory
-or developing the software under a non-disclosure agreement.
-
-The software also uses external software and libraries, which reside in their own repositories, are connected to this
-repository using Git submodules, and have their own copyright owners. Here is the list of the external repositories
-and where they are located in the directory structure:
-
-[InVesalius3](https://github.com/invesalius/invesalius3), `ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3`
-
-e-field library, `ros2_ws/src/mtms_packages/targeting/efield/src`
-
-Please see the repository roots of the external repositories for their respective authors and licenses.
+Currently, the use of the software requires a custom mTMS device, which is only available to project collaborators.
+However, the software can be used as a reference for developing similar systems or for educational purposes.
 
 ## Installation
 
-The mTMS software is intended to be used with a dedicated computer with real-time Ubuntu installed.
+1. **Prerequisites**: Ensure your system meets the following requirements:
+   - Supported operating system: Ubuntu 22.04.3 LTS
 
-Steps for installing and configuring the system and the software can be found under
-`Groups/SW Group/Computer installation` folder in ConnectToBrain Google Drive.
+2. **System Setup**: Follow the [Installation Guide](docs/source/markdown/installation-guide.md) to prepare your computer, operating system, and external software.
 
-After those steps, re-booting the computer automatically starts the Docker containers that run the mTMS software.
+3. **Install mTMS Software**: Run the installation script:
+   ```bash
+   source scripts/install.sh [site]
+
+Replace [site] with a valid site name from the sites directory:
+
+```bash
+ls sites
+```
+
+The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace.
+
+### Web UI Setup
+To create a desktop link to the mTMS panel:
+   - Open Chrome and navigate to https://localhost:3001
+   - Click "Install mTMS panel"
+   - Enable launching for desktop shortcut
 
 ## Getting started
 
-After the installation, you can open "mTMS panel" on the desktop to access some features of the system, such as the real-time pipeline.
+After installation:
 
-Other features, such as the Python and MATLAB APIs to control the mTMS device, are documented on
-a web page, to which there is a link on the computer desktop ("mtms documentation" icon).
+   - Open the "mTMS panel" on your desktop to access the experiment control panel.
+   - Explore example scripts in api/python/examples and api/matlab/examples to control the mTMS device.
+   - Detailed API documentation is available via the "mTMS Documentation" desktop shortcut.
+
+## Known differences between installations
+
+Site-specific configurations and known issues are detailed in the [Known Differences](docs/source/markdown/known-differences.md) document.
+
+## Guide for installing PREEMPT_RT kernel patch
+
+For instructions on installing the PREEMPT_RT patch for recent Linux kernels, see the [PREEMPT_RT Installation Guide](docs/source/markdown/preempt-rt-guide.md).
+
+## License
+
+This software is licensed under the GPL v3. See the [LICENSE](LICENSE) file for more information.
+
+### External libraries and dependencies
+
+This software depends on several external libraries and software, which are connected to this repository via Git submodules. Some of these
+are proprietary or have their own licenses. In addition, certain repositories are private and require appropriate permissions for access.
+Here are a few of the external repositories and their locations in the directory structure:
+
+- [InVesalius3](https://github.com/invesalius/invesalius3): Located at `ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3`
+- [E-field library](https://github.com/connect2brain/e-field): Used for electric field estimation, located at `ros2_ws/src/mtms_packages/targeting/efield/src` (private repository)
+- [Waveform Approximator](https://github.com/connect2brain/waveform-approximator): For approximating pulse waveforms, located at `ros2_ws/src/mtms_packages/targeting/waveform_approximator` (private repository)
+
+For a complete list, see the .gitmodules file. Refer to each repository’s root for license and authorship details.
+
+Access to private repositories may require contacting the maintainers or obtaining project-specific permissions.
+
+## References
+
+- Koponen, Lari M., Nieminen, Jaakko O., & Ilmoniemi, Risto J. (2018). Multi-locus transcranial magnetic stimulation—theory and implementation. *Brain Stimulation, 11*(4), 849–855. Elsevier. https://doi.org/10.1016/j.brs.2018.03.014

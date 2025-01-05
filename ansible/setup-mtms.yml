@@ -15,6 +15,9 @@
     # ROS distro
     ros_distro: "iron"
 
+  collections:
+    - community.general
+
   tasks:
     ########################################################################
     # 0. List and validate allowed site names
@@ -43,7 +46,32 @@
       when: target_site not in allowed_sites
 
     ########################################################################
-    # 1. Update sudoers for systemd service restart without password
+    # 1. Configure network
+    ########################################################################
+    - name: Configure static network settings
+      community.general.nmcli:
+        conn_name: Wired connection 1
+        state: present
+        type: ethernet
+        ip4: "192.168.200.221/24"
+        gw4: "192.168.200.1"
+        dns4: "192.168.200.1"
+        method4: manual
+        autoconnect: yes
+
+    - name: Disable automatic DNS and routes
+      ansible.builtin.command:
+        cmd: nmcli con modify 'Wired connection 1' ipv4.ignore-auto-dns yes ipv4.ignore-auto-routes yes
+      become: yes
+
+    - name: Activate Wired connection 1
+      community.general.nmcli:
+        conn_name: Wired connection 1
+        state: up
+      become: yes
+
+    ########################################################################
+    # 2. Update sudoers for systemd service restart without password
     ########################################################################
     - name: Allow user to restart mtms containers without sudo password
       lineinfile:
@@ -60,7 +88,48 @@
         mode: '0440'
 
     ########################################################################
-    # 2. Copy & enable systemd services (mtms & mtms-bridge)
+    # 3. Install NI drivers
+    ########################################################################
+    - name: Ensure target directory exists
+      ansible.builtin.file:
+        path: /tmp/ni-drivers
+        state: directory
+
+    - name: Copy NI driver ZIP to target
+      ansible.builtin.copy:
+        src: "{{ repo_root }}/proprietary-drivers/NILinux2024Q3DeviceDrivers.zip"
+        dest: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+
+    - name: Unzip NI drivers
+      ansible.builtin.unarchive:
+        src: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+        dest: /tmp/ni-drivers
+        remote_src: yes
+
+    - name: Install NI repository registration package
+      ansible.builtin.apt:
+        deb: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers/ni-ubuntu2204-drivers-2024Q3.deb
+
+    - name: Refresh package list
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install NI driver package (ni-rseries)
+      ansible.builtin.apt:
+        name: ni-rseries
+        state: present
+
+    - name: Install NI Hardware Configuration Utility
+      ansible.builtin.apt:
+        name: ni-hwcfg-utility
+        state: present
+
+    - name: Build NI kernel drivers
+      ansible.builtin.command:
+        cmd: dkms autoinstall
+
+    ########################################################################
+    # 4. Copy & enable systemd services (mtms & mtms-bridge)
     ########################################################################
     - name: Copy mtms.service
       template:
@@ -103,9 +172,8 @@
         state: restarted
 
     ########################################################################
-    # 3. Update environment variables in .bashrc
+    # 5. Update environment variables in .bashrc
     ########################################################################
-
     - name: Ensure MTMS_ROOT is exported
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
@@ -149,7 +217,7 @@
         state: present
 
     ########################################################################
-    # 4. Install busylight-for-humans
+    # 6. Install busylight-for-humans
     ########################################################################
     - name: Install busylight-for-humans
       pip:
@@ -172,7 +240,7 @@
       shell: udevadm control -R
 
     ########################################################################
-    # 5. Install extra packages
+    # 7. Install extra packages
     ########################################################################
     - name: Install extra packages
       apt:
@@ -181,8 +249,129 @@
         state: present
 
     ########################################################################
-    # 6. Install Sphinx requirements
+    # 8. Install Sphinx requirements
     ########################################################################
     - name: Install Sphinx requirements
       pip:
         requirements: "{{ repo_root }}/docs/sphinx-requirements.txt"
+
+    ########################################################################
+    # 9. Install Google Chrome (for Web-UI)
+    ########################################################################
+    - name: Download Google Chrome .deb package
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
+
+    - name: Install Google Chrome
+      ansible.builtin.apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+
+    # XXX: Unfortunately, creating the progressive web app (PWA) shortcut on the
+    #   desktop is not possible with Ansible. This must be done manually.
+
+    ########################################################################
+    # 10. Configure GRUB timeout
+    ########################################################################
+    - name: Ensure GRUB timeout is set to 1
+      ansible.builtin.lineinfile:
+        path: /etc/default/grub
+        regexp: '^GRUB_TIMEOUT='
+        line: 'GRUB_TIMEOUT=1'
+
+    - name: Update GRUB configuration
+      ansible.builtin.command:
+        cmd: update-grub
+
+    ########################################################################
+    # 11. Configure log rotation for rsyslog
+    #
+    # Allows at most four rotated log files, each sized at most 5G, resulting
+    # in at most 20G of each log and its rotations, and checks daily if the logs
+    # should be rotated.
+    ########################################################################
+    - name: Ensure logrotate configuration for rsyslog has 'rotate 4'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*rotate\s+\d+'
+        line: '        rotate 4'
+        backup: yes
+
+    - name: Ensure logrotate configuration for rsyslog has 'daily'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*weekly'
+        line: '        daily'
+        backup: yes
+
+    - name: Ensure logrotate configuration for rsyslog has 'size 5G'
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/rsyslog
+        regexp: '^\s*size\s+\d+[KMG]?'
+        line: '        size 5G'
+        backup: yes
+
+    ########################################################################
+    # 12. Install Git Credential Manager
+    ########################################################################
+    - name: Check if Git Credential Manager is already installed
+      ansible.builtin.command: "git-credential-manager --version"
+      register: gcm_check
+      ignore_errors: true
+
+    - name: Download Git Credential Manager .deb file
+      ansible.builtin.get_url:
+        url: "https://github.com/GitCredentialManager/git-credential-manager/releases/download/v2.0.935/gcm-linux_amd64.2.0.935.deb"
+        dest: "/tmp/gcmcore.deb"
+      when: gcm_check.failed
+
+    - name: Install Git Credential Manager
+      ansible.builtin.apt:
+        deb: "/tmp/gcmcore.deb"
+        state: present
+      when: gcm_check.failed
+
+    - name: Configure Git Credential Manager
+      ansible.builtin.shell:
+        cmd: "git-credential-manager configure"
+      when: gcm_check.failed
+
+    - name: Set Git credential store to secretservice
+      ansible.builtin.shell:
+        cmd: "git config --global credential.credentialStore secretservice"
+      when: gcm_check.failed
+
+    ########################################################################
+    # 13. Configure MATLAB
+    ########################################################################
+    - name: Add MATLAB API folder to MATLAB path
+      shell: |
+        matlab -batch "addpath('/home/mtms/mtms/api/matlab'); savepath"
+
+    ########################################################################
+    # 14. Create a desktop link to the documentation
+    ########################################################################
+    - name: Create a desktop link to the documentation
+      copy:
+        dest: "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        content: |
+          [Desktop Entry]
+          Version=1.0
+          Type=Application
+          Name=mTMS Documentation
+          Icon=application-x-html
+          Exec=xdg-open file:///home/{{ target_user }}/mtms/docs/build/html/index.html
+
+    - name: Set ownership, permissions, and trust the desktop file
+      file:
+        path: "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0755'
+        state: file
+
+    - name: Mark the desktop file as trusted
+      become_user: "{{ target_user }}"
+      command: >
+        gio set "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        metadata::trusted true
