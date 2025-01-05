@@ -16,7 +16,7 @@ However, the software can be used as a reference for developing similar systems 
 
 3. **Install mTMS software**: Run the installation script:
    ```bash
-   source scripts/install.sh [site]
+   scripts/install-mtms [site]
 
 Replace [site] with a valid site name from the sites directory:
 
