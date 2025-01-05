@@ -60,6 +60,47 @@
         mode: '0440'
 
     ########################################################################
+    # 2. Install NI drivers
+    ########################################################################
+    - name: Ensure target directory exists
+      ansible.builtin.file:
+        path: /tmp/ni-drivers
+        state: directory
+
+    - name: Copy NI driver ZIP to target
+      ansible.builtin.copy:
+        src: "{{ repo_root }}/proprietary-drivers/NILinux2024Q3DeviceDrivers.zip"
+        dest: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+
+    - name: Unzip NI drivers
+      ansible.builtin.unarchive:
+        src: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+        dest: /tmp/ni-drivers
+        remote_src: yes
+
+    - name: Install NI repository registration package
+      ansible.builtin.apt:
+        deb: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers/ni-ubuntu2204-drivers-2024Q3.deb
+
+    - name: Refresh package list
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install NI driver package (ni-rseries)
+      ansible.builtin.apt:
+        name: ni-rseries
+        state: present
+
+    - name: Install NI Hardware Configuration Utility
+      ansible.builtin.apt:
+        name: ni-hwcfg-utility
+        state: present
+
+    - name: Build NI kernel drivers
+      ansible.builtin.command:
+        cmd: dkms autoinstall
+
+    ########################################################################
     # 2. Copy & enable systemd services (mtms & mtms-bridge)
     ########################################################################
     - name: Copy mtms.service
