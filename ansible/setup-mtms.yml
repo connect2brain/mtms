@@ -340,3 +340,38 @@
       ansible.builtin.shell:
         cmd: "git config --global credential.credentialStore secretservice"
       when: gcm_check.failed
+
+    ########################################################################
+    # 13. Configure MATLAB
+    ########################################################################
+    - name: Add MATLAB API folder to MATLAB path
+      shell: |
+        matlab -batch "addpath('/home/mtms/mtms/api/matlab'); savepath"
+
+    ########################################################################
+    # 14. Create a desktop link to the documentation
+    ########################################################################
+    - name: Create a desktop link to the documentation
+      copy:
+        dest: "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        content: |
+          [Desktop Entry]
+          Version=1.0
+          Type=Application
+          Name=mTMS Documentation
+          Icon=application-x-html
+          Exec=xdg-open file:///home/{{ target_user }}/mtms/docs/build/html/index.html
+
+    - name: Set ownership, permissions, and trust the desktop file
+      file:
+        path: "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0755'
+        state: file
+
+    - name: Mark the desktop file as trusted
+      become_user: "{{ target_user }}"
+      command: >
+        gio set "/home/{{ target_user }}/Desktop/mTMS Documentation.desktop"
+        metadata::trusted true

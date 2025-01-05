@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo ""
+echo "Building documentation..."
+
 # Build the ROS workspace
 source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 
@@ -7,3 +10,6 @@ source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 cd $MTMS_ROOT/docs
 make clean
 make html
+
+echo "Done."
+echo ""
