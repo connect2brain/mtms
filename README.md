@@ -24,7 +24,7 @@ Replace [site] with a valid site name from the sites directory:
 ls sites
 ```
 
-The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace.
+The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace. Once finished, reboot the computer.
 
 ### Web UI setup
 To create a desktop link to the mTMS panel:

@@ -42,3 +42,6 @@ else
 fi
 
 echo "Done."
+echo ""
+echo "Reboot your computer to complete the installation."
+echo ""
