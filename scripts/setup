@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then
+    echo "Please provide the target site as an argument."
+    exit 1
+fi
+
+# Set target_site
+export target_site=$1
+
+echo "Installing required Ansible collections..."
+ansible-galaxy collection install -r ansible/requirements.yml
+ansible-playbook ansible/setup-mtms.yml --ask-become-pass -e target_site=$target_site
