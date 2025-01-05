@@ -15,6 +15,9 @@
     # ROS distro
     ros_distro: "iron"
 
+  collections:
+    - community.general
+
   tasks:
     ########################################################################
     # 0. List and validate allowed site names
@@ -43,7 +46,32 @@
       when: target_site not in allowed_sites
 
     ########################################################################
-    # 1. Update sudoers for systemd service restart without password
+    # 1. Configure network
+    ########################################################################
+    - name: Configure static network settings
+      community.general.nmcli:
+        conn_name: Wired connection 1
+        state: present
+        type: ethernet
+        ip4: "192.168.200.221/24"
+        gw4: "192.168.200.1"
+        dns4: "192.168.200.1"
+        method4: manual
+        autoconnect: yes
+
+    - name: Disable automatic DNS and routes
+      ansible.builtin.command:
+        cmd: nmcli con modify 'Wired connection 1' ipv4.ignore-auto-dns yes ipv4.ignore-auto-routes yes
+      become: yes
+
+    - name: Activate Wired connection 1
+      community.general.nmcli:
+        conn_name: Wired connection 1
+        state: up
+      become: yes
+
+    ########################################################################
+    # 2. Update sudoers for systemd service restart without password
     ########################################################################
     - name: Allow user to restart mtms containers without sudo password
       lineinfile:
@@ -60,7 +88,7 @@
         mode: '0440'
 
     ########################################################################
-    # 2. Install NI drivers
+    # 3. Install NI drivers
     ########################################################################
     - name: Ensure target directory exists
       ansible.builtin.file:
@@ -101,7 +129,7 @@
         cmd: dkms autoinstall
 
     ########################################################################
-    # 2. Copy & enable systemd services (mtms & mtms-bridge)
+    # 4. Copy & enable systemd services (mtms & mtms-bridge)
     ########################################################################
     - name: Copy mtms.service
       template:
@@ -144,9 +172,8 @@
         state: restarted
 
     ########################################################################
-    # 3. Update environment variables in .bashrc
+    # 5. Update environment variables in .bashrc
     ########################################################################
-
     - name: Ensure MTMS_ROOT is exported
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
@@ -190,7 +217,7 @@
         state: present
 
     ########################################################################
-    # 4. Install busylight-for-humans
+    # 6. Install busylight-for-humans
     ########################################################################
     - name: Install busylight-for-humans
       pip:
@@ -213,7 +240,7 @@
       shell: udevadm control -R
 
     ########################################################################
-    # 5. Install extra packages
+    # 7. Install extra packages
     ########################################################################
     - name: Install extra packages
       apt:
@@ -222,7 +249,7 @@
         state: present
 
     ########################################################################
-    # 6. Install Sphinx requirements
+    # 8. Install Sphinx requirements
     ########################################################################
     - name: Install Sphinx requirements
       pip:
