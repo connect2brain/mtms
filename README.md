@@ -18,14 +18,9 @@ e-field library, `ros2_ws/src/mtms_packages/targeting/efield/src`
 
 Please see the repository roots of the external repositories for their respective authors and licenses.
 
-## Installation
+## Installation Guide
 
-The mTMS software is intended to be used with a dedicated computer with real-time Ubuntu installed.
-
-Steps for installing and configuring the system and the software can be found under
-`Groups/SW Group/Computer installation` folder in ConnectToBrain Google Drive.
-
-After those steps, re-booting the computer automatically starts the Docker containers that run the mTMS software.
+For detailed installation instructions, see the [Installation Guide](docs/source/markdown/installation-guide.md).
 
 ## Getting started
 
