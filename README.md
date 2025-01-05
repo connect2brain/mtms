@@ -32,3 +32,7 @@ a web page, to which there is a link on the computer desktop ("mtms documentatio
 ## Known Differences Between Installations
 
 For site-specific configurations and known issues, see the [Known Differences](docs/source/markdown/known-differences.md) document.
+
+## Guide for installing PREEMPT_RT kernel
+
+For instructions on how to install the PREEMPT_RT kernel for recent kernel versions, see the [PREEMPT_RT Installation Guide](docs/source/markdown/preempt-rt-guide.md).
