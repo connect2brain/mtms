@@ -1,6 +1,6 @@
-# mTMS Project
+# mTMS project
 
-The mTMS software project is an open-source software for multi-locus transcranial magnetic stimulation (mTMS), used for
+The mTMS software is an open-source software for multi-locus transcranial magnetic stimulation (mTMS), used for
 flexible stimulation targeting for research and clinical applications [Koponen et al., 2018]. The software has been
 developed within the Connect2Brain project.
 
@@ -12,11 +12,11 @@ However, the software can be used as a reference for developing similar systems 
 1. **Prerequisites**: Ensure your system meets the following requirements:
    - Supported operating system: Ubuntu 22.04.3 LTS
 
-2. **System Setup**: Follow the [Installation Guide](docs/source/markdown/installation-guide.md) to prepare your computer, operating system, and external software.
+2. **System setup**: Follow the [Installation guide](docs/source/markdown/installation-guide.md) to prepare your computer, operating system, and external software.
 
-3. **Install mTMS Software**: Run the installation script:
+3. **Install mTMS software**: Run the installation script:
    ```bash
-   source scripts/install.sh [site]
+   scripts/install-mtms [site]
 
 Replace [site] with a valid site name from the sites directory:
 
@@ -24,11 +24,11 @@ Replace [site] with a valid site name from the sites directory:
 ls sites
 ```
 
-The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace.
+The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace. Once finished, reboot the computer.
 
-### Web UI Setup
+### Web UI setup
 To create a desktop link to the mTMS panel:
-   - Open Chrome and navigate to https://localhost:3001
+   - Open Chrome and navigate to http://localhost:3001
    - Click "Install mTMS panel"
    - Enable launching for desktop shortcut
 
@@ -40,13 +40,22 @@ After installation:
    - Explore example scripts in api/python/examples and api/matlab/examples to control the mTMS device.
    - Detailed API documentation is available via the "mTMS Documentation" desktop shortcut.
 
+After opening the mTMS panel, ensure that it reports that the mTMS device is powered on
+and started. If not, first turn it on by pressing the power button on the device.
+After that, press "Start device" on the front-page of the panel and wait for
+the device to start.
+
+Ensure also that:
+   - A BNC cable is connected from the 'sync' port of the mTMS device to 'Port A in' of the EEG/EMG device.
+   - Check that the EEG/EMG device is connected to the real-time computer with an Ethernet cable via the router.
+
 ## Known differences between installations
 
-Site-specific configurations and known issues are detailed in the [Known Differences](docs/source/markdown/known-differences.md) document.
+Site-specific configurations and known issues are detailed in the [Known differences](docs/source/markdown/known-differences.md) document.
 
 ## Guide for installing PREEMPT_RT kernel patch
 
-For instructions on installing the PREEMPT_RT patch for recent Linux kernels, see the [PREEMPT_RT Installation Guide](docs/source/markdown/preempt-rt-guide.md).
+For instructions on installing the PREEMPT_RT patch for recent Linux kernels, see the [PREEMPT_RT installation guide](docs/source/markdown/preempt-rt-guide.md).
 
 ## License
 
