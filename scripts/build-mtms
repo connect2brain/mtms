@@ -8,6 +8,20 @@ RESET=$(tput sgr0)
 # Set the disk space threshold (in GB)
 DISK_SPACE_THRESHOLD=20
 
+# Check that submodules are initialized and non-empty.
+SHARED_PACKAGES_DIR="$MTMS_ROOT/ros2_ws/src/shared_packages"
+ROSBRIDGE_DIR="$MTMS_ROOT/ros2_ws/src/shared_packages/rosbridge/rosbridge_suite"
+
+check_dir_non_empty() {
+    if [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ]; then
+        echo "${BOLD}${UNDERLINE}Error:${RESET} $1 not found or is empty. Run 'git submodule update --init --recursive' to initialize submodules."
+        exit 1
+    fi
+}
+
+check_dir_non_empty "$SHARED_PACKAGES_DIR"
+check_dir_non_empty "$ROSBRIDGE_DIR"
+
 # Function to check disk space and clean up Docker images if necessary
 check_disk_space_and_clean() {
     local free_space=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
