@@ -13,8 +13,8 @@ echo "  • ${BOLD}Building the MATLAB interfaces...${RESET}"
 
 # Create a temporary directory for all the interfaces
 mkdir -p $MTMS_ROOT/ros2_ws/src/temp_interfaces
-ln -s $MTMS_ROOT/ros2_ws/src/shared_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
-ln -s $MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
+ln -sf $MTMS_ROOT/ros2_ws/src/shared_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
+ln -sf $MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
 
 # Generate the MATLAB message files
 matlab -nodisplay -nosplash -nodesktop -r " \

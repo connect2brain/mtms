@@ -10,6 +10,7 @@ source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 cd $MTMS_ROOT/docs
 make clean
 make html
+cd $MTMS_ROOT
 
 echo "Done."
 echo ""
