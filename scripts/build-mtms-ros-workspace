@@ -5,6 +5,13 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
+# Ensure that $MTMS_ROOT is set
+if [ -z "$MTMS_ROOT" ]; then
+    echo "Error: \$MTMS_ROOT is not set."
+    echo "Please set \$MTMS_ROOT to the root directory of the mTMS repository."
+    exit 1
+fi
+
 echo ""
 echo "Building the ROS workspace:"
 

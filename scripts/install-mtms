@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 if [ -z "$1" ]; then
     echo "Please provide the target site as an argument."
@@ -18,7 +19,7 @@ fi
 # Run the Ansible playbook
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
-ansible-playbook -i 'localhost,' ansible/setup-mtms.yml --ask-become-pass -e target_site=$target_site
+#ansible-playbook -i 'localhost,' ansible/install-mtms.yml --ask-become-pass -e target_site=$target_site
 
 # Check that the playbook ran successfully
 if [ $? -ne 0 ]; then
@@ -26,7 +27,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-source $HOME/.bashrc
+set +e  # Allow sourcing of .bash_env before ROS workspace is built
+source $HOME/.bash_env
+set -e
 
 # Build documentation
 source scripts/build-docs

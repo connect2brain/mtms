@@ -172,49 +172,64 @@
         state: restarted
 
     ########################################################################
-    # 5. Update environment variables in .bashrc
+    # 5. Update environment variables in .bash_env and .bashrc
     ########################################################################
+    - name: Ensure .bash_env exists
+      file:
+        path: "{{ target_home }}/.bash_env"
+        state: touch
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: "0644"
+
     - name: Ensure MTMS_ROOT is exported
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "export MTMS_ROOT={{ repo_root }}"
         state: present
 
     - name: Ensure MTMS_ENV_FILE points to the .env file
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "export MTMS_ENV_FILE=$MTMS_ROOT/sites/{{ target_site }}/.env"
         state: present
 
     - name: Ensure script directory is in PATH
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "export PATH=$PATH:{{ repo_root }}/scripts/"
         state: present
 
     - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
         state: present
 
     - name: Ensure ROS is sourced
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "source /opt/ros/{{ ros_distro }}/setup.bash"
         state: present
 
     - name: Ensure local ROS workspace is sourced
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: "source $MTMS_ROOT/ros2_ws/install/local_setup.bash"
         state: present
 
-    - name: Ensure PYTHONPATH for the Python API
+    - name: Ensure PYTHONPATH for the Python API is set
       lineinfile:
-        dest: "{{ target_home }}/.bashrc"
+        dest: "{{ target_home }}/.bash_env"
         line: 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH'
         state: present
+
+    - name: Ensure .bash_env is sourced in .bashrc
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source {{ target_home }}/.bash_env"
+        state: present
+        insertafter: EOF
 
     ########################################################################
     # 6. Install busylight-for-humans
@@ -247,6 +262,11 @@
         name:
           - python3.10-venv  # Required for building ROS2 packages for MATLAB
         state: present
+
+    - name: Install Python packages
+      pip:
+        name:
+          - Cython  # Required for building ROS2 packages for neuronavigation
 
     ########################################################################
     # 8. Install Sphinx requirements
