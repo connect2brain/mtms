@@ -13,7 +13,6 @@ jobs:
   test:
     name: Run Test Suite
     runs-on: ubuntu-20.04
-    needs: build
     env:
       COMPOSE_FILE: .github/ci/docker-compose.test.yml
     steps:
