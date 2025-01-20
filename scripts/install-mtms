@@ -19,7 +19,7 @@ fi
 # Run the Ansible playbook
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
-#ansible-playbook -i 'localhost,' ansible/install-mtms.yml --ask-become-pass -e target_site=$target_site
+ansible-playbook -i 'localhost,' ansible/install-mtms.yml --ask-become-pass -e target_site=$target_site
 
 # Check that the playbook ran successfully
 if [ $? -ne 0 ]; then
