@@ -95,10 +95,9 @@
         path: /tmp/ni-drivers
         state: directory
 
-    - name: Copy NI driver ZIP to target
-      ansible.builtin.copy:
-        src: "{{ repo_root }}/proprietary-drivers/NILinux2024Q3DeviceDrivers.zip"
-        dest: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+    - name: Download NI driver ZIP
+      ansible.builtin.command:
+        cmd: wget -q --show-progress -O /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2024Q3/NILinux2024Q3DeviceDrivers.zip
 
     - name: Unzip NI drivers
       ansible.builtin.unarchive:
