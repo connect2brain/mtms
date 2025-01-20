@@ -33,7 +33,7 @@ check_disk_space_and_clean() {
             echo "Cleaning up Docker images..."
 
             # Remove unused build cache layers
-            docker builder prune -a -f --keep-storage=10GB
+            docker builder prune -a -f
 
             # Remove dangling images
             docker image prune -f
