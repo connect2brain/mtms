@@ -1,8 +1,13 @@
 # .github/workflows/ci.yml
 name: CI
 
+# Note: As of Jan 2025, contains several issues which prevent the workflow to be run automatically, namely:
+#   - The lack of docker-compose in the test environment.
+#   - The lack of access to private repositories (which are submodules of the mTMS repository).
+# For those reasons, disable running the workflow automatically.
+
 on:
-  pull_request:
+  workflow_dispatch: # This allows the workflow to be run manually but disables automatic triggers
 
 permissions:
   contents: read
@@ -13,7 +18,6 @@ jobs:
   test:
     name: Run Test Suite
     runs-on: ubuntu-20.04
-    needs: build
     env:
       COMPOSE_FILE: .github/ci/docker-compose.test.yml
     steps:
