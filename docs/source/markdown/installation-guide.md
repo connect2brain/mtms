@@ -100,7 +100,7 @@ in this guide.
 
 3. Partition Setup
    - Create root partition:
-     - Size: 120000 MB
+     - Size: 150000 MB
      - Type: Primary
      - Location: Beginning
      - File system: Ext4
@@ -148,19 +148,13 @@ in this guide.
    ```
 
 ### Repository Setup
-1. Generate SSH Key
-   ```bash
-   ssh-keygen -o
-   ```
-
-2. Add SSH Key to GitHub
-   - Copy contents of ~/.ssh/id_rsa.pub
-   - Add to GitHub under Settings -> SSH and GPG keys
-
-3. Clone Repository
+1. Clone Repository
    ```bash
    git clone git@github.com:connect2brain/mtms.git --recurse-submodules
    ```
+
+When asked for a user account and password, you can, e.g., use a Personal Access Token received
+from your GitHub account.
 
 ### MATLAB Installation
 1. Download and Install
@@ -192,16 +186,9 @@ in this guide.
 
 #### Tubingen
 ```bash
-sudo cp ~/MATLAB-license/license_mtms-tubingen_556154_R2024b.lic /usr/local/MATLAB/R2024b/licenses
+sudo cp ~/MATLAB-license/license.lic /usr/local/MATLAB/R2024b/licenses
 ```
 
 #### Chieti
-- Configuration TBD (As of Sep 2024)
-
-### InVesalius Installation (Chieti Only)
-1. Install dependencies as per [Wiki](https://github.com/invesalius/invesalius3/wiki)
-2. Build Cython modules in `invesalius_ros/ros2_ws/src/neuronavigation/neuronavigation/invesalius3`
-3. Verify installation by running:
-   ```bash
-   python3 app.py
-   ```
+- Configuration as of Jan 2025 requires manual modification of `ros_entrypoint.sh` in `waveform_approximator`.
+Effort could be put into integrating these changes into the `main` branch for easier SW deployment.
