@@ -5,6 +5,7 @@ import theme from 'styles/theme'
 import { SystemProvider } from './SystemProvider'
 import { ConfigProvider } from './ConfigProvider'
 import { HealthcheckProvider } from './HealthcheckProvider'
+import { NeuroSimoProvider } from './NeuroSimoProvider'
 
 interface Props {
   children: React.ReactNode
@@ -15,7 +16,11 @@ const Providers: React.FC<Props> = ({ children }) => {
     <ThemeProvider theme={theme}>
       <SystemProvider>
         <ConfigProvider>
-          <HealthcheckProvider>{children}</HealthcheckProvider>
+          <HealthcheckProvider>
+            <NeuroSimoProvider>
+              {children}
+            </NeuroSimoProvider>
+          </HealthcheckProvider>
         </ConfigProvider>
       </SystemProvider>
     </ThemeProvider>

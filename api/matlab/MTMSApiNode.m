@@ -27,6 +27,8 @@ classdef MTMSApiNode < handle
         charge_feedback_subscriber
         discharge_feedback_subscriber
 
+        decider_enabled_subscriber
+
         get_target_voltages_client
         get_maximum_intensity_client
         get_default_waveform_client
@@ -78,6 +80,17 @@ classdef MTMSApiNode < handle
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/charge", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
             obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/discharge", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
             obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/trigger_out", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
+
+            % Decider.
+            obj.decider_enabled_subscriber = ros2subscriber(...
+                obj.node, ...
+                '/pipeline/decider/enabled', ...
+                'std_msgs/Bool', ...
+                @obj.handle_decider_enabled, ...
+                'Durability', 'transientlocal', ...
+                'History', 'keeplast', ...
+                'Depth', 1, ...
+                'Reliability', 'reliable');
 
             % To other parts of the system.
 
@@ -471,6 +484,17 @@ classdef MTMSApiNode < handle
             end
 
             obj.printer.print_state(obj.system_state, obj.session);
+        end
+
+        % Decider
+        function handle_decider_enabled(obj, msg)
+            if msg.data
+                delete(obj.node);
+
+                % Disable API completely if Decider is enabled; this is to prevent Decider from inadvertently charging
+                % the channels to the maximum voltage (due to using PWM) while API is being used to deliver pulses.
+                assert(false, "Decider is enabled. All API operations are now disabled. Please restart.");
+            end
         end
 
         % Session
