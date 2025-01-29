@@ -44,6 +44,12 @@ else
     echo "Skipping MATLAB ROS interfaces build."
 fi
 
+# Register MATLAB ROS interfaces
+source scripts/register-mtms-matlab
+
+# Build mTMS containers
+source scripts/build-mtms
+
 echo "Done."
 echo ""
 echo "Reboot your computer to complete the installation."
