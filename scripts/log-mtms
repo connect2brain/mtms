@@ -133,10 +133,7 @@ if [ -n "$CONTAINER_NAME" ] && [ "$TIME_FILTERS" = false ]; then
 
     eval $CMD
 else
-    # XXX: For some reason, 'journalctl -u mtms', which worked before, nowadays display binary blobs instead
-    #   of ASCII lines. For that reason, change to 'journalctl -u docker', which displays all Docker logs regardless
-    #   of origin.
-    CMD="journalctl -u docker"
+    CMD="journalctl -u mtms"
     if [ "$TIME_FILTERS" = false ]; then
         CMD="$CMD --lines $TAIL_LINES"
     fi
