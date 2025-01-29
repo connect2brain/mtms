@@ -124,6 +124,25 @@ consecutive samples is 0.2 ms. However, due to this adjustment mechanism, the in
 between 0.2 ms and 0.3999 ms, potentially causing dropped samples. Hence, changing trigger mode to "send
 triggers as packets" may help in preventing samples from dropping.
 
+### Connection-related error messages in logs
+
+**Issue:**
+
+The system logs (displayed by running, e.g., `log-mtms`) show error messages such as:
+
+```
+ddsi_udp_conn_write to udp/239.255.0.1:7401 failed with retcode -1
+```
+
+**Possible cause:**
+
+ROS2 does not seem to always recover from the computer going to the sleep mode, causing the components to not be
+able to communicate with each other, resulting in the error messages such as above.
+
+**Solution:**
+
+Rebooting the computer returns the system into a stable state.
+
 ## Known differences between installations
 
 Site-specific configurations and known issues are detailed in the [Known differences](docs/source/markdown/known-differences.md) document.
