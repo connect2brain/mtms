@@ -49,6 +49,77 @@ Ensure also that:
    - A BNC cable is connected from the 'sync' port of the mTMS device to 'Port A in' of the EEG/EMG device.
    - Check that the EEG/EMG device is connected to the real-time computer with an Ethernet cable via the router.
 
+## Troubleshooting
+
+### Real-time pipeline cannot keep up with the sample stream
+
+**Issue:**
+The real-time pipeline processing rate of a 5 kHz sample stream drops to 2-3 kHz or lower.
+
+**Possible Cause:**
+The Neuronavigation computer is in the power-saving mode, which inadvertently slows down the ROS message stream.
+The root cause for this is unknown.
+
+**Solution:**
+- **Disable Power-Saving Mode:** Turn off the power-saving features on the Neuronavigation computer.
+- **Wake from Power-Saving:** If power-saving mode is active, reactivate the computer to resume normal operation.
+
+
+### MATLAB forgets ROS message types
+
+**Issue:**
+MATLAB may not find previously registered ROS message types, resulting in errors when creating the API object.
+For example:
+
+```matlab
+>> api = MTMSApi();
+...
+Unrecognized message type mtms_device_interfaces/DeviceState. Use ros2 msg list to see available types.
+...
+
+**Possible Cause:**
+An unknown issue causes MATLAB to forget registered ROS message types.
+
+**Solution:**
+Run the following script to re-register the message types:
+
+```bash
+scripts/register-mtms-matlab
+```
+
+### MATLAB message building crashes in Tübingen
+
+**Issue:**
+Executing scripts/build-mtms-matlab to rebuild ROS message types causes MATLAB to crash. Reinstalling the operating
+system does not resolve the problem.
+
+**Possible Cause:**
+Unknown. There may be compatibility issues affecting the message-building process.
+
+**Solution:**
+- **Use Pre-Built Message Types:** Utilize the pre-built MATLAB message types available in `api/matlab/matlab_msg_gen.zip`.
+Run the registration script:
+
+```bash
+scripts/register-mtms-matlab
+```
+
+### MEP analyzer does not tolerate dropped samples
+
+**Issue:**
+EEG streaming occasionally drops samples due to the UDP protocol, and the MEP analyzer cannot currently handle it.
+This prevents successful MEP analysis.
+
+**Solution:**
+The long-term solution is to enhance the MEP analyzer to tolerate one or two consecutive dropped samples.
+
+**Additional note:**
+If the Bittium NeurOne is configured to "send triggers as channels," EEG timestamps are adjusted by NeurOne
+upon receiving a trigger. For example, with a 5 kHz sampling rate, the expected time difference between
+consecutive samples is 0.2 ms. However, due to this adjustment mechanism, the interval can vary
+between 0.2 ms and 0.3999 ms, potentially causing dropped samples. Hence, changing trigger mode to "send
+triggers as packets" may help in preventing samples from dropping.
+
 ## Known differences between installations
 
 Site-specific configurations and known issues are detailed in the [Known differences](docs/source/markdown/known-differences.md) document.
