@@ -61,14 +61,14 @@ The Neuronavigation computer is in the power-saving mode, which inadvertently sl
 The root cause for this is unknown.
 
 **Solution:**
-- **Disable Power-Saving Mode:** Turn off the power-saving features on the Neuronavigation computer.
-- **Wake from Power-Saving:** If power-saving mode is active, reactivate the computer to resume normal operation.
+- **Wake from power-saving:** If power-saving mode is active, wake up the computer.
+- **Turn off the Neuronavigation computer:** Alternatively, the Neuronavigation computer can be turned off.
 
 
 ### MATLAB forgets ROS message types
 
 **Issue:**
-MATLAB may not find previously registered ROS message types, resulting in errors when creating the API object.
+MATLAB may sometimes not find previously registered ROS message types, resulting in errors when creating the API object.
 For example:
 
 ```matlab
@@ -76,9 +76,10 @@ For example:
 ...
 Unrecognized message type mtms_device_interfaces/DeviceState. Use ros2 msg list to see available types.
 ...
+```
 
-**Possible Cause:**
-An unknown issue causes MATLAB to forget registered ROS message types.
+**Possible cause:**
+The cause is unknown.
 
 **Solution:**
 Run the following script to re-register the message types:
@@ -93,16 +94,19 @@ scripts/register-mtms-matlab
 Executing scripts/build-mtms-matlab to rebuild ROS message types causes MATLAB to crash. Reinstalling the operating
 system does not resolve the problem.
 
-**Possible Cause:**
+**Possible cause:**
 Unknown. There may be compatibility issues affecting the message-building process.
 
 **Solution:**
-- **Use Pre-Built Message Types:** Utilize the pre-built MATLAB message types available in `api/matlab/matlab_msg_gen.zip`.
+- **Use pre-built message types:** Utilize the pre-built MATLAB message types available in `api/matlab/matlab_msg_gen.zip`.
 Run the registration script:
 
 ```bash
 scripts/register-mtms-matlab
 ```
+
+When needed to re-build (i.e., if the message definitions change), do it in Aalto or Chieti, and commit and share the
+resulting `.zip` file.
 
 ### MEP analyzer does not tolerate dropped samples
 
