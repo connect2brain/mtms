@@ -2,6 +2,9 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
+
+from std_msgs.msg import Bool
 
 from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents, RequestTrigger
@@ -127,6 +130,17 @@ class MTMSApiNode(Node):
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/mtms_device/events/feedback/charge', self.handle_charge_feedback, 10)
         self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/mtms_device/events/feedback/discharge', self.handle_discharge_feedback, 10)
         self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/mtms_device/events/feedback/trigger_out', self.handle_trigger_out_feedback, 10)
+
+        # Define a QoS profile with Transient Local durability
+        decider_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1
+        )
+
+        self.decider_enabled_subscriber = self.create_subscription(Bool, '/pipeline/decider/enabled', self.handle_decider_enabled, decider_qos)
+        self.is_decider_enabled = False
 
         self.event_feedback = {}
 
@@ -486,6 +500,17 @@ class MTMSApiNode(Node):
             session=self.session,
             force=force,
         )
+
+    # Decider
+
+    def handle_decider_enabled(self, msg):
+        enabled = msg.data
+        if enabled:
+            # Disable API completely if Decider is enabled; this is to prevent Decider from inadvertently charging
+            # the channels to the maximum voltage (due to using PWM) while API is being used to deliver pulses.
+            self.logger.error("Decider is enabled. All API operations are now disabled. Please restart.")
+            self.destroy_node()
+            rclpy.shutdown()
 
     # Session
 
