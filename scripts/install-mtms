@@ -16,16 +16,19 @@ if ! which matlab > /dev/null; then
     exit 1
 fi
 
+# Check if Ansible is installed
+if ! command -v ansible-playbook &> /dev/null; then
+    echo "Ansible is not installed. Installing Ansible..."
+    sudo apt update
+    sudo apt install -y software-properties-common
+    sudo add-apt-repository --yes --update ppa:ansible/ansible
+    sudo apt install -y ansible
+fi
+
 # Run the Ansible playbook
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
 ansible-playbook -i 'localhost,' ansible/install-mtms.yml --ask-become-pass -e target_site=$target_site
-
-# Check that the playbook ran successfully
-if [ $? -ne 0 ]; then
-    echo "Error: Ansible playbook failed."
-    exit 1
-fi
 
 set +e  # Allow sourcing of .bash_env before ROS workspace is built
 source $HOME/.bash_env
@@ -43,6 +46,12 @@ if [ "$response" != "n" ]; then
 else
     echo "Skipping MATLAB ROS interfaces build."
 fi
+
+# Register MATLAB ROS interfaces
+source scripts/register-mtms-matlab
+
+# Build mTMS containers
+source scripts/build-mtms
 
 echo "Done."
 echo ""
