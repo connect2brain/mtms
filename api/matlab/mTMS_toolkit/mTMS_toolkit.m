@@ -1,33 +1,58 @@
 classdef mTMS_toolkit < handle
-    %UNTITLED Summary of this class goes here
-    %   Detailed explanation goes here
+    %   A toolkit for managing multi-locus Transcranial Magnetic Stimulation (mTMS) experiments.
+    %   This class provides an interface for configuring and executing TMS experiments,
+    %   including pulse generation, waveform configuration, and EMG/EEG data processing.
+    %   It interacts with an external API to control hardware and manage experimental parameters.
 
     properties
-        api
-        mep_configuration
-        pulse_sequence
-        save_dir
-        block_count
-        closed_loop_trial_index
-        closed_loop_results
-        closed_loop_experiment_count
-        MEP_time_window
-        enable_EMG_filter
-        readout_fs
+        api % External API for interfacing with TMS hardware
+        mep_configuration % Configuration for Motor Evoked Potential (MEP) analysis
+        pulse_sequence % Sequence of pulses for stimulation
+        save_dir % Directory for saving experiment results
+        block_count % Counter for experiment blocks
+        closed_loop_trial_index % Index for closed-loop trial tracking
+        closed_loop_results % Results from closed-loop experiments
+        closed_loop_experiment_count % Counter for closed-loop experiments
+        MEP_time_window % Time window for MEP analysis (in seconds)
+        enable_EMG_filter % Flag to enable/disable EMG filtering
+        readout_fs % Sampling frequency for readout data (in Hz)
+        cleanupObj % Object to handle path cleanup on object destruction
     end
 
     methods
         function obj = mTMS_toolkit(api,save_dir)
-            %UNTITLED Construct an instance of this class
-            %   Detailed explanation goes here
+            % Initializes the toolkit with the provided API and save directory, sets up default
+            % MEP configurations, and adds necessary paths for auxiliary functions.
+            %
+            % :param api: External API object for interfacing with TMS hardware
+            % :type api: object
+            % :param save_dir: Directory path for saving experiment results
+            % :type save_dir: char
+            %
+            % :return: obj: Instance of the mTMS_toolkit class
+            % :rtype: mTMS_toolkit
 
-            addpath(genpath("/home/mtms/projects/mTMS_toolkit/misc"))
+            % Get path to the misc folder
+            classFilePath = mfilename('fullpath');
+            classDir = fileparts(classFilePath);
+            miscDir = fullfile(classDir, 'misc');
+
+            % Check if the misc folder exists
+            if isfolder(miscDir)
+                % Add misc folder contents to the MATLAB path
+                addpath(genpath(miscDir));
+                
+                % Set up cleanup to remove the path when the object is destroyed
+                obj.cleanupObj = onCleanup(@() rmpath(genpath(miscDir)));
+            else
+                warning('The misc folder does not exist at: %s', miscDir);
+            end
+
             obj.api = api;
             obj.generate_default_MEP_configuration()
             obj.set_MEP_processing_options([0.015,0.045],5000,1)
             obj.save_dir = save_dir;
             obj.reset_experiment
-
 
             if ~isempty(obj.save_dir) && ~exist(obj.save_dir,"dir")
                 mkdir(obj.save_dir)
@@ -35,6 +60,9 @@ classdef mTMS_toolkit < handle
         end
 
         function reset_experiment(obj)
+            % Resets the experiment state.
+            % Does not require any parameters. Does not return any value.
+
             obj.block_count = 1;
             obj.closed_loop_trial_index = 1;
             obj.closed_loop_experiment_count = 1;
@@ -42,45 +70,21 @@ classdef mTMS_toolkit < handle
         end
 
         function set_MEP_processing_options(obj,MEP_time_window,readout_fs,enable_filter)
+            % Sets the time window, sampling frequency, and filtering options for MEP analysis.
+            %
+            % :param MEP_time_window: Time window for MEP analysis [start, end] in seconds
+            % :type MEP_time_window: double array
+            % :param readout_fs: Sampling frequency for readout data in Hz
+            % :type readout_fs: double
+            % :param enable_filter: Flag to enable/disable EMG filtering
+            % :type enable_filter: logical
+            %
+            % :return: No return value
+
             obj.MEP_time_window = MEP_time_window;
             obj.enable_EMG_filter = enable_filter;
             obj.readout_fs = readout_fs;
         end
-
-        function [groupedData,medians] = extract_amplitude_by_label(obj,dataStruct)
-            % extractAmplitudeByLabel Groups readout.amplitude by unique label
-            %
-            % INPUT:
-            %   dataStruct - array of structures with fields:
-            %                - label: string or char array
-            %                - readout: struct with field 'amplitude' (numeric)
-            %
-            % OUTPUT:
-            %   groupedData - structure with fields for each unique label
-            %                 Each field contains an array of amplitude values
-
-            % Extract labels
-            labels = arrayfun(@(s) string(s.label), dataStruct);
-
-            % Get unique labels
-            uniqueLabels = unique(labels);
-
-            % Initialize outputs
-            groupedData = struct();
-            medians = struct();
-
-            % Loop through each unique label
-            for i = 1:numel(uniqueLabels)
-                lbl = uniqueLabels(i);
-                idx = labels == lbl;
-                amplitudes = arrayfun(@(s) s.readout.amplitude, dataStruct(idx));
-
-                fieldName = matlab.lang.makeValidName(lbl);
-                groupedData.(fieldName) = amplitudes;
-                medians.(fieldName) = median(amplitudes);
-            end
-        end
-
 
         function generate_MEP_configuration(obj,emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
             % Configure settings for capturing EMG segments.
@@ -108,19 +112,26 @@ classdef mTMS_toolkit < handle
 
         function generate_default_MEP_configuration(obj)
             % Configures default settings for capturing EMG segments.
+            % Does not require any parameters. Does not return any value.
 
             emg_channel = 0; % indexing starts from 0.
-            mep_start_time = -0.2;  % in ms, after the stimulation pulse
-            mep_end_time = 0.1;  % in ms
+            mep_start_time = -0.2;  % 200 ms before pulse
+            mep_end_time = 0.1;  % 100 ms after pulse
             preactivation_check_enabled = false;
-            preactivation_start_time = -0.02;  % in ms, minus sign indicates that the window starts before the stimulation pulse
-            preactivation_end_time = -0.01;
+            preactivation_start_time = -0.02;  % 200 ms before pulse
+            preactivation_end_time = -0.01;    % 100 ms before pulse
             preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside the time window, in uV.
 
             obj.generate_MEP_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
         end
 
-        function waveforms = get_monophasic_reference_waveform(obj)
+        function waveforms = get_monophasic_reference_waveforms(obj)
+            % Creates a set of predefined monophasic waveform configurations for each channel,
+            % specifying pulse modes and durations.
+            %
+            % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
+            % :rtype: cell
+
             % Set reference pulse durations.
             durations =  num2cell([60,30,37.5; ...
                                    60,30,37.5;...
@@ -129,11 +140,17 @@ classdef mTMS_toolkit < handle
                                    60,30,37.5]*1e-6);
             modes = {'r','h','f'};
             for i = 1:size(durations,1)
-                waveforms{i} = struct('mode',modes,'duration',durations(i,:));
+                waveforms{1,i} = struct('mode',modes,'duration',durations(i,:));
             end
         end
 
-        function waveform = get_biphasic_reference_waveform(obj)
+        function waveforms = get_biphasic_reference_waveforms(obj)
+            % Creates a set of predefined biphasic waveform configurations for each channel,
+            % specifying pulse modes and durations.
+            %
+            % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
+            % :rtype: cell
+
             % Set reference pulse durations.
             durations =  num2cell([60,40,140,10,67.5; ...
                                    60,40,140,10,67.5;...
@@ -141,10 +158,27 @@ classdef mTMS_toolkit < handle
                                    60,40,140,10,69.2;...
                                    60,40,140,10,73.0]*1e-6);
             modes = {'f','h','r','h','f'};
-            waveform = struct('mode',modes,'duration',durations);
+            for i = 1:size(durations,1)
+                waveforms{1,i} = struct('mode',modes,'duration',durations(i,:));
+            end
         end
 
         function target_voltages = get_target_voltages(obj,displacement_x,displacement_y,rotation_angle,intensity)
+            % Uses a precomputed table to find target voltages based on spatial displacement,
+            % rotation, and intensity, adjusting for polarity as needed.
+            %
+            % :param displacement_x: X-axis displacement of the target (in mm)
+            % :type displacement_x: double
+            % :param displacement_y: Y-axis displacement of the target (in mm)
+            % :type displacement_y: double
+            % :param rotation_angle: Rotation angle of the target (in degrees)
+            % :type rotation_angle: double
+            % :param intensity: Stimulation intensity
+            % :type intensity: double
+            %
+            % :return: target_voltages: Array of computed target voltages
+            % :rtype: double array
+
             algorithm = obj.api.get_targeting_algorithm('genetic');
             target = obj.api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
             [target_voltages, reverse_polarities] = obj.api.get_target_voltages(target);
@@ -152,12 +186,42 @@ classdef mTMS_toolkit < handle
         end
 
         function ITI = random_ITI(~,n_trials,ITI_window)
+            % Produces a vector of random ITI values within the specified window for the given
+            % number of trials.
+            %
+            % :param n_trials: Number of trials
+            % :type n_trials: int
+            % :param ITI_window: Interval range [min, max] for ITI (in seconds)
+            % :type ITI_window: double array
+            %
+            % :return: ITI: Array of random inter-trial intervals
+            % :rtype: double array
+
             width = ITI_window(2) - ITI_window(1);
             ITI = rand(n_trials,1);
             ITI = ITI * width + ITI_window(1);
         end
 
         function pulse_structure = generate_pulse_structure(obj,load_voltages,opt)
+            % Constructs a pulse structure with specified voltages and optional parameters for
+            % waveforms, timing, and readout settings, with input validation.
+            %
+            % :param load_voltages: Voltages to load for each channel
+            % :type load_voltages: double array
+            % :param opt: Optional structure with fields:
+            %   - charge_to_stim_time: Time from charge to stimulation (in seconds)
+            %   - waveforms: Cell array of waveform configurations
+            %   - ITI_window: Inter-trial interval range [min, max] (in seconds)
+            %   - ISI: Inter-stimulus intervals for multi-pulse sequences (in seconds)
+            %   - trigger_out: Output trigger channel (1 or 2)
+            %   - readout_type: Type of readout ('EMG' or 'EEG')
+            %   - repeat_on_failure: Whether to repeat on failure (logical)
+            %   - pulse_label: Label for the pulse (char)
+            % :type opt: struct
+            %
+            % :return: pulse_structure: Structure containing pulse configuration
+            % :rtype: struct
+
             arguments
                 obj
                 load_voltages;
@@ -225,8 +289,15 @@ classdef mTMS_toolkit < handle
         end
 
         function result = run_stimulation_sequence(obj,pulse_sequence)
-            % TODO:Add warmup to repeat first pulse,
-            % print MEP size, pulse count
+            % Runs a sequence of pulses, handling timing, readouts, and retries on failure.
+            % Saves results to the specified directory and performs a full discharge afterward.
+            %
+            % :param pulse_sequence: Array of pulse structures to execute
+            % :type pulse_sequence: struct array
+            %
+            % :return: result: Array of structures containing pulse data, readouts, and timestamps
+            % :rtype: struct array
+
             result = [];
             max_attempts = 5;
 
@@ -283,7 +354,6 @@ classdef mTMS_toolkit < handle
                 result(i).pulse = p;
                 result(i).readout = readout;
                 result(i).time = pulse_times;
-                %result(i).timestring = datestr(pulse_times,'dd-mm-yyyy HH:MM:SS:FFF');
                 result(i).label = string(p.pulse_label);
             end
             if ~isempty(obj.save_dir)
@@ -294,6 +364,15 @@ classdef mTMS_toolkit < handle
         end
 
         function result = run_stimulation_trial(obj,pulse_structure)
+            % Runs a single pulse trial, handling readouts and retries on failure, and stores
+            % results in the closed-loop results structure.
+            %
+            % :param pulse_structure: Structure defining the pulse configuration
+            % :type pulse_structure: struct
+            %
+            % :return: result: Structure containing pulse data, readout, and timestamp
+            % :rtype: struct
+
             p = pulse_structure;
             assert(length(p) == 1, "pulse_structure is expected to have only 1 element.")
             assert(~((isfield(p,'charge_time') || isfield(p,'stim_time')) && p.repeat_on_failure),"Specific charge or stimulation times are not compatible with repeat_on_failure set to true.")
@@ -342,6 +421,11 @@ classdef mTMS_toolkit < handle
         end
 
         function save_closed_loop_results(obj)
+            % Saves the closed-loop results to a .mat file in the specified save directory,
+            % incrementing the experiment count.
+            %
+            % :return: No return value
+
             if ~isempty(obj.save_dir)
                 filename = fullfile(obj.save_dir,sprintf("closed_loop_%s.mat",num2str(obj.closed_loop_experiment_count)));
                 obj.closed_loop_experiment_count = obj.closed_loop_experiment_count + 1;
@@ -351,6 +435,14 @@ classdef mTMS_toolkit < handle
         end
 
         function save_block_result(obj,result)
+            % Saves the results of a stimulation block to a .mat file in the specified save
+            % directory, incrementing the block count.
+            %
+            % :param result: Structure array containing block results
+            % :type result: struct array
+            %
+            % :return: No return value
+
             if ~isempty(obj.save_dir)
                 filename = fullfile(obj.save_dir,sprintf("block_%s.mat",num2str(obj.block_count)));
                 obj.block_count = obj.block_count + 1;
@@ -359,11 +451,28 @@ classdef mTMS_toolkit < handle
         end
 
         function shuffled_pulse_sequence = shuffle_pulse_sequence(obj,pulse_sequence)
+            % Reorders the pulses in the sequence randomly using a permutation.
+            %
+            % :param pulse_sequence: Array of pulse structures to shuffle
+            % :type pulse_sequence: struct array
+            %
+            % :return: shuffled_pulse_sequence: Shuffled array of pulse structures
+            % :rtype: struct array
+
             permutation_indices = randperm(numel(pulse_sequence));
             shuffled_pulse_sequence = pulse_sequence(permutation_indices);
         end
 
         function blocks = split_sequence_to_blocks(obj,pulse_sequence,N_blocks)
+            % Divides the pulse sequence into approximately equal blocks.
+            %
+            % :param pulse_sequence: Array of pulse structures to split
+            % :type pulse_sequence: struct array
+            % :param N_blocks: Number of blocks to create
+            % :type N_blocks: int
+            %
+            % :return: blocks: Cell array of pulse sequence blocks
+            % :rtype: cell
             blocks = {};
             block_size = ceil(length(pulse_sequence)/N_blocks);
             start = 1;
@@ -379,7 +488,16 @@ classdef mTMS_toolkit < handle
         end
 
         function warmup(obj,number_of_pulses,max_intensity)
-            % Stimulate with coil 5 with increasing intensity
+            % Executes a series of pulses on coil 5 with linearly increasing voltages to prepare
+            % the system or subject for stimulation.
+            %
+            % :param number_of_pulses: Number of warmup pulses
+            % :type number_of_pulses: int
+            % :param max_intensity: Maximum intensity as a fraction of maximum voltage
+            % :type max_intensity: double
+            %
+            % :return: No return value
+
             max_voltage = 1500;
             min_voltage = 500;
             voltages = linspace(min_voltage,max_voltage*max_intensity,number_of_pulses);
@@ -398,38 +516,20 @@ classdef mTMS_toolkit < handle
         end
 
         function [readout,pulse_ok,p] = stimulate(obj,pulse_structure)
+            % Loads capacitors and applies a pulse with the specified configuration, handling
+            % waveforms, timing, and readouts (EMG/EEG). Includes error checking and retry logic.
             %
-            % Loads capacitors and applies a pulse with default monophasic
-            % waveform. Options can be set to run a multi-pulse sequence,
-            % specify custom waveforms, measure a readout, and send output
-            % trigger from device.
+            % :param pulse_structure: Structure defining the pulse configuration
+            % :type pulse_structure: struct
             %
-            % Arguments
+            % :return: readout: Readout data (EMG/EEG) or empty if none
+            % :rtype: struct
+            % :return: pulse_ok: Flag indicating successful pulse execution
+            % :rtype: logical
+            % :return: p: Updated pulse structure with execution details
+            % :rtype: struct
 
-            %   Optional
-            %   opt.load_time (int): Onset of capacitor loading, measured with api.get_time() in seconds.
-            %   opt.stim_time (int array): Onset of each stimulus, analogous to opt.load_time. If longer than 1, applies a multi-pulse sequence.
-            %   opt.readout_type (char vector): Readout measure. Must be [] (=no readout), 'EMG' or 'EEG'.
-            %   opt.trigger_out (int): Output trigger channel of either 1, or 2. Other values skip the trigger send. Trigger coincides with the last pulse, if using a multi-pulse sequence.
-            %   opt.waveforms (cell matrix): Waveforms for each channel (columns) and each multi-pulse (rows).
-            %   opt.repeat_on_failure (bool): If True, repeat stimulus if any errors occurr during loading, stimulating, or readout (for maximum of 3 times).
-            %   opt.success (array):
-            % arguments
-            %     obj
-            %     load_voltages;
-            %     opt.load_time = [];
-            %     opt.stim_time = [NaN];
-            %     opt.readout_type = [];
-            %     opt.trigger_out = [];
-            %     opt.waveforms = {};
-            %     opt.repeat_on_failure = [];
-            %     opt.success = [];
-            % end
             p = pulse_structure;
-
-            % DEBUG
-            % now = obj.api.get_time();
-            % fprintf("CHARGE IN %.1f, STIM IN %.1f\n",p.charge_time-now,p.stim_time-now)
 
             % Handle electric current polarity
             abs_load_voltages = abs(p.load_voltages);
@@ -527,7 +627,6 @@ classdef mTMS_toolkit < handle
             if isstruct(readout) && isfield(readout,'buffer')
                 if isempty(readout.buffer)
                     fprintf('Error in readout.\n');
-                    readout_err.gather_mep_error
                     pulse_ok = 0;
                 else
                     if strcmp(p.readout_type,'EMG')
@@ -541,11 +640,10 @@ classdef mTMS_toolkit < handle
             end
 
             if pulse_ok
-
                 % Try to catch problems with coil connections
                 load_voltages_post = obj.api.get_current_voltages();
-                voltage_drop_ratio = (abs_load_voltages-load_voltages_post)./abs_load_voltages;
-                odd_channels = find((voltage_drop_ratio < 0.01) & (abs_load_voltages > 50));
+                voltage_drop_ratio = (abs_load_voltages(:)-load_voltages_post(:))./abs_load_voltages(:);
+                odd_channels = find((voltage_drop_ratio < 0.01) & (abs_load_voltages(:) > 50));
                 if ~isempty(odd_channels)
                     channel_str = sprintf('%d,',odd_channels); channel_str(end) = [];
                     warning(sprintf("No voltage drop in channel(s): %s. Was a pulse given?",channel_str))
@@ -553,85 +651,23 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function [waveforms,load_voltages_after_pulse, approximated_state_trajectories] = generate_biphasic_PWM_waveforms(obj,target_voltages,load_voltages,reference_durations)
-            % Generates waveforms for biphasic PWM pulses.
-            % If target_voltages has more than one row, it's assumed to be a
-            % multipulse.
-
-            % Turn off function handle warning that clutters the console
-            warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-
-
-            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
-            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
-            time_resolution = 0.01e-6;
-
-            target_state_trajectories = {};
-            approximated_state_trajectories = {};
-            %all_sampling_points = {};
-            waveforms = {};
-            n_pulses = size(target_voltages,1);
-            n_channels = size(target_voltages,2);
-
-            % Save voltages before each pulse
-            load_voltages_after_pulse = zeros(size(target_voltages));
-            % Assumed voltages start from the initial load voltages
-            assumed_voltages = load_voltages;
-
-            figure
-            tcl = tiledlayout(n_pulses,n_channels);
-            for i = 1:n_pulses
-                custom_waveforms = {};
-                for j = 1:n_channels
-                    % Select approximator object and select coil for modelling the
-                    % circuits
-                    approximator = WaveformApproximator(solutions_filename, time_resolution);
-                    approximator.select_coil(j);
-
-                    % Define target waveform for the PWM approximation
-                    actual_voltage = assumed_voltages(j);
-                    target_voltage = target_voltages(i,j);
-                    if target_voltage > 0
-                        mode = {'f','h','r','h','f'};
-                    else
-                        mode = {'r','h','f','h','r'};
-                    end
-                    durations = num2cell(reference_durations(j,:));
-                    target_waveform = struct('mode', mode, 'duration', durations);
-
-                    % Run iterative approximation for the best PWM fit
-                    [approximated_waveform, success] = approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
-
-                    custom_waveforms{j} = obj.api.create_waveform(approximated_waveform);
-
-                    % Get model parameters of the electronics circuit during the pulse
-                    % to plot the current.
-                    target_state_trajectories{i,j} = approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
-                    tmp_approximated_state_trajectory = approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
-                    approximated_state_trajectories{i,j} = tmp_approximated_state_trajectory;
-                    %all_sampling_points{i,j} = sampling_points;
-
-                    % Consider voltage drop in the channel for consecutive pulses
-                    % There is a bug that the last value is the initial state
-                    assumed_voltages(j) = tmp_approximated_state_trajectory(end-1).V_c;
-
-                    % Plot
-                    nexttile
-                    approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
-                end
-                load_voltages_after_pulse(i,:) = assumed_voltages;
-                title(tcl,'Channel currents. Pulses in rows, channels in columns.')
-
-                waveforms(i,:) = custom_waveforms;
-            end
-
-            warning('on', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-        end
-
         function [waveforms,load_voltages_after_pulse, approximated_state_trajectories] = generate_PWM_waveforms(obj,target_voltages,load_voltages,reference_waveforms)
-            % Generates waveforms for biphasic PWM pulses.
-            % If target_voltages has more than one row, it's assumed to be a
-            % multipulse.
+            % Creates pulse-width modulated (PWM) waveforms for each channel and pulse,
+            % approximating target voltages and tracking voltage changes.
+            %
+            % :param target_voltages: Target voltages for each pulse and channel
+            % :type target_voltages: double array
+            % :param load_voltages: Initial load voltages for each channel
+            % :type load_voltages: double array
+            % :param reference_waveforms: Reference waveform configurations
+            % :type reference_waveforms: cell array
+            %
+            % :return: waveforms: Cell array of generated PWM waveforms
+            % :rtype: cell
+            % :return: load_voltages_after_pulse: Voltages after each pulse
+            % :rtype: double array
+            % :return: approximated_state_trajectories: Trajectories of circuit states
+            % :rtype: cell
 
             function waveform = reverse_phases(waveform)
                 for k = 1:length(waveform)
@@ -647,14 +683,12 @@ classdef mTMS_toolkit < handle
             % Turn off function handle warning that clutters the console
             warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
 
-
-            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform-approximator/waveform_approximator/solutions_five_coil_set.mat";
-            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform-approximator"))
+            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
+            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
             time_resolution = 0.01e-6;
 
             target_state_trajectories = {};
             approximated_state_trajectories = {};
-            %all_sampling_points = {};
             waveforms = {};
             n_pulses = size(target_voltages,1);
             n_channels = size(target_voltages,2);
@@ -669,8 +703,7 @@ classdef mTMS_toolkit < handle
             for i = 1:n_pulses
                 custom_waveforms = {};
                 for j = 1:n_channels
-                    % Select approximator object and select coil for modelling the
-                    % circuits
+                    % Select approximator object and select coil for modelling the circuits
                     approximator = WaveformApproximator(solutions_filename, time_resolution);
                     approximator.select_coil(j);
 
@@ -682,8 +715,6 @@ classdef mTMS_toolkit < handle
                     else
                         target_waveform = reverse_phases(reference_waveforms{i,j});
                     end
-                    %durations = num2cell(reference_durations(j,:));
-                    %target_waveform = struct('mode', mode, 'duration', durations);
 
                     % Run iterative approximation for the best PWM fit
                     [approximated_waveform, success] = approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
@@ -695,7 +726,6 @@ classdef mTMS_toolkit < handle
                     target_state_trajectories{i,j} = approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
                     tmp_approximated_state_trajectory = approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
                     approximated_state_trajectories{i,j} = tmp_approximated_state_trajectory;
-                    %all_sampling_points{i,j} = sampling_points;
 
                     % Consider voltage drop in the channel for consecutive pulses
                     % There is a bug that the last value is the initial state
@@ -715,6 +745,14 @@ classdef mTMS_toolkit < handle
         end
 
         function clean_EMG = filter_EMG(obj,buffer)
+            % Applies bandpass and line-noise filters to the EMG buffer to produce clean data.
+            %
+            % :param buffer: Raw EMG data buffer
+            % :type buffer: double array
+            %
+            % :return: clean_EMG: Filtered EMG data
+            % :rtype: double array
+
             fs = obj.readout_fs;
 
             % Bandpass
@@ -726,6 +764,15 @@ classdef mTMS_toolkit < handle
         end
 
         function readout = calculate_p2p(obj,readout)
+            % Computes the peak-to-peak amplitude within the MEP time window and updates
+            % the readout structure with amplitude and peak indices.
+            %
+            % :param readout: Structure containing EMG data buffer
+            % :type readout: struct
+            %
+            % :return: readout: Updated structure with amplitude and peak indices
+            % :rtype: struct
+
             mep_window = obj.MEP_time_window*1000;
             buffer_window = [obj.mep_configuration.time_window.start, obj.mep_configuration.time_window.end];
 
@@ -738,6 +785,91 @@ classdef mTMS_toolkit < handle
             mep_start_ind = find(mep_mask,1)-1;
             readout.max_ind = mep_start_ind+max_mep_ind;
             readout.min_ind = mep_start_ind+min_mep_ind;
+        end
+
+        function [groupedData,medians] = extract_amplitude_by_label(obj,dataStruct)
+            % Organizes amplitude data from a structure array by unique labels and computes
+            % median amplitudes for each label.
+            %
+            % :param dataStruct: Array of structures with 'label' and 'readout.amplitude' fields
+            % :type dataStruct: struct array
+            %
+            % :return: groupedData: Structure with fields for each unique label containing amplitude arrays
+            % :rtype: struct
+            % :return: medians: Structure with median amplitudes for each label
+            % :rtype: struct
+
+            % Extract labels
+            labels = arrayfun(@(s) string(s.label), dataStruct);
+
+            % Get unique labels
+            uniqueLabels = unique(labels);
+
+            % Initialize outputs
+            groupedData = struct();
+            medians = struct();
+
+            % Loop through each unique label
+            for i = 1:numel(uniqueLabels)
+                lbl = uniqueLabels(i);
+                idx = labels == lbl;
+                amplitudes = arrayfun(@(s) s.readout.amplitude, dataStruct(idx));
+
+                fieldName = matlab.lang.makeValidName(lbl);
+                groupedData.(fieldName) = amplitudes;
+                medians.(fieldName) = median(amplitudes);
+            end
+        end
+
+        function load_voltages = didt_to_volts(obj, didt, coil_file)
+            % Converts the rate of change of current (di/dt) to corresponding capacitor load
+            % voltages using coil inductance values from a specified file. The input di/dt
+            % array must match the number of channels defined by the API.
+            %
+            % :param didt: Rate of change of current (di/dt) values for each channel (in A/s)
+            % :type didt: double array
+            % :param coil_file: File path to coil specifications (CSV or similar, containing 'inductances' column)
+            % :type coil_file: char
+            %
+            % :return: load_voltages: Corresponding capacitor load voltages (in V)
+            % :rtype: double array
+            %
+            % :throws: Error if coil_file is invalid, missing, or di/dt size does not match channel count
+            
+            % Ensure di/dt size matches the number of channels
+            n_channels = obj.api.channel_count;
+            if length(didt) ~= n_channels
+                error('mTMS_toolkit:didt_to_volts:InvalidInput', ...
+                      'Expected di/dt array of length %d, got %d.', n_channels, length(didt));
+            end
+
+            % Check if coil specification file exists
+            if ~isfile(coil_file)
+                error('mTMS_toolkit:didt_to_volts:FileNotFound', ...
+                      'Coil specification file not found at: %s', coil_file);
+            end
+
+            % Read coil specifications
+            try
+                coil_spec_table = readtable(coil_file, 'VariableNamingRule', 'preserve');
+                if ~ismember('inductances', coil_spec_table.Properties.VariableNames)
+                    error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
+                          'Coil file must contain an ''inductances'' column.');
+                end
+                inductances = coil_spec_table.inductances';
+                
+                % Validate inductances
+                if length(inductances) ~= n_channels
+                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
+                          'Expected %d inductance values, got %d.', n_channels, length(inductances));
+                end
+                
+                % Calculate load voltages using V = L * di/dt
+                load_voltages = inductances .* didt;
+            catch err
+                error('mTMS_toolkit:didt_to_volts:FileReadError', ...
+                      'Failed to process coil file: %s', err.message);
+            end
         end
 
     end
