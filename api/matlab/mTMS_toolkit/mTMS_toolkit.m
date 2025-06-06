@@ -864,8 +864,17 @@ classdef mTMS_toolkit < handle
                           'Expected %d inductance values, got %d.', n_channels, length(inductances));
                 end
                 
+                % Correct for mismatch between assumed E-field model and reality
+                polarities = coil_spec_table.polarities_vs_coilset_5_v230908';
+
+                % Validate polarities
+                if length(polarities) ~= n_channels
+                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
+                          'Expected %d inductance values, got %d.', n_channels, length(polarities));
+                end
+
                 % Calculate load voltages using V = L * di/dt
-                load_voltages = inductances .* didt;
+                load_voltages = inductances .* polarities.* didt;
             catch err
                 error('mTMS_toolkit:didt_to_volts:FileReadError', ...
                       'Failed to process coil file: %s', err.message);
