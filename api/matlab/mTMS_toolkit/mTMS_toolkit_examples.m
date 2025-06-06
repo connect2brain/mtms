@@ -1,15 +1,17 @@
 % mTMS toolkit usage examples
 
 %% Initialize api
-api = MTMSApi();
 
+api = MTMSApi();
 api.start_device();
 api.start_session();
 
 %% Initialize mTMS toolkit
+
+addpath("/home/mtms/mtms/api/matlab/mTMS_toolkit")
+
 save_dir = "/home/mtms/projects/mTMS_toolkit/saved/sub000";
-clear mtms_tk
-mtms_tk = mTMS_toolkit(api,save_dir);
+mtms_tk = mTMS_toolkit([],save_dir);
 
 %%
 
@@ -22,7 +24,7 @@ mtms_tk = mTMS_toolkit(api,save_dir);
 % mTMS coil array. Controlling the stimuli happens mainly be specifying the
 % capacitor load voltages, as by default, the discharging is done with a
 % pre-defined monophasic waveform. Many of the following examples set arbitrary values for
-% the load voltages. See Section 5. STIMULATION TARGETING, to learn how these load voltages
+% the load voltages. See Section 6. STIMULATION TARGETING, to learn how these load voltages
 % can be defined for different purposes.
 
 %% Run a test pulse to channel 0
@@ -236,7 +238,7 @@ load_voltages = [0,0,1500,0,1500];
 reference_load_voltages = [0,0,800,0,400];
 
 % Define reference waveforms which will be approximated with PWM
-reference_waveforms = mtms_tk.get_monophasic_reference_waveform();
+reference_waveforms = mtms_tk.get_monophasic_reference_waveforms();
 
 % Generate PWM waveforms for the single pulse.
 single_pulse_waveforms = mtms_tk.generate_PWM_waveforms(reference_load_voltages,load_voltages,reference_waveforms);
@@ -257,8 +259,8 @@ reference_load_voltage_set = [0,0,400,0,800;
                               0,0,800,0,400];
 
 % Define reference waveforms which will be approximated with PWM
-reference_waveforms(1,:) = mtms_tk.get_monophasic_reference_waveform();
-reference_waveforms(2,:) = mtms_tk.get_monophasic_reference_waveform();
+reference_waveforms(1,:) = mtms_tk.get_monophasic_reference_waveforms();
+reference_waveforms(2,:) = mtms_tk.get_monophasic_reference_waveforms();
 
 % Generate PWM waveforms for the paired pulse. Note that the waveforms for
 % the two stimuli must be calculated together because the first stimulus affects
@@ -286,7 +288,7 @@ reference_load_voltage_set = [0,0,400,0,800;
 
 % Define reference waveforms which will be approximated with PWM
 for i = 1:size(reference_load_voltage_set,1)
-    reference_waveforms(i,:) = mtms_tk.get_monophasic_reference_waveform();
+    reference_waveforms(i,:) = mtms_tk.get_monophasic_reference_waveforms();
 end
 
 % Generate PWM waveforms
@@ -303,7 +305,56 @@ mtms_tk.stimulate(multi_pulse_structure)
 
 %%
 
-%%%%% 5. STIMULATION TARGETING %%%%%
+%%%%% 5. BIPHASIC PULSE WAVEFORMS %%%%%
+
+%%
+
+% Default waveforms are monophasic. To create biphasic waveforms, we
+% need to specify a piecewise linear function for the electric current, as 
+% the mTMS software has no direct implementation for this. It's not
+% recommended to customize the following waveform, as each new waveform
+% requires careful calibration (bad calibration results in extra heating).
+
+%% Trapezoidal (normal)
+
+% Get piecewise linear waveform structures
+biphasic_waveforms_struct = mtms_tk.get_biphasic_reference_waveforms();
+
+% Convert waveforms to api format.
+biphasic_waveforms = {};
+for i = 1:length(biphasic_waveforms_struct)
+    biphasic_waveforms{1,i} = api.create_waveform(biphasic_waveforms_struct{i});
+end
+
+% Specify waveform as an argument for the pulse structure and execute
+load_voltages = [100,100,100,100,100];
+pulse_structure = mtms_tk.generate_pulse_structure(load_voltages,waveforms=biphasic_waveforms);
+mtms_tk.stimulate(pulse_structure);
+
+%% PWM
+
+% We generate single pulse PWM, like in Section 4, but this time use
+% get_biphasic_reference_waveforms() instead of
+% get_monophasic_reference_waveforms().
+
+load_voltages = [0,0,1500,0,1500];
+reference_load_voltages = [0,0,800,0,400];
+
+% Define reference waveforms which will be approximated with PWM
+reference_waveforms = mtms_tk.get_biphasic_reference_waveforms();
+
+% Generate PWM waveforms for the single pulse.
+single_pulse_waveforms = mtms_tk.generate_PWM_waveforms(reference_load_voltages,load_voltages,reference_waveforms);
+
+% Generate the pulse structure, and use the waveforms argument to specify the custom waveform.
+single_pulse_structure = mtms_tk.generate_pulse_structure(load_voltages,waveforms=single_pulse_waveforms);
+
+% Execute pulse
+mtms_tk.stimulate(single_pulse_structure)
+
+%%
+
+%%%%% 6. STIMULATION TARGETING %%%%%
 
 %%
 
@@ -354,13 +405,23 @@ mtms_tk.stimulate(pulse_structure)
 
 % This method is currently quite experimental and requires custom software.
 % See the open-source GitHub repository: https://github.com/lainem11/E-field_targeting/example_complex_geom.m.
-% The example script shows how to optimize the induced E-field pattern for stimulation targeting, 
-% but unfortunately lacks example data for realistic E-fields. Contact the
-% author if you are interested to use this method.
+% The example script shows how to optimize the induced E-field pattern for
+% stimulation targeting. We will assume you have a saved result from the
+% E-field targeting scripts as a file called 'targeting_results.mat'.
+
+% Load targeting results
+targeting_results = load('targeting_results.mat');
+didt = targeting_results.weights;
+
+% Specify coil file path
+coil_file = "/home/mtms/mtms/api/matlab/mTMS_toolkit/coils/5coil_aalto_29042025.csv";
+
+% Convert coil weights from the E-field targeting results to load voltages
+load_voltages = mtms_tk.didt_to_volts(didt,coil_file);
 
 %%
 
-%%%%% 6. COPY-PASTEABLES %%%%%
+%%%%% 7. COPY-PASTEABLES %%%%%
 
 %% Basic RMT measurement
 
