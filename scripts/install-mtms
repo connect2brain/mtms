@@ -28,6 +28,15 @@ fi
 # Run the Ansible playbook
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
+
+# Prompt for sudo password once
+read -s -p "Enter sudo password: " SUDO_PASS
+echo ""
+# Run the Docker installation playbook
+ANSIBLE_BECOME_PASS=$SUDO_PASS ansible-playbook -i 'localhost,' ansible/install-docker.yml --extra-vars "ansible_become_password=$SUDO_PASS"
+# Run the Docker installation playbook
+ANSIBLE_BECOME_PASS=$SUDO_PASS ansible-playbook -i 'localhost,' ansible/install-ros.yml --extra-vars "ansible_become_password=$SUDO_PASS"
+# Run the mTMS installation playbook
 ansible-playbook -i 'localhost,' ansible/install-mtms.yml --ask-become-pass -e target_site=$target_site
 
 set +e  # Allow sourcing of .bash_env before ROS workspace is built
