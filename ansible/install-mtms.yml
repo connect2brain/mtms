@@ -8,6 +8,8 @@
     # The user that runs the playbook.
     target_user: "{{ lookup('env', 'USER') }}"
     target_home: "/home/{{ target_user }}"
+    # Location of user projects.
+    projects_root: "{{ target_home }}/projects"
 
     # The repository root.
     repo_root: "{{ playbook_dir | dirname }}"
@@ -171,6 +173,17 @@
         state: restarted
 
     ########################################################################
+    # Create a projects directory for the user
+    ########################################################################
+    - name: Create projects directory
+      file:
+        path: "{{ projects_root }}"
+        state: directory
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0755'
+        
+    ########################################################################
     # 5. Update environment variables in .bash_env and .bashrc
     ########################################################################
     - name: Ensure .bash_env exists
@@ -199,6 +212,12 @@
         line: "export PATH=$PATH:{{ repo_root }}/scripts/"
         state: present
 
+    - name: Ensure PROJECTS_ROOT is exported
+      lineinfile:
+        dest: "{{ target_home }}/.bash_env"
+        line: "export PROJECTS_ROOT={{ projects_root }}"
+        state: present
+        
     - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
       lineinfile:
         dest: "{{ target_home }}/.bash_env"

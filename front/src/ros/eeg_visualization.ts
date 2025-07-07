@@ -7,7 +7,7 @@ import { EegBatchMessage, SampleMessage, EegTriggerMessage } from '../types/eeg'
 export const eegDataSubscriber = new ROSLIB.Topic<EegBatchMessage>({
   ros: ros,
   name: '/eeg/batch_data',
-  messageType: 'ui_interfaces/EegBatch',
+  messageType: 'eeg_msgs/EegBatch',
 })
 
 /* Listener for trigger */

@@ -53,19 +53,23 @@ check_disk_space_and_clean() {
     fi
 }
 
-# If a parameter is provided, use it as the container name.
-CONTAINER_NAME=$1
-
+# Warn the user if a positional argument was passed, since this script expects
+# only environment variables (like CONTAINER_NAME) for input.
+if [ -n "$1" ]; then
+  echo "Warning: Ignoring unexpected argument '$1'"
+fi
 # Check disk space and clean up before proceeding
 check_disk_space_and_clean
 
 # Rebuild the specified core container or all containers if none is specified.
+# To build a single container, call like:
+#   CONTAINER_NAME=your_container_name source scripts/build-mtms
 echo "${BOLD}Building containers...${RESET}"
 
 if [ -z "$CONTAINER_NAME" ]; then
     docker-compose -f $MTMS_ROOT/docker-compose.yml build
 else
-    docker-compose -f $MTMS_ROOT/docker-compose.yml build $CONTAINER_NAME
+    docker-compose -f $MTMS_ROOT/docker-compose.yml build "$CONTAINER_NAME"
 fi
 
 # Check the exit status of the last command (docker-compose build).
