@@ -17,6 +17,7 @@ classdef mTMS_toolkit < handle
         enable_EMG_filter % Flag to enable/disable EMG filtering
         readout_fs % Sampling frequency for readout data (in Hz)
         cleanupObj % Object to handle path cleanup on object destruction
+        channels_in_use % List of channel indices in use
     end
 
     methods
@@ -48,6 +49,7 @@ classdef mTMS_toolkit < handle
                 warning('The misc folder does not exist at: %s', miscDir);
             end
 
+            obj.channels_in_use = [0,1,2,3,4];
             obj.api = api;
             obj.generate_default_MEP_configuration()
             obj.set_MEP_processing_options([0.015,0.045],5000,1)
@@ -57,6 +59,10 @@ classdef mTMS_toolkit < handle
             if ~isempty(obj.save_dir) && ~exist(obj.save_dir,"dir")
                 mkdir(obj.save_dir)
             end
+        end
+
+        function set_channels_in_use(obj,channels_in_use)
+            obj.channels_in_use = channels_in_use;
         end
 
         function reset_experiment(obj)
@@ -234,7 +240,7 @@ classdef mTMS_toolkit < handle
                 opt.repeat_on_failure = [];
                 opt.pulse_label = '';
             end
-            N_chn = obj.api.channel_count;
+            N_chn = length(obj.channels_in_use);
             if isempty(opt.waveforms)
                 N_pulses = 1;
             else
@@ -359,8 +365,14 @@ classdef mTMS_toolkit < handle
             if ~isempty(obj.save_dir)
                 obj.save_block_result(result)
             end
-            obj.api.send_immediate_full_discharge_to_all_channels();
-            obj.api.wait_for_completion();
+            obj.full_discharge()
+            obj.api.wait_for_completion(10);
+        end
+
+        function full_discharge(obj)
+            for i = obj.channels_in_use
+                obj.api.send_charge_or_discharge(i,0,obj.api.execution_conditions.IMMEDIATE);
+            end
         end
 
         function result = run_stimulation_trial(obj,pulse_structure)
@@ -499,7 +511,7 @@ classdef mTMS_toolkit < handle
             % :return: No return value
 
             max_voltage = 1500;
-            min_voltage = 500;
+            min_voltage = 300;
             voltages = linspace(min_voltage,max_voltage*max_intensity,number_of_pulses);
             start_time = obj.api.get_time();
             for i = 1:number_of_pulses
@@ -549,9 +561,7 @@ classdef mTMS_toolkit < handle
             charge_ids = [];
             load_condition = obj.api.execution_conditions.IMMEDIATE;
             for i = 1:size(p.waveforms,2)
-                if i ~= 6
-                    charge_ids(i) = obj.api.send_charge_or_discharge(i-1,abs_load_voltages(i),load_condition);
-                end
+                charge_ids(i) = obj.api.send_charge_or_discharge(obj.channels_in_use(i),abs_load_voltages(i),load_condition);
             end
             obj.api.wait_for_completion(10);
 
@@ -574,9 +584,7 @@ classdef mTMS_toolkit < handle
                 for j=1:size(p.waveforms,2)
                     % send_pulse is always timed to cover multi-pulse
                     % scenarios, and maintain constant charge_to_stim time
-                    if j ~= 6
-                        pulse_ids(i,j) = obj.api.send_pulse(j-1, p.waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
-                    end
+                    pulse_ids(i,j) = obj.api.send_pulse(obj.channels_in_use(j), p.waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
                 end
             end
 
@@ -598,7 +606,7 @@ classdef mTMS_toolkit < handle
                 readout = [];
             end
 
-            obj.api.wait_for_completion(10)
+            obj.api.wait_for_completion(5)
 
             % Check for any errors
             pulse_ok = 1;
@@ -642,6 +650,7 @@ classdef mTMS_toolkit < handle
             if pulse_ok
                 % Try to catch problems with coil connections
                 load_voltages_post = obj.api.get_current_voltages();
+                load_voltages_post = load_voltages_post(obj.channels_in_use+1);
                 voltage_drop_ratio = (abs_load_voltages(:)-load_voltages_post(:))./abs_load_voltages(:);
                 odd_channels = find((voltage_drop_ratio < 0.01) & (abs_load_voltages(:) > 50));
                 if ~isempty(odd_channels)
