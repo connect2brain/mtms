@@ -8,10 +8,10 @@ api.start_session();
 
 %% Initialize mTMS toolkit
 
-addpath("/home/mtms/mtms/api/matlab/mTMS_toolkit")
+addpath(genpath("/home/mtms/mtms/api/matlab/mTMS_toolkit"))
 
 save_dir = "/home/mtms/projects/mTMS_toolkit/saved/sub000";
-mtms_tk = mTMS_toolkit([],save_dir);
+mtms_tk = mTMS_toolkit(api,save_dir);
 
 %%
 
