@@ -93,9 +93,12 @@ COPY ros2_ws/src/mtms_packages/interfaces/targeting_services src/interfaces/targ
 COPY ros2_ws/src/mtms_packages/interfaces/ui_interfaces src/interfaces/ui_interfaces/
 COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
+COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
+COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
+COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build --base-paths src/interfaces
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Copy rest of InVesalius
 
