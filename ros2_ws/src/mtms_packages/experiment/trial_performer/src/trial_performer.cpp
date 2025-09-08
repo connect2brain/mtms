@@ -136,10 +136,11 @@ void TrialPerformerNode::update_trigger_out_feedback(const event_msgs::msg::Trig
 
 /* Using publishers */
 
-void TrialPerformerNode::create_marker() {
+void TrialPerformerNode::create_marker(const mtms_trial_interfaces::msg::Trial &trial) {
   RCLCPP_INFO(this->get_logger(), "Creating marker...");
 
   auto msg = std::make_shared<neuronavigation_interfaces::msg::CreateMarker>();
+  msg->targets = trial.targets;
   create_marker_publisher->publish(*msg);
 }
 
@@ -717,7 +718,7 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
 
   /* If trial was successful, create a marker in neuronavigation. */
   if (success) {
-    create_marker();
+    create_marker(trial);
   }
 
   return {success, trial_result};

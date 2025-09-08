@@ -47,7 +47,7 @@ RUN apt-get update && \
 # Install Python dependencies
 
 RUN pip install cython vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.9 pypolaris==0.0.6 python-socketio scikit-learn
-
+RUN pip install numpy==1.26.4 scipy==1.14.0
 # HACK: As of now, wxPython >=4.1.0 (required by InVesalius) for Ubuntu 22 is not stored in PyPi, hence
 #       install using an own wheel file.
 #
@@ -93,9 +93,12 @@ COPY ros2_ws/src/mtms_packages/interfaces/targeting_services src/interfaces/targ
 COPY ros2_ws/src/mtms_packages/interfaces/ui_interfaces src/interfaces/ui_interfaces/
 COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
+COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
+COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
+COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build --base-paths src/interfaces
+RUN source /opt/ros/iron/setup.bash && colcon build
 
 # Copy rest of InVesalius
 
