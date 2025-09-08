@@ -125,7 +125,7 @@ private:
   void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
 
   /* Publishers */
-  void create_marker();
+  void create_marker(const mtms_trial_interfaces::msg::Trial &trial);
 
   /* Logging */
   void log_trial(const mtms_trial_interfaces::msg::Trial &trial);
