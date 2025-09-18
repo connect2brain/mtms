@@ -169,6 +169,20 @@ classdef mTMS_toolkit < handle
             end
         end
 
+        function api_waveforms = create_waveform_from_struct(obj,waveforms)
+            % Transforms wavefrom modes and durations to a waveform object.
+            %
+            % :param waveforms: Waveform modes and durations
+            % :type waveforms: cell array
+            %
+            % :return: api_waveforms: Waveform objects.
+            % :rtype: cell array
+
+            for i = 1:length(waveforms)
+                api_waveforms{1,i} = obj.api.create_waveform(waveforms{i});
+            end
+        end
+
         function target_voltages = get_target_voltages(obj,displacement_x,displacement_y,rotation_angle,intensity)
             % Uses a precomputed table to find target voltages based on spatial displacement,
             % rotation, and intensity, adjusting for polarity as needed.
@@ -189,6 +203,7 @@ classdef mTMS_toolkit < handle
             target = obj.api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
             [target_voltages, reverse_polarities] = obj.api.get_target_voltages(target);
             target_voltages(reverse_polarities) = -target_voltages(reverse_polarities);
+            target_voltages = target_voltages';
         end
 
         function ITI = random_ITI(~,n_trials,ITI_window)
@@ -206,6 +221,20 @@ classdef mTMS_toolkit < handle
             width = ITI_window(2) - ITI_window(1);
             ITI = rand(n_trials,1);
             ITI = ITI * width + ITI_window(1);
+        end
+
+        function pulse_structure = repeat_pulse_structure(~, pulse_structure,N)
+            % Creates N copies of the given pulse_structure.
+            %
+            % :param pulse_strucure: Structure containing pulse configurations
+            % :type pulse_structure: struct
+            % :param N: Number of copies.
+            % :type N: int
+            %
+            % :return: pulse_structure: Structure containing copies of the
+            % original pulse configurations.
+
+            pulse_structure = repmat(pulse_structure,1,N);
         end
 
         function pulse_structure = generate_pulse_structure(obj,load_voltages,opt)
@@ -339,7 +368,7 @@ classdef mTMS_toolkit < handle
                     p.stim_time = start_time + ITI;
                     p.charge_time = p.stim_time - p.charge_to_stim_time;
 
-                    [readout,pulse_ok,p] = obj.stimulate(p);
+                    [readout,pulse_ok] = obj.stimulate(p);
 
                     start_time = p.stim_time(1);
                     pulse_times = [pulse_times datetime];
@@ -351,6 +380,9 @@ classdef mTMS_toolkit < handle
                         p.success = [p.success,0];
                         if p.repeat_on_failure && length(p.success) < max_attempts
                             fprintf('Re-trying, attempt %i...\n',length(p.success))
+                            % Restarting the session usually helps
+                            obj.api.stop_session();
+                            obj.api.start_session();
                         else
                             fprintf('Continuing to next trial...\n')
                             pulse_complete = true;
@@ -399,7 +431,7 @@ classdef mTMS_toolkit < handle
             fprintf("\nPulse %i.\n\n",obj.closed_loop_trial_index)
 
             while ~pulse_complete
-                [readout,pulse_ok,p] = obj.stimulate(p);
+                [readout,pulse_ok] = obj.stimulate(p);
 
                 %start_time = p.stim_time(1);
                 pulse_times = [pulse_times datetime];
@@ -522,12 +554,12 @@ classdef mTMS_toolkit < handle
                 p.stim_time = start_time + ITI;
                 p.charge_time = p.stim_time - p.charge_to_stim_time;
 
-                [~,~,p] = obj.stimulate(p);
+                obj.stimulate(p);
                 start_time = p.stim_time(1);
             end
         end
 
-        function [readout,pulse_ok,p] = stimulate(obj,pulse_structure)
+        function [readout,pulse_ok] = stimulate(obj,pulse_structure)
             % Loads capacitors and applies a pulse with the specified configuration, handling
             % waveforms, timing, and readouts (EMG/EEG). Includes error checking and retry logic.
             %
