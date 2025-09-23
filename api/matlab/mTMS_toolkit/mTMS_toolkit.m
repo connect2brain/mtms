@@ -18,6 +18,8 @@ classdef mTMS_toolkit < handle
         readout_fs % Sampling frequency for readout data (in Hz)
         cleanupObj % Object to handle path cleanup on object destruction
         channels_in_use % List of channel indices in use
+        approximator % Waveform approximator instance
+        power_checker % Instance for pulse power calculation
     end
 
     methods
@@ -59,9 +61,13 @@ classdef mTMS_toolkit < handle
             if ~isempty(obj.save_dir) && ~exist(obj.save_dir,"dir")
                 mkdir(obj.save_dir)
             end
+
+            obj.approximator = obj.get_approximator();
+            obj.power_checker = pulse_power_checker(obj.approximator);
         end
 
         function set_channels_in_use(obj,channels_in_use)
+            % Defines the channels currently in use.
             obj.channels_in_use = channels_in_use;
         end
 
@@ -139,11 +145,11 @@ classdef mTMS_toolkit < handle
             % :rtype: cell
 
             % Set reference pulse durations.
-            durations =  num2cell([60,30,37.5; ...
-                                   60,30,37.5;...
-                                   60,30,37.5;...
-                                   60,30,37.5;...
-                                   60,30,37.5]*1e-6);
+            durations =  num2cell([60,30,37.0; ...
+                                   60,30,37.0;...
+                                   60,30,39.1;...
+                                   60,30,39.1;...
+                                   60,30,44.4]*1e-6);
             modes = {'r','h','f'};
             for i = 1:size(durations,1)
                 waveforms{1,i} = struct('mode',modes,'duration',durations(i,:));
@@ -178,8 +184,10 @@ classdef mTMS_toolkit < handle
             % :return: api_waveforms: Waveform objects.
             % :rtype: cell array
 
-            for i = 1:length(waveforms)
-                api_waveforms{1,i} = obj.api.create_waveform(waveforms{i});
+            for i = 1:size(waveforms,1)
+                for j = 1:size(waveforms,2)
+                    api_waveforms{i,j} = obj.api.create_waveform(waveforms{i,j});
+                end
             end
         end
 
@@ -292,13 +300,19 @@ classdef mTMS_toolkit < handle
             % Set default waveforms if not specified
             if isempty(opt.waveforms)
                 reverse_polarities = load_voltages < 0;
+                opt.waveforms = obj.get_monophasic_reference_waveforms();
                 % Define single-pulse waveforms
                 for j = 1:N_chn
-                    opt.waveforms{1,j} = obj.api.get_default_waveform(j-1);
                     if reverse_polarities(j)
-                        opt.waveforms{1,j} = obj.api.reverse_polarity(opt.waveforms{1,j});
+                        opt.waveforms{j}.mode = {'f','h','r'};
                     end
                 end
+            end
+
+            % Check pulse power
+            [power_ok, power_ratio] = obj.power_checker.check_pulse_power(load_voltages,opt.waveforms);
+            if ~power_ok
+                error("Pulse power exeeds limit by %.0f%s.\n",100-power_ratio*100,'%')
             end
 
             % Set repeat_of_failure to true if not specified
@@ -402,6 +416,7 @@ classdef mTMS_toolkit < handle
         end
 
         function full_discharge(obj)
+            % Discharges all used channels completely.
             for i = obj.channels_in_use
                 obj.api.send_charge_or_discharge(i,0,obj.api.execution_conditions.IMMEDIATE);
             end
@@ -595,6 +610,9 @@ classdef mTMS_toolkit < handle
             for i = 1:size(p.waveforms,2)
                 charge_ids(i) = obj.api.send_charge_or_discharge(obj.channels_in_use(i),abs_load_voltages(i),load_condition);
             end
+
+            % Prepare waveforms
+            waveforms = obj.create_waveform_from_struct(p.waveforms);
             obj.api.wait_for_completion(10);
 
             if ~isfield(p,'stim_time')
@@ -612,11 +630,11 @@ classdef mTMS_toolkit < handle
 
             % Stimulate
             pulse_ids = [];
-            for i = 1:size(p.waveforms,1)
-                for j=1:size(p.waveforms,2)
+            for i = 1:size(waveforms,1)
+                for j=1:size(waveforms,2)
                     % send_pulse is always timed to cover multi-pulse
                     % scenarios, and maintain constant charge_to_stim time
-                    pulse_ids(i,j) = obj.api.send_pulse(obj.channels_in_use(j), p.waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
+                    pulse_ids(i,j) = obj.api.send_pulse(obj.channels_in_use(j), waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
                 end
             end
 
@@ -721,13 +739,6 @@ classdef mTMS_toolkit < handle
                 end
             end
 
-            % Turn off function handle warning that clutters the console
-            warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-
-            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
-            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
-            time_resolution = 0.01e-6;
-
             target_state_trajectories = {};
             approximated_state_trajectories = {};
             waveforms = {};
@@ -742,11 +753,9 @@ classdef mTMS_toolkit < handle
             figure
             tcl = tiledlayout(n_pulses,n_channels);
             for i = 1:n_pulses
-                custom_waveforms = {};
                 for j = 1:n_channels
                     % Select approximator object and select coil for modelling the circuits
-                    approximator = WaveformApproximator(solutions_filename, time_resolution);
-                    approximator.select_coil(j);
+                    obj.approximator.select_coil(j);
 
                     % Define target waveform for the PWM approximation
                     actual_voltage = assumed_voltages(j);
@@ -758,14 +767,14 @@ classdef mTMS_toolkit < handle
                     end
 
                     % Run iterative approximation for the best PWM fit
-                    [approximated_waveform, success] = approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
-
-                    custom_waveforms{j} = obj.api.create_waveform(approximated_waveform);
+                    [approximated_waveform, success] = obj.approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
+                    
+                    waveforms{i,j} = approximated_waveform;
 
                     % Get model parameters of the electronics circuit during the pulse
                     % to plot the current.
-                    target_state_trajectories{i,j} = approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
-                    tmp_approximated_state_trajectory = approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
+                    target_state_trajectories{i,j} = obj.approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
+                    tmp_approximated_state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
                     approximated_state_trajectories{i,j} = tmp_approximated_state_trajectory;
 
                     % Consider voltage drop in the channel for consecutive pulses
@@ -774,14 +783,21 @@ classdef mTMS_toolkit < handle
 
                     % Plot
                     nexttile
-                    approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
+                    obj.approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
                 end
                 load_voltages_after_pulse(i,:) = assumed_voltages;
                 title(tcl,'Channel currents. Pulses in rows, channels in columns.')
 
-                waveforms(i,:) = custom_waveforms;
             end
+        end
 
+        function approximator = get_approximator(obj)
+            warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
+            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
+            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
+            time_resolution = 0.01e-6;
+
+            approximator = WaveformApproximator(solutions_filename, time_resolution);
             warning('on', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
         end
 
@@ -878,7 +894,7 @@ classdef mTMS_toolkit < handle
             % :throws: Error if coil_file is invalid, missing, or di/dt size does not match channel count
             
             % Ensure di/dt size matches the number of channels
-            n_channels = obj.api.channel_count;
+            n_channels = length(obj.channels_in_use);
             if length(didt) ~= n_channels
                 error('mTMS_toolkit:didt_to_volts:InvalidInput', ...
                       'Expected di/dt array of length %d, got %d.', n_channels, length(didt));
