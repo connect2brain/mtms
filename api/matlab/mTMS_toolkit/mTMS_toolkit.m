@@ -19,7 +19,7 @@ classdef mTMS_toolkit < handle
         cleanupObj % Object to handle path cleanup on object destruction
         channels_in_use % List of channel indices in use
         approximator % Waveform approximator instance
-        power_checker % Instance for pulse power calculation
+        strain_checker % Instance for pulse strain calculation
     end
 
     methods
@@ -63,7 +63,7 @@ classdef mTMS_toolkit < handle
             end
 
             obj.approximator = obj.get_approximator();
-            obj.power_checker = pulse_power_checker(obj.approximator);
+            obj.strain_checker = pulse_strain_checker(obj.approximator);
         end
 
         function set_channels_in_use(obj,channels_in_use)
@@ -309,10 +309,10 @@ classdef mTMS_toolkit < handle
                 end
             end
 
-            % Check pulse power
-            [power_ok, power_ratio] = obj.power_checker.check_pulse_power(load_voltages,opt.waveforms);
-            if ~power_ok
-                error("Pulse power exeeds limit by %.0f%s.\n",100-power_ratio*100,'%')
+            % Check pulse strain
+            [strain_ok, strain_ratio] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
+            if ~strain_ok
+                error("Pulse strain exeeds limit by %.0f%s.\n",100-strain_ratio*100,'%')
             end
 
             % Set repeat_of_failure to true if not specified
