@@ -310,9 +310,9 @@ classdef mTMS_toolkit < handle
             end
 
             % Check pulse strain
-            [strain_ok, strain_ratio] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
+            [strain_ok, stimulation_intensity_multiplier] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
             if ~strain_ok
-                error("Pulse strain exeeds limit by %.0f%s.\n",100-strain_ratio*100,'%')
+                error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
             end
 
             % Set repeat_of_failure to true if not specified

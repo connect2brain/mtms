@@ -40,7 +40,7 @@ classdef pulse_strain_checker < handle
             strain_limit = obj.calculate_strain(max_currents);
         end
 
-        function [strain_ok, strain_ratio] = check_pulse_strain(obj,load_voltages,waveforms)
+        function [strain_ok, stimulation_intensity_multiplier] = check_pulse_strain(obj,load_voltages,waveforms)
                 N_pulses = size(load_voltages,1);
                 max_currents = zeros(size(load_voltages));
 
@@ -55,7 +55,7 @@ classdef pulse_strain_checker < handle
                 pulse_strain = obj.calculate_strain(max_currents);
 
                 strain_ok = pulse_strain < obj.strain_limit;
-                strain_ratio = 1 - obj.strain_limit / pulse_strain;
+                stimulation_intensity_multiplier = sqrt(obj.strain_limit / pulse_strain);
         end
 
     end
