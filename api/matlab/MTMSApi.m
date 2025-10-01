@@ -816,6 +816,26 @@ classdef MTMSApi < handle
             target.algorithm = algorithm;
         end
 
+        function create_marker_msg = create_navigation_marker(obj, targets, mep)
+            % Builds and fills a CreateMarker message with the given parameters.
+
+            % Set default value for mep if not provided mep (optional): numeric value, defaults to 0
+            if nargin < 3 || isempty(mep)
+                mep = 0;
+            end
+
+            create_marker_msg = ros2message("neuronavigation_interfaces/CreateMarker");
+
+            % Fill targets (array of targeting_msgs/ElectricTarget)
+            if nargin >= 2 && ~isempty(targets)
+                create_marker_msg.targets = targets;
+            else
+                create_marker_msg.targets = struct([]);
+            end
+            create_marker_msg.brain_response_amplitude = mep;
+            obj.node.create_marker(create_marker_msg)
+        end
+
         % Compound events
 
         function id = send_charge_or_discharge(obj, channel, target_voltage, execution_condition, time)

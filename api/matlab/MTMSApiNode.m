@@ -27,6 +27,8 @@ classdef MTMSApiNode < handle
         charge_feedback_subscriber
         discharge_feedback_subscriber
 
+        create_marker_publisher
+
         decider_enabled_subscriber
 
         get_target_voltages_client
@@ -80,6 +82,8 @@ classdef MTMSApiNode < handle
             obj.charge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/charge", "event_msgs/ChargeFeedback", @obj.handle_charge_feedback);
             obj.discharge_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/discharge", "event_msgs/DischargeFeedback", @obj.handle_discharge_feedback);
             obj.trigger_out_feedback_subscriber = ros2subscriber(obj.node, "/mtms_device/events/feedback/trigger_out", "event_msgs/TriggerOutFeedback", @obj.handle_trigger_out_feedback);
+
+            obj.create_marker_publisher = ros2publisher(obj.node, "/neuronavigation/create_marker");
 
             % Decider.
             obj.decider_enabled_subscriber = ros2subscriber(...
@@ -321,6 +325,18 @@ classdef MTMSApiNode < handle
             success = response.success;
 
             assert(success, "Failed to request trigger out event.");
+        end
+
+        function create_marker(obj, create_marker_msg)
+            %create_marker Send create_marker event
+            %
+            %   Publishes a CreateMarker message with create_marker_msg.
+
+            pub = obj.create_marker_publisher;
+            % Publish the message
+            send(pub, create_marker_msg);
+            % Log
+            disp("Creating marker...");
         end
 
         % Feedback

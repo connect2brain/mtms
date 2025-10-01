@@ -146,31 +146,32 @@ api.wait_for_completion()
 
 
 %% Targeting
-
-displacement_x = 5;  % mm
-displacement_y = 5;  % mm
-rotation_angle = 90;  % deg
-intensity = 5;  % V/m
-algorithm = api.get_targeting_algorithm('genetic');
-
-target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
-
-[target_voltages, reverse_polarities] = api.get_target_voltages(target);
-
-% Get maximum intensity
-
-maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
-
-% Charge all channels to target voltages.
-
-api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
-api.wait_for_completion();
-
-% Send default pulse to all channels.
-
-api.send_immediate_default_pulse_to_all_channels(reverse_polarities);
-api.wait_for_completion();
-
+for a = 1:10
+    displacement_x = round((rand(1)-0.5)*30); ;  % mm
+    displacement_y = round((rand(1)-0.5)*30); ;  % mm
+    rotation_angle = round((rand(1))*359); ;  % deg
+    intensity = 1;  % V/m
+    algorithm = api.get_targeting_algorithm('genetic');
+    
+    target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
+    
+    [target_voltages, reverse_polarities] = api.get_target_voltages(target);
+    
+    % Get maximum intensity
+    
+    maximum_intensity = api.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
+    
+    % Charge all channels to target voltages.
+    
+    api.send_immediate_charge_or_discharge_to_all_channels(target_voltages);
+    api.wait_for_completion();
+    
+    % Send default pulse to all channels.
+    
+    api.send_immediate_default_pulse_to_all_channels(reverse_polarities);
+    api.wait_for_completion();
+    api.create_navigation_marker(target, round((rand(1))*1500));
+end
 
 %% Targeting and MEP analysis
 
