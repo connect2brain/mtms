@@ -104,6 +104,14 @@ RUN source /opt/ros/iron/setup.bash && colcon build
 
 COPY ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3 src/neuronavigation/neuronavigation/invesalius3/
 
+# Ensure an empty __init__.py exists for Python package discovery in invesalius3
+
+RUN set -eux; \
+    pkg_dir="/app/ros2_ws/src/neuronavigation/neuronavigation/invesalius3"; \
+    init_file="${pkg_dir}/__init__.py"; \
+    mkdir -p "${pkg_dir}"; \
+    : > "${init_file}"
+
 # Copy and build Neuronavigation ROS package
 
 COPY ros2_ws/src/mtms_packages/neuronavigation/neuronavigation src/neuronavigation/neuronavigation/
