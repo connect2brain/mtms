@@ -382,21 +382,23 @@ classdef mTMS_toolkit < handle
                     p.stim_time = start_time + ITI;
                     p.charge_time = p.stim_time - p.charge_to_stim_time;
 
-                    [readout,pulse_ok] = obj.stimulate(p);
+                    [readout,pulse_diagnostic] = obj.stimulate(p);
 
                     start_time = p.stim_time(1);
                     pulse_times = [pulse_times datetime];
 
-                    if pulse_ok
+                    if pulse_diagnostic.ok_flag
                         p.success = [p.success,1];
                         pulse_complete = true;
                     else
                         p.success = [p.success,0];
                         if p.repeat_on_failure && length(p.success) < max_attempts
                             fprintf('Re-trying, attempt %i...\n',length(p.success))
-                            % Restarting the session usually helps
-                            obj.api.stop_session();
-                            obj.api.start_session();
+                            % Restarting the session usually helps with readout issues
+                            if pulse_diagnostic.only_readout_failed
+                                obj.api.stop_session();
+                                obj.api.start_session();
+                            end
                         else
                             fprintf('Continuing to next trial...\n')
                             pulse_complete = true;
@@ -446,12 +448,11 @@ classdef mTMS_toolkit < handle
             fprintf("\nPulse %i.\n\n",obj.closed_loop_trial_index)
 
             while ~pulse_complete
-                [readout,pulse_ok] = obj.stimulate(p);
+                [readout,pulse_diagnostic] = obj.stimulate(p);
 
-                %start_time = p.stim_time(1);
                 pulse_times = [pulse_times datetime];
 
-                if pulse_ok
+                if pulse_diagnostic.ok_flag
                     p.success = [p.success,1];
                     pulse_complete = true;
                 else
@@ -574,7 +575,7 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function [readout,pulse_ok] = stimulate(obj,pulse_structure)
+        function [readout,pulse_diagnostic] = stimulate(obj,pulse_structure)
             % Loads capacitors and applies a pulse with the specified configuration, handling
             % waveforms, timing, and readouts (EMG/EEG). Includes error checking and retry logic.
             %
@@ -583,9 +584,7 @@ classdef mTMS_toolkit < handle
             %
             % :return: readout: Readout data (EMG/EEG) or empty if none
             % :rtype: struct
-            % :return: pulse_ok: Flag indicating successful pulse execution
-            % :rtype: logical
-            % :return: p: Updated pulse structure with execution details
+            % :return: pulse_diagnostic: Feedback for successful stimulation
             % :rtype: struct
 
             p = pulse_structure;
@@ -659,33 +658,44 @@ classdef mTMS_toolkit < handle
             obj.api.wait_for_completion(5)
 
             % Check for any errors
-            pulse_ok = 1;
+            pulse_diagnostic.ok_flag = 1;
+
+            pulse_diagnostic.charge_ids = charge_ids;
             for id=charge_ids
                 feedback = obj.api.get_event_feedback(id);
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in channel charging.\n');
-                    pulse_ok = 0;
+                    pulse_diagnostic.ok_flag = 0;
                 end
             end
+
+            pulse_diagnostic.pulse_ids = pulse_ids;
             pulse_ids = pulse_ids(:);
             for id=1:length(pulse_ids)
                 feedback = obj.api.get_event_feedback(pulse_ids(id));
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in pulse generation.\n');
-                    pulse_ok = 0;
+                    pulse_diagnostic.ok_flag = 0;
                 end
             end
+
+            pulse_diagnostic.trig_id = trig_id;
             if ~isempty(trig_id)
                 feedback = obj.api.get_event_feedback(trig_id);
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in output trigger.\n');
-                    pulse_ok = 0;
+                    pulse_diagnostic.ok_flag = 0;
                 end
             end
             if isstruct(readout) && isfield(readout,'buffer')
                 if isempty(readout.buffer)
                     fprintf('Error in readout.\n');
-                    pulse_ok = 0;
+                    if pulse_diagnostic.ok_flag
+                        pulse_diagnostic.only_readout_failed = 1;
+                    else
+                        pulse_diagnostic.only_readout_failed = 0;
+                    end
+                    pulse_diagnostic.ok_flag = 0;
                 else
                     if strcmp(p.readout_type,'EMG')
                         % Process buffer
@@ -697,7 +707,7 @@ classdef mTMS_toolkit < handle
                 end
             end
 
-            if pulse_ok
+            if pulse_diagnostic.ok_flag
                 % Try to catch problems with coil connections
                 load_voltages_post = obj.api.get_current_voltages();
                 load_voltages_post = load_voltages_post(obj.channels_in_use+1);
@@ -710,7 +720,7 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function [waveforms,load_voltages_after_pulse, approximated_state_trajectories] = generate_PWM_waveforms(obj,target_voltages,load_voltages,reference_waveforms)
+        function [waveforms,load_voltages_after_pulse, approximated_state_trajectories, target_state_trajectories] = generate_PWM_waveforms(obj,target_voltages,load_voltages,reference_waveforms)
             % Creates pulse-width modulated (PWM) waveforms for each channel and pulse,
             % approximating target voltages and tracking voltage changes.
             %
@@ -760,7 +770,7 @@ classdef mTMS_toolkit < handle
                     % Define target waveform for the PWM approximation
                     actual_voltage = assumed_voltages(j);
                     target_voltage = target_voltages(i,j);
-                    if target_voltage > 0
+                    if target_voltage >= 0
                         target_waveform = reference_waveforms{i,j};
                     else
                         target_waveform = reverse_phases(reference_waveforms{i,j});
@@ -794,6 +804,7 @@ classdef mTMS_toolkit < handle
         function approximator = get_approximator(obj)
             warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
             solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
+            
             addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
             time_resolution = 0.01e-6;
 
