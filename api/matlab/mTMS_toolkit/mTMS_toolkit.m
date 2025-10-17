@@ -687,13 +687,13 @@ classdef mTMS_toolkit < handle
                     pulse_diagnostic.ok_flag = 0;
                 end
             end
+            
+            pulse_diagnostic.only_readout_failed = 0;
             if isstruct(readout) && isfield(readout,'buffer')
                 if isempty(readout.buffer)
                     fprintf('Error in readout.\n');
                     if pulse_diagnostic.ok_flag
                         pulse_diagnostic.only_readout_failed = 1;
-                    else
-                        pulse_diagnostic.only_readout_failed = 0;
                     end
                     pulse_diagnostic.ok_flag = 0;
                 else
