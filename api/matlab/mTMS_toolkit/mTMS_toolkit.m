@@ -6,6 +6,7 @@ classdef mTMS_toolkit < handle
 
     properties
         api % External API for interfacing with TMS hardware
+        coil_specs % Table for coil specification parameters
         mep_configuration % Configuration for Motor Evoked Potential (MEP) analysis
         pulse_sequence % Sequence of pulses for stimulation
         save_dir % Directory for saving experiment results
@@ -23,7 +24,7 @@ classdef mTMS_toolkit < handle
     end
 
     methods
-        function obj = mTMS_toolkit(api,save_dir)
+        function obj = mTMS_toolkit(api,coil_spec_file,save_dir)
             % Initializes the toolkit with the provided API and save directory, sets up default
             % MEP configurations, and adds necessary paths for auxiliary functions.
             %
@@ -53,6 +54,7 @@ classdef mTMS_toolkit < handle
 
             obj.channels_in_use = [0,1,2,3,4];
             obj.api = api;
+            obj.coil_specs = obj.read_coil_specs(coil_spec_file);
             obj.generate_default_MEP_configuration()
             obj.set_MEP_processing_options([0.015,0.045],5000,1)
             obj.save_dir = save_dir;
@@ -69,6 +71,29 @@ classdef mTMS_toolkit < handle
         function set_channels_in_use(obj,channels_in_use)
             % Defines the channels currently in use.
             obj.channels_in_use = channels_in_use;
+        end
+
+        function coil_specs = read_coil_specs(~,coil_spec_file)
+            % Reads coil specification parameters from file.
+            %
+            % :param coil_spec_file: Filepath to a tabular (e.g. csv) file.
+            % :type coil_spec_file: char
+
+            % :return coil_specs: Coil specification parameters
+            % :type coil_specs: Table
+
+            % Check if coil specification file exists
+            if ~isfile(coil_file)
+                error('mTMS_toolkit:read_coilspecs:FileNotFound', ...
+                      'Coil specification file not found at: %s', coil_spec_file);
+            end
+            
+            try
+                coil_specs = readtable(coil_spec_file, 'VariableNamingRule', 'preserve');
+            catch err
+                error('mTMS_toolkit:read_coilspecs:FileReadError', ...
+                      'Failed to process coil file: %s', err.message);
+            end
         end
 
         function reset_experiment(obj)
@@ -144,12 +169,28 @@ classdef mTMS_toolkit < handle
             % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
             % :rtype: cell
 
+            % Read last phase durations from coil spec table
+            if ~ismember('last_phase_duration_monophasic', obj.coil_specs.Properties.VariableNames)
+                    error('mTMS_toolkit:get_monophasic_reference_waveforms:InvalidFileFormat', ...
+                          'Coil spec file must contain a ''last_phase_duration_monophasic'' column.');
+            end
+            last_phase_durs = obj.coil_specs.last_phase_duration_monophasic;
+            ramp_up_dur = 60e-6;
+            hold_dur = 30e-6;
+
+            % Validate format
+            n_coils = length(obj.channels_in_use);
+            if length(last_phase_durs) ~= n_coils
+                error('mTMS_toolkit:get_monophasic_reference_waveforms:InvalidWaveformDurationCount', ...
+                      'Expected %d duration values, got %d.', n_coils, length(last_phase_durs));
+            end
+
             % Set reference pulse durations.
-            durations =  num2cell([60,30,37.0; ...
-                                   60,30,37.0;...
-                                   60,30,39.1;...
-                                   60,30,39.1;...
-                                   60,30,44.4]*1e-6);
+            durations =  num2cell([repmat(ramp_up_dur,n_coils,1), ...
+                                   repmat(hold_dur,n_coils,1), ...
+                                   last_phase_durs]);
+
+            % Define the default waveform
             modes = {'r','h','f'};
             for i = 1:size(durations,1)
                 waveforms{1,i} = struct('mode',modes,'duration',durations(i,:));
@@ -163,12 +204,32 @@ classdef mTMS_toolkit < handle
             % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
             % :rtype: cell
 
+            % Read last phase durations from coil spec table
+            if ~ismember('last_phase_duration_biphasic', obj.coil_specs.Properties.VariableNames)
+                    error('mTMS_toolkit:get_biphasic_reference_waveforms:InvalidFileFormat', ...
+                          'Coil spec file must contain a ''last_phase_duration_biphasic'' column.');
+            end
+            last_phase_durs = obj.coil_specs.last_phase_duration_biphasic;
+            ramp_up1_dur = 60e-6;
+            hold1_dur = 40e-6;
+            ramp_down_dur = 140e-6;
+            hold2_dur = 10e-6;
+
+            % Validate format
+            n_coils = length(obj.channels_in_use);
+            if length(last_phase_durs) ~= n_coils
+                error('mTMS_toolkit:get_biphasic_reference_waveforms:InvalidWaveformDurationCount', ...
+                      'Expected %d duration values, got %d.', n_coils, length(last_phase_durs));
+            end
+
             % Set reference pulse durations.
-            durations =  num2cell([60,40,140,10,67.5; ...
-                                   60,40,140,10,67.5;...
-                                   60,40,140,10,69.2;...
-                                   60,40,140,10,69.2;...
-                                   60,40,140,10,73.0]*1e-6);
+            durations =  num2cell([repmat(ramp_up1_dur,n_coils,1), ...
+                                   repmat(hold1_dur,n_coils,1), ...
+                                   repmat(ramp_down_dur,n_coils,1), ...
+                                   repmat(hold2_dur,n_coils,1), ...
+                                   last_phase_durs]);
+
+            % Define the default waveform
             modes = {'f','h','r','h','f'};
             for i = 1:size(durations,1)
                 waveforms{1,i} = struct('mode',modes,'duration',durations(i,:));
@@ -889,64 +950,59 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function load_voltages = didt_to_volts(obj, didt, coil_file)
+        function load_voltages = didt_to_volts(obj, didt, coilset)
             % Converts the rate of change of current (di/dt) to corresponding capacitor load
             % voltages using coil inductance values from a specified file. The input di/dt
             % array must match the number of channels defined by the API.
             %
             % :param didt: Rate of change of current (di/dt) values for each channel (in A/s)
             % :type didt: double array
-            % :param coil_file: File path to coil specifications (CSV or similar, containing 'inductances' column)
-            % :type coil_file: char
             %
             % :return: load_voltages: Corresponding capacitor load voltages (in V)
             % :rtype: double array
             %
-            % :throws: Error if coil_file is invalid, missing, or di/dt size does not match channel count
+            % :throws: Error if inductances are missing, or di/dt size does not match channel count
             
-            % Ensure di/dt size matches the number of channels
-            n_channels = length(obj.channels_in_use);
-            if length(didt) ~= n_channels
+            % Ensure di/dt size matches the number of coils
+            n_coils = length(obj.channels_in_use);
+            if length(didt) ~= n_coils
                 error('mTMS_toolkit:didt_to_volts:InvalidInput', ...
-                      'Expected di/dt array of length %d, got %d.', n_channels, length(didt));
-            end
-
-            % Check if coil specification file exists
-            if ~isfile(coil_file)
-                error('mTMS_toolkit:didt_to_volts:FileNotFound', ...
-                      'Coil specification file not found at: %s', coil_file);
+                      'Expected di/dt array of length %d, got %d.', n_coils, length(didt));
             end
 
             % Read coil specifications
-            try
-                coil_spec_table = readtable(coil_file, 'VariableNamingRule', 'preserve');
-                if ~ismember('inductances', coil_spec_table.Properties.VariableNames)
-                    error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
-                          'Coil file must contain an ''inductances'' column.');
-                end
-                inductances = coil_spec_table.inductances';
-                
-                % Validate inductances
-                if length(inductances) ~= n_channels
-                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                          'Expected %d inductance values, got %d.', n_channels, length(inductances));
-                end
-                
-                % Correct for mismatch between assumed E-field model and reality
-                polarities = coil_spec_table.polarities_vs_coilset_5_v230908';
-
-                % Validate polarities
-                if length(polarities) ~= n_channels
-                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                          'Expected %d inductance values, got %d.', n_channels, length(polarities));
-                end
-
-                % Calculate load voltages using V = L * di/dt
-                load_voltages = inductances .* polarities.* didt;
-            catch err
-                error('mTMS_toolkit:didt_to_volts:FileReadError', ...
-                      'Failed to process coil file: %s', err.message);
+            if ~ismember('inductances', obj.coil_specs.Properties.VariableNames)
+                error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
+                      'Coil file must contain an ''inductances'' column.');
             end
+            inductances = obj.coil_specs.inductances';
+            
+            % Validate inductances
+            if length(inductances) ~= n_coils
+                error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
+                      'Expected %d inductance values, got %d.', n_coils, length(inductances));
+            end
+
+            if nargin >= 2
+                field_name = ['polarities_vs_', coilset];
+                if ~ismember(field_name, obj.coil_specs.Properties.VariableNames)
+                error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
+                      'Coil file must contain a %s column.',field_name);
+                end
+
+                % Specify mismatch between assumed E-field model and reality
+                polarities = obj.coil_specs.(field_name)';
+
+                if length(polarities) ~= n_coils
+                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
+                          'Expected %d inductance values, got %d.', n_coils, length(polarities));
+                end
+            else
+                polarities = ones(1,n_coils);   % No change in polarities
+            end
+            
+            % Calculate load voltages using V = L * di/dt
+            load_voltages = inductances .* polarities.* didt;
         end
 
     end
