@@ -14,9 +14,9 @@
 
 %% Initialize api
 
-channel_count = 5;  % Change to 6 in Aalto
+channel_count = 5;
 api = MTMSApi(channel_count);
-api.start_device();
+api.start_device()
 api.start_session()
 
 %% Initialize mTMS toolkit
@@ -24,7 +24,7 @@ api.start_session()
 addpath(genpath("/home/mtms/mtms/api/matlab/mTMS_toolkit"))
 
 % Set directory for automatic saving. Set to [] no disable saving.
-save_dir = "/home/mtms/projects/mTMS_toolkit/saved/sub000";
+save_dir = [];%"/home/mtms/projects/mTMS_toolkit/saved/sub000";
 
 % Define path to coil specification file that corresponds to a coil set currently in use. 
 coil_spec_file = "/home/mtms/mtms/api/matlab/mTMS_toolkit/coils/coil_specs_5coil_aalto_010925.csv";
@@ -53,12 +53,13 @@ load_voltages = [100,0,0,0,0];
 % Generate a pulse structure from the load_voltages, which automatically
 % configures default settings for charge and stimulation timing, waveforms,
 % etc.
+
 pulse_structure = mtms_tk.generate_pulse_structure(load_voltages);
 
 % Execute pulse
 mtms_tk.stimulate(pulse_structure);
 
-% Discharge load voltage
+% Discharge load voltage.
 mtms_tk.full_discharge()
 
 %% Run a test pulse to all channels
@@ -76,6 +77,7 @@ mtms_tk.full_discharge()
 % argument by specifying the output port number.
 
 load_voltages = [100,100,100,100,100];
+
 pulse_structure = mtms_tk.generate_pulse_structure(load_voltages,...
                                                    readout_type = 'EMG',...
                                                    trigger_out = 2);
@@ -136,7 +138,7 @@ ITI_window = [4,6];
 charge_to_stim_time = 3.5;
 N_pulses = size(load_voltage_set,1);
 
-clear pulse_sequence    % Make sure we have a fresh structure
+clear pulse_sequence
 for i = 1:N_pulses
     pulse_sequence(i) = mtms_tk.generate_pulse_structure(load_voltage_set(i,:),...
                                                          ITI_window = ITI_window,...
@@ -275,8 +277,8 @@ mtms_tk.full_discharge()
 % Single-pulse PWM may be used in cases where you want to compare the effects 
 % between paired- and single-pulse stimuli. 
 
-load_voltages = [0,0,1500,0,1500];
-reference_load_voltages = [0,0,800,0,400];
+load_voltages = [0,1500,0,1500,0];
+reference_load_voltages = [0,500,0,500,0];
 
 % Define reference waveforms which will be approximated with PWM
 reference_waveforms = mtms_tk.get_monophasic_reference_waveforms();
@@ -297,9 +299,9 @@ mtms_tk.full_discharge()
 
 %% Paired-pulse stimulus
 
-load_voltages = [0,0,1500,0,1500];
-reference_load_voltage_set = [0,0,400,0,800;
-                              0,0,800,0,400];
+load_voltages = [0,1500,0,1500,0];
+reference_load_voltage_set = [0,400,0,400,0;
+                              0,800,0,400,0];
 
 % Define reference waveforms which will be approximated with PWM
 reference_waveforms(1,:) = mtms_tk.get_monophasic_reference_waveforms();    % First pulse
@@ -327,11 +329,11 @@ mtms_tk.full_discharge()
 
 %% Quadruple-pulse stimulus
 
-load_voltages = [0,0,1500,0,1500];
-reference_load_voltage_set = [0,0,400,0,800;
-                              0,0,800,0,400;
-                              0,0,400,0,800;
-                              0,0,800,0,400];
+load_voltages = [1500,1500,1500,1500,1500];
+reference_load_voltage_set = [400,200,200,200,200;
+                              200,400,200,200,200;
+                              200,200,400,200,200;
+                              200,200,200,400,200];
 
 % Define reference waveforms which will be approximated with PWM
 for i = 1:size(reference_load_voltage_set,1)
@@ -352,6 +354,8 @@ multi_pulse_structure = mtms_tk.generate_pulse_structure(load_voltages, ...
 % Execute pulse
 mtms_tk.stimulate(multi_pulse_structure)
 
+mtms_tk.full_discharge()
+
 %%
 
 %%%%% 5. BIPHASIC PULSE WAVEFORMS %%%%%
@@ -370,16 +374,27 @@ mtms_tk.stimulate(multi_pulse_structure)
 %% Trapezoidal (normal)
 
 % Get piecewise linear waveform structures
-reference_waveforms = mtms_tk.get_biphasic_reference_waveforms();
-
-% Convert waveforms to api format.
-biphasic_waveforms = mtms_tk.create_waveform_from_struct(reference_waveforms);
+biphasic_waveforms = mtms_tk.get_biphasic_reference_waveforms();
 
 % Specify waveform as an argument for the pulse structure and execute
-load_voltages = [100,100,100,100,100];
+load_voltages = [-100,100,100,100,100];
+
+% When using custom waveform argument, the direction of the waveform
+% (current ramp up or down) must be considered. PWM approximations handle
+% this automatically. Here, we must handle the waveform direction manually.
+
+reverse_polarities = load_voltages < 0;
+for i = 1:length(load_voltages)
+    if reverse_polarities(i)
+        biphasic_waveforms{i} = mtms_tk.reverse_waveform(biphasic_waveforms{i});
+    end
+end
+
 pulse_structure = mtms_tk.generate_pulse_structure(load_voltages, ...
                                                    waveforms = biphasic_waveforms);
 mtms_tk.stimulate(pulse_structure);
+
+mtms_tk.full_discharge()
 
 %% PWM
 
@@ -387,8 +402,8 @@ mtms_tk.stimulate(pulse_structure);
 % get_biphasic_reference_waveforms() instead of
 % get_monophasic_reference_waveforms().
 
-load_voltages = [0,0,1500,0,1500];
-reference_load_voltages = [0,0,800,0,400];
+load_voltages = [0,1500,0,1500,0];
+reference_load_voltages = [0,600,0,300,0];
 
 % Define reference waveforms which will be approximated with PWM
 reference_waveforms = mtms_tk.get_biphasic_reference_waveforms();
@@ -401,8 +416,9 @@ single_pulse_structure = mtms_tk.generate_pulse_structure(load_voltages, ...
                                                           waveforms = single_pulse_waveforms);
 
 % Execute pulse
-mtms_tk.stimulate(single_pulse_structure)
+mtms_tk.stimulate(single_pulse_structure);
 
+mtms_tk.full_discharge()
 %%
 
 %%%%% 6. STIMULATION TARGETING %%%%%
@@ -449,6 +465,8 @@ pulse_structure = mtms_tk.generate_pulse_structure(load_voltages);
 % Execute pulse
 mtms_tk.stimulate(pulse_structure);
 
+mtms_tk.full_discharge()
+
 % The pulse structure with can also be used normally with the
 % run_stimulation_sequence, or run_stimulation_trial functions.
 
@@ -461,14 +479,25 @@ mtms_tk.stimulate(pulse_structure);
 % E-field targeting scripts as a file called 'targeting_results.mat'.
 
 % Load targeting results
-targeting_results = load('targeting_results.mat');
+targeting_results = load('/home/mtms/projects/mTMS_toolkit/targeting_results_TS.mat');
 didt = targeting_results.weights;
 
-% Specify coil file path (not included in the mTMS repository, contact mikael.laine@aalto.fi for assistance)
-coil_file = "/home/mtms/mtms/api/matlab/mTMS_toolkit/coils/5coil_aalto_29042025.csv";
-
 % Convert coil weights from the E-field targeting results to load voltages
-load_voltages = mtms_tk.didt_to_volts(didt,coil_file);
+normalized_load_voltages = mtms_tk.didt_to_volts(didt,'coilset_5_v230908');
+
+% The results are normalized to produce E-field of 1 V/m in strength. Scale
+% voltages as needed.
+intensity = 30;     % V/m
+load_voltages = normalized_load_voltages * intensity;
+
+% Generate pulse structure
+clear pulse_sequence
+for i = 1:size(load_voltages,1)
+    pulse_sequence(i) = mtms_tk.generate_pulse_structure(load_voltages(i,:));
+end
+
+% Execute pulse
+mtms_tk.run_stimulation_sequence(pulse_sequence);
 
 %%
 

@@ -83,7 +83,7 @@ classdef mTMS_toolkit < handle
             % :type coil_specs: Table
 
             % Check if coil specification file exists
-            if ~isfile(coil_file)
+            if ~isfile(coil_spec_file)
                 error('mTMS_toolkit:read_coilspecs:FileNotFound', ...
                       'Coil specification file not found at: %s', coil_spec_file);
             end
@@ -236,6 +236,25 @@ classdef mTMS_toolkit < handle
             end
         end
 
+        function reversed_waveform = reverse_waveform(~,waveform)
+            % Reverses the rise and fall phases of a waveform.
+            %
+            % :param waveform: Waveform modes and durations
+            % :type waveform: struct
+            %
+            % :return: reversed_waveform: Waveform with reversed modes.
+            % :rtype: struct array
+            reversed_waveform = waveform;
+            for i = 1:length(waveform)
+                switch waveform(i).mode
+                    case 'r'
+                        reversed_waveform(i).mode = 'f';
+                    case 'f'
+                        reversed_waveform(i).mode = 'r';
+                end
+            end
+        end
+
         function api_waveforms = create_waveform_from_struct(obj,waveforms)
             % Transforms wavefrom modes and durations to a waveform object.
             %
@@ -352,20 +371,20 @@ classdef mTMS_toolkit < handle
             end
             assert(isempty(opt.trigger_out) || (opt.trigger_out == 1) || (opt.trigger_out == 2), sprintf("trigger_out must be empty, 1, or 2."))
             assert(isempty(opt.ITI_window) || (opt.ITI_window(1) >= 2 && opt.ITI_window(2) < 20), sprintf("ITI_window must be empty, or inside window of [2,20]."))
-            assert(isempty(opt.ISI) || (isnumeric(opt.ISI) && opt.ISI > 0 && opt.ISI < 0.05), sprintf("ISI must be empty, or number between 0 and 0.05."))
+            assert(isempty(opt.ISI) || (isnumeric(opt.ISI) && all(opt.ISI > 0) && all(opt.ISI < 0.2)), sprintf("ISI must be empty, or array of numbers between 0 and 0.2."))
             assert(isempty(opt.readout_type) || strcmp(opt.readout_type,'EMG') || strcmp(opt.readout_type,'EEG'), sprintf("readout_type must be empty, 'EMG', or 'EEG'"))
             assert(isempty(opt.repeat_on_failure) || opt.repeat_on_failure == false || opt.repeat_on_failure == true, sprintf("repeat_of_failure must be empty, true, or false."))
             assert(isempty(opt.pulse_label) || ischar(opt.pulse_label), sprintf("pulse_label must be empty or character vector (use '')"))
             assert(isempty(opt.charge_to_stim_time) || (opt.charge_to_stim_time < opt.ITI_window(1) && opt.charge_to_stim_time > 1), sprintf("charge_to_stim_time must be less than the minimum ITI, but larger than 1."))
 
-            % Set default waveforms if not specified
+            % Set default waveforms (single pulse) if not specified
             if isempty(opt.waveforms)
                 reverse_polarities = load_voltages < 0;
                 opt.waveforms = obj.get_monophasic_reference_waveforms();
                 % Define single-pulse waveforms
                 for j = 1:N_chn
                     if reverse_polarities(j)
-                        opt.waveforms{j}.mode = {'f','h','r'};
+                        opt.waveforms{j} = obj.reverse_waveform(opt.waveforms{j});
                     end
                 end
             end
@@ -799,16 +818,7 @@ classdef mTMS_toolkit < handle
             % :return: approximated_state_trajectories: Trajectories of circuit states
             % :rtype: cell
 
-            function waveform = reverse_phases(waveform)
-                for k = 1:length(waveform)
-                    current_mode = waveform(k).mode;
-                    if strcmp(current_mode,'f')
-                        waveform(k).mode = 'r';
-                    elseif strcmp(current_mode,'r')
-                               waveform(k).mode = 'f';
-                    end
-                end
-            end
+            plot_flag = 0; % Change to 1 for debugging.
 
             target_state_trajectories = {};
             approximated_state_trajectories = {};
@@ -820,8 +830,9 @@ classdef mTMS_toolkit < handle
             load_voltages_after_pulse = zeros(size(target_voltages));
             % Assumed voltages start from the initial load voltages
             assumed_voltages = load_voltages;
+            
+            if plot_flag; figure; end
 
-            figure
             tcl = tiledlayout(n_pulses,n_channels);
             for i = 1:n_pulses
                 for j = 1:n_channels
@@ -834,7 +845,7 @@ classdef mTMS_toolkit < handle
                     if target_voltage >= 0
                         target_waveform = reference_waveforms{i,j};
                     else
-                        target_waveform = reverse_phases(reference_waveforms{i,j});
+                        target_waveform = obj.reverse_waveform(reference_waveforms{i,j});
                     end
 
                     % Run iterative approximation for the best PWM fit
@@ -853,8 +864,10 @@ classdef mTMS_toolkit < handle
                     assumed_voltages(j) = tmp_approximated_state_trajectory(end-1).V_c;
 
                     % Plot
-                    nexttile
-                    obj.approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
+                    if plot_flag
+                        nexttile
+                        obj.approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
+                    end
                 end
                 load_voltages_after_pulse(i,:) = assumed_voltages;
                 title(tcl,'Channel currents. Pulses in rows, channels in columns.')
