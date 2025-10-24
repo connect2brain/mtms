@@ -23,11 +23,13 @@ api.start_session()
 
 addpath(genpath("/home/mtms/mtms/api/matlab/mTMS_toolkit"))
 
+% Set directory for automatic saving. Set to [] no disable saving.
 save_dir = "/home/mtms/projects/mTMS_toolkit/saved/sub000";
-mtms_tk = mTMS_toolkit(api,save_dir);
 
-% Use channel 6 instead of 5 (TEMPORARY FIX FOR AALTO)
-%mtms_tk.set_channels_in_use([0,1,2,3,5])
+% Define path to coil specification file that corresponds to a coil set currently in use. 
+coil_spec_file = "/home/mtms/mtms/api/matlab/mTMS_toolkit/coils/coil_specs_5coil_aalto_010925.csv";
+
+mtms_tk = mTMS_toolkit(api,coil_spec_file,save_dir);
 
 %%
 
@@ -77,11 +79,11 @@ load_voltages = [100,100,100,100,100];
 pulse_structure = mtms_tk.generate_pulse_structure(load_voltages,...
                                                    readout_type = 'EMG',...
                                                    trigger_out = 2);
-[readout,pulse_ok] = mtms_tk.stimulate(pulse_structure);
+[readout,pulse_diagnostic] = mtms_tk.stimulate(pulse_structure);
 mtms_tk.full_discharge()
 
 % Get MEP amplitude.
-if pulse_ok
+if pulse_diagnostic.ok_flag
     fprintf("MEP amplitude: %.2e µV\n",readout.amplitude)
 end
 
