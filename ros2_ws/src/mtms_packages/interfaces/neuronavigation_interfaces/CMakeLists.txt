@@ -27,7 +27,6 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/OptitrackPoses.msg"
-  "msg/MarkersVisibilities.msg"
   "msg/PoseUsingEulerAngles.msg"
   "msg/PoseArray.msg"
   "msg/ElectricField.msg"

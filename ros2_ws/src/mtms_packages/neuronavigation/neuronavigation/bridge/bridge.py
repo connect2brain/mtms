@@ -15,7 +15,7 @@ from geometry_msgs.msg import Point, Pose
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool, MultiArrayDimension
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker, MarkersVisibilities, PoseArray
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker, PoseArray
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
