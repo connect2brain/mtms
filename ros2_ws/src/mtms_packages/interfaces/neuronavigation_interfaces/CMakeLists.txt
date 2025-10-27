@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(targeting_msgs REQUIRED)
+find_package(targeting_services REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -27,7 +27,9 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/OptitrackPoses.msg"
+  "msg/MarkersVisibilities.msg"
   "msg/PoseUsingEulerAngles.msg"
+  "msg/PoseArray.msg"
   "msg/ElectricField.msg"
   "msg/CreateMarker.msg"
 
@@ -42,7 +44,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/VisualizeTargets.srv"
 
-  DEPENDENCIES geometry_msgs targeting_msgs
+  DEPENDENCIES geometry_msgs targeting_services
  )
 
 ament_package()

@@ -11,16 +11,19 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, QoSProfile
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, Pose
 from shape_msgs.msg import Mesh, MeshTriangle
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, MultiArrayDimension
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker, MarkersVisibilities, PoseArray
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
+from targeting_msgs.msg import CoilTarget
 
 from invesalius3 import app
+import invesalius.data.transformations as tr
+import numpy as np
 import time
 from launch.substitutions import LaunchConfiguration
 
@@ -70,6 +73,7 @@ class NeuronavigationNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
             history=HistoryPolicy.KEEP_LAST,
         )
+        callback_group = ReentrantCallbackGroup()
 
         self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
 
@@ -107,10 +111,13 @@ class NeuronavigationNode(Node):
                                                                     self.planner_state_callback, qos_persist_latest, callback_group=callback_group)
         self._optitrack_state_subscription = self.create_subscription(OptitrackPoses, "/neuronavigation/optitrack_poses",
                                                                       self.optitrack_listener_callback, 1, callback_group=callback_group)
+        self._coil_target_subscription = self.create_subscription(CoilTarget, "/neuronavigation/coil_target",
+                                                                        self.coil_target_callback, 10, callback_group=callback_group)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
                                                                     self.open_orientation_dialog_callback, callback_group=callback_group)
+        self._poses_publisher = self.create_publisher(PoseArray, "neuronavigation/poses", qos_persist_latest, callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
@@ -170,7 +177,9 @@ class NeuronavigationNode(Node):
         # TODO: This should be renamed from 'stimulation_pulse_received' to something
         #   more generic related to the creation of a marker; however, that needs changes
         #   on InVesalius side as well.
-        self._stimulation_pulse_received()
+        targets = msg.targets
+        mep = msg.brain_response_amplitude
+        self._stimulation_pulse_received(targets, mep)
 
     def planner_state_callback(self, msg):
         if not hasattr(self, '_set_markers'):
@@ -210,6 +219,7 @@ class NeuronavigationNode(Node):
         self.get_logger().info('I heard optitrack: "%s"' % msg.probe)
         # Simulate a very slow consumer
         time.sleep(0.1)
+
     def efield_listener_callback(self, msg):
         self.get_logger().info('I heard efield: "%s"' % msg.data)
         # Publisher.sendMessage('invesalius messages', arg=msg.data)
@@ -251,8 +261,22 @@ class NeuronavigationNode(Node):
     def update_coil_at_target(self, state):
         msg = Bool()
         msg.data = state
-        self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
+        #self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
         self._coil_at_target_publisher.publish(msg)
+
+    def update_poses(self, poses, visibilities):
+        msg = PoseArray()
+        msg.visibilities.probe, msg.visibilities.head, msg.visibilities.coil = bool(visibilities[0]), bool(visibilities[1]), bool(visibilities[2])
+        for marker_pose in poses:
+            pose = Pose()
+            pose.position.x, pose.position.y, pose.position.z = marker_pose[:3]
+            ai, aj, ak = np.deg2rad(marker_pose[3:])
+            quaternion = tr.quaternion_from_euler(ai, aj, ak)
+            pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion
+            msg.poses.append(pose)
+
+        #self.get_logger().info("Publishing to the topic /neuronavigation/poses")
+        self._poses_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()
@@ -407,6 +431,13 @@ class NeuronavigationNode(Node):
 
         self._update_target_orientation_client.call_async(request)
 
+    def set_callback__update_coil_target(self, callback):
+        self._update_coil_target = callback
+
+    def coil_target_callback(self, msg):
+        self._update_coil_target(msg.coil_target_message)
+        self.get_logger().info('I heard /neuronavigation/coil_target: "%s"' % msg)
+
 
 class Connection(Thread):
     def __init__(self):
@@ -449,6 +480,12 @@ class Connection(Thread):
     def update_coil_at_target(self, state):
         self.node.update_coil_at_target(
             state=state,
+        )
+
+    def update_tracker_poses(self, poses, visibilities):
+        self.node.update_poses(
+            poses=poses,
+            visibilities=visibilities,
         )
 
     def update_coil_pose(self, position, orientation):
@@ -542,6 +579,9 @@ class Connection(Thread):
 
     def remove_pedal_callback(self, name):
         self.pedal_bridge.remove_pedal_callback(name=name)
+
+    def set_callback__update_coil_target(self, callback):
+        self.node.set_callback__update_coil_target(callback)
 
 
 class RosLoggerWrapper:
