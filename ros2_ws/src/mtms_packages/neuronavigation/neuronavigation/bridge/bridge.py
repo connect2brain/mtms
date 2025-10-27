@@ -11,11 +11,11 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, ReliabilityPolicy, QoSProfile
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
-from geometry_msgs.msg import Point, Pose
+from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool, MultiArrayDimension
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker, PoseArray
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
@@ -117,7 +117,6 @@ class NeuronavigationNode(Node):
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
                                                                     self.open_orientation_dialog_callback, callback_group=callback_group)
-        self._poses_publisher = self.create_publisher(PoseArray, "neuronavigation/poses", qos_persist_latest, callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
                                                                     '/planner/set_target_orientation', callback_group=callback_group)
@@ -263,20 +262,6 @@ class NeuronavigationNode(Node):
         msg.data = state
         #self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
         self._coil_at_target_publisher.publish(msg)
-
-    def update_poses(self, poses, visibilities):
-        msg = PoseArray()
-        msg.visibilities.probe, msg.visibilities.head, msg.visibilities.coil = bool(visibilities[0]), bool(visibilities[1]), bool(visibilities[2])
-        for marker_pose in poses:
-            pose = Pose()
-            pose.position.x, pose.position.y, pose.position.z = marker_pose[:3]
-            ai, aj, ak = np.deg2rad(marker_pose[3:])
-            quaternion = tr.quaternion_from_euler(ai, aj, ak)
-            pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion
-            msg.poses.append(pose)
-
-        #self.get_logger().info("Publishing to the topic /neuronavigation/poses")
-        self._poses_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
         msg = PoseUsingEulerAngles()

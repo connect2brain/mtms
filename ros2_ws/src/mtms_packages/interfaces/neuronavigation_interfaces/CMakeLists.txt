@@ -28,7 +28,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/EulerAngles.msg"
   "msg/OptitrackPoses.msg"
   "msg/PoseUsingEulerAngles.msg"
-  "msg/PoseArray.msg"
   "msg/ElectricField.msg"
   "msg/CreateMarker.msg"
 
