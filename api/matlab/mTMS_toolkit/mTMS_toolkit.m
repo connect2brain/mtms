@@ -39,18 +39,7 @@ classdef mTMS_toolkit < handle
             % Get path to the misc folder
             classFilePath = mfilename('fullpath');
             classDir = fileparts(classFilePath);
-            miscDir = fullfile(classDir, 'misc');
-
-            % Check if the misc folder exists
-            if isfolder(miscDir)
-                % Add misc folder contents to the MATLAB path
-                addpath(genpath(miscDir));
-                
-                % Set up cleanup to remove the path when the object is destroyed
-                obj.cleanupObj = onCleanup(@() rmpath(genpath(miscDir)));
-            else
-                warning('The misc folder does not exist at: %s', miscDir);
-            end
+            addpath(genpath(classDir));
 
             obj.channels_in_use = [0,1,2,3,4];
             obj.api = api;
