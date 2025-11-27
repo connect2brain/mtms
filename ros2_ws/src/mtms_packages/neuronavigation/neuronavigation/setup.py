@@ -27,6 +27,7 @@ def generate_data_files():
         ('lib/python3.8/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
         ('lib/python3.8/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.8/site-packages/navigation', 'invesalius3/navigation'),
+        ('lib/python3.8/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart'),
 
         # HACK: It is not very clean to copy the same files into both python3.8 and -3.10 directories,
         #   but for now, it is the easiest way to support both Python versions.
@@ -35,6 +36,7 @@ def generate_data_files():
         ('lib/python3.10/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
         ('lib/python3.10/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.10/site-packages/navigation', 'invesalius3/navigation'),
+        ('lib/python3.10/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart'),
 
         # HACK: Needed to run InVesalius in native Windows (outside Docker); for some reason, these files are
         # searched for in a different directory when running InVesalius in Windows, compared to Ubuntu.
@@ -43,6 +45,7 @@ def generate_data_files():
         ('lib/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
         ('lib/site-packages/samples', 'invesalius3/samples'),
         ('lib/site-packages/navigation', 'invesalius3/navigation'),
+        ('lib/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart')
     )
 
     data_files = []
