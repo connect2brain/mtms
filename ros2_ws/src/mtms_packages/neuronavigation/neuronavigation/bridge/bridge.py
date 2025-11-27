@@ -420,7 +420,7 @@ class NeuronavigationNode(Node):
         self._update_coil_target = callback
 
     def coil_target_callback(self, msg):
-        self._update_coil_target(msg.coil_target_message)
+        self._update_coil_target(msg.target_name)
         self.get_logger().info('I heard /neuronavigation/coil_target: "%s"' % msg)
 
 
