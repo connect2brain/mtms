@@ -52,9 +52,14 @@ classdef mTMS_toolkit < handle
             if ~isempty(obj.save_dir) && ~exist(obj.save_dir,"dir")
                 mkdir(obj.save_dir)
             end
-
+            
+            % Try to load approximator and initialize strain checker
             obj.approximator = obj.get_approximator();
-            obj.strain_checker = pulse_strain_checker(obj.approximator);
+            if ~isempty(obj.approximator)
+                obj.strain_checker = pulse_strain_checker(obj.approximator);
+            else
+                obj.strain_checker = [];
+            end
         end
 
         function set_channels_in_use(obj,channels_in_use)
@@ -378,10 +383,12 @@ classdef mTMS_toolkit < handle
                 end
             end
 
-            % Check pulse strain
-            [strain_ok, stimulation_intensity_multiplier] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
-            if ~strain_ok
-                error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
+            % Check pulse strain, if applicable
+            if ~isempty(obj.strain_checker) && N_chn == 5
+                [strain_ok, stimulation_intensity_multiplier] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
+                if ~strain_ok
+                    error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
+                end
             end
 
             % Set repeat_of_failure to true if not specified
@@ -807,6 +814,8 @@ classdef mTMS_toolkit < handle
             % :return: approximated_state_trajectories: Trajectories of circuit states
             % :rtype: cell
 
+            assert(~isempty(obj.approximator),sprintf("Waveform approximator is not initialized."))
+
             plot_flag = 0; % Change to 1 for debugging.
 
             target_state_trajectories = {};
@@ -871,7 +880,13 @@ classdef mTMS_toolkit < handle
             addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
             time_resolution = 0.01e-6;
 
-            approximator = WaveformApproximator(solutions_filename, time_resolution);
+            try
+                approximator = WaveformApproximator(solutions_filename, time_resolution);
+            catch ME
+                disp(ME.message)
+                warning('Waveform approximator disabled.')
+                approximator = [];
+            end
             warning('on', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
         end
 

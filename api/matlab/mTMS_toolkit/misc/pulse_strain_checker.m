@@ -30,10 +30,27 @@ classdef pulse_strain_checker < handle
             waveforms{1} = struct('mode',{'r','h','f'},'duration',{60e-6,30e-6,37e-6});
             waveforms = repmat(waveforms,1,5);
             
+            % Initialize temporary storage and max length tracker
+            temp_waveforms = cell(1, length(waveforms));
+            max_len = 0;
+            
             for i = 1:length(waveforms)
                 obj.approximator.select_coil(i);
                 state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(abs(load_voltages(i)),waveforms{i});
-                current_waveforms(:,i) = abs([state_trajectory.I_coil]);
+                
+                % Store the trajectory data and update maximum length
+                traj_data = abs([state_trajectory.I_coil]);
+                temp_waveforms{i} = traj_data;
+                if length(traj_data) > max_len
+                    max_len = length(traj_data);
+                end
+            end
+            
+            % Create zero-padded matrix
+            current_waveforms = zeros(max_len, length(waveforms));
+            for i = 1:length(waveforms)
+                data = temp_waveforms{i};
+                current_waveforms(1:length(data), i) = data(:);
             end
 
             strain_limit = obj.calculate_strain(current_waveforms);
@@ -41,18 +58,37 @@ classdef pulse_strain_checker < handle
 
         function [strain_ok, stimulation_intensity_multiplier] = check_pulse_strain(obj,load_voltages,waveforms)
                 N_pulses = size(load_voltages,1);
+                num_coils = 5; % Expecting 5 coils based on calculate_strain assertion
 
                 for i = 1:N_pulses
-                    for j = 1:length(waveforms)
+                    % Initialize temporary storage and max length tracker for this pulse
+                    temp_waveforms = cell(1, num_coils);
+                    max_len = 0;
+                    
+                    for j = 1:num_coils
                         obj.approximator.select_coil(j);
                         state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(abs(load_voltages(i,j)),waveforms{i,j});
-                        current_waveforms(:,j) = abs([state_trajectory.I_coil]);
+                        
+                        % Store the trajectory data and update maximum length
+                        traj_data = abs([state_trajectory.I_coil]);
+                        temp_waveforms{j} = traj_data;
+                        if length(traj_data) > max_len
+                            max_len = length(traj_data);
+                        end
                     end
+                    
+                    % Create zero-padded matrix for this pulse
+                    current_waveforms = zeros(max_len, num_coils);
+                    for j = 1:num_coils
+                        data = temp_waveforms{j};
+                        current_waveforms(1:length(data), j) = data(:);
+                    end
+                    
                     pulse_strain(i) = obj.calculate_strain(current_waveforms);
                 end
 
                 strain_ok = pulse_strain <= obj.strain_limit;
-                stimulation_intensity_multiplier = sqrt(obj.strain_limit / pulse_strain);
+                stimulation_intensity_multiplier = sqrt(obj.strain_limit ./ pulse_strain);
         end
 
     end
