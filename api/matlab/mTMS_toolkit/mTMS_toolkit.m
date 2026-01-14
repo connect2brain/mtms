@@ -24,7 +24,7 @@ classdef mTMS_toolkit < handle
     end
 
     methods
-        function obj = mTMS_toolkit(api,coil_spec_file,save_dir)
+        function obj = mTMS_toolkit(api,coil_spec_file,save_dir,approximator_dir)
             % Initializes the toolkit with the provided API and save directory, sets up default
             % MEP configurations, and adds necessary paths for auxiliary functions.
             %
@@ -32,6 +32,8 @@ classdef mTMS_toolkit < handle
             % :type api: object
             % :param save_dir: Directory path for saving experiment results
             % :type save_dir: char
+            % :param approximator_dir: Directory path for approximator files
+            % :type approximator_dir: char
             %
             % :return: obj: Instance of the mTMS_toolkit class
             % :rtype: mTMS_toolkit
@@ -54,7 +56,10 @@ classdef mTMS_toolkit < handle
             end
             
             % Try to load approximator and initialize strain checker
-            obj.approximator = obj.get_approximator();
+            if nargin < 4
+                approximator_dir = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/approximator_calibration/default";
+            end
+            obj.approximator = obj.get_approximator(approximator_dir);
             if ~isempty(obj.approximator)
                 obj.strain_checker = pulse_strain_checker(obj.approximator);
             else
@@ -796,7 +801,7 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function [waveforms,load_voltages_after_pulse, approximated_state_trajectories, target_state_trajectories] = generate_PWM_waveforms(obj,target_voltages,load_voltages,reference_waveforms)
+        function [waveforms,load_voltages_after_pulse, approximated_state_trajectories, target_state_trajectories, raw_waveforms] = generate_PWM_waveforms(obj,target_voltages,load_voltages,reference_waveforms)
             % Creates pulse-width modulated (PWM) waveforms for each channel and pulse,
             % approximating target voltages and tracking voltage changes.
             %
@@ -813,6 +818,8 @@ classdef mTMS_toolkit < handle
             % :rtype: double array
             % :return: approximated_state_trajectories: Trajectories of circuit states
             % :rtype: cell
+            % :return: raw_waveforms: Waveforms without duration correction.
+            % :rtype: cell
 
             assert(~isempty(obj.approximator),sprintf("Waveform approximator is not initialized."))
 
@@ -821,6 +828,7 @@ classdef mTMS_toolkit < handle
             target_state_trajectories = {};
             approximated_state_trajectories = {};
             waveforms = {};
+            raw_waveforms = {};
             n_pulses = size(target_voltages,1);
             n_channels = size(target_voltages,2);
 
@@ -829,9 +837,11 @@ classdef mTMS_toolkit < handle
             % Assumed voltages start from the initial load voltages
             assumed_voltages = load_voltages;
             
-            if plot_flag; figure; end
-
-            tcl = tiledlayout(n_pulses,n_channels);
+            if plot_flag
+                figure
+                tcl = tiledlayout(n_pulses,n_channels);
+                title(tcl,'Channel currents. Pulses in rows, channels in columns.')
+            end
             for i = 1:n_pulses
                 for j = 1:n_channels
                     % Select approximator object and select coil for modelling the circuits
@@ -847,14 +857,17 @@ classdef mTMS_toolkit < handle
                     end
 
                     % Run iterative approximation for the best PWM fit
-                    [approximated_waveform, success] = obj.approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
+                    [raw_waveform, success] = obj.approximator.approximate_iteratively(actual_voltage, abs(target_voltage), target_waveform);
                     
-                    waveforms{i,j} = approximated_waveform;
+                    raw_waveforms{i,j} = raw_waveform;
+
+                    % Correct for mode switching delays
+                    waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.correction_params);
 
                     % Get model parameters of the electronics circuit during the pulse
                     % to plot the current.
                     target_state_trajectories{i,j} = obj.approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
-                    tmp_approximated_state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(actual_voltage, approximated_waveform);
+                    tmp_approximated_state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(actual_voltage, raw_waveform);
                     approximated_state_trajectories{i,j} = tmp_approximated_state_trajectory;
 
                     % Consider voltage drop in the channel for consecutive pulses
@@ -866,22 +879,23 @@ classdef mTMS_toolkit < handle
                         nexttile
                         obj.approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
                     end
+
+
                 end
                 load_voltages_after_pulse(i,:) = assumed_voltages;
-                title(tcl,'Channel currents. Pulses in rows, channels in columns.')
-
             end
         end
 
-        function approximator = get_approximator(obj)
+        function approximator = get_approximator(obj,approximator_dir)
             warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-            solutions_filename = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/solutions_five_coil_set.mat";
+            solutions_filename = fullfile(approximator_dir,"simple_solutions.mat");
+            correction_filename = fullfile(approximator_dir,"correction_parameters");
             
             addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
             time_resolution = 0.01e-6;
 
             try
-                approximator = WaveformApproximator(solutions_filename, time_resolution);
+                approximator = WaveformApproximator(solutions_filename, time_resolution, correction_filename);
             catch ME
                 disp(ME.message)
                 warning('Waveform approximator disabled.')
