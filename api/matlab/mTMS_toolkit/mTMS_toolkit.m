@@ -18,7 +18,7 @@ classdef mTMS_toolkit < handle
         enable_EMG_filter % Flag to enable/disable EMG filtering
         readout_fs % Sampling frequency for readout data (in Hz)
         cleanupObj % Object to handle path cleanup on object destruction
-        channels_in_use % List of channel indices in use
+        channel_mapping % Mapping from channels to coils
         approximator % Waveform approximator instance
         strain_checker % Instance for pulse strain calculation
     end
@@ -43,7 +43,7 @@ classdef mTMS_toolkit < handle
             classDir = fileparts(classFilePath);
             addpath(genpath(classDir));
 
-            obj.channels_in_use = [0,1,2,3,4];
+            obj.channel_mapping = dictionary([0,1,2,3,4],[1,2,3,4,5]);
             obj.api = api;
             obj.coil_specs = obj.read_coil_specs(coil_spec_file);
             obj.generate_default_MEP_configuration()
@@ -67,9 +67,10 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function set_channels_in_use(obj,channels_in_use)
+        function set_channel_mapping(obj,channel_mapping)
             % Defines the channels currently in use.
-            obj.channels_in_use = channels_in_use;
+            assert(length(channel_mapping.keys) == length(channel_mapping.values), "The number of channels must match the number of coils")
+            obj.channel_mapping = channel_mapping;
         end
 
         function coil_specs = read_coil_specs(~,coil_spec_file)
@@ -178,16 +179,16 @@ classdef mTMS_toolkit < handle
             hold_dur = 30e-6;
 
             % Validate format
-            n_coils = length(obj.channels_in_use);
-            if length(last_phase_durs) ~= n_coils
+            n_channels = length(obj.channel_mapping.keys);
+            if length(last_phase_durs) < n_channels
                 error('mTMS_toolkit:get_monophasic_reference_waveforms:InvalidWaveformDurationCount', ...
-                      'Expected %d duration values, got %d.', n_coils, length(last_phase_durs));
+                      'Expected at least %d duration values, got %d.', n_channels, length(last_phase_durs));
             end
 
             % Set reference pulse durations.
-            durations =  num2cell([repmat(ramp_up_dur,n_coils,1), ...
-                                   repmat(hold_dur,n_coils,1), ...
-                                   last_phase_durs]);
+            durations =  num2cell([repmat(ramp_up_dur,n_channels,1), ...
+                                   repmat(hold_dur,n_channels,1), ...
+                                   last_phase_durs(obj.channel_mapping.values)]);
 
             % Define the default waveform
             modes = {'r','h','f'};
@@ -215,18 +216,18 @@ classdef mTMS_toolkit < handle
             hold2_dur = 10e-6;
 
             % Validate format
-            n_coils = length(obj.channels_in_use);
-            if length(last_phase_durs) ~= n_coils
+            n_channels = length(obj.channel_mapping.keys);
+            if length(last_phase_durs) < n_channels
                 error('mTMS_toolkit:get_biphasic_reference_waveforms:InvalidWaveformDurationCount', ...
-                      'Expected %d duration values, got %d.', n_coils, length(last_phase_durs));
+                      'Expected at least %d duration values, got %d.', n_channels, length(last_phase_durs));
             end
 
             % Set reference pulse durations.
-            durations =  num2cell([repmat(ramp_up1_dur,n_coils,1), ...
-                                   repmat(hold1_dur,n_coils,1), ...
-                                   repmat(ramp_down_dur,n_coils,1), ...
-                                   repmat(hold2_dur,n_coils,1), ...
-                                   last_phase_durs]);
+            durations =  num2cell([repmat(ramp_up1_dur,n_channels,1), ...
+                                   repmat(hold1_dur,n_channels,1), ...
+                                   repmat(ramp_down_dur,n_channels,1), ...
+                                   repmat(hold2_dur,n_channels,1), ...
+                                   last_phase_durs(obj.channel_mapping.values)]);
 
             % Define the default waveform
             modes = {'f','h','r','h','f'};
@@ -356,17 +357,17 @@ classdef mTMS_toolkit < handle
                 opt.repeat_on_failure = [];
                 opt.pulse_label = '';
             end
-            N_chn = length(obj.channels_in_use);
+            n_channels = length(obj.channel_mapping.keys);
             if isempty(opt.waveforms)
-                N_pulses = 1;
+                n_pulses = 1;
             else
-                N_pulses = size(opt.waveforms,1);
+                n_pulses = size(opt.waveforms,1);
             end
 
-            assert(length(load_voltages) == N_chn, sprintf("Expected %i load voltage channels, got %i.",N_chn,length(load_voltages)))
+            assert(length(load_voltages) == n_channels, sprintf("Expected %i load voltage channels, got %i.",n_channels,length(load_voltages)))
             if ~(isempty(opt.waveforms))
-                assert(size(opt.waveforms,2) == N_chn, sprintf("Expected %i waveforms, got %i.",N_chn,size(opt.waveforms,2)))
-                assert((N_pulses - 1) == length(opt.ISI), sprintf("Expected %i inter-stimulus intervals, got %i.",N_pulses,length(opt.ISI)))
+                assert(size(opt.waveforms,2) == n_channels, sprintf("Expected %i waveforms, got %i.",n_channels,size(opt.waveforms,2)))
+                assert((n_pulses - 1) == length(opt.ISI), sprintf("Expected %i inter-stimulus intervals, got %i.",n_pulses,length(opt.ISI)))
             end
             assert(isempty(opt.trigger_out) || (opt.trigger_out == 1) || (opt.trigger_out == 2), sprintf("trigger_out must be empty, 1, or 2."))
             assert(isempty(opt.ITI_window) || (opt.ITI_window(1) >= 2 && opt.ITI_window(2) < 20), sprintf("ITI_window must be empty, or inside window of [2,20]."))
@@ -381,7 +382,7 @@ classdef mTMS_toolkit < handle
                 reverse_polarities = load_voltages < 0;
                 opt.waveforms = obj.get_monophasic_reference_waveforms();
                 % Define single-pulse waveforms
-                for j = 1:N_chn
+                for j = 1:n_channels
                     if reverse_polarities(j)
                         opt.waveforms{j} = obj.reverse_waveform(opt.waveforms{j});
                     end
@@ -389,7 +390,7 @@ classdef mTMS_toolkit < handle
             end
 
             % Check pulse strain, if applicable
-            if ~isempty(obj.strain_checker) && N_chn == 5
+            if ~isempty(obj.strain_checker) && n_channels == 5
                 [strain_ok, stimulation_intensity_multiplier] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
                 if ~strain_ok
                     error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
@@ -429,7 +430,7 @@ classdef mTMS_toolkit < handle
             % :rtype: struct array
 
             result = [];
-            max_attempts = 5;
+            max_attempts = 3;
 
             % Restart session (helps with readout connections)
             obj.api.stop_session();
@@ -499,9 +500,29 @@ classdef mTMS_toolkit < handle
         end
 
         function full_discharge(obj)
-            % Discharges all used channels completely.
-            for i = obj.channels_in_use
-                obj.api.send_charge_or_discharge(i,0,obj.api.execution_conditions.IMMEDIATE);
+            % Discharges all channels completely.
+            charge_ids = obj.api.send_immediate_full_discharge_to_all_channels();
+
+            attempts = 0;
+            max_attempts = 3;
+            success = 0;
+
+            while ~success && (attempts < max_attempts)
+                success = 1;
+                for id=charge_ids
+                    feedback = obj.api.get_event_feedback(id);
+                    if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
+                        if (attempts + 1) < max_attempts; retry_str=" Retrying..."; else; retry_str=""; end
+                        fprintf('Error in channel discharging.%s\n', retry_str);
+                        success = 0;
+                    end
+                end
+                obj.api.wait_for_completion(10)
+                attempts = attempts + 1;
+            end
+
+            if ~success
+                error("CRITICAL ERROR: Device cannot be fully discharged. Call for technical support.")
             end
         end
 
@@ -521,7 +542,7 @@ classdef mTMS_toolkit < handle
 
             result = [];
             p.success = [];
-            max_attempts = 5;
+            max_attempts = 3;
 
             pulse_complete = false;
             pulse_times = [];
@@ -644,10 +665,11 @@ classdef mTMS_toolkit < handle
             voltages = linspace(min_voltage,max_voltage*max_intensity,number_of_pulses);
             start_time = obj.api.get_time();
             for i = 1:number_of_pulses
-                p = obj.generate_pulse_structure([0,0,0,0,voltages(i)]);
+                load_voltages = [0,voltages(i),0,0,0]; % Coil2: Typically less strained and has strong scalp sensation
+                p = obj.generate_pulse_structure(load_voltages);    
                 p.ITI_window = [3,4];
                 ITI = obj.random_ITI(1,p.ITI_window);
-                p.charge_to_stim_time = 2.5;
+                p.charge_to_stim_time = 2.9;
                 p.stim_time = start_time + ITI;
                 p.charge_time = p.stim_time - p.charge_to_stim_time;
 
@@ -688,7 +710,7 @@ classdef mTMS_toolkit < handle
             charge_ids = [];
             load_condition = obj.api.execution_conditions.IMMEDIATE;
             for i = 1:size(p.waveforms,2)
-                charge_ids(i) = obj.api.send_charge_or_discharge(obj.channels_in_use(i),abs_load_voltages(i),load_condition);
+                charge_ids(i) = obj.api.send_charge_or_discharge(obj.channel_mapping.keys(i),abs_load_voltages(i),load_condition);
             end
 
             % Prepare waveforms
@@ -696,7 +718,11 @@ classdef mTMS_toolkit < handle
             obj.api.wait_for_completion(10);
 
             if ~isfield(p,'stim_time')
-                stim_time = obj.api.get_time()+0.7; % Need time for preparing readout buffer
+                if isempty(p.readout_type)
+                    stim_time = obj.api.get_time()+0.7; % Need time for preparing readout buffer
+                else
+                    stim_time = obj.api.get_time()+0.1;
+                end
             else
                 stim_time = p.stim_time;
             end
@@ -714,7 +740,7 @@ classdef mTMS_toolkit < handle
                 for j=1:size(waveforms,2)
                     % send_pulse is always timed to cover multi-pulse
                     % scenarios, and maintain constant charge_to_stim time
-                    pulse_ids(i,j) = obj.api.send_pulse(obj.channels_in_use(j), waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
+                    pulse_ids(i,j) = obj.api.send_pulse(obj.channel_mapping.keys(j), waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
                 end
             end
 
@@ -755,7 +781,7 @@ classdef mTMS_toolkit < handle
             for id=1:length(pulse_ids)
                 feedback = obj.api.get_event_feedback(pulse_ids(id));
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
-                    fprintf('Error in pulse generation.\n');
+                    fprintf('Error in pulse execution.\n');
                     pulse_diagnostic.ok_flag = 0;
                 end
             end
@@ -783,7 +809,6 @@ classdef mTMS_toolkit < handle
                         readout.buffer_filt = obj.filter_EMG(readout.buffer);
                         readout = obj.calculate_p2p(readout);
                         plot_mep_data(readout, obj.mep_configuration, 5)
-                        %fprintf(2,"EMG p2p: %.2d\n",readout.amplitude);
                     end
                 end
             end
@@ -791,7 +816,9 @@ classdef mTMS_toolkit < handle
             if pulse_diagnostic.ok_flag
                 % Try to catch problems with coil connections
                 load_voltages_post = obj.api.get_current_voltages();
-                load_voltages_post = load_voltages_post(obj.channels_in_use+1);
+                load_voltages_post = load_voltages_post(obj.channel_mapping.keys+1);
+                % NOTE: Return of get_current_voltages() can differ from input load voltage.
+                % The pre pulse voltage could be polled from the API, but it results in +0.1 s delay.
                 voltage_drop_ratio = (abs_load_voltages(:)-load_voltages_post(:))./abs_load_voltages(:);
                 odd_channels = find((voltage_drop_ratio < 0.01) & (abs_load_voltages(:) > 50));
                 if ~isempty(odd_channels)
@@ -845,7 +872,7 @@ classdef mTMS_toolkit < handle
             for i = 1:n_pulses
                 for j = 1:n_channels
                     % Select approximator object and select coil for modelling the circuits
-                    obj.approximator.select_coil(j);
+                    obj.approximator.select_coil(obj.channel_mapping.values(j));
 
                     % Define target waveform for the PWM approximation
                     actual_voltage = assumed_voltages(j);
@@ -879,7 +906,6 @@ classdef mTMS_toolkit < handle
                         nexttile
                         obj.approximator.plot_state_trajectories(target_state_trajectories{i,j}, approximated_state_trajectories{i,j})
                     end
-
 
                 end
                 load_voltages_after_pulse(i,:) = assumed_voltages;
@@ -994,11 +1020,11 @@ classdef mTMS_toolkit < handle
             %
             % :throws: Error if inductances are missing, or di/dt size does not match channel count
             
-            % Ensure di/dt size matches the number of coils
-            n_coils = length(obj.channels_in_use);
-            if length(didt) ~= n_coils
+            % Ensure di/dt size matches the number of channels
+            n_channels = length(obj.channel_mapping.keys);
+            if length(didt) ~= n_channels
                 error('mTMS_toolkit:didt_to_volts:InvalidInput', ...
-                      'Expected di/dt array of length %d, got %d.', n_coils, length(didt));
+                      'Expected di/dt array of length %d, got %d.', n_channels, length(didt));
             end
 
             % Read coil specifications
@@ -1009,9 +1035,9 @@ classdef mTMS_toolkit < handle
             inductances = obj.coil_specs.inductances';
             
             % Validate inductances
-            if length(inductances) ~= n_coils
+            if length(inductances) ~= n_channels
                 error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                      'Expected %d inductance values, got %d.', n_coils, length(inductances));
+                      'Expected %d inductance values, got %d.', n_channels, length(inductances));
             end
 
             if nargin >= 2
@@ -1024,12 +1050,12 @@ classdef mTMS_toolkit < handle
                 % Specify mismatch between assumed E-field model and reality
                 polarities = obj.coil_specs.(field_name)';
 
-                if length(polarities) ~= n_coils
+                if length(polarities) ~= n_channels
                     error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                          'Expected %d inductance values, got %d.', n_coils, length(polarities));
+                          'Expected %d inductance values, got %d.', n_channels, length(polarities));
                 end
             else
-                polarities = ones(1,n_coils);   % No change in polarities
+                polarities = ones(1,n_channels);   % No change in polarities
             end
             
             % Calculate load voltages using V = L * di/dt
