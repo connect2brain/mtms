@@ -876,6 +876,8 @@ classdef mTMS_toolkit < handle
                     % Correct for mode switching delays
                     if ~isempty(obj.approximator.mode_switch_correction)
                         waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.mode_switch_correction);
+                    else
+                        waveforms{i,j} = raw_waveforms{i,j};
                     end
 
                     % Get model parameters of the electronics circuit during the pulse to plot the current.
