@@ -874,10 +874,11 @@ classdef mTMS_toolkit < handle
                     raw_waveforms{i,j} = raw_waveform;
 
                     % Correct for mode switching delays
-                    waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.mode_switch_correction);
+                    if ~isempty(obj.approximator.mode_switch_correction)
+                        waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.mode_switch_correction);
+                    end
 
-                    % Get model parameters of the electronics circuit during the pulse
-                    % to plot the current.
+                    % Get model parameters of the electronics circuit during the pulse to plot the current.
                     target_state_trajectories{i,j} = obj.approximator.generate_state_trajectory_from_waveform(abs(target_voltage), target_waveform);
                     tmp_approximated_state_trajectory = obj.approximator.generate_state_trajectory_from_waveform(actual_voltage, raw_waveform);
                     approximated_state_trajectories{i,j} = tmp_approximated_state_trajectory;
