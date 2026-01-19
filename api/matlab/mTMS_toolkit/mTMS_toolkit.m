@@ -24,16 +24,13 @@ classdef mTMS_toolkit < handle
     end
 
     methods
-        function obj = mTMS_toolkit(api,coil_spec_file,save_dir,approximator_dir)
+        function obj = mTMS_toolkit(save_dir)
             % Initializes the toolkit with the provided API and save directory, sets up default
             % MEP configurations, and adds necessary paths for auxiliary functions.
             %
-            % :param api: External API object for interfacing with TMS hardware
-            % :type api: object
+
             % :param save_dir: Directory path for saving experiment results
             % :type save_dir: char
-            % :param approximator_dir: Directory path for approximator files
-            % :type approximator_dir: char
             %
             % :return: obj: Instance of the mTMS_toolkit class
             % :rtype: mTMS_toolkit
@@ -44,25 +41,43 @@ classdef mTMS_toolkit < handle
             addpath(genpath(classDir));
 
             obj.channel_mapping = dictionary([0,1,2,3,4],[1,2,3,4,5]);
-            obj.api = api;
-            obj.coil_specs = obj.read_coil_specs(coil_spec_file);
-            obj.generate_default_MEP_configuration()
-            obj.set_MEP_processing_options([0.015,0.045],5000,1)
+            
             obj.save_dir = save_dir;
             obj.reset_experiment
 
             if ~isempty(obj.save_dir) && ~exist(obj.save_dir,"dir")
                 mkdir(obj.save_dir)
             end
+
+        end
+
+        function add_api(obj,api)
+            % Adds mTMS api to the mTMS toolkit, and initializes EMG
+            % readout configuration.
+            %
+            % :param api: External API object for interfacing with TMS hardware
+            % :type api: object
+
+            obj.api = api;
+            obj.generate_default_MEP_configuration()
+            obj.set_MEP_processing_options([0.015,0.045],5000,1)
+        end
+
+        function add_approximator(obj, calibration_filepath)
             
-            % Try to load approximator and initialize strain checker
-            if nargin < 4
-                approximator_dir = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/approximator_calibration/default";
-            end
-            obj.approximator = obj.get_approximator(approximator_dir);
-            if ~isempty(obj.approximator)
+            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
+            time_resolution = 0.01e-6;
+
+            try
+                warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
+                obj.approximator = WaveformApproximator(calibration_filepath, time_resolution);
+                warning('on', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
+
                 obj.strain_checker = pulse_strain_checker(obj.approximator);
-            else
+            catch ME
+                disp(ME.message)
+                warning('Waveform approximator disabled.')
+                obj.approximator = [];
                 obj.strain_checker = [];
             end
         end
@@ -71,29 +86,6 @@ classdef mTMS_toolkit < handle
             % Defines the channels currently in use.
             assert(length(channel_mapping.keys) == length(channel_mapping.values), "The number of channels must match the number of coils")
             obj.channel_mapping = channel_mapping;
-        end
-
-        function coil_specs = read_coil_specs(~,coil_spec_file)
-            % Reads coil specification parameters from file.
-            %
-            % :param coil_spec_file: Filepath to a tabular (e.g. csv) file.
-            % :type coil_spec_file: char
-
-            % :return coil_specs: Coil specification parameters
-            % :type coil_specs: Table
-
-            % Check if coil specification file exists
-            if ~isfile(coil_spec_file)
-                error('mTMS_toolkit:read_coilspecs:FileNotFound', ...
-                      'Coil specification file not found at: %s', coil_spec_file);
-            end
-            
-            try
-                coil_specs = readtable(coil_spec_file, 'VariableNamingRule', 'preserve');
-            catch err
-                error('mTMS_toolkit:read_coilspecs:FileReadError', ...
-                      'Failed to process coil file: %s', err.message);
-            end
         end
 
         function reset_experiment(obj)
@@ -169,26 +161,29 @@ classdef mTMS_toolkit < handle
             % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
             % :rtype: cell
 
-            % Read last phase durations from coil spec table
-            if ~ismember('last_phase_duration_monophasic', obj.coil_specs.Properties.VariableNames)
-                    error('mTMS_toolkit:get_monophasic_reference_waveforms:InvalidFileFormat', ...
-                          'Coil spec file must contain a ''last_phase_duration_monophasic'' column.');
-            end
-            last_phase_durs = obj.coil_specs.last_phase_duration_monophasic;
+            n_channels = length(obj.channel_mapping.keys);
             ramp_up_dur = 60e-6;
             hold_dur = 30e-6;
+            ramp_down_dur = 40e-6;
+
+            % Read last phase durations from calibration file
+            if ~isempty(obj.approximator) && ~isempty(obj.approximator.ramp_down_timings)
+                ramp_down_durs = obj.approximator.ramp_down_timings;
+            else
+                warning("Waveform calibration not found. Using default ramp-down timing.")
+                ramp_down_durs = repmat(n_channels, ramp_down_dur);
+            end
 
             % Validate format
-            n_channels = length(obj.channel_mapping.keys);
-            if length(last_phase_durs) < n_channels
+            if length(ramp_down_durs) < n_channels
                 error('mTMS_toolkit:get_monophasic_reference_waveforms:InvalidWaveformDurationCount', ...
-                      'Expected at least %d duration values, got %d.', n_channels, length(last_phase_durs));
+                      'Expected at least %d duration values, got %d.', n_channels, length(ramp_down_durs));
             end
 
             % Set reference pulse durations.
             durations =  num2cell([repmat(ramp_up_dur,n_channels,1), ...
                                    repmat(hold_dur,n_channels,1), ...
-                                   last_phase_durs(obj.channel_mapping.values)]);
+                                   ramp_down_durs(obj.channel_mapping.values)]);
 
             % Define the default waveform
             modes = {'r','h','f'};
@@ -204,23 +199,12 @@ classdef mTMS_toolkit < handle
             % :return: waveforms: Cell array of waveform structures with 'mode' and 'duration' fields
             % :rtype: cell
 
-            % Read last phase durations from coil spec table
-            if ~ismember('last_phase_duration_biphasic', obj.coil_specs.Properties.VariableNames)
-                    error('mTMS_toolkit:get_biphasic_reference_waveforms:InvalidFileFormat', ...
-                          'Coil spec file must contain a ''last_phase_duration_biphasic'' column.');
-            end
-            last_phase_durs = obj.coil_specs.last_phase_duration_biphasic;
+            % Hardcoded timings due to lacking data (not supported currently)
+            last_phase_durs = [65.5, 65.5, 67, 68, 715]*1e-6;
             ramp_up1_dur = 60e-6;
             hold1_dur = 40e-6;
             ramp_down_dur = 140e-6;
             hold2_dur = 10e-6;
-
-            % Validate format
-            n_channels = length(obj.channel_mapping.keys);
-            if length(last_phase_durs) < n_channels
-                error('mTMS_toolkit:get_biphasic_reference_waveforms:InvalidWaveformDurationCount', ...
-                      'Expected at least %d duration values, got %d.', n_channels, length(last_phase_durs));
-            end
 
             % Set reference pulse durations.
             durations =  num2cell([repmat(ramp_up1_dur,n_channels,1), ...
@@ -912,24 +896,6 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function approximator = get_approximator(obj,approximator_dir)
-            warning('off', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-            solutions_filename = fullfile(approximator_dir,"simple_solutions.mat");
-            correction_filename = fullfile(approximator_dir,"correction_parameters");
-            
-            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
-            time_resolution = 0.01e-6;
-
-            try
-                approximator = WaveformApproximator(solutions_filename, time_resolution, correction_filename);
-            catch ME
-                disp(ME.message)
-                warning('Waveform approximator disabled.')
-                approximator = [];
-            end
-            warning('on', 'MATLAB:dispatcher:UnresolvedFunctionHandle');
-        end
-
         function clean_EMG = filter_EMG(obj,buffer)
             % Applies bandpass and line-noise filters to the EMG buffer to produce clean data.
             %
@@ -1007,59 +973,68 @@ classdef mTMS_toolkit < handle
             end
         end
 
-        function load_voltages = didt_to_volts(obj, didt, coilset)
-            % Converts the rate of change of current (di/dt) to corresponding capacitor load
-            % voltages using coil inductance values from a specified file. The input di/dt
-            % array must match the number of channels defined by the API.
+        function load_voltages = didt_to_volts(obj, didt, polarities)
+            % Converts the rate of change of current (di/dt) to corresponding capacitor load voltages.
             %
             % :param didt: Rate of change of current (di/dt) values for each channel (in A/s)
             % :type didt: double array
+            % :param_polarities (Optional): Current polarity correction
+            % vector, specified as a vector of negative ones or positive ones.
             %
             % :return: load_voltages: Corresponding capacitor load voltages (in V)
             % :rtype: double array
             %
-            % :throws: Error if inductances are missing, or di/dt size does not match channel count
+            % :throws: Error if voltage transform data is missing, or didt
+            % size does not match channel count.
             
             % Ensure di/dt size matches the number of channels
             n_channels = length(obj.channel_mapping.keys);
-            if length(didt) ~= n_channels
-                error('mTMS_toolkit:didt_to_volts:InvalidInput', ...
-                      'Expected di/dt array of length %d, got %d.', n_channels, length(didt));
-            end
-
-            % Read coil specifications
-            if ~ismember('inductances', obj.coil_specs.Properties.VariableNames)
-                error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
-                      'Coil file must contain an ''inductances'' column.');
-            end
-            inductances = obj.coil_specs.inductances';
-            
-            % Validate inductances
-            if length(inductances) ~= n_channels
-                error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                      'Expected %d inductance values, got %d.', n_channels, length(inductances));
-            end
-
-            if nargin >= 2
-                field_name = ['polarities_vs_', coilset];
-                if ~ismember(field_name, obj.coil_specs.Properties.VariableNames)
-                error('mTMS_toolkit:didt_to_volts:InvalidFileFormat', ...
-                      'Coil file must contain a %s column.',field_name);
-                end
-
-                % Specify mismatch between assumed E-field model and reality
-                polarities = obj.coil_specs.(field_name)';
-
-                if length(polarities) ~= n_channels
-                    error('mTMS_toolkit:didt_to_volts:InvalidInductanceCount', ...
-                          'Expected %d inductance values, got %d.', n_channels, length(polarities));
-                end
+            assert(length(didt) == n_channels, "Length of didt must match the number of used channels.")
+            if nargin > 1
+                assert(size(polarities) == size(didt), "Size of polarities must match the size of didt.")
             else
-                polarities = ones(1,n_channels);   % No change in polarities
+                polarities = ones(size(didt)); % Default to no polarity switch.
             end
+
+            % Apply polarity switch
+            didt = didt .* polarities;
+
+            % Read coil inductances
+             if ~isempty(obj.approximator) && ~isempty(obj.approximator.solutions)
+                 solutions = obj.approximator.solutions;
+                inductances = [];
+                count = 1;
+                for i = obj.channel_mapping.values
+                    is_rise = didt(count) >= 0;
+                    if is_rise
+                        inductances(count) = solutions(i).metadata.L_rise;
+                    else
+                        inductances(count) = solutions(i).metadata.L_fall;
+                    end
+                    count = count + 1;
+                end
+             else
+                error("Inductance data could not be loaded.")
+             end
             
-            % Calculate load voltages using V = L * di/dt
-            load_voltages = inductances .* polarities.* didt;
+            % Make sure inductance is a column vector
+            inductances = reshape(inductances,1,[]);
+            
+            % Calculate load voltages using V = di/dt * L
+            load_voltages = didt .* inductances;
+
+            % Apply average current rate correction
+            if ~isempty(obj.approximator.avg_current_rate_correction)
+                avg_current_rate_correction = [];
+                count = 1;
+                for i = obj.channel_mapping.values
+                    avg_current_rate_correction(count) = obj.approximator.avg_current_rate_correction(i);
+                    count = count + 1;
+                end
+                avg_current_rate_correction = reshape(avg_current_rate_correction,1,[]);
+                load_voltages = load_voltages .* avg_current_rate_correction;
+            end
+
         end
 
     end
