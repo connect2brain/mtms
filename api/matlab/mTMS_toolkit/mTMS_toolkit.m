@@ -691,10 +691,11 @@ classdef mTMS_toolkit < handle
             end
 
             % Load the capacitors.
+            channels = obj.channel_mapping.keys;
             charge_ids = [];
             load_condition = obj.api.execution_conditions.IMMEDIATE;
             for i = 1:size(p.waveforms,2)
-                charge_ids(i) = obj.api.send_charge_or_discharge(obj.channel_mapping.keys(i),abs_load_voltages(i),load_condition);
+                charge_ids(i) = obj.api.send_charge_or_discharge(channels(i),abs_load_voltages(i),load_condition);
             end
 
             % Prepare waveforms
@@ -724,7 +725,7 @@ classdef mTMS_toolkit < handle
                 for j=1:size(waveforms,2)
                     % send_pulse is always timed to cover multi-pulse
                     % scenarios, and maintain constant charge_to_stim time
-                    pulse_ids(i,j) = obj.api.send_pulse(obj.channel_mapping.keys(j), waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
+                    pulse_ids(i,j) = obj.api.send_pulse(channels(j), waveforms{i,j}, false, obj.api.execution_conditions.TIMED, stim_time(i));
                 end
             end
 
@@ -856,7 +857,7 @@ classdef mTMS_toolkit < handle
             for i = 1:n_pulses
                 for j = 1:n_channels
                     % Select approximator object and select coil for modelling the circuits
-                    obj.approximator.select_coil(obj.channel_mapping.values(j));
+                    obj.approximator.select_coil(obj.channel_mapping(j));
 
                     % Define target waveform for the PWM approximation
                     actual_voltage = assumed_voltages(j);
@@ -873,7 +874,7 @@ classdef mTMS_toolkit < handle
                     raw_waveforms{i,j} = raw_waveform;
 
                     % Correct for mode switching delays
-                    waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.correction_params);
+                    waveforms{i,j} = obj.approximator.apply_duration_correction(raw_waveform, actual_voltage, obj.approximator.mode_switch_correction);
 
                     % Get model parameters of the electronics circuit during the pulse
                     % to plot the current.
@@ -999,19 +1000,22 @@ classdef mTMS_toolkit < handle
             % Apply polarity switch
             didt = didt .* polarities;
 
+            coils = obj.channel_mapping.values;
+
             % Read coil inductances
              if ~isempty(obj.approximator) && ~isempty(obj.approximator.solutions)
                  solutions = obj.approximator.solutions;
                 inductances = [];
-                count = 1;
-                for i = obj.channel_mapping.values
-                    is_rise = didt(count) >= 0;
+
+                for i = 1:length(coils)
+                    coil_num = coils(i);
+                    is_rise = didt(i) >= 0;
                     if is_rise
-                        inductances(count) = solutions(i).metadata.L_rise;
+                        inductances(i) = solutions(coil_num).metadata.L_rise;
                     else
-                        inductances(count) = solutions(i).metadata.L_fall;
+                        inductances(i) = solutions(coil_num).metadata.L_fall;
                     end
-                    count = count + 1;
+
                 end
              else
                 error("Inductance data could not be loaded.")
@@ -1026,11 +1030,12 @@ classdef mTMS_toolkit < handle
             % Apply average current rate correction
             if ~isempty(obj.approximator.avg_current_rate_correction)
                 avg_current_rate_correction = [];
-                count = 1;
-                for i = obj.channel_mapping.values
-                    avg_current_rate_correction(count) = obj.approximator.avg_current_rate_correction(i);
-                    count = count + 1;
+
+                for i = 1:length(coils)
+                    coil_num = coils(i);
+                    avg_current_rate_correction(i) = obj.approximator.avg_current_rate_correction(coil_num);
                 end
+
                 avg_current_rate_correction = reshape(avg_current_rate_correction,1,[]);
                 load_voltages = load_voltages .* avg_current_rate_correction;
             end
