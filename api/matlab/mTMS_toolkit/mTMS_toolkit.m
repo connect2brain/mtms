@@ -6,7 +6,6 @@ classdef mTMS_toolkit < handle
 
     properties
         api % External API for interfacing with TMS hardware
-        coil_specs % Table for coil specification parameters
         mep_configuration % Configuration for Motor Evoked Potential (MEP) analysis
         pulse_sequence % Sequence of pulses for stimulation
         save_dir % Directory for saving experiment results
@@ -324,6 +323,7 @@ classdef mTMS_toolkit < handle
             %   - readout_type: Type of readout ('EMG' or 'EEG')
             %   - repeat_on_failure: Whether to repeat on failure (logical)
             %   - pulse_label: Label for the pulse (char)
+            %   - clamp_strain: Flag for automatically lowering strain to the limit
             % :type opt: struct
             %
             % :return: pulse_structure: Structure containing pulse configuration
@@ -340,6 +340,7 @@ classdef mTMS_toolkit < handle
                 opt.readout_type = [];
                 opt.repeat_on_failure = [];
                 opt.pulse_label = '';
+                opt.clamp_strain = false;
             end
             n_channels = length(obj.channel_mapping.keys);
             if isempty(opt.waveforms)
@@ -377,7 +378,12 @@ classdef mTMS_toolkit < handle
             if ~isempty(obj.strain_checker) && n_channels == 5
                 [strain_ok, stimulation_intensity_multiplier] = obj.strain_checker.check_pulse_strain(load_voltages,opt.waveforms);
                 if ~strain_ok
-                    error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
+                    if opt.clamp_strain
+                        load_voltages = load_voltages * stimulation_intensity_multiplier * 0.99;
+                        fprintf("\nPulse strain too high. Decreased load voltages by %.0f%%.\n", (1-stimulation_intensity_multiplier) * 100)
+                    else
+                        error("Pulse strain too high. Maximum stimulation strength is %.0f%s of the suggested.\n",stimulation_intensity_multiplier*100,'%')
+                    end
                 end
             end
 
