@@ -843,6 +843,7 @@ classdef mTMS_toolkit < handle
             raw_waveforms = {};
             n_pulses = size(target_voltages,1);
             n_channels = size(target_voltages,2);
+            coils = obj.channel_mapping.values;
 
             % Save voltages before each pulse
             load_voltages_after_pulse = zeros(size(target_voltages));
@@ -857,7 +858,7 @@ classdef mTMS_toolkit < handle
             for i = 1:n_pulses
                 for j = 1:n_channels
                     % Select approximator object and select coil for modelling the circuits
-                    obj.approximator.select_coil(obj.channel_mapping(j));
+                    obj.approximator.select_coil(coils(j));
 
                     % Define target waveform for the PWM approximation
                     actual_voltage = assumed_voltages(j);
