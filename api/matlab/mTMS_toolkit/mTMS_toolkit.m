@@ -484,14 +484,15 @@ classdef mTMS_toolkit < handle
         end
 
         function full_discharge(obj)
-            % Discharges all channels completely.
-            charge_ids = obj.api.send_immediate_full_discharge_to_all_channels();
-
+            
             attempts = 0;
             max_attempts = 3;
             success = 0;
 
             while ~success && (attempts < max_attempts)
+                % Discharges all channels completely.
+                charge_ids = obj.api.send_immediate_full_discharge_to_all_channels();
+                obj.api.wait_for_completion(10)
                 success = 1;
                 for id=charge_ids
                     feedback = obj.api.get_event_feedback(id);
@@ -501,7 +502,7 @@ classdef mTMS_toolkit < handle
                         success = 0;
                     end
                 end
-                obj.api.wait_for_completion(10)
+                
                 attempts = attempts + 1;
             end
 
