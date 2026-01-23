@@ -167,10 +167,10 @@ classdef mTMS_toolkit < handle
 
             % Read last phase durations from calibration file
             if ~isempty(obj.approximator) && ~isempty(obj.approximator.ramp_down_timings)
-                ramp_down_durs = obj.approximator.ramp_down_timings;
+                ramp_down_durs = reshape(obj.approximator.ramp_down_timings,[],1);
             else
                 warning("Waveform calibration not found. Using default ramp-down timing.")
-                ramp_down_durs = repmat(n_channels, ramp_down_dur);
+                ramp_down_durs = repmat(ramp_down_dur,n_channels, 1);
             end
 
             % Validate format
