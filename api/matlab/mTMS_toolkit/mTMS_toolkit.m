@@ -1002,7 +1002,7 @@ classdef mTMS_toolkit < handle
             % Ensure di/dt size matches the number of channels
             n_channels = length(obj.channel_mapping.keys);
             assert(length(didt) == n_channels, "Length of didt must match the number of used channels.")
-            if nargin > 1
+            if nargin > 2
                 assert(size(polarities) == size(didt), "Size of polarities must match the size of didt.")
             else
                 polarities = ones(size(didt)); % Default to no polarity switch.
@@ -1013,43 +1013,25 @@ classdef mTMS_toolkit < handle
 
             coils = obj.channel_mapping.values;
 
-            % Read coil inductances
-             if ~isempty(obj.approximator) && ~isempty(obj.approximator.solutions)
-                 solutions = obj.approximator.solutions;
-                inductances = [];
-
+            % Read voltage to current rate transformations
+            if ~isempty(obj.approximator) && ~isempty(obj.approximator.volts_per_didt)
+                loaded_volts_per_didt = obj.approximator.volts_per_didt;
+                assert(length(loaded_volts_per_didt) >= length(didt), sprintf("Calibration file has transformation values for %i coils, but %i were asked.\n", length(loaded_volts_per_didt), length(didt)))
+                volts_per_didt = [];
+                
                 for i = 1:length(coils)
                     coil_num = coils(i);
-                    is_rise = didt(i) >= 0;
-                    if is_rise
-                        inductances(i) = solutions(coil_num).metadata.L_rise;
-                    else
-                        inductances(i) = solutions(coil_num).metadata.L_fall;
-                    end
-
+                    volts_per_didt(i) = loaded_volts_per_didt(coil_num);
                 end
              else
-                error("Inductance data could not be loaded.")
+                error("Voltage to current rate transformation data could not be found.")
              end
             
-            % Make sure inductance is a column vector
-            inductances = reshape(inductances,1,[]);
+            % Make sure volts_per_didt is a column vector
+            volts_per_didt = reshape(volts_per_didt,1,[]);
             
-            % Calculate load voltages using V = di/dt * L
-            load_voltages = didt .* inductances;
-
-            % Apply average current rate correction
-            if ~isempty(obj.approximator.avg_current_rate_correction)
-                avg_current_rate_correction = [];
-
-                for i = 1:length(coils)
-                    coil_num = coils(i);
-                    avg_current_rate_correction(i) = obj.approximator.avg_current_rate_correction(coil_num);
-                end
-
-                avg_current_rate_correction = reshape(avg_current_rate_correction,1,[]);
-                load_voltages = load_voltages .* avg_current_rate_correction;
-            end
+            % Calculate load voltages
+            load_voltages = didt .* volts_per_didt;
 
         end
 
