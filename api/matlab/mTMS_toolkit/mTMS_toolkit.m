@@ -710,10 +710,10 @@ classdef mTMS_toolkit < handle
             obj.api.wait_for_completion(10);
 
             if ~isfield(p,'stim_time')
-                if isempty(p.readout_type)
+                if ~isempty(p.readout_type)
                     stim_time = obj.api.get_time()+0.7; % Need time for preparing readout buffer
                 else
-                    stim_time = obj.api.get_time()+0.1;
+                    stim_time = obj.api.get_time()+0.2;
                 end
             else
                 stim_time = p.stim_time;
