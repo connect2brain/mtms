@@ -16,3 +16,6 @@
 [submodule "bitfiles"]
 	path = bitfiles
 	url = https://github.com/connect2brain/bitfiles.git
+[submodule "sites"]
+	path = sites
+	url = https://github.com/connect2brain/sites.git
