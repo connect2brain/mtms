@@ -13,3 +13,6 @@
 [submodule "ros2_ws/src/mtms_packages/targeting/waveform_approximator"]
 	path = ros2_ws/src/mtms_packages/targeting/waveform_approximator
 	url = https://github.com/connect2brain/waveform-approximator.git
+[submodule "bitfiles"]
+	path = bitfiles
+	url = https://github.com/connect2brain/bitfiles.git
