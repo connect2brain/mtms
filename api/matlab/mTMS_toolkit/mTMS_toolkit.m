@@ -435,6 +435,7 @@ classdef mTMS_toolkit < handle
                 pulse_times = [];
 
                 fprintf("\nPulse %i.\n\n",i)
+                pulse_diagnostic_array = {};
 
                 while ~pulse_complete
                     % Set inter-trial interval with randomized interval
@@ -455,6 +456,8 @@ classdef mTMS_toolkit < handle
                     p.charge_time = p.stim_time - p.charge_to_stim_time;
 
                     [readout,pulse_diagnostic] = obj.stimulate(p);
+                    
+                    pulse_diagnostic_array{end+1} = pulse_diagnostic;
 
                     start_time = p.stim_time(1);
                     pulse_times = [pulse_times datetime];
@@ -467,10 +470,6 @@ classdef mTMS_toolkit < handle
                         if p.repeat_on_failure && length(p.success) < max_attempts
                             fprintf('Re-trying, attempt %i...\n',length(p.success))
                             % Restarting the session usually helps with readout issues
-                            if pulse_diagnostic.only_readout_failed
-                                obj.api.stop_session();
-                                obj.api.start_session();
-                            end
                         else
                             fprintf('Continuing to next trial...\n')
                             pulse_complete = true;
@@ -481,6 +480,7 @@ classdef mTMS_toolkit < handle
                 result(i).readout = readout;
                 result(i).time = pulse_times;
                 result(i).label = string(p.pulse_label);
+                result(i).pulse_diagnostic = pulse_diagnostic_array;
             end
             if ~isempty(obj.save_dir)
                 obj.save_block_result(result)
@@ -563,6 +563,7 @@ classdef mTMS_toolkit < handle
             result.readout = readout;
             result.time = pulse_times;
             result.label = string(p.pulse_label);
+            result.pulse_diagnostic = pulse_diagnostic;
 
             if isempty(obj.closed_loop_results)
                 % First entry, accept any struct
@@ -759,41 +760,38 @@ classdef mTMS_toolkit < handle
             % Check for any errors
             pulse_diagnostic.ok_flag = 1;
 
-            pulse_diagnostic.charge_ids = charge_ids;
-            for id=charge_ids
-                feedback = obj.api.get_event_feedback(id);
+            for i=1:length(charge_ids)
+                feedback = obj.api.get_event_feedback(charge_ids(i));
+                pulse_diagnostic.charge_feedback{i} = feedback;
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in channel charging.\n');
                     pulse_diagnostic.ok_flag = 0;
                 end
             end
 
-            pulse_diagnostic.pulse_ids = pulse_ids;
             pulse_ids = pulse_ids(:);
-            for id=1:length(pulse_ids)
-                feedback = obj.api.get_event_feedback(pulse_ids(id));
+            for i=1:length(pulse_ids)
+                feedback = obj.api.get_event_feedback(pulse_ids(i));
+                pulse_diagnostic.pulse_feedback{i} = feedback;
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in pulse execution.\n');
                     pulse_diagnostic.ok_flag = 0;
                 end
             end
 
-            pulse_diagnostic.trig_id = trig_id;
             if ~isempty(trig_id)
                 feedback = obj.api.get_event_feedback(trig_id);
+                pulse_diagnostic.trigger_feedback = feedback;
                 if ~(isstruct(feedback) && feedback.value == feedback.NO_ERROR)
                     fprintf('Error in output trigger.\n');
                     pulse_diagnostic.ok_flag = 0;
                 end
             end
             
-            pulse_diagnostic.only_readout_failed = 0;
             if isstruct(readout) && isfield(readout,'buffer')
                 if isempty(readout.buffer)
                     fprintf('Error in readout.\n');
-                    if pulse_diagnostic.ok_flag
-                        pulse_diagnostic.only_readout_failed = 1;
-                    end
+                    pulse_diagnostic.readout_failed = 1;
                     pulse_diagnostic.ok_flag = 0;
                 else
                     if strcmp(p.readout_type,'EMG')
@@ -801,6 +799,7 @@ classdef mTMS_toolkit < handle
                         readout.buffer_filt = obj.filter_EMG(readout.buffer);
                         readout = obj.calculate_p2p(readout);
                         plot_mep_data(readout, obj.mep_configuration, 5)
+                        pulse_diagnostic.readout_failed = 0;
                     end
                 end
             end
