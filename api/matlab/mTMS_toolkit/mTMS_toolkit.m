@@ -539,9 +539,12 @@ classdef mTMS_toolkit < handle
             pulse_times = [];
 
             fprintf("\nPulse %i.\n\n",obj.closed_loop_trial_index)
+            pulse_diagnostic_array = {};
 
             while ~pulse_complete
                 [readout,pulse_diagnostic] = obj.stimulate(p);
+		        
+                pulse_diagnostic_array{end+1} = pulse_diagnostic;
 
                 pulse_times = [pulse_times datetime];
 
@@ -563,7 +566,7 @@ classdef mTMS_toolkit < handle
             result.readout = readout;
             result.time = pulse_times;
             result.label = string(p.pulse_label);
-            result.pulse_diagnostic = pulse_diagnostic;
+            result.pulse_diagnostic = pulse_diagnostic_array;
 
             if isempty(obj.closed_loop_results)
                 % First entry, accept any struct
