@@ -13,7 +13,7 @@ const uint16_t DEFAULT_WAVEFORM[][2] = {
   {waveform_msgs::msg::WaveformPhase::FALLING, 0}
 };
 
-const uint16_t LAST_WAVEFORM_PHASE_DURATION[N_CHANNELS] = {1549, 1545, 1610, 1610, 1766};
+const uint16_t LAST_WAVEFORM_PHASE_DURATION[N_CHANNELS] = {1570, 1570, 1610, 1630, 1790};
 
 class GetDefaultWaveform : public rclcpp::Node {
 
