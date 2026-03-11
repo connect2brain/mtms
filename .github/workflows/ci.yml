@@ -2,7 +2,7 @@
 name: CI
 
 # Note: As of Jan 2025, contains several issues which prevent the workflow to be run automatically, namely:
-#   - The lack of docker-compose in the test environment.
+#   - The lack of docker compose in the test environment.
 #   - The lack of access to private repositories (which are submodules of the mTMS repository).
 # For those reasons, disable running the workflow automatically.
 
@@ -45,10 +45,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker images
-        run: docker-compose -f ${{ env.COMPOSE_FILE }} build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache
+        run: docker compose -f ${{ env.COMPOSE_FILE }} build --cache-from type=local,src=/tmp/.buildx-cache --cache-to type=local,dest=/tmp/.buildx-cache
 
       - name: Start containers
-        run: docker-compose -f ${{ env.COMPOSE_FILE }} up -d
+        run: docker compose -f ${{ env.COMPOSE_FILE }} up -d
 
       - name: Run Cypress tests
         uses: cypress-io/github-action@v4
@@ -70,7 +70,7 @@ jobs:
           path: front/cypress/videos
 
       - name: Create Docker compose logs
-        run: docker-compose -f ${{ env.COMPOSE_FILE }} logs > docker-compose.log
+        run: docker compose -f ${{ env.COMPOSE_FILE }} logs > docker-compose.log
         if: failure()
 
       - name: Upload Docker compose logs

@@ -5,7 +5,7 @@ REM bound to change; for instance, we currently have to run neuronavigation outs
 REM Optitrack motion tracking. Once Optitrack works with Docker, the contents of this script could be changed to
 REM something like:
 REM
-REM docker-compose up neuronavigation
+REM docker compose up neuronavigation
 
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 

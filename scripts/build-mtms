@@ -72,7 +72,7 @@ else
     docker compose -f $MTMS_ROOT/docker-compose.yml build "$CONTAINER_NAME"
 fi
 
-# Check the exit status of the last command (docker-compose build).
+# Check the exit status of the last command (docker compose build).
 if [ $? -ne 0 ]; then
     echo "Build failed. Not restarting the containers."
     exit 1
