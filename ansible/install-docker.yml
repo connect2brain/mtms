@@ -78,6 +78,12 @@
         state: present
         update_cache: no
       tags: install_docker
+      
+    - name: Ensure docker cli plugin directory exists
+      file:
+        path: /usr/local/lib/docker/cli-plugins
+        state: directory
+        mode: '0755'
 
     - name: Install Docker Compose binary
       get_url:
