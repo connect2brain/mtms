@@ -15,12 +15,25 @@
     repo_root: "{{ playbook_dir | dirname }}"
 
     # ROS distro
-    ros_distro: "iron"
+    ros_distro: "jazzy"
+    pip_extra_args: "--break-system-packages"
 
   collections:
     - community.general
 
   tasks:
+    ########################################################################
+    # Preflight checks
+    ########################################################################
+    - name: Assert Ubuntu 24.04 / noble
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.distribution == "Ubuntu"
+          - ansible_facts.distribution_release == "noble"
+        fail_msg: >-
+          This playbook is intended for Ubuntu 24.04 (noble).
+          Detected {{ ansible_facts.distribution }} {{ ansible_facts.distribution_release }}
+
     ########################################################################
     # 0. List and validate allowed site names
     ########################################################################
@@ -109,7 +122,7 @@
 
     - name: Install NI repository registration package
       ansible.builtin.apt:
-        deb: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers/ni-ubuntu2204-drivers-2024Q3.deb
+        deb: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers/ni-ubuntu2404-drivers-2024Q3.deb
 
     - name: Refresh package list
       ansible.builtin.apt:
@@ -255,6 +268,7 @@
     - name: Install busylight-for-humans
       pip:
         name: busylight-for-humans
+        extra_args: "{{ pip_extra_args }}"
 
     - name: Generate Busylight udev rules (locally)
       shell: busylight udev-rules -o /tmp/99-busylights.rules
@@ -278,13 +292,15 @@
     - name: Install extra packages
       apt:
         name:
-          - python3.10-venv  # Required for building ROS2 packages for MATLAB
+          - python3-venv  # Required for building ROS2 packages for MATLAB on Ubuntu 24.04
+          - python3-pip
         state: present
 
     - name: Install Python packages
       pip:
         name:
           - Cython  # Required for building ROS2 packages for neuronavigation
+        extra_args: "{{ pip_extra_args }}"
 
     ########################################################################
     # 8. Install Sphinx requirements
@@ -292,6 +308,7 @@
     - name: Install Sphinx requirements
       pip:
         requirements: "{{ repo_root }}/docs/sphinx-requirements.txt"
+        extra_args: "{{ pip_extra_args }}"
 
     ########################################################################
     # 9. Install Google Chrome (for Web-UI)
