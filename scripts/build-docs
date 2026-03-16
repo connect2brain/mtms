@@ -3,9 +3,6 @@
 echo ""
 echo "Building documentation..."
 
-# Build the ROS workspace
-source $MTMS_ROOT/scripts/build-mtms-ros-workspace
-
 # Build the documentation
 cd $MTMS_ROOT/docs
 make clean
