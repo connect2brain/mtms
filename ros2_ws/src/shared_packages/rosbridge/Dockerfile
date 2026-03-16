@@ -12,9 +12,7 @@ RUN apt-get update && \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install \
-    pymongo \
-    tornado
+RUN pip install --break-system-packages pymongo tornado
 
 # Set the Cyclone DDS configuration
 COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
