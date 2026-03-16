@@ -1,6 +1,6 @@
 # Note: NI FPGA drivers do not work in Docker as of the last time it was tried, so this Dockerfile is work in progress.
 
-FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e
+FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cdb5d717e87ef46f39
 
 SHELL ["/bin/bash", "-c"]
 
