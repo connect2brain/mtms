@@ -1,107 +1,138 @@
-# Playbook sourced from: https://github.com/NeuroSimo/neurosimo/blob/main/ansible/install-docker.yml
 ---
-- name: Install Docker and Docker Compose
+- name: Install Docker Engine and Docker Compose Plugin on Ubuntu 24.04
   hosts: all
+  become: yes
   connection: local
-  become: yes  # Ensure all tasks run with sudo privileges
+
   vars:
-    docker_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
-    docker_repo: "https://download.docker.com/linux/ubuntu"
-    docker_repo_file: "/etc/apt/sources.list.d/docker.list"
-    docker_keyring: "/usr/share/keyrings/docker-archive-keyring.gpg"
-    docker_compose_version: "v2.5.0"
-    docker_compose_binary: "/usr/local/bin/docker-compose"
-    target_user: "mtms"  # Change this to your desired username
+    docker_keyring_path: /etc/apt/keyrings/docker.asc
+    docker_repo_url: https://download.docker.com/linux/ubuntu
+    docker_repo_file: /etc/apt/sources.list.d/docker.list
+    docker_apt_arch: "{{ 'arm64' if ansible_facts.architecture == 'aarch64' else 'amd64' }}"
+    target_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env','USER'), true) }}"
 
   tasks:
+    # -------------------------------------------------------------------------
+    # 0) Guardrails
+    # -------------------------------------------------------------------------
+    - name: Assert Ubuntu 24.04 / noble
+      assert:
+        that:
+          - ansible_facts.distribution == "Ubuntu"
+          - ansible_facts.distribution_release == "noble"
+        fail_msg: >-
+          This playbook is intended for Ubuntu 24.04 (noble).
+          Detected {{ ansible_facts.distribution }} {{ ansible_facts.distribution_release }}
 
-    - name: Update APT package cache
-      apt:
-        update_cache: yes
-      tags: update_cache
-
-    - name: Install required packages
+    # -------------------------------------------------------------------------
+    # 1) Install prerequisites
+    # -------------------------------------------------------------------------
+    - name: Ensure prerequisites are installed
       apt:
         name:
           - ca-certificates
           - curl
           - gnupg
-          - lsb-release
         state: present
         update_cache: yes
-      tags: install_dependencies
 
-    - name: Create directory for Docker keyring if it doesn't exist
+    # -------------------------------------------------------------------------
+    # 2) Remove legacy/conflicting Docker packages and sources
+    # -------------------------------------------------------------------------
+    - name: Remove conflicting Docker packages
+      apt:
+        name:
+          - docker.io
+          - docker-doc
+          - docker-compose
+          - podman-docker
+          - containerd
+          - runc
+        state: absent
+      ignore_errors: true
+
+    - name: Remove legacy Docker apt source files
       file:
-        path: "{{ docker_keyring | dirname }}"
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/apt/sources.list.d/docker.list
+        - /etc/apt/sources.list.d/docker-ce.list
+        - /etc/apt/sources.list.d/docker-engine.list
+      ignore_errors: true
+
+    - name: Remove any Docker repo lines from main sources.list
+      lineinfile:
+        path: /etc/apt/sources.list
+        regexp: '.*download\.docker\.com/linux/ubuntu.*'
+        state: absent
+      ignore_errors: true
+
+    # -------------------------------------------------------------------------
+    # 3) Add Docker GPG key
+    # -------------------------------------------------------------------------
+    - name: Ensure directory for APT keyrings exists
+      file:
+        path: /etc/apt/keyrings
         state: directory
         mode: '0755'
-      tags: setup_keyring
 
     - name: Download Docker GPG key
       get_url:
-        url: "{{ docker_gpg_key_url }}"
-        dest: "/tmp/docker.gpg"
+        url: "{{ docker_repo_url }}/gpg"
+        dest: "{{ docker_keyring_path }}"
         mode: '0644'
-      tags: add_gpg_key
+        force: true
 
-    - name: Convert Docker GPG key to keyring format
-      command: "gpg --dearmor -o {{ docker_keyring }} /tmp/docker.gpg"
-      args:
-        creates: "{{ docker_keyring }}"
-      tags: convert_gpg_key
+    # -------------------------------------------------------------------------
+    # 4) Add Docker apt repository
+    # -------------------------------------------------------------------------
+    - name: Configure Docker apt repository
+      copy:
+        dest: "{{ docker_repo_file }}"
+        mode: '0644'
+        content: |
+          deb [arch={{ docker_apt_arch }} signed-by={{ docker_keyring_path }}] {{ docker_repo_url }} {{ ansible_facts.distribution_release }} stable
 
-    - name: Remove temporary GPG key file
-      file:
-        path: "/tmp/docker.gpg"
-        state: absent
-      tags: cleanup
-
-    - name: Add Docker apt repository
-      apt_repository:
-        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
-        filename: "docker"
-        state: present
-
-    - name: Update apt cache after adding Docker repository
+    # -------------------------------------------------------------------------
+    # 5) Update apt cache (force — no cache_valid_time so the new repo is seen)
+    # -------------------------------------------------------------------------
+    - name: Update apt cache
       apt:
         update_cache: yes
-      tags: update_cache_after_repo
 
+    # -------------------------------------------------------------------------
+    # 6) Install Docker packages
+    # -------------------------------------------------------------------------
     - name: Install Docker packages
       apt:
         name:
           - docker-ce
           - docker-ce-cli
           - containerd.io
+          - docker-buildx-plugin
           - docker-compose-plugin
         state: present
-        update_cache: no
-      tags: install_docker
 
-    - name: Install Docker Compose binary
-      get_url:
-        url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-{{ ansible_architecture }}"
-        dest: "{{ docker_compose_binary }}"
-        mode: '0755'
-
-    - name: Ensure Docker Compose is executable
-      file:
-        path: "{{ docker_compose_binary }}"
-        mode: '0755'
-        state: file
-      tags: set_permissions
+    # -------------------------------------------------------------------------
+    # 7) Ensure user is in docker group
+    # -------------------------------------------------------------------------
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
 
     - name: Add user to docker group
       user:
         name: "{{ target_user }}"
         groups: docker
         append: yes
-      tags: add_user_to_docker
 
+    # -------------------------------------------------------------------------
+    # 8) Enable and start service
+    # -------------------------------------------------------------------------
     - name: Ensure Docker service is enabled and started
       service:
         name: docker
         enabled: yes
         state: started
-      tags: manage_service
