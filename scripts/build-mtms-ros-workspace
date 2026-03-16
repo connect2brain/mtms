@@ -12,6 +12,9 @@ if [ -z "$MTMS_ROOT" ]; then
     exit 1
 fi
 
+# Preserve caller's working directory since this script is sourced.
+ORIGINAL_PWD=$(pwd)
+
 echo ""
 echo "Building the ROS workspace:"
 
@@ -31,6 +34,9 @@ colcon build --packages-select mtms_device_bridge
 
 # Source the workspace
 source $MTMS_ROOT/ros2_ws/install/local_setup.bash
+
+# Restore caller's working directory.
+cd "$ORIGINAL_PWD"
 
 echo ""
 echo "Done."
