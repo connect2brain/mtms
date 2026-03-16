@@ -4,7 +4,7 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-User=mtms
+User={{ target_user }}
 
 Environment=MTMS_ROOT={{ repo_root }}
 Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env

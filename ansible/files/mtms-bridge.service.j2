@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=mtms
+User={{ target_user }}
 
 Environment=MTMS_ROOT={{ repo_root }}
 Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
@@ -15,7 +15,6 @@ LimitRTPRIO=99
 LimitMEMLOCK=10000000000
 
 Type=simple
-User=mtms
 ExecStart={{ repo_root }}/scripts/start-mtms-bridge
 Restart=always
 
