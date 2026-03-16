@@ -306,6 +306,8 @@
           - python3.10  # Required for building ROS2 packages for MATLAB
           - python3.10-venv
           - python3.10-dev
+          - gcc-12
+          - g++-12
           - python3-venv
           - python3-pip
         state: present
