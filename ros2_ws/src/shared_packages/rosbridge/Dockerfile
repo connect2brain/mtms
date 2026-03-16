@@ -8,6 +8,7 @@ RUN apt-get update && \
     apt-get install -y \
     dos2unix \
     python3-pip \
+    python3-pil \
     ros-jazzy-ament-cmake-mypy \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
