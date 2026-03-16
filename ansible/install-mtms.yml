@@ -5,8 +5,8 @@
   become: yes
 
   vars:
-    # The user that runs the playbook.
-    target_user: "{{ lookup('env', 'USER') }}"
+    # The non-root user that invoked sudo (fallback to current USER if unset).
+    target_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
     target_home: "/home/{{ target_user }}"
     # Location of user projects.
     projects_root: "{{ target_home }}/projects"
@@ -112,17 +112,17 @@
 
     - name: Download NI driver ZIP
       ansible.builtin.command:
-        cmd: wget -q --show-progress -O /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2024Q3/NILinux2024Q3DeviceDrivers.zip
+        cmd: wget -q --show-progress -O /tmp/ni-drivers/NILinux2026Q1DeviceDrivers.zip https://download.ni.com/support/softlib/MasterRepository/LinuxDrivers2026Q1/NILinux2026Q1DeviceDrivers.zip
 
     - name: Unzip NI drivers
       ansible.builtin.unarchive:
-        src: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers.zip
+        src: /tmp/ni-drivers/NILinux2026Q1DeviceDrivers.zip
         dest: /tmp/ni-drivers
         remote_src: yes
 
     - name: Install NI repository registration package
       ansible.builtin.apt:
-        deb: /tmp/ni-drivers/NILinux2024Q3DeviceDrivers/ni-ubuntu2404-drivers-2024Q3.deb
+        deb: /tmp/ni-drivers/NILinux2026Q1DeviceDrivers/ni-ubuntu2404-drivers-2026Q1.deb
 
     - name: Refresh package list
       ansible.builtin.apt:
@@ -370,8 +370,11 @@
     # 12. Configure MATLAB
     ########################################################################
     - name: Add MATLAB API folder to MATLAB path
-      shell: |
-        matlab -batch "addpath('/home/mtms/mtms/api/matlab'); savepath"
+      become_user: "{{ target_user }}"
+      environment:
+        HOME: "{{ target_home }}"
+      ansible.builtin.command:
+        cmd: matlab -batch "addpath('{{ repo_root }}/api/matlab'); savepath"
 
     ########################################################################
     # 13. Create a desktop link to the documentation
