@@ -21,7 +21,7 @@ RUN . /etc/os-release && \
 RUN apt-get update && \
     apt-get install -y \
     dos2unix \
-    ros-iron-rmw-cyclonedds-cpp && \
+    ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the Cyclone DDS configuration

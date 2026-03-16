@@ -8,8 +8,8 @@ RUN apt-get update && \
     apt-get install -y \
     dos2unix \
     python3-pip \
-    ros-iron-ament-cmake-mypy \
-    ros-iron-rmw-cyclonedds-cpp && \
+    ros-jazzy-ament-cmake-mypy \
+    ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install \

@@ -25,7 +25,7 @@ RUN apt-get update && \
     dos2unix \
     wget \
     unzip \
-    ros-iron-rmw-cyclonedds-cpp && \
+    ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build

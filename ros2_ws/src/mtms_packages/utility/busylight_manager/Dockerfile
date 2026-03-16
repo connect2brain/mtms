@@ -22,12 +22,12 @@ RUN apt-get update && \
     apt-get install -y \
     dos2unix \
     python3-pip \
-    ros-iron-rmw-cyclonedds-cpp && \
+    ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
 # Python dependencies
 
-RUN pip3 install busylight-for-humans
+RUN pip3 install --break-system-packages busylight-for-humans
 
 # Set the Cyclone DDS configuration
 COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/

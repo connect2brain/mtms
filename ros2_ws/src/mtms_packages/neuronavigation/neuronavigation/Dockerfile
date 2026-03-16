@@ -24,7 +24,7 @@ RUN apt-get update && \
     apt-get install -y \
     # General
     dos2unix \
-    ros-iron-rmw-cyclonedds-cpp \
+    ros-jazzy-rmw-cyclonedds-cpp \
     # InVesalius
     locales \
     python3-wxgtk4.0 \
