@@ -20,6 +20,7 @@ RUN . /etc/os-release && \
 RUN apt-get update && \
     apt-get install -y \
     dos2unix \
+    libboost-dev \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
