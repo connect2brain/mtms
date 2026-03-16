@@ -7,8 +7,7 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from system_interfaces.msg import Session, SessionState
 
-from busylight.lights import Light
-from busylight.lights.exceptions import NoLightsFound
+from busylight_core import Light, NoLightsFoundError
 
 class BusylightManagerNode(Node):
 
@@ -135,7 +134,7 @@ class BusylightManagerNode(Node):
     def reconnect(self):
         try:
             self.light = Light.first_light()
-        except NoLightsFound as e:
+        except NoLightsFoundError:
             pass
 
 def main():

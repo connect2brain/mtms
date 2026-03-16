@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 # Python dependencies
 
-RUN pip3 install --break-system-packages busylight-for-humans
+RUN pip3 install --break-system-packages busylight-core
 
 # Set the Cyclone DDS configuration
 COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
