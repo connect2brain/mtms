@@ -289,10 +289,24 @@
     ########################################################################
     # 7. Install extra packages
     ########################################################################
+    - name: Install software-properties-common (for apt repository management)
+      apt:
+        name: software-properties-common
+        state: present
+
+    - name: Add deadsnakes PPA for Python 3.10 packages
+      ansible.builtin.apt_repository:
+        repo: ppa:deadsnakes/ppa
+        state: present
+        update_cache: yes
+
     - name: Install extra packages
       apt:
         name:
-          - python3-venv  # Required for building ROS2 packages for MATLAB on Ubuntu 24.04
+          - python3.10  # Required for building ROS2 packages for MATLAB
+          - python3.10-venv
+          - python3.10-dev
+          - python3-venv
           - python3-pip
         state: present
 
