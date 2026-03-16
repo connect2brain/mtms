@@ -46,11 +46,11 @@ COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfa
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/experiment/trial_performer src/experiment/trial_performer/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select trial_performer
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_performer
 
 # Copy entrypoint
 

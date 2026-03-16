@@ -43,11 +43,11 @@ COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_m
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/experiment/trial_logger src/experiment/trial_logger/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select trial_logger
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_logger
 
 # Copy entrypoint
 

@@ -38,7 +38,7 @@ COPY ros2_ws/src/mtms_packages/interfaces/neuronavigation_interfaces ros2_ws/src
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
+RUN source /opt/ros/jazzy/setup.bash && \
     colcon build --symlink-install
 
 # Copy entrypoint

@@ -31,7 +31,7 @@ COPY ros2_ws/src/shared_packages/interfaces src/interfaces
 ARG INTERFACES_PATH
 COPY ${INTERFACES_PATH} src/interfaces
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # Copy the rosbridge node
 COPY ros2_ws/src/shared_packages/rosbridge/rosbridge_suite src/shared_packages/rosbridge/rosbridge_suite
@@ -40,7 +40,7 @@ COPY ros2_ws/src/shared_packages/rosbridge/rosbridge_suite src/shared_packages/r
 RUN find src/shared_packages/rosbridge -type f -exec dos2unix {} +
 
 # Build the rosbridge node after building interfaces
-RUN source /opt/ros/iron/setup.bash && colcon build --packages-up-to rosbridge_server
+RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-up-to rosbridge_server
 
 # Copy ROS entrypoint
 COPY ros2_ws/src/shared_packages/rosbridge/ros_entrypoint.sh .

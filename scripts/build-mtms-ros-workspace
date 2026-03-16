@@ -16,7 +16,7 @@ echo ""
 echo "Building the ROS workspace:"
 
 # Source ROS
-source /opt/ros/iron/setup.bash
+source /opt/ros/jazzy/setup.bash
 
 # Build interfaces
 echo "  • ${BOLD}Building interfaces...${RESET}"

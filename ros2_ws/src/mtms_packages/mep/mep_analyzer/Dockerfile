@@ -35,11 +35,11 @@ WORKDIR /app/ros2_ws
 COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
 COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/mep/mep_analyzer src/mep/mep_analyzer/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
 
 # Copy entrypoint
 

@@ -35,11 +35,11 @@ WORKDIR /app/ros2_ws
 # ROS interfaces
 COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/mep/eeg_gatherer src/mep/eeg_gatherer/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select eeg_gatherer
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select eeg_gatherer
 
 # Copy entrypoint
 

@@ -38,11 +38,11 @@ COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_
 
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/targeting/targeting src/targeting/targeting/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select targeting
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select targeting
 
 # Copy data files
 WORKDIR /app

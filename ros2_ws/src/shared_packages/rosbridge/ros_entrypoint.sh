@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-source /opt/ros/iron/setup.bash
+source /opt/ros/jazzy/setup.bash
 source /app/ros2_ws/install/setup.bash
 
 # Note: Action calls can take a while, so run them in separate threads to avoid blocking. Service calls should be fast, so

@@ -40,11 +40,11 @@ COPY ros2_ws/src/mtms_packages/interfaces/targeting_services ros2_ws/src/mtms_pa
 
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs ros2_ws/src/shared_packages/interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/mtms/stimulation_allower src/mtms/stimulation_allower/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select stimulation_allower
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select stimulation_allower
 
 # Copy entrypoint
 

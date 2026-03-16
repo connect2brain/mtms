@@ -69,7 +69,7 @@ COPY ros2_ws/src/shared_packages/realtime_utils ros2_ws/src/shared_packages/real
 # Build ROS packages
 
 WORKDIR /app/ros2_ws
-RUN source /opt/ros/iron/setup.bash && \
+RUN source /opt/ros/jazzy/setup.bash && \
     colcon build
 
 # Copy entrypoint

@@ -98,7 +98,7 @@ COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces
 COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # Copy rest of InVesalius
 
@@ -116,7 +116,7 @@ RUN set -eux; \
 
 COPY ros2_ws/src/mtms_packages/neuronavigation/neuronavigation src/neuronavigation/neuronavigation/
 
-RUN source /opt/ros/iron/setup.bash && colcon build --packages-select neuronavigation
+RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select neuronavigation
 
 # Copy entrypoint
 

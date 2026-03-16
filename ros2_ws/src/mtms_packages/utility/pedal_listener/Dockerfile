@@ -41,11 +41,11 @@ WORKDIR /app/ros2_ws
 COPY ros2_ws/src/mtms_packages/interfaces/event_msgs src/interfaces/event_msgs/
 COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/utility/pedal_listener src/utility/pedal_listener/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select pedal_listener
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select pedal_listener
 
 # Copy entrypoint
 

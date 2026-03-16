@@ -39,11 +39,11 @@ COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_
 
 COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/simulators/mtms_simulator/ ros2_ws/src/mtms_packages/simulators/mtms_simulator/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
 
 # Copy entrypoint
 

@@ -39,11 +39,11 @@ COPY ros2_ws/src/mtms_packages/interfaces/mtms_device_interfaces src/interfaces/
 
 COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/mtms/voltage_setter src/mtms/voltage_setter/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select voltage_setter
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select voltage_setter
 
 # Copy entrypoint
 

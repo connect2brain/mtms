@@ -44,11 +44,11 @@ COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces
 COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
 COPY ros2_ws/src/mtms_packages/experiment/trial_validator src/experiment/trial_validator/
-RUN source /opt/ros/iron/setup.bash && colcon build --symlink-install --packages-select trial_validator
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_validator
 
 # Copy entrypoint
 
