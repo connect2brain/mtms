@@ -12,29 +12,27 @@ RESET=$(tput sgr0)
 echo "  • ${BOLD}Building the MATLAB interfaces...${RESET}"
 
 # Create a temporary directory for all the interfaces
-mkdir -p $MTMS_ROOT/ros2_ws/src/temp_interfaces
-ln -sf $MTMS_ROOT/ros2_ws/src/shared_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
-ln -sf $MTMS_ROOT/ros2_ws/src/mtms_packages/interfaces/* $MTMS_ROOT/ros2_ws/src/temp_interfaces/
+TEMP_INTERFACES_DIR=$(mktemp -d /tmp/mtms-matlab-interfaces.XXXXXX)
+cleanup() {
+    rm -rf "$TEMP_INTERFACES_DIR"
+}
+trap cleanup EXIT
+
+ln -sf "$MTMS_ROOT"/ros2_ws/src/shared_packages/interfaces/* "$TEMP_INTERFACES_DIR"/
+ln -sf "$MTMS_ROOT"/ros2_ws/src/mtms_packages/interfaces/* "$TEMP_INTERFACES_DIR"/
 
 # Generate the MATLAB message files
 matlab -nodisplay -nosplash -nodesktop -r " \
-ros2genmsg('/home/mtms/mtms/ros2_ws/src/temp_interfaces', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns'); \
+ros2genmsg('$TEMP_INTERFACES_DIR', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns'); \
 exit;"
 
 if [ $? -ne 0 ]; then
     echo "Error: MATLAB failed to generate the message files."
-
-    # Remove the temporary directory
-    rm -rf $MTMS_ROOT/ros2_ws/src/temp_interfaces
-
     exit 1
 fi
 
 # Move the generated MATLAB message files to the API directory
-mv "$MTMS_ROOT/ros2_ws/src/temp_interfaces/matlab_msg_gen.zip" "$MTMS_ROOT/api/matlab/"
-
-# Remove the temporary directory
-rm -rf $MTMS_ROOT/ros2_ws/src/temp_interfaces
+mv "$TEMP_INTERFACES_DIR/matlab_msg_gen.zip" "$MTMS_ROOT/api/matlab/"
 
 echo "Done."
 echo ""
