@@ -9,24 +9,63 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
+# Ensure that $MTMS_ROOT is set
+if [ -z "$MTMS_ROOT" ]; then
+    echo "Error: \$MTMS_ROOT is not set."
+    echo "Please set \$MTMS_ROOT to the root directory of the mTMS repository."
+    exit 1
+fi
+
 echo "  • ${BOLD}Building the MATLAB interfaces...${RESET}"
 
 # Create a temporary directory for all the interfaces
 TEMP_INTERFACES_DIR=$(mktemp -d /tmp/mtms-matlab-interfaces.XXXXXX)
-cleanup() {
-    rm -rf "$TEMP_INTERFACES_DIR"
-}
-trap cleanup EXIT
-
 ln -sf "$MTMS_ROOT"/ros2_ws/src/shared_packages/interfaces/* "$TEMP_INTERFACES_DIR"/
 ln -sf "$MTMS_ROOT"/ros2_ws/src/mtms_packages/interfaces/* "$TEMP_INTERFACES_DIR"/
 
-# Generate the MATLAB message files
-matlab -nodisplay -nosplash -nodesktop -r " \
-ros2genmsg('$TEMP_INTERFACES_DIR', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns'); \
-exit;"
+# XXX: Generating the MATLAB message files requires Python 3.9 or 3.10. Ubuntu 24.04 LTS
+#   ships with Python 3.12, so we need to use a different Python version. Python 3.10 is
+#   installed by Ansible, so it should be available when running this script.
+export MATLAB_PYTHON=/usr/bin/python3.10
 
-if [ $? -ne 0 ]; then
+# XXX: MATLAB ROS Toolbox requires a GCC/G++ pair older than 13. Ubuntu 24.04 LTS
+#   ships with GCC/G++ 13, so we need to use a different pair. These are installed
+#   by Ansible.
+MATLAB_GCC_DIR=$(mktemp -d /tmp/mtms-matlab-gcc.XXXXXX)
+
+if ! command -v gcc-12 > /dev/null 2>&1 || ! command -v g++-12 > /dev/null 2>&1; then
+    echo "Error: gcc-12/g++-12 not found."
+    exit 1
+fi
+
+ln -sf "$(command -v gcc-12)" "$MATLAB_GCC_DIR/gcc"
+ln -sf "$(command -v g++-12)" "$MATLAB_GCC_DIR/g++"
+export PATH="$MATLAB_GCC_DIR:$PATH"
+
+# Clean up temporary directories.
+cleanup() {
+    rm -rf "$TEMP_INTERFACES_DIR" "$MATLAB_GCC_DIR"
+}
+trap cleanup EXIT
+
+echo "Generating the MATLAB message files... This may take 6-8 minutes."
+
+# Generate the MATLAB message files. Keep the script readable as multiline Bash,
+# then join to a single line because some MATLAB versions only execute one line with -batch.
+MATLAB_BATCH_LINES=(
+    "try"
+    "pyExe = getenv('MATLAB_PYTHON')"
+    "setpref('ROSToolbox', 'ROS2_PYTHON_EXECUTABLE', pyExe)"
+    "ros2genmsg('$TEMP_INTERFACES_DIR', 'CreateShareableFile', true, 'BuildConfiguration', 'fasterruns')"
+    "catch ME"
+    "disp(getReport(ME, 'extended', 'hyperlinks', 'off'))"
+    "exit(1)"
+    "end"
+)
+MATLAB_BATCH_CMD="$(printf '%s; ' "${MATLAB_BATCH_LINES[@]}")"
+MATLAB_BATCH_CMD="${MATLAB_BATCH_CMD%; }"
+
+if ! matlab -batch "$MATLAB_BATCH_CMD"; then
     echo "Error: MATLAB failed to generate the message files."
     exit 1
 fi
