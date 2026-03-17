@@ -12,7 +12,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
@@ -20,21 +20,21 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
-COPY ros2_ws/src/mtms_packages/interfaces/event_msgs src/interfaces/event_msgs/
-COPY ros2_ws/src/mtms_packages/interfaces/targeting_services src/interfaces/targeting_services/
-COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY src/interfaces/targeting_services src/interfaces/targeting_services/
+COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
+COPY src/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/mtms_packages/targeting/waveform_utils src/targeting/waveform_utils/
+COPY src/waveform_utils src/targeting/waveform_utils/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select waveform_utils
 
 # Copy entrypoint
 
-COPY ros2_ws/src/mtms_packages/targeting/waveform_utils/ros_entrypoint.sh .
+COPY src/waveform_utils/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

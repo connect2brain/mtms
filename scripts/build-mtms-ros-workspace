@@ -33,7 +33,7 @@ echo "  • ${BOLD}Building mTMS device bridge...${RESET}"
 colcon build --packages-select mtms_device_bridge
 
 # Source the workspace
-source $MTMS_ROOT/ros2_ws/install/local_setup.bash
+source $MTMS_ROOT/install/local_setup.bash
 
 # Restore caller's working directory.
 cd "$ORIGINAL_PWD"

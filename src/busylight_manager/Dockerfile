@@ -16,7 +16,7 @@ RUN apt-get update && \
 RUN pip3 install --break-system-packages busylight-core
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
@@ -24,23 +24,23 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
-COPY ros2_ws/src/mtms_packages/interfaces/event_msgs src/interfaces/event_msgs/
-COPY ros2_ws/src/mtms_packages/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
+COPY src/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/mtms_packages/utility/busylight_manager src/utility/busylight_manager/
+COPY src/busylight_manager src/utility/busylight_manager/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select busylight_manager
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/mtms_packages/utility/busylight_manager/ros_entrypoint.sh .
+COPY src/busylight_manager/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

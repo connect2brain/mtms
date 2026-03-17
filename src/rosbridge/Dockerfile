@@ -16,7 +16,7 @@ RUN apt-get update && \
 RUN pip install --break-system-packages pymongo tornado
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
@@ -24,7 +24,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # Copy shared ROS interfaces
-COPY ros2_ws/src/shared_packages/interfaces src/interfaces
+COPY src/interfaces src/interfaces
 
 # Copy project-specific interfaces
 ARG INTERFACES_PATH
@@ -33,7 +33,7 @@ COPY ${INTERFACES_PATH} src/interfaces
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # Copy the rosbridge node
-COPY ros2_ws/src/shared_packages/rosbridge/rosbridge_suite src/shared_packages/rosbridge/rosbridge_suite
+COPY src/rosbridge/rosbridge_suite src/shared_packages/rosbridge/rosbridge_suite
 
 # Change line endings for rosbridge files
 RUN find src/shared_packages/rosbridge -type f -exec dos2unix {} +
@@ -42,7 +42,7 @@ RUN find src/shared_packages/rosbridge -type f -exec dos2unix {} +
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-up-to rosbridge_server
 
 # Copy ROS entrypoint
-COPY ros2_ws/src/shared_packages/rosbridge/ros_entrypoint.sh .
+COPY src/rosbridge/ros_entrypoint.sh .
 RUN chmod +x ros_entrypoint.sh
 
 # XXX: Hack around the symlink issue, allows fail with || : as this isn't needed on linux

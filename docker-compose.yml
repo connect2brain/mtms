@@ -4,7 +4,7 @@ services:
   busylight_manager:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/utility/busylight_manager/Dockerfile
+      dockerfile: src/busylight_manager/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -18,7 +18,7 @@ services:
   experiment_performer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/experiment/experiment_performer/Dockerfile
+      dockerfile: src/experiment_performer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -30,7 +30,7 @@ services:
   pedal_listener:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/utility/pedal_listener/Dockerfile
+      dockerfile: src/pedal_listener/Dockerfile
     # The container needs to be privileged so that /dev devices (namely, the USB pedal) are created.
     privileged: true
     env_file:
@@ -42,7 +42,7 @@ services:
   stimulation_allower:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/mtms/stimulation_allower/Dockerfile
+      dockerfile: src/stimulation_allower/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -54,7 +54,7 @@ services:
   targeting:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/targeting/targeting/Dockerfile
+      dockerfile: src/targeting/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -66,7 +66,7 @@ services:
   trial_logger:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_logger/Dockerfile
+      dockerfile: src/trial_logger/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -78,7 +78,7 @@ services:
   trial_performer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_performer/Dockerfile
+      dockerfile: src/trial_performer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -90,7 +90,7 @@ services:
   trial_validator:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/experiment/trial_validator/Dockerfile
+      dockerfile: src/trial_validator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -102,7 +102,7 @@ services:
   voltage_setter:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/mtms/voltage_setter/Dockerfile
+      dockerfile: src/voltage_setter/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -114,7 +114,7 @@ services:
   waveform_utils:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_utils/Dockerfile
+      dockerfile: src/waveform_utils/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -124,7 +124,7 @@ services:
   waveform_approximator:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/targeting/waveform_approximator/Dockerfile
+      dockerfile: src/waveform_approximator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -143,7 +143,7 @@ services:
   eeg_gatherer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/mep/eeg_gatherer/Dockerfile
+      dockerfile: src/eeg_gatherer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -155,7 +155,7 @@ services:
   mep_analyzer:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/mep/mep_analyzer/Dockerfile
+      dockerfile: src/mep_analyzer/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
@@ -181,9 +181,9 @@ services:
   rosbridge:
     build:
       context: .
-      dockerfile: ros2_ws/src/shared_packages/rosbridge/Dockerfile
+      dockerfile: src/rosbridge/Dockerfile
       args:
-        INTERFACES_PATH: ros2_ws/src/mtms_packages/interfaces
+        INTERFACES_PATH: src/interfaces
     env_file:
       - ${MTMS_ENV_FILE}
     environment:

@@ -2,7 +2,7 @@
 set -e
 
 source /opt/ros/jazzy/setup.bash
-source /app/ros2_ws/install/setup.bash
+source /app/install/setup.bash
 
 # Note: Action calls can take a while, so run them in separate threads to avoid blocking. Service calls should be fast, so
 #   run them consecutively in the main thread. This logic seems to work for now in the front-end.

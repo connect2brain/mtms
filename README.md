@@ -161,9 +161,9 @@ This software depends on several external libraries and software, which are conn
 are proprietary or have their own licenses. In addition, certain repositories are private and require appropriate permissions for access.
 Here are a few of the external repositories and their locations in the directory structure:
 
-- [InVesalius3](https://github.com/invesalius/invesalius3): Located at `ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3`
-- [E-field library](https://github.com/connect2brain/e-field): Used for electric field estimation, located at `ros2_ws/src/mtms_packages/targeting/efield/src` (private repository)
-- [Waveform Approximator](https://github.com/connect2brain/waveform-approximator): For approximating pulse waveforms, located at `ros2_ws/src/mtms_packages/targeting/waveform_approximator` (private repository)
+- [InVesalius3](https://github.com/invesalius/invesalius3): Located at `src/neuronavigation/invesalius3`
+- [E-field library](https://github.com/connect2brain/e-field): Used for electric field estimation, located at `src/efield/src` (private repository)
+- [Waveform Approximator](https://github.com/connect2brain/waveform-approximator): For approximating pulse waveforms, located at `src/waveform_approximator` (private repository)
 
 For a complete list, see the .gitmodules file. Refer to each repository’s root for license and authorship details.
 

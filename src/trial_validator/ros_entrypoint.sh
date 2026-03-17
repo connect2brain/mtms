@@ -2,6 +2,6 @@
 set -e
 
 source /opt/ros/jazzy/setup.bash
-source /app/ros2_ws/install/setup.bash
+source /app/install/setup.bash
 
 ros2 launch trial_validator trial_validator.launch.py log-level:="$ROS_LOG_LEVEL"

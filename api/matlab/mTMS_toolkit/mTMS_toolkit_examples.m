@@ -102,7 +102,7 @@ mtms_tk.full_discharge()
 % mTMS toolkit, as it enables safety features to prevent coil damage.
 
 % Define calibration file for the coil in use
-calibration_filepath = "/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator/data/tubingen_mk2/calibration.mat";
+calibration_filepath = "/home/mtms/mtms/src/waveform_approximator/waveform_approximator/data/tubingen_mk2/calibration.mat";
 
 % The calibration file contains data that is used in the monophasic
 % waveform calibration, pulse strain estimation, PWM approximations, and

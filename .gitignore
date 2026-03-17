@@ -1,18 +1,16 @@
-ros2_ws/build
-ros2_ws/install
-ros2_ws/log
 build/
-log/
 install/
+log/
+
+src/build/
+src/install/
+src/log/
 
 __pycache__
 cmake-build-debug
 cmake-build-release
 front/cypress/videos
 front/cypress/screenshots
-ros2_ws/src/install/
-ros2_ws/src/log/
-ros2_ws/src/build/
 
 # ROS bags used to store data from, e.g., sessions.
 data/bags/

@@ -9,8 +9,8 @@ RESET=$(tput sgr0)
 DISK_SPACE_THRESHOLD=20
 
 # Check that submodules are initialized and non-empty.
-SHARED_PACKAGES_DIR="$MTMS_ROOT/ros2_ws/src/shared_packages"
-ROSBRIDGE_DIR="$MTMS_ROOT/ros2_ws/src/shared_packages/rosbridge/rosbridge_suite"
+SHARED_PACKAGES_DIR="$MTMS_ROOT/src"
+ROSBRIDGE_DIR="$MTMS_ROOT/src/rosbridge/rosbridge_suite"
 
 check_dir_non_empty() {
     if [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ]; then

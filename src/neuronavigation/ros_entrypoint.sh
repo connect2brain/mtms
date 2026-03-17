@@ -2,7 +2,7 @@
 set -e
 
 source /opt/ros/jazzy/setup.bash
-source /app/ros2_ws/install/setup.bash
+source /app/install/setup.bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/python3.8/dist-packages/pypolaris
 
 ros2 run neuronavigation start --ros-args -p electric_field_enable:="$ELECTRIC_FIELD_ENABLE" -p robot_enable:="$ROBOT_ENABLE"

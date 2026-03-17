@@ -16,7 +16,7 @@ RUN apt-get update && \
 RUN pip install --break-system-packages PySerial
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
@@ -24,20 +24,20 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app/ros2_ws
 
 # ROS interfaces
-COPY ros2_ws/src/mtms_packages/interfaces/event_msgs src/interfaces/event_msgs/
-COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/mtms_packages/utility/pedal_listener src/utility/pedal_listener/
+COPY src/pedal_listener src/utility/pedal_listener/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select pedal_listener
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/mtms_packages/utility/pedal_listener/ros_entrypoint.sh .
+COPY src/pedal_listener/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

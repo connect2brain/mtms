@@ -64,7 +64,7 @@ classdef mTMS_toolkit < handle
 
         function add_approximator(obj, calibration_filepath)
             
-            addpath(genpath("/home/mtms/mtms/ros2_ws/src/mtms_packages/targeting/waveform_approximator"))
+            addpath(genpath("/home/mtms/mtms/src/waveform_approximator"))
             time_resolution = 0.01e-6;
 
             try

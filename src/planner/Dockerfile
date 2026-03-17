@@ -11,15 +11,15 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/mtms_packages/ui/planner ros2_ws/src/mtms_packages/ui/planner/
-COPY ros2_ws/src/mtms_packages/interfaces/ui_interfaces ros2_ws/src/mtms_packages/interfaces/ui_interfaces/
-COPY ros2_ws/src/mtms_packages/interfaces/neuronavigation_interfaces ros2_ws/src/mtms_packages/interfaces/neuronavigation_interfaces/
+COPY src/planner src/planner/
+COPY src/interfaces/ui_interfaces src/interfaces/ui_interfaces/
+COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 
 # Build ROS packages
 
@@ -29,7 +29,7 @@ RUN source /opt/ros/jazzy/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/mtms_packages/ui/planner/ros_entrypoint.sh .
+COPY src/planner/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

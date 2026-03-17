@@ -246,7 +246,7 @@
     - name: Ensure local ROS workspace is sourced
       lineinfile:
         dest: "{{ target_home }}/.bash_env"
-        line: "source $MTMS_ROOT/ros2_ws/install/local_setup.bash"
+        line: "source $MTMS_ROOT/install/local_setup.bash"
         state: present
 
     - name: Ensure PYTHONPATH for the Python API is set

@@ -37,20 +37,20 @@ RUN apt-get install -y \
     dos2unix
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY src/resources/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
 
 WORKDIR /app
-COPY ros2_ws/src/mtms_packages/mtms/mtms_device_bridge ros2_ws/src/mtms_packages/mtms/mtms_device_bridge/
+COPY src/mtms_device_bridge src/mtms_device_bridge/
 
-COPY ros2_ws/src/mtms_packages/interfaces/mtms_device_interfaces ros2_ws/src/mtms_packages/interfaces/mtms_device_interfaces/
-COPY ros2_ws/src/mtms_packages/interfaces/event_msgs ros2_ws/src/mtms_packages/interfaces/event_msgs/
-COPY ros2_ws/src/mtms_packages/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY ros2_ws/src/shared_packages/interfaces/system_interfaces ros2_ws/src/shared_packages/interfaces/system_interfaces/
-COPY ros2_ws/src/shared_packages/realtime_utils ros2_ws/src/shared_packages/realtime_utils/
+COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
+COPY src/realtime_utils src/realtime_utils/
 
 # Build ROS packages
 
@@ -60,12 +60,12 @@ RUN source /opt/ros/jazzy/setup.bash && \
 
 # Copy entrypoint
 
-COPY ros2_ws/src/mtms_packages/mtms/mtms_device_bridge/ros_entrypoint.sh .
+COPY src/mtms_device_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
-COPY bitfiles/ /app/ros2_ws/bitfiles/
+COPY bitfiles/ /app/bitfiles/
 
-ENV BITFILE_DIRECTORY=/app/ros2_ws/bitfiles/
+ENV BITFILE_DIRECTORY=/app/bitfiles/
 
 ENTRYPOINT ["./ros_entrypoint.sh"]
