@@ -7,7 +7,7 @@ Wants=network-online.target
 User={{ target_user }}
 
 Environment=MTMS_ROOT={{ repo_root }}
-Environment=MTMS_ENV_FILE={{ repo_root }}/sites/{{ target_site }}/.env
+Environment=MTMS_ENV_FILE={{ repo_root }}/.env
 Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 

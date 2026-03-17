@@ -134,7 +134,7 @@ services:
       # to be able to find MATLAB license (located in /usr/local/MATLAB/[version]/licenses/).
       #
       # A better solution would be to mount only the license file, but the MATLAB version is defined
-      # site-specific .env file (e.g., sites/Aalto/.env), which is not easily available for
+      # site-specific .env file (e.g., sites/aalto/.env), which is not easily available for
       # docker-compose.yml, but only for Dockerfile.
       - '/usr/local/MATLAB:/usr/local/MATLAB'
     network_mode: host

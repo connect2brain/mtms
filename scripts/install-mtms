@@ -1,13 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ -z "$1" ]; then
-    echo "Please provide the target site as an argument."
-    exit 1
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Set target_site
-export target_site="$1"
+bash "${SCRIPT_DIR}/set-site-config" "${1:-}"
 
 # Ensure that MATLAB is installed
 if ! which matlab > /dev/null; then
@@ -37,7 +33,7 @@ ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/instal
 # Run the Docker installation playbook
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-ros.yml
 # Run the mTMS installation playbook
-ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml -e "target_site=$target_site"
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml
 
 set +e  # Allow sourcing of .bash_env before ROS workspace is built
 source $HOME/.bash_env

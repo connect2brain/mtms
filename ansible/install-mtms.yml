@@ -35,32 +35,6 @@
           Detected {{ ansible_facts.distribution }} {{ ansible_facts.distribution_release }}
 
     ########################################################################
-    # 0. List and validate allowed site names
-    ########################################################################
-    - name: Ensure target_site is defined
-      fail:
-        msg: "The 'target_site' variable must be provided as an extra variable (e.g., -e target_site=<site>)."
-      when: target_site is not defined
-
-    - name: Gather allowed site names
-      find:
-        paths: "{{ repo_root }}/sites"
-        file_type: directory
-        depth: 1
-      register: site_directories
-
-    - name: Extract allowed site names
-      set_fact:
-        allowed_sites: "{{ site_directories.files | map(attribute='path') | map('basename') | list }}"
-
-    - name: Validate target_site
-      fail:
-        msg: >
-          The variable 'target_site' must be one of the following values:
-          {{ allowed_sites | join(', ') }}.
-      when: target_site not in allowed_sites
-
-    ########################################################################
     # 1. Configure network
     ########################################################################
     - name: Configure static network settings
@@ -216,7 +190,7 @@
     - name: Ensure MTMS_ENV_FILE points to the .env file
       lineinfile:
         dest: "{{ target_home }}/.bash_env"
-        line: "export MTMS_ENV_FILE=$MTMS_ROOT/sites/{{ target_site }}/.env"
+        line: "export MTMS_ENV_FILE={{ repo_root }}/.env"
         state: present
 
     - name: Ensure script directory is in PATH

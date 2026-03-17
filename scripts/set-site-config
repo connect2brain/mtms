@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SITES_DIR="${REPO_ROOT}/sites"
+ROOT_ENV_FILE="${REPO_ROOT}/.env"
+GENERIC_ENV_FILE="${REPO_ROOT}/.env.example"
+
+target_site="${1:-}"
+
+if [ -z "$target_site" ]; then
+    echo "Warning: no site provided. Usage: scripts/install-mtms <site-name>"
+    echo ""
+    echo "Available sites:"
+    ls "$SITES_DIR"
+    echo ""
+    read -r -p "Instead of site-specific settings, use generic settings provided in .env.example? [Y/n] " response
+    if [ "$response" = "n" ] || [ "$response" = "N" ]; then
+        echo "Cancelled."
+        exit 1
+    fi
+    cp "$GENERIC_ENV_FILE" "$ROOT_ENV_FILE"
+    echo "Copied .env.example to .env."
+    exit 0
+fi
+
+SITE_ENV_FILE="${SITES_DIR}/${target_site}/.env"
+if [ ! -d "$SITES_DIR" ] || [ ! -f "$SITE_ENV_FILE" ]; then
+    echo "Error: invalid site '${target_site}': 'sites/${target_site}/.env' does not exist."
+    exit 1
+fi
+
+cp "$SITE_ENV_FILE" "$ROOT_ENV_FILE"
+echo "Copied sites/${target_site}/.env to .env."
