@@ -84,6 +84,10 @@ class MTMSSimulator(Node):
     PULSE_VOLTAGE_DROP_PROPORTION = 0.05
     """The proportion in which the voltage of the channel drops"""
 
+    UINT8_MAX = 2**8 - 1
+    UINT16_MAX = 2**16 - 1
+    UINT32_MAX = 2**32 - 1
+
     def __init__(self):
         """
         Creates the ROS node and initializes the publishers, subscribes and the services.
@@ -637,6 +641,12 @@ class MTMSSimulator(Node):
         feedback_msg = TriggerOutFeedback(id=event_info.id)
         self.trigger_out_feedback_publisher.publish(feedback_msg)
 
+    @staticmethod
+    def _clamp_uint(value: int | float, max_value: int) -> int:
+        """Convert numeric value to bounded unsigned integer."""
+        int_value = int(round(value))
+        return max(0, min(int_value, max_value))
+
     # NOTE: System state is not published fast enough with python. The simulator might
     # need to be translated to cpp later.
     def system_state_callback(self):
@@ -645,10 +655,10 @@ class MTMSSimulator(Node):
         for i in range(self.num_of_channels):
             channel = self.channels[i]
             channel_state = ChannelState(
-                channel_index=i,
-                voltage=channel.current_voltage,
-                temperature=channel.temperature,
-                pulse_count=channel.pulse_count,
+                channel_index=self._clamp_uint(i, self.UINT8_MAX),
+                voltage=self._clamp_uint(channel.current_voltage, self.UINT16_MAX),
+                temperature=self._clamp_uint(channel.temperature, self.UINT16_MAX),
+                pulse_count=self._clamp_uint(channel.pulse_count, self.UINT32_MAX),
                 channel_error=channel.errors,
             )
             msg.channel_states[i] = channel_state
