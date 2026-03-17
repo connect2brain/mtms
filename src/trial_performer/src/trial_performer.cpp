@@ -336,20 +336,7 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoi
   request->targets = targets;
   request->target_waveforms = target_waveforms;
 
-  /* Use promise and future to handle the async response. */
-  std::promise<targeting_services::srv::GetMultipulseWaveforms::Response::SharedPtr> promise;
-  auto future = promise.get_future();
-
-  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetMultipulseWaveforms>::SharedFuture future_response) {
-    try {
-      auto response = future_response.get();
-      promise.set_value(response);
-    } catch (const std::exception &e) {
-      promise.set_exception(std::make_exception_ptr(e));
-    }
-  };
-
-  get_multipulse_waveforms_client->async_send_request(request, response_callback);
+  auto future = get_multipulse_waveforms_client->async_send_request(request);
 
   /* Wait for the response. */
   auto future_status = future.wait_for(60s);
@@ -374,20 +361,7 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
   auto request = std::make_shared<targeting_services::srv::GetTargetVoltages::Request>();
   request->target = target;
 
-  /* Use promise and future to handle the async response. */
-  std::promise<targeting_services::srv::GetTargetVoltages::Response::SharedPtr> promise;
-  auto future = promise.get_future();
-
-  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedFuture future_response) {
-    try {
-      auto response = future_response.get();
-      promise.set_value(response);
-    } catch (const std::exception &e) {
-      promise.set_exception(std::make_exception_ptr(e));
-    }
-  };
-
-  targeting_client->async_send_request(request, response_callback);
+  auto future = targeting_client->async_send_request(request);
 
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
@@ -407,20 +381,7 @@ waveform_msgs::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t ch
   auto request = std::make_shared<targeting_services::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
 
-  /* Use promise and future to handle the async response. */
-  std::promise<targeting_services::srv::GetDefaultWaveform::Response::SharedPtr> promise;
-  auto future = promise.get_future();
-
-  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::GetDefaultWaveform>::SharedFuture future_response) {
-    try {
-      auto response = future_response.get();
-      promise.set_value(response);
-    } catch (const std::exception &e) {
-      promise.set_exception(std::make_exception_ptr(e));
-    }
-  };
-
-  get_default_waveform_client->async_send_request(request, response_callback);
+  auto future = get_default_waveform_client->async_send_request(request);
 
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
@@ -437,20 +398,7 @@ waveform_msgs::msg::Waveform TrialPerformerNode::reverse_polarity(const waveform
   auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
-  /* Use promise and future to handle the async response. */
-  std::promise<targeting_services::srv::ReversePolarity::Response::SharedPtr> promise;
-  auto future = promise.get_future();
-
-  auto response_callback = [&promise](rclcpp::Client<targeting_services::srv::ReversePolarity>::SharedFuture future_response) {
-    try {
-      auto response = future_response.get();
-      promise.set_value(response);
-    } catch (const std::exception &e) {
-      promise.set_exception(std::make_exception_ptr(e));
-    }
-  };
-
-  reverse_polarity_client->async_send_request(request, response_callback);
+  auto future = reverse_polarity_client->async_send_request(request);
 
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
@@ -471,20 +419,7 @@ void TrialPerformerNode::request_events(const std::vector<event_msgs::msg::Pulse
   request->pulses = pulses;
   request->trigger_outs = trigger_outs;
 
-  /* Use promise and future to handle the async response. */
-  std::promise<mtms_device_interfaces::srv::RequestEvents::Response::SharedPtr> promise;
-  auto future = promise.get_future();
-
-  auto response_callback = [&promise](rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedFuture future_response) {
-    try {
-      auto response = future_response.get();
-      promise.set_value(response);
-    } catch (const std::exception &e) {
-      promise.set_exception(std::make_exception_ptr(e));
-    }
-  };
-
-  request_events_client->async_send_request(request, response_callback);
+  auto future = request_events_client->async_send_request(request);
 
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
@@ -504,20 +439,7 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   auto goal = mtms_device_interfaces::action::SetVoltages::Goal();
   goal.voltages = voltages;
 
-  std::promise<bool> promise;
-  auto future = promise.get_future();
-
-  auto send_goal_options = rclcpp_action::Client<mtms_device_interfaces::action::SetVoltages>::SendGoalOptions();
-  send_goal_options.result_callback =
-      [&promise](const rclcpp_action::ClientGoalHandle<mtms_device_interfaces::action::SetVoltages>::WrappedResult &result) {
-        if (result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-          promise.set_value(result.result->success);
-        } else {
-          promise.set_value(false);
-        }
-      };
-
-  auto future_goal_handle = set_voltages_client->async_send_goal(goal, send_goal_options);
+  auto future_goal_handle = set_voltages_client->async_send_goal(goal);
 
   /* Wait for the goal handle. */
   if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
@@ -537,7 +459,10 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
     return false;
   }
 
-  bool success = future.get();
+  auto wrapped_result = future_result.get();
+  bool success = wrapped_result.code == rclcpp_action::ResultCode::SUCCEEDED &&
+                 wrapped_result.result != nullptr &&
+                 wrapped_result.result->success;
   if (!success) {
     RCLCPP_ERROR(this->get_logger(), "Failed to set voltages");
   }
@@ -550,21 +475,7 @@ std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::
   goal.mep_configuration = mep_config;
   goal.time = time;
 
-  std::promise<std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result>> promise;
-  auto future = promise.get_future();
-
-  auto send_goal_options = rclcpp_action::Client<mep_interfaces::action::AnalyzeMep>::SendGoalOptions();
-  send_goal_options.result_callback =
-      [this, &promise](const rclcpp_action::ClientGoalHandle<mep_interfaces::action::AnalyzeMep>::WrappedResult &wrapped_result) {
-        if (wrapped_result.code == rclcpp_action::ResultCode::SUCCEEDED) {
-          promise.set_value(wrapped_result.result);
-        } else {
-          RCLCPP_WARN(this->get_logger(), "Failed to analyze MEP.");
-          promise.set_value(nullptr);
-        }
-      };
-
-  auto future_goal_handle = analyze_mep_client->async_send_goal(goal, send_goal_options);
+  auto future_goal_handle = analyze_mep_client->async_send_goal(goal);
 
   /* Wait for the goal handle. */
   if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
@@ -584,7 +495,13 @@ std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::
     return nullptr;
   }
 
-  return future.get();
+  auto wrapped_result = future_result.get();
+  if (wrapped_result.code != rclcpp_action::ResultCode::SUCCEEDED || wrapped_result.result == nullptr) {
+    RCLCPP_WARN(this->get_logger(), "Failed to analyze MEP.");
+    return nullptr;
+  }
+
+  return wrapped_result.result;
 }
 
 /* Goal handling */
