@@ -23,7 +23,7 @@ class StartDevice : public rclcpp::Node {
 public:
   StartDevice()
       : Node("start_device") {
-    start_device_service_ = this->create_service<mtms_device_interfaces::srv::StartDevice>("/mtms/device/start_device", start_device);
+    start_device_service_ = this->create_service<mtms_device_interfaces::srv::StartDevice>("/mtms/device/start", start_device);
   }
 
 private:

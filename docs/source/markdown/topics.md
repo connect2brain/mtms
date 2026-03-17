@@ -16,8 +16,8 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 ### Services
 
-- `/mtms/device/start_device` - Start the mTMS device.
-- `/mtms/device/stop_device` - Stop the mTMS device.
+- `/mtms/device/start` - Start the mTMS device.
+- `/mtms/device/stop` - Stop the mTMS device.
 - `/mtms/device/send_settings` - Send stimulation settings to device.
 - `/mtms/device/allow_stimulation` - Enable/disable stimulation permission.
 - `/mtms/device/allow_trigger_out` - Enable/disable trigger-out permission.

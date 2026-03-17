@@ -42,8 +42,8 @@ from ExperimentHandler import ExperimentHandler
 
 class MTMSApiNode(Node):
     # To mTMS device
-    ROS_SERVICE_START_DEVICE = ('/mtms/device/start_device', StartDevice)
-    ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop_device', StopDevice)
+    ROS_SERVICE_START_DEVICE = ('/mtms/device/start', StartDevice)
+    ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', StopDevice)
 
     ROS_SERVICE_ALLOW_STIMULATION = ('/mtms/device/allow_stimulation', AllowStimulation)
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)

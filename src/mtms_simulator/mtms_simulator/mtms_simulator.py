@@ -131,10 +131,10 @@ class MTMSSimulator(Node):
             SendSettings, "/mtms/device/send_settings", self.send_settings_handler
         )
         self.start_device_service = self.create_service(
-            StartDevice, "/mtms/device/start_device", self.start_device_handler
+            StartDevice, "/mtms/device/start", self.start_device_handler
         )
         self.stop_device_service = self.create_service(
-            StopDevice, "/mtms/device/stop_device", self.stop_device_handler
+            StopDevice, "/mtms/device/stop", self.stop_device_handler
         )
         self.start_session_service = self.create_service(
             StartSession, "/mtms/device/session/start", self.start_session_handler

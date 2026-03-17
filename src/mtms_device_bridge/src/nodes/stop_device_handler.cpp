@@ -23,7 +23,7 @@ class StopDevice : public rclcpp::Node {
 public:
   StopDevice()
       : Node("stop_device") {
-    stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>("/mtms/device/stop_device", stop_device);
+    stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>("/mtms/device/stop", stop_device);
   }
 
 private:

@@ -29,8 +29,8 @@ policies and other behaviour will be described in their own sections.
 |----------------------------------|--------------|-----------------------------------------------|
 | `/mtms/device/allow_stimulation` | Service      | `mtms_device_interfaces.srv.AllowStimulation` |
 | `/mtms/device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
-| `/mtms/device/start_device`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
-| `/mtms/device/stop_device`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
+| `/mtms/device/start`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
+| `/mtms/device/stop`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
 | `/mtms/device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
@@ -92,8 +92,8 @@ ROS2 Documentation):
 | Lease duration | Default             |
 
 #### Device state management
-The device state is management by service topics `/mtms/device/start_device`
-and `/mtms/device/stop_device`.
+The device state is management by service topics `/mtms/device/start`
+and `/mtms/device/stop`.
 
 Current status of device state is published by the system_state in `device_state`
 session, which is defined by `DeviceState`:
@@ -105,11 +105,11 @@ session, which is defined by `DeviceState`:
 
     uint8 value
 
-when the device is started with `/mtms/device/start_device` request the response returns
+when the device is started with `/mtms/device/start` request the response returns
 `true` if startup was successful. Once the startup is finished the system state property
 `device_state.value=DeviceState.OPERATIONAL`
 
-when the device is stopped with `/mtms/device/stop_device` request the response returns
+when the device is stopped with `/mtms/device/stop` request the response returns
 `true` if shutdown was successful.  Once the shutdown process is finished the system
 state property `device_state.value=DeviceState.NOT_OPERATIONAL`
 
@@ -222,7 +222,7 @@ QoS: ROS2 Default
     ---
     bool success
 
-### Topic: `/mtms/device/start_device`
+### Topic: `/mtms/device/start`
 #### Service: `mtms_device_interfaces.srv.StartDevice`
 QoS: ROS2 Default
 
@@ -232,7 +232,7 @@ Start device. Response: Boolean indicating if starting was successful.
     ---
     bool success
 
-### Topic: `/mtms/device/stop_device`
+### Topic: `/mtms/device/stop`
 #### Service: `mtms_device_interfaces.srv.StopDevice`
 QoS: ROS2 Default
 
