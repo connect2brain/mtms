@@ -7,12 +7,12 @@
 [submodule "src/targeting/data"]
         path = src/targeting/data
 	url = https://github.com/connect2brain/targeting-tables.git
-[submodule "src/waveform_approximator"]
-        path = src/waveform_approximator
-	url = https://github.com/connect2brain/waveform-approximator.git
 [submodule "bitfiles"]
 	path = bitfiles
 	url = https://github.com/connect2brain/bitfiles.git
 [submodule "sites"]
 	path = sites
 	url = https://github.com/connect2brain/sites.git
+[submodule "src/waveform_approximator/waveform_approximator"]
+	path = src/waveform_approximator/waveform_approximator
+	url = https://github.com/connect2brain/waveform-approximator.git
