@@ -1,5 +1,5 @@
 # Cuda image adapted from: https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/12.0.0/ubuntu2004/base/Dockerfile
-FROM osrf/ros:iron-desktop@sha256:eddad5f79aa7e888af29793c11f0ee44280c656b74dba0d37b2f48a0aa57352e as base
+FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cdb5d717e87ef46f39
 FROM base as base-amd64
 
 ENV NVARCH x86_64
@@ -64,47 +64,47 @@ RUN apt-get update
 
 RUN apt-get install -y \
     dos2unix \
-    ros-iron-rmw-cyclonedds-cpp \
+    ros-jazzy-rmw-cyclonedds-cpp \
     wget
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3-linux-x86_64.tar.gz
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # Set the Cyclone DDS configuration
-COPY ros2_ws/src/shared_packages/resources/cyclonedds.xml /config/
+COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Build interfaces
-COPY ros2_ws/src/mtms_packages/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
-COPY ros2_ws/src/shared_packages/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
-COPY ros2_ws/src/shared_packages/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
-COPY ros2_ws/src/shared_packages/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
-COPY ros2_ws/src/shared_packages/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
+COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
+COPY src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
+COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
+COPY src/interfaces/mtms_trial_interfaces src/interfaces/mtms_trial_interfaces/
+COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
 
-RUN source /opt/ros/iron/setup.bash && colcon build
+RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 
 # Copy efield packages
-COPY ros2_ws/src/mtms_packages/targeting/efield src/targeting/efield/
+COPY src/efield src/efield/
 
 # Required so efield and efield_library can find their dependencies
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/ros2_ws/src/mtms_packages/targeting/efield/efield_libraries/lib"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/src/efield/efield_libraries/lib"
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/cuda-12.1/lib64:usr/local/cuda-12.1/targets/x86_64-linux/include/"
 ENV CPATH="/usr/local/cuda-12.1/targets/x86_64-linux/include/:${CPATH}"
 ENV PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/cuda-12.1/bin/nvcc/:/usr/local/cuda-12.1/lib64/:/usr/local/cuda-12.1/bin/:${PATH}"
 ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
 
 # Build efield library
-RUN cd src/targeting/efield/efield_libraries && cmake . && make
+RUN cd src/efield/efield_libraries && cmake . && make
 
 # Build efield packages
-RUN source /opt/ros/iron/setup.bash && colcon build --packages-select efield
+RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select efield
 
 
-COPY ros2_ws/src/mtms_packages/targeting/efield/ros_entrypoint.sh .
+COPY src/efield/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 
