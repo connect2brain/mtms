@@ -71,8 +71,9 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - MTMS_EXPERIMENT_LOGS_DIR=/app/mtms_experiment_logs
     volumes:
-      - '$PROJECTS_ROOT:/app/projects'
+      - '$MTMS_EXPERIMENT_LOGS_DIR:/app/mtms_experiment_logs'
     network_mode: host
 
   trial_performer:

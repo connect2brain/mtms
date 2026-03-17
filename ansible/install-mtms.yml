@@ -8,8 +8,8 @@
     # The non-root user that invoked sudo (fallback to current USER if unset).
     target_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env', 'USER'), true) }}"
     target_home: "/home/{{ target_user }}"
-    # Location of user projects.
-    projects_root: "{{ target_home }}/projects"
+    # Location where mTMS experiment logs are stored.
+    mtms_experiment_logs_dir: "{{ target_home }}/mtms_experiment_logs"
 
     # The repository root.
     repo_root: "{{ playbook_dir | dirname }}"
@@ -160,11 +160,11 @@
         state: restarted
 
     ########################################################################
-    # Create a projects directory for the user
+    # Create directory for mTMS experiment logs
     ########################################################################
-    - name: Create projects directory
+    - name: Create mTMS experiment logs directory
       file:
-        path: "{{ projects_root }}"
+        path: "{{ mtms_experiment_logs_dir }}"
         state: directory
         owner: "{{ target_user }}"
         group: "{{ target_user }}"
@@ -199,10 +199,10 @@
         line: "export PATH=$PATH:{{ repo_root }}/scripts/"
         state: present
 
-    - name: Ensure PROJECTS_ROOT is exported
+    - name: Ensure MTMS_EXPERIMENT_LOGS_DIR is exported
       lineinfile:
         dest: "{{ target_home }}/.bash_env"
-        line: "export PROJECTS_ROOT={{ projects_root }}"
+        line: "export MTMS_EXPERIMENT_LOGS_DIR={{ mtms_experiment_logs_dir }}"
         state: present
         
     - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS

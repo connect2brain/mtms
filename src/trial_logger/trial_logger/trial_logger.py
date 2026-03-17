@@ -3,16 +3,12 @@ import re
 from datetime import datetime
 
 from experiment_interfaces.srv import LogTrial
-from std_msgs.msg import String
 
 import rclpy
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 
 class TrialLoggerNode(Node):
-
-    PROJECTS_ROOT = '/app/projects/'
 
     TRIAL_COLUMNS = [
         "Trial index",
@@ -35,6 +31,9 @@ class TrialLoggerNode(Node):
         super().__init__('trial_logger_node')
 
         self.logger = self.get_logger()
+        self.logs_dir = os.getenv('MTMS_EXPERIMENT_LOGS_DIR')
+        if not self.logs_dir:
+            raise RuntimeError('MTMS_EXPERIMENT_LOGS_DIR is not set.')
 
         # Create service for logging trial.
 
@@ -44,19 +43,13 @@ class TrialLoggerNode(Node):
             self.log_trial_callback,
         )
 
-        # Create subscriber for active project.
-        qos_persist_latest = QoSProfile(
-            depth=1,
-            durability=DurabilityPolicy.TRANSIENT_LOCAL,
-            history=HistoryPolicy.KEEP_LAST,
-        )
-        self.active_project_subscriber = self.create_subscription(String, '/projects/active', self.handle_active_project_subscription, qos_persist_latest)
+        self.get_logger().info('Trial logs directory: {}.'.format(self.logs_dir))
 
     def open_log_file(self, metadata):
         subject_name = self.sanitize_filename(metadata.subject_name)
         experiment_name = self.sanitize_filename(metadata.experiment_name)
 
-        basepath = os.path.join(self.PROJECTS_ROOT, self.project, 'csv')
+        basepath = os.path.join(self.logs_dir, 'csv')
 
         # Ensure the directory exists
         if not os.path.exists(basepath):
@@ -170,11 +163,6 @@ class TrialLoggerNode(Node):
         self.get_logger().info('Done.')
 
         return response
-
-    def handle_active_project_subscription(self, msg):
-        self.project = msg.data
-
-        self.get_logger().info('Changed project to: {}.'.format(self.project))
 
 def main(args=None):
     rclpy.init(args=args)
