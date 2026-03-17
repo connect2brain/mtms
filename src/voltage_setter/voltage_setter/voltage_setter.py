@@ -22,6 +22,8 @@ class VoltageSetterNode(Node):
 
     # TODO: Hardcoded for now.
     MAXIMUM_VOLTAGE = 1500
+    REQUEST_EVENTS_TIMEOUT_S = 5.0
+    EVENT_FEEDBACK_TIMEOUT_S = 15.0
 
     def __init__(self):
         super().__init__('voltage_setter_node')
@@ -195,7 +197,13 @@ class VoltageSetterNode(Node):
         # Create and return a Result object.
         result = SetVoltages.Result()
 
-        goal_handle.succeed()
+        if success:
+            goal_handle.succeed()
+        else:
+            self.logger.error(
+                '{}: Aborting goal because voltage setting failed.'.format(goal_id)
+            )
+            goal_handle.abort()
 
         result.success = success
 
@@ -206,17 +214,35 @@ class VoltageSetterNode(Node):
     def async_service_call(self, client, request):
         call_service_event = Event()
         response_value = [None]
+        exception_value = [None]
 
         def service_call_callback(future):
-            nonlocal response_value
-            response_value[0] = future.result()
-            call_service_event.set()
+            try:
+                response_value[0] = future.result()
+            except Exception as exc:
+                exception_value[0] = exc
+            finally:
+                call_service_event.set()
 
         service_call_future = client.call_async(request)
         service_call_future.add_done_callback(service_call_callback)
 
-        # Wait for the service call to complete
-        call_service_event.wait()
+        # Wait for the service call to complete.
+        if not call_service_event.wait(timeout=self.REQUEST_EVENTS_TIMEOUT_S):
+            self.logger.error(
+                "Timed out waiting {:.1f} s for /mtms_device/events/request response.".format(
+                    self.REQUEST_EVENTS_TIMEOUT_S
+                )
+            )
+            return None
+
+        if exception_value[0] is not None:
+            self.logger.error(
+                "Call to /mtms_device/events/request failed with exception: {!r}".format(
+                    exception_value[0]
+                )
+            )
+            return None
 
         response = response_value[0]
         return response
@@ -241,7 +267,14 @@ class VoltageSetterNode(Node):
         request.charges.append(charge)
 
         response = self.async_service_call(self.request_events_client, request)
-        assert response.success, "Requesting charge failed."
+        if response is None:
+            raise TimeoutError(
+                "Timed out waiting for charge request response."
+            )
+        if not response.success:
+            raise RuntimeError(
+                "Charge request was rejected by /mtms_device/events/request."
+            )
 
         with self.lock:
             self.event_feedback[id] = None
@@ -266,7 +299,14 @@ class VoltageSetterNode(Node):
         request.discharges.append(discharge)
 
         response = self.async_service_call(self.request_events_client, request)
-        assert response.success, "Requesting discharge failed."
+        if response is None:
+            raise TimeoutError(
+                "Timed out waiting for discharge request response."
+            )
+        if not response.success:
+            raise RuntimeError(
+                "Discharge request was rejected by /mtms_device/events/request."
+            )
 
         with self.lock:
             self.event_feedback[id] = None
@@ -302,11 +342,22 @@ class VoltageSetterNode(Node):
 
     # General
 
-    def wait_for_events_to_finish(self, ids):
+    def wait_for_events_to_finish(self, ids, goal_id):
+        start = time.monotonic()
         while True:
             feedbacks = [self.get_event_feedback(id) for id in ids]
             if all([x is not None for x in feedbacks]):
                 break
+            if time.monotonic() - start > self.EVENT_FEEDBACK_TIMEOUT_S:
+                pending_ids = [id for id, feedback in zip(ids, feedbacks) if feedback is None]
+                self.logger.error(
+                    "{}: Timed out waiting {:.1f} s for charge/discharge feedback. Pending event IDs: {}".format(
+                        goal_id,
+                        self.EVENT_FEEDBACK_TIMEOUT_S,
+                        pending_ids,
+                    )
+                )
+                return None
 
             # XXX: This will cause an extra delay of up to 0.1 seconds. However, the correct
             #   fix would be to implement pulses as ROS actions, which removes the need
@@ -337,13 +388,24 @@ class VoltageSetterNode(Node):
 
         # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
         #   to hide the logic.
-        ids = self.set_voltages(
-            goal_id=goal_id,
-            voltages=voltages,
-        )
-        self.logger.info('{}: Waiting for charging and discharging to finish...'.format(goal_id))
+        try:
+            ids = self.set_voltages(
+                goal_id=goal_id,
+                voltages=voltages,
+            )
+            self.logger.info('{}: Waiting for charging and discharging to finish...'.format(goal_id))
+            feedbacks = self.wait_for_events_to_finish(ids, goal_id)
+        except Exception as exc:
+            self.logger.error(
+                '{}: Setting voltages failed with exception: {!r}'.format(
+                    goal_id,
+                    exc,
+                )
+            )
+            return False
 
-        feedbacks = self.wait_for_events_to_finish(ids)
+        if feedbacks is None:
+            return False
 
         # XXX: Should check charge feedbacks separately from discharge feedbacks, as the error codes
         #   could in theory differ. (Currently they do not, in particular the 'no error' condition does not,
