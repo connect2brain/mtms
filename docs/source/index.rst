@@ -17,7 +17,6 @@ Contents
    mTMS device interfaces <markdown/mtms-device-interfaces.md>
    Deployment environment <markdown/deployment-environment.md>
    Known differences between installations <markdown/known-differences.md>
-   Guide for installing PREEMPT_RT for recent kernels <markdown/preempt-rt-guide.md>
 
 Indices and tables
 ==================

@@ -6,8 +6,6 @@ There are a few key requirements for the system that will be explained in this s
 
 The system utilizes Optitrack for tracking the coil and the head of the subject. Optitrack provides the tracking data via Motive. As Motive is only supported on Windows, the system requires at least a Windows machine to operate.
 
-As Windows is not a real-time operating system, it is not suitable for running the real-time critical parts of the system. Thus, we need at least one additional machine for running the real-time critical sections, for example a Linux patched with PREEMPT\_RT.
-
 These two points are the key requirements for designing the production environment for the system. The system requires an architecture that is distributed across two machines, one Windows and one Linux machine.
 
 One additional aspect that, while not strictly a requirement, should be considered when designing the deployment environment is that the system will be deployed in different Universities: Aalto, Chieti, and Tübingen. Hence, there should be an easy way to deploy updated versions of the software in all locations regardless of whether without manually going to the site and downloading newest versions.

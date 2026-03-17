@@ -147,10 +147,6 @@ Rebooting the computer returns the system into a stable state.
 
 Site-specific configurations and known issues are detailed in the [Known differences](docs/source/markdown/known-differences.md) document.
 
-## Guide for installing PREEMPT_RT kernel patch
-
-For instructions on installing the PREEMPT_RT patch for recent Linux kernels, see the [PREEMPT_RT installation guide](docs/source/markdown/preempt-rt-guide.md).
-
 ## License
 
 This software is licensed under the GPL v3. See the [LICENSE](LICENSE) file for more information.
