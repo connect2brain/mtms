@@ -1,4 +1,4 @@
-[submodule "ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3"]
+[submodule "src/neuronavigation/invesalius3"]
 	path = src/neuronavigation/invesalius3
 	url = https://github.com/invesalius/invesalius3
 [submodule "src/efield"]
