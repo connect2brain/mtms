@@ -211,6 +211,12 @@
         line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
         state: present
 
+    - name: Ensure CYCLONEDDS_URI points to local CycloneDDS config
+      lineinfile:
+        dest: "{{ target_home }}/.bash_env"
+        line: "export CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml"
+        state: present
+
     - name: Ensure ROS is sourced
       lineinfile:
         dest: "{{ target_home }}/.bash_env"
