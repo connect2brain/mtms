@@ -33,10 +33,10 @@ COPY ${INTERFACES_PATH} src/interfaces
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # Copy the rosbridge node
-COPY src/rosbridge/rosbridge_suite src/shared_packages/rosbridge/rosbridge_suite
+COPY src/rosbridge/rosbridge_suite src/rosbridge/rosbridge_suite
 
 # Change line endings for rosbridge files
-RUN find src/shared_packages/rosbridge -type f -exec dos2unix {} +
+RUN find src/rosbridge -type f -exec dos2unix {} +
 
 # Build the rosbridge node after building interfaces
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-up-to rosbridge_server

@@ -14,7 +14,7 @@ call C:\dev\ros2_iron\local_setup.bat
 cd %MTMS_ROOT%\ros2_ws
 
 REM Ensure __init__.py exists for Python package discovery in invesalius3
-set "pkg_dir=%MTMS_ROOT%\ros2_ws\src\mtms_packages\neuronavigation\neuronavigation\invesalius3"
+set "pkg_dir=%MTMS_ROOT%\ros2_ws\src\neuronavigation\invesalius3"
 set "init_file=%pkg_dir%\__init__.py"
 
 if not exist "%pkg_dir%" (

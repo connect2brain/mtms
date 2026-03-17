@@ -21,7 +21,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
@@ -30,13 +30,10 @@ COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/pedal_listener src/utility/pedal_listener/
+COPY src/pedal_listener src/pedal_listener/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select pedal_listener
 
 # Copy entrypoint
-
-WORKDIR /app
-
 COPY src/pedal_listener/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

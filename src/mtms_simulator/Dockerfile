@@ -16,25 +16,22 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY src/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
+COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/mtms_simulator/ src/mtms_simulator/
+COPY src/mtms_simulator src/mtms_simulator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
 
 # Copy entrypoint
-
-WORKDIR /app
-
 COPY src/mtms_simulator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

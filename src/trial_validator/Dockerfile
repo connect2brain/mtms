@@ -16,7 +16,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
@@ -25,21 +25,18 @@ COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces
 COPY src/interfaces/targeting_services src/interfaces/targeting_services/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY src/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
-COPY src/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
-COPY src/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
-COPY src/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
+COPY src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
+COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
+COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
+COPY src/interfaces/mtms_trial_interfaces src/interfaces/mtms_trial_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/trial_validator src/experiment/trial_validator/
+COPY src/trial_validator src/trial_validator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_validator
 
 # Copy entrypoint
-
-WORKDIR /app
-
 COPY src/trial_validator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

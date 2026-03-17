@@ -16,24 +16,22 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY src/interfaces/targeting_services src/interfaces/targeting_services/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY src/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
+COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/targeting src/targeting/targeting/
+COPY src/targeting src/targeting/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select targeting
 
 # Copy data files
-WORKDIR /app
-
 COPY src/targeting/data data
 
 # Copy entrypoint

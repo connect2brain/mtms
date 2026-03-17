@@ -16,22 +16,19 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
-COPY src/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
-COPY src/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
-COPY src/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
+COPY src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
+COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
+COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/mep_analyzer src/mep/mep_analyzer/
+COPY src/mep_analyzer src/mep_analyzer/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
 
 # Copy entrypoint
-
-WORKDIR /app
-
 COPY src/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

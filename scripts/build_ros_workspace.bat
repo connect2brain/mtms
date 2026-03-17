@@ -12,7 +12,7 @@ call C:\dev\ros2_iron\local_setup.bat
 cd %MTMS_ROOT%\ros2_ws
 
 REM Ensure __init__.py exists for Python package discovery in invesalius3
-set "pkg_dir=%MTMS_ROOT%\ros2_ws\src\mtms_packages\neuronavigation\neuronavigation\invesalius3"
+set "pkg_dir=%MTMS_ROOT%\ros2_ws\src\neuronavigation\invesalius3"
 set "init_file=%pkg_dir%\__init__.py"
 
 if not exist "%pkg_dir%" (
@@ -27,7 +27,7 @@ if not exist "%init_file%" (
   echo __init__.py already exists: "%init_file%"
 )
 
-colcon build --base-paths src/mtms_packages/interfaces src/shared_packages/interfaces
+colcon build --base-paths src/interfaces
 
 REM Ask for a keypress before closing the terminal window so that potential errors are shown to the user.
 pause

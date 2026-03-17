@@ -23,7 +23,7 @@ COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_in
 
 # Build ROS packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 RUN source /opt/ros/jazzy/setup.bash && \
     colcon build --symlink-install
 

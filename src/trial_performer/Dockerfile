@@ -16,7 +16,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
@@ -26,22 +26,19 @@ COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_in
 COPY src/interfaces/targeting_services src/interfaces/targeting_services/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 
-COPY src/interfaces/eeg_msgs src/shared_interfaces/eeg_msgs/
-COPY src/interfaces/mep_interfaces src/shared_interfaces/mep_interfaces/
-COPY src/interfaces/system_interfaces src/shared_interfaces/system_interfaces/
-COPY src/interfaces/targeting_msgs src/shared_interfaces/targeting_msgs/
-COPY src/interfaces/mtms_trial_interfaces src/shared_interfaces/mtms_trial_interfaces/
+COPY src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
+COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
+COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
+COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
+COPY src/interfaces/mtms_trial_interfaces src/interfaces/mtms_trial_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/trial_performer src/experiment/trial_performer/
+COPY src/trial_performer src/trial_performer/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_performer
 
 # Copy entrypoint
-
-WORKDIR /app
-
 COPY src/trial_performer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

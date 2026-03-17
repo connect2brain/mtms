@@ -88,19 +88,19 @@ RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # Copy rest of InVesalius
 
-COPY src/neuronavigation/invesalius3 src/neuronavigation/neuronavigation/invesalius3/
+COPY src/neuronavigation/invesalius3 src/neuronavigation/invesalius3/
 
 # Ensure an empty __init__.py exists for Python package discovery in invesalius3
 
 RUN set -eux; \
-    pkg_dir="/app/src/neuronavigation/neuronavigation/invesalius3"; \
+    pkg_dir="/app/src/neuronavigation/invesalius3"; \
     init_file="${pkg_dir}/__init__.py"; \
     mkdir -p "${pkg_dir}"; \
     : > "${init_file}"
 
 # Copy and build Neuronavigation ROS package
 
-COPY src/neuronavigation src/neuronavigation/neuronavigation/
+COPY src/neuronavigation src/neuronavigation/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select neuronavigation
 
