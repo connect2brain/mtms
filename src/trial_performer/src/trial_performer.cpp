@@ -608,31 +608,39 @@ void TrialPerformerNode::handle_accepted(const std::shared_ptr<rclcpp_action::Se
 
 void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle) {
   RCLCPP_INFO(this->get_logger(), "Executing goal...");
-  const auto goal = goal_handle->get_goal();
   auto result = std::make_shared<mtms_trial_interfaces::action::PerformTrial::Result>();
+  try {
+    const auto goal = goal_handle->get_goal();
 
-  /* Log trial details. */
-  log_trial(goal->trial);
+    /* Log trial details. */
+    log_trial(goal->trial);
 
-  /* Check feasibility. */
-  if (!check_trial_feasible()) {
-    RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
+    /* Check feasibility. */
+    if (!check_trial_feasible()) {
+      RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
+      result->success = false;
+      goal_handle->succeed(result);
+      return;
+    }
+
+    /* Perform the trial. */
+    auto [success, trial_result] = perform_trial(goal->trial);
+
+    /* Log trial success. */
+    RCLCPP_INFO(this->get_logger(), "%s completed %s.",
+      goal->trial.config.dry_run ? "Dry run" : "Trial",
+      success ? "successfully" : "with errors");
+
+    /* Set result and succeed the goal. */
+    result->trial_result = trial_result;
+    result->success = success;
+  } catch (const std::exception &e) {
+    RCLCPP_ERROR(this->get_logger(), "Trial execution failed with exception: %s", e.what());
     result->success = false;
-    goal_handle->succeed(result);
-    return;
+  } catch (...) {
+    RCLCPP_ERROR(this->get_logger(), "Trial execution failed with unknown exception");
+    result->success = false;
   }
-
-  /* Perform the trial. */
-  auto [success, trial_result] = perform_trial(goal->trial);
-
-  /* Log trial success. */
-  RCLCPP_INFO(this->get_logger(), "%s completed %s.",
-    goal->trial.config.dry_run ? "Dry run" : "Trial",
-    success ? "successfully" : "with errors");
-
-  /* Set result and succeed the goal. */
-  result->trial_result = trial_result;
-  result->success = success;
 
   goal_handle->succeed(result);
 }
