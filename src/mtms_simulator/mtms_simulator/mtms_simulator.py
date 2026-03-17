@@ -137,10 +137,10 @@ class MTMSSimulator(Node):
             StopDevice, "/mtms/device/stop_device", self.stop_device_handler
         )
         self.start_session_service = self.create_service(
-            StartSession, "/mtms/system/session/start", self.start_session_handler
+            StartSession, "/mtms/device/session/start", self.start_session_handler
         )
         self.stop_session_service = self.create_service(
-            StopSession, "/mtms/system/session/stop", self.stop_session_handler
+            StopSession, "/mtms/device/session/stop", self.stop_session_handler
         )
         self.request_events_service = self.create_service(
             RequestEvents, "/mtms/device/events/request", self.request_events_handler
@@ -176,7 +176,7 @@ class MTMSSimulator(Node):
             lifespan=Duration(nanoseconds=lifespan_ns),
         )
         self.session_publisher = self.create_publisher(
-            Session, "/mtms/system/session", session_qos
+            Session, "/mtms/device/session", session_qos
         )
 
         # QoS definition for system state.

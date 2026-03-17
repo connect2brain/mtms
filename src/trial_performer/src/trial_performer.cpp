@@ -79,7 +79,7 @@ void TrialPerformerNode::initialize_subscribers() {
       std::bind(&TrialPerformerNode::handle_system_state, this, std::placeholders::_1));
 
   session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
-      "/mtms/system/session",
+      "/mtms/device/session",
       1,
       std::bind(&TrialPerformerNode::handle_session, this, std::placeholders::_1));
 

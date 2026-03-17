@@ -50,8 +50,8 @@ class MTMSApiNode(Node):
     ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', RequestTrigger)
 
     # To other parts of the system
-    ROS_SERVICE_START_SESSION = ('/mtms/system/session/start', StartSession)
-    ROS_SERVICE_STOP_SESSION = ('/mtms/system/session/stop', StopSession)
+    ROS_SERVICE_START_SESSION = ('/mtms/device/session/start', StartSession)
+    ROS_SERVICE_STOP_SESSION = ('/mtms/device/session/stop', StopSession)
 
     ROS_SERVICE_GET_TARGET_VOLTAGES = ('/mtms/targeting/get_target_voltages', GetTargetVoltages)
     ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/mtms/targeting/get_maximum_intensity', GetMaximumIntensity)
@@ -124,7 +124,7 @@ class MTMSApiNode(Node):
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
 
         # Similarly with session.
-        self.session_subscriber = self.create_subscription(Session, '/mtms/system/session', self.handle_session, 1)
+        self.session_subscriber = self.create_subscription(Session, '/mtms/device/session', self.handle_session, 1)
 
         self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/mtms/device/events/feedback/pulse', self.handle_pulse_feedback, 10)
         self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/mtms/device/events/feedback/charge', self.handle_charge_feedback, 10)

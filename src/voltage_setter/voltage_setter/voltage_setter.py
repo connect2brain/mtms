@@ -66,7 +66,7 @@ class VoltageSetterNode(Node):
         # Subscriber for session
         self.session_subscriber = self.create_subscription(
             Session,
-            '/mtms/system/session',
+            '/mtms/device/session',
             self.handle_session,
             1,
             callback_group=self.reentrant_callback_group)

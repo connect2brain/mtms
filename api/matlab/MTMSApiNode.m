@@ -72,10 +72,10 @@ classdef MTMSApiNode < handle
 
             % System-related
 
-            obj.session_subscriber = ros2subscriber(obj.node, "/mtms/system/session", "system_interfaces/Session", @obj.handle_session);
+            obj.session_subscriber = ros2subscriber(obj.node, "/mtms/device/session", "system_interfaces/Session", @obj.handle_session);
 
-            obj.start_session_client = ros2svcclient(obj.node, "/mtms/system/session/start", "system_interfaces/StartSession");
-            obj.stop_session_client = ros2svcclient(obj.node, "/mtms/system/session/stop", "system_interfaces/StopSession");
+            obj.start_session_client = ros2svcclient(obj.node, "/mtms/device/session/start", "system_interfaces/StartSession");
+            obj.stop_session_client = ros2svcclient(obj.node, "/mtms/device/session/stop", "system_interfaces/StopSession");
 
             % Event-related.
             obj.pulse_feedback_subscriber = ros2subscriber(obj.node, "/mtms/device/events/feedback/pulse", "event_msgs/PulseFeedback", @obj.handle_pulse_feedback);

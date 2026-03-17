@@ -7,7 +7,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 ### Device State and Feedback
 
 - `/mtms/device/system_state` - Current mTMS device state (channels, device/session state, errors, time).
-- `/mtms/system/session` - Session lifecycle state and session time.
+- `/mtms/device/session` - Session lifecycle state and session time.
 - `/mtms/device/events/feedback/pulse` - Pulse event completion/error feedback.
 - `/mtms/device/events/feedback/charge` - Charge event completion/error feedback.
 - `/mtms/device/events/feedback/discharge` - Discharge event completion/error feedback.
@@ -51,8 +51,8 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/allow_trigger_out` - Enable/disable trigger-out permission.
 - `/mtms/device/events/request` - Submit pulse/charge/discharge/trigger event requests.
 - `/mtms/device/trigger` - Request an immediate trigger event from bridge node.
-- `/mtms/system/session/start` - Start a stimulation session.
-- `/mtms/system/session/stop` - Stop an ongoing stimulation session.
+- `/mtms/device/session/start` - Start a stimulation session.
+- `/mtms/device/session/stop` - Stop an ongoing stimulation session.
 - `/mtms/stimulation/allowed` - Query whether stimulation is currently allowed.
 
 ### Experiment and Trial

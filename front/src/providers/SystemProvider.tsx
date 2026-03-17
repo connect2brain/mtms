@@ -151,7 +151,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
     /* Subscriber for session. */
     const sessionSubscriber = new Topic<Session>({
       ros: ros,
-      name: '/mtms/system/session',
+      name: '/mtms/device/session',
       messageType: 'system_interfaces/Session',
     })
 

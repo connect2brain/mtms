@@ -110,22 +110,22 @@ class ExperimentPerformerNode(Node):
 
         # Create service client to start a session.
 
-        self.start_session_client = self.create_client(StartSession, '/mtms/system/session/start', callback_group=self.callback_group)
+        self.start_session_client = self.create_client(StartSession, '/mtms/device/session/start', callback_group=self.callback_group)
         while not self.start_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms/system/session/start not available, waiting...')
+            self.get_logger().info('Service /mtms/device/session/start not available, waiting...')
 
         # Create service client to stop a session.
 
-        self.stop_session_client = self.create_client(StopSession, '/mtms/system/session/stop', callback_group=self.callback_group)
+        self.stop_session_client = self.create_client(StopSession, '/mtms/device/session/stop', callback_group=self.callback_group)
         while not self.stop_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms/system/session/stop not available, waiting...')
+            self.get_logger().info('Service /mtms/device/session/stop not available, waiting...')
 
         # Create subscriber for system state.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
         self.system_state = None
 
         # Create subscriber for session.
-        self.session_subscriber = self.create_subscription(Session, '/mtms/system/session', self.handle_session, 1)
+        self.session_subscriber = self.create_subscription(Session, '/mtms/device/session', self.handle_session, 1)
         self.session = None
 
         # Subscriber for pedal.
