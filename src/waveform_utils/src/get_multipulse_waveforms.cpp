@@ -10,28 +10,28 @@ GetMultipulseWaveforms::GetMultipulseWaveforms() : Node("get_multipulse_waveform
   callback_group = create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   get_multipulse_waveforms_service = this->create_service<targeting_services::srv::GetMultipulseWaveforms>(
-      "/waveforms/get_multipulse_waveforms",
+      "/mtms/waveforms/get_multipulse_waveforms",
       std::bind(&GetMultipulseWaveforms::handle_get_multipulse_waveforms, this, _1, _2),
       rclcpp::QoS(10),
       callback_group);
 
   get_target_voltages_client = this->create_client<targeting_services::srv::GetTargetVoltages>(
-      "/targeting/get_target_voltages",
+      "/mtms/targeting/get_target_voltages",
       rclcpp::QoS(10),
       callback_group);
 
   approximate_waveform_client = this->create_client<targeting_services::srv::ApproximateWaveform>(
-      "/targeting/approximate_waveform",
+      "/mtms/targeting/approximate_waveform",
       rclcpp::QoS(10),
       callback_group);
 
   estimate_voltage_after_pulse_client = this->create_client<targeting_services::srv::EstimateVoltageAfterPulse>(
-      "/targeting/estimate_voltage_after_pulse",
+      "/mtms/targeting/estimate_voltage_after_pulse",
       rclcpp::QoS(10),
       callback_group);
 
   reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>(
-      "/waveforms/reverse_polarity",
+      "/mtms/waveforms/reverse_polarity",
       rclcpp::QoS(10),
       callback_group);
 }

@@ -54,7 +54,7 @@ public:
     };
 
     get_default_waveform_service = this->create_service<targeting_services::srv::GetDefaultWaveform>(
-        "/waveforms/get_default", service_callback);
+        "/mtms/waveforms/get_default", service_callback);
   }
 
 private:

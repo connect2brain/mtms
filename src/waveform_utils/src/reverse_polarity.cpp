@@ -57,7 +57,7 @@ public:
     };
 
     reverse_polarity_service = this->create_service<targeting_services::srv::ReversePolarity>(
-        "/waveforms/reverse_polarity", service_callback);
+        "/mtms/waveforms/reverse_polarity", service_callback);
   }
 
 private:

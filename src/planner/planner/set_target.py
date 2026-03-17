@@ -14,7 +14,7 @@ class SetTargetNode(StateNode):
 
     def __init__(self):
         super().__init__('set_target')
-        self.create_service(SetTarget, '/planner/set_target', self.set_target_callback)
+        self.create_service(SetTarget, '/mtms/planner/set_target', self.set_target_callback)
 
     def set_target_callback(self, request, response):
         self.get_logger().info('Incoming request: Set target to '.format(request.name))

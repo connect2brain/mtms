@@ -21,7 +21,7 @@ void TrialPerformerNode::initialize_actions() {
       get_node_clock_interface(),
       get_node_logging_interface(),
       get_node_waitables_interface(),
-      "/trial/perform",
+      "/mtms/trial/perform",
       std::bind(&TrialPerformerNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
       std::bind(&TrialPerformerNode::handle_cancel, this, std::placeholders::_1),
       std::bind(&TrialPerformerNode::handle_accepted, this, std::placeholders::_1),
@@ -30,65 +30,65 @@ void TrialPerformerNode::initialize_actions() {
 
   /* Action client for setting voltages. */
   set_voltages_client = rclcpp_action::create_client<mtms_device_interfaces::action::SetVoltages>(
-      this, "/mtms_device/set_voltages");
+      this, "/mtms/device/set_voltages");
 
   while (!set_voltages_client->wait_for_action_server(2s)) {
-    RCLCPP_INFO(get_logger(), "Action /mtms_device/set_voltages not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Action /mtms/device/set_voltages not available, waiting...");
   }
 
   /* Action client for analyzing MEP. */
   analyze_mep_client = rclcpp_action::create_client<mep_interfaces::action::AnalyzeMep>(
-      this, "/mep/analyze");
+      this, "/mtms/mep/analyze");
 
   while (!analyze_mep_client->wait_for_action_server(2s)) {
-    RCLCPP_INFO(get_logger(), "Action /mep/analyze not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Action /mtms/mep/analyze not available, waiting...");
   }
 }
 
 void TrialPerformerNode::initialize_service_clients() {
-  targeting_client = this->create_client<targeting_services::srv::GetTargetVoltages>("/targeting/get_target_voltages");
+  targeting_client = this->create_client<targeting_services::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
 
-  reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>("/waveforms/reverse_polarity");
+  reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
   while (!reverse_polarity_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /waveforms/reverse_polarity not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/reverse_polarity not available, waiting...");
   }
 
   get_default_waveform_client = this->create_client<targeting_services::srv::GetDefaultWaveform>(
-      "/waveforms/get_default",
+      "/mtms/waveforms/get_default",
       rclcpp::QoS(rclcpp::ServicesQoS()),
       reentrant_callback_group);
   while (!get_default_waveform_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /waveforms/get_default not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_default not available, waiting...");
   }
 
-  get_multipulse_waveforms_client = this->create_client<targeting_services::srv::GetMultipulseWaveforms>("/waveforms/get_multipulse_waveforms");
+  get_multipulse_waveforms_client = this->create_client<targeting_services::srv::GetMultipulseWaveforms>("/mtms/waveforms/get_multipulse_waveforms");
   while (!get_multipulse_waveforms_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /waveforms/get_multipulse_waveforms not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_multipulse_waveforms not available, waiting...");
   }
 
-  request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms_device/events/request");
+  request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms/device/events/request");
   while (!request_events_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /mtms_device/events/request not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Service /mtms/device/events/request not available, waiting...");
   }
 }
 
 void TrialPerformerNode::initialize_subscribers() {
   system_statesubscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
-      "/mtms_device/system_state",
+      "/mtms/device/system_state",
       1,
       std::bind(&TrialPerformerNode::handle_system_state, this, std::placeholders::_1));
 
   session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
-      "/system/session",
+      "/mtms/system/session",
       1,
       std::bind(&TrialPerformerNode::handle_session, this, std::placeholders::_1));
 
   pulse_feedback_subscriber = this->create_subscription<event_msgs::msg::PulseFeedback>(
-      "/mtms_device/events/feedback/pulse", 10,
+      "/mtms/device/events/feedback/pulse", 10,
       std::bind(&TrialPerformerNode::update_pulse_feedback, this, std::placeholders::_1));
 
   trigger_out_feedback_subscriber = this->create_subscription<event_msgs::msg::TriggerOutFeedback>(
-      "/mtms_device/events/feedback/trigger_out", 10,
+      "/mtms/device/events/feedback/trigger_out", 10,
       std::bind(&TrialPerformerNode::update_trigger_out_feedback, this, std::placeholders::_1));
 }
 

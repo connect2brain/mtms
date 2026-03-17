@@ -20,12 +20,12 @@ class StateNode(Node):
 
         self._state_publisher = self.create_publisher(
             PlannerState,
-            "/planner/inner/state",
+            "/mtms/planner/inner/state",
             qos
         )
         self._state_subscriber = self.create_subscription(
             PlannerState,
-            '/planner/inner/state',
+            '/mtms/planner/inner/state',
             self.state_updated,
             qos_profile=qos
         )

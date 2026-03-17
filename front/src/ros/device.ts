@@ -3,13 +3,13 @@ import { ros } from './ros'
 
 const startDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/start_device',
+  name: '/mtms/device/start_device',
   serviceType: 'mtms_device_interfaces/StartDevice',
 })
 
 const stopDeviceService = new ROSLIB.Service({
   ros: ros,
-  name: '/mtms_device/stop_device',
+  name: '/mtms/device/stop_device',
   serviceType: 'mtms_device_interfaces/StopDevice',
 })
 

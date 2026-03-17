@@ -39,7 +39,7 @@ class TrialLoggerNode(Node):
 
         self.service = self.create_service(
             LogTrial,
-            '/trial/log',
+            '/mtms/trial/log',
             self.log_trial_callback,
         )
 

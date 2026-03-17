@@ -11,7 +11,7 @@ class ToggleVisibleNode(StateNode):
 
     def __init__(self):
         super().__init__('toggle_visible')
-        self.create_service(ToggleVisible, '/planner/toggle_visible', self.toggle_visible_callback)
+        self.create_service(ToggleVisible, '/mtms/planner/toggle_visible', self.toggle_visible_callback)
 
     def toggle_visible_callback(self, request, response):
         self.get_logger().info('Incoming request')

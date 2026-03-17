@@ -28,7 +28,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 class ExperimentPerformerNode(Node):
 
-    ROS_ACTION_PERFORM_TRIAL = ('/trial/perform', PerformTrial)
+    ROS_ACTION_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
@@ -47,7 +47,7 @@ class ExperimentPerformerNode(Node):
         self.action_server = ActionServer(
             self,
             PerformExperiment,
-            '/experiment/perform',
+            '/mtms/experiment/perform',
             self.perform_experiment_action_handler,
             callback_group=self.callback_group,
         )
@@ -56,7 +56,7 @@ class ExperimentPerformerNode(Node):
 
         self.count_valid_trials_service = self.create_service(
             CountValidTrials,
-            '/experiment/count_valid_trials',
+            '/mtms/experiment/count_valid_trials',
             self.count_valid_trials_callback,
             callback_group=self.callback_group,
         )
@@ -65,7 +65,7 @@ class ExperimentPerformerNode(Node):
 
         self.pause_experiment_service = self.create_service(
             PauseExperiment,
-            '/experiment/pause',
+            '/mtms/experiment/pause',
             self.pause_experiment_callback,
             callback_group=self.callback_group,
         )
@@ -74,7 +74,7 @@ class ExperimentPerformerNode(Node):
 
         self.resume_experiment_service = self.create_service(
             ResumeExperiment,
-            '/experiment/resume',
+            '/mtms/experiment/resume',
             self.resume_experiment_callback,
             callback_group=self.callback_group,
         )
@@ -83,7 +83,7 @@ class ExperimentPerformerNode(Node):
 
         self.cancel_experiment_service = self.create_service(
             CancelExperiment,
-            '/experiment/cancel',
+            '/mtms/experiment/cancel',
             self.cancel_experiment_callback,
             callback_group=self.callback_group,
         )
@@ -98,38 +98,38 @@ class ExperimentPerformerNode(Node):
 
         # Create service client for validating a trial.
 
-        self.validate_trial_client = self.create_client(ValidateTrial, '/trial/validate', callback_group=self.callback_group)
+        self.validate_trial_client = self.create_client(ValidateTrial, '/mtms/trial/validate', callback_group=self.callback_group)
         while not self.validate_trial_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /trial/validate not available, waiting...')
+            self.get_logger().info('Service /mtms/trial/validate not available, waiting...')
 
         # Create service client for logging a trial.
 
-        self.log_trial_client = self.create_client(LogTrial, '/trial/log', callback_group=self.callback_group)
+        self.log_trial_client = self.create_client(LogTrial, '/mtms/trial/log', callback_group=self.callback_group)
         while not self.log_trial_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /trial/log not available, waiting...')
+            self.get_logger().info('Service /mtms/trial/log not available, waiting...')
 
         # Create service client to start a session.
 
-        self.start_session_client = self.create_client(StartSession, '/system/session/start', callback_group=self.callback_group)
+        self.start_session_client = self.create_client(StartSession, '/mtms/system/session/start', callback_group=self.callback_group)
         while not self.start_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /system/session/start not available, waiting...')
+            self.get_logger().info('Service /mtms/system/session/start not available, waiting...')
 
         # Create service client to stop a session.
 
-        self.stop_session_client = self.create_client(StopSession, '/system/session/stop', callback_group=self.callback_group)
+        self.stop_session_client = self.create_client(StopSession, '/mtms/system/session/stop', callback_group=self.callback_group)
         while not self.stop_session_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /system/session/stop not available, waiting...')
+            self.get_logger().info('Service /mtms/system/session/stop not available, waiting...')
 
         # Create subscriber for system state.
-        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
+        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
         self.system_state = None
 
         # Create subscriber for session.
-        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session_subscriber = self.create_subscription(Session, '/mtms/system/session', self.handle_session, 1)
         self.session = None
 
         # Subscriber for pedal.
-        self.pedal_subscriber = self.create_subscription(Bool, "/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
+        self.pedal_subscriber = self.create_subscription(Bool, "/mtms/pedal/right_button/pressed", self.handle_pedal_pressed, 10)
         self.is_pedal_pressed = False
 
         # Create a lock so that service and action calls can modify the experiment state concurrently.
@@ -354,7 +354,7 @@ class ExperimentPerformerNode(Node):
             request,
             timeout_s=self.LOG_TRIAL_TIMEOUT_S,
             timeout_message=(
-                'Service /trial/log timed out after {:.1f} s. '
+                'Service /mtms/trial/log timed out after {:.1f} s. '
                 'Trial logger may be blocked or crashed.'
             ).format(self.LOG_TRIAL_TIMEOUT_S),
         )
@@ -363,7 +363,7 @@ class ExperimentPerformerNode(Node):
             return False
 
         if not response.success:
-            self.logger.error('Service /trial/log returned success=false.')
+            self.logger.error('Service /mtms/trial/log returned success=false.')
             return False
 
         return True

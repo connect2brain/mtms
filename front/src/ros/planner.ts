@@ -6,20 +6,20 @@ import { StateMessage } from '../types/target'
 /* Listener for planner state */
 export const plannerStateSubscriber = new ROSLIB.Topic<StateMessage>({
   ros: ros,
-  name: '/planner/state',
+  name: '/mtms/planner/state',
   messageType: 'ui_interfaces/PlannerState',
 })
 
 /* Toggle navigation service */
 const toggleNavigationService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_navigation',
+  name: '/mtms/planner/toggle_navigation',
   serviceType: 'ui_interfaces/ToggleNavigation',
 })
 
 const clearStateService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/clear_state',
+  name: '/mtms/planner/clear_state',
   serviceType: 'ui_interfaces/ClearState',
 })
 

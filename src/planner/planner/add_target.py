@@ -11,7 +11,7 @@ class AddTargetNode(StateNode):
 
     def __init__(self):
         super().__init__('add_target')
-        self.create_service(AddTarget, '/planner/add_target', self.add_target_callback)
+        self.create_service(AddTarget, '/mtms/planner/add_target', self.add_target_callback)
 
     def first_available_target_name(self):
         if self._state is None:

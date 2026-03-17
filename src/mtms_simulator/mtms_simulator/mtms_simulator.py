@@ -119,45 +119,45 @@ class MTMSSimulator(Node):
         # Services
         self.allow_stimulation_service = self.create_service(
             AllowStimulation,
-            "/mtms_device/allow_stimulation",
+            "/mtms/device/allow_stimulation",
             self.allow_stimulation_handler,
         )
         self.allow_trigger_out_service = self.create_service(
             AllowTriggerOut,
-            "/mtms_device/allow_trigger_out",
+            "/mtms/device/allow_trigger_out",
             self.allow_trigger_out_handler,
         )
         self.send_settings_service = self.create_service(
-            SendSettings, "/mtms_device/send_settings", self.send_settings_handler
+            SendSettings, "/mtms/device/send_settings", self.send_settings_handler
         )
         self.start_device_service = self.create_service(
-            StartDevice, "/mtms_device/start_device", self.start_device_handler
+            StartDevice, "/mtms/device/start_device", self.start_device_handler
         )
         self.stop_device_service = self.create_service(
-            StopDevice, "/mtms_device/stop_device", self.stop_device_handler
+            StopDevice, "/mtms/device/stop_device", self.stop_device_handler
         )
         self.start_session_service = self.create_service(
-            StartSession, "/system/session/start", self.start_session_handler
+            StartSession, "/mtms/system/session/start", self.start_session_handler
         )
         self.stop_session_service = self.create_service(
-            StopSession, "/system/session/stop", self.stop_session_handler
+            StopSession, "/mtms/system/session/stop", self.stop_session_handler
         )
         self.request_events_service = self.create_service(
-            RequestEvents, "/mtms_device/events/request", self.request_events_handler
+            RequestEvents, "/mtms/device/events/request", self.request_events_handler
         )
 
         # Publisher
         self.pulse_feedback_publisher = self.create_publisher(
-            PulseFeedback, "/mtms_device/events/feedback/pulse", 10
+            PulseFeedback, "/mtms/device/events/feedback/pulse", 10
         )
         self.charge_feedback_publisher = self.create_publisher(
-            ChargeFeedback, "/mtms_device/events/feedback/charge", 10
+            ChargeFeedback, "/mtms/device/events/feedback/charge", 10
         )
         self.discharge_feedback_publisher = self.create_publisher(
-            DischargeFeedback, "/mtms_device/events/feedback/discharge", 10
+            DischargeFeedback, "/mtms/device/events/feedback/discharge", 10
         )
         self.trigger_out_feedback_publisher = self.create_publisher(
-            TriggerOutFeedback, "/mtms_device/events/feedback/trigger_out", 10
+            TriggerOutFeedback, "/mtms/device/events/feedback/trigger_out", 10
         )
 
         # QoS definition for session.
@@ -176,7 +176,7 @@ class MTMSSimulator(Node):
             lifespan=Duration(nanoseconds=lifespan_ns),
         )
         self.session_publisher = self.create_publisher(
-            Session, "/system/session", session_qos
+            Session, "/mtms/system/session", session_qos
         )
 
         # QoS definition for system state.
@@ -195,13 +195,13 @@ class MTMSSimulator(Node):
             lifespan=Duration(nanoseconds=lifespan_ns),
         )
         self.system_state_publisher = self.create_publisher(
-            SystemState, "/mtms_device/system_state", system_state_qos
+            SystemState, "/mtms/device/system_state", system_state_qos
         )
 
         # Healthcheck publisher
         self.healthcheck_publisher = self.create_publisher(
             Healthcheck,
-            "/mtms_device/healthcheck",
+            "/mtms/device/healthcheck",
             10
         )
 

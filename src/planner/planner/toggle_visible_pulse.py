@@ -9,7 +9,7 @@ class ToggleVisiblePulseNode(StateNode):
 
     def __init__(self):
         super().__init__('toggle_visible_pulse')
-        self.create_service(ToggleVisiblePulse, '/planner/toggle_visible_pulse',
+        self.create_service(ToggleVisiblePulse, '/mtms/planner/toggle_visible_pulse',
                             self.toggle_visible_pulse_callback)
 
     def toggle_visible_pulse_callback(self, request, response):

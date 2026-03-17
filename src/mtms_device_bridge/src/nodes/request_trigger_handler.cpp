@@ -27,7 +27,7 @@ class RequestTriggerHandler : public rclcpp::Node {
 public:
   RequestTriggerHandler() : Node("request_trigger_handler") {
     trigger_service_ = this->create_service<mtms_device_interfaces::srv::RequestTrigger>(
-        "/mtms_device/trigger", &handle_request);
+        "/mtms/device/trigger", &handle_request);
   }
 
 private:

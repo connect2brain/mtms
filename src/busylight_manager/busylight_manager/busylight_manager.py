@@ -34,10 +34,10 @@ class BusylightManagerNode(Node):
         )
 
         # Subscriber for system state
-        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
+        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
 
         # Subscriber for session
-        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session_subscriber = self.create_subscription(Session, '/mtms/system/session', self.handle_session, 1)
         self.session = None
 
         # XXX: Kuando Omega busylight seems to turn itself off automatically after 30 seconds. To work around that, refresh the state periodically.

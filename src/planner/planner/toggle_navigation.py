@@ -13,7 +13,7 @@ class ToggleNavigationNode(StateNode):
 
     def __init__(self):
         super().__init__('toggle_navigation')
-        self.create_service(ToggleNavigation, '/planner/toggle_navigation', self.toggle_navigation_callback)
+        self.create_service(ToggleNavigation, '/mtms/planner/toggle_navigation', self.toggle_navigation_callback)
 
         qos = QoSProfile(
             depth=1,

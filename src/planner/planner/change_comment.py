@@ -11,7 +11,7 @@ class ChangeCommentNode(StateNode):
 
     def __init__(self):
         super().__init__('change_comment')
-        self.create_service(ChangeComment, '/planner/change_comment', self.change_comment_callback)
+        self.create_service(ChangeComment, '/mtms/planner/change_comment', self.change_comment_callback)
 
     def change_comment_callback(self, request, response):
         self.get_logger().info('Incoming request')

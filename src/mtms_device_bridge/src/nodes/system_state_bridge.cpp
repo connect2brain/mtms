@@ -76,7 +76,7 @@ NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devices
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
-const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
+const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
 
 
 class SystemStateBridge : public rclcpp::Node {
@@ -104,7 +104,7 @@ public:
         .lifespan(DEADLINE_NS);
 
     system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
-        "/mtms_device/system_state", qos);
+        "/mtms/device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
 
     healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);

@@ -31,28 +31,28 @@ class TrialValidatorNode(Node):
 
         self.service = self.create_service(
             ValidateTrial,
-            '/trial/validate',
+            '/mtms/trial/validate',
             self.validate_trial_callback,
             callback_group=self.callback_group,
         )
 
         # Service client for getting maximum intensity.
 
-        self.get_maximum_intensity_client = self.create_client(GetMaximumIntensity, '/targeting/get_maximum_intensity', callback_group=self.callback_group)
+        self.get_maximum_intensity_client = self.create_client(GetMaximumIntensity, '/mtms/targeting/get_maximum_intensity', callback_group=self.callback_group)
         while not self.get_maximum_intensity_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /targeting/get_maximum_intensity not available, waiting...')
+            self.get_logger().info('Service /mtms/targeting/get_maximum_intensity not available, waiting...')
 
         # Service client for getting default waveform.
 
-        self.get_default_waveform_client = self.create_client(GetDefaultWaveform, '/waveforms/get_default')
+        self.get_default_waveform_client = self.create_client(GetDefaultWaveform, '/mtms/waveforms/get_default')
         while not self.get_default_waveform_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /waveforms/get_default not available, waiting...')
+            self.get_logger().info('Service /mtms/waveforms/get_default not available, waiting...')
 
         # Service client for getting multipulse waveforms.
 
-        self.get_multipulse_waveforms_client = self.create_client(GetMultipulseWaveforms, '/waveforms/get_multipulse_waveforms')
+        self.get_multipulse_waveforms_client = self.create_client(GetMultipulseWaveforms, '/mtms/waveforms/get_multipulse_waveforms')
         while not self.get_multipulse_waveforms_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /waveforms/get_multipulse_waveforms not available, waiting...')
+            self.get_logger().info('Service /mtms/waveforms/get_multipulse_waveforms not available, waiting...')
 
     def async_service_call(self, client, request):
         call_service_event = Event()

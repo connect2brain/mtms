@@ -42,26 +42,26 @@ from ExperimentHandler import ExperimentHandler
 
 class MTMSApiNode(Node):
     # To mTMS device
-    ROS_SERVICE_START_DEVICE = ('/mtms_device/start_device', StartDevice)
-    ROS_SERVICE_STOP_DEVICE = ('/mtms_device/stop_device', StopDevice)
+    ROS_SERVICE_START_DEVICE = ('/mtms/device/start_device', StartDevice)
+    ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop_device', StopDevice)
 
-    ROS_SERVICE_ALLOW_STIMULATION = ('/mtms_device/allow_stimulation', AllowStimulation)
-    ROS_SERVICE_REQUEST_EVENTS = ('/mtms_device/events/request', RequestEvents)
-    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms_device/trigger', RequestTrigger)
+    ROS_SERVICE_ALLOW_STIMULATION = ('/mtms/device/allow_stimulation', AllowStimulation)
+    ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)
+    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', RequestTrigger)
 
     # To other parts of the system
-    ROS_SERVICE_START_SESSION = ('/system/session/start', StartSession)
-    ROS_SERVICE_STOP_SESSION = ('/system/session/stop', StopSession)
+    ROS_SERVICE_START_SESSION = ('/mtms/system/session/start', StartSession)
+    ROS_SERVICE_STOP_SESSION = ('/mtms/system/session/stop', StopSession)
 
-    ROS_SERVICE_GET_TARGET_VOLTAGES = ('/targeting/get_target_voltages', GetTargetVoltages)
-    ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/targeting/get_maximum_intensity', GetMaximumIntensity)
-    ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/waveforms/get_default', GetDefaultWaveform)
-    ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS = ('/waveforms/get_multipulse_waveforms', GetMultipulseWaveforms)
-    ROS_SERVICE_REVERSE_POLARITY = ('/waveforms/reverse_polarity', ReversePolarity)
+    ROS_SERVICE_GET_TARGET_VOLTAGES = ('/mtms/targeting/get_target_voltages', GetTargetVoltages)
+    ROS_SERVICE_GET_MAXIMUM_INTENSITY = ('/mtms/targeting/get_maximum_intensity', GetMaximumIntensity)
+    ROS_SERVICE_GET_DEFAULT_WAVEFORM = ('/mtms/waveforms/get_default', GetDefaultWaveform)
+    ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS = ('/mtms/waveforms/get_multipulse_waveforms', GetMultipulseWaveforms)
+    ROS_SERVICE_REVERSE_POLARITY = ('/mtms/waveforms/reverse_polarity', ReversePolarity)
 
-    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/stimulation/allowed', IsStimulationAllowed)
+    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/allowed', IsStimulationAllowed)
 
-    ROS_ACTION_ANALYZE_MEP = ('/mep/analyze', AnalyzeMep)
+    ROS_ACTION_ANALYZE_MEP = ('/mtms/mep/analyze', AnalyzeMep)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -121,15 +121,15 @@ class MTMSApiNode(Node):
             self.ros_action_clients[topic] = client
 
         # Have a queue of only one message so that only the latest system state is ever received.
-        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms_device/system_state', self.handle_system_state, 1)
+        self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
 
         # Similarly with session.
-        self.session_subscriber = self.create_subscription(Session, '/system/session', self.handle_session, 1)
+        self.session_subscriber = self.create_subscription(Session, '/mtms/system/session', self.handle_session, 1)
 
-        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/mtms_device/events/feedback/pulse', self.handle_pulse_feedback, 10)
-        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/mtms_device/events/feedback/charge', self.handle_charge_feedback, 10)
-        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/mtms_device/events/feedback/discharge', self.handle_discharge_feedback, 10)
-        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/mtms_device/events/feedback/trigger_out', self.handle_trigger_out_feedback, 10)
+        self.pulse_feedback_subscriber = self.create_subscription(PulseFeedback, '/mtms/device/events/feedback/pulse', self.handle_pulse_feedback, 10)
+        self.charge_feedback_subscriber = self.create_subscription(ChargeFeedback, '/mtms/device/events/feedback/charge', self.handle_charge_feedback, 10)
+        self.discharge_feedback_subscriber = self.create_subscription(DischargeFeedback, '/mtms/device/events/feedback/discharge', self.handle_discharge_feedback, 10)
+        self.trigger_out_feedback_subscriber = self.create_subscription(TriggerOutFeedback, '/mtms/device/events/feedback/trigger_out', self.handle_trigger_out_feedback, 10)
 
         # Define a QoS profile with Transient Local durability
         decider_qos = QoSProfile(

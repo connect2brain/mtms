@@ -11,7 +11,7 @@ class ChangeTargetIndexNode(StateNode):
 
     def __init__(self):
         super().__init__('change_target_index')
-        self.create_service(ChangeTargetIndex, '/planner/change_target_index',
+        self.create_service(ChangeTargetIndex, '/mtms/planner/change_target_index',
                             self.change_target_index_callback)
 
     def change_target_index_callback(self, request, response):

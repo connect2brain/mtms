@@ -140,7 +140,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
     /* Subscriber for system state. */
     const systemStateSubscriber = new Topic<SystemState>({
       ros: ros,
-      name: '/mtms_device/system_state',
+      name: '/mtms/device/system_state',
       messageType: 'mtms_device_interfaces/SystemState',
     })
 
@@ -151,7 +151,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
     /* Subscriber for session. */
     const sessionSubscriber = new Topic<Session>({
       ros: ros,
-      name: '/system/session',
+      name: '/mtms/system/session',
       messageType: 'system_interfaces/Session',
     })
 

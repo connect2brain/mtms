@@ -28,13 +28,13 @@ public:
   FeedbackMonitorBridge()
       : Node("feedback_monitor_bridge") {
     pulse_feedback_publisher_ = this->create_publisher<event_msgs::msg::PulseFeedback>(
-        "/mtms_device/events/feedback/pulse", 10);
+        "/mtms/device/events/feedback/pulse", 10);
     charge_feedback_publisher_ = this->create_publisher<event_msgs::msg::ChargeFeedback>(
-        "/mtms_device/events/feedback/charge", 10);
+        "/mtms/device/events/feedback/charge", 10);
     discharge_feedback_publisher_ = this->create_publisher<event_msgs::msg::DischargeFeedback>(
-        "/mtms_device/events/feedback/discharge", 10);
+        "/mtms/device/events/feedback/discharge", 10);
     trigger_out_feedback_publisher_ = this->create_publisher<event_msgs::msg::TriggerOutFeedback>(
-        "/mtms_device/events/feedback/trigger_out", 10);
+        "/mtms/device/events/feedback/trigger_out", 10);
 
     timer_ = this->create_wall_timer(20ms, std::bind(&FeedbackMonitorBridge::update_feedback_topics, this));
   }

@@ -184,10 +184,10 @@ public:
     };
 
     get_target_voltages = this->create_service<targeting_services::srv::GetTargetVoltages>(
-        "/targeting/get_target_voltages", get_target_voltages_callback);
+        "/mtms/targeting/get_target_voltages", get_target_voltages_callback);
 
     get_maximum_intensity = this->create_service<targeting_services::srv::GetMaximumIntensity>(
-        "/targeting/get_maximum_intensity", get_maximum_intensity_callback);
+        "/mtms/targeting/get_maximum_intensity", get_maximum_intensity_callback);
 
     initialize_lookup_table();
 

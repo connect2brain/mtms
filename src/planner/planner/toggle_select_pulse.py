@@ -9,7 +9,7 @@ class ToggleSelectPulseNode(StateNode):
 
     def __init__(self):
         super().__init__('toggle_select_pulse')
-        self.create_service(ToggleSelectPulse, '/planner/toggle_select_pulse',
+        self.create_service(ToggleSelectPulse, '/mtms/planner/toggle_select_pulse',
                             self.toggle_select_pulse_callback)
 
     def toggle_select_pulse_callback(self, request, response):

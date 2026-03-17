@@ -19,7 +19,7 @@ public:
         const std::shared_ptr<neuronavigation_interfaces::srv::EfieldNorm::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::EfieldNorm::Response> response) -> void {
 
-      RCLCPP_INFO(rclcpp::get_logger("efield_getnorm"), "Request received from /efield/get_norm");
+      RCLCPP_INFO(rclcpp::get_logger("efield_getnorm"), "Request received from /mtms/efield/get_norm");
 
       std::vector<float> position;
       std::vector<double> orientation;
@@ -40,7 +40,7 @@ public:
               const std::shared_ptr<neuronavigation_interfaces::srv::Efield::Request> request,
               std::shared_ptr<neuronavigation_interfaces::srv::Efield::Response> response) -> void {
 
-          RCLCPP_INFO(rclcpp::get_logger("efield_getefieldvector"), "Request received from /efield/get_efieldvector");
+          RCLCPP_INFO(rclcpp::get_logger("efield_getefieldvector"), "Request received from /mtms/efield/get_efieldvector");
 
           std::vector<float> position;
           std::vector<double> orientation;
@@ -59,7 +59,7 @@ public:
 
       auto service_callback_efield_vector_ROI=[this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoi::Request> request,
                                                      std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoi::Response> response)-> void {
-          RCLCPP_INFO(rclcpp::get_logger("efield-get_ROIefieldvector"), "Request received from /efield/get_ROIefieldvector");
+          RCLCPP_INFO(rclcpp::get_logger("efield-get_ROIefieldvector"), "Request received from /mtms/efield/get_ROIefieldvector");
           std::vector<float> position;
           std::vector<double> orientation;
 
@@ -73,7 +73,7 @@ public:
 
       auto service_callback_efield_vector_ROI_max_loc=[this](const std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoiMax::Request> request,
                                                      std::shared_ptr<neuronavigation_interfaces::srv::EfieldRoiMax::Response> response)-> void {
-          RCLCPP_INFO(rclcpp::get_logger("efield-get_ROIefieldvectorMax"), "Request received from /efield/get_ROIefieldvectorMax");
+          RCLCPP_INFO(rclcpp::get_logger("efield-get_ROIefieldvectorMax"), "Request received from /mtms/efield/get_ROIefieldvectorMax");
           std::vector<float> position;
           std::vector<double> orientation;
 
@@ -88,7 +88,7 @@ public:
     auto service_callback_init_efield= [this](const std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Request> request,
         std::shared_ptr<neuronavigation_interfaces::srv::InitializeEfield::Response> response)-> void {
 
-        RCLCPP_INFO(rclcpp::get_logger("efield_initialize"), "Request received from /efield/initialize");
+        RCLCPP_INFO(rclcpp::get_logger("efield_initialize"), "Request received from /mtms/efield/initialize");
         init_efield(request->cortex_model_path, request->mesh_models_paths,request->conductivities_inside, request->conductivities_outside, response->success);
         set_coil(request->coil_model_path, request->coil_set, response->success);
         set_dIperdt(request->set_di_per_dt, response->success);
@@ -97,7 +97,7 @@ public:
 
     auto service_callback_set_coil=[this](const std::shared_ptr<neuronavigation_interfaces::srv::SetCoil::Request> request,
                                   std::shared_ptr<neuronavigation_interfaces::srv::SetCoil::Response> response)-> void {
-        RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from /efield/set_coil");
+        RCLCPP_INFO(rclcpp::get_logger("efield_setcoil"), "Request received from /mtms/efield/set_coil");
 
         set_coil(request->coil_model_path, request->coil_set, response->success);
 
@@ -105,20 +105,20 @@ public:
 
     auto service_callback_set_dIperdt=[this](const std::shared_ptr<neuronavigation_interfaces::srv::Setdiperdt::Request> request,
                                             std::shared_ptr<neuronavigation_interfaces::srv::Setdiperdt::Response> response)-> void {
-        RCLCPP_INFO(rclcpp::get_logger("efield_setdIperdt"), "Request received from /efield/set_dIperdt");
+        RCLCPP_INFO(rclcpp::get_logger("efield_setdIperdt"), "Request received from /mtms/efield/set_dIperdt");
 
         set_dIperdt(request->set_di_per_dt, response->success);
 
      };
 
 
-      efield_service_init = this->create_service<neuronavigation_interfaces::srv::InitializeEfield>("/efield/initialize", service_callback_init_efield);
-      efield_service_enorm = this->create_service<neuronavigation_interfaces::srv::EfieldNorm>("/efield/get_norm", service_callback_efield_norm);
-      efield_service_coil = this->create_service<neuronavigation_interfaces::srv::SetCoil>("/efield/set_coil", service_callback_set_coil);
-      efield_service_vectorefield = this->create_service<neuronavigation_interfaces::srv::Efield>("/efield/get_efieldvector", service_callback_efield_vector);
-      efield_service_vectorfield_ROI = this->create_service<neuronavigation_interfaces::srv::EfieldRoi>("/efield/get_ROIefieldvector", service_callback_efield_vector_ROI);
-      efield_service_vectorfield_ROI_max_loc = this->create_service<neuronavigation_interfaces::srv::EfieldRoiMax>("/efield/get_ROIefieldvectorMax", service_callback_efield_vector_ROI_max_loc);
-      efield_service_dIperdt = this->create_service<neuronavigation_interfaces::srv::Setdiperdt>("/efield/set_dIperdt",service_callback_set_dIperdt);
+      efield_service_init = this->create_service<neuronavigation_interfaces::srv::InitializeEfield>("/mtms/efield/initialize", service_callback_init_efield);
+      efield_service_enorm = this->create_service<neuronavigation_interfaces::srv::EfieldNorm>("/mtms/efield/get_norm", service_callback_efield_norm);
+      efield_service_coil = this->create_service<neuronavigation_interfaces::srv::SetCoil>("/mtms/efield/set_coil", service_callback_set_coil);
+      efield_service_vectorefield = this->create_service<neuronavigation_interfaces::srv::Efield>("/mtms/efield/get_efieldvector", service_callback_efield_vector);
+      efield_service_vectorfield_ROI = this->create_service<neuronavigation_interfaces::srv::EfieldRoi>("/mtms/efield/get_ROIefieldvector", service_callback_efield_vector_ROI);
+      efield_service_vectorfield_ROI_max_loc = this->create_service<neuronavigation_interfaces::srv::EfieldRoiMax>("/mtms/efield/get_ROIefieldvectorMax", service_callback_efield_vector_ROI_max_loc);
+      efield_service_dIperdt = this->create_service<neuronavigation_interfaces::srv::Setdiperdt>("/mtms/efield/set_dIperdt",service_callback_set_dIperdt);
   }
 
 private:

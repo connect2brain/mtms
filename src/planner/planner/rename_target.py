@@ -11,7 +11,7 @@ class RenameTargetNode(StateNode):
 
     def __init__(self):
         super().__init__('rename_target')
-        self.create_service(RenameTarget, '/planner/rename_target', self.rename_target_callback)
+        self.create_service(RenameTarget, '/mtms/planner/rename_target', self.rename_target_callback)
 
     def rename_target_callback(self, request, response):
 

@@ -27,18 +27,18 @@ policies and other behaviour will be described in their own sections.
 
 | Topic                            | Type         | Message definition                            |
 |----------------------------------|--------------|-----------------------------------------------|
-| `/mtms_device/allow_stimulation` | Service      | `mtms_device_interfaces.srv.AllowStimulation` |
-| `/mtms_device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
-| `/mtms_device/start_device`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
-| `/mtms_device/stop_device`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
+| `/mtms/device/allow_stimulation` | Service      | `mtms_device_interfaces.srv.AllowStimulation` |
+| `/mtms/device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
+| `/mtms/device/start_device`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
+| `/mtms/device/stop_device`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
-| `/mtms_device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
-| `/mtms_device/events/feedback/charge`         | Publisher    | `event_msgs.msg.ChargeFeedback`         |
-| `/mtms_device/events/feedback/discharge`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
-| `/mtms_device/events/feedback/pulse`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
-| `/mtms_device/events/feedback/trigger_out`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
-| `/mtms_device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
+| `/mtms/device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
+| `/mtms/device/events/feedback/charge`         | Publisher    | `event_msgs.msg.ChargeFeedback`         |
+| `/mtms/device/events/feedback/discharge`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
+| `/mtms/device/events/feedback/pulse`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
+| `/mtms/device/events/feedback/trigger_out`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
+| `/mtms/device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
 
 ### Interface description
 The mTMS device interface functions can be divided to follow sections, which can
@@ -56,7 +56,7 @@ contain 1 or more different ROS2 topics:
 TODO: Add descriptions for error conditions.
 
 #### System state publishing
-The mTMS device publishes its system state on a regular intervals to the `/mtms_device/system_state` topic
+The mTMS device publishes its system state on a regular intervals to the `/mtms/device/system_state` topic
 
     ChannelState[] channel_states
 
@@ -92,8 +92,8 @@ ROS2 Documentation):
 | Lease duration | Default             |
 
 #### Device state management
-The device state is management by service topics `/mtms_device/start_device`
-and `/mtms_device/stop_device`.
+The device state is management by service topics `/mtms/device/start_device`
+and `/mtms/device/stop_device`.
 
 Current status of device state is published by the system_state in `device_state`
 session, which is defined by `DeviceState`:
@@ -105,11 +105,11 @@ session, which is defined by `DeviceState`:
 
     uint8 value
 
-when the device is started with `/mtms_device/start_device` request the response returns
+when the device is started with `/mtms/device/start_device` request the response returns
 `true` if startup was successful. Once the startup is finished the system state property
 `device_state.value=DeviceState.OPERATIONAL`
 
-when the device is stopped with `/mtms_device/stop_device` request the response returns
+when the device is stopped with `/mtms/device/stop_device` request the response returns
 `true` if shutdown was successful.  Once the shutdown process is finished the system
 state property `device_state.value=DeviceState.NOT_OPERATIONAL`
 
@@ -138,7 +138,7 @@ likewise when session stop request is made and complete, the session state will 
 `session_state.value=SessionState.STOPPED`
 
 #### Charging
-Charging works by requesting a service `/mtms_device/events/request` with a message of type `Charge`
+Charging works by requesting a service `/mtms/device/events/request` with a message of type `Charge`
 in `charges` field. The message type `Charge` consists of the following fields:
 
     uint8 channel
@@ -159,7 +159,7 @@ This event will start the charging process once the given execution condition in
 
 When the execution condition is met the charging process of a given `channel` to the
 `target_voltage` will start. Once the charging process is finished or disrupted by some
-error a message to the topic `/mtms_device/events/feedback/charge` is sent, containing the event id,
+error a message to the topic `/mtms/device/events/feedback/charge` is sent, containing the event id,
 given in the charge message and possible error raised.
 
     uint16 id
@@ -168,19 +168,19 @@ given in the charge message and possible error raised.
 #### Discharging
 The discharging process is similar to the charging process by having the service
 `mtms_device/request_events` for updating the channel voltage and will return
-feedback message `/mtms_device/events/feedback/discharge` once complete or disrupted by error.
+feedback message `/mtms/device/events/feedback/discharge` once complete or disrupted by error.
 
 #### Device configuration and settings
-The device needs to have setting sent to it with topic `/mtms_device/send_settings` that
+The device needs to have setting sent to it with topic `/mtms/device/send_settings` that
 control the pulse durations and frequencies.
 
 For the device to be able to give pulses, the stimulation has to be allowed. This is
-controlled with topic `/mtms_device/allow_stimulation`.
+controlled with topic `/mtms/device/allow_stimulation`.
 
 #### Pulses
 Pulses, also work similarly to the charging and discharging processes in the regard that
-pulses are requested in service `/mtms_device/events/request` and once finished or disrupted
-by error return with `/mtms_device/events/feedback/pulse`.
+pulses are requested in service `/mtms/device/events/request` and once finished or disrupted
+by error return with `/mtms/device/events/feedback/pulse`.
 
     uint8 channel
     WaveformPiece[] waveform
@@ -191,7 +191,7 @@ works similarly to the charging and discharging properties.
 
 #### Trigger out
 Trigger out messages work also similarly to the charging and once the trigger out message
-is completed message to the topic `/mtms_device/events/feedback/trigger_out` is sent:
+is completed message to the topic `/mtms/device/events/feedback/trigger_out` is sent:
 
     uint8 port  # The index of the signal port.
     uint32 duration_us  # Duration of the pulse in microseconds.
@@ -203,7 +203,7 @@ when the `event_info` condition it met.
 ## Interface specification
 This section goes over the implementation details of different interface messages.
 
-### Topic: `/mtms_device/allow_stimulation`
+### Topic: `/mtms/device/allow_stimulation`
 #### Service: `mtms_device_interfaces.srv.AllowStimulation`
 QoS: ROS2 Default
 
@@ -214,7 +214,7 @@ Response: Boolean indicating if the service call was successful.
     ---
     bool success
 
-### Topic: `/mtms_device/send_settings`
+### Topic: `/mtms/device/send_settings`
 #### Service: `mtms_device_interfaces.srv.SendSettings`
 QoS: ROS2 Default
 
@@ -222,7 +222,7 @@ QoS: ROS2 Default
     ---
     bool success
 
-### Topic: `/mtms_device/start_device`
+### Topic: `/mtms/device/start_device`
 #### Service: `mtms_device_interfaces.srv.StartDevice`
 QoS: ROS2 Default
 
@@ -232,7 +232,7 @@ Start device. Response: Boolean indicating if starting was successful.
     ---
     bool success
 
-### Topic: `/mtms_device/stop_device`
+### Topic: `/mtms/device/stop_device`
 #### Service: `mtms_device_interfaces.srv.StopDevice`
 QoS: ROS2 Default
 
@@ -242,7 +242,7 @@ Stop device. Response: Boolean indicating if stopping was successful.
     ---
     bool success
 
-### Topic: `/mtms_device/events/request`
+### Topic: `/mtms/device/events/request`
 #### Service: `mtms_device_interfaces.srv.RequestEvents`
 QoS: ROS2 Default
 
@@ -257,7 +257,7 @@ Request events. Response: Boolean indicating if request was successful.
 
 ## Publishers
 
-### Topic: `/mtms_device/events/feedback/pulse`
+### Topic: `/mtms/device/events/feedback/pulse`
 #### Message: `event_msgs.msg.PulseFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -266,7 +266,7 @@ Contains feedback of an event
     uint16 id
     PulseError error
 
-### Topic: `/mtms_device/events/feedback/charge`
+### Topic: `/mtms/device/events/feedback/charge`
 #### Message: `event_msgs.msg.ChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -275,7 +275,7 @@ Contains feedback of an event
     uint16 id
     ChargeError error
 
-### Topic: `/mtms_device/events/feedback/discharge`
+### Topic: `/mtms/device/events/feedback/discharge`
 #### Message: `event_msgs.msg.DisChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -284,7 +284,7 @@ Contains feedback of an event
 uint16 id
 DischargeError error
 
-### Topic: `/mtms_device/events/feedback/trigger_out`
+### Topic: `/mtms/device/events/feedback/trigger_out`
 #### Message: `event_msgs.msg.TriggerOutFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
@@ -292,7 +292,7 @@ QoS: ROS2 Defaults with KEEP_LAST with depth 10
     uint32 duration_us # Duration of the pulse in microseconds.
     EventInfo event_info
 
-### Topic: `/mtms_device/system_state`
+### Topic: `/mtms/device/system_state`
 #### Message: `mtms_device_interfaces.msg.SystemState
 QoS:
 - History: KEEP_LAST with depth 1.

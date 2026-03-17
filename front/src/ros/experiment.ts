@@ -4,7 +4,7 @@ import { ros } from './ros'
 /* Get maximum intensity service */
 const getMaximumIntensityService = new ROSLIB.Service({
   ros: ros,
-  name: '/targeting/get_maximum_intensity',
+  name: '/mtms/targeting/get_maximum_intensity',
   serviceType: 'targeting_services/GetMaximumIntensity',
 })
 
@@ -43,7 +43,7 @@ export const getMaximumIntensity = (
 /* Count valid trials service */
 const countValidTrialsService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/count_valid_trials',
+  name: '/mtms/experiment/count_valid_trials',
   serviceType: 'experiment_interfaces/CountValidTrials',
 })
 
@@ -74,7 +74,7 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
      the type checks (that is, ROSLIB as any) can be removed everywhere. */
 const performExperimentActionClient: any = new (ROSLIB as any).Action({
   ros: ros,
-  name: '/experiment/perform',
+  name: '/mtms/experiment/perform',
   actionType: 'experiment_interfaces/PerformExperiment',
 })
 
@@ -135,7 +135,7 @@ export const visualizeTargets = (targets: any, is_ordered: boolean, callback: ()
 /* Pause experiment service */
 const pauseExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/pause',
+  name: '/mtms/experiment/pause',
   serviceType: 'experiment_interfaces/PauseExperiment',
 })
 
@@ -161,7 +161,7 @@ export const pauseExperiment = (callback: () => void) => {
 /* Resume experiment service */
 const resumeExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/resume',
+  name: '/mtms/experiment/resume',
   serviceType: 'experiment_interfaces/ResumeExperiment',
 })
 
@@ -187,7 +187,7 @@ export const resumeExperiment = (callback: () => void) => {
 /* Cancel experiment service */
 const cancelExperimentService = new ROSLIB.Service({
   ros: ros,
-  name: '/experiment/cancel',
+  name: '/mtms/experiment/cancel',
   serviceType: 'experiment_interfaces/CancelExperiment',
 })
 

@@ -46,7 +46,7 @@ EventHandler::EventHandler() : Node("event_handler") {
   serialized_message = SerializedMessage();
 
   request_events_service = this->create_service<mtms_device_interfaces::srv::RequestEvents>(
-      "/mtms_device/events/request", std::bind(&EventHandler::handle_request_events, this, std::placeholders::_1, std::placeholders::_2));
+      "/mtms/device/events/request", std::bind(&EventHandler::handle_request_events, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,

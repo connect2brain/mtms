@@ -11,7 +11,7 @@ class SetPulseIntensityNode(StateNode):
 
     def __init__(self):
         super().__init__('set_pulse_intensity')
-        self.create_service(SetPulseIntensity, '/planner/set_pulse_intensity',
+        self.create_service(SetPulseIntensity, '/mtms/planner/set_pulse_intensity',
                             self.set_pulse_intensity_callback)
 
     def set_pulse_intensity_callback(self, request, response):

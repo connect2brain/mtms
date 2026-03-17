@@ -8,7 +8,7 @@ class ChangePulseIndexNode(StateNode):
 
     def __init__(self):
         super().__init__('change_pulse_index')
-        self.create_service(ChangePulseIndex, '/planner/change_pulse_index',
+        self.create_service(ChangePulseIndex, '/mtms/planner/change_pulse_index',
                             self.change_pulse_index_callback)
 
     def change_pulse_index_callback(self, request, response):

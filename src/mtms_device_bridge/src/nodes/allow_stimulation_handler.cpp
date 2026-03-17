@@ -24,7 +24,7 @@ void allow_stimulation([[maybe_unused]] const std::shared_ptr<mtms_device_interf
 class AllowStimulation : public rclcpp::Node {
 public:
   AllowStimulation() : Node("allow_stimulation") {
-    allow_stimulation_service_ = this->create_service<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation", allow_stimulation);
+    allow_stimulation_service_ = this->create_service<mtms_device_interfaces::srv::AllowStimulation>("/mtms/device/allow_stimulation", allow_stimulation);
   }
 
 private:

@@ -119,39 +119,39 @@ class NeuronavigationNode(Node):
                                                                     self.open_orientation_dialog_callback, callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
-                                                                    '/planner/set_target_orientation', callback_group=callback_group)
+                                                                    '/mtms/planner/set_target_orientation', callback_group=callback_group)
         if self.electric_field_enable:
-            self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
+            self.client_init_efield = self.create_client(InitializeEfield, '/mtms/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/init not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/init not available, waiting...')
             self.get_logger().info('efield enorm')
 
-            self.client_get_efield_norm = self.create_client(EfieldNorm, '/efield/get_norm', callback_group=callback_group)
+            self.client_get_efield_norm = self.create_client(EfieldNorm, '/mtms/efield/get_norm', callback_group=callback_group)
             while not self.client_get_efield_norm.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/getnorm not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/getnorm not available, waiting...')
 
-            self.client_get_efield_vector = self.create_client(Efield, '/efield/get_efieldvector', callback_group=callback_group)
+            self.client_get_efield_vector = self.create_client(Efield, '/mtms/efield/get_efieldvector', callback_group=callback_group)
             while not self.client_get_efield_vector.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/get_efieldvector not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/get_efieldvector not available, waiting...')
 
-            self.client_get_efield_vectorROI = self.create_client(EfieldRoi, '/efield/get_ROIefieldvector',
+            self.client_get_efield_vectorROI = self.create_client(EfieldRoi, '/mtms/efield/get_ROIefieldvector',
                                                                callback_group=callback_group)
             while not self.client_get_efield_vectorROI.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/get_ROIefieldvector not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/get_ROIefieldvector not available, waiting...')
 
-            self.client_get_efield_vectorROIMax = self.create_client(EfieldRoiMax, '/efield/get_ROIefieldvectorMax',
+            self.client_get_efield_vectorROIMax = self.create_client(EfieldRoiMax, '/mtms/efield/get_ROIefieldvectorMax',
                                                                callback_group=callback_group)
             while not self.client_get_efield_vectorROIMax.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/get_ROIefieldvectorMax not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/get_ROIefieldvectorMax not available, waiting...')
 
-            self.client_set_coil = self.create_client(SetCoil, '/efield/set_coil', callback_group= callback_group)
+            self.client_set_coil = self.create_client(SetCoil, '/mtms/efield/set_coil', callback_group= callback_group)
             while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/set_coil not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/set_coil not available, waiting...')
             self.get_logger().info('efield set coil')
 
-            self.client_set_dIperdt = self.create_client(Setdiperdt, '/efield/set_dIperdt', callback_group= callback_group)
+            self.client_set_dIperdt = self.create_client(Setdiperdt, '/mtms/efield/set_dIperdt', callback_group= callback_group)
             while not self.client_set_dIperdt.wait_for_service(timeout_sec=1.0):
-                self.get_logger().info('efield service /efield/set_dIperdt not available, waiting...')
+                self.get_logger().info('efield service /mtms/efield/set_dIperdt not available, waiting...')
             self.get_logger().info('efield set dIperdt')
 
     def set_callback__set_markers(self, callback):

@@ -13,7 +13,7 @@ const uint16_t EEG_DATA_SUBSCRIBER_QUEUE_SIZE = 1024;
 GatherEegServer::GatherEegServer() : Node("eeg_gatherer") {
   this->gather_eeg_action_server = rclcpp_action::create_server<mep_interfaces::action::GatherEeg>(
     this,
-    "/eeg/gather",
+    "/mtms/eeg/gather",
     std::bind(&GatherEegServer::handle_goal, this, _1, _2),
     std::bind(&GatherEegServer::handle_cancel, this, _1),
     std::bind(&GatherEegServer::handle_accepted, this, _1));
@@ -45,7 +45,7 @@ void GatherEegServer::execute(const std::shared_ptr<GoalHandleGatherEeg> goal_ha
   auto eeg_gatherer = EegGatherer(goal_id, start_time, end_time);
 
   auto eeg_subscription = this->create_subscription<eeg_msgs::msg::Sample>(
-    "/eeg/raw",
+    "/mtms/eeg/raw",
     EEG_DATA_SUBSCRIBER_QUEUE_SIZE,
     [this, &eeg_gatherer](const eeg_msgs::msg::Sample::SharedPtr msg) {
       RCLCPP_INFO_THROTTLE(rclcpp::get_logger("eeg_gatherer"),

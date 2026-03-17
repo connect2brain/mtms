@@ -7,51 +7,51 @@ import { ros } from 'ros/ros'
 /* Set up change_comment service. */
 const changeCommentService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/change_comment',
+  name: '/mtms/planner/change_comment',
   serviceType: 'ui_interfaces/ChangeComment',
 })
 /* Set up add_target service. */
 const addTargetService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/add_target',
+  name: '/mtms/planner/add_target',
   serviceType: 'ui_interfaces/AddTarget',
 })
 /* Set up rename_target service. */
 const renameTargetService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/rename_target',
+  name: '/mtms/planner/rename_target',
   serviceType: 'ui_interfaces/RenameTarget',
 })
 /* Set up toggle_select service. */
 const toggleTargetSelectService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_select_target',
+  name: '/mtms/planner/toggle_select_target',
   serviceType: 'ui_interfaces/ToggleSelectTarget',
 })
 /* Set up remove_target service. */
 const removeTargetService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/remove_target',
+  name: '/mtms/planner/remove_target',
   serviceType: 'ui_interfaces/RemoveTarget',
 })
 
 const changeTargetIndexService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/change_target_index',
+  name: '/mtms/planner/change_target_index',
   serviceType: 'ui_interfaces/ChangeTargetIndex',
 })
 
 /* Set up set_target service. */
 const setTargetService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/set_target',
+  name: '/mtms/planner/set_target',
   serviceType: 'ui_interfaces/SetTarget',
 })
 
 /* Set up toggle_visible service. */
 const toggleVisibleService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_visible',
+  name: '/mtms/planner/toggle_visible',
   serviceType: 'ui_interfaces/ToggleVisible',
 })
 

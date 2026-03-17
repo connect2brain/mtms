@@ -27,17 +27,17 @@ class PedalListenerNode(Node):
 
         self.pedal_connected_publisher = self.create_publisher(
             Bool,
-            "/pedal/connected",
+            "/mtms/pedal/connected",
             qos
         )
         self.left_button_publisher = self.create_publisher(
             Bool,
-            "/pedal/left_button/pressed",
+            "/mtms/pedal/left_button/pressed",
             qos
         )
         self.right_button_publisher = self.create_publisher(
             Bool,
-            "/pedal/right_button/pressed",
+            "/mtms/pedal/right_button/pressed",
             qos
         )
 

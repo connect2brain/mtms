@@ -8,7 +8,7 @@ class SetTargetOrientationNode(StateNode):
 
     def __init__(self):
         super().__init__('set_target_orientation')
-        self.create_service(SetTargetOrientation, '/planner/set_target_orientation',
+        self.create_service(SetTargetOrientation, '/mtms/planner/set_target_orientation',
                             self.set_target_orientation_callback)
 
     def set_target_orientation_callback(self, request, response):

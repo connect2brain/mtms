@@ -46,19 +46,19 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   useEffect(() => {
     const eegSubscriber = new Topic<Healthcheck>({
       ros: ros,
-      name: '/eeg/healthcheck',
+      name: '/mtms/eeg/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 
     const mtmsSubscriber = new Topic<Healthcheck>({
       ros: ros,
-      name: '/mtms_device/healthcheck',
+      name: '/mtms/device/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 
     const mepSubscriber = new Topic<Healthcheck>({
       ros: ros,
-      name: '/mep/healthcheck',
+      name: '/mtms/mep/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 

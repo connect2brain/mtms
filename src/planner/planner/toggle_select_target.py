@@ -14,7 +14,7 @@ class ToggleSelectTargetNode(StateNode):
 
     def __init__(self):
         super().__init__('toggle_select_target')
-        self.create_service(ToggleSelectTarget, '/planner/toggle_select_target', self.toggle_select_target_callback)
+        self.create_service(ToggleSelectTarget, '/mtms/planner/toggle_select_target', self.toggle_select_target_callback)
 
     def toggle_select_target_callback(self, request, response):
         self.get_logger().info('Incoming request')

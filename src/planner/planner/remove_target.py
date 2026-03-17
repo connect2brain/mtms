@@ -37,7 +37,7 @@ class RemoveTargetNode(StateNode):
 
     def __init__(self):
         super().__init__('remove_target')
-        self.create_service(RemoveTarget, '/planner/remove_target', self.remove_target_callback)
+        self.create_service(RemoveTarget, '/mtms/planner/remove_target', self.remove_target_callback)
 
     def remove_target_callback(self, request, response):
         self.get_logger().info(f'Removing target {request.name}')

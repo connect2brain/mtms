@@ -56,12 +56,12 @@ public:
     coil_at_target_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       "/neuronavigation/coil_at_target", qos_deadline, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
-    allow_stimulation_client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms_device/allow_stimulation");
-    allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms_device/allow_trigger_out");
+    allow_stimulation_client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms/device/allow_stimulation");
+    allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms/device/allow_trigger_out");
 
     /* Create service for querying status of stimulation allowed.*/
     is_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::IsStimulationAllowed>(
-        "/stimulation/allowed", is_stimulation_allowed_callback);
+        "/mtms/stimulation/allowed", is_stimulation_allowed_callback);
 
     /* Update initial default state even if no neuronavigation topics are publishing. */
     update_stimulation_allowed();

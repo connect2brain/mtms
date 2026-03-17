@@ -10,7 +10,7 @@ class AddPulseSequenceNode(StateNode):
 
     def __init__(self):
         super().__init__('add_pulse_sequence')
-        self.create_service(AddPulseSequence, '/planner/add_pulse_sequence', self.add_pulse_sequence_callback)
+        self.create_service(AddPulseSequence, '/mtms/planner/add_pulse_sequence', self.add_pulse_sequence_callback)
 
     def first_available_pulse_sequence_name(self):
         if self._state is None:

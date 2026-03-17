@@ -9,7 +9,7 @@
 
 #include <sstream>
 
-const std::string HEALTHCHECK_TOPIC = "/mtms_device/healthcheck";
+const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
 
 class FpgaConnection : public rclcpp::Node {
 public:

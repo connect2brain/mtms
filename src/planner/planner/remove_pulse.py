@@ -34,7 +34,7 @@ class RemovePulseNode(StateNode):
 
     def __init__(self):
         super().__init__('remove_pulse')
-        self.create_service(RemovePulse, '/planner/remove_pulse', self.remove_pulse_callback)
+        self.create_service(RemovePulse, '/mtms/planner/remove_pulse', self.remove_pulse_callback)
 
     def remove_pulse_callback(self, request, response):
         self.get_logger().info(f'Removing pulse {request.pulse_index} from {request.name}')

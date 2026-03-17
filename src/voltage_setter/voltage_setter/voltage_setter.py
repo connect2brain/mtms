@@ -37,7 +37,7 @@ class VoltageSetterNode(Node):
         self.action_server = ActionServer(
             self,
             SetVoltages,
-            '/mtms_device/set_voltages',
+            '/mtms/device/set_voltages',
             self.handle_action_set_voltages,
             callback_group=self.reentrant_callback_group,
         )
@@ -45,18 +45,18 @@ class VoltageSetterNode(Node):
         # Service client for requesting events.
         self.request_events_client = self.create_client(
             RequestEvents,
-            '/mtms_device/events/request',
+            '/mtms/device/events/request',
             callback_group=self.reentrant_callback_group)
 
         while not self.request_events_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms_device/events/request not available, waiting...')
+            self.get_logger().info('Service /mtms/device/events/request not available, waiting...')
 
         # Subscriber for system state
 
         # Have a queue of only one message so that only the latest system state is received.
         self.system_state_subscriber = self.create_subscription(
             SystemState,
-            '/mtms_device/system_state',
+            '/mtms/device/system_state',
             self.handle_system_state,
             1,
             callback_group=self.reentrant_callback_group)
@@ -66,7 +66,7 @@ class VoltageSetterNode(Node):
         # Subscriber for session
         self.session_subscriber = self.create_subscription(
             Session,
-            '/system/session',
+            '/mtms/system/session',
             self.handle_session,
             1,
             callback_group=self.reentrant_callback_group)
@@ -76,14 +76,14 @@ class VoltageSetterNode(Node):
         # Publishers for feedbacks.
         self.charge_feedback_subscriber = self.create_subscription(
             ChargeFeedback,
-            '/mtms_device/events/feedback/charge',
+            '/mtms/device/events/feedback/charge',
             self.update_event_feedback,
             10,
             callback_group=self.reentrant_callback_group)
 
         self.discharge_feedback_subscriber = self.create_subscription(
             DischargeFeedback,
-            '/mtms_device/events/feedback/discharge',
+            '/mtms/device/events/feedback/discharge',
             self.update_event_feedback,
             10,
             callback_group=self.reentrant_callback_group)
@@ -227,7 +227,7 @@ class VoltageSetterNode(Node):
         # Wait for the service call to complete.
         if not call_service_event.wait(timeout=self.REQUEST_EVENTS_TIMEOUT_S):
             self.logger.error(
-                "Timed out waiting {:.1f} s for /mtms_device/events/request response.".format(
+                "Timed out waiting {:.1f} s for /mtms/device/events/request response.".format(
                     self.REQUEST_EVENTS_TIMEOUT_S
                 )
             )
@@ -235,7 +235,7 @@ class VoltageSetterNode(Node):
 
         if exception_value[0] is not None:
             self.logger.error(
-                "Call to /mtms_device/events/request failed with exception: {!r}".format(
+                "Call to /mtms/device/events/request failed with exception: {!r}".format(
                     exception_value[0]
                 )
             )
@@ -276,7 +276,7 @@ class VoltageSetterNode(Node):
             with self.lock:
                 self.event_feedback.pop(id, None)
             raise RuntimeError(
-                "Charge request was rejected by /mtms_device/events/request."
+                "Charge request was rejected by /mtms/device/events/request."
             )
 
         return id
@@ -311,7 +311,7 @@ class VoltageSetterNode(Node):
             with self.lock:
                 self.event_feedback.pop(id, None)
             raise RuntimeError(
-                "Discharge request was rejected by /mtms_device/events/request."
+                "Discharge request was rejected by /mtms/device/events/request."
             )
 
         return id

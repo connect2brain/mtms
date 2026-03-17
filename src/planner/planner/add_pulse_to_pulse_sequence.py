@@ -10,7 +10,7 @@ class AddPulseToPulseSequenceNode(StateNode):
 
     def __init__(self):
         super().__init__('add_target')
-        self.create_service(AddPulseToPulseSequence, '/planner/add_pulse_to_pulse_sequence',
+        self.create_service(AddPulseToPulseSequence, '/mtms/planner/add_pulse_to_pulse_sequence',
                             self.add_pulse_to_pulse_sequence_callback)
 
     def add_pulse_to_pulse_sequence_callback(self, request, response):

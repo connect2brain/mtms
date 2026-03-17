@@ -11,7 +11,7 @@ class RenamePulseSequenceNode(StateNode):
 
     def __init__(self):
         super().__init__('rename_pulse_sequence')
-        self.create_service(RenamePulseSequence, '/planner/rename_pulse_sequence', self.rename_pulse_sequence_callback)
+        self.create_service(RenamePulseSequence, '/mtms/planner/rename_pulse_sequence', self.rename_pulse_sequence_callback)
 
     def rename_pulse_sequence_callback(self, request, response):
 

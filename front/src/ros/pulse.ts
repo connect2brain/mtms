@@ -6,34 +6,34 @@ import { ros } from 'ros/ros'
 
 const removePulseService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/remove_pulse',
+  name: '/mtms/planner/remove_pulse',
   serviceType: 'ui_interfaces/RemovePulse',
 })
 const setPulseIntensityService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/set_pulse_intensity',
+  name: '/mtms/planner/set_pulse_intensity',
   serviceType: 'ui_interfaces/SetPulseIntensity',
 })
 const setPulseIsiService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/set_pulse_isi',
+  name: '/mtms/planner/set_pulse_isi',
   serviceType: 'ui_interfaces/SetPulseIsi',
 })
 const togglePulseSelectedService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_select_pulse',
+  name: '/mtms/planner/toggle_select_pulse',
   serviceType: 'ui_interfaces/ToggleSelectPulse',
 })
 
 const togglePulseVisibleService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/toggle_visible_pulse',
+  name: '/mtms/planner/toggle_visible_pulse',
   serviceType: 'ui_interfaces/ToggleVisiblePulse',
 })
 
 const changePulseIndexService = new ROSLIB.Service({
   ros: ros,
-  name: '/planner/change_pulse_index',
+  name: '/mtms/planner/change_pulse_index',
   serviceType: 'ui_interfaces/ChangePulseIndex',
 })
 

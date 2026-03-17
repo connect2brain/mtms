@@ -37,7 +37,7 @@ class GatheredEegBuffer():
 
 class AnalyzeMepNode(Node):
 
-    ROS_ACTION_GATHER_EEG = ('/eeg/gather', GatherEeg)
+    ROS_ACTION_GATHER_EEG = ('/mtms/eeg/gather', GatherEeg)
 
     def __init__(self):
         super().__init__('analyze_mep_node')
@@ -60,7 +60,7 @@ class AnalyzeMepNode(Node):
         self.action_server = ActionServer(
             self,
             AnalyzeMep,
-            '/mep/analyze',
+            '/mtms/mep/analyze',
             self.analyze_mep_action_handler,
             callback_group=self.callback_group,
         )
@@ -70,7 +70,7 @@ class AnalyzeMepNode(Node):
         #
         self.analyze_mep_service = self.create_service(
             AnalyzeMepService,
-            '/mep/analyze_service',
+            '/mtms/mep/analyze_service',
             self.analyze_mep_service_handler,
             callback_group=self.callback_group,
         )
@@ -78,14 +78,14 @@ class AnalyzeMepNode(Node):
         # Create subscriber for EEG healthcheck
         self.healthcheck_publisher = self.create_publisher(
             Healthcheck,
-            '/mep/healthcheck',
+            '/mtms/mep/healthcheck',
             10,
             callback_group=self.callback_group,
         )
 
         self.eeg_healthcheck_subscriber = self.create_subscription(
             Healthcheck,
-            '/eeg/healthcheck',
+            '/mtms/eeg/healthcheck',
             self.eeg_healthcheck_handler,
             10,
             callback_group=self.callback_group,

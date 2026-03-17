@@ -11,7 +11,7 @@ class SetPulseSequenceIsiNode(StateNode):
 
     def __init__(self):
         super().__init__('set_pulse_sequence_isi')
-        self.create_service(SetPulseSequenceIsi, '/planner/set_pulse_sequence_isi',
+        self.create_service(SetPulseSequenceIsi, '/mtms/planner/set_pulse_sequence_isi',
                             self.set_pulse_sequence_isi_callback)
 
     def set_pulse_sequence_isi_callback(self, request, response):

@@ -32,7 +32,7 @@ public:
         .lifespan(DEADLINE_NS);
 
     session_publisher = this->create_publisher<system_interfaces::msg::Session>(
-      "/system/session",
+      "/mtms/system/session",
       qos);
 
     timer = this->create_wall_timer(SESSION_PUBLISHING_INTERVAL, std::bind(&SessionBridge::publish_session, this));

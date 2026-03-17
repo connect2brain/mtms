@@ -9,13 +9,13 @@ from mtms_trial_interfaces.srv import ValidateTrial
 
 
 class ExperimentHandler:
-    ROS_ACTION_PERFORM_EXPERIMENT = ('/experiment/perform', PerformExperiment)
+    ROS_ACTION_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
 
-    ROS_SERVICE_CANCEL_EXPERIMENT = ('/experiment/cancel', CancelExperiment)
-    ROS_SERVICE_PAUSE_EXPERIMENT = ('/experiment/pause', PauseExperiment)
-    ROS_SERVICE_RESUME_EXPERIMENT = ('/experiment/resume', ResumeExperiment)
+    ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', CancelExperiment)
+    ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', PauseExperiment)
+    ROS_SERVICE_RESUME_EXPERIMENT = ('/mtms/experiment/resume', ResumeExperiment)
 
-    ROS_SERVICE_VALIDATE_TRIAL = ('/trial/validate', ValidateTrial)
+    ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/validate', ValidateTrial)
 
     ROS_SERVICES = (
         ROS_SERVICE_CANCEL_EXPERIMENT,

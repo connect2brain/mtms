@@ -24,7 +24,7 @@ void allow_trigger_out([[maybe_unused]] const std::shared_ptr<mtms_device_interf
 class AllowTriggerOut : public rclcpp::Node {
 public:
   AllowTriggerOut() : Node("allow_trigger_out") {
-    allow_trigger_out_service_ = this->create_service<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms_device/allow_trigger_out", allow_trigger_out);
+    allow_trigger_out_service_ = this->create_service<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms/device/allow_trigger_out", allow_trigger_out);
   }
 
 private:
