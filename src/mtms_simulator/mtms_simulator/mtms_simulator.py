@@ -259,10 +259,30 @@ class MTMSSimulator(Node):
         return response
 
     def send_settings_handler(self, request, response):
-        self.get_logger().info("Received settings")
-        self.get_logger().debug("Settings: %r" % request.settings)
+        settings = request.settings
+        self.get_logger().info("Received settings:")
+        self.get_logger().info(
+            "  maximum number of pulse pieces: %d"
+            % settings.maximum_number_of_pulse_pieces
+        )
+        self.get_logger().info(
+            "  maximum rising-falling difference (ticks): %d"
+            % settings.maximum_rising_falling_difference_ticks
+        )
+        self.get_logger().info(
+            "  maximum pulse duration (ticks): %d"
+            % settings.maximum_pulse_duration_ticks
+        )
+        self.get_logger().info(
+            "  maximum pulses per unit time, pulses: %d"
+            % settings.pulses_in_maximum_pulses_per_time
+        )
+        self.get_logger().info(
+            "  maximum pulses per unit time, unit time (ms): %d"
+            % settings.time_in_maximum_pulses_per_time_ms
+        )
 
-        self.settings = request.settings
+        self.settings = settings
         for channel in self.channels:
             channel.settings = self.settings
 
