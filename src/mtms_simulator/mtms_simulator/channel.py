@@ -126,10 +126,19 @@ class Channel:
             When discharging is ready return DischargeFeedback with event id and errors.
         """
 
-        # To prevent division by zero if discharging the coil back to 0
+        requested_target_voltage = target_voltage
+        # Model reaches a floor above 0 V to avoid infinite time-to-zero in the RC curve.
         target_voltage = max(target_voltage, 3)
 
-        self.logger.info(f"Discharging from {self.current_voltage} to {target_voltage}")
+        self.logger.info(
+            "Discharging from %s to requested %s (simulated target %s)"
+            % (self.current_voltage, requested_target_voltage, target_voltage)
+        )
+
+        # If already at/below target, discharge is effectively complete.
+        # This also avoids math errors for log(0) when current voltage is 0.
+        if self.current_voltage <= target_voltage:
+            return DischargeFeedback(id=event_id)
 
         # Calculate wait time
         t = self.time_constant * math.log(self.current_voltage / target_voltage)
