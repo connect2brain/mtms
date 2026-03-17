@@ -26,6 +26,7 @@ from mtms_device_interfaces.msg import (
 )
 from mtms_device_interfaces.srv import (
     AllowStimulation,
+    AllowTriggerOut,
     SendSettings,
     StartDevice,
     StopDevice,
@@ -116,6 +117,11 @@ class MTMSSimulator(Node):
             AllowStimulation,
             "/mtms_device/allow_stimulation",
             self.allow_stimulation_handler,
+        )
+        self.allow_trigger_out_service = self.create_service(
+            AllowTriggerOut,
+            "/mtms_device/allow_trigger_out",
+            self.allow_trigger_out_handler,
         )
         self.send_settings_service = self.create_service(
             SendSettings, "/mtms_device/send_settings", self.send_settings_handler
@@ -216,6 +222,7 @@ class MTMSSimulator(Node):
 
         self.session_start_time = 0.0
         self.allow_stimulation: bool = False
+        self.allow_trigger_out: bool = True
         self.settings: Settings = Settings()
 
         self.create_timer(
@@ -240,6 +247,14 @@ class MTMSSimulator(Node):
         for channel in self.channels:
             channel.allow_stimulation = request.allow_stimulation
 
+        response.success = True
+        return response
+
+    def allow_trigger_out_handler(self, request, response):
+        self.get_logger().info(
+            "Allow trigger out set to %r" % request.allow_trigger_out
+        )
+        self.allow_trigger_out = request.allow_trigger_out
         response.success = True
         return response
 
