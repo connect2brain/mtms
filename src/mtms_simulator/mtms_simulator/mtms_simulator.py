@@ -484,7 +484,7 @@ class MTMSSimulator(Node):
             return PulseError(value=PulseError.INVALID_CHANNEL)
 
         # TODO: Implement execution condition check for other types as well.
-        execution_condition = message.event_info.execution_condition
+        execution_condition = message.event_info.execution_condition.value
         if execution_condition not in (
             ExecutionCondition.IMMEDIATE,
             ExecutionCondition.TIMED,
