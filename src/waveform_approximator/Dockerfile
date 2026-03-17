@@ -1,18 +1,25 @@
-# Copyright 2019 - 2023 The MathWorks, Inc.
+###
+### Modified from MATLAB Dockerfile template in March 2026:
+###
+### https://github.com/mathworks-ref-arch/matlab-dockerfile/blob/main/Dockerfile
+###
+
+# Copyright 2019-2025 The MathWorks, Inc.
 # This Dockerfile allows you to build a Docker® image with MATLAB® installed using the MATLAB Package
 # Manager. Use the optional build arguments to customize the version of MATLAB, list of products to
 # install, and the location at which to install MATLAB.
 
 # Here is an example docker build command with the optional build arguments.
-# docker build --build-arg MATLAB_RELEASE=r2023b
+# docker build --build-arg MATLAB_RELEASE=R2025b
 #              --build-arg MATLAB_PRODUCT_LIST="MATLAB Deep_Learning_Toolbox Symbolic_Math_Toolbox"
-#              --build-arg MATLAB_INSTALL_LOCATION="/opt/matlab/R2023b"
+#              --build-arg MATLAB_INSTALL_LOCATION="/opt/matlab/R2025b"
 #              --build-arg LICENSE_SERVER=12345@hostname.com
+#              --build-arg UBUNTU_VERSION=24.04
 #              -t my_matlab_image_name .
 
 # To specify which MATLAB release to install in the container, edit the value of the MATLAB_RELEASE argument.
-# Use lowercase to specify the release, for example: ARG MATLAB_RELEASE=r2021b
-ARG MATLAB_RELEASE=r2024b
+# Use uppercase to specify the release, for example: ARG MATLAB_RELEASE=R2021b
+ARG MATLAB_RELEASE=R2025b
 
 # Specify the list of products to install into MATLAB.
 ARG MATLAB_PRODUCT_LIST="MATLAB Optimization_Toolbox ROS_Toolbox Symbolic_Math_Toolbox"
@@ -20,12 +27,12 @@ ARG MATLAB_PRODUCT_LIST="MATLAB Optimization_Toolbox ROS_Toolbox Symbolic_Math_T
 # Specify MATLAB Install Location.
 ARG MATLAB_INSTALL_LOCATION="/opt/matlab/${MATLAB_RELEASE}"
 
-# Specify license server information using the format: port@hostname
-ARG LICENSE_SERVER
+# Specify a ubuntu version to use for the container
+ARG UBUNTU_VERSION=24.04
 
 # When you start the build stage, this Dockerfile by default uses the Ubuntu-based matlab-deps image.
 # To check the available matlab-deps images, see: https://hub.docker.com/r/mathworks/matlab-deps
-FROM mathworks/matlab-deps:${MATLAB_RELEASE}@sha256:80f22634c26f7c894b279fdcf16624a59ee8af4984c40d66705254cdd9bb60a3
+FROM mathworks/matlab-deps:${MATLAB_RELEASE}${UBUNTU_VERSION:+-ubuntu${UBUNTU_VERSION}}
 
 # Declare build arguments to use at the current build stage.
 ARG MATLAB_RELEASE
@@ -33,25 +40,14 @@ ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
 ARG LICENSE_SERVER
 
-# Pin to the latest stable version of ros-apt-source
-ENV ROS_APT_SOURCE_VERSION=1.1.0
-# Install curl and certificates required for downloading files securely
-RUN apt-get update && apt-get install -y curl ca-certificates
-# Use ROS_APT_SOURCE_VERSION and OS codename to build download URL and install the .deb
-RUN . /etc/os-release && \
-    curl -L -s -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.${VERSION_CODENAME}_all.deb" && \
-    apt-get update && \
-    apt-get install -y /tmp/ros2-apt-source.deb && \
-    rm -f /tmp/ros2-apt-source.deb
-
 # Install mpm dependencies.
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install --no-install-recommends --yes \
     wget \
     unzip \
-    ca-certificates \
     dos2unix \
+    ca-certificates \
     && apt-get clean \
     && apt-get autoremove \
     && rm -rf /var/lib/apt/lists/*
@@ -65,10 +61,6 @@ RUN adduser --shell /bin/bash --disabled-password --gecos "" matlab \
 USER matlab
 WORKDIR /home/matlab
 
-# Create .matlab directory and set ownership
-RUN mkdir -p /home/matlab/.matlab && \
-    chown -R matlab:matlab /home/matlab/.matlab
-
 # Run mpm to install MATLAB in the target location and delete the mpm installation afterwards.
 # If mpm fails to install successfully, then print the logfile in the terminal, otherwise clean up.
 # Pass in $HOME variable to install support packages into the user's HOME folder.
@@ -79,20 +71,15 @@ RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \
     --destination=${MATLAB_INSTALL_LOCATION} \
     --products ${MATLAB_PRODUCT_LIST} \
     || (echo "MPM Installation Failure. See below for more information:" && cat /tmp/mathworks_root.log && false) \
-    && sudo rm -f mpm /tmp/mathworks_root.log \
+    && sudo rm -rf mpm /tmp/mathworks_root.log \
     && sudo ln -s ${MATLAB_INSTALL_LOCATION}/bin/matlab /usr/local/bin/matlab
 
-# Note: Uncomment one of the following two ways to configure the license server.
-
-# Option 1. Specify the host and port of the machine that serves the network licenses
+# Specify the host and port of the machine that serves the network licenses
 # if you want to store the license information in an environment variable. This
 # is the preferred option. You can either use a build variable, like this:
 # --build-arg LICENSE_SERVER=27000@MyServerName or you can specify the license server
 # directly using: ENV MLM_LICENSE_FILE=27000@flexlm-server-name
 ENV MLM_LICENSE_FILE=${MLM_LICENSE_FILE}
-# Option 2. Alternatively, you can put a license file into the container.
-# Enter the details of the license server in this file and uncomment the following line.
-# COPY network.lic ${MATLAB_INSTALL_LOCATION}/licenses/
 
 # The following environment variables allow MathWorks to understand how this MathWorks
 # product (MATLAB Dockerfile) is being used. This information helps us make MATLAB even better.
@@ -102,18 +89,19 @@ ENV MLM_LICENSE_FILE=${MLM_LICENSE_FILE}
 # https://github.com/mathworks-ref-arch/matlab-dockerfile#help-make-matlab-even-better
 ENV MW_DDUX_FORCE_ENABLE=true MW_CONTEXT_TAGS=MATLAB:DOCKERFILE:V1
 
-# Set environment variable needed by ROS toolbox.
-ENV LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+###
+### Template ends here
+###
 
 # Copy waveform approximator
-COPY ros2_ws/src/mtms_packages/targeting/waveform_approximator/waveform_approximator /home/matlab
+COPY src/waveform_approximator/waveform_approximator /home/matlab
 
 # Copy custom ROS messages
 COPY api/matlab/matlab_msg_gen.zip /home/matlab
 
 # Copy entrypoint
 
-COPY ros2_ws/src/mtms_packages/targeting/waveform_approximator/ros_entrypoint.sh .
+COPY src/waveform_approximator/ros_entrypoint.sh .
 RUN sudo dos2unix ros_entrypoint.sh
 RUN sudo chmod +x ros_entrypoint.sh
 
