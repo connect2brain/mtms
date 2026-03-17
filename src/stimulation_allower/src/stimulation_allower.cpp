@@ -62,6 +62,9 @@ public:
     /* Create service for querying status of stimulation allowed.*/
     is_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::IsStimulationAllowed>(
         "/stimulation/allowed", is_stimulation_allowed_callback);
+
+    /* Update initial default state even if no neuronavigation topics are publishing. */
+    update_stimulation_allowed();
   }
 
 private:
