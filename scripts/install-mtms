@@ -66,5 +66,13 @@ source scripts/build-mtms
 
 echo "Done."
 echo ""
-echo "Reboot your computer to complete the installation."
+echo "A reboot is required to complete the installation."
+read -r -p "Reboot now? (Y/n): " reboot_response
+
+if [[ "$reboot_response" =~ ^[Nn]([Oo])?$ ]]; then
+    echo "Please reboot your computer manually to complete the installation."
+else
+    echo "Rebooting now..."
+    sudo reboot
+fi
 echo ""
