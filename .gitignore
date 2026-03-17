@@ -14,15 +14,10 @@ cmake-build-release
 front/cypress/videos
 front/cypress/screenshots
 
-# ROS bags used to store data from, e.g., sessions.
-data/bags/
+# Neuronavigation data
 data/neuronavigation/
 !data/neuronavigation/efield
 !data/neuronavigation/example.inv3
-
-# Generated when building ROS messages for MATLAB API by running ros2genmsg (see documentation
-# in api/matlab/README.md); can be left outside version control.
-matlab_msg_gen/
 
 # The config for neuronavigation is stored in .config directory.
 .config/
