@@ -86,8 +86,10 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
           max={max}
           value={value}
           onChange={handleSliderChange}
+          onInput={handleSliderChange}
           style={{
-            WebkitAppearance: 'slider-vertical' /* WebKit */,
+            writingMode: 'vertical-lr',
+            direction: 'rtl',
             width: '8px',
             height: '350px',
             zIndex: 2,
