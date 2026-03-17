@@ -36,7 +36,7 @@ services:
   mtms_simulator:
     build:
       context: .
-      dockerfile: ros2_ws/src/mtms_packages/simulators/mtms_simulator/Dockerfile
+      dockerfile: ros2_ws/src/mtms_packages/mtms/mtms_simulator/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:

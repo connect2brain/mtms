@@ -28,14 +28,14 @@ COPY ros2_ws/src/shared_packages/interfaces/system_interfaces src/shared_interfa
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY ros2_ws/src/mtms_packages/simulators/mtms_simulator/ ros2_ws/src/mtms_packages/simulators/mtms_simulator/
+COPY ros2_ws/src/mtms_packages/mtms/mtms_simulator/ ros2_ws/src/mtms_packages/mtms/mtms_simulator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY ros2_ws/src/mtms_packages/simulators/mtms_simulator/ros_entrypoint.sh .
+COPY ros2_ws/src/mtms_packages/mtms/mtms_simulator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

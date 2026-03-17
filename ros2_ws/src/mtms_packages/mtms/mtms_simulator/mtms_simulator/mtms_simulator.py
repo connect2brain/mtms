@@ -16,9 +16,8 @@ from event_msgs.msg import (
     ChargeFeedback,
     DischargeFeedback,
     TriggerOutFeedback,
-    WaveformPhase,
-    WaveformPiece,
 )
+from waveform_msgs.msg import Waveform, WaveformPhase, WaveformPiece
 from mtms_device_interfaces.msg import (
     SystemState,
     DeviceState,
@@ -517,7 +516,7 @@ class MTMSSimulator(Node):
         return PulseError(value=PulseError.NO_ERROR)
 
     def _calculate_waveform_durations(
-        self, waveform: list[WaveformPiece]
+        self, waveform: Waveform
     ) -> (int, int, int):
         """
         Calculated the waveform durations
@@ -531,7 +530,7 @@ class MTMSSimulator(Node):
         total_duration = 0
         rising_duration = 0
         falling_duration = 0
-        for waveform_piece in waveform:
+        for waveform_piece in waveform.pieces:
             # TODO: Check waveform phase type requirements.
             duration = waveform_piece.duration_in_ticks
             total_duration += duration
