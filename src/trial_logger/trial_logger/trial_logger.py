@@ -49,7 +49,7 @@ class TrialLoggerNode(Node):
         subject_name = self.sanitize_filename(metadata.subject_name)
         experiment_name = self.sanitize_filename(metadata.experiment_name)
 
-        basepath = os.path.join(self.logs_dir, 'csv')
+        basepath = self.logs_dir
 
         # Ensure the directory exists
         if not os.path.exists(basepath):
