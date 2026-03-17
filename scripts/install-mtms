@@ -49,7 +49,7 @@ source $HOME/.bash_env
 source scripts/build-docs
 
 # Build MATLAB ROS interfaces if requested
-echo "Do you want to build the MATLAB ROS interfaces? (Y/n) (Note: This takes a few minutes to complete.)"
+echo "Do you want to build the MATLAB ROS interfaces? (Y/n) (Note: This can take 6-8 minutes to complete.)"
 read -r response
 
 if [ "$response" != "n" ]; then
