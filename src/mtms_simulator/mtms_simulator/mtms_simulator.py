@@ -522,10 +522,23 @@ class MTMSSimulator(Node):
             falling_duration,
         ) = self._calculate_waveform_durations(waveform=message.waveform)
         if total_duration > self.settings.maximum_pulse_duration_ticks:
+            self.get_logger().warn(
+                "Pulse duration invalid: total=%d ticks exceeds max=%d ticks"
+                % (total_duration, self.settings.maximum_pulse_duration_ticks)
+            )
             return PulseError(value=PulseError.INVALID_DURATIONS)
 
         rise_fall_diff = abs(rising_duration - falling_duration)
         if rise_fall_diff > self.settings.maximum_rising_falling_difference_ticks:
+            self.get_logger().warn(
+                "Pulse duration invalid: rising=%d ticks, falling=%d ticks, diff=%d ticks exceeds max_diff=%d ticks"
+                % (
+                    rising_duration,
+                    falling_duration,
+                    rise_fall_diff,
+                    self.settings.maximum_rising_falling_difference_ticks,
+                )
+            )
             return PulseError(value=PulseError.INVALID_DURATIONS)
 
         return PulseError(value=PulseError.NO_ERROR)
