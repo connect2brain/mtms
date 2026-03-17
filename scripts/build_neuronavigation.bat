@@ -5,7 +5,7 @@ REM Note that the ROS workspace is not re-built; for that, use build_ros_workspa
 
 call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
-call C:\dev\ros2_iron\local_setup.bat
+call C:\dev\ros2_jazzy\local_setup.bat
 
 cd %MTMS_ROOT%\ros2_ws
 
