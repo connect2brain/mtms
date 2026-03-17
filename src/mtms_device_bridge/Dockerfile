@@ -37,7 +37,7 @@ RUN apt-get install -y \
     dos2unix
 
 # Set the Cyclone DDS configuration
-COPY src/resources/cyclonedds.xml /config/
+COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace
