@@ -32,6 +32,7 @@ class ExperimentPerformerNode(Node):
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
+    LOG_TRIAL_TIMEOUT_S = 2.0
 
     def __init__(self):
         super().__init__('experiment_performer_node')
@@ -264,7 +265,7 @@ class ExperimentPerformerNode(Node):
     def get_result_from_container(self, result_container):
         return result_container[0]
 
-    def async_service_call(self, client, request):
+    def async_service_call(self, client, request, timeout_s=None, timeout_message=None):
         call_service_event = Event()
         response_value = [None]
 
@@ -276,8 +277,17 @@ class ExperimentPerformerNode(Node):
         service_call_future = client.call_async(request)
         service_call_future.add_done_callback(service_call_callback)
 
-        # Wait for the service call to complete
-        call_service_event.wait()
+        # Wait for the service call to complete.
+        if timeout_s is None:
+            call_service_event.wait()
+        else:
+            completed = call_service_event.wait(timeout=timeout_s)
+            if not completed:
+                if timeout_message is not None:
+                    self.logger.warning(timeout_message)
+                else:
+                    self.logger.warning('Service call timed out after {:.3f} seconds.'.format(timeout_s))
+                return None
 
         response = response_value[0]
         return response
@@ -339,9 +349,24 @@ class ExperimentPerformerNode(Node):
         request.trial_result = trial_result
         request.num_of_attempts = num_of_attempts
 
-        response = self.async_service_call(self.log_trial_client, request)
+        response = self.async_service_call(
+            self.log_trial_client,
+            request,
+            timeout_s=self.LOG_TRIAL_TIMEOUT_S,
+            timeout_message=(
+                'Service /trial/log timed out after {:.1f} s. '
+                'Trial logger may be blocked or crashed.'
+            ).format(self.LOG_TRIAL_TIMEOUT_S),
+        )
 
-        assert response.success, "Logging trial was not successful."
+        if response is None:
+            return False
+
+        if not response.success:
+            self.logger.error('Service /trial/log returned success=false.')
+            return False
+
+        return True
 
     # Performing experiment
 
@@ -714,15 +739,26 @@ class ExperimentPerformerNode(Node):
                     i + 1,
                     num_of_valid_trials
                 ))
-                trial_results.append(trial_result)
 
-                self.log_trial(
+                trial_logged = self.log_trial(
                     metadata=metadata,
                     trial=trial,
                     trial_number=trial_number,
                     trial_result=trial_result,
                     num_of_attempts=num_of_attempts,
                 )
+                if not trial_logged:
+                    self.logger.error(
+                        '{}: Trial {} / {} was performed, but logging did not complete; aborting experiment.'.format(
+                            goal_id,
+                            i + 1,
+                            num_of_valid_trials,
+                        )
+                    )
+                    success = False
+                    break
+
+                trial_results.append(trial_result)
 
                 i += 1
                 num_of_attempts = 0
