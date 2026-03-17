@@ -1,14 +1,14 @@
 [submodule "ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3"]
-	path = ros2_ws/src/mtms_packages/neuronavigation/neuronavigation/invesalius3
+	path = src/neuronavigation/invesalius3
 	url = https://github.com/invesalius/invesalius3
-[submodule "ros2_ws/src/mtms_packages/targeting/efield"]
-	path = ros2_ws/src/mtms_packages/targeting/efield
+[submodule "src/efield"]
+        path = src/efield
 	url = https://github.com/connect2brain/e-field.git
-[submodule "ros2_ws/src/mtms_packages/targeting/targeting/data"]
-	path = ros2_ws/src/mtms_packages/targeting/targeting/data
+[submodule "src/targeting/data"]
+        path = src/targeting/data
 	url = https://github.com/connect2brain/targeting-tables.git
-[submodule "ros2_ws/src/mtms_packages/targeting/waveform_approximator"]
-	path = ros2_ws/src/mtms_packages/targeting/waveform_approximator
+[submodule "src/waveform_approximator"]
+        path = src/waveform_approximator
 	url = https://github.com/connect2brain/waveform-approximator.git
 [submodule "bitfiles"]
 	path = bitfiles
