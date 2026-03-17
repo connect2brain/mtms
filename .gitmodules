@@ -1,9 +1,6 @@
 [submodule "src/neuronavigation/invesalius3"]
 	path = src/neuronavigation/invesalius3
 	url = https://github.com/invesalius/invesalius3
-[submodule "src/efield"]
-        path = src/efield
-	url = https://github.com/connect2brain/e-field.git
 [submodule "src/targeting/data"]
         path = src/targeting/data
 	url = https://github.com/connect2brain/targeting-tables.git
@@ -16,3 +13,6 @@
 [submodule "src/waveform_approximator/waveform_approximator"]
 	path = src/waveform_approximator/waveform_approximator
 	url = https://github.com/connect2brain/waveform-approximator.git
+[submodule "src/efield/efield_libraries"]
+	path = src/efield/efield_libraries
+	url = https://github.com/connect2brain/e-field.git
