@@ -162,9 +162,6 @@ class VoltageSetterNode(Node):
         self.id_counter += 1
         return self.id_counter
 
-    def reset_id_counter(self):
-        self.id_counter = 0
-
     # Utilities
 
     def get_voltage(self, channel):
@@ -253,6 +250,8 @@ class VoltageSetterNode(Node):
         request = RequestEvents.Request()
 
         id = self.get_next_id()
+        with self.lock:
+            self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -268,16 +267,17 @@ class VoltageSetterNode(Node):
 
         response = self.async_service_call(self.request_events_client, request)
         if response is None:
+            with self.lock:
+                self.event_feedback.pop(id, None)
             raise TimeoutError(
                 "Timed out waiting for charge request response."
             )
         if not response.success:
+            with self.lock:
+                self.event_feedback.pop(id, None)
             raise RuntimeError(
                 "Charge request was rejected by /mtms_device/events/request."
             )
-
-        with self.lock:
-            self.event_feedback[id] = None
 
         return id
 
@@ -285,6 +285,8 @@ class VoltageSetterNode(Node):
         request = RequestEvents.Request()
 
         id = self.get_next_id()
+        with self.lock:
+            self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -300,16 +302,17 @@ class VoltageSetterNode(Node):
 
         response = self.async_service_call(self.request_events_client, request)
         if response is None:
+            with self.lock:
+                self.event_feedback.pop(id, None)
             raise TimeoutError(
                 "Timed out waiting for discharge request response."
             )
         if not response.success:
+            with self.lock:
+                self.event_feedback.pop(id, None)
             raise RuntimeError(
                 "Discharge request was rejected by /mtms_device/events/request."
             )
-
-        with self.lock:
-            self.event_feedback[id] = None
 
         return id
 
@@ -383,8 +386,6 @@ class VoltageSetterNode(Node):
         success = self.check_goal_feasible(goal_id)
         if not success:
             return False
-
-        self.reset_id_counter()
 
         # XXX: Keeping track of the IDs is a bit messy; should use ROS actions instead
         #   to hide the logic.
