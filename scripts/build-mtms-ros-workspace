@@ -24,7 +24,7 @@ source /opt/ros/jazzy/setup.bash
 # Build interfaces
 echo "  • ${BOLD}Building interfaces...${RESET}"
 
-cd $MTMS_ROOT/ros2_ws
+cd $MTMS_ROOT
 colcon build --base-paths src/interfaces src/realtime_utils
 
 # Build mTMS device bridge

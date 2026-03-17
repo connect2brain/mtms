@@ -11,10 +11,10 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary
 
 call C:\dev\ros2_jazzy\local_setup.bat
 
-cd %MTMS_ROOT%\ros2_ws
+cd %MTMS_ROOT%
 
 REM Ensure __init__.py exists for Python package discovery in invesalius3
-set "pkg_dir=%MTMS_ROOT%\ros2_ws\src\neuronavigation\invesalius3"
+set "pkg_dir=%MTMS_ROOT%\src\neuronavigation\invesalius3"
 set "init_file=%pkg_dir%\__init__.py"
 
 if not exist "%pkg_dir%" (

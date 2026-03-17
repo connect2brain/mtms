@@ -11,8 +11,8 @@ if "%~2"=="" (
 
 :: XXX: Hardcoded source and destination directories
 set "SOURCE_DIR=c:\Users\mTMS\mtms-fpga\FPGA Bitfiles"
-set "DEST_DIR_INCLUDE=C:\Users\mTMS\mtms\ros2_ws\src\bridges\mtms_device_bridge\include"
-set "DEST_DIR_LIB=C:\Users\mTMS\mtms\ros2_ws\src\bridges\mtms_device_bridge\src\lib"
+set "DEST_DIR_INCLUDE=C:\Users\mTMS\mtms\src\mtms_device_bridge\include"
+set "DEST_DIR_LIB=C:\Users\mTMS\mtms\src\mtms_device_bridge\src\lib"
 set "DEST_DIR_BITFILES=C:\Users\mTMS\mtms\bitfiles"
 set "GENERATION=%~1"
 set "VERSION=%~2"

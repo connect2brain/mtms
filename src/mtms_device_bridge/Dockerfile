@@ -54,7 +54,7 @@ COPY src/realtime_utils src/realtime_utils/
 
 # Build ROS packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 RUN source /opt/ros/jazzy/setup.bash && \
     colcon build
 

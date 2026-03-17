@@ -70,7 +70,7 @@ RUN rm setup.py
 
 # Copy and build ROS interfaces
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/

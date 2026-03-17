@@ -21,7 +21,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy ROS workspace and build packages
 
-WORKDIR /app/ros2_ws
+WORKDIR /app
 
 # Copy shared ROS interfaces
 COPY src/interfaces src/interfaces
