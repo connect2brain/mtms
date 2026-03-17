@@ -20,7 +20,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 ### Neuronavigation
 
-- `/navigation/navigate` - Boolean navigation mode state.
+- `/neuronavigation/navigate` - Boolean navigation mode state.  XXX: Seems to be unused.
 - `/neuronavigation/optitrack_poses` - Tracked tool/coil poses from OptiTrack bridge.
 - `/neuronavigation/coil_target` - Selected coil target updates for neuronavigation.
 - `/neuronavigation/create_marker` - Marker creation requests (for stimulation/visualization events).

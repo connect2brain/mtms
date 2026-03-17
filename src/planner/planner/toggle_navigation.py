@@ -22,12 +22,12 @@ class ToggleNavigationNode(StateNode):
         )
         self._navigating_publisher = self.create_publisher(
             Bool,
-            "/navigation/navigate",
+            "/neuronavigation/navigate",
             qos
         )
         self._navigating_subscriber = self.create_subscription(
             Bool,
-            "/navigation/navigate",
+            "/neuronavigation/navigate",
             self.update_navigating,
             qos
         )
