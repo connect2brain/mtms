@@ -10,6 +10,10 @@
     docker_repo_file: /etc/apt/sources.list.d/docker.list
     docker_apt_arch: "{{ 'arm64' if ansible_facts.architecture == 'aarch64' else 'amd64' }}"
     target_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env','USER'), true) }}"
+    apt_connectivity_urls:
+      - https://archive.ubuntu.com/ubuntu/dists/noble/Release
+      - https://security.ubuntu.com/ubuntu/dists/noble-security/Release
+      - https://download.docker.com/linux/ubuntu/dists/noble/Release
 
   tasks:
     # -------------------------------------------------------------------------
@@ -23,6 +27,39 @@
         fail_msg: >-
           This playbook is intended for Ubuntu 24.04 (noble).
           Detected {{ ansible_facts.distribution }} {{ ansible_facts.distribution_release }}
+
+    - name: Preflight check repository reachability
+      ansible.builtin.uri:
+        url: "{{ item }}"
+        method: GET
+        return_content: no
+        timeout: 8
+        status_code: 200
+      register: repo_reachability
+      changed_when: false
+      retries: 4
+      delay: 3
+      until: repo_reachability is succeeded
+      loop: "{{ apt_connectivity_urls }}"
+      loop_control:
+        label: "{{ item }}"
+      failed_when: false
+
+    - name: Fail fast when package repositories are unreachable
+      ansible.builtin.assert:
+        that:
+          - repo_reachability.results | selectattr('failed', 'defined') | selectattr('failed') | list | length == 0
+        fail_msg: >-
+          One or more package repositories are unreachable before apt operations.
+          This usually indicates temporary internet/DNS/proxy/captive-portal issues.
+          Failed URLs: {{
+            repo_reachability.results
+            | selectattr('failed', 'defined')
+            | selectattr('failed')
+            | map(attribute='item')
+            | list
+            | join(', ')
+          }}
 
     # -------------------------------------------------------------------------
     # 1) Install prerequisites
