@@ -15,7 +15,6 @@ Contents
    Python API <rst/python-api.rst>
    Matlab API <rst/matlab-api.rst>
    mTMS device interfaces <markdown/mtms-device-interfaces.md>
-   Deployment environment <markdown/deployment-environment.md>
    Known differences between installations <markdown/known-differences.md>
 
 Indices and tables
