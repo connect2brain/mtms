@@ -138,9 +138,7 @@ export const SystemView = () => {
           <DeviceControl />
         </PanelA>
         <VerticalDividedPanelB>
-          <SubPanel>
-            <SystemState />
-          </SubPanel>
+          <SystemState />
         </VerticalDividedPanelB>
         <PanelC>
           <EventFeedbacks feedback={feedback} />
@@ -152,7 +150,7 @@ export const SystemView = () => {
 
 const Wrapper = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(20rem, 26rem) minmax(24rem, 38rem);
   grid-template-rows: auto 1fr;
   gap: 1rem;
   padding: 1rem;
@@ -177,12 +175,7 @@ const VerticalDividedPanelB = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  height: 96%;
   ${styledPanel}
-`
-
-const SubPanel = styled(PanelA)`
-  margin: 0;
 `
 
 const PanelC = styled.div`
