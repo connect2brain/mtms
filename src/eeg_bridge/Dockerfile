@@ -23,7 +23,7 @@ COPY src/interfaces/pipeline_interfaces src/interfaces/pipeline_interfaces/
 
 COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
-COPY src/utils/realtime src/utils/realtime/
+COPY src/realtime_utils src/realtime_utils/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
