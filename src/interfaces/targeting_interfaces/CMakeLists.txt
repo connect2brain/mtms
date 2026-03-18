@@ -7,6 +7,8 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(event_interfaces REQUIRED)
+find_package(waveform_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -25,6 +27,17 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CoilTarget.msg"
   "msg/ElectricTarget.msg"
   "msg/TargetingAlgorithm.msg"
+
+  "srv/ApproximateWaveform.srv"
+  "srv/EstimateVoltageAfterPulse.srv"
+  "srv/GetMultipulseWaveforms.srv"
+
+  "srv/GetTargetVoltages.srv"
+  "srv/GetMaximumIntensity.srv"
+  "srv/GetDefaultWaveform.srv"
+  "srv/ReversePolarity.srv"
+
+  DEPENDENCIES event_interfaces waveform_interfaces
 )
 
 ament_package()

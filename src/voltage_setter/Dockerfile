@@ -27,7 +27,7 @@ COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY src/interfaces/mtms_trial_interfaces src/interfaces/mtms_trial_interfaces/
 COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
-COPY src/interfaces/targeting_services src/interfaces/targeting_services/
+COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
 COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build

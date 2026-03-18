@@ -27,7 +27,7 @@ from event_interfaces.msg import (
 
 from mep_interfaces.action import AnalyzeMep
 
-from targeting_services.srv import (
+from targeting_interfaces.srv import (
     GetTargetVoltages,
     GetMaximumIntensity,
     GetDefaultWaveform,

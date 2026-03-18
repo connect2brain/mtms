@@ -1,5 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
-#include "targeting_services/srv/reverse_polarity.hpp"
+#include "targeting_interfaces/srv/reverse_polarity.hpp"
 #include "waveform_interfaces/msg/waveform_phase.hpp"
 #include "waveform_interfaces/msg/waveform_piece.hpp"
 #include "waveform_interfaces/msg/waveform.hpp"
@@ -23,8 +23,8 @@ public:
   ReversePolarity() : Node("reverse_polarity") {
 
     auto service_callback = [this](
-        const std::shared_ptr<targeting_services::srv::ReversePolarity::Request> request,
-        std::shared_ptr<targeting_services::srv::ReversePolarity::Response> response) -> void {
+        const std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Request> request,
+        std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Response> response) -> void {
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
@@ -56,12 +56,12 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Responded to request.");
     };
 
-    reverse_polarity_service = this->create_service<targeting_services::srv::ReversePolarity>(
+    reverse_polarity_service = this->create_service<targeting_interfaces::srv::ReversePolarity>(
         "/mtms/waveforms/reverse_polarity", service_callback);
   }
 
 private:
-  rclcpp::Service<targeting_services::srv::ReversePolarity>::SharedPtr reverse_polarity_service;
+  rclcpp::Service<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_service;
 };
 
 

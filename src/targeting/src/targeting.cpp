@@ -8,8 +8,8 @@
 
 #include "targeting_interfaces/msg/targeting_algorithm.hpp"
 
-#include "targeting_services/srv/get_target_voltages.hpp"
-#include "targeting_services/srv/get_maximum_intensity.hpp"
+#include "targeting_interfaces/srv/get_target_voltages.hpp"
+#include "targeting_interfaces/srv/get_maximum_intensity.hpp"
 
 #include <fstream>
 #include <string>
@@ -93,8 +93,8 @@ public:
     /* Define callbacks for service calls. */
 
     auto get_target_voltages_callback = [this](
-        const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Request> request,
-        std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> response) -> void {
+        const std::shared_ptr<targeting_interfaces::srv::GetTargetVoltages::Request> request,
+        std::shared_ptr<targeting_interfaces::srv::GetTargetVoltages::Response> response) -> void {
 
       int8_t displacement_x = request->target.displacement_x;
       int8_t displacement_y = request->target.displacement_y;
@@ -144,8 +144,8 @@ public:
     };
 
     auto get_maximum_intensity_callback = [this](
-        const std::shared_ptr<targeting_services::srv::GetMaximumIntensity::Request> request,
-        std::shared_ptr<targeting_services::srv::GetMaximumIntensity::Response> response) -> void {
+        const std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Request> request,
+        std::shared_ptr<targeting_interfaces::srv::GetMaximumIntensity::Response> response) -> void {
       int8_t displacement_x = request->displacement_x;
       int8_t displacement_y = request->displacement_y;
       int16_t rotation_angle = request->rotation_angle;
@@ -183,10 +183,10 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Successfully responded to maximum intensity request with %d V/m", response->maximum_intensity);
     };
 
-    get_target_voltages = this->create_service<targeting_services::srv::GetTargetVoltages>(
+    get_target_voltages = this->create_service<targeting_interfaces::srv::GetTargetVoltages>(
         "/mtms/targeting/get_target_voltages", get_target_voltages_callback);
 
-    get_maximum_intensity = this->create_service<targeting_services::srv::GetMaximumIntensity>(
+    get_maximum_intensity = this->create_service<targeting_interfaces::srv::GetMaximumIntensity>(
         "/mtms/targeting/get_maximum_intensity", get_maximum_intensity_callback);
 
     initialize_lookup_table();
@@ -298,8 +298,8 @@ private:
   }
 
   Target targets[NUM_OF_ALGORITHMS][NUM_OF_DISPLACEMENTS][NUM_OF_DISPLACEMENTS][NUM_OF_ROTATION_ANGLES];
-  rclcpp::Service<targeting_services::srv::GetTargetVoltages>::SharedPtr get_target_voltages;
-  rclcpp::Service<targeting_services::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
+  rclcpp::Service<targeting_interfaces::srv::GetTargetVoltages>::SharedPtr get_target_voltages;
+  rclcpp::Service<targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
 
   std::string coil_array;
 };

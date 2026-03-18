@@ -8,12 +8,12 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(targeting_services REQUIRED)
+find_package(targeting_interfaces REQUIRED)
 
 add_executable(targeting
         src/targeting.cpp
 )
-ament_target_dependencies(targeting rclcpp std_msgs targeting_services)
+ament_target_dependencies(targeting rclcpp std_msgs targeting_interfaces)
 
 install(TARGETS
   targeting

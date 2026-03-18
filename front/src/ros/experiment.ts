@@ -5,7 +5,7 @@ import { ros } from './ros'
 const getMaximumIntensityService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/targeting/get_maximum_intensity',
-  serviceType: 'targeting_services/GetMaximumIntensity',
+  serviceType: 'targeting_interfaces/GetMaximumIntensity',
 })
 
 export const getMaximumIntensity = (

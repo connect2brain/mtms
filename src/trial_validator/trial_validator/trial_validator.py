@@ -7,7 +7,7 @@ from mtms_trial_interfaces.msg import Trial
 from mtms_trial_interfaces.srv import ValidateTrial
 
 from waveform_interfaces.msg import WaveformsForCoilSet
-from targeting_services.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
+from targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup

@@ -96,11 +96,11 @@ classdef MTMSApiNode < handle
 
             % To other parts of the system.
 
-            obj.get_target_voltages_client = ros2svcclient(obj.node, "/mtms/targeting/get_target_voltages", "targeting_services/GetTargetVoltages");
-            obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/mtms/targeting/get_maximum_intensity", "targeting_services/GetMaximumIntensity");
-            obj.get_default_waveform_client = ros2svcclient(obj.node, "/mtms/waveforms/get_default", "targeting_services/GetDefaultWaveform");
-            obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/mtms/waveforms/get_multipulse_waveforms", "targeting_services/GetMultipulseWaveforms");
-            obj.reverse_polarity_client = ros2svcclient(obj.node, "/mtms/waveforms/reverse_polarity", "targeting_services/ReversePolarity");
+            obj.get_target_voltages_client = ros2svcclient(obj.node, "/mtms/targeting/get_target_voltages", "targeting_interfaces/GetTargetVoltages");
+            obj.get_maximum_intensity_client = ros2svcclient(obj.node, "/mtms/targeting/get_maximum_intensity", "targeting_interfaces/GetMaximumIntensity");
+            obj.get_default_waveform_client = ros2svcclient(obj.node, "/mtms/waveforms/get_default", "targeting_interfaces/GetDefaultWaveform");
+            obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/mtms/waveforms/get_multipulse_waveforms", "targeting_interfaces/GetMultipulseWaveforms");
+            obj.reverse_polarity_client = ros2svcclient(obj.node, "/mtms/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
             obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
         end

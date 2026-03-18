@@ -15,8 +15,8 @@
   <build_depend>mep_interfaces</build_depend>
   <exec_depend>mep_interfaces</exec_depend>
 
-  <build_depend>targeting_services</build_depend>
-  <exec_depend>targeting_services</exec_depend>
+  <build_depend>targeting_interfaces</build_depend>
+  <exec_depend>targeting_interfaces</exec_depend>
 
   <build_depend>mtms_trial_interfaces</build_depend>
   <exec_depend>mtms_trial_interfaces</exec_depend>

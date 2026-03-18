@@ -20,7 +20,7 @@ WORKDIR /app
 
 # ROS interfaces
 COPY src/interfaces/event_interfaces src/interfaces/event_interfaces/
-COPY src/interfaces/targeting_services src/interfaces/targeting_services/
+COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
 COPY src/interfaces/waveform_interfaces src/interfaces/waveform_interfaces/
 
 COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/

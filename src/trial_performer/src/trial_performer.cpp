@@ -46,14 +46,14 @@ void TrialPerformerNode::initialize_actions() {
 }
 
 void TrialPerformerNode::initialize_service_clients() {
-  targeting_client = this->create_client<targeting_services::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
+  targeting_client = this->create_client<targeting_interfaces::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
 
-  reverse_polarity_client = this->create_client<targeting_services::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
+  reverse_polarity_client = this->create_client<targeting_interfaces::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
   while (!reverse_polarity_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/reverse_polarity not available, waiting...");
   }
 
-  get_default_waveform_client = this->create_client<targeting_services::srv::GetDefaultWaveform>(
+  get_default_waveform_client = this->create_client<targeting_interfaces::srv::GetDefaultWaveform>(
       "/mtms/waveforms/get_default",
       rclcpp::QoS(rclcpp::ServicesQoS()),
       reentrant_callback_group);
@@ -61,7 +61,7 @@ void TrialPerformerNode::initialize_service_clients() {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_default not available, waiting...");
   }
 
-  get_multipulse_waveforms_client = this->create_client<targeting_services::srv::GetMultipulseWaveforms>("/mtms/waveforms/get_multipulse_waveforms");
+  get_multipulse_waveforms_client = this->create_client<targeting_interfaces::srv::GetMultipulseWaveforms>("/mtms/waveforms/get_multipulse_waveforms");
   while (!get_multipulse_waveforms_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_multipulse_waveforms not available, waiting...");
   }
@@ -332,7 +332,7 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::Waveforms
     const std::vector<targeting_interfaces::msg::ElectricTarget> &targets,
     const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms) {
 
-  auto request = std::make_shared<targeting_services::srv::GetMultipulseWaveforms::Request>();
+  auto request = std::make_shared<targeting_interfaces::srv::GetMultipulseWaveforms::Request>();
   request->targets = targets;
   request->target_waveforms = target_waveforms;
 
@@ -358,7 +358,7 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::Waveforms
 std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_target_voltages(
     const targeting_interfaces::msg::ElectricTarget &target) {
 
-  auto request = std::make_shared<targeting_services::srv::GetTargetVoltages::Request>();
+  auto request = std::make_shared<targeting_interfaces::srv::GetTargetVoltages::Request>();
   request->target = target;
 
   auto future = targeting_client->async_send_request(request);
@@ -378,7 +378,7 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
 }
 
 waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
-  auto request = std::make_shared<targeting_services::srv::GetDefaultWaveform::Request>();
+  auto request = std::make_shared<targeting_interfaces::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
 
   auto future = get_default_waveform_client->async_send_request(request);
@@ -395,7 +395,7 @@ waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint
 }
 
 waveform_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const waveform_interfaces::msg::Waveform &waveform) {
-  auto request = std::make_shared<targeting_services::srv::ReversePolarity::Request>();
+  auto request = std::make_shared<targeting_interfaces::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
   auto future = reverse_polarity_client->async_send_request(request);

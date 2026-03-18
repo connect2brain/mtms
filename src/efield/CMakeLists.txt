@@ -11,7 +11,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(shape_msgs REQUIRED)
-find_package(targeting_services REQUIRED)
+find_package(targeting_interfaces REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries")
@@ -31,7 +31,7 @@ add_library(libefield_estimation SHARED IMPORTED)
 set_target_properties(libefield_estimation PROPERTIES IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/efield_libraries/libefield_estimation.so)
 target_link_libraries(efield libefield_estimation)
 
-ament_target_dependencies(efield rclcpp std_msgs targeting_services neuronavigation_interfaces shape_msgs)
+ament_target_dependencies(efield rclcpp std_msgs targeting_interfaces neuronavigation_interfaces shape_msgs)
 
 install(TARGETS
         efield

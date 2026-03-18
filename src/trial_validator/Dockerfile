@@ -22,7 +22,7 @@ WORKDIR /app
 COPY src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
 COPY src/interfaces/event_interfaces src/interfaces/event_interfaces/
 COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
-COPY src/interfaces/targeting_services src/interfaces/targeting_services/
+COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
 COPY src/interfaces/waveform_interfaces src/interfaces/waveform_interfaces/
 
 COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
