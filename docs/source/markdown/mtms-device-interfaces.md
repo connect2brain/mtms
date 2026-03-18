@@ -27,7 +27,6 @@ policies and other behaviour will be described in their own sections.
 
 | Topic                            | Type         | Message definition                            |
 |----------------------------------|--------------|-----------------------------------------------|
-| `/mtms/device/allow_stimulation` | Service      | `mtms_device_interfaces.srv.AllowStimulation` |
 | `/mtms/device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
 | `/mtms/device/start`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
 | `/mtms/device/stop`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
@@ -175,7 +174,11 @@ The device needs to have setting sent to it with topic `/mtms/device/send_settin
 control the pulse durations and frequencies.
 
 For the device to be able to give pulses, the stimulation has to be allowed. This is
-controlled with topic `/mtms/device/allow_stimulation`.
+controlled based on the following rules:
+
+- If neuronavigation is not started, stimulation is allowed.
+- If neuronavigation is started and target mode is disabled, stimulation is allowed.
+- If neuronavigation is started and target mode is enabled, and coil is at the target, stimulation is allowed.
 
 #### Pulses
 Pulses, also work similarly to the charging and discharging processes in the regard that
@@ -202,17 +205,6 @@ when the `event_info` condition it met.
 
 ## Interface specification
 This section goes over the implementation details of different interface messages.
-
-### Topic: `/mtms/device/allow_stimulation`
-#### Service: `mtms_device_interfaces.srv.AllowStimulation`
-QoS: ROS2 Default
-
-Allow or disallow stimulation.
-Response: Boolean indicating if the service call was successful.
-
-    bool allow_stimulation
-    ---
-    bool success
 
 ### Topic: `/mtms/device/send_settings`
 #### Service: `mtms_device_interfaces.srv.SendSettings`

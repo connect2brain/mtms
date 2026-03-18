@@ -45,7 +45,6 @@ class MTMSApiNode(Node):
     ROS_SERVICE_START_DEVICE = ('/mtms/device/start', StartDevice)
     ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', StopDevice)
 
-    ROS_SERVICE_ALLOW_STIMULATION = ('/mtms/device/allow_stimulation', AllowStimulation)
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)
     ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', RequestTrigger)
 
@@ -68,7 +67,6 @@ class MTMSApiNode(Node):
         ROS_SERVICE_STOP_DEVICE,
         ROS_SERVICE_START_SESSION,
         ROS_SERVICE_STOP_SESSION,
-        ROS_SERVICE_ALLOW_STIMULATION,
         ROS_SERVICE_GET_TARGET_VOLTAGES,
         ROS_SERVICE_GET_MAXIMUM_INTENSITY,
         ROS_SERVICE_GET_DEFAULT_WAVEFORM,
@@ -184,16 +182,6 @@ class MTMSApiNode(Node):
         return self.call_service(client, request)
 
     # Events
-
-    def allow_stimulation(self, allow_stimulation):
-        topic, service_type = self.ROS_SERVICE_ALLOW_STIMULATION
-
-        client = self.ros_service_clients[topic]
-        request = service_type.Request()
-
-        request.allow_stimulation = allow_stimulation
-
-        return self.call_service(client, request)
 
     def request_trigger(self):
         topic, service_type = self.ROS_SERVICE_REQUEST_TRIGGER

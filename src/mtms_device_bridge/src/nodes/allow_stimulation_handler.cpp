@@ -1,34 +1,53 @@
 #include "rclcpp/rclcpp.hpp"
-
-#include "mtms_device_interfaces/srv/allow_stimulation.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 
-void allow_stimulation([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::AllowStimulation::Request> request,
-                        std::shared_ptr<mtms_device_interfaces::srv::AllowStimulation::Response> response) {
-  if (!is_fpga_ok()) {
-    RCLCPP_WARN(rclcpp::get_logger("allow_stimulation"), "FPGA not in OK state during service call");
-    response->success = false;
-    return;
-  }
-
-  bool allow_stimulation = request->allow_stimulation;
-
-  NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Allowstimulation, allow_stimulation));
-
-  response->success = true;
-  RCLCPP_INFO(rclcpp::get_logger("allow_stimulation"), "%s stimulation", allow_stimulation ? "Allowing" : "Disallowing");
-}
-
 class AllowStimulation : public rclcpp::Node {
 public:
   AllowStimulation() : Node("allow_stimulation") {
-    allow_stimulation_service_ = this->create_service<mtms_device_interfaces::srv::AllowStimulation>("/mtms/device/allow_stimulation", allow_stimulation);
+    auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+        .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+    allow_stimulation_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
+        "/mtms/stimulation/allowed",
+        qos_persist_latest,
+        std::bind(&AllowStimulation::allow_stimulation_callback, this, std::placeholders::_1));
+  }
+
+  void ensure_fpga_and_apply_cached_state() {
+    if (!is_fpga_ok()) {
+      init_fpga();
+      return;
+    }
+
+    if (has_allow_stimulation_) {
+      apply_allow_stimulation(last_allow_stimulation_);
+    }
   }
 
 private:
-  rclcpp::Service<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr allow_stimulation_service_;
+  void apply_allow_stimulation(bool allow_stimulation) {
+    if (!is_fpga_ok()) {
+      RCLCPP_WARN(this->get_logger(), "FPGA not in OK state while handling allow stimulation topic");
+      return;
+    }
+
+    NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, NiFpga_mTMS_ControlBool_Allowstimulation, allow_stimulation));
+    RCLCPP_INFO(this->get_logger(), "%s stimulation", allow_stimulation ? "Allowing" : "Disallowing");
+  }
+
+  void allow_stimulation_callback(const std_msgs::msg::Bool::SharedPtr msg) {
+    last_allow_stimulation_ = msg->data;
+    has_allow_stimulation_ = true;
+    apply_allow_stimulation(last_allow_stimulation_);
+  }
+
+  bool has_allow_stimulation_ = false;
+  bool last_allow_stimulation_ = false;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr allow_stimulation_subscription_;
 };
 
 int main(int argc, char **argv) {
@@ -40,9 +59,7 @@ int main(int argc, char **argv) {
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),
       [&]() {
-          if (!is_fpga_ok()) {
-              init_fpga();
-          }
+          node->ensure_fpga_and_apply_cached_state();
       }
   );
   rclcpp::spin(node);

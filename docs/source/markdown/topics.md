@@ -19,8 +19,6 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/start` - Start the mTMS device.
 - `/mtms/device/stop` - Stop the mTMS device.
 - `/mtms/device/send_settings` - Send stimulation settings to device.
-- `/mtms/device/allow_stimulation` - Enable/disable stimulation permission.
-- `/mtms/device/allow_trigger_out` - Enable/disable trigger-out permission.
 - `/mtms/device/events/request` - Submit pulse/charge/discharge/trigger event requests.
 - `/mtms/device/trigger` - Request an immediate trigger event from bridge node.
 - `/mtms/device/session/start` - Start a stimulation session.
@@ -30,6 +28,13 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 ### Actions
 
 - `/mtms/device/set_voltages` - Set per-channel capacitor voltages on the device.
+
+## Stimulation
+
+### Topics
+
+- `/mtms/stimulation/allowed` - Enable/disable stimulation permission.
+- `/mtms/trigger_out/allowed` - Enable/disable trigger-out permission.
 
 ## Planner
 

@@ -1,7 +1,5 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "mtms_device_interfaces/srv/allow_stimulation.hpp"
-#include "mtms_device_interfaces/srv/allow_trigger_out.hpp"
 #include "mtms_device_interfaces/srv/get_stimulation_allowed.hpp"
 
 using namespace std;
@@ -12,8 +10,8 @@ using std::placeholders::_1;
 /* HACK: Needs to match the value in neuronavigation bridge. */
 const milliseconds COIL_AT_TARGET_PUBLISHING_INTERVAL = 600ms;
 
-const std::string ALLOW_STIMULATION_SERVICE_NAME = "/mtms/device/allow_stimulation";
-const std::string ALLOW_TRIGGER_OUT_SERVICE_NAME = "/mtms/device/allow_trigger_out";
+const std::string ALLOW_STIMULATION_TOPIC_NAME = "/mtms/stimulation/allowed";
+const std::string ALLOW_TRIGGER_OUT_TOPIC_NAME = "/mtms/trigger_out/allowed";
 
 class StimulationAllower : public rclcpp::Node {
 
@@ -49,7 +47,7 @@ public:
       this->update_stimulation_allowed();
     };
 
-    /* Create subscribers and service client. */
+    /* Create subscribers and publishers. */
     neuronavigation_started_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       "/neuronavigation/started", qos_persist_latest, std::bind(&StimulationAllower::neuronavigation_started_callback, this, _1));
 
@@ -59,8 +57,8 @@ public:
     coil_at_target_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       "/neuronavigation/coil_at_target", qos_deadline, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
-    allow_stimulation_client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>(ALLOW_STIMULATION_SERVICE_NAME);
-    allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>(ALLOW_TRIGGER_OUT_SERVICE_NAME);
+    allow_stimulation_publisher_ = this->create_publisher<std_msgs::msg::Bool>(ALLOW_STIMULATION_TOPIC_NAME, qos_persist_latest);
+    allow_trigger_out_publisher_ = this->create_publisher<std_msgs::msg::Bool>(ALLOW_TRIGGER_OUT_TOPIC_NAME, qos_persist_latest);
 
     /* Create service for querying status of stimulation allowed.*/
     get_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::GetStimulationAllowed>(
@@ -73,32 +71,16 @@ public:
   }
 
 private:
-  void call_stimulation_allowed_service(bool value) {
-    auto request = std::make_shared<mtms_device_interfaces::srv::AllowStimulation::Request>();
-    request->allow_stimulation = value;
-
-    while (!allow_stimulation_client_->wait_for_service(std::chrono::seconds(1))) {
-      if (!rclcpp::ok()) {
-        RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
-        return;
-      }
-      RCLCPP_INFO(this->get_logger(), "Waiting for service %s to become available...", ALLOW_STIMULATION_SERVICE_NAME.c_str());
-    }
-    auto result_future = allow_stimulation_client_->async_send_request(request);
+  void publish_stimulation_allowed(bool value) {
+    std_msgs::msg::Bool msg;
+    msg.data = value;
+    allow_stimulation_publisher_->publish(msg);
   }
 
-  void call_trigger_out_allowed_service(bool value) {
-    auto request = std::make_shared<mtms_device_interfaces::srv::AllowTriggerOut::Request>();
-    request->allow_trigger_out = value;
-
-    while (!allow_trigger_out_client_->wait_for_service(std::chrono::seconds(1))) {
-      if (!rclcpp::ok()) {
-        RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
-        return;
-      }
-      RCLCPP_INFO(this->get_logger(), "Waiting for service %s to become available...", ALLOW_TRIGGER_OUT_SERVICE_NAME.c_str());
-    }
-    auto result_future = allow_trigger_out_client_->async_send_request(request);
+  void publish_trigger_out_allowed(bool value) {
+    std_msgs::msg::Bool msg;
+    msg.data = value;
+    allow_trigger_out_publisher_->publish(msg);
   }
 
   void update_stimulation_allowed() {
@@ -115,14 +97,14 @@ private:
 
     RCLCPP_INFO(this->get_logger(), "%s stimulation and trigger out.", this->stimulation_allowed ? "Allowing" : "Disallowing");
 
-    this->call_stimulation_allowed_service(this->stimulation_allowed);
+    this->publish_stimulation_allowed(this->stimulation_allowed);
 
     /* If stimulation is disallowed, disallow trigger out, as well.
 
       Rationale: usually, trigger out is used to either signal that a stimulation pulse has been given or trigger
       stimulation on another TMS device - if stimulation is disallowed, both of these use cases should be
       prevented as well. */
-    this->call_trigger_out_allowed_service(this->stimulation_allowed);
+    this->publish_trigger_out_allowed(this->stimulation_allowed);
   }
 
   void neuronavigation_started_callback(const std_msgs::msg::Bool::SharedPtr msg) {
@@ -150,8 +132,8 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr target_mode_enabled_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr coil_at_target_subscription_;
 
-  rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr allow_stimulation_client_;
-  rclcpp::Client<mtms_device_interfaces::srv::AllowTriggerOut>::SharedPtr allow_trigger_out_client_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr allow_stimulation_publisher_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr allow_trigger_out_publisher_;
 
   rclcpp::Service<mtms_device_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
 };

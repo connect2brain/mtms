@@ -348,17 +348,6 @@ classdef MTMSApi < handle
             started = obj.get_session_state() == obj.session_states.STARTED;
         end
 
-        function success = allow_stimulation(obj, allow_stimulation)
-        % Allow or disallow stimulation.
-        %
-        % :param allow_stimulation: Either true (allow) or false (disallow).
-        %
-        % :return: True if allowing or disallowing was successful.
-        % :rtype: bool
-
-            success = obj.node.allow_stimulation(allow_stimulation);
-        end
-
         function id = send_pulse(obj, channel, waveform, reverse_polarity, execution_condition, time)
         % Send a pulse event to a specified channel.
         %

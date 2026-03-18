@@ -90,8 +90,6 @@ channel = 0
 execution_condition = ExecutionCondition.TIMED
 time = api.get_time() + 1.0
 
-api.allow_stimulation(True)
-
 api.send_pulse(
     channel=channel,
     waveform=waveform,

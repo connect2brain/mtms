@@ -16,7 +16,6 @@ classdef MTMSApiNode < handle
 
         request_trigger_client
 
-        allow_stimulation_client
         request_events_client
 
         system_state_subscriber
@@ -63,7 +62,6 @@ classdef MTMSApiNode < handle
             obj.start_device_client = ros2svcclient(obj.node, "/mtms/device/start", "mtms_device_interfaces/StartDevice");
             obj.stop_device_client = ros2svcclient(obj.node, "/mtms/device/stop", "mtms_device_interfaces/StopDevice");
 
-            obj.allow_stimulation_client = ros2svcclient(obj.node, "/mtms/device/allow_stimulation", "mtms_device_interfaces/AllowStimulation");
             obj.request_events_client = ros2svcclient(obj.node, "/mtms/device/events/request", "mtms_device_interfaces/RequestEvents");
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms/device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
@@ -171,20 +169,6 @@ classdef MTMSApiNode < handle
             client = obj.request_trigger_client;
 
             request = ros2message(client);
-
-            response = call(client, request);
-            success = response.success;
-        end
-
-        function success = allow_stimulation(obj, allow_stimulation)
-            %allow_stimulation Allow or disallow stimulation.
-            %
-            %   Allow or disallow stimulation.
-
-            client = obj.allow_stimulation_client;
-
-            request = ros2message(client);
-            request.allow_stimulation = allow_stimulation;
 
             response = call(client, request);
             success = response.success;

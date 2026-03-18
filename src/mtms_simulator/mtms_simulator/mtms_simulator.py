@@ -25,8 +25,6 @@ from mtms_device_interfaces.msg import (
     Settings,
 )
 from mtms_device_interfaces.srv import (
-    AllowStimulation,
-    AllowTriggerOut,
     SendSettings,
     StartDevice,
     StopDevice,
@@ -53,7 +51,7 @@ from rclpy.qos import (
     HistoryPolicy,
     ReliabilityPolicy,
 )
-from std_msgs.msg import String
+from std_msgs.msg import Bool
 
 from .channel import Channel
 
@@ -126,16 +124,6 @@ class MTMSSimulator(Node):
         self.charge_rate = self.get_parameter("charge_rate").value
 
         # Services
-        self.allow_stimulation_service = self.create_service(
-            AllowStimulation,
-            "/mtms/device/allow_stimulation",
-            self.allow_stimulation_handler,
-        )
-        self.allow_trigger_out_service = self.create_service(
-            AllowTriggerOut,
-            "/mtms/device/allow_trigger_out",
-            self.allow_trigger_out_handler,
-        )
         self.send_settings_service = self.create_service(
             SendSettings, "/mtms/device/send_settings", self.send_settings_handler
         )
@@ -167,6 +155,14 @@ class MTMSSimulator(Node):
         )
         self.trigger_out_feedback_publisher = self.create_publisher(
             TriggerOutFeedback, "/mtms/device/events/feedback/trigger_out", 10
+        )
+
+        # Subscribers for allow state topics.
+        self.allow_stimulation_subscription = self.create_subscription(
+            Bool, "/mtms/stimulation/allowed", self.allow_stimulation_callback, 10
+        )
+        self.allow_trigger_out_subscription = self.create_subscription(
+            Bool, "/mtms/trigger_out/allowed", self.allow_trigger_out_callback, 10
         )
 
         # QoS definition for session.
@@ -296,25 +292,20 @@ class MTMSSimulator(Node):
             % settings.time_in_maximum_pulses_per_time_ms
         )
 
-    def allow_stimulation_handler(self, request, response):
+    def allow_stimulation_callback(self, msg: Bool):
         self.get_logger().info(
-            "Allow stimulation set to %r" % request.allow_stimulation
+            "Allow stimulation set to %r" % msg.data
         )
 
-        self.allow_stimulation = request.allow_stimulation
+        self.allow_stimulation = msg.data
         for channel in self.channels:
-            channel.allow_stimulation = request.allow_stimulation
+            channel.allow_stimulation = msg.data
 
-        response.success = True
-        return response
-
-    def allow_trigger_out_handler(self, request, response):
+    def allow_trigger_out_callback(self, msg: Bool):
         self.get_logger().info(
-            "Allow trigger out set to %r" % request.allow_trigger_out
+            "Allow trigger out set to %r" % msg.data
         )
-        self.allow_trigger_out = request.allow_trigger_out
-        response.success = True
-        return response
+        self.allow_trigger_out = msg.data
 
     def send_settings_handler(self, request, response):
         settings = request.settings
