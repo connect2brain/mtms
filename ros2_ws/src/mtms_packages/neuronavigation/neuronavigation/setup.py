@@ -25,6 +25,7 @@ def generate_data_files():
         ('lib/python3.8/site-packages/locale', 'invesalius3/locale'),
         ('lib/python3.8/site-packages/icons', 'invesalius3/icons'),
         ('lib/python3.8/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
+        ('lib/python3.8/site-packages/invesalius_rs', 'invesalius3/invesalius_rs'),
         ('lib/python3.8/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.8/site-packages/navigation', 'invesalius3/navigation'),
         ('lib/python3.8/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart'),
@@ -34,6 +35,7 @@ def generate_data_files():
         ('lib/python3.10/site-packages/locale', 'invesalius3/locale'),
         ('lib/python3.10/site-packages/icons', 'invesalius3/icons'),
         ('lib/python3.10/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
+        ('lib/python3.10/site-packages/invesalius_rs', 'invesalius3/invesalius_rs'),
         ('lib/python3.10/site-packages/samples', 'invesalius3/samples'),
         ('lib/python3.10/site-packages/navigation', 'invesalius3/navigation'),
         ('lib/python3.10/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart'),
@@ -43,6 +45,7 @@ def generate_data_files():
         ('lib/site-packages/locale', 'invesalius3/locale'),
         ('lib/site-packages/icons', 'invesalius3/icons'),
         ('lib/site-packages/invesalius_cy', 'invesalius3/invesalius_cy'),
+        ('lib/site-packages/invesalius_rs', 'invesalius3/invesalius_rs'),
         ('lib/site-packages/samples', 'invesalius3/samples'),
         ('lib/site-packages/navigation', 'invesalius3/navigation'),
         ('lib/site-packages/invesalius/segmentation/deep_learning/fastsurfer_subpart', 'invesalius3/invesalius/segmentation/deep_learning/fastsurfer_subpart')

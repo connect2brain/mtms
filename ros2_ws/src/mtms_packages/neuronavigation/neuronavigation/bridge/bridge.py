@@ -15,8 +15,10 @@ from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
 from std_msgs.msg import Bool, MultiArrayDimension
 
-from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
-from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
+from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, \
+    CreateMarker
+from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, \
+    EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
 from targeting_msgs.msg import CoilTarget
@@ -56,7 +58,7 @@ class NeuronavigationNode(Node):
             name='Enable or disable electric field',
             type=ParameterType.PARAMETER_BOOL,
         )
-        self.declare_parameter('electric_field_enable', descriptor=descriptor)
+        self.declare_parameter('electric_field_enable', False, descriptor=descriptor)
         self.electric_field_enable = self.get_parameter('electric_field_enable').value
 
         # Robot
@@ -64,7 +66,7 @@ class NeuronavigationNode(Node):
             name='Enable or disable robot',
             type=ParameterType.PARAMETER_BOOL,
         )
-        self.declare_parameter('robot_enable', descriptor=descriptor)
+        self.declare_parameter('robot_enable', False, descriptor=descriptor)
         self.robot_enable = self.get_parameter('robot_enable').value
 
         # Create publishers, subscribers, and services
@@ -75,7 +77,8 @@ class NeuronavigationNode(Node):
         )
         callback_group = ReentrantCallbackGroup()
 
-        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10, callback_group=callback_group)
+        self._coil_pose_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/coil_pose", 10,
+                                                          callback_group=callback_group)
 
         # Create subscriber for creating marker.
         self._create_marker_subscriber = self.create_subscription(
@@ -87,10 +90,13 @@ class NeuronavigationNode(Node):
         )
 
         # Create publisher for neuronavigation started.
-        self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started", qos_persist_latest, callback_group=callback_group)
+        self._neuronavigation_started_publisher = self.create_publisher(Bool, "neuronavigation/started",
+                                                                        qos_persist_latest,
+                                                                        callback_group=callback_group)
 
         # Create publisher for 'target mode' message.
-        self._target_mode_publisher = self.create_publisher(Bool, "neuronavigation/target_mode/enabled", qos_persist_latest, callback_group=callback_group)
+        self._target_mode_publisher = self.create_publisher(Bool, "neuronavigation/target_mode/enabled",
+                                                            qos_persist_latest, callback_group=callback_group)
 
         # Create publisher for 'coil at target' message.
         deadline_coil_at_target = rclpy.duration.Duration(seconds=self.COIL_AT_TARGET_DEADLINE_S)
@@ -102,54 +108,67 @@ class NeuronavigationNode(Node):
             deadline=deadline_coil_at_target,
             lifespan=deadline_coil_at_target,
         )
-        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target", qos_coil_at_target, callback_group=callback_group)
+        self._coil_at_target_publisher = self.create_publisher(Bool, "neuronavigation/coil_at_target",
+                                                               qos_coil_at_target, callback_group=callback_group)
 
         # Create other publishers.
-        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest, callback_group=callback_group)
-        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest, callback_group=callback_group)
+        self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest,
+                                                          callback_group=callback_group)
+        self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest,
+                                                      callback_group=callback_group)
         self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
-                                                                    self.planner_state_callback, qos_persist_latest, callback_group=callback_group)
-        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses, "/neuronavigation/optitrack_poses",
-                                                                      self.optitrack_listener_callback, 1, callback_group=callback_group)
+                                                                    self.planner_state_callback, qos_persist_latest,
+                                                                    callback_group=callback_group)
+        self._optitrack_state_subscription = self.create_subscription(OptitrackPoses,
+                                                                      "/neuronavigation/optitrack_poses",
+                                                                      self.optitrack_listener_callback, 1,
+                                                                      callback_group=callback_group)
         self._coil_target_subscription = self.create_subscription(CoilTarget, "/neuronavigation/coil_target",
-                                                                        self.coil_target_callback, 10, callback_group=callback_group)
+                                                                  self.coil_target_callback, 10,
+                                                                  callback_group=callback_group)
 
         self._open_orientation_dialog_service = self.create_service(OpenOrientationDialog,
                                                                     "neuronavigation/open_orientation_dialog",
-                                                                    self.open_orientation_dialog_callback, callback_group=callback_group)
+                                                                    self.open_orientation_dialog_callback,
+                                                                    callback_group=callback_group)
 
         self._update_target_orientation_client = self.create_client(SetTargetOrientation,
-                                                                    '/planner/set_target_orientation', callback_group=callback_group)
+                                                                    '/planner/set_target_orientation',
+                                                                    callback_group=callback_group)
         if self.electric_field_enable:
-            self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize', callback_group=callback_group)
+            self.client_init_efield = self.create_client(InitializeEfield, '/efield/initialize',
+                                                         callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/init not available, waiting...')
             self.get_logger().info('efield enorm')
 
-            self.client_get_efield_norm = self.create_client(EfieldNorm, '/efield/get_norm', callback_group=callback_group)
+            self.client_get_efield_norm = self.create_client(EfieldNorm, '/efield/get_norm',
+                                                             callback_group=callback_group)
             while not self.client_get_efield_norm.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/getnorm not available, waiting...')
 
-            self.client_get_efield_vector = self.create_client(Efield, '/efield/get_efieldvector', callback_group=callback_group)
+            self.client_get_efield_vector = self.create_client(Efield, '/efield/get_efieldvector',
+                                                               callback_group=callback_group)
             while not self.client_get_efield_vector.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_efieldvector not available, waiting...')
 
             self.client_get_efield_vectorROI = self.create_client(EfieldRoi, '/efield/get_ROIefieldvector',
-                                                               callback_group=callback_group)
+                                                                  callback_group=callback_group)
             while not self.client_get_efield_vectorROI.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_ROIefieldvector not available, waiting...')
 
             self.client_get_efield_vectorROIMax = self.create_client(EfieldRoiMax, '/efield/get_ROIefieldvectorMax',
-                                                               callback_group=callback_group)
+                                                                     callback_group=callback_group)
             while not self.client_get_efield_vectorROIMax.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/get_ROIefieldvectorMax not available, waiting...')
 
-            self.client_set_coil = self.create_client(SetCoil, '/efield/set_coil', callback_group= callback_group)
+            self.client_set_coil = self.create_client(SetCoil, '/efield/set_coil', callback_group=callback_group)
             while not self.client_set_coil.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/set_coil not available, waiting...')
             self.get_logger().info('efield set coil')
 
-            self.client_set_dIperdt = self.create_client(Setdiperdt, '/efield/set_dIperdt', callback_group= callback_group)
+            self.client_set_dIperdt = self.create_client(Setdiperdt, '/efield/set_dIperdt',
+                                                         callback_group=callback_group)
             while not self.client_set_dIperdt.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('efield service /efield/set_dIperdt not available, waiting...')
             self.get_logger().info('efield set dIperdt')
@@ -260,7 +279,7 @@ class NeuronavigationNode(Node):
     def update_coil_at_target(self, state):
         msg = Bool()
         msg.data = state
-        #self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
+        # self.get_logger().info("Publishing value {} to the topic /neuronavigation/coil_at_target".format(state))
         self._coil_at_target_publisher.publish(msg)
 
     def update_coil_pose(self, position, orientation):
@@ -283,9 +302,10 @@ class NeuronavigationNode(Node):
         self.get_logger().info("Publishing to the topic /neuronavigation/coil_mesh")
         self._coil_mesh_publisher.publish(msg)
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set,conductivities_inside, conductivities_outside, dI_per_dt):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set, conductivities_inside,
+                          conductivities_outside, dI_per_dt):
         request = InitializeEfield.Request()
-        request.cortex_model_path= cortex_model_path
+        request.cortex_model_path = cortex_model_path
         request.mesh_models_paths = mesh_models_paths
         request.coil_model_path = coil_model_path
         request.coil_set = coil_set
@@ -296,7 +316,7 @@ class NeuronavigationNode(Node):
         while future.done() is False:
             pass
         try:
-            response= future.result()
+            response = future.result()
             self.get_logger().info("Responding to the service request /neuronavigation/efield/init")
             return response.success
         except Exception as e:
@@ -305,13 +325,13 @@ class NeuronavigationNode(Node):
 
     def set_coil(self, coil_model_path, coil_set):
         request = SetCoil.Request()
-        request.coil_model_path=coil_model_path
+        request.coil_model_path = coil_model_path
         request.coil_set = coil_set
         future = self.client_set_coil.call_async(request)
         while future.done() is False:
             pass
         try:
-            response= future.result()
+            response = future.result()
             self.get_logger().info("Responding to the service request /neuronavigation/efield/coil")
             return response.success
         except Exception as e:
@@ -333,7 +353,7 @@ class NeuronavigationNode(Node):
         return None
 
     def update_efield(self, position, orientation, T_rot):
-        request= EfieldNorm.Request()
+        request = EfieldNorm.Request()
         request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
         request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
         request.transducer_rotation = T_rot
@@ -350,7 +370,7 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def update_efield_vector(self,position, orientation, T_rot):
+    def update_efield_vector(self, position, orientation, T_rot):
         request = Efield.Request()
         request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
         request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
@@ -368,12 +388,12 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def update_efield_vectorROI(self,position, orientation, id_list, T_rot):
+    def update_efield_vectorROI(self, position, orientation, id_list, T_rot):
         request = EfieldRoi.Request()
         request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
         request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
         request.transducer_rotation = T_rot
-        request.id_list=id_list
+        request.id_list = id_list
         future = self.client_get_efield_vectorROI.call_async(request)
         while future.done() is False:
             pass
@@ -385,12 +405,12 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def update_efield_vectorROIMax(self,position, orientation, id_list, T_rot):
+    def update_efield_vectorROIMax(self, position, orientation, id_list, T_rot):
         request = EfieldRoiMax.Request()
         request.coordinate.position.x, request.coordinate.position.y, request.coordinate.position.z = position
         request.coordinate.orientation.alpha, request.coordinate.orientation.beta, request.coordinate.orientation.gamma = orientation
         request.transducer_rotation = T_rot
-        request.id_list=id_list
+        request.id_list = id_list
         future = self.client_get_efield_vectorROIMax.call_async(request)
         while future.done() is False:
             pass
@@ -508,7 +528,7 @@ class Connection(Thread):
     def update_efield_vectorROI(self, position, orientation, T_rot, id_list):
         return self.node.update_efield_vectorROI(
             position=position,
-            orientation= orientation,
+            orientation=orientation,
             T_rot=T_rot,
             id_list=id_list
         )
@@ -516,12 +536,13 @@ class Connection(Thread):
     def update_efield_vectorROIMax(self, position, orientation, T_rot, id_list):
         return self.node.update_efield_vectorROIMax(
             position=position,
-            orientation= orientation,
+            orientation=orientation,
             T_rot=T_rot,
             id_list=id_list
         )
 
-    def initialize_efield(self, cortex_model_path, mesh_models_paths,  coil_model_path, coil_set, conductivities_inside, conductivities_outside, dI_per_dt):
+    def initialize_efield(self, cortex_model_path, mesh_models_paths, coil_model_path, coil_set, conductivities_inside,
+                          conductivities_outside, dI_per_dt):
         return self.node.initialize_efield(
             cortex_model_path=cortex_model_path,
             mesh_models_paths=mesh_models_paths,
@@ -535,7 +556,7 @@ class Connection(Thread):
     def set_coil(self, coil_model_path, coil_set):
         return self.node.set_coil(
             coil_model_path=coil_model_path,
-            coil_set = coil_set
+            coil_set=coil_set
         )
 
     def set_dIperdt(self, dIperdt):
@@ -593,7 +614,6 @@ def main():
         # XInitThreads call is needed for multithreading in InVesalius to not crash when running in Docker.
         x11 = ctypes.cdll.LoadLibrary('libX11.so')
         x11.XInitThreads()
-
 
     # Clear command line arguments to prevent conflict between ROS's and neuronavigation's command line arguments.
     sys.argv = [sys.argv[0]]
