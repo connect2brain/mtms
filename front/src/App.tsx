@@ -1,16 +1,13 @@
-import React, { useState } from 'react'
-import { Route, Routes } from 'react-router-dom'
+import React from 'react'
 import styled from 'styled-components'
 
 import './App.css'
 
 import Providers from './providers/Providers'
-import { HealthcheckProvider } from './providers/HealthcheckProvider'
-import { ConfigProvider } from './providers/ConfigProvider'
-import { SystemProvider } from './providers/SystemProvider'
 
 import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
 import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
+import { EegInfoDisplay } from 'components/general/EegInfoDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 
 const App = () => {
@@ -18,6 +15,7 @@ const App = () => {
     <Providers>
       <HealthcheckStatusDisplay />
       <HealthcheckMessageDisplay />
+      <EegInfoDisplay />
       <Wrapper>
         <MultipleViews />
       </Wrapper>

@@ -94,6 +94,13 @@ export const SystemView = () => {
     chargeFeedbackSubscriber.subscribe(chargeFeedbackCallback)
     dischargeFeedbackSubscriber.subscribe(dischargeFeedbackCallback)
     triggerOutFeedbackSubscriber.subscribe(triggerOutFeedbackCallback)
+
+    return () => {
+      pulseFeedbackSubscriber.unsubscribe(pulseFeedbackCallback)
+      chargeFeedbackSubscriber.unsubscribe(chargeFeedbackCallback)
+      dischargeFeedbackSubscriber.unsubscribe(dischargeFeedbackCallback)
+      triggerOutFeedbackSubscriber.unsubscribe(triggerOutFeedbackCallback)
+    }
   }, [])
 
   const pulseFeedbackCallback = (message: PulseFeedbackMessage) => {
