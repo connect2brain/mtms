@@ -191,6 +191,12 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
   sample.sample_index = this->session_sample_index;
   this->session_sample_index++;
 
+  /* Set the system time when the sample is published (nanoseconds since epoch). */
+  auto now = std::chrono::high_resolution_clock::now();
+  uint64_t system_time_eeg_bridge_published = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    now.time_since_epoch()).count();
+  sample.system_time_eeg_bridge_published = system_time_eeg_bridge_published;
+
   this->eeg_sample_publisher->publish(sample);
 
   // Log latency trigger when present
