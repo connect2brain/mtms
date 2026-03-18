@@ -376,14 +376,26 @@
         backup: yes
 
     ########################################################################
-    # 12. Configure MATLAB
+    # 12. Configure MATLAB startup path
     ########################################################################
-    - name: Add MATLAB API folder to MATLAB path
-      become_user: "{{ target_user }}"
-      environment:
-        HOME: "{{ target_home }}"
-      ansible.builtin.command:
-        cmd: matlab -batch "addpath('{{ repo_root }}/api/matlab'); savepath"
+    - name: Ensure MATLAB startup directory exists
+      file:
+        path: "{{ target_home }}/Documents/MATLAB"
+        state: directory
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0755'
+
+    - name: Ensure mTMS MATLAB API path is added in startup.m
+      lineinfile:
+        path: "{{ target_home }}/Documents/MATLAB/startup.m"
+        line: "addpath('{{ repo_root }}/api/matlab');"
+        create: yes
+        owner: "{{ target_user }}"
+        group: "{{ target_user }}"
+        mode: '0644'
+        state: present
+        insertafter: EOF
 
     ########################################################################
     # 13. Create a desktop link to the documentation
