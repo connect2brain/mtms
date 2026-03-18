@@ -4,9 +4,6 @@ import styled from 'styled-components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog } from '@fortawesome/free-solid-svg-icons'
 
-import DataVisualize from './DataVisualize'
-import DataVisualizeWebGL from './DataVisualizeWebGL'
-
 import { SmallHeader } from '../styles/StyledTypography'
 
 import { ConfigView } from './ConfigView'
@@ -52,13 +49,6 @@ export const MultipleViews = () => {
         <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
           Targets
         </a>
-        <a
-          href='#'
-          onClick={() => setCurrentView('visualizer')}
-          className={currentView === 'visualizer' ? 'active' : ''}
-        >
-          Visualizer
-        </a>
         <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
           <FontAwesomeIcon icon={faCog} />
         </ConfigIcon>
@@ -80,12 +70,6 @@ export const MultipleViews = () => {
         <Wrapper>
           <SmallHeader>Targets</SmallHeader>
           <TargetView />
-        </Wrapper>
-        )}
-        {currentView === 'visualizer' && (
-        <Wrapper>
-          <SmallHeader>Visualizer</SmallHeader>
-          <DataVisualize />
         </Wrapper>
         )}
         {currentView === 'config' && (

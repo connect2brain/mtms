@@ -1,13 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import targetReducer from 'reducers/planner/targetReducer'
 import sequenceReducer from 'reducers/planner/sequenceReducer'
-import eegReducer from 'reducers/visualizer/eegReducer'
 
 export const store = configureStore({
   reducer: {
     targets: targetReducer,
     sequences: sequenceReducer,
-    eegData: eegReducer,
   },
   middleware: (getDefaultMiddleware) => {
     return getDefaultMiddleware({
