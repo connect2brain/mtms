@@ -1,12 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
-import targetReducer from 'reducers/planner/targetReducer'
-import sequenceReducer from 'reducers/planner/sequenceReducer'
 
 export const store = configureStore({
-  reducer: {
-    targets: targetReducer,
-    sequences: sequenceReducer,
-  },
+  reducer: {},
   middleware: (getDefaultMiddleware) => {
     return getDefaultMiddleware({
       serializableCheck: false,

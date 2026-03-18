@@ -9,7 +9,6 @@ import { SmallHeader } from '../styles/StyledTypography'
 import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
-import { TargetView } from './TargetView'
 
 /* Session storage utilities. */
 
@@ -46,9 +45,6 @@ export const MultipleViews = () => {
         >
           Experiment
         </a>
-        <a href='#' onClick={() => setCurrentView('targets')} className={currentView === 'targets' ? 'active' : ''}>
-          Targets
-        </a>
         <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
           <FontAwesomeIcon icon={faCog} />
         </ConfigIcon>
@@ -64,12 +60,6 @@ export const MultipleViews = () => {
         <Wrapper>
           <SmallHeader>Experiment</SmallHeader>
           <ExperimentView />
-        </Wrapper>
-        )}
-        {currentView === 'targets' && (
-        <Wrapper>
-          <SmallHeader>Targets</SmallHeader>
-          <TargetView />
         </Wrapper>
         )}
         {currentView === 'config' && (
