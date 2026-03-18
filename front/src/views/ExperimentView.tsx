@@ -197,7 +197,7 @@ const ConfigPanel = styled.div`
   grid-template-rows: repeat(1, 1fr);
   grid-template-columns: repeat(6, 1fr);
   width: 600px;
-  height: 550px;
+  height: auto;
   gap: 20px;
 `
 
