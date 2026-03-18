@@ -30,10 +30,10 @@ void TrialPerformerNode::initialize_actions() {
 
   /* Action client for setting voltages. */
   set_voltages_client = rclcpp_action::create_client<experiment_interfaces::action::SetVoltages>(
-      this, "/mtms/device/set_voltages");
+      this, "/mtms/trial/set_voltages");
 
   while (!set_voltages_client->wait_for_action_server(2s)) {
-    RCLCPP_INFO(get_logger(), "Action /mtms/device/set_voltages not available, waiting...");
+    RCLCPP_INFO(get_logger(), "Action /mtms/trial/set_voltages not available, waiting...");
   }
 
   /* Action client for analyzing MEP. */

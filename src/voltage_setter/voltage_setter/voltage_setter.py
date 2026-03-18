@@ -39,7 +39,7 @@ class VoltageSetterNode(Node):
         self.action_server = ActionServer(
             self,
             SetVoltages,
-            '/mtms/device/set_voltages',
+            '/mtms/trial/set_voltages',
             self.handle_action_set_voltages,
             callback_group=self.reentrant_callback_group,
         )

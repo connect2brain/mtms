@@ -25,10 +25,6 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/session/stop` - Stop an ongoing stimulation session.
 - `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.
 
-### Actions
-
-- `/mtms/device/set_voltages` - Set per-channel capacitor voltages on the device.
-
 ## Stimulation
 
 ### Topics
@@ -129,6 +125,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 ### Actions
 
 - `/mtms/experiment/perform` - Run a full experiment consisting of multiple trials.
+- `/mtms/trial/set_voltages` - Set per-channel capacitor voltages before performing a trial.
 - `/mtms/trial/perform` - Execute one trial (targeting, stimulation, feedback integration).
 
 ## Targeting
