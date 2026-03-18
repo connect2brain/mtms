@@ -34,7 +34,7 @@ from targeting_services.srv import (
     GetMultipulseWaveforms
 )
 
-from mtms_device_interfaces.srv import IsStimulationAllowed
+from mtms_device_interfaces.srv import GetStimulationAllowed
 
 from MTMSApiPrinter import MTMSApiPrinter
 from ExperimentHandler import ExperimentHandler
@@ -59,7 +59,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_GET_MULTIPULSE_WAVEFORMS = ('/mtms/waveforms/get_multipulse_waveforms', GetMultipulseWaveforms)
     ROS_SERVICE_REVERSE_POLARITY = ('/mtms/waveforms/reverse_polarity', ReversePolarity)
 
-    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/allowed', IsStimulationAllowed)
+    ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/get_allowed', GetStimulationAllowed)
 
     ROS_ACTION_ANALYZE_MEP = ('/mtms/mep/analyze', AnalyzeMep)
 

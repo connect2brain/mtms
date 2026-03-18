@@ -2,7 +2,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "mtms_device_interfaces/srv/allow_stimulation.hpp"
 #include "mtms_device_interfaces/srv/allow_trigger_out.hpp"
-#include "mtms_device_interfaces/srv/is_stimulation_allowed.hpp"
+#include "mtms_device_interfaces/srv/get_stimulation_allowed.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -20,9 +20,9 @@ class StimulationAllower : public rclcpp::Node {
 public:
   StimulationAllower() : Node("stimulation_allower") {
 
-    auto is_stimulation_allowed_callback = [this](
-        [[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::IsStimulationAllowed::Request> request,
-        std::shared_ptr<mtms_device_interfaces::srv::IsStimulationAllowed::Response> response) -> void {
+    auto get_stimulation_allowed_callback = [this](
+        [[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::GetStimulationAllowed::Request> request,
+        std::shared_ptr<mtms_device_interfaces::srv::GetStimulationAllowed::Response> response) -> void {
 
       response->success = true;
       response->stimulation_allowed = this->stimulation_allowed;
@@ -63,8 +63,8 @@ public:
     allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>(ALLOW_TRIGGER_OUT_SERVICE_NAME);
 
     /* Create service for querying status of stimulation allowed.*/
-    is_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::IsStimulationAllowed>(
-        "/mtms/stimulation/allowed", is_stimulation_allowed_callback);
+    get_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::GetStimulationAllowed>(
+        "/mtms/stimulation/get_allowed", get_stimulation_allowed_callback);
 
     /* Update initial default state even if no neuronavigation topics are publishing. */
     update_stimulation_allowed();
@@ -153,7 +153,7 @@ private:
   rclcpp::Client<mtms_device_interfaces::srv::AllowStimulation>::SharedPtr allow_stimulation_client_;
   rclcpp::Client<mtms_device_interfaces::srv::AllowTriggerOut>::SharedPtr allow_trigger_out_client_;
 
-  rclcpp::Service<mtms_device_interfaces::srv::IsStimulationAllowed>::SharedPtr is_stimulation_allowed_service_;
+  rclcpp::Service<mtms_device_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
 };
 
 

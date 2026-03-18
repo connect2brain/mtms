@@ -25,7 +25,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/trigger` - Request an immediate trigger event from bridge node.
 - `/mtms/device/session/start` - Start a stimulation session.
 - `/mtms/device/session/stop` - Stop an ongoing stimulation session.
-- `/mtms/stimulation/allowed` - Query whether stimulation is currently allowed.
+- `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.
 
 ### Actions
 
