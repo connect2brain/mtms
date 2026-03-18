@@ -1,0 +1,15 @@
+[Unit]
+Description=EEG UDP fanout service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ target_user }}
+
+Type=simple
+ExecStart={{ samplicator_install_dir }}/bin/samplicate -d 0 -p {{ eeg_udp_fanout_source_port }} {{ eeg_udp_fanout_destinations | join(' ') }}
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

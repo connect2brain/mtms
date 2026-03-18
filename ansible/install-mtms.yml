@@ -3,6 +3,8 @@
   hosts: localhost
   connection: local
   become: yes
+  vars_files:
+    - vars/samplicator.yml
 
   vars:
     # The non-root user that invoked sudo (fallback to current USER if unset).
@@ -17,6 +19,12 @@
     # ROS distro
     ros_distro: "jazzy"
     pip_extra_args: "--break-system-packages"
+
+    # EEG UDP fanout settings
+    eeg_udp_fanout_source_port: 50000
+    eeg_udp_fanout_destinations:
+      - 127.0.0.1/50001
+      - 127.0.0.1/50002
 
   collections:
     - community.general
@@ -135,6 +143,14 @@
         group: root
         mode: '0644'
 
+    - name: Copy eeg-udp-fanout.service
+      template:
+        src: files/eeg-udp-fanout.service.j2
+        dest: /etc/systemd/system/eeg-udp-fanout.service
+        owner: root
+        group: root
+        mode: '0644'
+
     - name: Reload systemd
       systemd:
         daemon_reload: yes
@@ -149,6 +165,11 @@
         name: mtms-bridge.service
         enabled: yes
 
+    - name: Enable eeg-udp-fanout.service
+      systemd:
+        name: eeg-udp-fanout.service
+        enabled: yes
+
     - name: Restart mtms.service
       systemd:
         name: mtms.service
@@ -157,6 +178,11 @@
     - name: Restart mtms-bridge.service
       systemd:
         name: mtms-bridge.service
+        state: restarted
+
+    - name: Restart eeg-udp-fanout.service
+      systemd:
+        name: eeg-udp-fanout.service
         state: restarted
 
     ########################################################################

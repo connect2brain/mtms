@@ -3,11 +3,12 @@
   hosts: localhost
   become: yes
   connection: local
+  vars_files:
+    - vars/samplicator.yml
   vars:
     samplicator_repo: https://github.com/sleinen/samplicator.git
     samplicator_version: ceeb1d280188c155b71d819282490be86190f6f6
     samplicator_src_dir: /opt/samplicator
-    samplicator_install_dir: /opt/samplicator-install
 
   tasks:
     - name: Install git
