@@ -226,7 +226,6 @@ void MTMSSimulator::request_events_handler(
   const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
   std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response)
 {
-  RCLCPP_INFO(this->get_logger(), "Received request to process events");
   for (const auto & pulse : request->pulses) {
     process_pulse(pulse);
   }
@@ -399,7 +398,7 @@ event_msgs::msg::PulseError MTMSSimulator::validate_pulse(const event_msgs::msg:
 
 void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
 {
-  RCLCPP_INFO(this->get_logger(), "Charge message received");
+  RCLCPP_INFO(this->get_logger(), "Charge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
   if (session_not_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started. Can't charge coil.");
@@ -419,14 +418,15 @@ void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
-  RCLCPP_INFO(this->get_logger(), "Start charging for channel: %u", message.channel);
   auto feedback = channels_[message.channel].charge(message.target_voltage, message.event_info.id);
   charge_feedback_publisher_->publish(feedback);
+
+  RCLCPP_INFO(this->get_logger(), "Charge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
 void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message)
 {
-  RCLCPP_INFO(this->get_logger(), "Discharge message received");
+  RCLCPP_INFO(this->get_logger(), "Discharge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
   if (session_not_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started. Can't discharge coil.");
@@ -448,11 +448,13 @@ void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message
 
   auto feedback = channels_[message.channel].discharge(message.target_voltage, message.event_info.id);
   discharge_feedback_publisher_->publish(feedback);
+
+  RCLCPP_INFO(this->get_logger(), "Discharge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
 void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
 {
-  RCLCPP_INFO(this->get_logger(), "Pulse message received");
+  RCLCPP_INFO(this->get_logger(), "Pulse requested: channel=%u, id=%u", message.channel, message.event_info.id);
 
   wait_for_execution_condition(
     message.event_info.execution_condition,
@@ -471,6 +473,8 @@ void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
   auto feedback = channels_[message.channel].pulse(
     message.event_info.id, static_cast<uint16_t>(total_duration));
   pulse_feedback_publisher_->publish(feedback);
+
+  RCLCPP_INFO(this->get_logger(), "Pulse completed: channel=%u, id=%u", message.channel, message.event_info.id);
 }
 
 void MTMSSimulator::process_trigger_out(const event_msgs::msg::TriggerOut & message) const

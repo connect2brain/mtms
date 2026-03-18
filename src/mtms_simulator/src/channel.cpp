@@ -28,10 +28,6 @@ Channel::Channel(
 
 event_msgs::msg::ChargeFeedback Channel::charge(const uint16_t target_voltage, const uint16_t event_id)
 {
-  RCLCPP_INFO(
-    logger_, "Charge requested: from %.2fV to %uV.",
-    current_voltage_, target_voltage);
-
   const double charge_rate_constant = capacitance_ / (2.0 * charge_rate_);
   const double t =
     charge_rate_constant *
@@ -56,10 +52,6 @@ event_msgs::msg::DischargeFeedback Channel::discharge(
   const uint16_t event_id)
 {
   const double target_voltage = std::max<double>(requested_target_voltage, 3.0);
-
-  RCLCPP_INFO(
-    logger_, "Discharge requested: from %.2fV to %uV.",
-    current_voltage_, requested_target_voltage);
 
   if (current_voltage_ <= target_voltage) {
     event_msgs::msg::DischargeFeedback feedback;
@@ -88,9 +80,6 @@ event_msgs::msg::PulseFeedback Channel::pulse(const uint16_t event_id, const uin
 {
   const double next_voltage =
     current_voltage_ - pulse_voltage_drop_proportion_ * current_voltage_;
-  RCLCPP_INFO(
-    logger_, "Pulse requested: from %.2fV to %.2fV.",
-    current_voltage_, next_voltage);
 
   ++pulse_count;
   const double duration = duration_ticks / CLOCK_FREQUENCY_HZ;
