@@ -13,7 +13,6 @@
 # docker build --build-arg MATLAB_RELEASE=R2025b
 #              --build-arg MATLAB_PRODUCT_LIST="MATLAB Deep_Learning_Toolbox Symbolic_Math_Toolbox"
 #              --build-arg MATLAB_INSTALL_LOCATION="/opt/matlab/R2025b"
-#              --build-arg LICENSE_SERVER=12345@hostname.com
 #              --build-arg UBUNTU_VERSION=24.04
 #              -t my_matlab_image_name .
 
@@ -38,7 +37,6 @@ FROM mathworks/matlab-deps:${MATLAB_RELEASE}${UBUNTU_VERSION:+-ubuntu${UBUNTU_VE
 ARG MATLAB_RELEASE
 ARG MATLAB_PRODUCT_LIST
 ARG MATLAB_INSTALL_LOCATION
-ARG LICENSE_SERVER
 
 # Install mpm dependencies.
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -73,13 +71,6 @@ RUN wget -q https://www.mathworks.com/mpm/glnxa64/mpm \
     || (echo "MPM Installation Failure. See below for more information:" && cat /tmp/mathworks_root.log && false) \
     && sudo rm -rf mpm /tmp/mathworks_root.log \
     && sudo ln -s ${MATLAB_INSTALL_LOCATION}/bin/matlab /usr/local/bin/matlab
-
-# Specify the host and port of the machine that serves the network licenses
-# if you want to store the license information in an environment variable. This
-# is the preferred option. You can either use a build variable, like this:
-# --build-arg LICENSE_SERVER=27000@MyServerName or you can specify the license server
-# directly using: ENV MLM_LICENSE_FILE=27000@flexlm-server-name
-ENV MLM_LICENSE_FILE=${MLM_LICENSE_FILE}
 
 # The following environment variables allow MathWorks to understand how this MathWorks
 # product (MATLAB Dockerfile) is being used. This information helps us make MATLAB even better.
