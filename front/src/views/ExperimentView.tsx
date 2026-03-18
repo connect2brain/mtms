@@ -36,9 +36,8 @@ import {
 import { SystemContext } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
+import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
 
-
-import { set } from 'cypress/types/lodash'
 
 /* Styles for inputs for experiment metadata (= experiment and subject name) */
 const ExperimentMetadata = styled.div`
@@ -413,6 +412,8 @@ export const ExperimentView = () => {
 
   const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
+  const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
+  const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
 
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
@@ -1303,13 +1304,13 @@ export const ExperimentView = () => {
             </GrayedOutPanel>
           </TriggerRow>
         </TriggerPanel>
-        <MepPanel isGrayedOut={!mepHealthcheckOk}>
+        <MepPanel isGrayedOut={!isStreaming}>
           <SmallerTitle>MEP analysis</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Enabled:</ConfigLabel>
-            <ToggleSwitch type='flat' checked={mepEnabled} onChange={setMepEnabled} disabled={!mepHealthcheckOk} />
+            <ToggleSwitch type='flat' checked={mepEnabled} onChange={setMepEnabled} disabled={!isStreaming} />
           </ConfigRow>
-          <GrayedOutPanel isGrayedOut={!mepEnabled || !mepHealthcheckOk}>
+          <GrayedOutPanel isGrayedOut={!mepEnabled || !isStreaming}>
             <ConfigRow>
               <IndentedLabel>EMG channel:</IndentedLabel>
               {/*
@@ -1322,7 +1323,7 @@ export const ExperimentView = () => {
                 min={1}
                 max={16}
                 onChange={setEmgChannel}
-                disabled={!mepEnabled}
+                disabled={!mepEnabled || !isStreaming}
               />
             </ConfigRow>
           </GrayedOutPanel>
