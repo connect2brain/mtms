@@ -7,7 +7,7 @@ from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPo
 from std_msgs.msg import Bool
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents, RequestTrigger
+from mtms_device_interfaces.srv import StartDevice, StopDevice, RequestEvents, RequestTrigger
 
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed

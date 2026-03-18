@@ -29,6 +29,7 @@ from mtms_device_interfaces.srv import (
     StartDevice,
     StopDevice,
     RequestEvents,
+    RequestTrigger,
 )
 from system_interfaces.msg import (
     Session,
@@ -141,6 +142,9 @@ class MTMSSimulator(Node):
         )
         self.request_events_service = self.create_service(
             RequestEvents, "/mtms/device/events/request", self.request_events_handler
+        )
+        self.request_trigger_service = self.create_service(
+            RequestTrigger, "/mtms/device/trigger", self.request_trigger_handler
         )
 
         # Publisher
@@ -383,6 +387,15 @@ class MTMSSimulator(Node):
         for trigger_out in request.trigger_outs:
             self.process_trigger_out(trigger_out)
 
+        response.success = True
+        return response
+
+    def request_trigger_handler(self, request, response):
+        del request
+
+        self.get_logger().warn(
+            "Execution condition WAIT_FOR_TRIGGER is not supported in simulator."
+        )
         response.success = True
         return response
 
