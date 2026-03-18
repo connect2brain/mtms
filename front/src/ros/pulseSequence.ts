@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 
 import { Pulse, PulseSequence } from 'types/pulseSequence'
 import { isOfPulseSequenceChangeableKey, objectKeysToSnakeCase } from 'utils'

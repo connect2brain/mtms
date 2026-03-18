@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode } from 'react'
-import { Topic, Message } from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 
 import { ros } from 'ros/ros'
 
@@ -44,19 +44,19 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
-    const eegSubscriber = new Topic<Healthcheck>({
+    const eegSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/eeg/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 
-    const mtmsSubscriber = new Topic<Healthcheck>({
+    const mtmsSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/device/healthcheck',
       messageType: 'system_interfaces/Healthcheck',
     })
 
-    const mepSubscriber = new Topic<Healthcheck>({
+    const mepSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/mep/healthcheck',
       messageType: 'system_interfaces/Healthcheck',

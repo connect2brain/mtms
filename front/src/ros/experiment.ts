@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 import { ros } from './ros'
 
 /* Get maximum intensity service */
@@ -68,14 +68,12 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
   )
 }
 
-/* Perform experiment action
-
-   TODO: After ROSLIB types are updated with the action support, bypassing
-     the type checks (that is, ROSLIB as any) can be removed everywhere. */
-const performExperimentActionClient: any = new (ROSLIB as any).Action({
+/* Perform experiment action.
+   Foxglove roslibjs uses the RobotWebTools ActionClient/Goal API. */
+const performExperimentActionClient: any = new (ROSLIB as any).ActionClient({
   ros: ros,
   name: '/mtms/experiment/perform',
-  actionType: 'experiment_interfaces/PerformExperiment',
+  actionName: 'experiment_interfaces/PerformExperimentAction',
 })
 
 export const performExperiment = (
@@ -83,24 +81,33 @@ export const performExperiment = (
   done_callback: (trialResults: any, success: boolean) => void,
   feedback_callback: (response: any) => void
 ) => {
-  const goal: any = new (ROSLIB as any).ActionGoal({
-    experiment: experiment,
+  const goal: any = new (ROSLIB as any).Goal({
+    actionClient: performExperimentActionClient,
+    goalMessage: {
+      experiment: experiment,
+    },
   })
 
-  performExperimentActionClient.sendGoal(
-    goal,
-    (response: any) => {
-      if (!response.success) {
-        console.log('ERROR: Failed to perform experiment: success field was false.')
-        done_callback(response.trial_results, false)
-      } else {
-        done_callback(response.trial_results, true)
-      }
-    },
-    (feedback: any) => {
-      feedback_callback(feedback)
+
+  console.log('Sending goal to perform experiment')
+
+  goal.on('result', (response: any) => {
+    console.log('Result received from perform experiment')
+    if (!response.success) {
+      console.log('ERROR: Failed to perform experiment: success field was false.')
+      done_callback(response.trial_results, false)
+    } else {
+      done_callback(response.trial_results, true)
     }
-  )
+  })
+
+  goal.on('feedback', (feedback: any) => {
+    feedback_callback(feedback)
+  })
+
+  goal.send()
+
+  console.log('Goal sent to perform experiment')
 }
 
 /* Visualize targets service */

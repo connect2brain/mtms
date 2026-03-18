@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 import { ros } from './ros'
 
 const startDeviceService = new ROSLIB.Service({

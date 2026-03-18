@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode } from 'react'
-import { Topic } from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 import { ros } from 'ros/ros'
 
 interface NeuroSimoContextType {
@@ -20,7 +20,7 @@ export const NeuroSimoProvider: React.FC<NeuroSimoProviderProps> = ({ children }
   const [deciderEnabled, setDeciderEnabled] = useState<boolean | null>(null)
 
   useEffect(() => {
-    const deciderSubscriber = new Topic<{ data: boolean }>({
+    const deciderSubscriber = new ROSLIB.Topic<{ data: boolean }>({
       ros: ros,
       name: '/pipeline/decider/enabled',
       messageType: 'std_msgs/Bool',

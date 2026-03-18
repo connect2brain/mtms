@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 
 export const EventTypes = {
   CHARGE: 0,

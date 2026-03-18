@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ReactNode } from 'react'
-import { Topic, Message } from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 
 import { ros } from 'ros/ros'
 
@@ -63,7 +63,7 @@ export const HumanReadableSessionState = {
   STOPPING: 'Stopping...',
 }
 
-export interface Session extends Message {
+export interface Session extends ROSLIB.Message {
   state: SessionState
   time: number
 }
@@ -83,7 +83,7 @@ export const HumanReadableDeviceState = {
   SHUTDOWN: 'Shutting down...',
 }
 
-export interface SystemState extends Message {
+export interface SystemState extends ROSLIB.Message {
   channel_states: ChannelState[]
 
   system_error_cumulative: SystemError
@@ -138,7 +138,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
 
   useEffect(() => {
     /* Subscriber for system state. */
-    const systemStateSubscriber = new Topic<SystemState>({
+    const systemStateSubscriber = new ROSLIB.Topic<SystemState>({
       ros: ros,
       name: '/mtms/device/system_state',
       messageType: 'mtms_device_interfaces/SystemState',
@@ -149,7 +149,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
     })
 
     /* Subscriber for session. */
-    const sessionSubscriber = new Topic<Session>({
+    const sessionSubscriber = new ROSLIB.Topic<Session>({
       ros: ros,
       name: '/mtms/device/session',
       messageType: 'system_interfaces/Session',

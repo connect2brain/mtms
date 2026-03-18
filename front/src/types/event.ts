@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 import { ChargeError, DischargeError, PulseError, TriggerOutError } from './eventErrors'
 
 interface Error {

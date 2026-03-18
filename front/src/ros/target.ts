@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 
 import { EulerAngles, Position, Target } from 'types/target'
 import { isOfTargetChangeableKey } from 'utils'

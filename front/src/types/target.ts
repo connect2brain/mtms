@@ -1,4 +1,4 @@
-import ROSLIB from 'roslib'
+import ROSLIB from '@foxglove/roslibjs'
 import { PulseSequence } from './pulseSequence'
 
 export interface EulerAngles {
