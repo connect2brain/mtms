@@ -50,7 +50,7 @@ const InputRow = styled.div`
   justify-content: flex-start;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
 `
 
 const Label = styled.label`
@@ -1126,7 +1126,7 @@ export const ExperimentView = () => {
     <>
       <ExperimentMetadata>
         <InputRow>
-          <Label>Experiment:</Label>
+          <Label>Name:</Label>
           <Input
             type='text'
             placeholder='E.g., Resting motor threshold experiment 1'
