@@ -29,7 +29,7 @@ void TrialPerformerNode::initialize_actions() {
       callback_group);
 
   /* Action client for setting voltages. */
-  set_voltages_client = rclcpp_action::create_client<mtms_device_interfaces::action::SetVoltages>(
+  set_voltages_client = rclcpp_action::create_client<experiment_interfaces::action::SetVoltages>(
       this, "/mtms/device/set_voltages");
 
   while (!set_voltages_client->wait_for_action_server(2s)) {
@@ -436,7 +436,7 @@ void TrialPerformerNode::request_events(const std::vector<event_msgs::msg::Pulse
 /* Action clients */
 
 bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
-  auto goal = mtms_device_interfaces::action::SetVoltages::Goal();
+  auto goal = experiment_interfaces::action::SetVoltages::Goal();
   goal.voltages = voltages;
 
   auto future_goal_handle = set_voltages_client->async_send_goal(goal);

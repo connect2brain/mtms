@@ -16,7 +16,7 @@
 #include "mtms_trial_interfaces/action/perform_trial.hpp"
 
 #include "mep_interfaces/action/analyze_mep.hpp"
-#include "mtms_device_interfaces/action/set_voltages.hpp"
+#include "experiment_interfaces/action/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/srv/request_events.hpp"
@@ -46,7 +46,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp_action::Server<mtms_trial_interfaces::action::PerformTrial>::SharedPtr action_server;
-  rclcpp_action::Client<mtms_device_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
+  rclcpp_action::Client<experiment_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp_action::Client<mep_interfaces::action::AnalyzeMep>::SharedPtr analyze_mep_client;
   rclcpp::Client<targeting_services::srv::GetTargetVoltages>::SharedPtr targeting_client;
   rclcpp::Client<targeting_services::srv::ReversePolarity>::SharedPtr reverse_polarity_client;

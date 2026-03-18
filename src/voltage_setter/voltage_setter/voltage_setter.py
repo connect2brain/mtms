@@ -11,7 +11,7 @@ from event_msgs.msg import ExecutionCondition, Charge, Discharge, ChargeFeedback
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
-from mtms_device_interfaces.action import SetVoltages
+from experiment_interfaces.action import SetVoltages
 from system_interfaces.msg import Session, SessionState
 
 

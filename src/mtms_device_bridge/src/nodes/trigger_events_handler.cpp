@@ -19,7 +19,7 @@ void handle_request(
                                       NiFpga_mTMS_ControlBool_Eventtrigger,
                                       true));
 
-  RCLCPP_INFO(rclcpp::get_logger("trigger_events_handler"), "Events triggered.");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_events_handler"), "Events with execution condition WAIT_FOR_TRIGGER triggered.");
   response->success = true;
 }
 

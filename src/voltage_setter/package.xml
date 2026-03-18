@@ -10,6 +10,7 @@
   <depend>rclpy</depend>
 
   <depend>mtms_device_interfaces</depend>
+  <depend>experiment_interfaces</depend>
   <depend>event_msgs</depend>
   <depend>system_interfaces</depend>
 
