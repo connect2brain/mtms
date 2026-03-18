@@ -9,7 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(neuronavigation_interfaces REQUIRED)
-find_package(mtms_device_interfaces REQUIRED)
+find_package(system_interfaces REQUIRED)
 
 # Install stimulation_allower executable.
 
@@ -22,7 +22,7 @@ target_include_directories(stimulation_allower
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stimulation_allower rclcpp std_msgs neuronavigation_interfaces mtms_device_interfaces)
+ament_target_dependencies(stimulation_allower rclcpp std_msgs neuronavigation_interfaces system_interfaces)
 
 install(TARGETS
   stimulation_allower

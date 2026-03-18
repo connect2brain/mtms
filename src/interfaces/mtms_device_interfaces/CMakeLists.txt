@@ -39,8 +39,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/RequestEvents.srv"
         "srv/RequestTrigger.srv"
 
-        "srv/GetStimulationAllowed.srv"
-
         "srv/SendSettings.srv"
 
         "action/SetVoltages.action"

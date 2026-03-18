@@ -10,7 +10,7 @@ from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import StartDevice, StopDevice, AllowStimulation, RequestEvents, RequestTrigger
 
 from system_interfaces.msg import Session
-from system_interfaces.srv import StartSession, StopSession
+from system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed
 
 from event_msgs.msg import (
     Charge,
@@ -33,8 +33,6 @@ from targeting_services.srv import (
     ReversePolarity,
     GetMultipulseWaveforms
 )
-
-from mtms_device_interfaces.srv import GetStimulationAllowed
 
 from MTMSApiPrinter import MTMSApiPrinter
 from ExperimentHandler import ExperimentHandler

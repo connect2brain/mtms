@@ -21,7 +21,7 @@ WORKDIR /app
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
 COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
-COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
 COPY src/interfaces/targeting_services src/interfaces/targeting_services/
 
 COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
