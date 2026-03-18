@@ -96,6 +96,11 @@ class Channel:
             When charging is ready return ChargeFeedback with event id and errors.
         """
 
+        self.logger.info(
+            "Charge requested: from %sV to %sV."
+            % (self.current_voltage, target_voltage)
+        )
+
         # Calculate wait time
         charge_rate_constant = self.capacitance / (2 * self.charge_rate)
         t = charge_rate_constant * (target_voltage**2 - self.current_voltage**2)
@@ -131,8 +136,8 @@ class Channel:
         target_voltage = max(target_voltage, 3)
 
         self.logger.info(
-            "Discharging from %s to requested %s (simulated target %s)"
-            % (self.current_voltage, requested_target_voltage, target_voltage)
+            "Discharge requested: from %sV to %sV."
+            % (self.current_voltage, requested_target_voltage)
         )
 
         # If already at/below target, discharge is effectively complete.
@@ -172,6 +177,12 @@ class Channel:
         Returns:
             When pulse given return PulseFeedback with event id and errors.
         """
+
+        self.logger.info(
+            "Pulse requested: from %sV to %sV."
+            % (self.current_voltage, self.current_voltage - self.pulse_voltage_drop_proportion * self.current_voltage)
+        )
+
         self.pulse_count += 1
         duration = duration_ticks / Channel.CLOCK_FREQUENCY_HZ
 
