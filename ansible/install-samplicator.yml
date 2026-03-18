@@ -1,0 +1,58 @@
+---
+- name: Install samplicator on Ubuntu
+  hosts: localhost
+  become: yes
+  connection: local
+  vars:
+    samplicator_repo: https://github.com/sleinen/samplicator.git
+    samplicator_version: ceeb1d280188c155b71d819282490be86190f6f6
+    samplicator_src_dir: /opt/samplicator
+    samplicator_install_dir: /opt/samplicator-install
+
+  tasks:
+    - name: Install git
+      apt:
+        name: git
+        state: present
+        update_cache: yes
+
+    - name: Install build tools
+      apt:
+        name:
+          - build-essential
+          - autoconf
+          - automake
+          - libtool
+        state: present
+
+    - name: Clone samplicator repository
+      git:
+        repo: "{{ samplicator_repo }}"
+        dest: "{{ samplicator_src_dir }}"
+        version: "{{ samplicator_version }}"
+        force: yes
+
+    - name: Run autogen.sh
+      command: ./autogen.sh
+      args:
+        chdir: "{{ samplicator_src_dir }}"
+
+    - name: Run configure
+      command: ./configure --prefix={{ samplicator_install_dir }}
+      args:
+        chdir: "{{ samplicator_src_dir }}"
+
+    - name: Build samplicator
+      command: make -j{{ ansible_facts.processor_vcpus | default(1) }}
+      args:
+        chdir: "{{ samplicator_src_dir }}"
+
+    - name: Install samplicator
+      command: make install
+      args:
+        chdir: "{{ samplicator_src_dir }}"
+
+    - name: Verify samplicate is installed
+      command: "{{ samplicator_install_dir }}/bin/samplicate -h"
+      register: samplicate_help
+      changed_when: false

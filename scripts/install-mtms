@@ -21,18 +21,24 @@ if ! command -v ansible-playbook &> /dev/null; then
     sudo apt install -y ansible
 fi
 
-# Run the Ansible playbook
+# Run the Ansible playbooks
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
 
 # Prompt for sudo password once
 read -r -s -p "Enter sudo password: " SUDO_PASS
 echo ""
-# Run the Docker installation playbook
+
+# Install Docker
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-docker.yml
-# Run the Docker installation playbook
+
+# Install ROS
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-ros.yml
-# Run the mTMS installation playbook
+
+# Install samplicator
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-samplicator.yml
+
+# Install mTMS
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml
 
 set +e  # Allow sourcing of .bash_env before ROS workspace is built
