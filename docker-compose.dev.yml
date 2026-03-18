@@ -61,13 +61,3 @@ services:
     # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
     privileged: true
     network_mode: host
-
-  optitrack_bridge:
-    build:
-      context: .
-      dockerfile: src/optitrack_bridge/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    network_mode: host

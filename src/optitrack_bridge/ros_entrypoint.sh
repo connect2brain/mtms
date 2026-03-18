@@ -1,7 +1,0 @@
-#!/bin/bash
-set -e
-
-source /opt/ros/jazzy/setup.bash
-source /app/install/setup.bash
-
-ros2 launch optitrack_bridge optitrack_bridge.launch.py log-level:="$ROS_LOG_LEVEL"
