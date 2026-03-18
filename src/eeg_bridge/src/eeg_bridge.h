@@ -34,17 +34,6 @@ enum EegDeviceState {
   EEG_DEVICE_STREAMING
 };
 
-/**
- * Supported EEG Devices
- *
- * List the options for the currently supported EEG devices. Used to define, which
- * adpter to use for the socket communnication between this software and the eeg device.
- */
-enum EegDevice {
-  NEURONE,
-  TURBOLINK,
-};
-
 const double_t UNSET_TIME = std::numeric_limits<double_t>::quiet_NaN();
 const uint64_t UNSET_PREVIOUS_SAMPLE_INDEX = std::numeric_limits<uint64_t>::max();
 
@@ -104,9 +93,6 @@ private:
   /* Configuration */
   uint16_t port = 0;
   uint8_t maximum_dropped_samples = 0;
-  EegDevice eeg_device;
-  uint32_t turbolink_sampling_frequency = 0;
-  uint8_t turbolink_eeg_channel_count = 0;
   std::string eeg_device_type;
 
   std::shared_ptr<UdpSocket> socket_;

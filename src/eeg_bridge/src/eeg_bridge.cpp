@@ -15,7 +15,6 @@
 
 #include "adapters/eeg_adapter.h"
 #include "adapters/neurone_adapter.h"
-#include "adapters/turbolink_adapter.h"
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -122,21 +121,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
     this->maximum_dropped_samples = static_cast<uint8_t>(msg->maximum_dropped_samples);
   }
 
-  /* Check if turbolink parameters have changed */
-  if (msg->turbolink_sampling_frequency != static_cast<int32_t>(this->turbolink_sampling_frequency)) {
-    this->turbolink_sampling_frequency = static_cast<uint32_t>(msg->turbolink_sampling_frequency);
-    if (this->eeg_device_type == "turbolink") {
-      needs_adapter_recreation = true;
-    }
-  }
-
-  if (msg->turbolink_eeg_channel_count != static_cast<int32_t>(this->turbolink_eeg_channel_count)) {
-    this->turbolink_eeg_channel_count = static_cast<uint8_t>(msg->turbolink_eeg_channel_count);
-    if (this->eeg_device_type == "turbolink") {
-      needs_adapter_recreation = true;
-    }
-  }
-
   /* Recreate socket if port changed */
   if (needs_socket_recreation) {
     this->socket_ = std::make_shared<UdpSocket>(this->port);
@@ -163,14 +147,11 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
 
     if (this->eeg_device_type == "neurone") {
       this->eeg_adapter = std::make_shared<NeurOneAdapter>(this->socket_);
-    } else if (this->eeg_device_type == "turbolink") {
-      this->eeg_adapter = std::make_shared<TurboLinkAdapter>(this->socket_,
-                                                             this->turbolink_sampling_frequency,
-                                                             this->turbolink_eeg_channel_count);
     } else {
+      this->eeg_adapter.reset();
       RCLCPP_ERROR(this->get_logger(), "Unsupported EEG device: %s", this->eeg_device_type.c_str());
       this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                   "Unsupported EEG device type");
+                                   "Unsupported EEG device type (only neurone is supported)");
       return;
     }
 
@@ -183,10 +164,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
   RCLCPP_INFO(this->get_logger(), "  • Port: %d", this->port);
   RCLCPP_INFO(this->get_logger(), "  • EEG device: %s", this->eeg_device_type.c_str());
   RCLCPP_INFO(this->get_logger(), "  • Maximum dropped samples: %d", this->maximum_dropped_samples);
-  if (this->eeg_device_type == "turbolink") {
-    RCLCPP_INFO(this->get_logger(), "  • Turbolink sampling frequency: %d", this->turbolink_sampling_frequency);
-    RCLCPP_INFO(this->get_logger(), "  • Turbolink EEG channel count: %d", this->turbolink_eeg_channel_count);
-  }
   RCLCPP_INFO(this->get_logger(), " ");
 
   this->publish_health_status(system_interfaces::msg::ComponentHealth::READY, "");
@@ -472,9 +449,8 @@ void EegBridge::process_eeg_packet() {
   if (!this->socket_->read_data(this->buffer, BUFFER_SIZE)) {
     RCLCPP_WARN(this->get_logger(), "Timeout while reading EEG data");
 
-    // Interpret timeout as the end of the stream. This can happen at the end of an actual stream
-    // when using TurboLink, as the device does not send any data after the stream ends, or e.g.,
-    // if the ethernet cable is disconnected in the middle of a stream.
+    // Interpret timeout as the end of the stream, e.g. if the device has
+    // stopped sending data or if the ethernet cable is disconnected.
     set_device_state(EegDeviceState::WAITING_FOR_EEG_DEVICE);
 
     return;
