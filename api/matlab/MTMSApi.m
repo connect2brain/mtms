@@ -103,7 +103,9 @@ classdef MTMSApi < handle
         % Start the mTMS device, waiting until the device reports its state as operational.
         % Does not require any parameters. Does not return any value.
 
-            obj.node.start_device();
+            success = obj.node.start_device();
+            assert(success, "Failed to start device: '/mtms/device/start' is unavailable or not responding.");
+
             while obj.get_device_state() ~= obj.device_states.OPERATIONAL
                 pause(0.1)
             end
@@ -113,7 +115,9 @@ classdef MTMSApi < handle
         % Stop the mTMS device, waiting until the device reports its state as non-operational.
         % Does not require any parameters. Does not return any value.
 
-            obj.node.stop_device();
+            success = obj.node.stop_device();
+            assert(success, "Failed to stop device: '/mtms/device/stop' is unavailable or not responding.");
+
             while obj.get_device_state() ~= obj.device_states.NOT_OPERATIONAL
                 pause(0.1)
             end
@@ -123,7 +127,9 @@ classdef MTMSApi < handle
         % Start an session, waiting until the session state is reported as started.
         % Does not require any parameters. Does not return any value.
 
-            obj.node.start_session();
+            success = obj.node.start_session();
+            assert(success, "Failed to start session: '/mtms/device/session/start' is unavailable or not responding.");
+
             while obj.get_session_state() ~= obj.session_states.STARTED
                 pause(0.1)
             end
@@ -133,7 +139,9 @@ classdef MTMSApi < handle
         % Stop an session, waiting until the session state is reported as stopped.
         % Does not require any parameters. Does not return any value.
 
-            obj.node.stop_session();
+            success = obj.node.stop_session();
+            assert(success, "Failed to stop session: '/mtms/device/session/stop' is unavailable or not responding.");
+
             while obj.get_session_state() ~= obj.session_states.STOPPED
                 pause(0.1)
             end
