@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
-import { SmallHeader } from '../styles/StyledTypography'
-
 import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
@@ -53,19 +51,16 @@ export const MultipleViews = () => {
       <ViewContainer>
         {currentView === 'SystemView' && (
         <Wrapper>
-          <SmallHeader>System</SmallHeader>
           <SystemView />
         </Wrapper>
         )}
         {currentView === 'experiment' && (
         <Wrapper>
-          <SmallHeader>Experiment</SmallHeader>
           <ExperimentView />
         </Wrapper>
         )}
         {currentView === 'config' && (
         <Wrapper>
-          <SmallHeader>Config</SmallHeader>
           <ConfigView />
         </Wrapper>
         )}
