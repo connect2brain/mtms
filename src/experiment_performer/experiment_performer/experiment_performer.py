@@ -32,7 +32,8 @@ class ExperimentPerformerNode(Node):
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
-    LOG_TRIAL_TIMEOUT_S = 2.0
+    SERVICE_CALL_TIMEOUT_S = 2.0
+    SESSION_STATE_WAIT_TIMEOUT_S = 5.0
 
     def __init__(self):
         super().__init__('experiment_performer_node')
@@ -265,29 +266,32 @@ class ExperimentPerformerNode(Node):
     def get_result_from_container(self, result_container):
         return result_container[0]
 
-    def async_service_call(self, client, request, timeout_s=None, timeout_message=None):
+    def async_service_call(self, client, request, service_name):
         call_service_event = Event()
         response_value = [None]
 
         def service_call_callback(future):
             nonlocal response_value
-            response_value[0] = future.result()
+            try:
+                response_value[0] = future.result()
+            except Exception as error:
+                self.logger.error('Service {} call failed: {}'.format(service_name, str(error)))
+                response_value[0] = None
             call_service_event.set()
 
         service_call_future = client.call_async(request)
         service_call_future.add_done_callback(service_call_callback)
 
         # Wait for the service call to complete.
-        if timeout_s is None:
-            call_service_event.wait()
-        else:
-            completed = call_service_event.wait(timeout=timeout_s)
-            if not completed:
-                if timeout_message is not None:
-                    self.logger.warning(timeout_message)
-                else:
-                    self.logger.warning('Service call timed out after {:.3f} seconds.'.format(timeout_s))
-                return None
+        completed = call_service_event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+        if not completed:
+            self.logger.warning(
+                'Service {} timed out after {:.1f} s.'.format(
+                    service_name,
+                    self.SERVICE_CALL_TIMEOUT_S,
+                )
+            )
+            return None
 
         response = response_value[0]
         return response
@@ -319,22 +323,40 @@ class ExperimentPerformerNode(Node):
     def start_session(self):
         request = StartSession.Request()
 
-        response = self.async_service_call(self.start_session_client, request)
+        response = self.async_service_call(self.start_session_client, request, '/mtms/device/session/start')
 
-        assert response.success, "Starting session was not successful."
+        if response is None:
+            return False
+
+        if not response.success:
+            self.logger.error('Service /mtms/device/session/start returned success=false.')
+            return False
+
+        return True
 
     def stop_session(self):
         request = StopSession.Request()
 
-        response = self.async_service_call(self.stop_session_client, request)
+        response = self.async_service_call(self.stop_session_client, request, '/mtms/device/session/stop')
 
-        assert response.success, "Stopping session was not successful."
+        if response is None:
+            return False
+
+        if not response.success:
+            self.logger.error('Service /mtms/device/session/stop returned success=false.')
+            return False
+
+        return True
 
     def validate_trial(self, trial):
         request = ValidateTrial.Request()
         request.trial = trial
 
-        response = self.async_service_call(self.validate_trial_client, request)
+        response = self.async_service_call(self.validate_trial_client, request, '/mtms/trial/validate')
+
+        if response is None:
+            self.logger.error('Service /mtms/trial/validate did not return a response.')
+            return False
 
         assert response.success, "Validating trial was not successful."
 
@@ -349,15 +371,7 @@ class ExperimentPerformerNode(Node):
         request.trial_result = trial_result
         request.num_of_attempts = num_of_attempts
 
-        response = self.async_service_call(
-            self.log_trial_client,
-            request,
-            timeout_s=self.LOG_TRIAL_TIMEOUT_S,
-            timeout_message=(
-                'Service /mtms/trial/log timed out after {:.1f} s. '
-                'Trial logger may be blocked or crashed.'
-            ).format(self.LOG_TRIAL_TIMEOUT_S),
-        )
+        response = self.async_service_call(self.log_trial_client, request, '/mtms/trial/log')
 
         if response is None:
             return False
@@ -563,23 +577,65 @@ class ExperimentPerformerNode(Node):
         # If session is already started, stop it first.
         if self.is_session_started():
             self.logger.info('{}: Session already started on the mTMS device, stopping...'.format(goal_id))
-            self.stop_session()
+            session_stopped = self.stop_session()
+            if not session_stopped:
+                self.logger.error('{}: Could not stop existing session before starting a new one.'.format(goal_id))
+                return False
 
-            while not self.is_session_stopped():
-                time.sleep(0.1)
+            if not self.wait_for_session_stop(goal_id):
+                return False
 
         self.logger.info('{}: Starting session.'.format(goal_id))
-        self.start_session()
+        session_started = self.start_session()
+        if not session_started:
+            self.logger.error('{}: Could not start session.'.format(goal_id))
+            return False
 
-        while not self.is_session_started():
-            time.sleep(0.1)
+        if not self.wait_for_session_start(goal_id):
+            return False
+
+        return True
 
     def finalize_session(self, goal_id):
         self.logger.info('{}: Stopping session...'.format(goal_id))
-        self.stop_session()
+        session_stopped = self.stop_session()
+        if not session_stopped:
+            self.logger.warning(
+                '{}: Stop session call did not complete; continuing shutdown without waiting for session state.'
+                .format(goal_id)
+            )
+            return
 
-        while not self.is_session_stopped():
+        if not self.wait_for_session_stop(goal_id):
+            self.logger.warning('{}: Session did not reach STOPPED state before timeout.'.format(goal_id))
+
+    def wait_for_session_start(self, goal_id):
+        deadline = time.monotonic() + self.SESSION_STATE_WAIT_TIMEOUT_S
+        while not self.is_session_started():
+            if time.monotonic() >= deadline:
+                self.logger.warning(
+                    '{}: Timed out after {:.1f} s while waiting for session state STARTED.'
+                    .format(goal_id, self.SESSION_STATE_WAIT_TIMEOUT_S)
+                )
+                return False
+
             time.sleep(0.1)
+
+        return True
+
+    def wait_for_session_stop(self, goal_id):
+        deadline = time.monotonic() + self.SESSION_STATE_WAIT_TIMEOUT_S
+        while not self.is_session_stopped():
+            if time.monotonic() >= deadline:
+                self.logger.warning(
+                    '{}: Timed out after {:.1f} s while waiting for session state STOPPED.'
+                    .format(goal_id, self.SESSION_STATE_WAIT_TIMEOUT_S)
+                )
+                return False
+
+            time.sleep(0.1)
+
+        return True
 
     def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
@@ -607,7 +663,8 @@ class ExperimentPerformerNode(Node):
             np.random.seed(1234)
             valid_trials = np.random.permutation(valid_trials)
 
-        self.initialize_session(goal_id)
+        if not self.initialize_session(goal_id):
+            return False, trial_results
 
         # Loop over trials and perform each.
         success = True
