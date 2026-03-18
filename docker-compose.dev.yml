@@ -71,15 +71,3 @@ services:
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
-
-  planner:
-    build:
-      context: .
-      dockerfile: src/planner/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    volumes:
-      - './src/planner:/app/src/planner/'
-    network_mode: host

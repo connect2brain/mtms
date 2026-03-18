@@ -35,40 +35,6 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 - `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.
 
-## Planner
-
-### Topics
-
-- `/mtms/planner/inner/state` - Internal mutable planner state used by planner nodes.
-- `/mtms/planner/state` - Public planner state used by UI and integrations.
-
-### Services
-
-- `/mtms/planner/add_target` - Add a target to planner state.
-- `/mtms/planner/remove_target` - Remove a target from planner state.
-- `/mtms/planner/rename_target` - Rename a target.
-- `/mtms/planner/set_target` - Set target properties.
-- `/mtms/planner/set_target_orientation` - Set target orientation.
-- `/mtms/planner/change_target_index` - Reorder target index.
-- `/mtms/planner/add_pulse_sequence` - Add a pulse sequence.
-- `/mtms/planner/remove_pulse_sequence` - Remove a pulse sequence.
-- `/mtms/planner/rename_pulse_sequence` - Rename a pulse sequence.
-- `/mtms/planner/add_pulse_to_pulse_sequence` - Add pulse to a sequence.
-- `/mtms/planner/remove_pulse` - Remove pulse from a sequence.
-- `/mtms/planner/set_pulse_intensity` - Set pulse intensity.
-- `/mtms/planner/set_pulse_isi` - Set pulse inter-stimulus interval.
-- `/mtms/planner/set_pulse_sequence_intensity` - Set sequence pulse intensities.
-- `/mtms/planner/set_pulse_sequence_isi` - Set sequence pulse ISIs.
-- `/mtms/planner/change_pulse_index` - Reorder pulse index inside a sequence.
-- `/mtms/planner/change_comment` - Update planner comment metadata.
-- `/mtms/planner/toggle_select_target` - Toggle target selection.
-- `/mtms/planner/toggle_select_pulse_sequence` - Toggle pulse-sequence selection.
-- `/mtms/planner/toggle_select_pulse` - Toggle pulse selection.
-- `/mtms/planner/toggle_visible` - Toggle target visibility.
-- `/mtms/planner/toggle_visible_pulse` - Toggle pulse visibility.
-- `/mtms/planner/toggle_navigation` - Toggle navigation mode.
-- `/mtms/planner/clear_state` - Clear/reset planner state.
-
 ## Neuronavigation
 
 ### Topics

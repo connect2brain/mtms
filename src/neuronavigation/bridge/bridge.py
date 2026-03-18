@@ -17,8 +17,6 @@ from std_msgs.msg import Bool, MultiArrayDimension
 
 from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
-from ui_interfaces.msg import PlannerState
-from ui_interfaces.srv import SetTargetOrientation
 from targeting_interfaces.msg import CoilTarget
 
 from invesalius3 import app
@@ -107,8 +105,6 @@ class NeuronavigationNode(Node):
         # Create other publishers.
         self._coil_mesh_publisher = self.create_publisher(Mesh, "neuronavigation/coil_mesh", qos_persist_latest, callback_group=callback_group)
         self._focus_publisher = self.create_publisher(PoseUsingEulerAngles, "neuronavigation/focus", qos_persist_latest, callback_group=callback_group)
-        self._planner_state_subscription = self.create_subscription(PlannerState, "planner/state",
-                                                                    self.planner_state_callback, qos_persist_latest, callback_group=callback_group)
         self._optitrack_state_subscription = self.create_subscription(OptitrackPoses, "/neuronavigation/optitrack_poses",
                                                                       self.optitrack_listener_callback, 1, callback_group=callback_group)
         self._coil_target_subscription = self.create_subscription(CoilTarget, "/neuronavigation/coil_target",
@@ -118,8 +114,6 @@ class NeuronavigationNode(Node):
                                                                     "neuronavigation/open_orientation_dialog",
                                                                     self.open_orientation_dialog_callback, callback_group=callback_group)
 
-        self._update_target_orientation_client = self.create_client(SetTargetOrientation,
-                                                                    '/mtms/planner/set_target_orientation', callback_group=callback_group)
         if self.electric_field_enable:
             self.client_init_efield = self.create_client(InitializeEfield, '/mtms/efield/initialize', callback_group=callback_group)
             while not self.client_init_efield.wait_for_service(timeout_sec=1.0):
@@ -179,40 +173,6 @@ class NeuronavigationNode(Node):
         targets = msg.targets
         mep = msg.brain_response_amplitude
         self._stimulation_pulse_received(targets, mep)
-
-    def planner_state_callback(self, msg):
-        if not hasattr(self, '_set_markers'):
-            self.get_logger().info('set markers not set yet')
-            return
-
-        self.get_logger().info(f'Updating planner state')
-        markers = []
-        for id, target in enumerate(msg.targets):
-            position = [target.pose.position.x, target.pose.position.y, target.pose.position.z]
-            orientation = [target.pose.orientation.alpha, target.pose.orientation.beta, target.pose.orientation.gamma]
-
-            if target.target:
-                color = self._COLOR_TARGET
-
-            elif target.selected:
-                color = self._COLOR_SELECTED
-
-            else:
-                color = self._COLOR_NON_TARGET
-
-            marker_data = {
-                'ball_id': id,
-                'position': position,
-                'orientation': orientation,
-                'target': target.target,
-                'size': 3,
-                'colour': [c / 255.0 for c in color],
-                'arrow_flag': not all(d == 0.0 for d in orientation)
-            }
-            markers.append(marker_data)
-
-        self._set_markers(markers)
-        self.get_logger().info('I heard planner state')
 
     def optitrack_listener_callback(self, msg):
         self.get_logger().info('I heard optitrack: "%s"' % msg.probe)
@@ -402,20 +362,6 @@ class NeuronavigationNode(Node):
             self.get_logger().info('Service call failed %r' % (e,))
             return None
 
-    def update_target_orientation(self, target_id, orientation):
-        self.get_logger().info(f'updating target {target_id} orientation to {str(orientation)}')
-        request = SetTargetOrientation.Request()
-
-        euler_angles = EulerAngles()
-        euler_angles.alpha = orientation[0]
-        euler_angles.beta = orientation[1]
-        euler_angles.gamma = orientation[2]
-
-        request.orientation = euler_angles
-        request.target_id = target_id
-
-        self._update_target_orientation_client.call_async(request)
-
     def set_callback__update_coil_target(self, callback):
         self._update_coil_target = callback
 
@@ -480,10 +426,8 @@ class Connection(Thread):
         )
 
     def update_target_orientation(self, target_id, orientation):
-        self.node.update_target_orientation(
-            target_id=target_id,
-            orientation=orientation
-        )
+        # Not implemented
+        pass
 
     def update_coil_mesh(self, points, polygons):
         self.node.update_coil_mesh(

@@ -1,13 +1,5 @@
 version: '3.5'
 
-services:
-  planner_test:
-    networks:
-      - cinetwork
-    build:
-      context: ..
-      dockerfile: src/planner/Dockerfile
-
 networks:
   cinetwork:
     name: cinetwork
