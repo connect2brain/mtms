@@ -10,7 +10,7 @@ However, the software can be used as a reference for developing similar systems 
 ## Installation
 
 1. **Prerequisites**: Ensure your system meets the following requirements:
-   - Supported operating system: Ubuntu 22.04.3 LTS
+   - Supported operating system: Ubuntu 24.04.4 LTS
 
 2. **System setup**: Follow the [Installation guide](docs/source/markdown/installation-guide.md) to prepare your computer, operating system, and external software.
 
