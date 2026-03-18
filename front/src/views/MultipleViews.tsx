@@ -86,6 +86,17 @@ export const MultipleViews = () => {
 const ViewContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
+  padding-top: 0.75rem;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0.5rem;
+    width: 250px;
+    border-top: 2px solid ${(p) => p.theme.colors.gray};
+  }
 `
 
 const OptionWrapper = styled.div`
@@ -113,7 +124,6 @@ const Wrapper = styled.div`
   width: 100%;
   padding: 0.5rem;
   margin: 0.5rem;
-  border: 3px solid ${(p) => p.theme.colors.darkgray};
 `
 
 const ConfigIcon = styled.a`
