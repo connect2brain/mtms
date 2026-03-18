@@ -27,6 +27,11 @@ export BITFILE_PREFIX="NiFpga_mTMS_generation_${MTMS_DEVICE_GENERATION}_${BITFIL
 export BITFILE=$BITFILE_PREFIX.lvbitx
 export BITFILE_SIGNATURE="$(cat $BITFILE_DIRECTORY/$BITFILE_PREFIX.signature)"
 
+# Prevent ros2 launch from writing under ~/.ros/log.
+# launch.log cannot be disabled directly, so redirect it to tmpfs.
+export ROS_LOG_DIR=/dev/shm/ros_logs
+mkdir -p "$ROS_LOG_DIR"
+
 source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 
 # Start mTMS bridge
