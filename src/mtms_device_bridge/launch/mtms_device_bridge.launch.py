@@ -58,7 +58,7 @@ def generate_launch_description():
                     "channel-count": channel_count,
                 }
             ],
-            arguments=['--ros-args', '--log-level', logger]
+            arguments=['--ros-args', '--log-level', logger, '--disable-external-lib-logs']
         )
         ld.add_action(node)
 
