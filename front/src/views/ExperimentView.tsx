@@ -1314,7 +1314,7 @@ export const ExperimentView = () => {
               <IndentedLabel>EMG channel:</IndentedLabel>
               {/*
                   TODO: Validate EMG channel by passing a prop to ValidatedInput, based on the
-                  number of available EMG channels, published in EegInfo topic by EEG bridge.
+                  number of available EMG channels, published by EEG bridge.
                 */}
               <ValidatedInput
                 type='text'
