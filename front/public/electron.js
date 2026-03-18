@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Menu, shell } = require('electron')
+const { app, BrowserWindow, Menu, shell, screen } = require('electron')
 const path = require('path')
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -6,9 +6,13 @@ const isDev = process.env.NODE_ENV === 'development'
 let mainWindow
 
 function createWindow() {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    x: 0,
+    y: 0,
+    width,
+    height,
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
