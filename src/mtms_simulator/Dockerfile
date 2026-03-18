@@ -3,7 +3,6 @@ FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cd
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
-
 RUN apt-get update && \
     apt-get install -y \
     dos2unix \
@@ -14,24 +13,28 @@ RUN apt-get update && \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace and build packages
+# Copy ROS workspace
 
 WORKDIR /app
 
 # ROS interfaces
-COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY src/interfaces/event_msgs src/interfaces/event_msgs/
 COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
-
+COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
+COPY src/interfaces/targeting_services src/interfaces/targeting_services/
+COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
+
+COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/mtms_simulator src/mtms_simulator/
+COPY src/mtms_simulator src/mtms/mtms_simulator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
 
 # Copy entrypoint
+
 COPY src/mtms_simulator/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

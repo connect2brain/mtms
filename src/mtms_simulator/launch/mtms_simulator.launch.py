@@ -1,54 +1,32 @@
 from launch import LaunchDescription
+from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    ld = LaunchDescription()
+
     log_arg = DeclareLaunchArgument(
-        name="log-level",
+        "log-level",
+        default_value=["info"],
         description="Logging level",
-        default_value="info",
-    )
-
-    channels_arg = DeclareLaunchArgument(
-        name="channels",
-        description="Number of mTMS channels",
-        default_value="5",
-    )
-    max_voltage_arg = DeclareLaunchArgument(
-        name="max-voltage",
-        description="Maximum voltage of the coils",
-        default_value="1500",
-    )
-
-    charge_rate_arg = DeclareLaunchArgument(
-        "charge-rate",
-        description="Charging rate of the coils in J/s",
-        default_value="1500",
     )
 
     logger = LaunchConfiguration("log-level")
 
-    node = Node(
-        package="mtms_simulator",
-        executable="mtms_simulator",
-        parameters=[
-            {
-                "channels": LaunchConfiguration("channels"),
-                "max_voltage": LaunchConfiguration("max-voltage"),
-                "charge_rate": LaunchConfiguration("charge-rate"),
-            }
-        ],
-        arguments=["--ros-args", "--log-level", logger],
-    )
+    node_executables = [
+        "mtms_simulator",
+    ]
 
-    return LaunchDescription(
-        [
-            channels_arg,
-            max_voltage_arg,
-            charge_rate_arg,
-            log_arg,
-            node,
-        ]
-    )
+    for node_executable in node_executables:
+        node = Node(
+            package="mtms_simulator",
+            executable=node_executable,
+            arguments=['--ros-args', '--log-level', logger]
+        )
+        ld.add_action(node)
+
+    ld.add_action(log_arg)
+
+    return ld
