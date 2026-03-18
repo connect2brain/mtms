@@ -1,8 +1,7 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext } from 'react'
 import styled from 'styled-components'
 
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
-import { NeuroSimoContext } from 'providers/NeuroSimoProvider'
 import { StyledPanel } from 'styles/General'
 
 const HealthcheckMessagePanel = styled(StyledPanel)`
@@ -31,7 +30,6 @@ const Message = styled.div`
 
 export const HealthcheckMessageDisplay: React.FC = () => {
   const { eegHealthcheck, mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
-  const { deciderEnabled } = useContext(NeuroSimoContext)
 
   let displayMessage
 
@@ -43,8 +41,6 @@ export const HealthcheckMessageDisplay: React.FC = () => {
     displayMessage = mtmsDeviceHealthcheck?.actionable_message
   } else if (eegHealthcheck?.status.value !== HealthcheckStatus.READY) {
     displayMessage = eegHealthcheck?.actionable_message
-  } else if (deciderEnabled) {
-    displayMessage = 'Please disable Decider to run experiments'
   } else {
     displayMessage = 'Ready'
   }

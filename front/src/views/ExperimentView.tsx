@@ -36,7 +36,6 @@ import {
 import { SystemContext } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
-import { NeuroSimoContext } from 'providers/NeuroSimoProvider'
 
 
 import { set } from 'cypress/types/lodash'
@@ -414,8 +413,6 @@ export const ExperimentView = () => {
 
   const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
-
-  const { deciderEnabled } = useContext(NeuroSimoContext)
 
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
@@ -1464,8 +1461,7 @@ export const ExperimentView = () => {
               startButtonState === StartButtonState.Updating ||
               startButtonState === StartButtonState.Pausing ||
               selectedPoints.length == 0 ||
-              selectedAngles.length == 0 ||
-              (deciderEnabled !== null && deciderEnabled)
+              selectedAngles.length == 0
             }
           >
             {startButtonStateToString(startButtonState)}
