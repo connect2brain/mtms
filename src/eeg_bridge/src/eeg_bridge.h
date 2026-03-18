@@ -13,12 +13,8 @@
 
 #include "eeg_interfaces/msg/eeg_device_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
-#include "eeg_interfaces/srv/start_streaming.hpp"
-#include "eeg_interfaces/srv/stop_streaming.hpp"
-#include "eeg_interfaces/srv/initialize_eeg_device_stream.hpp"
 
 #include "system_interfaces/msg/component_health.hpp"
-#include "system_interfaces/srv/abort_session.hpp"
 #include "system_interfaces/msg/data_source_state.hpp"
 #include "system_interfaces/msg/global_config.hpp"
 
@@ -76,18 +72,6 @@ private:
 
   void set_device_state(EegDeviceState new_state);
 
-  void abort_session(const std::string& reason);
-
-  void handle_start_streaming(
-      const std::shared_ptr<eeg_interfaces::srv::StartStreaming::Request> request,
-      std::shared_ptr<eeg_interfaces::srv::StartStreaming::Response> response);
-  void handle_stop_streaming(
-      const std::shared_ptr<eeg_interfaces::srv::StopStreaming::Request> request,
-      std::shared_ptr<eeg_interfaces::srv::StopStreaming::Response> response);
-  void handle_initialize(
-      const std::shared_ptr<eeg_interfaces::srv::InitializeEegDeviceStream::Request> request,
-      std::shared_ptr<eeg_interfaces::srv::InitializeEegDeviceStream::Response> response);
-
   void handle_global_config(const system_interfaces::msg::GlobalConfig::SharedPtr msg);
 
   /* Configuration */
@@ -113,21 +97,11 @@ private:
 
   rclcpp::TimerBase::SharedPtr heartbeat_publisher_timer;
 
-  /* Services */
-  rclcpp::Service<eeg_interfaces::srv::StartStreaming>::SharedPtr start_streaming_service;
-  rclcpp::Service<eeg_interfaces::srv::StopStreaming>::SharedPtr stop_streaming_service;
-  rclcpp::Service<eeg_interfaces::srv::InitializeEegDeviceStream>::SharedPtr initialize_service;
-
-  /* Service client for session abort */
-  rclcpp::Client<system_interfaces::srv::AbortSession>::SharedPtr abort_session_client;
-
   /* Subscribers */
   rclcpp::Subscription<system_interfaces::msg::GlobalConfig>::SharedPtr global_config_subscription;
 
   /* Data source state */
   system_interfaces::msg::DataSourceState::_state_type data_source_state = system_interfaces::msg::DataSourceState::READY;
-  bool is_session_start = false;
-  bool session_abort_requested = false;
   
   /* Device sample tracking for dropped sample detection */
   uint64_t previous_device_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
