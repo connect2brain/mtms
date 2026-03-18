@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCog } from '@fortawesome/free-solid-svg-icons'
-
 import { SmallHeader } from '../styles/StyledTypography'
 
 import { ConfigView } from './ConfigView'
@@ -45,9 +42,13 @@ export const MultipleViews = () => {
         >
           Experiment
         </a>
-        <ConfigIcon onClick={() => setCurrentView('config')} className={currentView === 'config' ? 'active' : ''}>
-          <FontAwesomeIcon icon={faCog} />
-        </ConfigIcon>
+        <a
+          href='#'
+          onClick={() => setCurrentView('config')}
+          className={currentView === 'config' ? 'active' : ''}
+        >
+          Config
+        </a>
       </OptionWrapper>
       <ViewContainer>
         {currentView === 'SystemView' && (
@@ -116,10 +117,3 @@ const Wrapper = styled.div`
   margin: 0.5rem;
 `
 
-const ConfigIcon = styled.a`
-  position: absolute;
-  top: 105px;
-  right: 500px;
-  font-size: 28px;
-  cursor: pointer;
-`
