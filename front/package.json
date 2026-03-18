@@ -1,7 +1,9 @@
 {
-  "name": "front",
+  "name": "mtms",
   "version": "0.1.0",
   "private": true,
+  "main": "public/electron.js",
+  "homepage": "./",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
@@ -38,15 +40,21 @@
     "webgl-plot": "^0.7.0"
   },
   "scripts": {
-    "start": "REACT_APP_ENV=dev react-scripts start",
-    "build": "REACT_APP_ENV=prod react-scripts build",
+    "start": "REACT_APP_ENV=dev REACT_APP_ROSBRIDGE_URL=ws://localhost:9091 react-scripts start",
+    "build": "REACT_APP_ENV=prod REACT_APP_ROSBRIDGE_URL=ws://localhost:9091 react-scripts build",
     "test": "REACT_APP_ENV=test react-scripts start",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx,json}",
     "lint:fix": "eslint --fix 'src/**/*.{js,jsx,ts,tsx,json}'",
     "format": "prettier --write 'src/**/*.{js,jsx,ts,tsx,css,md,json}' --config ./.prettierrc",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run"
+    "cypress:run": "cypress run",
+    "electron": "electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && NODE_ENV=development electron .\"",
+    "electron-pack": "npm run build && electron-builder",
+    "electron-pack-win": "npm run build && electron-builder --win",
+    "electron-pack-mac": "npm run build && electron-builder --mac",
+    "electron-pack-linux": "npm run build && electron-builder --linux"
   },
   "eslintConfig": {
     "extends": [
@@ -73,7 +81,10 @@
     "@types/throttleit": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
+    "concurrently": "^7.6.0",
     "cypress": "^10.1.0",
+    "electron": "^25.0.0",
+    "electron-builder": "^24.0.0",
     "eslint": "^8.15.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-typescript": "^2.7.1",
@@ -81,6 +92,29 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.29.4",
     "prettier": "^2.6.2",
-    "sass": "^1.68.0"
+    "sass": "^1.68.0",
+    "wait-on": "^7.0.1"
+  },
+  "build": {
+    "appId": "com.mtms.app",
+    "productName": "mtms",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "public/electron.js",
+      "public/preload.js"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }

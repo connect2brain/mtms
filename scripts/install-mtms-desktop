@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+MTMS_DIR="$HOME/mtms"
+DESKTOP_FILE="$HOME/.local/share/applications/mtms.desktop"
+DESKTOP_ICON="$HOME/Desktop/mtms.desktop"
+
+DESKTOP_ENTRY="[Desktop Entry]
+Version=1.0
+Type=Application
+Name=mTMS panel
+Comment=Control panel for multi-locus TMS experiments
+Exec=$MTMS_DIR/front/dist-electron/linux-unpacked/mtms
+Icon=$MTMS_DIR/front/public/favicon.ico
+Terminal=false
+Categories=Science;MedicalSoftware;"
+
+mkdir -p "$HOME/.local/share/applications"
+echo "$DESKTOP_ENTRY" > "$DESKTOP_FILE"
+chmod +x "$DESKTOP_FILE"
+
+if [ -d "$HOME/Desktop" ]; then
+    echo "$DESKTOP_ENTRY" > "$DESKTOP_ICON"
+    chmod +x "$DESKTOP_ICON"
+    if command -v gio &> /dev/null; then
+        gio set "$DESKTOP_ICON" metadata::trusted true 2>/dev/null || true
+    fi
+fi
+
+if command -v update-desktop-database &> /dev/null; then
+    update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+fi
+
+echo ""
+echo "Desktop launcher installed successfully!"
+echo "You can now find mTMS panel in:"
+echo "  - Applications menu"
+if [ -d "$HOME/Desktop" ]; then
+    echo "  - Desktop icon"
+fi
+echo ""

@@ -64,26 +64,36 @@ export const MultipleViews = () => {
         </ConfigIcon>
       </OptionWrapper>
       <ViewContainer>
-        <Wrapper style={{ display: currentView === 'SystemView' ? 'block' : 'none' }}>
+        {currentView === 'SystemView' && (
+        <Wrapper>
           <SmallHeader>System</SmallHeader>
           <SystemView />
         </Wrapper>
-        <Wrapper style={{ display: currentView === 'experiment' ? 'block' : 'none' }}>
+        )}
+        {currentView === 'experiment' && (
+        <Wrapper>
           <SmallHeader>Experiment</SmallHeader>
           <ExperimentView />
         </Wrapper>
-        <Wrapper style={{ display: currentView === 'targets' ? 'block' : 'none' }}>
+        )}
+        {currentView === 'targets' && (
+        <Wrapper>
           <SmallHeader>Targets</SmallHeader>
           <TargetView />
         </Wrapper>
-        <Wrapper style={{ display: currentView === 'visualizer' ? 'block' : 'none' }}>
+        )}
+        {currentView === 'visualizer' && (
+        <Wrapper>
           <SmallHeader>Visualizer</SmallHeader>
           <DataVisualize />
         </Wrapper>
-        <Wrapper style={{ display: currentView === 'config' ? 'block' : 'none' }}>
+        )}
+        {currentView === 'config' && (
+        <Wrapper>
           <SmallHeader>Config</SmallHeader>
           <ConfigView />
         </Wrapper>
+        )}
       </ViewContainer>
     </div>
   )

@@ -307,19 +307,32 @@
         extra_args: "{{ pip_extra_args }}"
 
     ########################################################################
-    # 9. Install Google Chrome (for Web-UI)
+    # 9. Install Node.js 18 LTS for Electron app build
     ########################################################################
-    - name: Download Google Chrome .deb package
-      ansible.builtin.get_url:
-        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        dest: /tmp/google-chrome-stable_current_amd64.deb
+    - name: Remove old Node.js packages
+      apt:
+        name:
+          - nodejs
+          - libnode-dev
+          - libnode72
+        state: absent
+        purge: yes
+      ignore_errors: yes
 
-    - name: Install Google Chrome
-      ansible.builtin.apt:
-        deb: /tmp/google-chrome-stable_current_amd64.deb
+    - name: Check if NodeSource repository is configured
+      stat:
+        path: /etc/apt/sources.list.d/nodesource.list
+      register: nodesource_repo
 
-    # XXX: Unfortunately, creating the progressive web app (PWA) shortcut on the
-    #   desktop is not possible with Ansible. This must be done manually.
+    - name: Download and run NodeSource setup script
+      shell: curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+      when: not nodesource_repo.stat.exists
+
+    - name: Install Node.js 18 from NodeSource
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
 
     ########################################################################
     # 10. Configure GRUB timeout

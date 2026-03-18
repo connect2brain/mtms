@@ -26,11 +26,10 @@ ls sites
 
 The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace. Once finished, reboot the computer.
 
-### Web UI setup
-To create a desktop link to the mTMS panel:
-   - Open Chrome and navigate to http://localhost:3001
-   - Click "Install mTMS panel"
-   - Enable launching for desktop shortcut
+### Desktop app setup
+The installer builds and installs the Electron-based desktop app automatically.
+After installation, you can launch `mTMS panel` from the applications menu
+or from the desktop icon.
 
 ## Getting started
 

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Launch mTMS Electron app
+
+MTMS_DIR="$HOME/mtms"
+APP_DIR="$MTMS_DIR/front"
+ELECTRON_APP="$APP_DIR/dist-electron/linux-unpacked/mtms"
+
+# Check if app is built
+if [ ! -f "$ELECTRON_APP" ]; then
+    echo "mTMS app not found. Building now..."
+    cd "$APP_DIR" || exit 1
+
+    # Install dependencies if needed
+    if [ ! -d "node_modules" ]; then
+        echo "Installing dependencies..."
+        npm install
+    fi
+
+    # Build the app
+    echo "Building app..."
+    DISABLE_ESLINT_PLUGIN=true npm run build
+    npm run electron-pack-linux
+fi
+
+# Launch the app
+echo "Launching mTMS..."
+"$ELECTRON_APP" &

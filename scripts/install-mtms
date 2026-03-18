@@ -64,6 +64,13 @@ source scripts/register-mtms-matlab
 # Build mTMS containers
 source scripts/build-mtms
 
+# Build Electron app
+bash scripts/build-electron-app
+
+# Install desktop launcher
+echo "Installing desktop launcher..."
+bash scripts/install-mtms-desktop
+
 echo "Done."
 echo ""
 echo "A reboot is required to complete the installation."

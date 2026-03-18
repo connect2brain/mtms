@@ -161,22 +161,6 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
-  # Frontend-related services
-  front:
-    build:
-      context: .
-      dockerfile: front/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-      - REACT_APP_ROSBRIDGE_URL=ws://localhost:9091
-      - PORT=3001
-    volumes:
-      - './front/src:/app/src'
-      - './front/public:/app/public'
-    network_mode: host
-
   rosbridge:
     build:
       context: .

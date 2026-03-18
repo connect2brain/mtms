@@ -11,8 +11,11 @@ src/log/
 __pycache__
 cmake-build-debug
 cmake-build-release
+
+# Frontend
 front/cypress/videos
 front/cypress/screenshots
+front/dist-electron/
 
 # Neuronavigation data
 data/neuronavigation/
