@@ -7,6 +7,7 @@ SHELL ["/bin/bash", "-c"]
 RUN apt-get update && \
     apt-get install -y \
     dos2unix \
+    python3-cbor2 \
     python3-pip \
     python3-pil \
     ros-jazzy-ament-cmake-mypy \
