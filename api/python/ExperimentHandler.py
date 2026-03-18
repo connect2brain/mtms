@@ -1,15 +1,16 @@
 import rclpy
-from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from experiment_interfaces.action import PerformExperiment
+from experiment_interfaces.msg import ExperimentFeedback
+from experiment_interfaces.srv import PerformExperiment
 from experiment_interfaces.srv import CancelExperiment, PauseExperiment, ResumeExperiment
 
 from mtms_trial_interfaces.srv import ValidateTrial
 
 
 class ExperimentHandler:
-    ROS_ACTION_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
+    ROS_SERVICE_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
+    ROS_TOPIC_EXPERIMENT_FEEDBACK = ('/mtms/experiment/feedback', ExperimentFeedback)
 
     ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', CancelExperiment)
     ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', PauseExperiment)
@@ -18,14 +19,11 @@ class ExperimentHandler:
     ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/validate', ValidateTrial)
 
     ROS_SERVICES = (
+        ROS_SERVICE_PERFORM_EXPERIMENT,
         ROS_SERVICE_CANCEL_EXPERIMENT,
         ROS_SERVICE_PAUSE_EXPERIMENT,
         ROS_SERVICE_RESUME_EXPERIMENT,
         ROS_SERVICE_VALIDATE_TRIAL,
-    )
-
-    ROS_ACTIONS = (
-        ROS_ACTION_PERFORM_EXPERIMENT,
     )
 
     def __init__(self, node):
@@ -51,35 +49,25 @@ class ExperimentHandler:
 
             self.ros_service_clients[topic] = client
 
-        # Action clients
-        self.ros_action_clients = {}
-
-        for topic, action_type in self.ROS_ACTIONS:
-            client = ActionClient(self.node, action_type, topic, callback_group=callback_group)
-            while not client.wait_for_server(timeout_sec=1.0):
-                self.logger.info('Action {} not available, waiting...'.format(topic))
-
-            self.ros_action_clients[topic] = client
+        feedback_topic, feedback_type = self.ROS_TOPIC_EXPERIMENT_FEEDBACK
+        self.feedback_subscriber = self.node.create_subscription(
+            feedback_type,
+            feedback_topic,
+            self._feedback_callback,
+            10,
+            callback_group=callback_group,
+        )
 
     # Internal callbacks
     def _feedback_callback(self, feedback_msg):
-        self.feedback = feedback_msg.feedback
+        self.feedback = feedback_msg
 
-    def _goal_response_callback(self, future):
-        goal_handle = future.result()
-        if not goal_handle.accepted:
-            self.logger.error('Perform experiment goal rejected.')
-            return
-
-        get_result_future = goal_handle.get_result_async()
-        get_result_future.add_done_callback(self._get_result_callback)
-
-    def _get_result_callback(self, future):
+    def _perform_experiment_response_callback(self, future):
         self.experiment_completed = True
 
-        self.result = future.result().result
+        self.result = future.result()
         if self.result is None:
-            self.logger.error('Perform experiment goal failed.')
+            self.logger.error('Perform experiment service call failed.')
             return
 
         success = self.result.success
@@ -138,19 +126,18 @@ class ExperimentHandler:
         object
             The result of the experiment.
         """
-        topic, action_type = self.ROS_ACTION_PERFORM_EXPERIMENT
+        topic, service_type = self.ROS_SERVICE_PERFORM_EXPERIMENT
+        client = self.ros_service_clients[topic]
 
-        client = self.ros_action_clients[topic]
+        request = service_type.Request()
+        request.experiment = experiment
 
-        # Define goal
-        goal = action_type.Goal()
-        goal.experiment = experiment
+        self.feedback = None
+        self.result = None
+        self.experiment_completed = False
 
-        # Send goal asynchronously
-        send_goal_future = client.send_goal_async(
-            goal, feedback_callback=self._feedback_callback
-        )
-        send_goal_future.add_done_callback(self._goal_response_callback)
+        service_future = client.call_async(request)
+        service_future.add_done_callback(self._perform_experiment_response_callback)
 
     def get_trial_results(self):
         if self.result is None:

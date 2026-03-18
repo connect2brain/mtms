@@ -29,16 +29,17 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ExperimentMetadata.msg"
   "msg/ExperimentState.msg"
   "msg/IntertrialInterval.msg"
+  "msg/ExperimentFeedback.msg"
 
   "srv/CountValidTrials.srv"
   "srv/LogTrial.srv"
+  "srv/PerformExperiment.srv"
 
   "srv/CancelExperiment.srv"
   "srv/PauseExperiment.srv"
   "srv/ResumeExperiment.srv"
 
   "action/SetVoltages.action"
-  "action/PerformExperiment.action"
 
   DEPENDENCIES mep_interfaces targeting_services mtms_trial_interfaces
 )

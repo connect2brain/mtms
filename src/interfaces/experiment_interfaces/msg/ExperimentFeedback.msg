@@ -1,10 +1,4 @@
-Experiment experiment
----
-bool success
-mtms_trial_interfaces/TrialResult[] trial_results
----
 ExperimentState experiment_state
-
 mtms_trial_interfaces/Trial trial
 uint16 attempt_number
 uint16 trial_number

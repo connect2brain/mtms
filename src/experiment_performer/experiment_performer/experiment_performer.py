@@ -1,15 +1,14 @@
 import time
-from threading import Event, Lock
+from threading import Event, Lock, Thread
 
 import numpy as np
 
-from experiment_interfaces.msg import ExperimentState
-from experiment_interfaces.action import PerformExperiment
-from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial
+from experiment_interfaces.msg import ExperimentState, ExperimentFeedback
+from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial, PerformExperiment
 
 from mtms_trial_interfaces.action import PerformTrial
 from mtms_trial_interfaces.srv import ValidateTrial
-from mtms_trial_interfaces.msg import TrialTiming, TrialConfig
+from mtms_trial_interfaces.msg import TrialTiming, TrialConfig, Trial
 
 from std_msgs.msg import Bool
 
@@ -19,7 +18,7 @@ from system_interfaces.msg import Session, SessionState
 from system_interfaces.srv import StartSession, StopSession
 
 import rclpy
-from rclpy.action import ActionClient, ActionServer
+from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from rclpy.executors import MultiThreadedExecutor
@@ -40,17 +39,22 @@ class ExperimentPerformerNode(Node):
 
         self.logger = self.get_logger()
 
-        # Enable calling services within actions. See also MultiThreadExecutor.
+        # Allow nested service/action calls from long-running callbacks.
         self.callback_group = ReentrantCallbackGroup()
 
-        # Create action server for performing experiment.
-
-        self.action_server = ActionServer(
-            self,
+        # Create service for performing experiment.
+        self.perform_experiment_service = self.create_service(
             PerformExperiment,
             '/mtms/experiment/perform',
-            self.perform_experiment_action_handler,
+            self.perform_experiment_service_callback,
             callback_group=self.callback_group,
+        )
+
+        # Publish experiment progress updates for UIs.
+        self.experiment_feedback_publisher = self.create_publisher(
+            ExperimentFeedback,
+            '/mtms/experiment/feedback',
+            10,
         )
 
         # Create service for counting valid trials in an experiment.
@@ -136,6 +140,7 @@ class ExperimentPerformerNode(Node):
         # Create a lock so that service and action calls can modify the experiment state concurrently.
         self.experiment_state_lock = Lock()
         self.experiment_state = ExperimentState.NOT_RUNNING
+        self.perform_experiment_thread = None
 
     # Experiment state
 
@@ -384,9 +389,37 @@ class ExperimentPerformerNode(Node):
 
     # Performing experiment
 
-    def perform_experiment_action_handler(self, goal_handle):
-        request = goal_handle.request
+    def perform_experiment_service_callback(self, request, response):
+        if self.get_experiment_state() != ExperimentState.NOT_RUNNING:
+            self.logger.error('Could not start experiment: another experiment is already running.')
+            response.success = False
+            response.trial_results = []
+            return response
+
+        if self.perform_experiment_thread is not None and self.perform_experiment_thread.is_alive():
+            self.logger.error('Could not start experiment: perform thread is already active.')
+            response.success = False
+            response.trial_results = []
+            return response
+
+        request_id = "{:04x}".format(time.time_ns() & 0xffff)
         experiment = request.experiment
+        self.perform_experiment_thread = Thread(
+            target=self.perform_experiment_thread_target,
+            args=(request_id, experiment),
+            daemon=True,
+        )
+        self.perform_experiment_thread.start()
+
+        # Return immediately; updates are provided via /mtms/experiment/feedback.
+        response.success = True
+        response.trial_results = []
+        return response
+
+    def perform_experiment_thread_target(self, goal_id, experiment):
+        valid_trials = []
+        success = False
+        trial_results = []
 
         metadata = experiment.metadata
         trials = experiment.trials
@@ -396,13 +429,8 @@ class ExperimentPerformerNode(Node):
         autopause = experiment.autopause
         autopause_interval = experiment.autopause_interval
 
-        # Use short version of goal ID (2 first bytes as hex) for logging.
-        #
-        uuid = goal_handle.goal_id.uuid
-        goal_id = "{:02x}{:02x}".format(uuid[0], uuid[1])
-
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
+        self.logger.info('{}: New experiment request: {}.'.format(goal_id, goal_id))
 
         # XXX: There should probably be an Experiment message so the request wouldn't have
         #   to be passed directly.
@@ -411,35 +439,42 @@ class ExperimentPerformerNode(Node):
             experiment=experiment
         )
 
-        valid_trials = self.get_valid_trials(
-            goal_id=goal_id,
-            trials=trials,
+        try:
+            valid_trials = self.get_valid_trials(
+                goal_id=goal_id,
+                trials=trials,
+            )
+
+            success, trial_results = self.perform_experiment(
+                goal_id=goal_id,
+                metadata=metadata,
+                valid_trials=valid_trials,
+                intertrial_interval=intertrial_interval,
+                wait_for_pedal_press=wait_for_pedal_press,
+                randomize_trials=randomize_trials,
+                autopause=autopause,
+                autopause_interval=autopause_interval,
+            )
+        except Exception as error:
+            self.logger.error('{}: Experiment thread failed: {}'.format(goal_id, str(error)))
+
+        # Mark experiment as finished so pause/cancel calls are rejected after completion.
+        self.set_experiment_state(ExperimentState.NOT_RUNNING)
+
+        # Publish final state update so UI can detect completion.
+        final_trial = Trial()
+        if len(valid_trials) > 0:
+            final_trial = valid_trials[-1]
+
+        self.publish_feedback(
+            experiment_state=ExperimentState.NOT_RUNNING,
+            trial=final_trial,
+            num_of_attempts=0,
+            trial_number=len(valid_trials),
+            total_trials=len(valid_trials),
         )
 
-        success, trial_results = self.perform_experiment(
-            goal_handle=goal_handle,
-            goal_id=goal_id,
-            metadata=metadata,
-            valid_trials=valid_trials,
-            intertrial_interval=intertrial_interval,
-            wait_for_pedal_press=wait_for_pedal_press,
-            randomize_trials=randomize_trials,
-            autopause=autopause,
-            autopause_interval=autopause_interval,
-        )
-
-        # Create and return a Result object.
-
-        result = PerformExperiment.Result()
-
-        goal_handle.succeed()
-
-        result.trial_results = trial_results
-        result.success = success
-
-        self.logger.info('{}: Done.'.format(goal_id))
-
-        return result
+        self.logger.info('{}: Done (success={}, trial_results={}).'.format(goal_id, success, len(trial_results)))
 
     def pause_experiment_callback(self, request, response):
         # TODO: This service callback, as well as resuming and canceling an experiment, need to be
@@ -448,8 +483,8 @@ class ExperimentPerformerNode(Node):
         #   the state, as long as only one experiment is going on at a time? Should starting
         #   several experiments at the same time be prevented? Probably these service calls should
         #   also check that there is an ongoing experiment in the first place. Before doing any of
-        #   this, it might be worthwhile to wait until rosbridge supports actions, and first modify
-        #   front-end to use PerformExperiment action instead of the equivalent service.
+        #   this, these services affect node-wide state and therefore assume only one ongoing
+        #   experiment at a time.
         #
         goal_id = "abcd"
 
@@ -561,8 +596,8 @@ class ExperimentPerformerNode(Node):
                 high=intertrial_interval.max,
             )
 
-    def send_feedback(self, goal_handle, experiment_state, trial, num_of_attempts, trial_number, total_trials):
-        feedback_msg = PerformExperiment.Feedback()
+    def publish_feedback(self, experiment_state, trial, num_of_attempts, trial_number, total_trials):
+        feedback_msg = ExperimentFeedback()
 
         feedback_msg.experiment_state = ExperimentState(value=experiment_state)
         feedback_msg.trial = trial
@@ -570,7 +605,7 @@ class ExperimentPerformerNode(Node):
         feedback_msg.trial_number = trial_number
         feedback_msg.total_trials = total_trials
 
-        goal_handle.publish_feedback(feedback_msg)
+        self.experiment_feedback_publisher.publish(feedback_msg)
 
     def initialize_session(self, goal_id):
 
@@ -637,7 +672,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, goal_handle, goal_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
@@ -687,8 +722,7 @@ class ExperimentPerformerNode(Node):
             experiment_state = self.get_experiment_state()
 
             # Send feedback at the start of a new trial attempt.
-            self.send_feedback(
-                goal_handle=goal_handle,
+            self.publish_feedback(
                 experiment_state=experiment_state,
                 trial=trial,
                 num_of_attempts=num_of_attempts,
@@ -709,8 +743,7 @@ class ExperimentPerformerNode(Node):
                 # Re-send feedback after pausing has been finished.
                 #
                 # XXX: Is this needed? If it is, please document why.
-                self.send_feedback(
-                    goal_handle=goal_handle,
+                self.publish_feedback(
                     experiment_state=experiment_state,
                     trial=trial,
                     num_of_attempts=num_of_attempts,
@@ -837,7 +870,7 @@ def main(args=None):
 
     experiment_performer_node = ExperimentPerformerNode()
 
-    # Enable calling services within actions. See also ReentrantCallbackGroup.
+    # Enable nested calls from long-running callbacks. See also ReentrantCallbackGroup.
     executor = MultiThreadedExecutor()
     try:
         rclpy.spin(experiment_performer_node, executor=executor)

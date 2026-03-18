@@ -26,14 +26,14 @@ export const getMaximumIntensity = (
 
   getMaximumIntensityService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to get maximum intensity')
       } else {
         callback(response.maximum_intensity)
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to get maximum intensity, error:')
       console.log(error)
     }
@@ -54,26 +54,32 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
 
   countValidTrialsService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to count valid trials: success field was false.')
       } else {
         callback(response.num_of_valid_trials)
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to count valid trials, error:')
       console.log(error)
     }
   )
 }
 
-/* Perform experiment action.
-   Foxglove roslibjs uses the RobotWebTools ActionClient/Goal API. */
-const performExperimentActionClient: any = new (ROSLIB as any).ActionClient({
+/* Perform experiment service */
+const performExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/perform',
-  actionName: 'experiment_interfaces/PerformExperimentAction',
+  serviceType: 'experiment_interfaces/PerformExperiment',
+})
+
+/* Experiment feedback topic */
+const experimentFeedbackTopic = new ROSLIB.Topic({
+  ros: ros,
+  name: '/mtms/experiment/feedback',
+  messageType: 'experiment_interfaces/ExperimentFeedback',
 })
 
 export const performExperiment = (
@@ -81,33 +87,41 @@ export const performExperiment = (
   done_callback: (trialResults: any, success: boolean) => void,
   feedback_callback: (response: any) => void
 ) => {
-  const goal: any = new (ROSLIB as any).Goal({
-    actionClient: performExperimentActionClient,
-    goalMessage: {
-      experiment: experiment,
-    },
+  const request = new ROSLIB.ServiceRequest({
+    experiment: experiment,
   })
 
-
-  console.log('Sending goal to perform experiment')
-
-  goal.on('result', (response: any) => {
-    console.log('Result received from perform experiment')
-    if (!response.success) {
-      console.log('ERROR: Failed to perform experiment: success field was false.')
-      done_callback(response.trial_results, false)
-    } else {
-      done_callback(response.trial_results, true)
+  let previousExperimentState: number | null = null
+  const onFeedback = (feedback: any) => {
+    const currentExperimentState = feedback?.experiment_state?.value
+    if (typeof currentExperimentState === 'number') {
+      if (currentExperimentState === 0) {
+        experimentFeedbackTopic.unsubscribe(onFeedback)
+        done_callback([], previousExperimentState !== 3)
+        return
+      }
+      previousExperimentState = currentExperimentState
     }
-  })
-
-  goal.on('feedback', (feedback: any) => {
     feedback_callback(feedback)
-  })
+  }
+  experimentFeedbackTopic.subscribe(onFeedback)
 
-  goal.send()
-
-  console.log('Goal sent to perform experiment')
+  performExperimentService.callService(
+    request,
+    (response: any) => {
+      if (!response.success) {
+        experimentFeedbackTopic.unsubscribe(onFeedback)
+        console.log('ERROR: Failed to perform experiment: success field was false.')
+        done_callback([], false)
+      }
+    },
+    (error: any) => {
+      experimentFeedbackTopic.unsubscribe(onFeedback)
+      console.log('ERROR: Failed to perform experiment, error:')
+      console.log(error)
+      done_callback([], false)
+    }
+  )
 }
 
 /* Visualize targets service */
@@ -125,14 +139,14 @@ export const visualizeTargets = (targets: any, is_ordered: boolean, callback: ()
 
   visualizeTargetsService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to visualize targets: success field was false.')
       } else {
         callback()
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to visualize targets, error:')
       console.log(error)
     }
@@ -151,14 +165,14 @@ export const pauseExperiment = (callback: () => void) => {
 
   pauseExperimentService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to pause experiment: success field was false.')
       } else {
         callback()
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to pause experiment, error:')
       console.log(error)
     }
@@ -177,14 +191,14 @@ export const resumeExperiment = (callback: () => void) => {
 
   resumeExperimentService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to resume experiment: success field was false.')
       } else {
         callback()
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to resume experiment, error:')
       console.log(error)
     }
@@ -203,14 +217,14 @@ export const cancelExperiment = (callback: () => void) => {
 
   cancelExperimentService.callService(
     request,
-    (response) => {
+    (response: any) => {
       if (!response.success) {
         console.log('ERROR: Failed to cancel experiment: success field was false.')
       } else {
         callback()
       }
     },
-    (error) => {
+    (error: any) => {
       console.log('ERROR: Failed to cancel experiment, error:')
       console.log(error)
     }
