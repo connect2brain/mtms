@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 
-import { TabBar } from 'styles/General'
-
 import {
   chargeFeedbackSubscriber,
   dischargeFeedbackSubscriber,
@@ -88,8 +86,6 @@ const initialState = {
 }
 
 export const SystemView = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics'>('overview')
-
   const [feedback, setFeedback] = useState<Feedback>()
 
   useEffect(() => {
@@ -130,30 +126,18 @@ export const SystemView = () => {
 
   return (
     <>
-      <TabBar>
-        <a href='#' onClick={() => setActiveTab('overview')} className={activeTab === 'overview' ? 'active' : ''}>
-          Overview
-        </a>
-        <a href='#' onClick={() => setActiveTab('diagnostics')} className={activeTab === 'diagnostics' ? 'active' : ''}>
-          Diagnostics
-        </a>
-      </TabBar>
       <Wrapper>
-        {activeTab === 'overview' && (
-          <>
-            <PanelA>
-              <DeviceControl />
-            </PanelA>
-            <VerticalDividedPanelB>
-              <SubPanel>
-                <SystemState />
-              </SubPanel>
-            </VerticalDividedPanelB>
-            <PanelC>
-              <EventFeedbacks feedback={feedback} />
-            </PanelC>
-          </>
-        )}
+        <PanelA>
+          <DeviceControl />
+        </PanelA>
+        <VerticalDividedPanelB>
+          <SubPanel>
+            <SystemState />
+          </SubPanel>
+        </VerticalDividedPanelB>
+        <PanelC>
+          <EventFeedbacks feedback={feedback} />
+        </PanelC>
       </Wrapper>
     </>
   )
