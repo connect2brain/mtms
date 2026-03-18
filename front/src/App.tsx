@@ -12,12 +12,10 @@ import { SystemProvider } from './providers/SystemProvider'
 import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
 import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
 import { MultipleViews } from 'views/MultipleViews'
-import { Header as StyledHeader } from 'styles/StyledTypography'
 
 const App = () => {
   return (
     <Providers>
-      <Header>mTMS control panel</Header>
       <HealthcheckStatusDisplay />
       <HealthcheckMessageDisplay />
       <Wrapper>
@@ -26,16 +24,6 @@ const App = () => {
     </Providers>
   )
 }
-
-const Header = styled(StyledHeader)`
-  font-size: 1.6rem;
-  color: #333;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background-color: #f2f2f2;
-  border-bottom: 2px solid #ddd;
-  border-radius: 3px 3px 0 0;
-`
 
 const Wrapper = styled.div`
   padding: 1rem;
