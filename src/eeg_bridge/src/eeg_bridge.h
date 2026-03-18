@@ -15,7 +15,6 @@
 #include "eeg_interfaces/msg/sample.hpp"
 
 #include "system_interfaces/msg/component_health.hpp"
-#include "system_interfaces/msg/data_source_state.hpp"
 #include "system_interfaces/msg/global_config.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
@@ -67,7 +66,6 @@ private:
   void publish_heartbeat();
   void publish_health_status(uint8_t health_level, const std::string& message);
   void publish_device_info();
-  void publish_data_source_state();
   void publish_cumulative_dropped_samples();
 
   void set_device_state(EegDeviceState new_state);
@@ -93,16 +91,12 @@ private:
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_publisher;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_samples_publisher;
   rclcpp::Publisher<system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
-  rclcpp::Publisher<system_interfaces::msg::DataSourceState>::SharedPtr data_source_state_publisher;
 
   rclcpp::TimerBase::SharedPtr heartbeat_publisher_timer;
 
   /* Subscribers */
   rclcpp::Subscription<system_interfaces::msg::GlobalConfig>::SharedPtr global_config_subscription;
 
-  /* Data source state */
-  system_interfaces::msg::DataSourceState::_state_type data_source_state = system_interfaces::msg::DataSourceState::READY;
-  
   /* Device sample tracking for dropped sample detection */
   uint64_t previous_device_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
   uint64_t cumulative_dropped_samples = 0;
@@ -111,10 +105,6 @@ private:
   uint64_t session_sample_index = 0;
 
   double_t time_offset = UNSET_TIME;     // in seconds
-
-  /* XXHash state for data fingerprinting */
-  uint64_t data_source_fingerprint = 0;
-
 };
 
 #endif

@@ -13,8 +13,6 @@ find_package(eeg_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 find_package(pipeline_interfaces REQUIRED)
 find_package(realtime_utils REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(XXHASH REQUIRED libxxhash)
 
 add_executable(eeg_bridge
         src/adapters/eeg_adapter.h
@@ -28,10 +26,7 @@ add_executable(eeg_bridge
 
 target_link_libraries(eeg_bridge
   realtime_utils::utils
-  ${XXHASH_LIBRARIES}
 )
-
-target_include_directories(eeg_bridge PRIVATE ${XXHASH_INCLUDE_DIRS})
 
 ament_target_dependencies(eeg_bridge rclcpp std_msgs std_srvs eeg_interfaces system_interfaces pipeline_interfaces realtime_utils)
 

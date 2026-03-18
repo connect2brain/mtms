@@ -6,9 +6,6 @@
 #include <string>
 #include <unistd.h>
 
-#define XXH_INLINE_ALL
-#include <xxhash.h>
-
 #include "realtime_utils/utils.h"
 
 #include "eeg_bridge.h"
@@ -46,9 +43,6 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->device_info_publisher =
       this->create_publisher<eeg_interfaces::msg::EegDeviceInfo>(DEVICE_INFO_TOPIC, qos_persist_latest);
 
-  this->data_source_state_publisher =
-      this->create_publisher<system_interfaces::msg::DataSourceState>("/mtms/eeg_bridge/state", qos_persist_latest);
-
   this->heartbeat_publisher =
     this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
 
@@ -68,8 +62,7 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->heartbeat_publisher_timer = this->create_wall_timer(
     std::chrono::milliseconds(500), [this] { publish_heartbeat(); });
 
-  /* Publish initial state and health status. */
-  publish_data_source_state();
+  /* Publish initial health status. */
   publish_health_status(system_interfaces::msg::ComponentHealth::READY, "");
 }
 
@@ -154,19 +147,9 @@ void EegBridge::publish_device_info() {
   this->device_info_publisher->publish(device_info);
 }
 
-void EegBridge::publish_data_source_state() {
-  system_interfaces::msg::DataSourceState msg;
-  msg.state = this->data_source_state;
-  this->data_source_state_publisher->publish(msg);
-}
-
 void EegBridge::set_device_state(EegDeviceState new_state) {
   EegDeviceState previous_state = this->device_state;
   this->device_state = new_state;
-
-  this->data_source_state = (this->device_state == EegDeviceState::EEG_DEVICE_STREAMING)
-                              ? system_interfaces::msg::DataSourceState::RUNNING
-                              : system_interfaces::msg::DataSourceState::READY;
 
   if (previous_state != this->device_state) {
     if (previous_state != EegDeviceState::EEG_DEVICE_STREAMING &&
@@ -174,7 +157,6 @@ void EegBridge::set_device_state(EegDeviceState new_state) {
       reset_state();
     }
     publish_device_info();
-    publish_data_source_state();
   }
 }
 
@@ -202,7 +184,6 @@ bool EegBridge::reset_state() {
   this->previous_device_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
   this->cumulative_dropped_samples = 0;
   this->last_sample_time = std::chrono::steady_clock::now();
-  this->data_source_fingerprint = 0;
 
   this->publish_cumulative_dropped_samples();
 
@@ -295,27 +276,6 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 
   /* Mark the sample as valid by default. The preprocessor can later mark it as invalid if needed. */
   sample.valid = true;
-
-  /* Set the system time when the sample was published. */
-  auto now = std::chrono::high_resolution_clock::now();
-  uint64_t system_time_data_source_published = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    now.time_since_epoch()).count();
-
-  sample.system_time_data_source_published = system_time_data_source_published;
-
-  /* Update data fingerprint with EEG data */
-  if (!sample.eeg.empty()) {
-    this->data_source_fingerprint = XXH64(sample.eeg.data(), 
-                                            sample.eeg.size() * sizeof(double),
-                                            this->data_source_fingerprint);
-  }
-  
-  /* Update data fingerprint with EMG data */
-  if (!sample.emg.empty()) {
-    this->data_source_fingerprint = XXH64(sample.emg.data(),
-                                            sample.emg.size() * sizeof(double),
-                                            this->data_source_fingerprint);
-  }
 
   this->eeg_sample_publisher->publish(sample);
 
