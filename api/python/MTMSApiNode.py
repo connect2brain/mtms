@@ -195,6 +195,7 @@ class MTMSApiNode(Node):
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
+        self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -217,13 +218,12 @@ class MTMSApiNode(Node):
             channel=channel,
         )
 
-        self.event_feedback[id] = None
-
     def send_charge(self, id, execution_condition, time, channel, target_voltage):
         topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
+        self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -246,13 +246,12 @@ class MTMSApiNode(Node):
             channel=channel,
         )
 
-        self.event_feedback[id] = None
-
     def send_discharge(self, id, execution_condition, time, channel, target_voltage):
         topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
+        self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -275,13 +274,12 @@ class MTMSApiNode(Node):
             channel=channel,
         )
 
-        self.event_feedback[id] = None
-
     def send_trigger_out(self, id, execution_condition, time, port, duration_us):
         topic, service_type = self.ROS_SERVICE_REQUEST_EVENTS
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
+        self.event_feedback[id] = None
 
         event_info = EventInfo()
         event_info.id = id
@@ -303,8 +301,6 @@ class MTMSApiNode(Node):
             event_info=event_info,
             port=port,
         )
-
-        self.event_feedback[id] = None
 
     # Feedback
 
