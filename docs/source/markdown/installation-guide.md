@@ -158,7 +158,7 @@ from your GitHub account.
 
 ### MATLAB Installation
 1. Download and Install
-   - Download R2024b for Linux from mathworks.com
+   - Download R2025b for Linux from mathworks.com
    - Run installation:
      ```bash
      sudo ./install
@@ -186,7 +186,7 @@ from your GitHub account.
 
 #### Tubingen
 ```bash
-sudo cp ~/MATLAB-license/license.lic /usr/local/MATLAB/R2024b/licenses
+sudo cp ~/MATLAB-license/license.lic /usr/local/MATLAB/R2025b/licenses
 ```
 
 #### Chieti
