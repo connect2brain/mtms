@@ -6,7 +6,7 @@ const selectedColor = theme.colors.lightgray
 
 const defaultWaitDuration = 500
 
-const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3000'}`
+const testUrl = `http://${Cypress.env('FRONT_URL') ?? 'localhost:3001'}`
 describe('Target table', () => {
   before(() => {
     cy.visit(testUrl + '/targets')

@@ -40,8 +40,8 @@
     "webgl-plot": "^0.7.0"
   },
   "scripts": {
-    "start": "REACT_APP_ENV=dev REACT_APP_ROSBRIDGE_URL=ws://localhost:9091 react-scripts start",
-    "build": "REACT_APP_ENV=prod REACT_APP_ROSBRIDGE_URL=ws://localhost:9091 react-scripts build",
+    "start": "REACT_APP_ENV=dev PORT=3001 react-scripts start",
+    "build": "REACT_APP_ENV=prod react-scripts build",
     "test": "REACT_APP_ENV=test react-scripts start",
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx,json}",
@@ -50,7 +50,7 @@
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "electron": "electron .",
-    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && NODE_ENV=development electron .\"",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3001 && NODE_ENV=development electron .\"",
     "electron-pack": "npm run build && electron-builder",
     "electron-pack-win": "npm run build && electron-builder --win",
     "electron-pack-mac": "npm run build && electron-builder --mac",
