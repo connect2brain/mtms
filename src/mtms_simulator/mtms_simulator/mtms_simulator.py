@@ -29,7 +29,6 @@ from mtms_device_interfaces.srv import (
     StartDevice,
     StopDevice,
     RequestEvents,
-    RequestTrigger,
 )
 from system_interfaces.msg import (
     Session,
@@ -53,6 +52,7 @@ from rclpy.qos import (
     ReliabilityPolicy,
 )
 from std_msgs.msg import Bool
+from std_srvs.srv import Trigger
 
 from .channel import Channel
 
@@ -144,7 +144,7 @@ class MTMSSimulator(Node):
             RequestEvents, "/mtms/device/events/request", self.request_events_handler
         )
         self.request_trigger_service = self.create_service(
-            RequestTrigger, "/mtms/device/trigger", self.request_trigger_handler
+            Trigger, "/mtms/device/trigger", self.request_trigger_handler
         )
 
         # Publisher

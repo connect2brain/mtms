@@ -37,7 +37,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/StopDevice.srv"
 
         "srv/RequestEvents.srv"
-        "srv/RequestTrigger.srv"
 
         "srv/SendSettings.srv"
 

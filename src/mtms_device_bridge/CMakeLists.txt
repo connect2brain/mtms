@@ -13,6 +13,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
 find_package(event_msgs REQUIRED)
 find_package(system_interfaces REQUIRED)
@@ -226,7 +227,7 @@ target_include_directories(request_trigger_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(request_trigger_handler rclcpp std_msgs event_msgs mtms_device_interfaces realtime_utils)
+ament_target_dependencies(request_trigger_handler rclcpp std_msgs std_srvs event_msgs mtms_device_interfaces realtime_utils)
 
 # Feedback monitor bridge
 

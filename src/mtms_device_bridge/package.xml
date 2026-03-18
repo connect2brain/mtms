@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>mtms_device_interfaces</depend>
+  <depend>std_srvs</depend>
   <depend>event_msgs</depend>
   <depend>system_interfaces</depend>
   <depend>realtime_utils</depend>

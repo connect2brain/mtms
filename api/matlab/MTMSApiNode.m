@@ -66,7 +66,7 @@ classdef MTMSApiNode < handle
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms/device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
-            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "mtms_device_interfaces/RequestTrigger");
+            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "std_srvs/Trigger");
 
             % System-related
 

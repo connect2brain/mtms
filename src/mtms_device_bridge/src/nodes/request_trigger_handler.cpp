@@ -1,12 +1,12 @@
 #include "rclcpp/rclcpp.hpp"
-#include "mtms_device_interfaces/srv/request_trigger.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 
 void handle_request(
-    [[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::RequestTrigger::Request> request,
-    std::shared_ptr<mtms_device_interfaces::srv::RequestTrigger::Response> response) {
+    [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
 
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("request_trigger_handler"), "FPGA not in OK state while attempting to trigger events.");
@@ -26,12 +26,12 @@ void handle_request(
 class RequestTriggerHandler : public rclcpp::Node {
 public:
   RequestTriggerHandler() : Node("request_trigger_handler") {
-    trigger_service_ = this->create_service<mtms_device_interfaces::srv::RequestTrigger>(
+    trigger_service_ = this->create_service<std_srvs::srv::Trigger>(
         "/mtms/device/trigger", &handle_request);
   }
 
 private:
-  rclcpp::Service<mtms_device_interfaces::srv::RequestTrigger>::SharedPtr trigger_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr trigger_service_;
 };
 
 int main(int argc, char **argv) {

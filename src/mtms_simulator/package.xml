@@ -12,6 +12,7 @@
   <depend>event_msgs</depend>
   <depend>waveform_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
 
   <test_depend>ament_flake8</test_depend>
   <test_depend>python3-pytest</test_depend>

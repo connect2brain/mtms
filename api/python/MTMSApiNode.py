@@ -5,9 +5,10 @@ from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
 
 from std_msgs.msg import Bool
+from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, RequestEvents, RequestTrigger
+from mtms_device_interfaces.srv import StartDevice, StopDevice, RequestEvents
 
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed
@@ -44,7 +45,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', StopDevice)
 
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)
-    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', RequestTrigger)
+    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', Trigger)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/mtms/device/session/start', StartSession)
