@@ -34,12 +34,12 @@
         force: yes
 
     - name: Run autogen.sh
-      command: ./autogen.sh
+      command: bash ./autogen.sh
       args:
         chdir: "{{ samplicator_src_dir }}"
 
     - name: Run configure
-      command: ./configure --prefix={{ samplicator_install_dir }}
+      command: bash ./configure --prefix={{ samplicator_install_dir }}
       args:
         chdir: "{{ samplicator_src_dir }}"
 
