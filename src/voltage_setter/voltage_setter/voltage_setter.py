@@ -24,6 +24,8 @@ class VoltageSetterNode(Node):
     MAXIMUM_VOLTAGE = 1500
     REQUEST_EVENTS_TIMEOUT_S = 5.0
     EVENT_FEEDBACK_TIMEOUT_S = 15.0
+    SESSION_START_WAIT_TIMEOUT_S = 3.0
+    SESSION_START_POLL_INTERVAL_S = 0.05
 
     def __init__(self):
         super().__init__('voltage_setter_node')
@@ -376,11 +378,31 @@ class VoltageSetterNode(Node):
             return False
 
         # Check that the session is started.
-        if not self.is_session_started():
+        if not self.wait_for_session_to_start(goal_id):
             self.logger.info('{}: Session not started on the mTMS device, aborting.'.format(goal_id))
             return False
 
         return True
+
+    def wait_for_session_to_start(self, goal_id):
+        if self.is_session_started():
+            return True
+
+        self.logger.info(
+            '{}: Session not started yet, waiting up to {:.1f} s.'.format(
+                goal_id,
+                self.SESSION_START_WAIT_TIMEOUT_S,
+            )
+        )
+
+        deadline = time.monotonic() + self.SESSION_START_WAIT_TIMEOUT_S
+        while time.monotonic() < deadline:
+            if self.is_session_started():
+                self.logger.info('{}: Session started, proceeding with voltage setting.'.format(goal_id))
+                return True
+            time.sleep(self.SESSION_START_POLL_INTERVAL_S)
+
+        return self.is_session_started()
 
     def perform_set_voltages(self, goal_id, voltages):
         success = self.check_goal_feasible(goal_id)
