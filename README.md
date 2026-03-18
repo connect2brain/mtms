@@ -24,7 +24,8 @@ Replace [site] with a valid site name from the sites directory:
 ls sites
 ```
 
-The installation script will install the mTMS software and its dependencies, including the ROS 2 workspace. Once finished, reboot the computer.
+The installation script will install the mTMS software and its dependencies, and prompt
+to reboot the computer at the end.
 
 ### Desktop app setup
 The installer builds and installs the Electron-based desktop app automatically.
@@ -40,13 +41,7 @@ After installation:
    - Detailed API documentation is available via the "mTMS Documentation" desktop shortcut.
 
 After opening the mTMS panel, ensure that it reports that the mTMS device is powered on
-and started. If not, first turn it on by pressing the power button on the device.
-After that, press "Start device" on the front-page of the panel and wait for
-the device to start.
-
-Ensure also that:
-   - A BNC cable is connected from the 'sync' port of the mTMS device to 'Port A in' of the EEG/EMG device.
-   - Check that the EEG/EMG device is connected to the real-time computer with an Ethernet cable via the router.
+and started. If not, turn it on by pressing the power button on the device.
 
 ## Documentation
 

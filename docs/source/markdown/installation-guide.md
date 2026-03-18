@@ -135,7 +135,7 @@ Note that the software installation steps are in `README.md`, while the hardware
 
 ## Site-Specific Configurations
 
-### MATLAB Docker License
+### MATLAB License Configuration
 
 #### Aalto
 - No specific configuration needed
