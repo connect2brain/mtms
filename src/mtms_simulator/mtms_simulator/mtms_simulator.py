@@ -143,8 +143,8 @@ class MTMSSimulator(Node):
         self.request_events_service = self.create_service(
             RequestEvents, "/mtms/device/events/request", self.request_events_handler
         )
-        self.request_trigger_service = self.create_service(
-            Trigger, "/mtms/device/trigger", self.request_trigger_handler
+        self.trigger_events_service = self.create_service(
+            Trigger, "/mtms/device/events/trigger", self.trigger_events_handler
         )
 
         # Publisher
@@ -390,7 +390,7 @@ class MTMSSimulator(Node):
         response.success = True
         return response
 
-    def request_trigger_handler(self, request, response):
+    def trigger_events_handler(self, request, response):
         del request
 
         self.get_logger().warn(

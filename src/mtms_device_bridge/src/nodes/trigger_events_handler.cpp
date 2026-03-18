@@ -9,7 +9,7 @@ void handle_request(
     std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
 
   if (!is_fpga_ok()) {
-    RCLCPP_WARN(rclcpp::get_logger("request_trigger_handler"), "FPGA not in OK state while attempting to trigger events.");
+    RCLCPP_WARN(rclcpp::get_logger("trigger_events_handler"), "FPGA not in OK state while attempting to trigger events.");
     response->success = false;
     return;
   }
@@ -19,15 +19,15 @@ void handle_request(
                                       NiFpga_mTMS_ControlBool_Eventtrigger,
                                       true));
 
-  RCLCPP_INFO(rclcpp::get_logger("request_trigger_handler"), "Events triggered.");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_events_handler"), "Events triggered.");
   response->success = true;
 }
 
-class RequestTriggerHandler : public rclcpp::Node {
+class TriggerEventsHandler : public rclcpp::Node {
 public:
-  RequestTriggerHandler() : Node("request_trigger_handler") {
+  TriggerEventsHandler() : Node("trigger_events_handler") {
     trigger_service_ = this->create_service<std_srvs::srv::Trigger>(
-        "/mtms/device/trigger", &handle_request);
+        "/mtms/device/events/trigger", &handle_request);
   }
 
 private:
@@ -37,9 +37,9 @@ private:
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<RequestTriggerHandler>();
+  auto node = std::make_shared<TriggerEventsHandler>();
 
-  RCLCPP_INFO(rclcpp::get_logger("request_trigger_handler"), "Request trigger handler ready.");
+  RCLCPP_INFO(rclcpp::get_logger("trigger_events_handler"), "Trigger events handler ready.");
 
   auto timer = node->create_wall_timer(
       std::chrono::milliseconds(FPGA_OK_CHECK_INTERVAL_MS),

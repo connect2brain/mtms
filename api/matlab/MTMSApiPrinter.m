@@ -148,11 +148,12 @@ classdef MTMSApiPrinter < handle
             fprintf(str);
         end
 
-        function print_request_trigger(obj)
+        function print_trigger_events(obj)
             % HACK: This should probably be a feedback message that is received from the mtms_device, informing that the
-            %   event trigger was successfully generated, similar to the feedback messages from the actual events.
+            %   pending events with execution condition set to WAIT_FOR_TRIGGER were successfully triggered.
+            %   It would be similar to the feedback messages from the actual events.
             %
-            fprintf("Event trigger\n");
+            fprintf("Events with execution condition WAIT_FOR_TRIGGER triggered.\n");
         end
 
         function print_heading(obj, text)

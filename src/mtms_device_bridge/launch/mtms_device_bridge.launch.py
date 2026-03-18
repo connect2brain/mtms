@@ -39,7 +39,7 @@ def generate_launch_description():
         "allow_trigger_out_handler",
 
         "event_handler",
-        "request_trigger_handler",
+        "trigger_events_handler",
 
         "feedback_monitor_bridge",
         "system_state_bridge",

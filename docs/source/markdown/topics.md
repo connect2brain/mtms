@@ -20,7 +20,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/stop` - Stop the mTMS device.
 - `/mtms/device/send_settings` - Send stimulation settings to device.
 - `/mtms/device/events/request` - Submit pulse/charge/discharge/trigger event requests.
-- `/mtms/device/trigger` - Request an immediate trigger event from bridge node.
+- `/mtms/device/events/trigger` - Trigger all pending events with execution condition set to WAIT_FOR_TRIGGER.
 - `/mtms/device/session/start` - Start a stimulation session.
 - `/mtms/device/session/stop` - Stop an ongoing stimulation session.
 - `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.

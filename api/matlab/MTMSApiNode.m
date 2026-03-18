@@ -14,7 +14,7 @@ classdef MTMSApiNode < handle
         start_session_client
         stop_session_client
 
-        request_trigger_client
+        trigger_events_client
 
         request_events_client
 
@@ -66,7 +66,7 @@ classdef MTMSApiNode < handle
 
             obj.system_state_subscriber = ros2subscriber(obj.node, "/mtms/device/system_state", "mtms_device_interfaces/SystemState", @obj.handle_system_state);
 
-            obj.request_trigger_client = ros2svcclient(obj.node, "/mtms_device/request_trigger", "std_srvs/Trigger");
+            obj.trigger_events_client = ros2svcclient(obj.node, "/mtms/device/events/trigger", "std_srvs/Trigger");
 
             % System-related
 
@@ -161,12 +161,12 @@ classdef MTMSApiNode < handle
 
         % Events
 
-        function request_trigger(obj)
-            %request_trigger Request trigger from mTMS device
+        function trigger_events(obj)
+            %trigger_events Trigger all pending events with execution condition set to WAIT_FOR_TRIGGER
             %
-            %   Request trigger from the mTMS device.
+            %   Trigger all pending events with execution condition set to WAIT_FOR_TRIGGER.
 
-            client = obj.request_trigger_client;
+            client = obj.trigger_events_client;
 
             request = ros2message(client);
 

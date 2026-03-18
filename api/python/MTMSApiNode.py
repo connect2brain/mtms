@@ -45,7 +45,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', StopDevice)
 
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)
-    ROS_SERVICE_REQUEST_TRIGGER = ('/mtms/device/trigger', Trigger)
+    ROS_SERVICE_TRIGGER_EVENTS = ('/mtms/device/events/trigger', Trigger)
 
     # To other parts of the system
     ROS_SERVICE_START_SESSION = ('/mtms/device/session/start', StartSession)
@@ -73,7 +73,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_REVERSE_POLARITY,
         ROS_SERVICE_IS_STIMULATION_ALLOWED,
         ROS_SERVICE_REQUEST_EVENTS,
-        ROS_SERVICE_REQUEST_TRIGGER,
+        ROS_SERVICE_TRIGGER_EVENTS,
     )
 
     ROS_ACTIONS = (
@@ -182,8 +182,8 @@ class MTMSApiNode(Node):
 
     # Events
 
-    def request_trigger(self):
-        topic, service_type = self.ROS_SERVICE_REQUEST_TRIGGER
+    def trigger_events(self):
+        topic, service_type = self.ROS_SERVICE_TRIGGER_EVENTS
 
         client = self.ros_service_clients[topic]
         request = service_type.Request()
