@@ -8,7 +8,7 @@
   <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
-  <depend>eeg_msgs</depend>
+  <depend>eeg_interfaces</depend>
   <depend>mep_interfaces</depend>
 
   <export>

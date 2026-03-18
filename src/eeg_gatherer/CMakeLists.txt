@@ -9,7 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(eeg_msgs REQUIRED)
+find_package(eeg_interfaces REQUIRED)
 find_package(mep_interfaces REQUIRED)
 
 add_executable(
@@ -32,7 +32,7 @@ ament_target_dependencies(
   rclcpp
   rclcpp_action
   std_msgs
-  eeg_msgs
+  eeg_interfaces
   mep_interfaces
 )
 

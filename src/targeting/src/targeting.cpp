@@ -6,7 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-#include "targeting_msgs/msg/targeting_algorithm.hpp"
+#include "targeting_interfaces/msg/targeting_algorithm.hpp"
 
 #include "targeting_services/srv/get_target_voltages.hpp"
 #include "targeting_services/srv/get_maximum_intensity.hpp"
@@ -42,8 +42,8 @@ const uint16_t NUM_OF_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
 const uint8_t NUM_OF_ALGORITHMS = 2;
 
 std::map<uint8_t, std::string> algorithmMap = {
-    {targeting_msgs::msg::TargetingAlgorithm::LEAST_SQUARES, "least-squares"},
-    {targeting_msgs::msg::TargetingAlgorithm::GENETIC, "genetic"}
+    {targeting_interfaces::msg::TargetingAlgorithm::LEAST_SQUARES, "least-squares"},
+    {targeting_interfaces::msg::TargetingAlgorithm::GENETIC, "genetic"}
 };
 
 class Target {

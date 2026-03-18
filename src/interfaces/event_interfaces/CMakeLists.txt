@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(event_msgs)
+project(event_interfaces)
 
 if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,7 +7,7 @@ endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(waveform_msgs REQUIRED)
+find_package(waveform_interfaces REQUIRED)
 
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
@@ -44,7 +44,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/EventInfo.msg"
     "msg/ExecutionCondition.msg"
 
-    DEPENDENCIES waveform_msgs
+    DEPENDENCIES waveform_interfaces
 )
 
 ament_package()

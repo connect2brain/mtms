@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(eeg_msgs)
+project(targeting_interfaces)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -7,7 +7,6 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(builtin_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -23,19 +22,9 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/EegInfo.msg"
-
-  "msg/Sample.msg"
-  "msg/SampleMetadata.msg"
-
-  "msg/PreprocessedSample.msg"
-  "msg/PreprocessedSampleMetadata.msg"
-
-  "msg/EegStatistics.msg"
-
-  "msg/EegBatch.msg"
-
-  DEPENDENCIES builtin_interfaces
+  "msg/CoilTarget.msg"
+  "msg/ElectricTarget.msg"
+  "msg/TargetingAlgorithm.msg"
 )
 
 ament_package()

@@ -1,4 +1,4 @@
-targeting_msgs/ElectricTarget[] targets
+targeting_interfaces/ElectricTarget[] targets
 float64[] pulse_times_since_trial_start
 
 # Note that 'timing' field can be left undefined when performing experiments

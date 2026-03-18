@@ -27,11 +27,11 @@
 #include "targeting_services/srv/reverse_polarity.hpp"
 #include "targeting_services/srv/get_default_waveform.hpp"
 #include "targeting_services/srv/get_multipulse_waveforms.hpp"
-#include "event_msgs/msg/event_info.hpp"
-#include "event_msgs/msg/pulse.hpp"
-#include "event_msgs/msg/pulse_feedback.hpp"
-#include "event_msgs/msg/trigger_out.hpp"
-#include "event_msgs/msg/trigger_out_feedback.hpp"
+#include "event_interfaces/msg/event_info.hpp"
+#include "event_interfaces/msg/pulse.hpp"
+#include "event_interfaces/msg/pulse_feedback.hpp"
+#include "event_interfaces/msg/trigger_out.hpp"
+#include "event_interfaces/msg/trigger_out_feedback.hpp"
 
 class TrialPerformerNode : public rclcpp::Node {
 public:
@@ -55,14 +55,14 @@ private:
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_statesubscriber;
   rclcpp::Subscription<system_interfaces::msg::Session>::SharedPtr session_subscriber;
-  rclcpp::Subscription<event_msgs::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
-  rclcpp::Subscription<event_msgs::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
+  rclcpp::Subscription<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
+  rclcpp::Subscription<event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
   rclcpp::Publisher<neuronavigation_interfaces::msg::CreateMarker>::SharedPtr create_marker_publisher;
 
   mtms_device_interfaces::msg::SystemState::SharedPtr system_state;
   system_interfaces::msg::Session::SharedPtr session;
-  std::unordered_map<uint16_t, event_msgs::msg::PulseFeedback::SharedPtr> pulse_feedback;
-  std::unordered_map<uint16_t, event_msgs::msg::TriggerOutFeedback::SharedPtr> trigger_out_feedback;
+  std::unordered_map<uint16_t, event_interfaces::msg::PulseFeedback::SharedPtr> pulse_feedback;
+  std::unordered_map<uint16_t, event_interfaces::msg::TriggerOutFeedback::SharedPtr> trigger_out_feedback;
   uint16_t id_counter;
 
   void initialize_actions();
@@ -72,8 +72,8 @@ private:
 
   void handle_system_state(const mtms_device_interfaces::msg::SystemState::SharedPtr msg);
   void handle_session(const system_interfaces::msg::Session::SharedPtr msg);
-  void update_pulse_feedback(const event_msgs::msg::PulseFeedback::SharedPtr msg);
-  void update_trigger_out_feedback(const event_msgs::msg::TriggerOutFeedback::SharedPtr msg);
+  void update_pulse_feedback(const event_interfaces::msg::PulseFeedback::SharedPtr msg);
+  void update_trigger_out_feedback(const event_interfaces::msg::TriggerOutFeedback::SharedPtr msg);
 
   /* Helpers */
   bool check_trial_feasible();
@@ -87,27 +87,27 @@ private:
   bool wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids, const std::vector<uint16_t> &trigger_out_ids);
 
   /* ROS message creation */
-  std::pair<std::vector<event_msgs::msg::Pulse>, std::vector<uint16_t>> create_pulses(
-      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &waveforms, const mtms_trial_interfaces::msg::Trial &trial, double start_time);
+  std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> create_pulses(
+      const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &waveforms, const mtms_trial_interfaces::msg::Trial &trial, double start_time);
 
-  event_msgs::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const waveform_msgs::msg::Waveform &waveform, double time, uint8_t execution_condition);
+  event_interfaces::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const waveform_interfaces::msg::Waveform &waveform, double time, uint8_t execution_condition);
 
-  std::pair<std::vector<event_msgs::msg::TriggerOut>, std::vector<uint16_t>> create_trigger_outs(
+  std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> create_trigger_outs(
       const std::vector<mtms_trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time);
 
-  event_msgs::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
+  event_interfaces::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 
   /* Service calls */
-  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_approximated_waveforms(
-      const std::vector<targeting_msgs::msg::ElectricTarget> &targets,
-      const std::vector<waveform_msgs::msg::WaveformsForCoilSet> &target_waveforms);
+  std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> get_approximated_waveforms(
+      const std::vector<targeting_interfaces::msg::ElectricTarget> &targets,
+      const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms);
 
   std::pair<std::vector<double_t>, std::vector<bool>> get_target_voltages(
-      const targeting_msgs::msg::ElectricTarget &target);
+      const targeting_interfaces::msg::ElectricTarget &target);
 
-  waveform_msgs::msg::Waveform get_default_waveform(uint8_t channel);
-  waveform_msgs::msg::Waveform reverse_polarity(const waveform_msgs::msg::Waveform &waveform);
-  void request_events(const std::vector<event_msgs::msg::Pulse> &pulses, const std::vector<event_msgs::msg::TriggerOut> &trigger_outs);
+  waveform_interfaces::msg::Waveform get_default_waveform(uint8_t channel);
+  waveform_interfaces::msg::Waveform reverse_polarity(const waveform_interfaces::msg::Waveform &waveform);
+  void request_events(const std::vector<event_interfaces::msg::Pulse> &pulses, const std::vector<event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
 
@@ -138,11 +138,11 @@ private:
 
   std::pair<bool, mtms_trial_interfaces::msg::TrialResult> perform_trial(const mtms_trial_interfaces::msg::Trial &trial);
 
-  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
-      const targeting_msgs::msg::ElectricTarget &target, const waveform_msgs::msg::WaveformsForCoilSet &target_waveforms);
+  std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
+      const targeting_interfaces::msg::ElectricTarget &target, const waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms);
 
-  std::pair<std::vector<uint16_t>, std::vector<waveform_msgs::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
-      const std::vector<targeting_msgs::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
+  std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
+      const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
 };
 
 #endif // TRIAL_PERFORMER_H

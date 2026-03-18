@@ -2,10 +2,10 @@ import time
 
 from MTMSApi import MTMSApi
 
-from event_msgs.msg import (
+from event_interfaces.msg import (
     ExecutionCondition,
 )
-from targeting_msgs.msg import (
+from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )

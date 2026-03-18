@@ -24,8 +24,8 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app
 
 # ROS interfaces
-COPY src/interfaces/event_msgs src/interfaces/event_msgs/
-COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/event_interfaces src/interfaces/event_interfaces/
+COPY src/interfaces/waveform_interfaces src/interfaces/waveform_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

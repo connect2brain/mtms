@@ -8,7 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(mep_interfaces REQUIRED)
-find_package(targeting_msgs REQUIRED)
+find_package(targeting_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -34,7 +34,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "action/PerformTrial.action"
 
-  DEPENDENCIES mep_interfaces targeting_msgs
+  DEPENDENCIES mep_interfaces targeting_interfaces
 )
 
 ament_package()

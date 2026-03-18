@@ -19,23 +19,23 @@ export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
 export const pulseFeedbackSubscriber = new ROSLIB.Topic<PulseFeedbackMessage>({
   ros: ros,
   name: '/event/pulse_feedback',
-  messageType: 'event_msgs/PulseFeedback',
+  messageType: 'event_interfaces/PulseFeedback',
 })
 
 export const chargeFeedbackSubscriber = new ROSLIB.Topic<ChargeFeedbackMessage>({
   ros: ros,
   name: '/event/charge_feedback',
-  messageType: 'event_msgs/ChargeFeedback',
+  messageType: 'event_interfaces/ChargeFeedback',
 })
 
 export const dischargeFeedbackSubscriber = new ROSLIB.Topic<DischargeFeedbackMessage>({
   ros: ros,
   name: '/event/discharge_feedback',
-  messageType: 'event_msgs/DischargeFeedback',
+  messageType: 'event_interfaces/DischargeFeedback',
 })
 
 export const triggerOutFeedbackSubscriber = new ROSLIB.Topic<TriggerOutFeedbackMessage>({
   ros: ros,
   name: '/event/trigger_out_feedback',
-  messageType: 'event_msgs/TriggerOutFeedback',
+  messageType: 'event_interfaces/TriggerOutFeedback',
 })

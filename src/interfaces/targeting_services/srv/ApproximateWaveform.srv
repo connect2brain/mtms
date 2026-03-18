@@ -2,8 +2,8 @@
 
 uint16 actual_voltage
 uint16 target_voltage
-waveform_msgs/Waveform target_waveform
+waveform_interfaces/Waveform target_waveform
 uint8 coil_number
 ---
 bool success
-waveform_msgs/Waveform approximated_waveform
+waveform_interfaces/Waveform approximated_waveform

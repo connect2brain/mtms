@@ -3,4 +3,4 @@
 int8 channel
 ---
 bool success
-waveform_msgs/Waveform waveform
+waveform_interfaces/Waveform waveform

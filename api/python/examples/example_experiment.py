@@ -6,7 +6,7 @@ from mep_interfaces.msg import (
 )
 from mep_interfaces.msg import TimeWindow
 from experiment_interfaces.msg import Experiment, ExperimentMetadata, IntertrialInterval
-from targeting_msgs.msg import (
+from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget,
 )

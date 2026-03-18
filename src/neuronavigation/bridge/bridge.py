@@ -19,7 +19,7 @@ from neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, Op
 from neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
 from ui_interfaces.msg import PlannerState
 from ui_interfaces.srv import SetTargetOrientation
-from targeting_msgs.msg import CoilTarget
+from targeting_interfaces.msg import CoilTarget
 
 from invesalius3 import app
 import invesalius.data.transformations as tr

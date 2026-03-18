@@ -33,10 +33,10 @@ policies and other behaviour will be described in their own sections.
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
 | `/mtms/device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
-| `/mtms/device/events/feedback/charge`         | Publisher    | `event_msgs.msg.ChargeFeedback`         |
-| `/mtms/device/events/feedback/discharge`      | Publisher    | `event_msgs.msg.DischargeFeedback`      |
-| `/mtms/device/events/feedback/pulse`          | Publisher    | `event_msgs.msg.PulseFeedback`          |
-| `/mtms/device/events/feedback/trigger_out`    | Publisher    | `event_msgs.msg.TriggerOutFeedback`     |
+| `/mtms/device/events/feedback/charge`         | Publisher    | `event_interfaces.msg.ChargeFeedback`         |
+| `/mtms/device/events/feedback/discharge`      | Publisher    | `event_interfaces.msg.DischargeFeedback`      |
+| `/mtms/device/events/feedback/pulse`          | Publisher    | `event_interfaces.msg.PulseFeedback`          |
+| `/mtms/device/events/feedback/trigger_out`    | Publisher    | `event_interfaces.msg.TriggerOutFeedback`     |
 | `/mtms/device/system_state`      | Publisher    | `mtms_device_interfaces.msg.SystemState`      |
 
 ### Interface description
@@ -240,17 +240,17 @@ QoS: ROS2 Default
 
 Request events. Response: Boolean indicating if request was successful.
 
-    event_msgs/Pulse[] pulses
-    event_msgs/Charge[] charges
-    event_msgs/Discharge[] discharges
-    event_msgs/TriggerOut[] trigger_outs
+    event_interfaces/Pulse[] pulses
+    event_interfaces/Charge[] charges
+    event_interfaces/Discharge[] discharges
+    event_interfaces/TriggerOut[] trigger_outs
     ---
     bool success
 
 ## Publishers
 
 ### Topic: `/mtms/device/events/feedback/pulse`
-#### Message: `event_msgs.msg.PulseFeedback`
+#### Message: `event_interfaces.msg.PulseFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
 Contains feedback of an event
@@ -259,7 +259,7 @@ Contains feedback of an event
     PulseError error
 
 ### Topic: `/mtms/device/events/feedback/charge`
-#### Message: `event_msgs.msg.ChargeFeedback`
+#### Message: `event_interfaces.msg.ChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
 Contains feedback of an event
@@ -268,7 +268,7 @@ Contains feedback of an event
     ChargeError error
 
 ### Topic: `/mtms/device/events/feedback/discharge`
-#### Message: `event_msgs.msg.DisChargeFeedback`
+#### Message: `event_interfaces.msg.DisChargeFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
 Contains feedback of an event
@@ -277,7 +277,7 @@ uint16 id
 DischargeError error
 
 ### Topic: `/mtms/device/events/feedback/trigger_out`
-#### Message: `event_msgs.msg.TriggerOutFeedback`
+#### Message: `event_interfaces.msg.TriggerOutFeedback`
 QoS: ROS2 Defaults with KEEP_LAST with depth 10
 
     uint8 port # The index of the signal port.

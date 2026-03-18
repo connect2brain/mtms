@@ -19,17 +19,17 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app
 
 # ROS interfaces
-COPY src/interfaces/event_msgs src/interfaces/event_msgs/
+COPY src/interfaces/event_interfaces src/interfaces/event_interfaces/
 COPY src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
 COPY src/interfaces/mtms_device_interfaces src/interfaces/mtms_device_interfaces/
 COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 COPY src/interfaces/targeting_services src/interfaces/targeting_services/
-COPY src/interfaces/waveform_msgs src/interfaces/waveform_msgs/
+COPY src/interfaces/waveform_interfaces src/interfaces/waveform_interfaces/
 
-COPY src/interfaces/eeg_msgs src/interfaces/eeg_msgs/
+COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY src/interfaces/mep_interfaces src/interfaces/mep_interfaces/
 COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
-COPY src/interfaces/targeting_msgs src/interfaces/targeting_msgs/
+COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
 COPY src/interfaces/mtms_trial_interfaces src/interfaces/mtms_trial_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build

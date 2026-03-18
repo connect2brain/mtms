@@ -8,7 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "targeting_msgs/msg/electric_target.hpp"
+#include "targeting_interfaces/msg/electric_target.hpp"
 
 #include "targeting_services/srv/get_multipulse_waveforms.hpp"
 #include "targeting_services/srv/get_target_voltages.hpp"
@@ -16,9 +16,9 @@
 #include "targeting_services/srv/estimate_voltage_after_pulse.hpp"
 #include "targeting_services/srv/reverse_polarity.hpp"
 
-#include "waveform_msgs/msg/waveform_phase.hpp"
-#include "waveform_msgs/msg/waveform_piece.hpp"
-#include "waveform_msgs/msg/waveforms_for_coil_set.hpp"
+#include "waveform_interfaces/msg/waveform_phase.hpp"
+#include "waveform_interfaces/msg/waveform_piece.hpp"
+#include "waveform_interfaces/msg/waveforms_for_coil_set.hpp"
 
 using namespace std::placeholders;
 using boost::uuids::detail::md5;
@@ -40,19 +40,19 @@ private:
   const std::shared_ptr<targeting_services::srv::ApproximateWaveform::Response> approximate_waveform(
     const uint16_t actual_voltage,
     const uint16_t target_voltage,
-    const waveform_msgs::msg::Waveform& target_waveform,
+    const waveform_interfaces::msg::Waveform& target_waveform,
     const uint8_t coil_number);
 
   const std::shared_ptr<targeting_services::srv::ReversePolarity::Response> reverse_polarity(
-    const waveform_msgs::msg::Waveform& waveform);
+    const waveform_interfaces::msg::Waveform& waveform);
 
   const std::shared_ptr<targeting_services::srv::EstimateVoltageAfterPulse::Response> estimate_voltage_after_pulse(
     const uint16_t voltage_before,
-    const waveform_msgs::msg::Waveform& waveform,
+    const waveform_interfaces::msg::Waveform& waveform,
     const uint8_t coil_number);
 
   const std::shared_ptr<targeting_services::srv::GetTargetVoltages::Response> get_target_voltages(
-    const targeting_msgs::msg::ElectricTarget& target);
+    const targeting_interfaces::msg::ElectricTarget& target);
 
   rclcpp::Logger logger;
   rclcpp::CallbackGroup::SharedPtr callback_group;

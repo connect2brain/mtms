@@ -7,7 +7,7 @@ endif ()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(event_msgs REQUIRED)
+find_package(event_interfaces REQUIRED)
 
 if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
@@ -39,7 +39,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "srv/RequestEvents.srv"
 
         "srv/SendSettings.srv"
-        DEPENDENCIES event_msgs
+        DEPENDENCIES event_interfaces
 )
 
 ament_package()

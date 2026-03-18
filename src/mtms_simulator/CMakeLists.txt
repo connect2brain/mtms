@@ -9,8 +9,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(event_msgs REQUIRED)
-find_package(waveform_msgs REQUIRED)
+find_package(event_interfaces REQUIRED)
+find_package(waveform_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 
@@ -31,8 +31,8 @@ ament_target_dependencies(
   rclcpp
   std_msgs
   std_srvs
-  event_msgs
-  waveform_msgs
+  event_interfaces
+  waveform_interfaces
   mtms_device_interfaces
   system_interfaces
 )

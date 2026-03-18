@@ -11,12 +11,12 @@
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
-#include "event_msgs/msg/charge_error.hpp"
-#include "event_msgs/msg/discharge_error.hpp"
-#include "event_msgs/msg/trigger_out_error.hpp"
+#include "event_interfaces/msg/charge_error.hpp"
+#include "event_interfaces/msg/discharge_error.hpp"
+#include "event_interfaces/msg/trigger_out_error.hpp"
 #include "mtms_device_interfaces/msg/channel_state.hpp"
 #include "system_interfaces/msg/healthcheck_status.hpp"
-#include "waveform_msgs/msg/waveform_phase.hpp"
+#include "waveform_interfaces/msg/waveform_phase.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -49,13 +49,13 @@ MTMSSimulator::MTMSSimulator()
   trigger_events_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/device/events/trigger", std::bind(&MTMSSimulator::trigger_events_handler, this, _1, _2));
 
-  pulse_feedback_publisher_ = this->create_publisher<event_msgs::msg::PulseFeedback>(
+  pulse_feedback_publisher_ = this->create_publisher<event_interfaces::msg::PulseFeedback>(
     "/mtms/device/events/feedback/pulse", 10);
-  charge_feedback_publisher_ = this->create_publisher<event_msgs::msg::ChargeFeedback>(
+  charge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::ChargeFeedback>(
     "/mtms/device/events/feedback/charge", 10);
-  discharge_feedback_publisher_ = this->create_publisher<event_msgs::msg::DischargeFeedback>(
+  discharge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::DischargeFeedback>(
     "/mtms/device/events/feedback/discharge", 10);
-  trigger_out_feedback_publisher_ = this->create_publisher<event_msgs::msg::TriggerOutFeedback>(
+  trigger_out_feedback_publisher_ = this->create_publisher<event_interfaces::msg::TriggerOutFeedback>(
     "/mtms/device/events/feedback/trigger_out", 10);
 
   auto state_qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -267,7 +267,7 @@ bool MTMSSimulator::validate_charge_or_discharge(
       this->get_logger(),
       "Trying to use invalid channel %u, configured channel count is %zu",
       channel, num_of_channels_);
-    error_value = event_msgs::msg::ChargeError::INVALID_CHANNEL;
+    error_value = event_interfaces::msg::ChargeError::INVALID_CHANNEL;
     return false;
   }
   if (target_voltage >= max_voltage_) {
@@ -275,20 +275,20 @@ bool MTMSSimulator::validate_charge_or_discharge(
       this->get_logger(),
       "Too high voltage. Requested %u, maximum supported is %u",
       target_voltage, max_voltage_);
-    error_value = event_msgs::msg::ChargeError::INVALID_VOLTAGE;
+    error_value = event_interfaces::msg::ChargeError::INVALID_VOLTAGE;
     return false;
   }
 
-  error_value = event_msgs::msg::ChargeError::NO_ERROR;
+  error_value = event_interfaces::msg::ChargeError::NO_ERROR;
   return true;
 }
 
 void MTMSSimulator::wait_for_execution_condition(
-  const event_msgs::msg::ExecutionCondition & execution_condition,
+  const event_interfaces::msg::ExecutionCondition & execution_condition,
   const double execution_time) const
 {
   switch (execution_condition.value) {
-    case event_msgs::msg::ExecutionCondition::TIMED:
+    case event_interfaces::msg::ExecutionCondition::TIMED:
     {
       const double wait =
         execution_time - (this->get_clock()->now().seconds() - session_start_time_.load());
@@ -297,12 +297,12 @@ void MTMSSimulator::wait_for_execution_condition(
       }
       break;
     }
-    case event_msgs::msg::ExecutionCondition::WAIT_FOR_TRIGGER:
+    case event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER:
       RCLCPP_WARN(
         this->get_logger(),
         "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing.");
       break;
-    case event_msgs::msg::ExecutionCondition::IMMEDIATE:
+    case event_interfaces::msg::ExecutionCondition::IMMEDIATE:
       break;
     default:
       RCLCPP_WARN(
@@ -314,7 +314,7 @@ void MTMSSimulator::wait_for_execution_condition(
 }
 
 std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durations(
-  const waveform_msgs::msg::Waveform & waveform) const
+  const waveform_interfaces::msg::Waveform & waveform) const
 {
   uint32_t total_duration = 0;
   uint32_t rising_duration = 0;
@@ -323,9 +323,9 @@ std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durat
   for (const auto & piece : waveform.pieces) {
     const uint32_t duration = piece.duration_in_ticks;
     total_duration += duration;
-    if (piece.waveform_phase.value == waveform_msgs::msg::WaveformPhase::RISING) {
+    if (piece.waveform_phase.value == waveform_interfaces::msg::WaveformPhase::RISING) {
       rising_duration += duration;
-    } else if (piece.waveform_phase.value == waveform_msgs::msg::WaveformPhase::FALLING) {
+    } else if (piece.waveform_phase.value == waveform_interfaces::msg::WaveformPhase::FALLING) {
       falling_duration += duration;
     }
   }
@@ -333,14 +333,14 @@ std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durat
   return {total_duration, rising_duration, falling_duration};
 }
 
-event_msgs::msg::PulseError MTMSSimulator::validate_pulse(const event_msgs::msg::Pulse & message) const
+event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const event_interfaces::msg::Pulse & message) const
 {
-  event_msgs::msg::PulseError error;
-  error.value = event_msgs::msg::PulseError::NO_ERROR;
+  event_interfaces::msg::PulseError error;
+  error.value = event_interfaces::msg::PulseError::NO_ERROR;
 
   if (!allow_stimulation_.load()) {
     RCLCPP_WARN(this->get_logger(), "Stimulation not allowed, skipping pulse.");
-    error.value = event_msgs::msg::PulseError::NOT_ALLOWED;
+    error.value = event_interfaces::msg::PulseError::NOT_ALLOWED;
     return error;
   }
 
@@ -348,27 +348,27 @@ event_msgs::msg::PulseError MTMSSimulator::validate_pulse(const event_msgs::msg:
 
   if (message.channel >= system_state_.channel_states.size()) {
     RCLCPP_WARN(this->get_logger(), "Invalid channel index: %u", message.channel);
-    error.value = event_msgs::msg::PulseError::INVALID_CHANNEL;
+    error.value = event_interfaces::msg::PulseError::INVALID_CHANNEL;
     return error;
   }
 
   const auto execution_condition = message.event_info.execution_condition.value;
   if (
-    execution_condition != event_msgs::msg::ExecutionCondition::IMMEDIATE &&
-    execution_condition != event_msgs::msg::ExecutionCondition::TIMED &&
-    execution_condition != event_msgs::msg::ExecutionCondition::WAIT_FOR_TRIGGER)
+    execution_condition != event_interfaces::msg::ExecutionCondition::IMMEDIATE &&
+    execution_condition != event_interfaces::msg::ExecutionCondition::TIMED &&
+    execution_condition != event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER)
   {
-    error.value = event_msgs::msg::PulseError::INVALID_EXECUTION_CONDITION;
+    error.value = event_interfaces::msg::PulseError::INVALID_EXECUTION_CONDITION;
     return error;
   }
 
   const auto & channel = channels_[message.channel];
   if (channel.is_charging) {
-    error.value = event_msgs::msg::PulseError::OVERLAPPING_WITH_CHARGING;
+    error.value = event_interfaces::msg::PulseError::OVERLAPPING_WITH_CHARGING;
     return error;
   }
   if (channel.is_discharging) {
-    error.value = event_msgs::msg::PulseError::OVERLAPPING_WITH_DISCHARGING;
+    error.value = event_interfaces::msg::PulseError::OVERLAPPING_WITH_DISCHARGING;
     return error;
   }
 
@@ -380,7 +380,7 @@ event_msgs::msg::PulseError MTMSSimulator::validate_pulse(const event_msgs::msg:
       this->get_logger(),
       "Pulse duration invalid: total=%u ticks exceeds max=%u ticks",
       total_duration, settings_.maximum_pulse_duration_ticks);
-    error.value = event_msgs::msg::PulseError::INVALID_DURATIONS;
+    error.value = event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
 
@@ -393,14 +393,14 @@ event_msgs::msg::PulseError MTMSSimulator::validate_pulse(const event_msgs::msg:
       "Pulse duration invalid: rising=%u ticks, falling=%u ticks, diff=%u ticks exceeds max_diff=%u ticks",
       rising_duration, falling_duration, rise_fall_diff,
       settings_.maximum_rising_falling_difference_ticks);
-    error.value = event_msgs::msg::PulseError::INVALID_DURATIONS;
+    error.value = event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
 
   return error;
 }
 
-void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
+void MTMSSimulator::process_charge(const event_interfaces::msg::Charge & message)
 {
   RCLCPP_INFO(this->get_logger(), "Charge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
@@ -409,9 +409,9 @@ void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
     return;
   }
 
-  uint8_t error_value = event_msgs::msg::ChargeError::NO_ERROR;
+  uint8_t error_value = event_interfaces::msg::ChargeError::NO_ERROR;
   if (!validate_charge_or_discharge(message.channel, message.target_voltage, error_value)) {
-    event_msgs::msg::ChargeFeedback feedback;
+    event_interfaces::msg::ChargeFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error.value = error_value;
     charge_feedback_publisher_->publish(feedback);
@@ -422,7 +422,7 @@ void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
-  event_msgs::msg::ChargeFeedback feedback;
+  event_interfaces::msg::ChargeFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].charge(message.target_voltage, message.event_info.id);
@@ -432,7 +432,7 @@ void MTMSSimulator::process_charge(const event_msgs::msg::Charge & message)
   RCLCPP_INFO(this->get_logger(), "Charge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
-void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message)
+void MTMSSimulator::process_discharge(const event_interfaces::msg::Discharge & message)
 {
   RCLCPP_INFO(this->get_logger(), "Discharge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
@@ -441,9 +441,9 @@ void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message
     return;
   }
 
-  uint8_t error_value = event_msgs::msg::DischargeError::NO_ERROR;
+  uint8_t error_value = event_interfaces::msg::DischargeError::NO_ERROR;
   if (!validate_charge_or_discharge(message.channel, message.target_voltage, error_value)) {
-    event_msgs::msg::DischargeFeedback feedback;
+    event_interfaces::msg::DischargeFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error.value = error_value;
     discharge_feedback_publisher_->publish(feedback);
@@ -454,7 +454,7 @@ void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
-  event_msgs::msg::DischargeFeedback feedback;
+  event_interfaces::msg::DischargeFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].discharge(message.target_voltage, message.event_info.id);
@@ -464,7 +464,7 @@ void MTMSSimulator::process_discharge(const event_msgs::msg::Discharge & message
   RCLCPP_INFO(this->get_logger(), "Discharge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
-void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
+void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
 {
   RCLCPP_INFO(this->get_logger(), "Pulse requested: channel=%u, id=%u", message.channel, message.event_info.id);
 
@@ -473,8 +473,8 @@ void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
     message.event_info.execution_time);
 
   auto error = validate_pulse(message);
-  if (error.value != event_msgs::msg::PulseError::NO_ERROR) {
-    event_msgs::msg::PulseFeedback feedback;
+  if (error.value != event_interfaces::msg::PulseError::NO_ERROR) {
+    event_interfaces::msg::PulseFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error = error;
     pulse_feedback_publisher_->publish(feedback);
@@ -482,7 +482,7 @@ void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
   }
 
   const auto total_duration = std::get<0>(calculate_waveform_durations(message.waveform));
-  event_msgs::msg::PulseFeedback feedback;
+  event_interfaces::msg::PulseFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].pulse(
@@ -493,7 +493,7 @@ void MTMSSimulator::process_pulse(const event_msgs::msg::Pulse & message)
   RCLCPP_INFO(this->get_logger(), "Pulse completed: channel=%u, id=%u", message.channel, message.event_info.id);
 }
 
-void MTMSSimulator::process_trigger_out(const event_msgs::msg::TriggerOut & message) const
+void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message) const
 {
   (void)allow_trigger_out_;
   wait_for_execution_condition(
@@ -502,9 +502,9 @@ void MTMSSimulator::process_trigger_out(const event_msgs::msg::TriggerOut & mess
 
   std::this_thread::sleep_for(std::chrono::duration<double>(message.duration_us / 1e6));
 
-  event_msgs::msg::TriggerOutFeedback feedback;
+  event_interfaces::msg::TriggerOutFeedback feedback;
   feedback.id = message.event_info.id;
-  feedback.error.value = event_msgs::msg::TriggerOutError::NO_ERROR;
+  feedback.error.value = event_interfaces::msg::TriggerOutError::NO_ERROR;
   trigger_out_feedback_publisher_->publish(feedback);
 }
 
@@ -540,10 +540,10 @@ void MTMSSimulator::publish_session()
 }
 
 void MTMSSimulator::queue_event_batch(
-  const std::vector<event_msgs::msg::Pulse> & pulses,
-  const std::vector<event_msgs::msg::Charge> & charges,
-  const std::vector<event_msgs::msg::Discharge> & discharges,
-  const std::vector<event_msgs::msg::TriggerOut> & trigger_outs)
+  const std::vector<event_interfaces::msg::Pulse> & pulses,
+  const std::vector<event_interfaces::msg::Charge> & charges,
+  const std::vector<event_interfaces::msg::Discharge> & discharges,
+  const std::vector<event_interfaces::msg::TriggerOut> & trigger_outs)
 {
   EventBatch batch;
   batch.pulses = pulses;

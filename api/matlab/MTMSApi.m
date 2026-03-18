@@ -48,7 +48,7 @@ classdef MTMSApi < handle
         %   * 'incomplete_events' - An empty list.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
         %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
-        %   * 'execution_conditions' - A ROS2 message object, of type "event_msgs/ExecutionCondition".
+        %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
             % TODO: Should receive channel count automatically from .env so that the user of the API wouldn't have to care.
 
@@ -68,7 +68,7 @@ classdef MTMSApi < handle
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
             obj.session_states = ros2message("system_interfaces/SessionState");
 
-            obj.execution_conditions = ros2message("event_msgs/ExecutionCondition");
+            obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
 
             % Print configuration
             disp("Configuration:")
@@ -584,7 +584,7 @@ classdef MTMSApi < handle
 
             assert(length(modes) == length(durations), 'Length of modes must be equal to the length of durations.');
 
-            waveform = ros2message('waveform_msgs/Waveform');
+            waveform = ros2message('waveform_interfaces/Waveform');
             for i = 1:length(modes)
                 mode = modes{i};
                 duration_in_ticks = durations{i} / 25e-9;
@@ -602,7 +602,7 @@ classdef MTMSApi < handle
                 allowed_modes = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
                 assert(ismember(mode, allowed_modes), ['Mode must be one of ' strjoin(allowed_modes, ', ')]);
 
-                piece = ros2message('waveform_msgs/WaveformPiece');
+                piece = ros2message('waveform_interfaces/WaveformPiece');
                 assert (duration_in_ticks >= 0 && duration_in_ticks <= 65535, 'Duration in ticks must be in range 0-65535.');
                 piece.duration_in_ticks = uint16(duration_in_ticks);
 
@@ -622,7 +622,7 @@ classdef MTMSApi < handle
         % :return: A WaveformsForCoilSet object.
         % :rtype: ROS message (WaveformsForCoilSet)
 
-            waveforms_for_coil_set = ros2message('waveform_msgs/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('waveform_interfaces/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = waveforms(channel + 1);
             end
@@ -633,7 +633,7 @@ classdef MTMSApi < handle
         end
 
         function waveforms_for_coil_set = get_default_waveforms_for_coil_set(obj)
-            waveforms_for_coil_set = ros2message('waveform_msgs/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('waveform_interfaces/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = obj.get_default_waveform(channel);
             end
@@ -652,7 +652,7 @@ classdef MTMSApi < handle
         % :return: Targeting algorithm.
         % :rtype: ROS message (TargetingAlgorithm)
 
-            algorithm = ros2message('targeting_msgs/TargetingAlgorithm');
+            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
             if strcmp(algorithm_str, 'least_squares')
                 algorithm.value = algorithm.LEAST_SQUARES;
             elseif strcmp(algorithm_str, 'genetic')
@@ -790,7 +790,7 @@ classdef MTMSApi < handle
             % :return: Target message.
             % :rtype: ROS message (ElectricTarget)
 
-            target = ros2message('targeting_msgs/ElectricTarget');
+            target = ros2message('targeting_interfaces/ElectricTarget');
 
             % Check that the values are within the allowed ranges to avoid MATLAB's int8 and int16 silently
             % casting the values to the nearest allowed value. Also check that the values are integers.
@@ -823,7 +823,7 @@ classdef MTMSApi < handle
 
             create_marker_msg = ros2message("neuronavigation_interfaces/CreateMarker");
 
-            % Fill targets (array of targeting_msgs/ElectricTarget)
+            % Fill targets (array of targeting_interfaces/ElectricTarget)
             if nargin >= 2 && ~isempty(targets)
                 create_marker_msg.targets = targets;
             else

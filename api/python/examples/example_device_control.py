@@ -1,9 +1,9 @@
 from MTMSApi import MTMSApi
 
-from event_msgs.msg import (
+from event_interfaces.msg import (
     ExecutionCondition,
 )
-from waveform_msgs.msg import (
+from waveform_interfaces.msg import (
     WaveformPhase,
     WaveformPiece,
     Waveform
@@ -13,7 +13,7 @@ from mep_interfaces.msg import (
     PreactivationCheck
 )
 from mep_interfaces.msg import TimeWindow
-from targeting_msgs.msg import (
+from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget
 )

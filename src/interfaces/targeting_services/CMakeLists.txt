@@ -8,8 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(event_msgs REQUIRED)
-find_package(targeting_msgs REQUIRED)
+find_package(event_interfaces REQUIRED)
+find_package(targeting_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -34,7 +34,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/GetDefaultWaveform.srv"
   "srv/ReversePolarity.srv"
 
-  DEPENDENCIES event_msgs targeting_msgs
+  DEPENDENCIES event_interfaces targeting_interfaces
  )
 
 ament_package()

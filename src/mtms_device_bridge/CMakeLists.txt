@@ -15,7 +15,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
-find_package(event_msgs REQUIRED)
+find_package(event_interfaces REQUIRED)
 find_package(system_interfaces REQUIRED)
 find_package(realtime_utils REQUIRED)
 
@@ -208,7 +208,7 @@ target_include_directories(event_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_handler rclcpp std_msgs event_msgs mtms_device_interfaces realtime_utils)
+ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_device_interfaces realtime_utils)
 
 # Trigger events handler
 
@@ -227,7 +227,7 @@ target_include_directories(trigger_events_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(trigger_events_handler rclcpp std_msgs std_srvs event_msgs mtms_device_interfaces realtime_utils)
+ament_target_dependencies(trigger_events_handler rclcpp std_msgs std_srvs event_interfaces mtms_device_interfaces realtime_utils)
 
 # Feedback monitor bridge
 
@@ -246,7 +246,7 @@ target_include_directories(feedback_monitor_bridge
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_msgs realtime_utils)
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_interfaces realtime_utils)
 
 # Settings handler
 

@@ -6,7 +6,7 @@ import numpy as np
 from mtms_trial_interfaces.msg import Trial
 from mtms_trial_interfaces.srv import ValidateTrial
 
-from waveform_msgs.msg import WaveformsForCoilSet
+from waveform_interfaces.msg import WaveformsForCoilSet
 from targeting_services.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
 import rclpy

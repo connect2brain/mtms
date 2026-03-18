@@ -15,8 +15,8 @@
   <build_depend>mep_interfaces</build_depend>
   <exec_depend>mep_interfaces</exec_depend>
 
-  <build_depend>targeting_msgs</build_depend>
-  <exec_depend>targeting_msgs</exec_depend>
+  <build_depend>targeting_interfaces</build_depend>
+  <exec_depend>targeting_interfaces</exec_depend>
 
   <build_depend>std_msgs</build_depend>
   <depend>action_msgs</depend>
