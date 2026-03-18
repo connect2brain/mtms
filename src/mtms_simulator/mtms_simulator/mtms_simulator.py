@@ -158,11 +158,23 @@ class MTMSSimulator(Node):
         )
 
         # Subscribers for allow state topics.
+        state_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.TRANSIENT_LOCAL,
+        )
         self.allow_stimulation_subscription = self.create_subscription(
-            Bool, "/mtms/stimulation/allowed", self.allow_stimulation_callback, 10
+            Bool,
+            "/mtms/stimulation/allowed",
+            self.allow_stimulation_callback,
+            state_qos,
         )
         self.allow_trigger_out_subscription = self.create_subscription(
-            Bool, "/mtms/trigger_out/allowed", self.allow_trigger_out_callback, 10
+            Bool,
+            "/mtms/trigger_out/allowed",
+            self.allow_trigger_out_callback,
+            state_qos,
         )
 
         # QoS definition for session.
