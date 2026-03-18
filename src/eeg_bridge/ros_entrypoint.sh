@@ -5,4 +5,6 @@ source /opt/ros/jazzy/setup.bash
 source /app/install/setup.bash
 
 ros2 launch eeg_bridge eeg_bridge.launch.py \
-  log-level:="$ROS_LOG_LEVEL"
+  log-level:="$ROS_LOG_LEVEL" \
+  eeg-port:="${EEG_PORT:-50001}" \
+  eeg-device:="${EEG_DEVICE:-neurone}"

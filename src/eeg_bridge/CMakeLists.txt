@@ -8,10 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(std_srvs REQUIRED)
 find_package(eeg_interfaces REQUIRED)
-find_package(system_interfaces REQUIRED)
-find_package(pipeline_interfaces REQUIRED)
 find_package(realtime_utils REQUIRED)
 
 add_executable(eeg_bridge
@@ -28,7 +25,7 @@ target_link_libraries(eeg_bridge
   realtime_utils::utils
 )
 
-ament_target_dependencies(eeg_bridge rclcpp std_msgs std_srvs eeg_interfaces system_interfaces pipeline_interfaces realtime_utils)
+ament_target_dependencies(eeg_bridge rclcpp std_msgs eeg_interfaces realtime_utils)
 
 
 install(TARGETS

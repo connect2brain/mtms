@@ -28,14 +28,14 @@ COPY src/utils/realtime src/utils/realtime/
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/eeg/eeg_bridge src/eeg/eeg_bridge/
+COPY src/eeg_bridge src/eeg_bridge/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select eeg_bridge
 
 # Copy entrypoint
 
 WORKDIR /app
 
-COPY src/eeg/eeg_bridge/ros_entrypoint.sh .
+COPY src/eeg_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

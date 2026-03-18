@@ -6,16 +6,10 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "std_msgs/msg/bool.hpp"
-#include "std_msgs/msg/string.hpp"
 #include "std_msgs/msg/int32.hpp"
 
 #include "eeg_interfaces/msg/eeg_device_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
-
-#include "system_interfaces/msg/global_config.hpp"
-
-#include "std_srvs/srv/trigger.hpp"
 
 #include "adapters/eeg_adapter.h"
 #include "adapters/socket.h"
@@ -59,18 +53,14 @@ private:
   bool check_for_dropped_samples(uint64_t device_sample_index);
   void check_for_sample_timeout();
 
-  void create_publishers();
-
   void publish_device_info();
   void publish_cumulative_dropped_samples();
 
   void set_device_state(EegDeviceState new_state);
 
-  void handle_global_config(const system_interfaces::msg::GlobalConfig::SharedPtr msg);
-
   /* Configuration */
   uint16_t port = 0;
-  uint8_t maximum_dropped_samples = 0;
+  uint8_t maximum_dropped_samples = 2;
   std::string eeg_device_type;
 
   std::shared_ptr<UdpSocket> socket_;
@@ -85,9 +75,6 @@ private:
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_publisher;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_samples_publisher;
-
-  /* Subscribers */
-  rclcpp::Subscription<system_interfaces::msg::GlobalConfig>::SharedPtr global_config_subscription;
 
   /* Device sample tracking for dropped sample detection */
   uint64_t previous_device_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;

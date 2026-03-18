@@ -1,8 +1,8 @@
 #include <chrono>
 #include <cmath>
 #include <cstdio>
-#include <functional>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 
@@ -15,7 +15,6 @@
 
 using namespace std::chrono;
 using namespace std::chrono_literals;
-using namespace std::placeholders;
 
 /* Publisher topics */
 const std::string EEG_RAW_TOPIC = "/mtms/eeg/raw";
@@ -45,75 +44,29 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->dropped_samples_publisher =
     this->create_publisher<std_msgs::msg::Int32>(DROPPED_SAMPLES_TOPIC, 10);
 
-  /* Create subscribers */
-  this->global_config_subscription = this->create_subscription<system_interfaces::msg::GlobalConfig>(
-      "/mtms/global_configurator/config",
-      qos_persist_latest,
-      std::bind(&EegBridge::handle_global_config, this, std::placeholders::_1));
+  this->declare_parameter<int>("eeg_port", 50001);
+  this->declare_parameter<std::string>("eeg_device", "neurone");
 
-}
+  const auto eeg_port_param = this->get_parameter("eeg_port").as_int();
+  this->port = static_cast<uint16_t>(eeg_port_param);
+  this->eeg_device_type = this->get_parameter("eeg_device").as_string();
 
-void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig::SharedPtr msg) {
-  bool needs_adapter_recreation = false;
-  bool needs_socket_recreation = false;
-
-  /* Check if port has changed */
-  if (msg->eeg_port != static_cast<int32_t>(this->port)) {
-    this->port = static_cast<uint16_t>(msg->eeg_port);
-    needs_socket_recreation = true;
-    needs_adapter_recreation = true;
+  this->socket_ = std::make_shared<UdpSocket>(this->port);
+  if (!this->socket_->init_socket()) {
+    throw std::runtime_error("Failed to initialize UDP socket");
   }
 
-  /* Check if device type has changed */
-  if (msg->eeg_device != this->eeg_device_type) {
-    this->eeg_device_type = msg->eeg_device;
-    needs_adapter_recreation = true;
+  if (this->eeg_device_type == "neurone") {
+    this->eeg_adapter = std::make_shared<NeurOneAdapter>(this->socket_);
+  } else {
+    throw std::runtime_error("Unsupported EEG device: " + this->eeg_device_type);
   }
 
-  /* Update maximum dropped samples */
-  if (msg->maximum_dropped_samples != static_cast<int32_t>(this->maximum_dropped_samples)) {
-    this->maximum_dropped_samples = static_cast<uint8_t>(msg->maximum_dropped_samples);
-  }
-
-  /* Recreate socket if port changed */
-  if (needs_socket_recreation) {
-    this->socket_ = std::make_shared<UdpSocket>(this->port);
-    if (!this->socket_->init_socket()) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to initialize UDP socket");
-      return;
-    }
-  }
-
-  /* Recreate adapter if needed */
-  if (needs_adapter_recreation) {
-    /* Ensure socket exists before creating adapter */
-    if (!this->socket_) {
-      this->socket_ = std::make_shared<UdpSocket>(this->port);
-      if (!this->socket_->init_socket()) {
-        RCLCPP_ERROR(this->get_logger(), "Failed to initialize UDP socket");
-        return;
-      }
-    }
-
-    if (this->eeg_device_type == "neurone") {
-      this->eeg_adapter = std::make_shared<NeurOneAdapter>(this->socket_);
-    } else {
-      this->eeg_adapter.reset();
-      RCLCPP_ERROR(this->get_logger(), "Unsupported EEG device: %s", this->eeg_device_type.c_str());
-      return;
-    }
-
-    /* Publish updated device info */
-    publish_device_info();
-  }
-
-  /* Log final configuration */
   RCLCPP_INFO(this->get_logger(), "EEG bridge configuration:");
-  RCLCPP_INFO(this->get_logger(), "  • Port: %d", this->port);
+  RCLCPP_INFO(this->get_logger(), "  • Port: %u", this->port);
   RCLCPP_INFO(this->get_logger(), "  • EEG device: %s", this->eeg_device_type.c_str());
   RCLCPP_INFO(this->get_logger(), "  • Maximum dropped samples: %d", this->maximum_dropped_samples);
-  RCLCPP_INFO(this->get_logger(), " ");
-
+  publish_device_info();
 }
 
 void EegBridge::publish_device_info() {
@@ -258,20 +211,6 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 }
 
 void EegBridge::process_eeg_packet() {
-  /* Check if adapter is initialized */
-  if (!this->eeg_adapter) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
-                         "Waiting for global configuration to initialize EEG adapter...");
-    return;
-  }
-
-  /* Check if socket is initialized */
-  if (!this->socket_) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
-                         "Waiting for socket initialization...");
-    return;
-  }
-
   // Read UDP packet
   if (!this->socket_->read_data(this->buffer, BUFFER_SIZE)) {
     RCLCPP_WARN(this->get_logger(), "Timeout while reading EEG data");
