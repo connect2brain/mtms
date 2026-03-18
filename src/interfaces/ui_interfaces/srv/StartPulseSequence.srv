@@ -1,6 +1,0 @@
-# ROS service for starting a new pulse sequence.
-
-Session session
----
-bool success
-string status "OK"

@@ -76,7 +76,6 @@ COPY src/interfaces/event_interfaces src/interfaces/event_interfaces/
 COPY src/interfaces/experiment_interfaces src/interfaces/experiment_interfaces/
 COPY src/interfaces/neuronavigation_interfaces src/interfaces/neuronavigation_interfaces/
 COPY src/interfaces/targeting_interfaces src/interfaces/targeting_interfaces/
-COPY src/interfaces/ui_interfaces src/interfaces/ui_interfaces/
 COPY src/interfaces/waveform_interfaces src/interfaces/waveform_interfaces/
 
 COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
