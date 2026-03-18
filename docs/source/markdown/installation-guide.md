@@ -1,14 +1,13 @@
-# mTMS Real-time Computer Installation Guide
+# mTMS Computer Installation Guide
 
-This guide provides step-by-step instructions for installing and configuring an mTMS real-time computer system. Some steps are specific to the lab computer installation, while others (marked with *) are required for both lab computers and mobile laptops.
+This guide provides step-by-step instructions for installing and configuring the mTMS
+computer system.
 
-Note that the software installation steps are in `README.md`, while the hardware, operating system, and other pre-requisite steps are
-in this guide.
+Note that the software installation steps are in `README.md`, while the hardware, operating system, and other pre-requisite steps are in this guide.
 
 ## Prerequisites
 
-- Windows 11 pre-installed on the computer
-- Ubuntu 22.04.3 LTS installation media
+- Ubuntu 24.04.4 LTS installation media
 - Internet connection
 - Required hardware components (Edgerouter X, Bittium NeurOne)
 
@@ -26,9 +25,9 @@ in this guide.
 
 1. Initial Setup
    - Power on the Edgerouter X
-   - Connect router's eth0 port to the real-time computer
-   - On Windows, disable DHCP and set:
-     - IP: 192.168.1.2
+   - Connect router's eth0 port to the mTMS computer
+   - Disable DHCP on mTMS computer and set:
+     - IP address: 192.168.1.2
      - Network mask: 255.255.0.0
 
 2. Router Configuration
@@ -45,43 +44,18 @@ in this guide.
    - Connect Bittium NeurOne to eth3
 
 4. Network Configuration
-   - Enable DHCP on real-time computer
+   - Enable DHCP on mTMS computer
    - Access router at 192.168.1.1
    - Under 'switch' interface:
      - Select Actions -> Config
      - Change IP address to 192.168.200.1/24
      - Save changes
 
-## Windows Configuration
-
-### Disable BitLocker
-1. Open Windows search
-2. Search for "Data encryption"
-3. Disable encryption
-
-## BIOS Configuration
-
-1. Update BIOS
-   - Open HP Support Assistant
-   - Navigate to Device Support -> Software & Drivers
-   - Install HP Consumer Desktop PC BIOS Update
-
-2. Configure BIOS Settings
-   - Access BIOS during boot (usually Esc key on HP Envy)
-   - Change language to English
-   - Disable secure boot
-
-## Operating System Installation*
-
-### Prepare for Dual Boot
-1. In Windows:
-   - Open Disk Management
-   - Shrink main partition to 200 GB
-   - Leave remaining space unallocated
+## Operating System Installation
 
 ### Install Ubuntu
 1. Boot Setup
-   - Boot from Ubuntu 22.04.3 LTS installation media
+   - Boot from Ubuntu 24.04.4 LTS installation media
    - Select "Try or Install Ubuntu"
    - If encountering Nouveau driver issues:
      ```
@@ -113,26 +87,12 @@ in this guide.
      - File system: Ext4
      - Mount point: /home
 
-   - Set boot loader:
-     - Device: /dev/nvme0n1p1 (Windows Boot Manager)
-
 4. User Setup
    - Name: mtms
    - Password: multilocus
    - Enable "Require password to log in"
 
-## Ubuntu Configuration*
-
-1. Install Ubuntu Pro
-   - Complete initial Ubuntu Pro setup
-   - Create personal Ubuntu Pro account
-
-2. Install Real-time Kernel
-   ```bash
-   sudo pro enable realtime-kernel
-   ```
-
-## Software Installation*
+## Software Installation
 
 ### Git Setup
 1. Install Git
@@ -152,9 +112,6 @@ in this guide.
    ```bash
    git clone git@github.com:connect2brain/mtms.git --recurse-submodules
    ```
-
-When asked for a user account and password, you can, e.g., use a Personal Access Token received
-from your GitHub account.
 
 ### MATLAB Installation
 1. Download and Install
