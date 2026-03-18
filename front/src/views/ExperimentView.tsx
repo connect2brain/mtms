@@ -414,6 +414,7 @@ export const ExperimentView = () => {
   const { targetingAlgorithm } = useContext(ConfigContext)
   const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
   const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
+  const maxEmgChannel = Math.max(1, eegDeviceInfo?.num_emg_channels ?? 0)
 
   const [experimentName, setExperimentName] = useState<string>(() => getKey('experimentName', ''))
   const [subjectName, setSubjectName] = useState<string>(() => getKey('subjectName', ''))
@@ -942,6 +943,13 @@ export const ExperimentView = () => {
     setMepHealthcheckOk(mepHealthcheck?.status.value === HealthcheckStatus.READY)
   }, [mepHealthcheck])
 
+  /* Keep selected EMG channel within the available range from EEG info. */
+  useEffect(() => {
+    if (emgChannel > maxEmgChannel) {
+      setEmgChannel(maxEmgChannel)
+    }
+  }, [emgChannel, maxEmgChannel])
+
   /* Update session storage. */
   useEffect(() => {
     storeKey('experimentName', experimentName)
@@ -1313,15 +1321,11 @@ export const ExperimentView = () => {
           <GrayedOutPanel isGrayedOut={!mepEnabled || !isStreaming}>
             <ConfigRow>
               <IndentedLabel>EMG channel:</IndentedLabel>
-              {/*
-                  TODO: Validate EMG channel by passing a prop to ValidatedInput, based on the
-                  number of available EMG channels, published by EEG bridge.
-                */}
               <ValidatedInput
                 type='text'
                 value={emgChannel}
                 min={1}
-                max={16}
+                max={maxEmgChannel}
                 onChange={setEmgChannel}
                 disabled={!mepEnabled || !isStreaming}
               />
