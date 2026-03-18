@@ -1,0 +1,33 @@
+Dependency: rosbridge_suite
+Upstream Repository: https://github.com/RobotWebTools/rosbridge_suite
+Vendored Location: rosbridge/rosbridge_suite
+
+Vendored Into Repository: mtms
+Vendored On: 2026-03-18
+
+Upstream Commit SHA: 61860bf4c091fcac33cb64e5b313f5a7f65b038e
+Upstream Commit Date: 2026-02-26
+Upstream Commit Author: atofetti-botbot <atofetti@botbot.bot>
+Upstream Commit Message: fix: numpy.ndarray not handled in CBOR serialization (#1161)
+
+Latest Commits:
+    61860bf4c091  — fix: numpy.ndarray not handled in CBOR serialization (#1161)
+    abada43955cc  — feat: Add an option to use EventsExecutor (#1157)
+    728ed0d228de  — fix: Handle action rejection and server timeout (#1139)
+    1efe67a0f151  — fix: Reduce idle CPU consumption of websocket server (#1040)
+
+Local Modifications:
+    None at time of vendoring.
+
+Update Procedure:
+    1. Clone or fetch the upstream repository:
+         git clone https://github.com/RobotWebTools/rosbridge_suite
+         cd rosbridge_suite
+         git checkout <desired commit or tag>
+
+    2. Review differences with the vendored copy using:
+         diff -ruN <vendored_path>/rosbridge_suite <fresh_upstream_checkout> > upstream_diff.patch
+
+    3. Apply updates selectively or overwrite files as appropriate.
+
+    4. Update the Upstream Commit SHA and date in this file after changes.
