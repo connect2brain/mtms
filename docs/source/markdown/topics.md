@@ -68,7 +68,6 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 ### Topics
 
 - `/mtms/eeg/raw` - Incoming raw EEG samples used by EEG gatherer.
-- `/mtms/eeg/healthcheck` - EEG receiver availability/health status.
 - `/mtms/mep/healthcheck` - MEP analyzer health status.
 
 ### Services
