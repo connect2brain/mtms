@@ -66,6 +66,12 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
   const sliderHeight = 350
   const maximumIntensityPositionInPixels = sliderHeight * (1 - (maximumIntensity - min) / (max - min))
   const maximumIntensityPosition = `${maximumIntensityPositionInPixels}px`
+  const sliderStyle: React.CSSProperties = {
+    WebkitAppearance: 'slider-vertical',
+    width: '8px',
+    height: '350px',
+    zIndex: 2,
+  }
 
   return (
     <div>
@@ -87,13 +93,7 @@ export const IntensitySelector: React.FC<IntensitySelectorProps> = ({
           value={value}
           onChange={handleSliderChange}
           onInput={handleSliderChange}
-          style={{
-            writingMode: 'vertical-lr',
-            direction: 'rtl',
-            width: '8px',
-            height: '350px',
-            zIndex: 2,
-          }}
+          style={sliderStyle}
         />
         <IntensityLabel>Intensity (V/m):</IntensityLabel>
         <ValidatedInput type='number' value={value} min={min} max={max} onChange={handleChange} />
