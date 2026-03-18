@@ -153,17 +153,17 @@ services:
     privileged: true
     network_mode: host
 
-  eeg_gatherer:
-    build:
-      context: .
-      dockerfile: src/eeg_gatherer/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
-    network_mode: host
+  # eeg_gatherer:
+  #   build:
+  #     context: .
+  #     dockerfile: src/eeg_gatherer/Dockerfile
+  #   env_file:
+  #     - ${MTMS_ENV_FILE}
+  #   environment:
+  #     - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+  #   # The container needs to be privileged to set real-time priority.
+  #   privileged: true
+  #   network_mode: host
 
   mep_analyzer:
     build:

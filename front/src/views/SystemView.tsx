@@ -8,12 +8,12 @@ export const SystemView = () => {
   return (
     <>
       <Wrapper>
-        <PanelA>
+        <LeftPanel>
           <DeviceControl />
-        </PanelA>
-        <VerticalDividedPanelB>
+        </LeftPanel>
+        <RightPanel>
           <SystemState />
-        </VerticalDividedPanelB>
+        </RightPanel>
       </Wrapper>
     </>
   )
@@ -34,13 +34,13 @@ const styledPanel = `
   box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);/
 `
 
-const PanelA = styled.div`
+const LeftPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 1 / 2;
   ${styledPanel}
 `
 
-const VerticalDividedPanelB = styled.div`
+const RightPanel = styled.div`
   grid-row: 1 / 2;
   grid-column: 2 / 3;
   display: flex;
