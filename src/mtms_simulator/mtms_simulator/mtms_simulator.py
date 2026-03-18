@@ -88,6 +88,15 @@ class MTMSSimulator(Node):
     UINT16_MAX = 2**16 - 1
     UINT32_MAX = 2**32 - 1
 
+    # Reasonable simulator defaults for pulse validation settings.
+    # NOTE: These values are intended for stable simulator behaviour and may not
+    # exactly match constraints enforced by the physical mTMS device.
+    DEFAULT_MAXIMUM_NUMBER_OF_PULSE_PIECES = 8
+    DEFAULT_MAXIMUM_RISING_FALLING_DIFFERENCE_TICKS = 10000
+    DEFAULT_MAXIMUM_PULSE_DURATION_TICKS = 10000
+    DEFAULT_PULSES_IN_MAXIMUM_PULSES_PER_TIME = 20
+    DEFAULT_TIME_IN_MAXIMUM_PULSES_PER_TIME_MS = 1000
+
     def __init__(self):
         """
         Creates the ROS node and initializes the publishers, subscribes and the services.
@@ -227,7 +236,28 @@ class MTMSSimulator(Node):
         self.session_start_time = 0.0
         self.allow_stimulation: bool = False
         self.allow_trigger_out: bool = True
-        self.settings: Settings = Settings()
+        self.settings: Settings = Settings(
+            maximum_number_of_pulse_pieces=(
+                MTMSSimulator.DEFAULT_MAXIMUM_NUMBER_OF_PULSE_PIECES
+            ),
+            maximum_rising_falling_difference_ticks=(
+                MTMSSimulator.DEFAULT_MAXIMUM_RISING_FALLING_DIFFERENCE_TICKS
+            ),
+            maximum_pulse_duration_ticks=(
+                MTMSSimulator.DEFAULT_MAXIMUM_PULSE_DURATION_TICKS
+            ),
+            pulses_in_maximum_pulses_per_time=(
+                MTMSSimulator.DEFAULT_PULSES_IN_MAXIMUM_PULSES_PER_TIME
+            ),
+            time_in_maximum_pulses_per_time_ms=(
+                MTMSSimulator.DEFAULT_TIME_IN_MAXIMUM_PULSES_PER_TIME_MS
+            ),
+        )
+
+        self.get_logger().info(
+            "Using simulator default settings for pulse validation; these are reasonable defaults and may not exactly match mTMS hardware limits."
+        )
+        self.log_settings(settings=self.settings)
 
         self.create_timer(
             MTMSSimulator.SESSION_PUBLISHING_INTERVAL_MS / 1000,
@@ -240,6 +270,30 @@ class MTMSSimulator(Node):
         self.create_timer(
             MTMSSimulator.HEALTHCHECK_PUBLISHING_INTERVAL_MS / 1000,
             self.healthcheck_callback,
+        )
+
+    def log_settings(self, settings: Settings) -> None:
+        """Log settings in a consistent format."""
+        self.get_logger().info("Simulator settings:")
+        self.get_logger().info(
+            "  maximum number of pulse pieces: %d"
+            % settings.maximum_number_of_pulse_pieces
+        )
+        self.get_logger().info(
+            "  maximum rising-falling difference (ticks): %d"
+            % settings.maximum_rising_falling_difference_ticks
+        )
+        self.get_logger().info(
+            "  maximum pulse duration (ticks): %d"
+            % settings.maximum_pulse_duration_ticks
+        )
+        self.get_logger().info(
+            "  maximum pulses per unit time, pulses: %d"
+            % settings.pulses_in_maximum_pulses_per_time
+        )
+        self.get_logger().info(
+            "  maximum pulses per unit time, unit time (ms): %d"
+            % settings.time_in_maximum_pulses_per_time_ms
         )
 
     def allow_stimulation_handler(self, request, response):
@@ -264,27 +318,7 @@ class MTMSSimulator(Node):
 
     def send_settings_handler(self, request, response):
         settings = request.settings
-        self.get_logger().info("Received settings:")
-        self.get_logger().info(
-            "  maximum number of pulse pieces: %d"
-            % settings.maximum_number_of_pulse_pieces
-        )
-        self.get_logger().info(
-            "  maximum rising-falling difference (ticks): %d"
-            % settings.maximum_rising_falling_difference_ticks
-        )
-        self.get_logger().info(
-            "  maximum pulse duration (ticks): %d"
-            % settings.maximum_pulse_duration_ticks
-        )
-        self.get_logger().info(
-            "  maximum pulses per unit time, pulses: %d"
-            % settings.pulses_in_maximum_pulses_per_time
-        )
-        self.get_logger().info(
-            "  maximum pulses per unit time, unit time (ms): %d"
-            % settings.time_in_maximum_pulses_per_time_ms
-        )
+        self.log_settings(settings=settings)
 
         self.settings = settings
         for channel in self.channels:
