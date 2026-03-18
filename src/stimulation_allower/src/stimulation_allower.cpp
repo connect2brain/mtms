@@ -12,6 +12,9 @@ using std::placeholders::_1;
 /* HACK: Needs to match the value in neuronavigation bridge. */
 const milliseconds COIL_AT_TARGET_PUBLISHING_INTERVAL = 600ms;
 
+const std::string ALLOW_STIMULATION_SERVICE_NAME = "/mtms/device/allow_stimulation";
+const std::string ALLOW_TRIGGER_OUT_SERVICE_NAME = "/mtms/device/allow_trigger_out";
+
 class StimulationAllower : public rclcpp::Node {
 
 public:
@@ -56,8 +59,8 @@ public:
     coil_at_target_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       "/neuronavigation/coil_at_target", qos_deadline, std::bind(&StimulationAllower::coil_at_target_callback, this, _1), subscription_options);
 
-    allow_stimulation_client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>("/mtms/device/allow_stimulation");
-    allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>("/mtms/device/allow_trigger_out");
+    allow_stimulation_client_ = this->create_client<mtms_device_interfaces::srv::AllowStimulation>(ALLOW_STIMULATION_SERVICE_NAME);
+    allow_trigger_out_client_ = this->create_client<mtms_device_interfaces::srv::AllowTriggerOut>(ALLOW_TRIGGER_OUT_SERVICE_NAME);
 
     /* Create service for querying status of stimulation allowed.*/
     is_stimulation_allowed_service_ = this->create_service<mtms_device_interfaces::srv::IsStimulationAllowed>(
@@ -65,6 +68,8 @@ public:
 
     /* Update initial default state even if no neuronavigation topics are publishing. */
     update_stimulation_allowed();
+
+    RCLCPP_INFO(this->get_logger(), "Stimulation allower ready.");
   }
 
 private:
@@ -77,7 +82,7 @@ private:
         RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
         return;
       }
-      RCLCPP_INFO(this->get_logger(), "Waiting for service to become available...");
+      RCLCPP_INFO(this->get_logger(), "Waiting for service %s to become available...", ALLOW_STIMULATION_SERVICE_NAME.c_str());
     }
     auto result_future = allow_stimulation_client_->async_send_request(request);
   }
@@ -91,7 +96,7 @@ private:
         RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
         return;
       }
-      RCLCPP_INFO(this->get_logger(), "Waiting for service to become available...");
+      RCLCPP_INFO(this->get_logger(), "Waiting for service %s to become available...", ALLOW_TRIGGER_OUT_SERVICE_NAME.c_str());
     }
     auto result_future = allow_trigger_out_client_->async_send_request(request);
   }
