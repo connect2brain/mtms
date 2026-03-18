@@ -8,13 +8,11 @@
 
 #include "std_msgs/msg/bool.hpp"
 #include "std_msgs/msg/string.hpp"
-#include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/int32.hpp"
 
 #include "eeg_interfaces/msg/eeg_device_info.hpp"
 #include "eeg_interfaces/msg/sample.hpp"
 
-#include "system_interfaces/msg/component_health.hpp"
 #include "system_interfaces/msg/global_config.hpp"
 
 #include "std_srvs/srv/trigger.hpp"
@@ -63,8 +61,6 @@ private:
 
   void create_publishers();
 
-  void publish_heartbeat();
-  void publish_health_status(uint8_t health_level, const std::string& message);
   void publish_device_info();
   void publish_cumulative_dropped_samples();
 
@@ -88,11 +84,7 @@ private:
   /* Publishers */
   rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
   rclcpp::Publisher<eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_publisher;
-  rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_publisher;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_samples_publisher;
-  rclcpp::Publisher<system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
-
-  rclcpp::TimerBase::SharedPtr heartbeat_publisher_timer;
 
   /* Subscribers */
   rclcpp::Subscription<system_interfaces::msg::GlobalConfig>::SharedPtr global_config_subscription;

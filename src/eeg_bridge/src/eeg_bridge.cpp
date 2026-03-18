@@ -20,7 +20,6 @@ using namespace std::placeholders;
 /* Publisher topics */
 const std::string EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
-const std::string HEARTBEAT_TOPIC = "/mtms/eeg_bridge/heartbeat";
 const std::string DROPPED_SAMPLES_TOPIC = "/eeg_bridge/dropped_samples";
 
 /* Have a long queue to avoid dropping messages. */
@@ -43,14 +42,8 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   this->device_info_publisher =
       this->create_publisher<eeg_interfaces::msg::EegDeviceInfo>(DEVICE_INFO_TOPIC, qos_persist_latest);
 
-  this->heartbeat_publisher =
-    this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-
   this->dropped_samples_publisher =
     this->create_publisher<std_msgs::msg::Int32>(DROPPED_SAMPLES_TOPIC, 10);
-
-  this->health_publisher =
-    this->create_publisher<system_interfaces::msg::ComponentHealth>("/mtms/eeg_bridge/health", qos_persist_latest);
 
   /* Create subscribers */
   this->global_config_subscription = this->create_subscription<system_interfaces::msg::GlobalConfig>(
@@ -58,12 +51,6 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
       qos_persist_latest,
       std::bind(&EegBridge::handle_global_config, this, std::placeholders::_1));
 
-  /* Create heartbeat timer */
-  this->heartbeat_publisher_timer = this->create_wall_timer(
-    std::chrono::milliseconds(500), [this] { publish_heartbeat(); });
-
-  /* Publish initial health status. */
-  publish_health_status(system_interfaces::msg::ComponentHealth::READY, "");
 }
 
 void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig::SharedPtr msg) {
@@ -93,8 +80,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
     this->socket_ = std::make_shared<UdpSocket>(this->port);
     if (!this->socket_->init_socket()) {
       RCLCPP_ERROR(this->get_logger(), "Failed to initialize UDP socket");
-      this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                   "Failed to initialize UDP socket");
       return;
     }
   }
@@ -106,8 +91,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
       this->socket_ = std::make_shared<UdpSocket>(this->port);
       if (!this->socket_->init_socket()) {
         RCLCPP_ERROR(this->get_logger(), "Failed to initialize UDP socket");
-        this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                     "Failed to initialize UDP socket");
         return;
       }
     }
@@ -117,8 +100,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
     } else {
       this->eeg_adapter.reset();
       RCLCPP_ERROR(this->get_logger(), "Unsupported EEG device: %s", this->eeg_device_type.c_str());
-      this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                   "Unsupported EEG device type (only neurone is supported)");
       return;
     }
 
@@ -133,7 +114,6 @@ void EegBridge::handle_global_config(const system_interfaces::msg::GlobalConfig:
   RCLCPP_INFO(this->get_logger(), "  • Maximum dropped samples: %d", this->maximum_dropped_samples);
   RCLCPP_INFO(this->get_logger(), " ");
 
-  this->publish_health_status(system_interfaces::msg::ComponentHealth::READY, "");
 }
 
 void EegBridge::publish_device_info() {
@@ -158,18 +138,6 @@ void EegBridge::set_device_state(EegDeviceState new_state) {
     }
     publish_device_info();
   }
-}
-
-void EegBridge::publish_heartbeat() {
-  auto heartbeat = std_msgs::msg::Empty();
-  this->heartbeat_publisher->publish(heartbeat);
-}
-
-void EegBridge::publish_health_status(uint8_t health_level, const std::string& message) {
-  auto health = system_interfaces::msg::ComponentHealth();
-  health.health_level = health_level;
-  health.message = message;
-  this->health_publisher->publish(health);
 }
 
 void EegBridge::publish_cumulative_dropped_samples() {
@@ -222,8 +190,6 @@ bool EegBridge::check_for_dropped_samples(uint64_t device_sample_index) {
 
     if (dropped_samples_count > this->maximum_dropped_samples) {
       RCLCPP_ERROR(this->get_logger(), "Samples dropped above allowed threshold (%d).", this->maximum_dropped_samples);
-      this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                  "EEG samples dropped above allowed threshold");
     }
   }
   
@@ -355,8 +321,6 @@ void EegBridge::process_eeg_packet() {
   case ERROR:
     RCLCPP_ERROR(this->get_logger(), "Error reading data packet.");
     set_device_state(EegDeviceState::WAITING_FOR_EEG_DEVICE);
-    this->publish_health_status(system_interfaces::msg::ComponentHealth::ERROR,
-                                "Error reading EEG data packet");
     break;
 
   case END:
