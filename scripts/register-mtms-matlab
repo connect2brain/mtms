@@ -7,28 +7,27 @@ if [ -z "$MTMS_ROOT" ]; then
     exit 1
 fi
 
-echo "  • ${BOLD}Registering the MATLAB interfaces...${RESET}"
-
-# Register from a temporary directory so MATLAB-generated package folders do not clutter the repository.
-MATLAB_TEMP_DIR=$(mktemp -d /tmp/mtms-matlab-register.XXXXXX)
-cleanup() {
-    rm -rf "$MATLAB_TEMP_DIR"
-}
-trap cleanup EXIT
-
 if [ ! -f "$MTMS_ROOT/api/matlab/matlab_msg_gen.zip" ]; then
     echo "Error: MATLAB message archive not found at '$MTMS_ROOT/api/matlab/matlab_msg_gen.zip'."
     echo "Build it first with: scripts/build-mtms-matlab"
     exit 1
 fi
 
-cp "$MTMS_ROOT/api/matlab/matlab_msg_gen.zip" "$MATLAB_TEMP_DIR/"
+echo "  • ${BOLD}Registering the MATLAB interfaces...${RESET}"
+
+# Register from a persistent directory outside the repository to avoid cluttering the repo.
+MATLAB_REGISTER_DIR="$HOME/Documents/MATLAB/mtms"
+mkdir -p "$MATLAB_REGISTER_DIR"
+rm -rf "$MATLAB_REGISTER_DIR"/*
+
+# Copy the generated package folders.
+cp "$MTMS_ROOT/api/matlab/matlab_msg_gen.zip" "$MATLAB_REGISTER_DIR/"
 
 # Register messages in MATLAB. Keep the script readable as multiline Bash,
 # then join to one line for MATLAB -r.
 MATLAB_BATCH_LINES=(
     "try"
-    "ros2RegisterMessages('$MATLAB_TEMP_DIR')"
+    "ros2RegisterMessages('$MATLAB_REGISTER_DIR')"
     "catch ME"
     "disp(getReport(ME, 'extended', 'hyperlinks', 'off'))"
     "exit(1)"
@@ -44,4 +43,5 @@ if ! matlab -nodisplay -nosplash -nodesktop -r "$MATLAB_BATCH_CMD"; then
 fi
 
 echo "Done."
+echo "Registered MATLAB ROS2 messages in: $MATLAB_REGISTER_DIR"
 echo ""
