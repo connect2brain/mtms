@@ -1,21 +1,18 @@
-# EEG and EMG data in microvolts
+# ============================================================================
+# Core data
+# ============================================================================
+float64[] eeg                   # Length = num_eeg_channels, in microvolts
+float64[] emg                   # Length = num_emg_channels, in microvolts
+float64 time                    # Sample time, seconds since recording start
+uint64 sample_index             # Sample count (0-based)
 
-float64[] eeg_data
-float64[] emg_data
-float64 time
-uint64 index
+# ============================================================================
+# Hardware triggers
+# ============================================================================
+bool trigger_a
+bool trigger_b
 
-# The second trigger-in port of the EEG device (port B) is used for triggers
-# that indicate simultaneous pulses (at least in case of conventional
-# TMS devices for measuring the timing error - with mTMS device, it can be
-# used more flexibly). Use this field to indicate that case.
-#
-# TODO: Naming could be clearer. Maybe 'is_stimulation_trigger'? The problem is
-#   that it does not necessarily indicate simultaneous stimulation in case of
-#   mTMS device.
-bool is_trigger
-
-bool is_event
-string event_type
-
-SampleMetadata metadata
+# ============================================================================
+# Metadata
+# ============================================================================
+uint64 system_time_eeg_bridge_published
