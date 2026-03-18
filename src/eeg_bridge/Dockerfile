@@ -19,8 +19,6 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app
 
 # ROS interfaces
-COPY src/interfaces/pipeline_interfaces src/interfaces/pipeline_interfaces/
-
 COPY src/interfaces/eeg_interfaces src/interfaces/eeg_interfaces/
 COPY src/interfaces/system_interfaces src/interfaces/system_interfaces/
 COPY src/realtime_utils src/realtime_utils/

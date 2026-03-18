@@ -173,8 +173,8 @@ eeg_interfaces::msg::Sample EegBridge::create_ros_sample(const AdapterSample& ad
   sample.eeg = adapter_sample.eeg;
   sample.emg = adapter_sample.emg;
   sample.time = adapter_sample.time;
-  sample.pulse_trigger = adapter_sample.trigger_a;
-  sample.loopback_trigger = adapter_sample.trigger_b;
+  sample.trigger_a = adapter_sample.trigger_a;
+  sample.trigger_b = adapter_sample.trigger_b;
   
   return sample;
 }
@@ -187,24 +187,19 @@ void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
 
   sample.time -= this->time_offset;
 
-  sample.is_session_start = false;
-
   /* Set the streaming sample index. */
   sample.sample_index = this->session_sample_index;
   this->session_sample_index++;
 
-  /* Mark the sample as valid by default. The preprocessor can later mark it as invalid if needed. */
-  sample.valid = true;
-
   this->eeg_sample_publisher->publish(sample);
 
   // Log latency trigger when present
-  if (sample.loopback_trigger) {
+  if (sample.trigger_b) {
     RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Receiving loopback triggers");
   }
   
   // Log pulse trigger when present
-  if (sample.pulse_trigger) {
+  if (sample.trigger_a) {
     RCLCPP_INFO(this->get_logger(), "Received TMS pulse at time: %.4f s", sample.time);
   }
 
