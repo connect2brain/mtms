@@ -8,7 +8,11 @@ import {
   TriggerOutFeedbackMessage,
 } from '../types/event'
 
-import { MTMSEventMessage } from '../types/eeg'
+interface MTMSEventMessage extends ROSLIB.Message {
+  when_to_execute: number
+  processing_start_time: number
+  event_type: number
+}
 
 export const eventSubscriber = new ROSLIB.Topic<MTMSEventMessage>({
   ros: ros,
