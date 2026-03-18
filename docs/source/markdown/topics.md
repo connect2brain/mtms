@@ -23,7 +23,6 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/events/trigger` - Trigger all pending events with execution condition set to WAIT_FOR_TRIGGER.
 - `/mtms/device/session/start` - Start a stimulation session.
 - `/mtms/device/session/stop` - Stop an ongoing stimulation session.
-- `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.
 
 ## Stimulation
 
@@ -31,6 +30,10 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 - `/mtms/stimulation/allowed` - Enable/disable stimulation permission.
 - `/mtms/trigger_out/allowed` - Enable/disable trigger-out permission.
+
+### Services
+
+- `/mtms/stimulation/get_allowed` - Query whether stimulation is currently allowed.
 
 ## Planner
 
