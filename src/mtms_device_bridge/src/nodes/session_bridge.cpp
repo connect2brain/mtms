@@ -13,8 +13,8 @@ using namespace std::chrono_literals;
 
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
-const milliseconds SESSION_PUBLISHING_INTERVAL = 1ms;
-const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 2ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL = 100ms;
+const milliseconds SESSION_PUBLISHING_INTERVAL_TOLERANCE = 10ms;
 
 NiFpga_mTMS_IndicatorU8 session_state_indicator = NiFpga_mTMS_IndicatorU8_Sessionstate;
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;

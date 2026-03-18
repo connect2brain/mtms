@@ -47,10 +47,10 @@ public:
   MTMSSimulator();
 
 private:
-  static constexpr int SESSION_PUBLISHING_INTERVAL_MS = 1;
-  static constexpr int SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 2;
-  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 20;
-  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 5;
+  static constexpr int SESSION_PUBLISHING_INTERVAL_MS = 100;
+  static constexpr int SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
+  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 100;
+  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
   static constexpr int HEALTHCHECK_PUBLISHING_INTERVAL_MS = 800;
 
   static constexpr double CAPACITANCE = 1020e-6;
