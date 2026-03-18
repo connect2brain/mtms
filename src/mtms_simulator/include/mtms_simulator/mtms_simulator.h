@@ -2,10 +2,15 @@
 #define MTMS_SIMULATOR__MTMS_SIMULATOR_HPP_
 
 #include <algorithm>
+#include <atomic>
+#include <condition_variable>
 #include <cmath>
 #include <cstdint>
+#include <deque>
 #include <limits>
+#include <mutex>
 #include <memory>
+#include <thread>
 #include <tuple>
 #include <vector>
 
@@ -45,6 +50,7 @@
 class MTMSSimulator : public rclcpp::Node {
 public:
   MTMSSimulator();
+  ~MTMSSimulator() override;
 
 private:
   static constexpr int SESSION_PUBLISHING_INTERVAL_MS = 100;
@@ -116,23 +122,44 @@ private:
   void process_discharge(const event_msgs::msg::Discharge & message);
   void process_pulse(const event_msgs::msg::Pulse & message);
   void process_trigger_out(const event_msgs::msg::TriggerOut & message) const;
+  void event_worker_loop();
+  void queue_event_batch(
+    const std::vector<event_msgs::msg::Pulse> & pulses,
+    const std::vector<event_msgs::msg::Charge> & charges,
+    const std::vector<event_msgs::msg::Discharge> & discharges,
+    const std::vector<event_msgs::msg::TriggerOut> & trigger_outs);
 
-  void system_state_callback();
-  void session_callback();
-  void healthcheck_callback() const;
+  void publish_system_state();
+  void publish_session();
+  void publish_healthcheck() const;
 
   size_t num_of_channels_ {5};
   uint16_t max_voltage_ {1500};
   double charge_rate_ {1500.0};
 
-  bool allow_stimulation_ {false};
-  bool allow_trigger_out_ {true};
-  double session_start_time_ {0.0};
+  struct EventBatch
+  {
+    std::vector<event_msgs::msg::Pulse> pulses;
+    std::vector<event_msgs::msg::Charge> charges;
+    std::vector<event_msgs::msg::Discharge> discharges;
+    std::vector<event_msgs::msg::TriggerOut> trigger_outs;
+  };
 
+  std::atomic<bool> allow_stimulation_ {false};
+  std::atomic<bool> allow_trigger_out_ {true};
+  std::atomic<uint8_t> session_state_value_ {system_interfaces::msg::SessionState::STOPPED};
+  std::atomic<double> session_start_time_ {0.0};
+
+  mutable std::mutex state_mutex_;
   mtms_device_interfaces::msg::SystemState system_state_;
-  system_interfaces::msg::Session session_;
   mtms_device_interfaces::msg::Settings settings_;
   std::vector<Channel> channels_;
+
+  std::mutex event_queue_mutex_;
+  std::condition_variable event_queue_cv_;
+  std::deque<EventBatch> event_queue_;
+  bool stop_event_worker_ {false};
+  std::thread event_worker_;
 
   rclcpp::Service<mtms_device_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
   rclcpp::Service<mtms_device_interfaces::srv::StartDevice>::SharedPtr start_device_service_;
