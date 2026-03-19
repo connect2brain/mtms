@@ -91,7 +91,7 @@ private:
   event_interfaces::msg::Pulse create_pulse(uint16_t id, uint8_t channel, const waveform_interfaces::msg::Waveform &waveform, double time, uint8_t execution_condition);
 
   std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> create_trigger_outs(
-      const std::vector<mtms_trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time);
+      const mtms_trial_interfaces::msg::Trial &trial, double pulse_time);
 
   event_interfaces::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 

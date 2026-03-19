@@ -7,8 +7,6 @@ from targeting_interfaces.msg import (
 )
 from mtms_trial_interfaces.msg import (
     Trial,
-    TrialConfig,
-    TriggerConfig,
 )
 
 
@@ -46,50 +44,43 @@ mep_config = {
 }
 
 # Enable both trigger outs, coinciding with the beginning of the trial with zero delay.
-triggers = [
-    TriggerConfig(
-        enabled=True,
-        delay=0.0,
-    ),
-    TriggerConfig(
-        enabled=True,
-        delay=0.0,
-    ),
-]
-
-trial_config = TrialConfig(
-    voltage_tolerance_proportion_for_precharging=0.1,  # Do not modify
-    use_pulse_width_modulation_approximation=True,  # Do not modify
-    recharge_after_trial=True,
-    dry_run=False,
-)
+trigger_enabled = [True, True]
+trigger_delay = [0.0, 0.0]
 
 # If analyze MEP is set to True, the mTMS software will automatically analyze the MEPs and write the analysis results
-# into projects/[project-directory]/csv.
-#
-# TODO: Implement a way to change the project directory from the API.
+# as csv into ~/mtms_experiment_logs/.
 #
 # Note that enabling MEP analysis leads to many ways in which a trial can fail, e.g., if EEG is not available
 # or the preactivation check fails.
+#
+# TODO: MEP analysis is now separate from the trial, so needs a separate call to the API.
 analyze_mep = False
 
 # Define the trials.
 single_pulse_trial = Trial(
     targets=[target],
     pulse_times_since_trial_start=[0.0],
+    trigger_enabled=trigger_enabled,
+    trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    config=trial_config,
-    triggers=triggers,
+    voltage_tolerance_proportion_for_precharging=0.1,  # Do not modify
+    use_pulse_width_modulation_approximation=True,  # Do not modify
+    recharge_after_trial=True,
+    dry_run=False,
 )
 
 paired_pulse_trial = Trial(
     targets=[target, target],
     pulse_times_since_trial_start=[0.0, 0.1],
+    trigger_enabled=trigger_enabled,
+    trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    config=trial_config,
-    triggers=triggers,
+    voltage_tolerance_proportion_for_precharging=0.1,  # Do not modify
+    use_pulse_width_modulation_approximation=True,  # Do not modify
+    recharge_after_trial=True,
+    dry_run=False,
 )
 
 print("Validating single pulse trial...")

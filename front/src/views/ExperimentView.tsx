@@ -323,27 +323,18 @@ type TimeWindow = {
   end: number
 }
 
-type TrialTiming = {
-  desired_start_time: number
-  allow_late: boolean
-}
-
-type TrialConfig = {
-  voltage_tolerance_proportion_for_precharging: number
-  recharge_after_trial: boolean
-  use_pulse_width_modulation_approximation: boolean
-  dry_run: boolean
-}
-
 type Trial = {
   targets: Target[]
   pulse_times_since_trial_start: number[]
 
-  /* Note: experiment performer overwrites these if needed. */
-  timing: TrialTiming
-  config: TrialConfig
+  start_time: number
+  trigger_enabled: boolean[]
+  trigger_delay: number[]
 
-  triggers: TriggerConfig[]
+  voltage_tolerance_proportion_for_precharging: number
+  recharge_after_trial: boolean
+  use_pulse_width_modulation_approximation: boolean
+  dry_run: boolean
 }
 
 enum StartButtonState {
@@ -562,6 +553,8 @@ export const ExperimentView = () => {
         delay: trigger2Delay / 1000,
       },
     ]
+    const trigger_enabled = triggers.map((t) => t.enabled)
+    const trigger_delay = triggers.map((t) => t.delay)
 
     if (activeTab === ExperimentTab.MultipleLocations) {
       const singleRepetitionTrials: Trial[] = []
@@ -582,15 +575,14 @@ export const ExperimentView = () => {
             targets: [target],
             pulse_times_since_trial_start: [0],
 
-            timing: { desired_start_time: 0.0, allow_late: true },
-            config: {
-              voltage_tolerance_proportion_for_precharging: 0.03,
-              recharge_after_trial: true,
-              use_pulse_width_modulation_approximation: false,
-              dry_run: false,
-            },
+            start_time: 0.0,
+            trigger_enabled: trigger_enabled,
+            trigger_delay: trigger_delay,
 
-            triggers: triggers,
+            voltage_tolerance_proportion_for_precharging: 0.03,
+            recharge_after_trial: true,
+            use_pulse_width_modulation_approximation: false,
+            dry_run: false,
           }
           singleRepetitionTrials.push(trial)
         })
@@ -612,15 +604,14 @@ export const ExperimentView = () => {
         targets: [target],
         pulse_times_since_trial_start: [0],
 
-        timing: { desired_start_time: 0.0, allow_late: true },
-        config: {
-          voltage_tolerance_proportion_for_precharging: 0.03,
-          recharge_after_trial: true,
-          use_pulse_width_modulation_approximation: false,
-          dry_run: false,
-        },
+        start_time: 0.0,
+        trigger_enabled: trigger_enabled,
+        trigger_delay: trigger_delay,
 
-        triggers: triggers,
+        voltage_tolerance_proportion_for_precharging: 0.03,
+        recharge_after_trial: true,
+        use_pulse_width_modulation_approximation: false,
+        dry_run: false,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
@@ -650,15 +641,14 @@ export const ExperimentView = () => {
         targets: [targetFirstPulse, targetSecondPulse],
         pulse_times_since_trial_start: [0, pairedPulseDelay / 1000],
 
-        timing: { desired_start_time: 0.0, allow_late: true },
-        config: {
-          voltage_tolerance_proportion_for_precharging: 0.03,
-          recharge_after_trial: true,
-          use_pulse_width_modulation_approximation: true,
-          dry_run: false,
-        },
+        start_time: 0.0,
+        trigger_enabled: trigger_enabled,
+        trigger_delay: trigger_delay,
 
-        triggers: triggers,
+        voltage_tolerance_proportion_for_precharging: 0.03,
+        recharge_after_trial: true,
+        use_pulse_width_modulation_approximation: true,
+        dry_run: false,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)

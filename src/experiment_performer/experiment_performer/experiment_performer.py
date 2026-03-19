@@ -9,7 +9,7 @@ from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeE
 
 from mtms_trial_interfaces.action import PerformTrial
 from mtms_trial_interfaces.srv import ValidateTrial
-from mtms_trial_interfaces.msg import TrialTiming, TrialConfig, Trial
+from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool
 
@@ -796,10 +796,6 @@ class ExperimentPerformerNode(Node):
             # Determine the time of the next trial.
             trial_time = self.get_current_time() + time_to_next_trial
 
-            timing = TrialTiming(
-                desired_start_time=trial_time,
-            )
-
             self.logger.info('Performing trial {} / {}, attempt number {}'.format(
                 i + 1,
                 num_of_valid_trials,
@@ -811,15 +807,11 @@ class ExperimentPerformerNode(Node):
             recharge_after_trial = True
             voltage_tolerance_proportion_for_precharging = 0.03
 
-            config = TrialConfig(
-                use_pulse_width_modulation_approximation=use_pulse_width_modulation_approximation,
-                dry_run=dry_run,
-                recharge_after_trial=recharge_after_trial,
-                voltage_tolerance_proportion_for_precharging=voltage_tolerance_proportion_for_precharging,
-            )
-
-            trial.timing = timing
-            trial.config = config
+            trial.start_time = trial_time
+            trial.use_pulse_width_modulation_approximation = use_pulse_width_modulation_approximation
+            trial.dry_run = dry_run
+            trial.recharge_after_trial = recharge_after_trial
+            trial.voltage_tolerance_proportion_for_precharging = voltage_tolerance_proportion_for_precharging
 
             mep_event = None
             mep_result_container = None

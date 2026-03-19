@@ -211,14 +211,19 @@ event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8
   return pulse;
 }
 
-std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const std::vector<mtms_trial_interfaces::msg::TriggerConfig> &triggers, double pulse_time) {
+std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const mtms_trial_interfaces::msg::Trial &trial, double pulse_time) {
   std::vector<uint16_t> trigger_out_ids;
   std::vector<event_interfaces::msg::TriggerOut> trigger_outs;
 
-  for (uint8_t i = 0; i < triggers.size(); ++i) {
-    if (triggers[i].enabled) {
+  const auto n = std::min(trial.trigger_enabled.size(), trial.trigger_delay.size());
+  for (size_t i = 0; i < n; ++i) {
+    if (trial.trigger_enabled[i]) {
       int id = get_next_id();
-      auto trigger_out = create_trigger_out(id, pulse_time + triggers[i].delay, event_interfaces::msg::ExecutionCondition::TIMED, i + 1);
+      auto trigger_out = create_trigger_out(
+          id,
+          pulse_time + trial.trigger_delay[i],
+          event_interfaces::msg::ExecutionCondition::TIMED,
+          static_cast<uint8_t>(i + 1));
       trigger_out_ids.push_back(id);
       trigger_outs.push_back(trigger_out);
     }
@@ -285,15 +290,13 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 /* Logging */
 
 void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &trial) {
-  auto timing = trial.timing;
   RCLCPP_INFO(this->get_logger(), "Trial:");
-  if (trial.config.dry_run) {
+  if (trial.dry_run) {
     RCLCPP_INFO(this->get_logger(), "  Dry run");
   }
   RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
-  if (!trial.config.dry_run) {
-    RCLCPP_INFO(this->get_logger(), "  Timing:");
-    RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
+  if (!trial.dry_run) {
+    RCLCPP_INFO(this->get_logger(), "    Start time: %.3f s", trial.start_time);
   }
 }
 
@@ -502,7 +505,7 @@ void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
 
     /* Log trial success. */
     RCLCPP_INFO(this->get_logger(), "%s completed %s.",
-      goal->trial.config.dry_run ? "Dry run" : "Trial",
+      goal->trial.dry_run ? "Dry run" : "Trial",
       success ? "successfully" : "with errors");
 
     /* Set result and succeed the goal. */
@@ -526,34 +529,31 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
   mtms_trial_interfaces::msg::TrialResult trial_result;
   double_t start_time;
 
-  auto timing = trial.timing;
-  auto config = trial.config;
-
   /* Always get initial voltages and waveforms to warm up the cache. */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, config.use_pulse_width_modulation_approximation);
+  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, trial.use_pulse_width_modulation_approximation);
 
   log_voltages(desired_voltages, "Desired voltages");
 
   /* Actually set voltages and perform pulses if not in dry run mode. */
-  if (!config.dry_run) {
-    success = success && set_voltages_if_needed(desired_voltages, config.voltage_tolerance_proportion_for_precharging);
+  if (!trial.dry_run) {
+    success = success && set_voltages_if_needed(desired_voltages, trial.voltage_tolerance_proportion_for_precharging);
     if (!success) {
       return {false, trial_result};
     }
 
     /* Check if the trial can be performed at the desired start time. */
     const double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
-    if (earliest_start_time > timing.desired_start_time) {
+    if (earliest_start_time > trial.start_time) {
       RCLCPP_ERROR(this->get_logger(),
         "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
-        timing.desired_start_time, earliest_start_time);
+        trial.start_time, earliest_start_time);
       return {false, trial_result};
     }
-    start_time = timing.desired_start_time;
+    start_time = trial.start_time;
 
     /* Create and send pulses and trigger outs. */
     auto [pulses, pulse_ids] = create_pulses(waveforms, trial, start_time);
-    auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial.triggers, start_time);
+    auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, start_time);
 
     /* Request events. */
     request_events(pulses, trigger_outs);
@@ -574,7 +574,7 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
   auto voltages_after_trial = get_actual_voltages();
   log_voltages(voltages_after_trial, "Voltages after trial");
 
-  if (config.recharge_after_trial) {
+  if (trial.recharge_after_trial) {
     RCLCPP_INFO(this->get_logger(), "Recharging...");
     success = success && set_voltages(desired_voltages);
 
