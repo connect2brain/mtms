@@ -7,7 +7,6 @@ endif ()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 
 find_package(event_interfaces REQUIRED)
@@ -32,7 +31,6 @@ target_include_directories(trial_performer
 ament_target_dependencies(
         trial_performer
         rclcpp
-        rclcpp_action
         std_msgs
         event_interfaces
         experiment_interfaces

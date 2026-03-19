@@ -2,7 +2,6 @@ import time
 from threading import Event, Lock
 
 import rclpy
-from rclpy.action import ActionServer
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
@@ -11,7 +10,7 @@ from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFe
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
-from experiment_interfaces.action import SetVoltages
+from experiment_interfaces.srv import SetVoltages
 from system_interfaces.msg import Session, SessionState
 
 
@@ -34,13 +33,12 @@ class VoltageSetterNode(Node):
 
         self.reentrant_callback_group = ReentrantCallbackGroup()
 
-        # Action server for setting voltages.
+        # Service for setting voltages.
 
-        self.action_server = ActionServer(
-            self,
+        self.set_voltages_service = self.create_service(
             SetVoltages,
             '/mtms/trial/set_voltages',
-            self.handle_action_set_voltages,
+            self.handle_set_voltages,
             callback_group=self.reentrant_callback_group,
         )
 
@@ -173,40 +171,30 @@ class VoltageSetterNode(Node):
 
             return self.system_state.channel_states[channel].voltage
 
-    # Set voltages action
+    # Set voltages service
 
-    def handle_action_set_voltages(self, goal_handle):
-        request = goal_handle.request
-
+    def handle_set_voltages(self, request, response):
         voltages = request.voltages
 
-        # Use short version of goal ID (2 first bytes as hex) for logging.
-        #
-        uuid = goal_handle.goal_id.uuid
-        goal_id = "{:02x}{:02x}".format(uuid[0], uuid[1])
+        # Use a simple textual ID for logging.
+        goal_id = "set_voltages"
 
         self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: New goal received: {}.'.format(goal_id, goal_id))
+        self.logger.info('{}: New request received.'.format(goal_id))
 
         success = self.perform_set_voltages(
             goal_id=goal_id,
             voltages=voltages,
         )
 
-        # Create and return a Result object.
-        result = SetVoltages.Result()
+        response.success = success
 
-        if success:
-            goal_handle.succeed()
-        else:
+        if not success:
             self.logger.error(
-                '{}: Aborting goal because voltage setting failed.'.format(goal_id)
+                '{}: Voltage setting failed.'.format(goal_id)
             )
-            goal_handle.abort()
 
-        result.success = success
-
-        return result
+        return response
 
     ## Service calls
 

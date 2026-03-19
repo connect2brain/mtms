@@ -26,13 +26,6 @@ void TrialPerformerNode::initialize_services() {
       rmw_qos_profile_services_default,
       callback_group);
 
-  /* Action client for setting voltages. */
-  set_voltages_client = rclcpp_action::create_client<experiment_interfaces::action::SetVoltages>(
-      this, "/mtms/trial/set_voltages");
-
-  while (!set_voltages_client->wait_for_action_server(2s)) {
-    RCLCPP_INFO(get_logger(), "Action /mtms/trial/set_voltages not available, waiting...");
-  }
 }
 
 void TrialPerformerNode::initialize_service_clients() {
@@ -59,6 +52,12 @@ void TrialPerformerNode::initialize_service_clients() {
   request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms/device/events/request");
   while (!request_events_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/device/events/request not available, waiting...");
+  }
+
+  /* Service client for setting voltages. */
+  set_voltages_client = this->create_client<experiment_interfaces::srv::SetVoltages>("/mtms/trial/set_voltages");
+  while (!set_voltages_client->wait_for_service(2s)) {
+    RCLCPP_INFO(get_logger(), "Service /mtms/trial/set_voltages not available, waiting...");
   }
 }
 
@@ -428,38 +427,24 @@ void TrialPerformerNode::request_events(const std::vector<event_interfaces::msg:
 /* Action clients */
 
 bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
-  auto goal = experiment_interfaces::action::SetVoltages::Goal();
-  goal.voltages = voltages;
+  auto request = std::make_shared<experiment_interfaces::srv::SetVoltages::Request>();
+  request->voltages = voltages;
 
-  auto future_goal_handle = set_voltages_client->async_send_goal(goal);
+  auto future = set_voltages_client->async_send_request(request);
 
-  /* Wait for the goal handle. */
-  if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to send 'set voltages' goal");
+  /* Wait for the response. */
+  if (future.wait_for(10s) != std::future_status::ready) {
+    RCLCPP_ERROR(this->get_logger(), "Call to SetVoltages service timed out");
     return false;
   }
 
-  auto goal_handle = future_goal_handle.get();
-  if (!goal_handle) {
-    RCLCPP_ERROR(this->get_logger(), "'Set voltages' goal was rejected by server");
+  auto response = future.get();
+  if (!response->success) {
+    RCLCPP_ERROR(this->get_logger(), "Call to SetVoltages service failed");
     return false;
   }
 
-  auto future_result = set_voltages_client->async_get_result(goal_handle);
-  if (future_result.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to get 'set voltages' result");
-    return false;
-  }
-
-  auto wrapped_result = future_result.get();
-  bool success = wrapped_result.code == rclcpp_action::ResultCode::SUCCEEDED &&
-                 wrapped_result.result != nullptr &&
-                 wrapped_result.result->success;
-  if (!success) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to set voltages");
-  }
-
-  return success;
+  return true;
 }
 
 void TrialPerformerNode::handle_perform_trial(

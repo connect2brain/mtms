@@ -34,12 +34,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CountValidTrials.srv"
   "srv/LogTrial.srv"
   "srv/PerformExperiment.srv"
+  "srv/SetVoltages.srv"
 
   "srv/CancelExperiment.srv"
   "srv/PauseExperiment.srv"
   "srv/ResumeExperiment.srv"
-
-  "action/SetVoltages.action"
 
   DEPENDENCIES mep_interfaces targeting_interfaces mtms_trial_interfaces
 )
