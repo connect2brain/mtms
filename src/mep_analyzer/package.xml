@@ -7,11 +7,12 @@
   <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>GPL-3.0-only</license>
 
-  <depend>rclpy</depend>
-  <depend>eeg_interfaces</depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
   <depend>mep_interfaces</depend>
+  <depend>eeg_interfaces</depend>
 
   <export>
-    <build_type>ament_python</build_type>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

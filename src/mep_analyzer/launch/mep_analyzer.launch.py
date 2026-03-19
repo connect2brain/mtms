@@ -9,13 +9,14 @@ def generate_launch_description():
 
     log_arg = DeclareLaunchArgument(
         "log-level",
+        default_value=["info"],
         description="Logging level",
     )
 
     logger = LaunchConfiguration("log-level")
 
     node_executables = [
-        "analyze_mep",
+        "mep_analyzer",
     ]
 
     for node_executable in node_executables:

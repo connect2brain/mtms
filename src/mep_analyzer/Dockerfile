@@ -3,7 +3,6 @@ FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cd
 SHELL ["/bin/bash", "-c"]
 
 # Install dependencies
-
 RUN apt-get update && \
     apt-get install -y \
     dos2unix \
@@ -14,14 +13,14 @@ RUN apt-get update && \
 COPY config/cyclonedds.xml /config/
 ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
-# Copy ROS workspace and build packages
+# Copy ROS workspace
 
 WORKDIR /app
 
 # ROS interfaces
 COPY interfaces/eeg_interfaces interfaces/eeg_interfaces/
 COPY interfaces/mep_interfaces interfaces/mep_interfaces/
-COPY interfaces/system_interfaces interfaces/system_interfaces/
+
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
@@ -29,6 +28,7 @@ COPY src/mep_analyzer src/mep_analyzer/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
 
 # Copy entrypoint
+
 COPY src/mep_analyzer/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
