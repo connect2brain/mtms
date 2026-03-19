@@ -9,6 +9,8 @@
 #include <thread>
 #include <tuple>
 
+#include "mtms_simulator/neurone_trigger_client.h"
+
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
 #include "event_interfaces/msg/charge_error.hpp"
@@ -120,6 +122,9 @@ MTMSSimulator::MTMSSimulator()
     "Using simulator default settings for pulse validation; these are reasonable defaults "
     "and may not exactly match mTMS hardware limits.");
   log_settings(settings_);
+
+  // Connect to NeurOne trigger server in the background and keep retrying until it is reachable.
+  neurone_trigger_client_ = std::make_unique<NeurOneTriggerClient>(this->get_logger());
 
   session_timer_ = this->create_wall_timer(
     session_period, std::bind(&MTMSSimulator::publish_session, this));
@@ -492,7 +497,7 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
   RCLCPP_INFO(this->get_logger(), "Pulse completed: channel=%u, id=%u", message.channel, message.event_info.id);
 }
 
-void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message) const
+void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message)
 {
   (void)allow_trigger_out_;
   RCLCPP_INFO(this->get_logger(), "Trigger out requested: port=%u, id=%u, condition=%u, time=%.3f s", message.port, message.event_info.id,
@@ -501,6 +506,10 @@ void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut 
   wait_for_execution_condition(
     message.event_info.execution_condition,
     message.event_info.execution_time);
+
+  if (neurone_trigger_client_) {
+    neurone_trigger_client_->EnqueueTriggerForPort(message.port);
+  }
 
   std::this_thread::sleep_for(std::chrono::duration<double>(message.duration_us / 1e6));
 

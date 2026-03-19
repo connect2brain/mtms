@@ -118,7 +118,7 @@ private:
   void process_charge(const event_interfaces::msg::Charge & message);
   void process_discharge(const event_interfaces::msg::Discharge & message);
   void process_pulse(const event_interfaces::msg::Pulse & message);
-  void process_trigger_out(const event_interfaces::msg::TriggerOut & message) const;
+  void process_trigger_out(const event_interfaces::msg::TriggerOut & message);
   void event_worker_loop();
   void queue_event_batch(
     const std::vector<event_interfaces::msg::Pulse> & pulses,
@@ -180,6 +180,9 @@ private:
   rclcpp::TimerBase::SharedPtr session_timer_;
   rclcpp::TimerBase::SharedPtr system_state_timer_;
   rclcpp::TimerBase::SharedPtr healthcheck_timer_;
+
+  // Sends trigger tokens to NeurOne. Retries TCP connection in the background.
+  std::unique_ptr<class NeurOneTriggerClient> neurone_trigger_client_;
 };
 
 #endif  // MTMS_SIMULATOR__MTMS_SIMULATOR_HPP_

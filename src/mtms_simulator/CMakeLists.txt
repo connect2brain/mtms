@@ -19,6 +19,7 @@ find_package(system_interfaces REQUIRED)
 add_executable(mtms_simulator
   src/mtms_simulator.cpp
   src/channel.cpp
+  src/neurone_trigger_client.cpp
 )
 
 target_include_directories(mtms_simulator
