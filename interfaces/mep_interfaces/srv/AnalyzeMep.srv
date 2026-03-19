@@ -1,0 +1,24 @@
+uint8 emg_channel
+
+float64 mep_time_window_start
+float64 mep_time_window_end
+
+bool preactivation_check_enabled
+float64 preactivation_check_time_window_start
+float64 preactivation_check_time_window_end
+float64 preactivation_check_voltage_range_limit
+
+---
+bool preactivation_passed
+
+float64 amplitude
+float64 latency
+float64[] emg_buffer
+
+# Status codes
+uint8 NO_ERROR=0
+uint8 LATE=1
+uint8 SAMPLES_DROPPED=2
+uint8 INVALID_EMG_CHANNEL=3
+
+uint8 status
