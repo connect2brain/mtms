@@ -60,7 +60,12 @@ class TrialLoggerNode(Node):
             os.makedirs(basepath)
 
         current_timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        filename = f"{current_timestamp}_{experiment_name}_{subject_name}_{experiment_id}.csv"
+        filename_parts = [current_timestamp]
+        if experiment_name:
+            filename_parts.append(experiment_name)
+        if subject_name:
+            filename_parts.append(subject_name)
+        filename = "_".join(filename_parts) + ".csv"
         filepath = os.path.join(basepath, filename)
 
         file = open(filepath, 'w+')
