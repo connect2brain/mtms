@@ -66,9 +66,9 @@ void MepAnalyzerNode::device_info_callback(const eeg_interfaces::msg::EegDeviceI
 
   if (eeg_buffer.max_size() == 0) {
     const double fs_hz = static_cast<double>(*sampling_frequency_hz);
-    const size_t capacity = static_cast<size_t>(std::ceil(eeg_bufferWINDOW_S * fs_hz));
+    const size_t capacity = static_cast<size_t>(std::ceil(EEG_BUFFER_WINDOW_S * fs_hz));
     eeg_buffer.reset(std::max<size_t>(capacity, 1));
-    RCLCPP_INFO(this->get_logger(), "Initialized EEG buffer: sampling_frequency=%.3fHz capacity=%zu window=%.3fs", fs_hz, eeg_buffer.max_size(), eeg_bufferWINDOW_S);
+    RCLCPP_INFO(this->get_logger(), "Initialized EEG buffer: sampling_frequency=%.3fHz capacity=%zu window=%.3fs", fs_hz, eeg_buffer.max_size(), EEG_BUFFER_WINDOW_S);
   }
 
   buffer_cv.notify_all();
@@ -103,7 +103,7 @@ void MepAnalyzerNode::eeg_sample_callback(const eeg_interfaces::msg::Sample::Sha
   buffer_cv.notify_all();
 }
 
-bool MepAnalyzerNode::wait_for_next_stimulation_time(double & stimulation_time_s)
+bool MepAnalyzerNode::wait_for_next_stimulation_time(double & stimulation_time_s, double timeout_s)
 {
   std::optional<double> baseline_trigger;
   {
@@ -111,14 +111,19 @@ bool MepAnalyzerNode::wait_for_next_stimulation_time(double & stimulation_time_s
     baseline_trigger = last_trigger_a_time_s;
   }
 
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::duration<double>(timeout_s);
   while (rclcpp::ok()) {
     std::unique_lock<std::mutex> lock(buffer_mutex);
-    buffer_cv.wait_for(lock, std::chrono::duration<double>(WAIT_POLL_PERIOD_S));
+    const auto wait_status = buffer_cv.wait_until(lock, deadline);
 
     if (last_trigger_a_time_s.has_value() &&
         (!baseline_trigger.has_value() || *last_trigger_a_time_s > *baseline_trigger)) {
       stimulation_time_s = *last_trigger_a_time_s;
       return true;
+    }
+
+    if (wait_status == std::cv_status::timeout) {
+      return false;
     }
   }
   return false;
@@ -197,9 +202,9 @@ void MepAnalyzerNode::analyze_mep_handler(
   response->status = mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR;
 
   double stimulation_time_s = 0.0;
-  if (!wait_for_next_stimulation_time(stimulation_time_s)) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
-    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler aborted before next trigger: status=%d", response->status);
+  if (!wait_for_next_stimulation_time(stimulation_time_s, ANALYZE_MEP_TIMEOUT_S)) {
+    response->status = mep_interfaces::srv::AnalyzeMep::Response::TIMEOUT;
+    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler timed out waiting for next trigger: status=%d", response->status);
     return;
   }
 

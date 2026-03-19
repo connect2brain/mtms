@@ -469,33 +469,15 @@ classdef MTMSApiNode < handle
             request.preactivation_check_time_window_end = double(mep_configuration.preactivation_check_time_window_end);
             request.preactivation_check_voltage_range_limit = double(mep_configuration.preactivation_check_voltage_range_limit);
 
-            try
-                response = call(client, request, 'timeout', 10);
+            response = call(client, request);
 
-                % If successful, assign the output from the response.
-                mep = struct();
-                mep.amplitude = response.amplitude;
-                mep.latency = response.latency;
-                mep.emg_buffer = response.emg_buffer;
+            % If successful, assign the output from the response.
+            mep = struct();
+            mep.amplitude = response.amplitude;
+            mep.latency = response.latency;
+            mep.emg_buffer = response.emg_buffer;
 
-                errors = response.status;
-
-            catch ME
-                warning('MEP analysis service call timed out or failed.');
-
-                % Return zeros to indicate failed call.
-                mep = struct();
-                mep.amplitude = 0;
-                mep.latency = 0;
-                mep.emg_buffer = [];
-                errors = uint8(255);
-
-                % Re-initialize the client
-                obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze", "mep_interfaces/AnalyzeMep");
-
-                % Give a moment for the new client to establish connection
-                pause(0.5);
-            end
+            errors = response.status;
         end
 
         % System state

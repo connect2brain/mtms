@@ -25,8 +25,9 @@ private:
   static const std::string EEG_DEVICE_INFO_TOPIC;
   static const std::string SERVICE_ANALYZE_MEP;
 
-  static constexpr double eeg_bufferWINDOW_S = 3.0;
+  static constexpr double EEG_BUFFER_WINDOW_S = 3.0;
   static constexpr double WAIT_POLL_PERIOD_S = 0.01;
+  static constexpr double ANALYZE_MEP_TIMEOUT_S = 10.0;
 
   void device_info_callback(const eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg);
   void eeg_sample_callback(const eeg_interfaces::msg::Sample::SharedPtr msg);
@@ -35,7 +36,7 @@ private:
     const std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Request> request,
     std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> response);
 
-  bool wait_for_next_stimulation_time(double & stimulation_time_s);
+  bool wait_for_next_stimulation_time(double & stimulation_time_s, double timeout_s);
   bool wait_until_buffer_covers(double start_time_s, double end_time_s);
 
   bool extract_emg_window(
