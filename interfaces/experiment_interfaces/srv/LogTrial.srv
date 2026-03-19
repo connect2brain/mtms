@@ -1,4 +1,5 @@
-ExperimentMetadata metadata
+string experiment_name
+string subject_name
 string experiment_id
 
 uint16 trial_number

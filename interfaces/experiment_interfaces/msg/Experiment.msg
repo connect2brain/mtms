@@ -1,4 +1,5 @@
-ExperimentMetadata metadata
+string experiment_name
+string subject_name
 
 trial_interfaces/Trial[] trials
 

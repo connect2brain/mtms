@@ -26,7 +26,6 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Experiment.msg"
-  "msg/ExperimentMetadata.msg"
   "msg/ExperimentState.msg"
   "msg/ExperimentFeedback.msg"
 

@@ -1,6 +1,6 @@
 from MTMSApi import MTMSApi
 
-from experiment_interfaces.msg import Experiment, ExperimentMetadata, IntertrialInterval
+from experiment_interfaces.msg import Experiment, IntertrialInterval
 from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget,
@@ -16,12 +16,6 @@ api = MTMSApi(
 
 handler = api.get_experiment_handler()
 
-
-# Define the experiment.
-metadata = ExperimentMetadata(
-    experiment_name="Example experiment",
-    subject_name="Example subject",
-)
 
 target = ElectricTarget(
     displacement_x=0,  # mm
@@ -114,11 +108,13 @@ wait_for_pedal_press = False
 autopause = False
 autopause_interval = 0
 
-# Define the experiment.
 experiment = Experiment(
-    metadata=metadata,
+    experiment_name="Example experiment",
+    subject_name="Example subject",
     trials=trials,
-    intertrial_interval=intertrial_interval,
+    intertrial_interval_min=intertrial_interval.min,
+    intertrial_interval_max=intertrial_interval.max,
+    intertrial_interval_tolerance=intertrial_interval.tolerance,
     randomize_trials=randomize_trials,
     wait_for_pedal_press=wait_for_pedal_press,
     autopause=autopause,

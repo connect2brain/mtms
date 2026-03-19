@@ -1,2 +1,0 @@
-string experiment_name
-string subject_name

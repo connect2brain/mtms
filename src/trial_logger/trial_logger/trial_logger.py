@@ -49,9 +49,9 @@ class TrialLoggerNode(Node):
 
         self.get_logger().info('Trial logs directory: {}.'.format(self.logs_dir))
 
-    def open_new_log_file(self, metadata, experiment_id):
-        subject_name = self.sanitize_filename(metadata.subject_name)
-        experiment_name = self.sanitize_filename(metadata.experiment_name)
+    def open_new_log_file(self, experiment_name, subject_name, experiment_id):
+        subject_name = self.sanitize_filename(subject_name)
+        experiment_name = self.sanitize_filename(experiment_name)
 
         basepath = self.logs_dir
 
@@ -112,7 +112,7 @@ class TrialLoggerNode(Node):
         )
         file.write(row)
 
-    def rotate_log_file_if_needed(self, metadata, experiment_id):
+    def rotate_log_file_if_needed(self, experiment_name, subject_name, experiment_id):
         if self.current_experiment_id == experiment_id and self.current_log_file is not None:
             return
 
@@ -123,11 +123,11 @@ class TrialLoggerNode(Node):
                 pass
 
         self.current_experiment_id = experiment_id
-        self.current_log_file = self.open_new_log_file(metadata, experiment_id)
+        self.current_log_file = self.open_new_log_file(experiment_name, subject_name, experiment_id)
         self.write_header(self.current_log_file)
 
-    def log_trial(self, metadata, experiment_id, trial_number, trial, num_of_attempts, mep_amplitude, mep_latency):
-        self.rotate_log_file_if_needed(metadata, experiment_id)
+    def log_trial(self, experiment_name, subject_name, experiment_id, trial_number, trial, num_of_attempts, mep_amplitude, mep_latency):
+        self.rotate_log_file_if_needed(experiment_name, subject_name, experiment_id)
         file = self.current_log_file
 
         self.log_trial_row(
@@ -141,7 +141,8 @@ class TrialLoggerNode(Node):
         file.flush()
 
     def log_trial_callback(self, request, response):
-        metadata = request.metadata
+        experiment_name = request.experiment_name
+        subject_name = request.subject_name
         experiment_id = request.experiment_id
         trial_number = request.trial_number
         trial = request.trial
@@ -152,7 +153,8 @@ class TrialLoggerNode(Node):
         self.get_logger().info('Logging trial {} (experiment_id={}).'.format(trial_number, experiment_id))
 
         self.log_trial(
-            metadata=metadata,
+            experiment_name=experiment_name,
+            subject_name=subject_name,
             experiment_id=experiment_id,
             trial_number=trial_number,
             trial=trial,

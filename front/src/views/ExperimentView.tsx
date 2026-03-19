@@ -274,13 +274,9 @@ type TriggerConfig = {
   delay: number
 }
 
-type Metadata = {
+type Experiment = {
   experiment_name: string
   subject_name: string
-}
-
-type Experiment = {
-  metadata: Metadata
 
   trials: Trial[]
   intertrial_interval_min: number
@@ -678,10 +674,8 @@ export const ExperimentView = () => {
     const mep_emg_channel = emgChannel - 1
 
     const experiment: Experiment = {
-      metadata: {
-        experiment_name: experimentName,
-        subject_name: subjectName,
-      },
+      experiment_name: experimentName,
+      subject_name: subjectName,
 
       trials: trials,
       intertrial_interval_min: itiMin,

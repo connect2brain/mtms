@@ -217,9 +217,9 @@ class ExperimentPerformerNode(Node):
     def log_experiment_config(self, experiment):
         self.logger.info('Experiment configuration:')
 
-        self.logger.info('Metadata:')
-        self.logger.info('  - Experiment name: {}'.format(experiment.metadata.experiment_name))
-        self.logger.info('  - Subject name: {}'.format(experiment.metadata.subject_name))
+        self.logger.info('Experiment:')
+        self.logger.info('  - Experiment name: {}'.format(experiment.experiment_name))
+        self.logger.info('  - Subject name: {}'.format(experiment.subject_name))
         self.logger.info('Trials:')
         self.logger.info('  - Total # of trials: {}'.format(len(experiment.trials)))
         # TODO
@@ -318,10 +318,11 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, metadata, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency, mep_emg_buffer):
+    def log_trial(self, experiment_name, subject_name, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency, mep_emg_buffer):
         request = LogTrial.Request()
 
-        request.metadata = metadata
+        request.experiment_name = experiment_name
+        request.subject_name = subject_name
         request.experiment_id = experiment_id
         request.trial = trial
         request.trial_number = trial_number
@@ -406,7 +407,8 @@ class ExperimentPerformerNode(Node):
         valid_trials = []
         success = False
 
-        metadata = experiment.metadata
+        experiment_name = experiment.experiment_name
+        subject_name = experiment.subject_name
         trials = experiment.trials
         intertrial_interval_min = experiment.intertrial_interval_min
         intertrial_interval_max = experiment.intertrial_interval_max
@@ -428,7 +430,8 @@ class ExperimentPerformerNode(Node):
 
             success = self.perform_experiment(
                 experiment_id=experiment_id,
-                metadata=metadata,
+                experiment_name=experiment_name,
+                subject_name=subject_name,
                 valid_trials=valid_trials,
                 intertrial_interval_min=intertrial_interval_min,
                 intertrial_interval_max=intertrial_interval_max,
@@ -630,7 +633,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, experiment_id, metadata, valid_trials, intertrial_interval_min, intertrial_interval_max, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, experiment_id, experiment_name, subject_name, valid_trials, intertrial_interval_min, intertrial_interval_max, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
@@ -832,7 +835,8 @@ class ExperimentPerformerNode(Node):
             ))
 
             trial_logged = self.log_trial(
-                metadata=metadata,
+                experiment_name=experiment_name,
+                subject_name=subject_name,
                 experiment_id=experiment_id,
                 trial=trial,
                 trial_number=trial_number,
