@@ -84,7 +84,7 @@ class TrialLoggerNode(Node):
         header = ";".join(self.TRIAL_COLUMNS) + '\n'
         file.write(header)
 
-    def log_trial_row(self, file, trial_number, trial, trial_result, num_of_attempts):
+    def log_trial_row(self, file, trial_number, trial, num_of_attempts, mep_amplitude, mep_latency):
         num_of_targets = len(trial.targets)
         assert num_of_targets <= 2, "Does not support more than two targets."
 
@@ -97,7 +97,7 @@ class TrialLoggerNode(Node):
         row = "{};{};{:.3f};{};{};{};{};{};{};{};{};{};{:.1f};{:.4f}\n".format(
             trial_number,
             num_of_attempts,
-            trial_result.actual_start_time,
+            trial.start_time,
             num_of_targets,
             first_target.displacement_x,
             first_target.displacement_y,
@@ -107,8 +107,8 @@ class TrialLoggerNode(Node):
             second_target.displacement_y if second_target else '',
             second_target.rotation_angle if second_target else '',
             second_target.intensity if second_target else '',
-            trial_result.mep_amplitude,
-            trial_result.mep_latency,
+            mep_amplitude,
+            mep_latency,
         )
         file.write(row)
 
@@ -126,7 +126,7 @@ class TrialLoggerNode(Node):
         self.current_log_file = self.open_new_log_file(metadata, experiment_id)
         self.write_header(self.current_log_file)
 
-    def log_trial(self, metadata, experiment_id, trial_number, trial, trial_result, num_of_attempts):
+    def log_trial(self, metadata, experiment_id, trial_number, trial, num_of_attempts, mep_amplitude, mep_latency):
         self.rotate_log_file_if_needed(metadata, experiment_id)
         file = self.current_log_file
 
@@ -134,8 +134,9 @@ class TrialLoggerNode(Node):
             file=file,
             trial_number=trial_number,
             trial=trial,
-            trial_result=trial_result,
             num_of_attempts=num_of_attempts,
+            mep_amplitude=mep_amplitude,
+            mep_latency=mep_latency,
         )
         file.flush()
 
@@ -144,8 +145,9 @@ class TrialLoggerNode(Node):
         experiment_id = request.experiment_id
         trial_number = request.trial_number
         trial = request.trial
-        trial_result = request.trial_result
         num_of_attempts = request.num_of_attempts
+        mep_amplitude = request.mep_amplitude
+        mep_latency = request.mep_latency
 
         self.get_logger().info('Logging trial {} (experiment_id={}).'.format(trial_number, experiment_id))
 
@@ -154,8 +156,9 @@ class TrialLoggerNode(Node):
             experiment_id=experiment_id,
             trial_number=trial_number,
             trial=trial,
-            trial_result=trial_result,
             num_of_attempts=num_of_attempts,
+            mep_amplitude=mep_amplitude,
+            mep_latency=mep_latency,
         )
         response.success = True
 

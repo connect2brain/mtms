@@ -1,4 +1,3 @@
 Experiment experiment
 ---
 bool success
-mtms_trial_interfaces/TrialResult[] trial_results

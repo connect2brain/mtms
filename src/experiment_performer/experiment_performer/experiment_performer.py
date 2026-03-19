@@ -318,15 +318,16 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, metadata, experiment_id, trial, trial_number, trial_result, num_of_attempts):
+    def log_trial(self, metadata, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency, mep_emg_buffer):
         request = LogTrial.Request()
 
         request.metadata = metadata
         request.experiment_id = experiment_id
         request.trial = trial
         request.trial_number = trial_number
-        request.trial_result = trial_result
         request.num_of_attempts = num_of_attempts
+        request.mep_amplitude = mep_amplitude
+        request.mep_latency = mep_latency
 
         response = self.async_service_call(self.log_trial_client, request, '/mtms/trial/log')
 
@@ -404,7 +405,6 @@ class ExperimentPerformerNode(Node):
     def perform_experiment_thread_target(self, experiment_id, experiment):
         valid_trials = []
         success = False
-        trial_results = []
 
         metadata = experiment.metadata
         trials = experiment.trials
@@ -424,7 +424,7 @@ class ExperimentPerformerNode(Node):
         try:
             valid_trials = self.get_valid_trials(trials)
 
-            success, trial_results = self.perform_experiment(
+            success = self.perform_experiment(
                 experiment_id=experiment_id,
                 metadata=metadata,
                 valid_trials=valid_trials,
@@ -453,7 +453,7 @@ class ExperimentPerformerNode(Node):
             total_trials=len(valid_trials),
         )
 
-        self.logger.info('Experiment done (success={}, trial_results={}).'.format(success, len(trial_results)))
+        self.logger.info('Experiment done (success={}).'.format(success))
 
     def pause_experiment_callback(self, request, response):
         if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
@@ -637,13 +637,10 @@ class ExperimentPerformerNode(Node):
             valid_trials=valid_trials
         )
         if not feasible:
-            trial_results = []
             success = False
-
-            return success, trial_results
+            return success
 
         num_of_valid_trials = len(valid_trials)
-        trial_results = []
 
         if randomize_trials is True:
             # XXX: Set seed to a constant value for now; think about how to properly make experiments
@@ -653,7 +650,7 @@ class ExperimentPerformerNode(Node):
             valid_trials = np.random.permutation(valid_trials)
 
         if not self.initialize_session():
-            return False, trial_results
+            return False
 
         # Loop over trials and perform each.
         success = True
@@ -774,7 +771,6 @@ class ExperimentPerformerNode(Node):
                 ))
                 continue
 
-            trial_result = response.trial_result
             success = response.success
 
             if not success:
@@ -787,6 +783,8 @@ class ExperimentPerformerNode(Node):
 
                 continue
 
+            mep_amplitude = 0.0
+            mep_latency = 0.0
             if analyze_mep:
                 if mep_event is None or mep_result_container is None:
                     self.logger.warning('MEP analysis not started, retrying in {} seconds.'.format(
@@ -814,9 +812,8 @@ class ExperimentPerformerNode(Node):
                     ))
                     continue
 
-                trial_result.mep_amplitude = mep_result.amplitude
-                trial_result.mep_latency = mep_result.latency
-                trial_result.mep_emg_buffer = mep_result.emg_buffer
+                mep_amplitude = mep_result.amplitude
+                mep_latency = mep_result.latency
 
                 mep_ok = mep_result.preactivation_passed and (mep_result.status == AnalyzeMep.Response.NO_ERROR)
                 if not mep_ok:
@@ -835,8 +832,9 @@ class ExperimentPerformerNode(Node):
                 experiment_id=experiment_id,
                 trial=trial,
                 trial_number=trial_number,
-                trial_result=trial_result,
                 num_of_attempts=num_of_attempts,
+                mep_amplitude=mep_amplitude,
+                mep_latency=mep_latency,
             )
             if not trial_logged:
                 self.logger.error(
@@ -857,7 +855,7 @@ class ExperimentPerformerNode(Node):
 
         self.finalize_session()
 
-        return success, trial_results
+        return success
 
 def main(args=None):
     rclpy.init(args=args)

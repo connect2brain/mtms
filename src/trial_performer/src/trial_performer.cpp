@@ -478,15 +478,13 @@ void TrialPerformerNode::handle_perform_trial(
     }
 
     /* Perform the trial. */
-    auto [success, trial_result] = perform_trial(request->trial);
+    bool success = perform_trial(request->trial);
 
     /* Log trial success. */
     RCLCPP_INFO(this->get_logger(), "%s completed %s.",
       request->trial.dry_run ? "Dry run" : "Trial",
       success ? "successfully" : "with errors");
 
-    /* Set result. */
-    response->trial_result = trial_result;
     response->success = success;
   } catch (const std::exception &e) {
     RCLCPP_ERROR(this->get_logger(), "Trial execution failed with exception: %s", e.what());
@@ -497,11 +495,10 @@ void TrialPerformerNode::handle_perform_trial(
   }
 }
 
-std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
+bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
   tic();
 
   bool success = true;
-  mtms_trial_interfaces::msg::TrialResult trial_result;
   double_t start_time;
 
   /* Always get initial voltages and waveforms to warm up the cache. */
@@ -513,7 +510,7 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
   if (!trial.dry_run) {
     success = success && set_voltages_if_needed(desired_voltages, trial.voltage_tolerance_proportion_for_precharging);
     if (!success) {
-      return {false, trial_result};
+      return false;
     }
 
     /* Check if the trial can be performed at the desired start time. */
@@ -522,7 +519,7 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
       RCLCPP_ERROR(this->get_logger(),
         "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
         trial.start_time, earliest_start_time);
-      return {false, trial_result};
+      return false;
     }
     start_time = trial.start_time;
 
@@ -536,15 +533,9 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
     /* For troubleshooting purposes, log the time passed after requesting events. */
     toc("Time passed after requesting events");
 
-    /* Fill in the earliest start time of the trial as the time right after requesting events. */
-    trial_result.earliest_start_time = this->get_current_time();
-
     /* Wait for events to finish. */
     success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
   }
-
-  /* Fill trial result. */
-  trial_result.actual_start_time = start_time;
 
   auto voltages_after_trial = get_actual_voltages();
   log_voltages(voltages_after_trial, "Voltages after trial");
@@ -562,7 +553,7 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
     create_marker(trial);
   }
 
-  return {success, trial_result};
+  return success;
 }
 
 std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {

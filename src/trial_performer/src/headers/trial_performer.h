@@ -10,7 +10,6 @@
 #include <sstream>
 
 #include "rclcpp/rclcpp.hpp"
-#include "mtms_trial_interfaces/msg/trial_result.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
 
@@ -125,7 +124,7 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  std::pair<bool, mtms_trial_interfaces::msg::TrialResult> perform_trial(const mtms_trial_interfaces::msg::Trial &trial);
+  bool perform_trial(const mtms_trial_interfaces::msg::Trial &trial);
 
   std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
       const targeting_interfaces::msg::ElectricTarget &target, const waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms);
