@@ -10,10 +10,9 @@
 #include <sstream>
 
 #include "rclcpp/rclcpp.hpp"
-#include "rclcpp_action/rclcpp_action.hpp"
-
 #include "mtms_trial_interfaces/msg/trial_result.hpp"
-#include "mtms_trial_interfaces/action/perform_trial.hpp"
+#include "mtms_trial_interfaces/msg/trial.hpp"
+#include "mtms_trial_interfaces/srv/perform_trial.hpp"
 
 #include "experiment_interfaces/action/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
@@ -44,7 +43,7 @@ public:
 private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
-  rclcpp_action::Server<mtms_trial_interfaces::action::PerformTrial>::SharedPtr action_server;
+  rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
   rclcpp_action::Client<experiment_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp::Client<targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
   rclcpp::Client<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
@@ -63,7 +62,7 @@ private:
   std::unordered_map<uint16_t, event_interfaces::msg::TriggerOutFeedback::SharedPtr> trigger_out_feedback;
   uint16_t id_counter;
 
-  void initialize_actions();
+  void initialize_services();
   void initialize_service_clients();
   void initialize_subscribers();
   void initialize_publishers();
@@ -109,15 +108,10 @@ private:
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
 
-  /* Action handlers */
-  rclcpp_action::GoalResponse handle_goal(
-      const rclcpp_action::GoalUUID &uuid,
-      std::shared_ptr<const mtms_trial_interfaces::action::PerformTrial::Goal> goal);
-  rclcpp_action::CancelResponse handle_cancel(
-      const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
-  void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
-
-  void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle);
+  /* Service handlers */
+  void handle_perform_trial(
+      const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
+      std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
 
   /* Publishers */
   void create_marker(const mtms_trial_interfaces::msg::Trial &trial);

@@ -7,8 +7,7 @@ import uuid
 from experiment_interfaces.msg import ExperimentState, ExperimentFeedback
 from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.action import PerformTrial
-from mtms_trial_interfaces.srv import ValidateTrial
+from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
 from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool
@@ -21,7 +20,6 @@ from system_interfaces.srv import StartSession, StopSession
 from mep_interfaces.srv import AnalyzeMep
 
 import rclpy
-from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from rclpy.executors import MultiThreadedExecutor
@@ -30,7 +28,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 class ExperimentPerformerNode(Node):
 
-    ROS_ACTION_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
+    ROS_SERVICE_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
@@ -96,13 +94,13 @@ class ExperimentPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create action client for performing a trial.
+        # Create service client for performing a trial.
 
-        topic, action_type = self.ROS_ACTION_PERFORM_TRIAL
+        service_name, service_type = self.ROS_SERVICE_PERFORM_TRIAL
 
-        self.perform_trial_client = ActionClient(self, action_type, topic, callback_group=self.callback_group)
-        while not self.perform_trial_client.wait_for_server(timeout_sec=1.0):
-            self.get_logger().info('Action {} not available, waiting...'.format(topic))
+        self.perform_trial_client = self.create_client(service_type, service_name, callback_group=self.callback_group)
+        while not self.perform_trial_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service {} not available, waiting...'.format(service_name))
 
         # Create service client for validating a trial.
 
@@ -230,52 +228,7 @@ class ExperimentPerformerNode(Node):
         self.logger.info('  - Minimum: {}'.format(experiment.intertrial_interval.min))
         self.logger.info('  - Maximum: {}'.format(experiment.intertrial_interval.max))
 
-    ## Asynchronous action and service callers
-
-    def async_action_call(self, client, goal_msg):
-        send_goal_event = Event()
-        get_result_event = Event()
-
-        goal_response = [None]
-        action_result = [None]
-
-        # Send goal to ROS action.
-        def send_goal_callback(future):
-            nonlocal send_goal_event
-            nonlocal goal_response
-            goal_response[0] = future.result()
-            send_goal_event.set()
-
-        send_goal_future = client.send_goal_async(goal_msg)
-        send_goal_future.add_done_callback(send_goal_callback)
-
-        # Wait for the goal to be sent
-        send_goal_event.wait()
-
-        goal_handle = goal_response[0]
-        if not goal_handle.accepted:
-            self.get_logger().info('Goal rejected.')
-            return None
-
-        # Get result from ROS action.
-        def get_result_done_callback(future):
-            nonlocal get_result_event
-            nonlocal action_result
-            result_response = future.result()
-            if result_response is None:
-                self.get_logger().info('Action result failed.')
-                action_result[0] = None
-            else:
-                action_result[0] = result_response.result
-            get_result_event.set()
-
-        get_result_future = goal_handle.get_result_async()
-        get_result_future.add_done_callback(get_result_done_callback)
-
-        return get_result_event, action_result
-
-    def get_result_from_container(self, result_container):
-        return result_container[0]
+    ## Asynchronous service callers
 
     def async_service_call(self, client, request, service_name):
         call_service_event = Event()
@@ -307,27 +260,19 @@ class ExperimentPerformerNode(Node):
         response = response_value[0]
         return response
 
-    # Action callers
+    # Perform trial
 
-    def async_perform_trial_action(self, trial):
-        client = self.perform_trial_client
-        goal = PerformTrial.Goal()
+    def perform_trial(self, trial):
+        request = PerformTrial.Request()
+        request.trial = trial
 
-        goal.trial = trial
+        response = self.async_service_call(self.perform_trial_client, request, '/mtms/trial/perform')
 
-        event, result_container = self.async_action_call(client, goal)
+        if response is None:
+            self.logger.error('Service /mtms/trial/perform did not return a response.')
+            return None
 
-        return event, result_container
-
-    def sync_perform_trial_action(self, trial):
-        event, result_container = self.async_perform_trial_action(
-            trial=trial,
-        )
-        event.wait()
-
-        result = self.get_result_from_container(result_container)
-
-        return result
+        return response
 
     # Service callers
 
@@ -820,11 +765,17 @@ class ExperimentPerformerNode(Node):
                 # so the analyzer can start waiting for the upcoming data.
                 mep_event, mep_result_container = self.async_analyze_mep(experiment)
 
-            result = self.sync_perform_trial_action(
+            response = self.perform_trial(
                 trial=trial,
             )
-            trial_result = result.trial_result
-            success = result.success
+            if response is None:
+                self.logger.info('Trial service did not return a response, attempting again in {} seconds.'.format(
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
+                continue
+
+            trial_result = response.trial_result
+            success = response.success
 
             if not success:
                 self.logger.info('Trial not successful, attempting again in {} seconds.'.format(

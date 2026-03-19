@@ -28,8 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/TrialResult.msg"
 
   "srv/ValidateTrial.srv"
-
-  "action/PerformTrial.action"
+  "srv/PerformTrial.srv"
 
   DEPENDENCIES mep_interfaces targeting_interfaces
 )

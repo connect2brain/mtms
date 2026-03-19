@@ -8,24 +8,22 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
       reentrant_callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)),
       id_counter(0) {
 
-  initialize_actions();
+  initialize_services();
   initialize_service_clients();
   initialize_subscribers();
   initialize_publishers();
 }
 
-void TrialPerformerNode::initialize_actions() {
-  /* Action server for performing trial. */
-  action_server = rclcpp_action::create_server<mtms_trial_interfaces::action::PerformTrial>(
-      get_node_base_interface(),
-      get_node_clock_interface(),
-      get_node_logging_interface(),
-      get_node_waitables_interface(),
+void TrialPerformerNode::initialize_services() {
+  /* Service for performing trial. */
+  perform_trial_service = this->create_service<mtms_trial_interfaces::srv::PerformTrial>(
       "/mtms/trial/perform",
-      std::bind(&TrialPerformerNode::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
-      std::bind(&TrialPerformerNode::handle_cancel, this, std::placeholders::_1),
-      std::bind(&TrialPerformerNode::handle_accepted, this, std::placeholders::_1),
-      rcl_action_server_get_default_options(),
+      std::bind(
+          &TrialPerformerNode::handle_perform_trial,
+          this,
+          std::placeholders::_1,
+          std::placeholders::_2),
+      rmw_qos_profile_services_default,
       callback_group);
 
   /* Action client for setting voltages. */
@@ -464,62 +462,39 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   return success;
 }
 
-/* Goal handling */
-
-rclcpp_action::GoalResponse TrialPerformerNode::handle_goal(
-    [[maybe_unused]] const rclcpp_action::GoalUUID &uuid,
-    [[maybe_unused]] std::shared_ptr<const mtms_trial_interfaces::action::PerformTrial::Goal> goal) {
-  RCLCPP_INFO(get_logger(), "Received goal request");
-  return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-}
-
-rclcpp_action::CancelResponse TrialPerformerNode::handle_cancel(
-    [[maybe_unused]] const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle) {
-  RCLCPP_INFO(get_logger(), "Received request to cancel goal");
-  return rclcpp_action::CancelResponse::ACCEPT;
-}
-
-void TrialPerformerNode::handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle) {
-  std::thread{std::bind(&TrialPerformerNode::execute, this, std::placeholders::_1), goal_handle}.detach();
-}
-
-void TrialPerformerNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<mtms_trial_interfaces::action::PerformTrial>> goal_handle) {
-  RCLCPP_INFO(this->get_logger(), "Executing goal...");
-  auto result = std::make_shared<mtms_trial_interfaces::action::PerformTrial::Result>();
+void TrialPerformerNode::handle_perform_trial(
+    const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
+  RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
   try {
-    const auto goal = goal_handle->get_goal();
-
     /* Log trial details. */
-    log_trial(goal->trial);
+    log_trial(request->trial);
 
     /* Check feasibility. */
     if (!check_trial_feasible()) {
       RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
-      result->success = false;
-      goal_handle->succeed(result);
+      response->success = false;
       return;
     }
 
     /* Perform the trial. */
-    auto [success, trial_result] = perform_trial(goal->trial);
+    auto [success, trial_result] = perform_trial(request->trial);
 
     /* Log trial success. */
     RCLCPP_INFO(this->get_logger(), "%s completed %s.",
-      goal->trial.dry_run ? "Dry run" : "Trial",
+      request->trial.dry_run ? "Dry run" : "Trial",
       success ? "successfully" : "with errors");
 
-    /* Set result and succeed the goal. */
-    result->trial_result = trial_result;
-    result->success = success;
+    /* Set result. */
+    response->trial_result = trial_result;
+    response->success = success;
   } catch (const std::exception &e) {
     RCLCPP_ERROR(this->get_logger(), "Trial execution failed with exception: %s", e.what());
-    result->success = false;
+    response->success = false;
   } catch (...) {
     RCLCPP_ERROR(this->get_logger(), "Trial execution failed with unknown exception");
-    result->success = false;
+    response->success = false;
   }
-
-  goal_handle->succeed(result);
 }
 
 std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
