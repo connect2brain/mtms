@@ -470,7 +470,7 @@ classdef MTMSApiNode < handle
             request.preactivation_check_voltage_range_limit = double(mep_configuration.preactivation_check_voltage_range_limit);
 
             try
-                response = call(client, request, 'timeout', 5);
+                response = call(client, request, 'timeout', 10);
 
                 % If successful, assign the output from the response.
                 mep = struct();

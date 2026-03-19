@@ -259,7 +259,7 @@ classdef MTMSApi < handle
         %   * Session.STOPPING : Session is stopping.
         % :rtype: int
 
-            state = obj.node.session.state.value;
+            state = obj.node.session.state;
         end
 
         function voltage = get_current_voltage(obj, channel)

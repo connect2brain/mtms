@@ -127,7 +127,7 @@ api.send_pulse(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# MEP analysis is based on a coinciding trigger: thus, send a trigger out together with the pulse.
+# MEP analysis is based on trigger coinciding with the pulse: thus, send a trigger out.
 port = 1
 duration_us = 1000
 
@@ -295,7 +295,7 @@ api.send_timed_default_pulse_to_all_channels(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# MEP analysis is based on a coinciding trigger: thus, send a trigger out together with the pulse.
+# MEP analysis is based on trigger coinciding with the pulse: thus, send a trigger out.
 port = 1
 duration_us = 1000
 

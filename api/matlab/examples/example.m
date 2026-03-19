@@ -65,7 +65,16 @@ channel = 0;
 api.send_pulse(channel, waveform, reverse_polarity, execution_condition, time);
 % Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-% Analyze MEP on EMG channel 0, coinciding with the pulse.
+% MEP analysis is based on a trigger coinciding with the pulse: thus, send a trigger out.
+
+duration_us = 1000;
+
+port = 1;
+execution_condition = api.execution_conditions.TIMED;
+
+api.send_trigger_out(port, duration_us, execution_condition, time);
+
+% Analyze MEP on EMG channel 0.
 
 % Note that the EMG channel indexing starts from 0.
 emg_channel = 0;

@@ -82,7 +82,7 @@ classdef MTMSApiPrinter < handle
             time_str = sprintf("Time (s): %.2f", session.time);
 
             state_str = sprintf("Device state: %s", obj.enum_to_str(device_state.value, obj.mtmsapi_enums.DEVICE_STATES));
-            session_str = sprintf("Session: %s", obj.enum_to_str(session_state.value, obj.mtmsapi_enums.SESSION_STATES));
+            session_str = sprintf("Session: %s", obj.enum_to_str(session_state, obj.mtmsapi_enums.SESSION_STATES));
             startup_error_str = sprintf("Startup error: %s", obj.enum_to_str(startup_error.value, obj.mtmsapi_enums.STARTUP_ERRORS));
 
             if ~obj.support_temperature
