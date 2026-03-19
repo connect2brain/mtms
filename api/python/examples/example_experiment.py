@@ -1,10 +1,8 @@
 from MTMSApi import MTMSApi
 
-from experiment_interfaces.msg import Experiment, IntertrialInterval
+from experiment_interfaces.msg import Experiment
 from targeting_interfaces.msg import ElectricTarget
-from trial_interfaces.msg import (
-    Trial,
-)
+from trial_interfaces.msg import Trial
 
 
 api = MTMSApi(
@@ -22,28 +20,25 @@ target = ElectricTarget(
     algorithm=ElectricTarget.LEAST_SQUARES,
 )
 
-mep_config = {
-    "emg_channel": 0,  # EMG channel 0 corresponds to the first EMG channel in the amplifier.
-    "mep_time_window_start": 0.020,
-    "mep_time_window_end": 0.040,
-    "preactivation_check_enabled": True,
-    "preactivation_check_time_window_start": -0.040,
-    "preactivation_check_time_window_end": -0.020,
-    "preactivation_check_voltage_range_limit": 70.0,
-}
-
 # Enable both trigger outs, coinciding with the beginning of the trial with zero delay.
 trigger_enabled = [True, True]
 trigger_delay = [0.0, 0.0]
 
 # If analyze MEP is set to True, the mTMS software will automatically analyze the MEPs and write the analysis results
-# as csv into ~/mtms_experiment_logs/.
+# into ~/mtms_experiment_logs/ as a CSV file.
 #
-# Note that enabling MEP analysis leads to many ways in which a trial can fail, e.g., if EEG is not available
+# Note that enabling MEP analysis leads to several ways in which a trial can fail, e.g., if EEG is not available
 # or the preactivation check fails.
-#
-# TODO: MEP analysis is now separate from the trial, so needs a separate call to the API.
-analyze_mep = False
+analyze_mep = True
+
+mep_emg_channel = 0  # EMG channel 0 corresponds to the first EMG channel in the amplifier.
+mep_time_window_start = 0.020
+mep_time_window_end = 0.040
+preactivation_check_enabled = False  # If True, it will typically fail with simulated data. Hence, set it to False in this example.
+preactivation_check_time_window_start = -0.040
+preactivation_check_time_window_end = -0.020
+preactivation_check_voltage_range_limit = 70.0
+
 
 # Define the trials.
 single_pulse_trial = Trial(
@@ -53,8 +48,8 @@ single_pulse_trial = Trial(
     trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    voltage_tolerance_proportion_for_precharging=0.1,  # Do not modify
-    use_pulse_width_modulation_approximation=True,  # Do not modify
+    voltage_tolerance_proportion_for_precharging=0.1,  # This can be kept as is.
+    use_pulse_width_modulation_approximation=True,  # This can be kept as is.
     recharge_after_trial=True,
     dry_run=False,
 )
@@ -66,8 +61,8 @@ paired_pulse_trial = Trial(
     trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    voltage_tolerance_proportion_for_precharging=0.1,  # Do not modify
-    use_pulse_width_modulation_approximation=True,  # Do not modify
+    voltage_tolerance_proportion_for_precharging=0.1,  # This can be kept as is.
+    use_pulse_width_modulation_approximation=True,  # This can be kept as is.
     recharge_after_trial=True,
     dry_run=False,
 )
@@ -89,11 +84,9 @@ if not is_valid:
 trials = 3 * [single_pulse_trial] + 3 * [paired_pulse_trial]
 
 # Other experiment settings.
-intertrial_interval = IntertrialInterval(
-    min=3.5,
-    max=4.5,
-    tolerance=0.1, # do not modify
-)
+intertrial_interval_min = 3.5
+intertrial_interval_max = 4.5
+intertrial_interval_tolerance = 0.1  # This can be kept as is.
 
 # Note that the randomization in the mTMS software uses a constant seed for reproducibility;
 # alternatively, you can randomize the 'trials' list yourself.
@@ -107,21 +100,21 @@ experiment = Experiment(
     experiment_name="Example experiment",
     subject_name="Example subject",
     trials=trials,
-    intertrial_interval_min=intertrial_interval.min,
-    intertrial_interval_max=intertrial_interval.max,
-    intertrial_interval_tolerance=intertrial_interval.tolerance,
+    intertrial_interval_min=intertrial_interval_min,
+    intertrial_interval_max=intertrial_interval_max,
+    intertrial_interval_tolerance=intertrial_interval_tolerance,
     randomize_trials=randomize_trials,
     wait_for_pedal_press=wait_for_pedal_press,
     autopause=autopause,
     autopause_interval=autopause_interval,
     analyze_mep=analyze_mep,
-    mep_emg_channel=mep_config["emg_channel"],
-    mep_time_window_start=mep_config["mep_time_window_start"],
-    mep_time_window_end=mep_config["mep_time_window_end"],
-    preactivation_check_enabled=mep_config["preactivation_check_enabled"],
-    preactivation_check_time_window_start=mep_config["preactivation_check_time_window_start"],
-    preactivation_check_time_window_end=mep_config["preactivation_check_time_window_end"],
-    preactivation_check_voltage_range_limit=mep_config["preactivation_check_voltage_range_limit"],
+    mep_emg_channel=mep_emg_channel,
+    mep_time_window_start=mep_time_window_start,
+    mep_time_window_end=mep_time_window_end,
+    preactivation_check_enabled=preactivation_check_enabled,
+    preactivation_check_time_window_start=preactivation_check_time_window_start,
+    preactivation_check_time_window_end=preactivation_check_time_window_end,
+    preactivation_check_voltage_range_limit=preactivation_check_voltage_range_limit,
 )
 
 api.start_device()
@@ -159,12 +152,5 @@ while not handler.is_done() and not api.is_interrupted():
 if api.is_interrupted():
     print("Experiment was interrupted, aborting experiment.")
     handler.cancel_experiment()
-
-# 'results' is a list containing TrialResults objects, each including the actual start time of each trial
-# and the results of the MEP analysis if it was enabled. The MEP analysis results also include the raw EMG buffer
-# for custom analysis. See TrialResult.msg and Mep.msg for more information.
-#
-# TODO: Likely bitrotten.
-results = handler.get_trial_results()
 
 api.stop_session()

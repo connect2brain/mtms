@@ -36,7 +36,10 @@ class ExperimentHandler:
         # Use ReentrantCallbackGroup to allow simultaneous actions and services.
         callback_group = ReentrantCallbackGroup()
 
+        # Completion is signaled by the performer via /mtms/experiment/feedback.
         self.experiment_completed = False
+        self._waiting_for_experiment_feedback = False
+        self.was_canceled = False
 
         # Service clients
 
@@ -61,18 +64,29 @@ class ExperimentHandler:
     # Internal callbacks
     def _feedback_callback(self, feedback_msg):
         self.feedback = feedback_msg
+        if feedback_msg.state == ExperimentFeedback.CANCELED:
+            self.was_canceled = True
+
+        # The performer publishes a final NOT_RUNNING feedback when the experiment
+        # thread ends; use that as the completion condition.
+        if self._waiting_for_experiment_feedback and feedback_msg.state == ExperimentFeedback.NOT_RUNNING:
+            self.experiment_completed = True
+            self._waiting_for_experiment_feedback = False
 
     def _perform_experiment_response_callback(self, future):
-        self.experiment_completed = True
-
         self.result = future.result()
         if self.result is None:
             self.logger.error('Perform experiment service call failed.')
+            # If we never started properly, don't block forever waiting for feedback.
+            self.experiment_completed = True
             return
 
         success = self.result.success
         if success:
-            self.logger.info('Experiment succeeded.')
+            self.logger.info('Experiment start accepted (waiting for feedback).')
+        else:
+            self.logger.error('Experiment start rejected (service returned success=false).')
+            self.experiment_completed = True
 
     # Public methods
     def pause_experiment(self):
@@ -135,6 +149,8 @@ class ExperimentHandler:
         self.feedback = None
         self.result = None
         self.experiment_completed = False
+        self._waiting_for_experiment_feedback = True
+        self.was_canceled = False
 
         service_future = client.call_async(request)
         service_future.add_done_callback(self._perform_experiment_response_callback)
