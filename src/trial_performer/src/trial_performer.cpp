@@ -299,7 +299,6 @@ void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &tria
   if (!trial.config.dry_run) {
     RCLCPP_INFO(this->get_logger(), "  Timing:");
     RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
-    RCLCPP_INFO(this->get_logger(), "    Allow trial to be late: %s", timing.allow_late ? "true" : "false");
   }
 
   RCLCPP_INFO(this->get_logger(), "  MEP analysis: %s", trial.analyze_mep ? "enabled" : "disabled");
@@ -582,17 +581,15 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
       return {false, trial_result};
     }
 
-    /* Determine the start time of the trial. */
-    if (timing.allow_late) {
-      /* If trial is allowed to be late, set the start time to the earliest possible time. The marginal
-         is added because it takes a while to request the events from the mTMS device. */
-      double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
-      start_time = std::max(earliest_start_time, timing.desired_start_time);
-
-    } else {
-      /* Otherwise attempt to start the trial at the desired start time. */
-      start_time = timing.desired_start_time;
+    /* Check if the trial can be performed at the desired start time. */
+    const double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
+    if (earliest_start_time > timing.desired_start_time) {
+      RCLCPP_ERROR(this->get_logger(),
+        "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
+        timing.desired_start_time, earliest_start_time);
+      return {false, trial_result};
     }
+    start_time = timing.desired_start_time;
 
     /* Create and send pulses and trigger outs. */
     auto [pulses, pulse_ids] = create_pulses(waveforms, trial, start_time);

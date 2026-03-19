@@ -754,12 +754,8 @@ class ExperimentPerformerNode(Node):
             # Determine the time of the next trial.
             trial_time = self.get_current_time() + time_to_next_trial
 
-            # When performing an (rTMS style) experiment, always allow late trials, as the exact timing of the pulse is unimportant.
-            allow_late = True
-
             timing = TrialTiming(
                 desired_start_time=trial_time,
-                allow_late=allow_late,
             )
 
             self.logger.info('Performing trial {} / {}, attempt number {}'.format(

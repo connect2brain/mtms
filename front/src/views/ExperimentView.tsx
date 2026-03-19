@@ -579,7 +579,7 @@ export const ExperimentView = () => {
     const preactivation_check_enabled = false
     const preactivation_check_voltage_range_limit = 90
 
-    const analyze_mep = mepHealthcheckOk ? mepEnabled : false
+    const analyze_mep = mepEnabled
     /* 0-based indexing is internally used for EMG channels, hence decrement to allow
       the user to use 1-based indexing. */
     const mep_emg_channel = emgChannel - 1
