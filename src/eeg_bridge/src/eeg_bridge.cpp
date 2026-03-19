@@ -100,6 +100,8 @@ void EegBridge::publish_cumulative_dropped_samples() {
 }
 
 bool EegBridge::reset_state() {
+  RCLCPP_INFO(this->get_logger(), "Resetting state...");
+
   this->session_sample_index = 0;
   this->time_offset = UNSET_TIME;
   this->previous_device_sample_index = UNSET_PREVIOUS_SAMPLE_INDEX;
