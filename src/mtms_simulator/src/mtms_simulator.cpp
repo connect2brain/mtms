@@ -495,6 +495,9 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
 void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message) const
 {
   (void)allow_trigger_out_;
+  RCLCPP_INFO(this->get_logger(), "Trigger out requested: port=%u, id=%u, condition=%u, time=%.3f s", message.port, message.event_info.id,
+    message.event_info.execution_condition.value, message.event_info.execution_time);
+
   wait_for_execution_condition(
     message.event_info.execution_condition,
     message.event_info.execution_time);
@@ -505,6 +508,8 @@ void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut 
   feedback.id = message.event_info.id;
   feedback.error.value = event_interfaces::msg::TriggerOutError::NO_ERROR;
   trigger_out_feedback_publisher_->publish(feedback);
+
+  RCLCPP_INFO(this->get_logger(), "Trigger out completed: port=%u, id=%u", message.port, message.event_info.id);
 }
 
 void MTMSSimulator::publish_system_state()
