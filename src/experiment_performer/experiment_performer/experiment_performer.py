@@ -42,7 +42,7 @@ class ExperimentPerformerNode(Node):
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
-    SERVICE_CALL_TIMEOUT_S = 10.0
+    SERVICE_CALL_TIMEOUT_S = 16.0  # Stopping a session can take up to 15 seconds.
     SESSION_STATE_WAIT_TIMEOUT_S = 5.0
 
     def __init__(self):
