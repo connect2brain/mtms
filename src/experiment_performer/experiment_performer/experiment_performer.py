@@ -823,7 +823,7 @@ class ExperimentPerformerNode(Node):
                 mep_amplitude = mep_result.amplitude
                 mep_latency = mep_result.latency
 
-                mep_ok = mep_result.preactivation_passed and (mep_result.status == AnalyzeMep.Response.NO_ERROR)
+                mep_ok = (mep_result.status == AnalyzeMep.Response.NO_ERROR)
                 if not mep_ok:
                     self.logger.warning('MEP analysis failed, attempting again in {} seconds.'.format(
                         self.TRIAL_REDO_INTERVAL_S,

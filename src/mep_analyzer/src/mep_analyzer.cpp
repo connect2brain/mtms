@@ -195,7 +195,7 @@ void MepAnalyzerNode::analyze_mep_handler(
 {
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler called: emg_channel=%u mep_window=[%.3f,%.3f] preactivation_enabled=%s pre_window=[%.3f,%.3f] pre_range_limit=%.3f", static_cast<unsigned>(request->emg_channel), request->mep_time_window_start, request->mep_time_window_end, request->preactivation_check_enabled ? "true" : "false", request->preactivation_check_time_window_start, request->preactivation_check_time_window_end, request->preactivation_check_voltage_range_limit);
 
-  response->preactivation_passed = true;
+  bool preactivation_passed = true;
   response->amplitude = 0.0;
   response->latency = 0.0;
   response->emg_buffer.clear();
@@ -277,9 +277,9 @@ void MepAnalyzerNode::analyze_mep_handler(
       return;
     }
     const double voltage_range = max_minus_min(pre);
-    response->preactivation_passed = voltage_range <= request->preactivation_check_voltage_range_limit;
-    if (!response->preactivation_passed) {
-      // Keep NO_ERROR status; caller uses preactivation_passed separately.
+    preactivation_passed = voltage_range <= request->preactivation_check_voltage_range_limit;
+    if (!preactivation_passed) {
+      response->status = mep_interfaces::srv::AnalyzeMep::Response::PREACTIVATION_FAILED;
     }
   }
 
@@ -326,7 +326,7 @@ void MepAnalyzerNode::analyze_mep_handler(
     response->status = mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
   }
 
-  RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, response->preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
+  RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
 }
 
 int main(int argc, char ** argv)
