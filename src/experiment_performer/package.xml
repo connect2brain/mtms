@@ -12,7 +12,7 @@
   <depend>mep_interfaces</depend>
   <depend>mtms_device_interfaces</depend>
   <depend>experiment_interfaces</depend>
-  <depend>mtms_trial_interfaces</depend>
+  <depend>trial_interfaces</depend>
   <depend>system_interfaces</depend>
 
   <export>

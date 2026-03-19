@@ -3,8 +3,8 @@ from threading import Event
 
 import numpy as np
 
-from mtms_trial_interfaces.msg import Trial
-from mtms_trial_interfaces.srv import ValidateTrial
+from trial_interfaces.msg import Trial
+from trial_interfaces.srv import ValidateTrial
 
 from waveform_interfaces.msg import WaveformsForCoilSet
 from targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform

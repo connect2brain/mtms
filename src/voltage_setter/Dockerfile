@@ -25,7 +25,7 @@ COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
 COPY interfaces/eeg_interfaces interfaces/eeg_interfaces/
 COPY interfaces/mep_interfaces interfaces/mep_interfaces/
-COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
+COPY interfaces/trial_interfaces interfaces/trial_interfaces/
 COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/system_interfaces interfaces/system_interfaces/

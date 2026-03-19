@@ -27,7 +27,7 @@ COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
 
 COPY interfaces/mep_interfaces interfaces/mep_interfaces/
 COPY interfaces/eeg_interfaces interfaces/eeg_interfaces/
-COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
+COPY interfaces/trial_interfaces interfaces/trial_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

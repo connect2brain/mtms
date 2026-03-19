@@ -7,8 +7,8 @@ import uuid
 from experiment_interfaces.msg import ExperimentState, ExperimentFeedback
 from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
-from mtms_trial_interfaces.msg import Trial
+from trial_interfaces.srv import PerformTrial, ValidateTrial
+from trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool
 

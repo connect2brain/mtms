@@ -16,7 +16,7 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
 
 void TrialPerformerNode::initialize_services() {
   /* Service for performing trial. */
-  perform_trial_service = this->create_service<mtms_trial_interfaces::srv::PerformTrial>(
+  perform_trial_service = this->create_service<trial_interfaces::srv::PerformTrial>(
       "/mtms/trial/perform",
       std::bind(
           &TrialPerformerNode::handle_perform_trial,
@@ -126,7 +126,7 @@ void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg
 
 /* Using publishers */
 
-void TrialPerformerNode::create_marker(const mtms_trial_interfaces::msg::Trial &trial) {
+void TrialPerformerNode::create_marker(const trial_interfaces::msg::Trial &trial) {
   RCLCPP_INFO(this->get_logger(), "Creating marker...");
 
   auto msg = std::make_shared<neuronavigation_interfaces::msg::CreateMarker>();
@@ -177,7 +177,7 @@ std::vector<uint16_t> TrialPerformerNode::get_actual_voltages() const {
 
 /* ROS message creation */
 
-std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &waveforms, const mtms_trial_interfaces::msg::Trial &trial, double start_time) {
+std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time) {
   std::vector<uint16_t> pulse_ids;
   std::vector<event_interfaces::msg::Pulse> pulses;
 
@@ -209,7 +209,7 @@ event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8
   return pulse;
 }
 
-std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const mtms_trial_interfaces::msg::Trial &trial, double pulse_time) {
+std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const trial_interfaces::msg::Trial &trial, double pulse_time) {
   std::vector<uint16_t> trigger_out_ids;
   std::vector<event_interfaces::msg::TriggerOut> trigger_outs;
 
@@ -287,7 +287,7 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 
 /* Logging */
 
-void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &trial) {
+void TrialPerformerNode::log_trial(const trial_interfaces::msg::Trial &trial) {
   RCLCPP_INFO(this->get_logger(), "Trial:");
   if (trial.dry_run) {
     RCLCPP_INFO(this->get_logger(), "  Dry run");
@@ -463,8 +463,8 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
 }
 
 void TrialPerformerNode::handle_perform_trial(
-    const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
-    std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
+    const std::shared_ptr<trial_interfaces::srv::PerformTrial::Request> request,
+    std::shared_ptr<trial_interfaces::srv::PerformTrial::Response> response) {
   RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
   try {
     /* Log trial details. */
@@ -495,7 +495,7 @@ void TrialPerformerNode::handle_perform_trial(
   }
 }
 
-bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
+bool TrialPerformerNode::perform_trial(const trial_interfaces::msg::Trial &trial) {
   tic();
 
   bool success = true;
