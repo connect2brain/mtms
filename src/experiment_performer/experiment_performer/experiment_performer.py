@@ -330,7 +330,7 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, experiment_name, subject_name, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency, mep_emg_buffer):
+    def log_trial(self, experiment_name, subject_name, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency):
         request = LogTrial.Request()
 
         request.experiment_name = experiment_name
@@ -793,6 +793,7 @@ class ExperimentPerformerNode(Node):
             mep_amplitude = 0.0
             mep_latency = 0.0
             if analyze_mep:
+                self.logger.info('Analyzing MEP...')
                 if mep_event is None or mep_result_container is None:
                     self.logger.warning('MEP analysis not started, retrying in {} seconds.'.format(
                         self.TRIAL_REDO_INTERVAL_S,
