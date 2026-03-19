@@ -27,7 +27,7 @@ if not exist "%init_file%" (
   echo __init__.py already exists: "%init_file%"
 )
 
-colcon build --base-paths src/interfaces
+colcon build --base-paths interfaces
 
 REM Ask for a keypress before closing the terminal window so that potential errors are shown to the user.
 pause

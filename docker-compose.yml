@@ -180,7 +180,7 @@ services:
       context: .
       dockerfile: src/rosbridge/Dockerfile
       args:
-        INTERFACES_PATH: src/interfaces
+        INTERFACES_PATH: interfaces
     env_file:
       - ${MTMS_ENV_FILE}
     environment:

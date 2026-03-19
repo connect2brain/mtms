@@ -20,7 +20,7 @@ echo "  • ${BOLD}Building the MATLAB interfaces...${RESET}"
 
 # Create a temporary directory for all the interfaces
 TEMP_INTERFACES_DIR=$(mktemp -d /tmp/mtms-matlab-interfaces.XXXXXX)
-ln -sf "$MTMS_ROOT"/src/interfaces/* "$TEMP_INTERFACES_DIR"/
+ln -sf "$MTMS_ROOT"/interfaces/* "$TEMP_INTERFACES_DIR"/
 
 # XXX: Generating the MATLAB message files requires Python 3.9 or 3.10. Ubuntu 24.04 LTS
 #   ships with Python 3.12, so we need to use a different Python version. Python 3.10 is
