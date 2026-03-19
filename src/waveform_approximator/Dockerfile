@@ -90,8 +90,11 @@ COPY src/waveform_approximator/waveform_approximator /home/matlab
 # Copy custom ROS messages
 COPY api/matlab/matlab_msg_gen.zip /home/matlab
 
-# Copy entrypoint
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
+# Copy entrypoint
 COPY src/waveform_approximator/ros_entrypoint.sh .
 RUN sudo dos2unix ros_entrypoint.sh
 RUN sudo chmod +x ros_entrypoint.sh
