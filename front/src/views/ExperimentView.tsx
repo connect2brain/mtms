@@ -1,6 +1,6 @@
 /* TODO: This could be split into multiple files. */
 
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { TabBar, Select, GrayedOutPanel, ActiveProps } from 'styles/General'
@@ -31,6 +31,7 @@ import {
   cancelExperiment,
   visualizeTargets,
   getMaximumIntensity,
+  subscribeToExperimentFeedback,
 } from 'ros/experiment'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -482,9 +483,11 @@ export const ExperimentView = () => {
 
   const [trialNumber, setTrialNumber] = useState<number | null>(null)
   const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
-  const [experimentState, setExperimentState] = useState<number>(ExperimentState.NotRunning)
+  const [experimentState, setExperimentState] = useState<number>(() =>
+    getKey('experimentState', ExperimentState.NotRunning)
+  )
 
-  const visualizeFeedback = (feedback: any) => {
+  const visualizeFeedback = useCallback((feedback: any) => {
     /* TODO: Only visualize the first target for now. */
     const target = feedback.trial.targets[0]
     const x: number = target.displacement_x
@@ -493,7 +496,47 @@ export const ExperimentView = () => {
 
     setHighlightedPoints([{ x: x, y: y }])
     setHighlightedAngles([angle])
-  }
+  }, [])
+
+  // Keep session/execution state in sync with ROS feedback while this view is mounted.
+  //
+  // Without this, the experiment state would not be retained when switching between tabs.
+  //
+  // XXX: This seems like a hack - maybe remove or do a proper fix later? Added in commit ID: a49998bc.
+  useEffect(() => {
+    const unsubscribe = subscribeToExperimentFeedback((feedback: any) => {
+      const feedbackState = feedback?.state
+      setExperimentState(feedbackState)
+
+      // Keep derived UI state consistent even if feedback callbacks race with `performExperiment`'s
+      // done callback.
+      if (feedbackState === ExperimentState.NotRunning) {
+        setTrialNumber(null)
+        setAttemptNumber(null)
+        setCancelButtonState(CancelButtonState.Cancel)
+        setHighlightedPoints([])
+        setHighlightedAngles([])
+        return
+      }
+
+      if (feedbackState === ExperimentState.Canceled) {
+        setTrialNumber(null)
+        setAttemptNumber(null)
+        setCancelButtonState(CancelButtonState.Cancel)
+        setHighlightedPoints([])
+        setHighlightedAngles([])
+        return
+      }
+
+      visualizeFeedback(feedback)
+      setTrialNumber(feedback.trial_number)
+      setAttemptNumber(feedback.attempt_number)
+    })
+
+    return () => {
+      unsubscribe()
+    }
+  }, [visualizeFeedback])
 
   const perform = () => {
     const experiment: Experiment = formExperiment()
@@ -959,6 +1002,10 @@ export const ExperimentView = () => {
   useEffect(() => {
     storeKey('activeTab', activeTab)
   }, [activeTab])
+
+  useEffect(() => {
+    storeKey('experimentState', experimentState)
+  }, [experimentState])
 
   useEffect(() => {
     storeKey('selectedPulse', selectedPulse)

@@ -80,6 +80,19 @@ const experimentFeedbackTopic = new ROSLIB.Topic({
   messageType: 'experiment_interfaces/ExperimentFeedback',
 })
 
+export const subscribeToExperimentFeedback = (callback: (response: any) => void) => {
+  const onFeedback = (feedback: any) => {
+    callback(feedback)
+  }
+
+  experimentFeedbackTopic.subscribe(onFeedback)
+
+  // Return an unsubscribe function for React effect cleanup.
+  return () => {
+    experimentFeedbackTopic.unsubscribe(onFeedback)
+  }
+}
+
 export const performExperiment = (
   experiment: any,
   done_callback: (trialResults: any, success: boolean) => void,
