@@ -301,6 +301,20 @@ void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &tria
     RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
     RCLCPP_INFO(this->get_logger(), "    Allow trial to be late: %s", timing.allow_late ? "true" : "false");
   }
+
+  RCLCPP_INFO(this->get_logger(), "  MEP analysis: %s", trial.analyze_mep ? "enabled" : "disabled");
+  if (trial.analyze_mep) {
+    RCLCPP_INFO(this->get_logger(), "    EMG channel: %u", trial.mep_emg_channel);
+    RCLCPP_INFO(this->get_logger(), "    MEP time window: [%.3f, %.3f] s",
+                trial.mep_time_window_start, trial.mep_time_window_end);
+    RCLCPP_INFO(this->get_logger(), "    Preactivation check: %s", trial.preactivation_check_enabled ? "enabled" : "disabled");
+    if (trial.preactivation_check_enabled) {
+      RCLCPP_INFO(this->get_logger(), "      Time window: [%.3f, %.3f] s",
+                  trial.preactivation_check_time_window_start, trial.preactivation_check_time_window_end);
+      RCLCPP_INFO(this->get_logger(), "      Voltage range limit: %.3f",
+                  trial.preactivation_check_voltage_range_limit);
+    }
+  }
 }
 
 void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
