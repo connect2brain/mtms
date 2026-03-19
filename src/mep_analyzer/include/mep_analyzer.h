@@ -46,7 +46,10 @@ private:
 
   static double max_minus_min(const std::vector<double> & v);
 
-  rclcpp::CallbackGroup::SharedPtr callback_group;
+  // Keep EEG streaming callbacks sequential to preserve strict sample_index order.
+  rclcpp::CallbackGroup::SharedPtr data_callback_group;
+  // Allow the service handler to run concurrently with EEG ingestion.
+  rclcpp::CallbackGroup::SharedPtr service_callback_group;
   rclcpp::Subscription<eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_subscriber;
   rclcpp::Subscription<eeg_interfaces::msg::Sample>::SharedPtr eeg_subscriber;
   rclcpp::Service<mep_interfaces::srv::AnalyzeMep>::SharedPtr analyze_mep_service;

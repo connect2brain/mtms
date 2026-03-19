@@ -16,7 +16,8 @@ const std::string MepAnalyzerNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
 MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
 : Node("mep_analyzer", options)
 {
-  callback_group = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+  data_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  service_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
 
   const auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -28,7 +29,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     std::bind(&MepAnalyzerNode::device_info_callback, this, std::placeholders::_1),
     [&]() {
       rclcpp::SubscriptionOptions opts;
-      opts.callback_group = callback_group;
+      opts.callback_group = data_callback_group;
       return opts;
     }());
 
@@ -42,7 +43,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     std::bind(&MepAnalyzerNode::eeg_sample_callback, this, std::placeholders::_1),
     [&]() {
       rclcpp::SubscriptionOptions opts;
-      opts.callback_group = callback_group;
+      opts.callback_group = data_callback_group;
       return opts;
     }());
 
@@ -50,7 +51,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     SERVICE_ANALYZE_MEP.c_str(),
     std::bind(&MepAnalyzerNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
-    callback_group);
+    service_callback_group);
 }
 
 void MepAnalyzerNode::device_info_callback(const eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
