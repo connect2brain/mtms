@@ -9,7 +9,7 @@ It sends NeurOne-like UDP packets (`measurement_start`, `samples`, `measurement_
 From this directory:
 
 ```bash
-g++ -std=c++17 -O3 -pthread neurone_simulator.cpp -o neurone_simulator
+./build.sh
 ```
 
 ## Run
