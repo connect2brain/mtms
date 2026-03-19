@@ -27,6 +27,15 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 
 
+ANALYZE_MEP_STATUS_TO_REASON = {
+    AnalyzeMep.Response.PREACTIVATION_FAILED: 'preactivation check failed',
+    AnalyzeMep.Response.LATE: 'late response',
+    AnalyzeMep.Response.TIMEOUT: 'analysis timed out',
+    AnalyzeMep.Response.SAMPLES_DROPPED: 'samples dropped',
+    AnalyzeMep.Response.INVALID_EMG_CHANNEL: 'invalid EMG channel',
+}
+
+
 class ExperimentPerformerNode(Node):
 
     ROS_SERVICE_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
@@ -825,7 +834,9 @@ class ExperimentPerformerNode(Node):
 
                 mep_ok = (mep_result.status == AnalyzeMep.Response.NO_ERROR)
                 if not mep_ok:
-                    self.logger.warning('MEP analysis failed, attempting again in {} seconds.'.format(
+                    failure_reason = ANALYZE_MEP_STATUS_TO_REASON.get(mep_result.status, 'unknown failure status')
+                    self.logger.warning('MEP analysis failed (reason={}), attempting again in {} seconds.'.format(
+                        failure_reason,
                         self.TRIAL_REDO_INTERVAL_S,
                     ))
                     continue
