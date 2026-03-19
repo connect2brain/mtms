@@ -225,8 +225,8 @@ class ExperimentPerformerNode(Node):
         # TODO
         self.logger.info('  - # of valid trials: {}'.format(len(experiment.trials)))
         self.logger.info('Intertrial interval:')
-        self.logger.info('  - Minimum: {}'.format(experiment.intertrial_interval.min))
-        self.logger.info('  - Maximum: {}'.format(experiment.intertrial_interval.max))
+        self.logger.info('  - Minimum: {}'.format(experiment.intertrial_interval_min))
+        self.logger.info('  - Maximum: {}'.format(experiment.intertrial_interval_max))
 
     ## Asynchronous service callers
 
@@ -408,7 +408,9 @@ class ExperimentPerformerNode(Node):
 
         metadata = experiment.metadata
         trials = experiment.trials
-        intertrial_interval = experiment.intertrial_interval
+        intertrial_interval_min = experiment.intertrial_interval_min
+        intertrial_interval_max = experiment.intertrial_interval_max
+        intertrial_interval_tolerance = experiment.intertrial_interval_tolerance
         wait_for_pedal_press = experiment.wait_for_pedal_press
         randomize_trials = experiment.randomize_trials
         autopause = experiment.autopause
@@ -428,7 +430,8 @@ class ExperimentPerformerNode(Node):
                 experiment_id=experiment_id,
                 metadata=metadata,
                 valid_trials=valid_trials,
-                intertrial_interval=intertrial_interval,
+                intertrial_interval_min=intertrial_interval_min,
+                intertrial_interval_max=intertrial_interval_max,
                 wait_for_pedal_press=wait_for_pedal_press,
                 randomize_trials=randomize_trials,
                 autopause=autopause,
@@ -539,7 +542,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval):
+    def get_time_to_next_trial(self, num_of_attempts, is_first_trial, intertrial_interval_min, intertrial_interval_max):
         if num_of_attempts > 1:
             return self.TRIAL_REDO_INTERVAL_S
 
@@ -548,8 +551,8 @@ class ExperimentPerformerNode(Node):
             return self.FIRST_TRIAL_TIME_S
         else:
             return np.random.uniform(
-                low=intertrial_interval.min,
-                high=intertrial_interval.max,
+                low=intertrial_interval_min,
+                high=intertrial_interval_max,
             )
 
     def publish_feedback(self, experiment_state, trial, num_of_attempts, trial_number, total_trials):
@@ -627,7 +630,7 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, experiment_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, experiment_id, metadata, valid_trials, intertrial_interval_min, intertrial_interval_max, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
@@ -732,7 +735,8 @@ class ExperimentPerformerNode(Node):
                 time_to_next_trial = self.get_time_to_next_trial(
                     num_of_attempts=num_of_attempts,
                     is_first_trial=is_first_trial,
-                    intertrial_interval=intertrial_interval,
+                    intertrial_interval_min=intertrial_interval_min,
+                    intertrial_interval_max=intertrial_interval_max,
                 )
 
             # Determine the time of the next trial.

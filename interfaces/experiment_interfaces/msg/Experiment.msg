@@ -1,12 +1,15 @@
 ExperimentMetadata metadata
 
 trial_interfaces/Trial[] trials
-IntertrialInterval intertrial_interval
+
+float64 intertrial_interval_min
+float64 intertrial_interval_max
+float64 intertrial_interval_tolerance
 
 bool randomize_trials
 
 # If true, wait for pedal press before performing each trial in
-# the experiment. In that case, ignore 'intertrial_interval' field.
+# the experiment. In that case, ignore the intertrial interval fields.
 bool wait_for_pedal_press
 
 bool autopause

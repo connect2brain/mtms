@@ -274,12 +274,6 @@ type TriggerConfig = {
   delay: number
 }
 
-type IntertrialInterval = {
-  min: number
-  max: number
-  tolerance: number
-}
-
 type Metadata = {
   experiment_name: string
   subject_name: string
@@ -289,7 +283,9 @@ type Experiment = {
   metadata: Metadata
 
   trials: Trial[]
-  intertrial_interval: IntertrialInterval
+  intertrial_interval_min: number
+  intertrial_interval_max: number
+  intertrial_interval_tolerance: number
 
   randomize_trials: boolean
   wait_for_pedal_press: boolean
@@ -688,11 +684,9 @@ export const ExperimentView = () => {
       },
 
       trials: trials,
-      intertrial_interval: {
-        min: itiMin,
-        max: itiMax,
-        tolerance: 0.0,
-      },
+      intertrial_interval_min: itiMin,
+      intertrial_interval_max: itiMax,
+      intertrial_interval_tolerance: 0.0,
 
       randomize_trials: true,
       wait_for_pedal_press: waitForPedalPress,

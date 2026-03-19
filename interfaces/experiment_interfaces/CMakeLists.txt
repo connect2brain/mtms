@@ -28,7 +28,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Experiment.msg"
   "msg/ExperimentMetadata.msg"
   "msg/ExperimentState.msg"
-  "msg/IntertrialInterval.msg"
   "msg/ExperimentFeedback.msg"
 
   "srv/CountValidTrials.srv"
