@@ -10,12 +10,4 @@ TrialConfig config
 
 TriggerConfig[] triggers
 
-bool analyze_mep
-uint8 mep_emg_channel
-float64 mep_time_window_start
-float64 mep_time_window_end
-
-bool preactivation_check_enabled
-float64 preactivation_check_time_window_start
-float64 preactivation_check_time_window_end
-float64 preactivation_check_voltage_range_limit
+ 

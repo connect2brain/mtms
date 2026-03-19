@@ -296,6 +296,16 @@ type Experiment = {
 
   autopause: boolean
   autopause_interval: number
+
+  analyze_mep: boolean
+  mep_emg_channel: number
+  mep_time_window_start: number
+  mep_time_window_end: number
+
+  preactivation_check_enabled: boolean
+  preactivation_check_time_window_start: number
+  preactivation_check_time_window_end: number
+  preactivation_check_voltage_range_limit: number
 }
 
 type Target = {
@@ -334,16 +344,6 @@ type Trial = {
   config: TrialConfig
 
   triggers: TriggerConfig[]
-
-  analyze_mep: boolean
-  mep_emg_channel: number
-  mep_time_window_start: number
-  mep_time_window_end: number
-
-  preactivation_check_enabled: boolean
-  preactivation_check_time_window_start: number
-  preactivation_check_time_window_end: number
-  preactivation_check_voltage_range_limit: number
 }
 
 enum StartButtonState {
@@ -563,27 +563,6 @@ export const ExperimentView = () => {
       },
     ]
 
-    /* TODO: Hard-coded for now - make configurable. */
-    const mep_config_time_window: TimeWindow = {
-      start: 0.01,
-      end: 0.04,
-    }
-
-    /* TODO: Hard-coded for now - make configurable. */
-    const preactivation_check_time_window: TimeWindow = {
-      start: -0.1,
-      end: -0.01,
-    }
-
-    /* TODO: Hard-coded for now - make configurable. */
-    const preactivation_check_enabled = false
-    const preactivation_check_voltage_range_limit = 90
-
-    const analyze_mep = mepEnabled
-    /* 0-based indexing is internally used for EMG channels, hence decrement to allow
-      the user to use 1-based indexing. */
-    const mep_emg_channel = emgChannel - 1
-
     if (activeTab === ExperimentTab.MultipleLocations) {
       const singleRepetitionTrials: Trial[] = []
 
@@ -612,16 +591,6 @@ export const ExperimentView = () => {
             },
 
             triggers: triggers,
-
-            analyze_mep: analyze_mep,
-            mep_emg_channel: mep_emg_channel,
-            mep_time_window_start: mep_config_time_window.start,
-            mep_time_window_end: mep_config_time_window.end,
-
-            preactivation_check_enabled: preactivation_check_enabled,
-            preactivation_check_time_window_start: preactivation_check_time_window.start,
-            preactivation_check_time_window_end: preactivation_check_time_window.end,
-            preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
           }
           singleRepetitionTrials.push(trial)
         })
@@ -652,16 +621,6 @@ export const ExperimentView = () => {
         },
 
         triggers: triggers,
-
-        analyze_mep: analyze_mep,
-        mep_emg_channel: mep_emg_channel,
-        mep_time_window_start: mep_config_time_window.start,
-        mep_time_window_end: mep_config_time_window.end,
-
-        preactivation_check_enabled: preactivation_check_enabled,
-        preactivation_check_time_window_start: preactivation_check_time_window.start,
-        preactivation_check_time_window_end: preactivation_check_time_window.end,
-        preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
@@ -700,16 +659,6 @@ export const ExperimentView = () => {
         },
 
         triggers: triggers,
-
-        analyze_mep: analyze_mep,
-        mep_emg_channel: mep_emg_channel,
-        mep_time_window_start: mep_config_time_window.start,
-        mep_time_window_end: mep_config_time_window.end,
-
-        preactivation_check_enabled: preactivation_check_enabled,
-        preactivation_check_time_window_start: preactivation_check_time_window.start,
-        preactivation_check_time_window_end: preactivation_check_time_window.end,
-        preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
@@ -720,6 +669,27 @@ export const ExperimentView = () => {
 
   const formExperiment = (): Experiment => {
     const trials = formTrials()
+
+    /* TODO: Hard-coded for now - make configurable. */
+    const mep_config_time_window: TimeWindow = {
+      start: 0.01,
+      end: 0.04,
+    }
+
+    /* TODO: Hard-coded for now - make configurable. */
+    const preactivation_check_time_window: TimeWindow = {
+      start: -0.1,
+      end: -0.01,
+    }
+
+    /* TODO: Hard-coded for now - make configurable. */
+    const preactivation_check_enabled = false
+    const preactivation_check_voltage_range_limit = 90
+
+    const analyze_mep = mepEnabled
+    /* 0-based indexing is internally used for EMG channels, hence decrement to allow
+      the user to use 1-based indexing. */
+    const mep_emg_channel = emgChannel - 1
 
     const experiment: Experiment = {
       metadata: {
@@ -739,6 +709,16 @@ export const ExperimentView = () => {
 
       autopause: autopause,
       autopause_interval: autopauseIntervalMinutes * 60,
+
+      analyze_mep: analyze_mep,
+      mep_emg_channel: mep_emg_channel,
+      mep_time_window_start: mep_config_time_window.start,
+      mep_time_window_end: mep_config_time_window.end,
+
+      preactivation_check_enabled: preactivation_check_enabled,
+      preactivation_check_time_window_start: preactivation_check_time_window.start,
+      preactivation_check_time_window_end: preactivation_check_time_window.end,
+      preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
     }
     return experiment
   }

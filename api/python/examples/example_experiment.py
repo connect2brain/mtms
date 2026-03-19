@@ -81,8 +81,6 @@ single_pulse_trial = Trial(
     # These are the same for all trials.
     config=trial_config,
     triggers=triggers,
-    analyze_mep=analyze_mep,
-    mep_config=mep_config,
 )
 
 paired_pulse_trial = Trial(
@@ -92,8 +90,6 @@ paired_pulse_trial = Trial(
     # These are the same for all trials.
     config=trial_config,
     triggers=triggers,
-    analyze_mep=analyze_mep,
-    mep_config=mep_config,
 )
 
 print("Validating single pulse trial...")
@@ -136,6 +132,14 @@ experiment = Experiment(
     wait_for_pedal_press=wait_for_pedal_press,
     autopause=autopause,
     autopause_interval=autopause_interval,
+    analyze_mep=analyze_mep,
+    mep_emg_channel=mep_config["emg_channel"],
+    mep_time_window_start=mep_config["mep_time_window_start"],
+    mep_time_window_end=mep_config["mep_time_window_end"],
+    preactivation_check_enabled=mep_config["preactivation_check_enabled"],
+    preactivation_check_time_window_start=mep_config["preactivation_check_time_window_start"],
+    preactivation_check_time_window_end=mep_config["preactivation_check_time_window_end"],
+    preactivation_check_voltage_range_limit=mep_config["preactivation_check_voltage_range_limit"],
 )
 
 api.start_device()

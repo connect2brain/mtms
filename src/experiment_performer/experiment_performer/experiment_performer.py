@@ -18,6 +18,8 @@ from mtms_device_interfaces.msg import SystemState, DeviceState
 from system_interfaces.msg import Session, SessionState
 from system_interfaces.srv import StartSession, StopSession
 
+from mep_interfaces.srv import AnalyzeMep
+
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -32,7 +34,7 @@ class ExperimentPerformerNode(Node):
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
-    SERVICE_CALL_TIMEOUT_S = 2.0
+    SERVICE_CALL_TIMEOUT_S = 10.0
     SESSION_STATE_WAIT_TIMEOUT_S = 5.0
 
     def __init__(self):
@@ -107,6 +109,12 @@ class ExperimentPerformerNode(Node):
         self.validate_trial_client = self.create_client(ValidateTrial, '/mtms/trial/validate', callback_group=self.callback_group)
         while not self.validate_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /mtms/trial/validate not available, waiting...')
+
+        # Create service client for analyzing MEP.
+
+        self.analyze_mep_client = self.create_client(AnalyzeMep, '/mtms/mep/analyze', callback_group=self.callback_group)
+        while not self.analyze_mep_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /mtms/mep/analyze not available, waiting...')
 
         # Create service client for logging a trial.
 
@@ -386,6 +394,39 @@ class ExperimentPerformerNode(Node):
 
         return True
 
+    def async_analyze_mep(self, experiment):
+        call_service_event = Event()
+        response_value = [None]
+
+        request = AnalyzeMep.Request()
+
+        request.emg_channel = experiment.mep_emg_channel
+
+        request.mep_time_window_start = experiment.mep_time_window_start
+        request.mep_time_window_end = experiment.mep_time_window_end
+
+        request.preactivation_check_enabled = experiment.preactivation_check_enabled
+        request.preactivation_check_time_window_start = experiment.preactivation_check_time_window_start
+        request.preactivation_check_time_window_end = experiment.preactivation_check_time_window_end
+        request.preactivation_check_voltage_range_limit = experiment.preactivation_check_voltage_range_limit
+
+        def service_call_callback(future):
+            nonlocal response_value
+            try:
+                response_value[0] = future.result()
+            except Exception as error:
+                self.logger.error('Service /mtms/mep/analyze call failed: {}'.format(str(error)))
+                response_value[0] = None
+            call_service_event.set()
+
+        service_call_future = self.analyze_mep_client.call_async(request)
+        service_call_future.add_done_callback(service_call_callback)
+
+        return call_service_event, response_value
+
+    def get_mep_result_from_container(self, result_container):
+        return result_container[0]
+
     # Performing experiment
 
     def perform_experiment_service_callback(self, request, response):
@@ -427,6 +468,7 @@ class ExperimentPerformerNode(Node):
         randomize_trials = experiment.randomize_trials
         autopause = experiment.autopause
         autopause_interval = experiment.autopause_interval
+        analyze_mep = experiment.analyze_mep
 
         self.logger.info('New experiment request.')
 
@@ -779,46 +821,95 @@ class ExperimentPerformerNode(Node):
             trial.timing = timing
             trial.config = config
 
+            mep_event = None
+            mep_result_container = None
+            if analyze_mep:
+                # Fire off MEP analysis request before triggering the stimulation events,
+                # so the analyzer can start waiting for the upcoming data.
+                mep_event, mep_result_container = self.async_analyze_mep(experiment)
+
             result = self.sync_perform_trial_action(
                 trial=trial,
             )
             trial_result = result.trial_result
             success = result.success
 
-            if success:
-                self.logger.info('Successfully performed trial {} / {}.'.format(
-                    i + 1,
-                    num_of_valid_trials
-                ))
-
-                trial_logged = self.log_trial(
-                    metadata=metadata,
-                    experiment_id=experiment_id,
-                    trial=trial,
-                    trial_number=trial_number,
-                    trial_result=trial_result,
-                    num_of_attempts=num_of_attempts,
-                )
-                if not trial_logged:
-                    self.logger.error(
-                        'Trial {} / {} was performed, but logging did not complete; aborting experiment.'.format(
-                            i + 1,
-                            num_of_valid_trials,
-                        )
-                    )
-                    success = False
-                    break
-
-                trial_results.append(trial_result)
-
-                i += 1
-                num_of_attempts = 0
-            else:
+            if not success:
                 self.logger.info('Trial not successful, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
 
-            # Add a delay to allow other ROS service calls to run.
+                # Add a delay to allow other ROS service calls to run. XXX: Is this needed?
+                time.sleep(0.1)
+
+                continue
+
+            if analyze_mep:
+                if mep_event is None or mep_result_container is None:
+                    self.logger.warning('MEP analysis not started, retrying in {} seconds.'.format(
+                        self.TRIAL_REDO_INTERVAL_S,
+                    ))
+                    continue
+
+                completed = mep_event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+                if not completed:
+                    self.logger.warning(
+                        'Service /mtms/mep/analyze timed out after {:.1f} s.'.format(
+                            self.SERVICE_CALL_TIMEOUT_S,
+                        )
+                    )
+                    self.logger.warning('MEP analysis timed out, retrying in {} seconds.'.format(
+                        self.TRIAL_REDO_INTERVAL_S,
+                    ))
+                    continue
+
+                mep_result = self.get_mep_result_from_container(mep_result_container)
+
+                if mep_result is None:
+                    self.logger.warning('MEP analysis result is None, retrying in {} seconds.'.format(
+                        self.TRIAL_REDO_INTERVAL_S,
+                    ))
+                    continue
+
+                trial_result.mep_amplitude = mep_result.amplitude
+                trial_result.mep_latency = mep_result.latency
+                trial_result.mep_emg_buffer = mep_result.emg_buffer
+
+                mep_ok = mep_result.preactivation_passed and (mep_result.status == AnalyzeMep.Response.NO_ERROR)
+                if not mep_ok:
+                    self.logger.warning('MEP analysis failed, attempting again in {} seconds.'.format(
+                        self.TRIAL_REDO_INTERVAL_S,
+                    ))
+                    continue
+
+            self.logger.info('Successfully performed trial {} / {}.'.format(
+                i + 1,
+                num_of_valid_trials
+            ))
+
+            trial_logged = self.log_trial(
+                metadata=metadata,
+                experiment_id=experiment_id,
+                trial=trial,
+                trial_number=trial_number,
+                trial_result=trial_result,
+                num_of_attempts=num_of_attempts,
+            )
+            if not trial_logged:
+                self.logger.error(
+                    'Trial {} / {} was performed, but logging did not complete; aborting experiment.'.format(
+                        i + 1,
+                        num_of_valid_trials,
+                    )
+                )
+                break
+
+            trial_results.append(trial_result)
+
+            i += 1
+            num_of_attempts = 0
+
+            # Add a delay to allow other ROS service calls to run. XXX: Is this needed?
             time.sleep(0.1)
 
         self.finalize_session()

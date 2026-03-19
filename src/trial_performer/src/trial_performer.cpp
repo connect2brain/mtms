@@ -62,11 +62,6 @@ void TrialPerformerNode::initialize_service_clients() {
   while (!request_events_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/device/events/request not available, waiting...");
   }
-
-  analyze_mep_client = this->create_client<mep_interfaces::srv::AnalyzeMep>("/mtms/mep/analyze");
-  while (!analyze_mep_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /mtms/mep/analyze not available, waiting...");
-  }
 }
 
 void TrialPerformerNode::initialize_subscribers() {
@@ -300,20 +295,6 @@ void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &tria
     RCLCPP_INFO(this->get_logger(), "  Timing:");
     RCLCPP_INFO(this->get_logger(), "    Desired start time: %.3f s", timing.desired_start_time);
   }
-
-  RCLCPP_INFO(this->get_logger(), "  MEP analysis: %s", trial.analyze_mep ? "enabled" : "disabled");
-  if (trial.analyze_mep) {
-    RCLCPP_INFO(this->get_logger(), "    EMG channel: %u", trial.mep_emg_channel);
-    RCLCPP_INFO(this->get_logger(), "    MEP time window: [%.3f, %.3f] s",
-                trial.mep_time_window_start, trial.mep_time_window_end);
-    RCLCPP_INFO(this->get_logger(), "    Preactivation check: %s", trial.preactivation_check_enabled ? "enabled" : "disabled");
-    if (trial.preactivation_check_enabled) {
-      RCLCPP_INFO(this->get_logger(), "      Time window: [%.3f, %.3f] s",
-                  trial.preactivation_check_time_window_start, trial.preactivation_check_time_window_end);
-      RCLCPP_INFO(this->get_logger(), "      Voltage range limit: %.3f",
-                  trial.preactivation_check_voltage_range_limit);
-    }
-  }
 }
 
 void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
@@ -480,27 +461,6 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   return success;
 }
 
-std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> TrialPerformerNode::analyze_mep(const mtms_trial_interfaces::msg::Trial &trial, double time) {
-  auto request = std::make_shared<mep_interfaces::srv::AnalyzeMep::Request>();
-  request->emg_channel = trial.mep_emg_channel;
-
-  request->mep_time_window_start = trial.mep_time_window_start;
-  request->mep_time_window_end = trial.mep_time_window_end;
-
-  request->preactivation_check_enabled = trial.preactivation_check_enabled;
-  request->preactivation_check_time_window_start = trial.preactivation_check_time_window_start;
-  request->preactivation_check_time_window_end = trial.preactivation_check_time_window_end;
-  request->preactivation_check_voltage_range_limit = trial.preactivation_check_voltage_range_limit;
-
-  auto future = analyze_mep_client->async_send_request(request);
-  if (future.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Service /mtms/mep/analyze timed out");
-    return nullptr;
-  }
-
-  return future.get();
-}
-
 /* Goal handling */
 
 rclcpp_action::GoalResponse TrialPerformerNode::handle_goal(
@@ -603,26 +563,6 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
 
     /* Fill in the earliest start time of the trial as the time right after requesting events. */
     trial_result.earliest_start_time = this->get_current_time();
-
-    /* Analyze MEP if needed. */
-    if (trial.analyze_mep) {
-      auto mep_result = analyze_mep(trial, start_time);
-      if (mep_result == nullptr) {
-        return {false, trial_result};
-      }
-      trial_result.mep_amplitude = mep_result->amplitude;
-      trial_result.mep_latency = mep_result->latency;
-      trial_result.mep_emg_buffer = mep_result->emg_buffer;
-
-      const bool mep_ok =
-          mep_result->preactivation_passed &&
-          (mep_result->status == mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR);
-      success = success && mep_ok;
-
-      if (!mep_ok) {
-        RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
-      }
-    }
 
     /* Wait for events to finish. */
     success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);

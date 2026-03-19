@@ -15,7 +15,6 @@
 #include "mtms_trial_interfaces/msg/trial_result.hpp"
 #include "mtms_trial_interfaces/action/perform_trial.hpp"
 
-#include "mep_interfaces/srv/analyze_mep.hpp"
 #include "experiment_interfaces/action/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
@@ -47,7 +46,6 @@ private:
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp_action::Server<mtms_trial_interfaces::action::PerformTrial>::SharedPtr action_server;
   rclcpp_action::Client<experiment_interfaces::action::SetVoltages>::SharedPtr set_voltages_client;
-  rclcpp::Client<mep_interfaces::srv::AnalyzeMep>::SharedPtr analyze_mep_client;
   rclcpp::Client<targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
   rclcpp::Client<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
   rclcpp::Client<targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
@@ -110,9 +108,6 @@ private:
   void request_events(const std::vector<event_interfaces::msg::Pulse> &pulses, const std::vector<event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
-
-  /* Service calls */
-  std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> analyze_mep(const mtms_trial_interfaces::msg::Trial &trial, double time);
 
   /* Action handlers */
   rclcpp_action::GoalResponse handle_goal(
