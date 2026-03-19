@@ -152,7 +152,7 @@ bool TrialPerformerNode::is_device_started() const {
 }
 
 bool TrialPerformerNode::is_session_started() const {
-  return session && session->state.value == system_interfaces::msg::SessionState::STARTED;
+  return session && session->state == system_interfaces::msg::Session::STARTED;
 }
 
 double TrialPerformerNode::get_current_time() const {

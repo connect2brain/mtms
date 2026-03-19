@@ -1,7 +1,7 @@
 from util.bcolors import bcolors
 
 from mtms_device_interfaces.msg import DeviceState, StartupError
-from system_interfaces.msg import SessionState
+from system_interfaces.msg import Session
 from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
 
 class MTMSApiEnums():
@@ -12,10 +12,10 @@ class MTMSApiEnums():
         (DeviceState.SHUTDOWN, "Shutdown", bcolors.WARNING),
     )
     SESSION_STATES = (
-        (SessionState.STOPPED, "Stopped", bcolors.OKBLUE),
-        (SessionState.STARTING, "Starting", bcolors.OKBLUE),
-        (SessionState.STARTED, "Started", bcolors.OKGREEN),
-        (SessionState.STOPPING, "Stopping", bcolors.WARNING),
+        (Session.STOPPED, "Stopped", bcolors.OKBLUE),
+        (Session.STARTING, "Starting", bcolors.OKBLUE),
+        (Session.STARTED, "Started", bcolors.OKGREEN),
+        (Session.STOPPING, "Stopping", bcolors.WARNING),
     )
     STARTUP_ERRORS = (
         (StartupError.NO_ERROR, "No error", bcolors.OKGREEN),

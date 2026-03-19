@@ -11,7 +11,7 @@ import time
 
 import rclpy
 
-from system_interfaces.msg import SessionState
+from system_interfaces.msg import Session
 from mtms_device_interfaces.msg import DeviceState
 from event_interfaces.msg import ExecutionCondition
 from waveform_interfaces.msg import WaveformsForCoilSet
@@ -125,7 +125,7 @@ class MTMSApi:
         Does not require any parameters, and does not return any value.
         """
         self.node.start_session()
-        while self.get_session_state() != SessionState.STARTED:
+        while self.get_session_state() != Session.STARTED:
             if self.verbose:
                 self.node.print_state()
 
@@ -136,7 +136,7 @@ class MTMSApi:
         Does not require any parameters, and does not return any value.
         """
         self.node.stop_session()
-        while self.get_session_state() != SessionState.STOPPED:
+        while self.get_session_state() != Session.STOPPED:
             # For safety reasons, be very explicit when stopping session and/or device, which
             # lowers the capacitor voltages down to zero; we want the operator to know exactly
             # when it is finished - hence do not allow interrupting waiting for the session to
@@ -240,13 +240,13 @@ class MTMSApi:
         int
             The current state of the session. One of the following:
 
-            * SessionState.STOPPED : Session is stopped.
-            * SessionState.STARTING : Session is starting.
-            * SessionState.STARTED : Session is started.
-            * SessionState.STOPPING : Session is stopping.
+            * Session.STOPPED : Session is stopped.
+            * Session.STARTING : Session is starting.
+            * Session.STARTED : Session is started.
+            * Session.STOPPING : Session is stopping.
         """
         self.node.wait_for_new_state()
-        return self.node.session.state.value
+        return self.node.session.state
 
     def get_current_voltage(self, channel):
         """
@@ -343,7 +343,7 @@ class MTMSApi:
         return self.node.get_event_feedback(id)
 
     def is_session_started(self):
-        return self.get_session_state() == SessionState.STARTED
+        return self.get_session_state() == Session.STARTED
 
     # Events
     def send_pulse(self, channel, waveform, execution_condition=ExecutionCondition.TIMED, time=None, reverse_polarity=False):

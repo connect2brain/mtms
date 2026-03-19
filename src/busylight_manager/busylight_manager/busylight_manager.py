@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
-from system_interfaces.msg import Session, SessionState
+from system_interfaces.msg import Session
 
 from busylight_core import Light, NoLightsFoundError
 
@@ -66,7 +66,7 @@ class BusylightManagerNode(Node):
         self.update_light()
 
     def handle_session(self, msg):
-        session_state = msg.state.value
+        session_state = msg.state
 
         state_changed = self.session_state != session_state
 
@@ -96,18 +96,18 @@ class BusylightManagerNode(Node):
             return
 
         if self.device_state == DeviceState.OPERATIONAL:
-            if self.session_state == SessionState.STARTING:
+            if self.session_state == Session.STARTING:
                 pass
 
-            elif self.session_state == SessionState.STARTED:
+            elif self.session_state == Session.STARTED:
                 self.get_logger().info("Device operational, session started.")
                 self.current_color = self.COLOR_SESSION_STARTED
 
-            elif self.session_state == SessionState.STOPPING:
+            elif self.session_state == Session.STOPPING:
                 self.get_logger().info("Device operational, session stopping.")
                 self.current_color = self.COLOR_SESSION_STOPPING
 
-            elif self.session_state == SessionState.STOPPED:
+            elif self.session_state == Session.STOPPED:
                 self.get_logger().info("Device operational, session stopped.")
                 self.current_color = self.COLOR_DEVICE_OPERATIONAL
 

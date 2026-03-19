@@ -37,7 +37,6 @@
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/session.hpp"
-#include "system_interfaces/msg/session_state.hpp"
 #include "system_interfaces/srv/start_session.hpp"
 #include "system_interfaces/srv/stop_session.hpp"
 
@@ -145,7 +144,7 @@ private:
 
   std::atomic<bool> allow_stimulation_ {false};
   std::atomic<bool> allow_trigger_out_ {true};
-  std::atomic<uint8_t> session_state_value_ {system_interfaces::msg::SessionState::STOPPED};
+  std::atomic<uint8_t> session_state_value_ {system_interfaces::msg::Session::STOPPED};
   std::atomic<double> session_start_time_ {0.0};
 
   mutable std::mutex state_mutex_;

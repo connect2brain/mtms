@@ -12,7 +12,7 @@ classdef MTMSApiEnums < handle
     methods
         function obj = MTMSApiEnums()
             device_state = ros2message("mtms_device_interfaces/DeviceState");
-            session_state = ros2message("system_interfaces/SessionState");
+            session_state = ros2message("system_interfaces/Session");
             startup_error = ros2message("mtms_device_interfaces/StartupError");
 
             pulse_error = ros2message("event_interfaces/PulseError");

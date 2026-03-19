@@ -15,7 +15,7 @@ from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 
-from system_interfaces.msg import Session, SessionState
+from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession
 
 from mep_interfaces.srv import AnalyzeMep
@@ -187,13 +187,13 @@ class ExperimentPerformerNode(Node):
         if self.session is None:
             return None
 
-        return self.session.state.value
+        return self.session.state
 
     def is_session_started(self):
-        return self.get_session_state() == SessionState.STARTED
+        return self.get_session_state() == Session.STARTED
 
     def is_session_stopped(self):
-        return self.get_session_state() == SessionState.STOPPED
+        return self.get_session_state() == Session.STOPPED
 
     def get_current_time(self):
         if self.session is None:

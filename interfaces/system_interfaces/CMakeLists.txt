@@ -25,7 +25,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Healthcheck.msg"
   "msg/HealthcheckStatus.msg"
 
-  "msg/SessionState.msg"
   "msg/Session.msg"
 
   "msg/TimebaseMapping.msg"

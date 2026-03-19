@@ -2,7 +2,6 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "system_interfaces/msg/session_state.hpp"
 #include "system_interfaces/msg/session.hpp"
 
 #include "fpga.h"
@@ -50,7 +49,7 @@ private:
                         NiFpga_ReadU8(
                             session,
                             session_state_indicator,
-                            &session_msg.state.value
+                            &session_msg.state
                         ));
 
     uint64_t time;

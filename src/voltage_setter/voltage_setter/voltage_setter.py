@@ -11,7 +11,7 @@ from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFe
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
 from trial_interfaces.srv import SetVoltages
-from system_interfaces.msg import Session, SessionState
+from system_interfaces.msg import Session
 
 
 class VoltageSetterNode(Node):
@@ -122,7 +122,7 @@ class VoltageSetterNode(Node):
             if self.session is None:
                 return None
 
-            return self.session.state.value
+            return self.session.state
 
     def get_current_time(self):
         with self.lock:
@@ -132,10 +132,10 @@ class VoltageSetterNode(Node):
             return self.session.time
 
     def is_session_started(self):
-        return self.get_session_state() == SessionState.STARTED
+        return self.get_session_state() == Session.STARTED
 
     def is_session_stopped(self):
-        return self.get_session_state() == SessionState.STOPPED
+        return self.get_session_state() == Session.STOPPED
 
     # Events
 

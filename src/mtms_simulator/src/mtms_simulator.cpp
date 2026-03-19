@@ -219,7 +219,7 @@ void MTMSSimulator::start_session_handler(
     return;
   }
 
-  session_state_value_ = system_interfaces::msg::SessionState::STARTED;
+  session_state_value_ = system_interfaces::msg::Session::STARTED;
   session_start_time_ = this->get_clock()->now().seconds();
   RCLCPP_INFO(this->get_logger(), "Session started");
   response->success = true;
@@ -229,7 +229,7 @@ void MTMSSimulator::stop_session_handler(
   [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StopSession::Request> request,
   std::shared_ptr<system_interfaces::srv::StopSession::Response> response)
 {
-  session_state_value_ = system_interfaces::msg::SessionState::STOPPED;
+  session_state_value_ = system_interfaces::msg::Session::STOPPED;
   RCLCPP_INFO(this->get_logger(), "Session stopped");
   response->success = true;
 }
@@ -254,7 +254,7 @@ void MTMSSimulator::trigger_events_handler(
 
 bool MTMSSimulator::session_not_started() const
 {
-  return session_state_value_.load() != system_interfaces::msg::SessionState::STARTED;
+  return session_state_value_.load() != system_interfaces::msg::Session::STARTED;
 }
 
 bool MTMSSimulator::validate_charge_or_discharge(
@@ -531,9 +531,9 @@ void MTMSSimulator::publish_system_state()
 void MTMSSimulator::publish_session()
 {
   system_interfaces::msg::Session msg;
-  msg.state.value = session_state_value_.load();
+  msg.state = session_state_value_.load();
   msg.time = 0.0;
-  if (msg.state.value == system_interfaces::msg::SessionState::STARTED) {
+  if (msg.state == system_interfaces::msg::Session::STARTED) {
     msg.time = this->get_clock()->now().seconds() - session_start_time_.load();
   }
   session_publisher_->publish(msg);

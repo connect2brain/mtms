@@ -66,12 +66,9 @@ The mTMS device publishes its system state on a regular intervals to the `/mtms/
     StartupError startup_error
 
     DeviceState device_state
-    SessionState session_state
-
-    float64 time
 
 where each of the coil channels in the mTMS device has its own `ChannelState` object in the
-channel_states object. `DeviceState` and `SessionState` describe the device and session
+channel_states object. `DeviceState` and `session_state` describe the device and session
 states, which are described in their own sections.
 
 System state is published with 20ms interval tolerance for message delay is 5ms.
@@ -121,20 +118,21 @@ In addition to modifying session state, when session is
 started system state `time` (in seconds) property starts counting up from the moment
 session was started. When session is stopped `time` is reset back to 0.
 
-Current status of session state is published by the system_state in `session_state`
-session, which is defined by `SessionState`:
+Current status of session state is published by the system_state in `session_state`,
+which uses the constants defined in the `Session` message:
 
     uint8 STOPPED=0
     uint8 STARTING=1
     uint8 STARTED=2
     uint8 STOPPING=3
 
-    uint8 value
+    uint8 state
+    float64 time
 
 When the session starting is finished the system state property
-`session_state.value=SessionState.STARTED` and the service request will return `true`,
+`session_state=Session.STARTED` and the service request will return `true`,
 likewise when session stop request is made and complete, the session state will be
-`session_state.value=SessionState.STOPPED`
+`session_state=Session.STOPPED`
 
 #### Charging
 Charging works by requesting a service `/mtms/device/events/request` with a message of type `Charge`

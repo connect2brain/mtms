@@ -47,7 +47,7 @@ classdef MTMSApi < handle
         %   * 'event_id' - A numerical ID, initialized to 0.
         %   * 'incomplete_events' - An empty list.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
-        %   * 'session_states' - A ROS2 message object, of type "system_interfaces/SessionState".
+        %   * 'session_states' - A ROS2 message object, of type "system_interfaces/Session".
         %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
 
             % TODO: Should receive channel count automatically from .env so that the user of the API wouldn't have to care.
@@ -66,7 +66,7 @@ classdef MTMSApi < handle
             obj.incomplete_events = [];
 
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
-            obj.session_states = ros2message("system_interfaces/SessionState");
+            obj.session_states = ros2message("system_interfaces/Session");
 
             obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
 
@@ -253,10 +253,10 @@ classdef MTMSApi < handle
         %
         % :return: The current state of the session. One of the following
         %
-        %   * SessionState.STOPPED : Session is stopped.
-        %   * SessionState.STARTING : Session is starting.
-        %   * SessionState.STARTED : Session is started.
-        %   * SessionState.STOPPING : Session is stopping.
+        %   * Session.STOPPED : Session is stopped.
+        %   * Session.STARTING : Session is starting.
+        %   * Session.STARTED : Session is started.
+        %   * Session.STOPPING : Session is stopping.
         % :rtype: int
 
             state = obj.node.session.state.value;

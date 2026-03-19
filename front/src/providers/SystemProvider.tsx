@@ -64,7 +64,7 @@ export const HumanReadableSessionState = {
 }
 
 export interface Session extends ROSLIB.Message {
-  state: SessionState
+  state: number
   time: number
 }
 
@@ -96,14 +96,6 @@ export interface SystemState extends ROSLIB.Message {
 }
 
 interface Error {
-  value: number
-}
-
-export interface SessionState {
-  value: number
-}
-
-export interface DeviceState {
   value: number
 }
 
