@@ -72,7 +72,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 ### Services
 
-- `/mtms/mep/analyze_service` - Service-based MEP analysis endpoint (MATLAB-compatible fallback).
+- `/mtms/mep/analyze` - MEP analysis endpoint.
 
 ### Actions
 

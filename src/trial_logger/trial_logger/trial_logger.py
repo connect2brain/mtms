@@ -122,8 +122,8 @@ class TrialLoggerNode(Node):
             second_target.displacement_y if second_target else '',
             second_target.rotation_angle if second_target else '',
             second_target.intensity if second_target else '',
-            trial_result.mep.amplitude,
-            trial_result.mep.latency,
+            trial_result.mep_amplitude,
+            trial_result.mep_latency,
         )
         file.write(row)
 

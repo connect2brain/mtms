@@ -1,4 +1,6 @@
-mep_interfaces/Mep mep
+float64 mep_amplitude
+float64 mep_latency
+float64[] mep_emg_buffer
 
 # The actual start time of the trial; because trial can be delayed due to charging or
 # discharging taking time, it is not necessarily the same as the time when the trial

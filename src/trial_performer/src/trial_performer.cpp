@@ -35,14 +35,6 @@ void TrialPerformerNode::initialize_actions() {
   while (!set_voltages_client->wait_for_action_server(2s)) {
     RCLCPP_INFO(get_logger(), "Action /mtms/trial/set_voltages not available, waiting...");
   }
-
-  /* Action client for analyzing MEP. */
-  analyze_mep_client = rclcpp_action::create_client<mep_interfaces::action::AnalyzeMep>(
-      this, "/mtms/mep/analyze");
-
-  while (!analyze_mep_client->wait_for_action_server(2s)) {
-    RCLCPP_INFO(get_logger(), "Action /mtms/mep/analyze not available, waiting...");
-  }
 }
 
 void TrialPerformerNode::initialize_service_clients() {
@@ -69,6 +61,11 @@ void TrialPerformerNode::initialize_service_clients() {
   request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms/device/events/request");
   while (!request_events_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/device/events/request not available, waiting...");
+  }
+
+  analyze_mep_client = this->create_client<mep_interfaces::srv::AnalyzeMep>("/mtms/mep/analyze");
+  while (!analyze_mep_client->wait_for_service(2s)) {
+    RCLCPP_INFO(get_logger(), "Service /mtms/mep/analyze not available, waiting...");
   }
 }
 
@@ -470,38 +467,25 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   return success;
 }
 
-std::shared_ptr<mep_interfaces::action::AnalyzeMep::Result> TrialPerformerNode::analyze_mep(const mep_interfaces::msg::MepConfiguration &mep_config, double time) {
-  auto goal = mep_interfaces::action::AnalyzeMep::Goal();
-  goal.mep_configuration = mep_config;
-  goal.time = time;
+std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> TrialPerformerNode::analyze_mep(const mtms_trial_interfaces::msg::Trial &trial, double time) {
+  auto request = std::make_shared<mep_interfaces::srv::AnalyzeMep::Request>();
+  request->emg_channel = trial.mep_emg_channel;
 
-  auto future_goal_handle = analyze_mep_client->async_send_goal(goal);
+  request->mep_time_window_start = trial.mep_time_window_start;
+  request->mep_time_window_end = trial.mep_time_window_end;
 
-  /* Wait for the goal handle. */
-  if (future_goal_handle.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to send MEP goal");
+  request->preactivation_check_enabled = trial.preactivation_check_enabled;
+  request->preactivation_check_time_window_start = trial.preactivation_check_time_window_start;
+  request->preactivation_check_time_window_end = trial.preactivation_check_time_window_end;
+  request->preactivation_check_voltage_range_limit = trial.preactivation_check_voltage_range_limit;
+
+  auto future = analyze_mep_client->async_send_request(request);
+  if (future.wait_for(10s) != std::future_status::ready) {
+    RCLCPP_ERROR(this->get_logger(), "Service /mtms/mep/analyze timed out");
     return nullptr;
   }
 
-  auto goal_handle = future_goal_handle.get();
-  if (!goal_handle) {
-    RCLCPP_ERROR(this->get_logger(), "MEP goal was rejected by server");
-    return nullptr;
-  }
-
-  auto future_result = analyze_mep_client->async_get_result(goal_handle);
-  if (future_result.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Failed to get MEP result");
-    return nullptr;
-  }
-
-  auto wrapped_result = future_result.get();
-  if (wrapped_result.code != rclcpp_action::ResultCode::SUCCEEDED || wrapped_result.result == nullptr) {
-    RCLCPP_WARN(this->get_logger(), "Failed to analyze MEP.");
-    return nullptr;
-  }
-
-  return wrapped_result.result;
+  return future.get();
 }
 
 /* Goal handling */
@@ -611,14 +595,20 @@ std::pair<bool, mtms_trial_interfaces::msg::TrialResult> TrialPerformerNode::per
 
     /* Analyze MEP if needed. */
     if (trial.analyze_mep) {
-      auto mep_result = analyze_mep(trial.mep_config, start_time);
+      auto mep_result = analyze_mep(trial, start_time);
       if (mep_result == nullptr) {
         return {false, trial_result};
       }
-      trial_result.mep = mep_result->mep;
-      success = success && mep_result->success;
+      trial_result.mep_amplitude = mep_result->amplitude;
+      trial_result.mep_latency = mep_result->latency;
+      trial_result.mep_emg_buffer = mep_result->emg_buffer;
 
-      if (!mep_result->success) {
+      const bool mep_ok =
+          mep_result->preactivation_passed &&
+          (mep_result->status == mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR);
+      success = success && mep_ok;
+
+      if (!mep_ok) {
         RCLCPP_WARN(this->get_logger(), "MEP analysis failed.");
       }
     }

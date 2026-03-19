@@ -8,11 +8,6 @@ from waveform_interfaces.msg import (
     WaveformPiece,
     Waveform
 )
-from mep_interfaces.msg import (
-    MepConfiguration,
-    PreactivationCheck
-)
-from mep_interfaces.msg import TimeWindow
 from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget
@@ -134,22 +129,15 @@ api.send_pulse(
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on the first EMG channel, coinciding with the pulse.
-mep_configuration = MepConfiguration(
-    emg_channel=0,  # Indexing starts from 0
-
-    time_window=TimeWindow(
-        start=0.020,  # in ms, after the stimulation pulse
-        end=0.040,  # in ms
-    ),
-    preactivation_check=PreactivationCheck(
-        enabled=True,
-        time_window=TimeWindow(
-            start=-0.040,  # in ms, minus sign indicates that the window starts before the stimulation pulse
-            end=-0.020,
-        ),
-        voltage_range_limit=70.0,  # Maximum allowed voltage range inside the time window, in uV.
-    ),
-)
+mep_configuration = {
+    "emg_channel": 0,  # Indexing starts from 0
+    "mep_time_window_start": 0.020,  # s, after stimulation pulse
+    "mep_time_window_end": 0.040,  # s
+    "preactivation_check_enabled": True,
+    "preactivation_check_time_window_start": -0.040,  # s, before stimulation pulse
+    "preactivation_check_time_window_end": -0.020,  # s
+    "preactivation_check_voltage_range_limit": 70.0,  # uV
+}
 
 mep, errors = api.analyze_mep(
     time=time,
@@ -301,22 +289,15 @@ api.send_timed_default_pulse_to_all_channels(
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
 # Analyze MEP on the first EMG channel, coinciding with the pulse.
-mep_configuration = MepConfiguration(
-    emg_channel=0,  # Indexing starts from 0
-
-    time_window=TimeWindow(
-        start=0.020,  # in ms, after the stimulation pulse
-        end=0.040,  # in ms
-    ),
-    preactivation_check=PreactivationCheck(
-        enabled=True,
-        time_window=TimeWindow(
-            start=-0.040,  # in ms, minus sign indicates that the window starts before the stimulation pulse
-            end=-0.020,
-        ),
-        voltage_range_limit=70.0,  # Maximum allowed voltage range inside the time window, in uV.
-    ),
-)
+mep_configuration = {
+    "emg_channel": 0,  # Indexing starts from 0
+    "mep_time_window_start": 0.020,  # s, after stimulation pulse
+    "mep_time_window_end": 0.040,  # s
+    "preactivation_check_enabled": True,
+    "preactivation_check_time_window_start": -0.040,  # s, before stimulation pulse
+    "preactivation_check_time_window_end": -0.020,  # s
+    "preactivation_check_voltage_range_limit": 70.0,  # uV
+}
 
 mep, errors = api.analyze_mep(
     time=time,

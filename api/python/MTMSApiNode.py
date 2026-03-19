@@ -1,5 +1,4 @@
 import rclpy
-from rclpy.action import ActionClient
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, DurabilityPolicy, ReliabilityPolicy, HistoryPolicy
@@ -25,7 +24,7 @@ from event_interfaces.msg import (
     TriggerOutFeedback,
 )
 
-from mep_interfaces.action import AnalyzeMep
+from mep_interfaces.srv import AnalyzeMep
 
 from targeting_interfaces.srv import (
     GetTargetVoltages,
@@ -59,7 +58,7 @@ class MTMSApiNode(Node):
 
     ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/get_allowed', GetStimulationAllowed)
 
-    ROS_ACTION_ANALYZE_MEP = ('/mtms/mep/analyze', AnalyzeMep)
+    ROS_SERVICE_ANALYZE_MEP = ('/mtms/mep/analyze', AnalyzeMep)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -74,10 +73,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_IS_STIMULATION_ALLOWED,
         ROS_SERVICE_REQUEST_EVENTS,
         ROS_SERVICE_TRIGGER_EVENTS,
-    )
-
-    ROS_ACTIONS = (
-        ROS_ACTION_ANALYZE_MEP,
+        ROS_SERVICE_ANALYZE_MEP,
     )
 
     def __init__(self, channel_count, verbose):
@@ -104,18 +100,6 @@ class MTMSApiNode(Node):
                 self.logger.info('Service {} not available, waiting...'.format(topic))
 
             self.ros_service_clients[topic] = client
-
-        # Action clients
-
-        self.ros_action_clients = {}
-
-        for topic, action_type in self.ROS_ACTIONS:
-            # Use ReentrantCallbackGroup to allow multiple actions to be executed simultaneously.
-            client = ActionClient(self, action_type, topic, callback_group=ReentrantCallbackGroup())
-            while not client.wait_for_server(timeout_sec=1.0):
-                self.logger.info('Action {} not available, waiting...'.format(topic))
-
-            self.ros_action_clients[topic] = client
 
         # Have a queue of only one message so that only the latest system state is ever received.
         self.system_state_subscriber = self.create_subscription(SystemState, '/mtms/device/system_state', self.handle_system_state, 1)
@@ -427,41 +411,29 @@ class MTMSApiNode(Node):
     # MEP analysis
 
     def analyze_mep(self, time, mep_configuration):
-        topic, action_type = self.ROS_ACTION_ANALYZE_MEP
+        topic, service_type = self.ROS_SERVICE_ANALYZE_MEP
+        client = self.ros_service_clients[topic]
 
-        client = self.ros_action_clients[topic]
+        request = service_type.Request()
+        request.emg_channel = int(mep_configuration["emg_channel"])
 
-        # Define goal.
-        goal = action_type.Goal()
+        request.mep_time_window_start = float(mep_configuration["mep_time_window_start"])
+        request.mep_time_window_end = float(mep_configuration["mep_time_window_end"])
 
-        goal.time = time
-        goal.mep_configuration = mep_configuration
+        request.preactivation_check_enabled = bool(mep_configuration["preactivation_check_enabled"])
+        request.preactivation_check_time_window_start = float(mep_configuration["preactivation_check_time_window_start"])
+        request.preactivation_check_time_window_end = float(mep_configuration["preactivation_check_time_window_end"])
+        request.preactivation_check_voltage_range_limit = float(mep_configuration["preactivation_check_voltage_range_limit"])
 
-        # Send goal to ROS action.
-        send_goal_future = client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, send_goal_future)
+        response = self.call_service(client, request)
 
-        goal_handle = send_goal_future.result()
-        if not goal_handle.accepted:
-            self.logger.info('Analyze MEP goal rejected.')
-            return None, None
+        mep = {
+            "amplitude": response.amplitude,
+            "latency": response.latency,
+            "emg_buffer": response.emg_buffer,
+        }
 
-        # Get result from ROS action.
-        get_result_future = goal_handle.get_result_async()
-
-        # XXX: Because of the custom SIGINT handler (defined in the constructor of MTMSApi class),
-        #   waiting for the MEP here cannot be interrupted by Ctrl+C. It turned out to be hard to
-        #   keep ROS in a working state after Ctrl+C without overriding the default SIGINT handler,
-        #   hence the current solution. Maybe this could be looked further into at some point.
-        #
-        rclpy.spin_until_future_complete(self, get_result_future)
-
-        result = get_result_future.result()
-        if result is None:
-            self.logger.info('Analyze MEP result failed.')
-            return None, None
-
-        return result.result.mep, result.result.errors
+        return mep, response.status
 
     # Experiment
     def get_experiment_handler(self):

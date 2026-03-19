@@ -1,10 +1,5 @@
 from MTMSApi import MTMSApi
 
-from mep_interfaces.msg import (
-    MepConfiguration,
-    PreactivationCheck
-)
-from mep_interfaces.msg import TimeWindow
 from experiment_interfaces.msg import Experiment, ExperimentMetadata, IntertrialInterval
 from targeting_interfaces.msg import (
     TargetingAlgorithm,
@@ -40,21 +35,15 @@ target = ElectricTarget(
     ),
 )
 
-mep_config = MepConfiguration(
-    emg_channel=0,  # EMG channel 0 corresponds to the first EMG channel in the amplifier.
-    time_window=TimeWindow(
-        start=0.020,
-        end=0.040,
-    ),
-    preactivation_check=PreactivationCheck(
-        enabled=True,
-        time_window=TimeWindow(
-            start=-0.040,
-            end=-0.020,
-        ),
-        voltage_range_limit=70.0,
-    ),
-)
+mep_config = {
+    "emg_channel": 0,  # EMG channel 0 corresponds to the first EMG channel in the amplifier.
+    "mep_time_window_start": 0.020,
+    "mep_time_window_end": 0.040,
+    "preactivation_check_enabled": True,
+    "preactivation_check_time_window_start": -0.040,
+    "preactivation_check_time_window_end": -0.020,
+    "preactivation_check_voltage_range_limit": 70.0,
+}
 
 # Enable both trigger outs, coinciding with the beginning of the trial with zero delay.
 triggers = [

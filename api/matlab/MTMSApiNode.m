@@ -102,7 +102,7 @@ classdef MTMSApiNode < handle
             obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/mtms/waveforms/get_multipulse_waveforms", "targeting_interfaces/GetMultipulseWaveforms");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/mtms/waveforms/reverse_polarity", "targeting_interfaces/ReversePolarity");
 
-            obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
+            obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze", "mep_interfaces/AnalyzeMep");
         end
 
         % Starting and stopping
@@ -460,28 +460,38 @@ classdef MTMSApiNode < handle
 
             request = ros2message(client);
 
-            request.time = time;
-            request.mep_configuration.emg_channel = uint8(mep_configuration.emg_channel);
-            request.mep_configuration.time_window = mep_configuration.time_window;
-            request.mep_configuration.preactivation_check = mep_configuration.preactivation_check;
+            request.emg_channel = uint8(mep_configuration.emg_channel);
+            request.mep_time_window_start = double(mep_configuration.mep_time_window_start);
+            request.mep_time_window_end = double(mep_configuration.mep_time_window_end);
+
+            request.preactivation_check_enabled = logical(mep_configuration.preactivation_check_enabled);
+            request.preactivation_check_time_window_start = double(mep_configuration.preactivation_check_time_window_start);
+            request.preactivation_check_time_window_end = double(mep_configuration.preactivation_check_time_window_end);
+            request.preactivation_check_voltage_range_limit = double(mep_configuration.preactivation_check_voltage_range_limit);
 
             try
                 response = call(client, request, 'timeout', 5);
 
                 % If successful, assign the output from the response.
-                mep = response.mep;
-                errors = response.errors;
+                mep = struct();
+                mep.amplitude = response.amplitude;
+                mep.latency = response.latency;
+                mep.emg_buffer = response.emg_buffer;
+
+                errors = response.status;
 
             catch ME
                 warning('MEP analysis service call timed out or failed.');
 
                 % Return zeros to indicate failed call.
+                mep = struct();
                 mep.amplitude = 0;
                 mep.latency = 0;
-                errors = "Unkown";
+                mep.emg_buffer = [];
+                errors = uint8(255);
 
                 % Re-initialize the client
-                obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze_service", "mep_interfaces/AnalyzeMepService");
+                obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze", "mep_interfaces/AnalyzeMep");
 
                 % Give a moment for the new client to establish connection
                 pause(0.5);

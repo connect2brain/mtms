@@ -924,7 +924,7 @@ class MTMSApi:
         tuple
             A tuple containing the MEP message, consisting of the fields amplitude and latency, and any errors encountered during the analysis.
         """
-        mep, errors = self.node.analyze_mep(
+        mep, status = self.node.analyze_mep(
             time=time,
             mep_configuration=mep_configuration,
         )
@@ -932,12 +932,15 @@ class MTMSApi:
         # HACK: ROS2 doesn't support NaN values, therefore they are encoded as 0.0 values. Do the decoding
         #   here. Maybe it would better to use non-zero errors instead as criterion for returning Nones?
         #
-        if mep.amplitude == 0.0:
-            mep.amplitude = None
-        if mep.latency == 0.0:
-            mep.latency = None
+        if mep is None:
+            return None, None
 
-        return mep, errors
+        if mep["amplitude"] == 0.0:
+            mep["amplitude"] = None
+        if mep["latency"] == 0.0:
+            mep["latency"] = None
+
+        return mep, status
 
     # Experiment
     def get_experiment_handler(self):

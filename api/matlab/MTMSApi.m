@@ -753,24 +753,19 @@ classdef MTMSApi < handle
             %    exceeds this limit, the preactivation check will fail.
             % :type preactivation_voltage_range_limit: float
             %
-            % :return: MEP configuration
-            % :rtype: ROS message (MepConfiguration)
+            % :return: MEP configuration (struct matching mep_interfaces/AnalyzeMep request)
+            % :rtype: struct
 
-            mep_configuration = ros2message('mep_interfaces/MepConfiguration');
-
+            mep_configuration = struct();
             mep_configuration.emg_channel = emg_channel;
 
-            mep_configuration.time_window.start = mep_start_time;
-            mep_configuration.time_window.end = mep_end_time;
+            mep_configuration.mep_time_window_start = mep_start_time;
+            mep_configuration.mep_time_window_end = mep_end_time;
 
-            preactivation_check = ros2message('mep_interfaces/PreactivationCheck');
-
-            preactivation_check.enabled = preactivation_check_enabled;
-            preactivation_check.time_window.start = preactivation_start_time;
-            preactivation_check.time_window.end = preactivation_end_time;
-            preactivation_check.voltage_range_limit = preactivation_voltage_range_limit;
-
-            mep_configuration.preactivation_check = preactivation_check;
+            mep_configuration.preactivation_check_enabled = preactivation_check_enabled;
+            mep_configuration.preactivation_check_time_window_start = preactivation_start_time;
+            mep_configuration.preactivation_check_time_window_end = preactivation_end_time;
+            mep_configuration.preactivation_check_voltage_range_limit = preactivation_voltage_range_limit;
         end
 
         function [target] = create_target(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
