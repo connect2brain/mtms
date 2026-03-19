@@ -28,6 +28,7 @@ COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
 COPY interfaces/system_interfaces interfaces/system_interfaces/
 COPY interfaces/trial_interfaces interfaces/trial_interfaces/
+COPY interfaces/neuronavigation_interfaces interfaces/neuronavigation_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

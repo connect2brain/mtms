@@ -5,7 +5,7 @@ from experiment_interfaces.msg import ExperimentFeedback
 from experiment_interfaces.srv import PerformExperiment
 from experiment_interfaces.srv import CancelExperiment, PauseExperiment, ResumeExperiment
 
-from mtms_trial_interfaces.srv import ValidateTrial
+from trial_interfaces.srv import ValidateTrial
 
 
 class ExperimentHandler:

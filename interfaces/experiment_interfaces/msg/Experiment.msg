@@ -1,6 +1,6 @@
 ExperimentMetadata metadata
 
-mtms_trial_interfaces/Trial[] trials
+trial_interfaces/Trial[] trials
 IntertrialInterval intertrial_interval
 
 bool randomize_trials

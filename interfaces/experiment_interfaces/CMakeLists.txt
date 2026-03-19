@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(mep_interfaces REQUIRED)
 find_package(targeting_interfaces REQUIRED)
-find_package(mtms_trial_interfaces REQUIRED)
+find_package(trial_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -39,7 +39,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/PauseExperiment.srv"
   "srv/ResumeExperiment.srv"
 
-  DEPENDENCIES mep_interfaces targeting_interfaces mtms_trial_interfaces
+  DEPENDENCIES mep_interfaces targeting_interfaces trial_interfaces
 )
 
 ament_package()

@@ -5,7 +5,7 @@ from targeting_interfaces.msg import (
     TargetingAlgorithm,
     ElectricTarget,
 )
-from mtms_trial_interfaces.msg import (
+from trial_interfaces.msg import (
     Trial,
 )
 
