@@ -28,6 +28,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/ValidateTrial.srv"
   "srv/PerformTrial.srv"
+  "srv/SetVoltages.srv"
 
   DEPENDENCIES mep_interfaces targeting_interfaces
 )

@@ -10,7 +10,7 @@ from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFe
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
-from experiment_interfaces.srv import SetVoltages
+from trial_interfaces.srv import SetVoltages
 from system_interfaces.msg import Session, SessionState
 
 

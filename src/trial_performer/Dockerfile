@@ -22,11 +22,9 @@ WORKDIR /app
 COPY interfaces/event_interfaces interfaces/event_interfaces/
 COPY interfaces/experiment_interfaces interfaces/experiment_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
-COPY interfaces/neuronavigation_interfaces interfaces/neuronavigation_interfaces/
 COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
 
-COPY interfaces/eeg_interfaces interfaces/eeg_interfaces/
 COPY interfaces/system_interfaces interfaces/system_interfaces/
 COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/trial_interfaces interfaces/trial_interfaces/

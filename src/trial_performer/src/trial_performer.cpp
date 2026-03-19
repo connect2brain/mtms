@@ -55,7 +55,7 @@ void TrialPerformerNode::initialize_service_clients() {
   }
 
   /* Service client for setting voltages. */
-  set_voltages_client = this->create_client<experiment_interfaces::srv::SetVoltages>("/mtms/trial/set_voltages");
+  set_voltages_client = this->create_client<trial_interfaces::srv::SetVoltages>("/mtms/trial/set_voltages");
   while (!set_voltages_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/trial/set_voltages not available, waiting...");
   }
@@ -427,7 +427,7 @@ void TrialPerformerNode::request_events(const std::vector<event_interfaces::msg:
 /* Action clients */
 
 bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
-  auto request = std::make_shared<experiment_interfaces::srv::SetVoltages::Request>();
+  auto request = std::make_shared<trial_interfaces::srv::SetVoltages::Request>();
   request->voltages = voltages;
 
   auto future = set_voltages_client->async_send_request(request);

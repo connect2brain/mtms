@@ -12,8 +12,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "trial_interfaces/msg/trial.hpp"
 #include "trial_interfaces/srv/perform_trial.hpp"
-
-#include "experiment_interfaces/srv/set_voltages.hpp"
+#include "trial_interfaces/srv/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/srv/request_events.hpp"
@@ -43,7 +42,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp::Service<trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
-  rclcpp::Client<experiment_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
+  rclcpp::Client<trial_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp::Client<targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
   rclcpp::Client<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
   rclcpp::Client<targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;

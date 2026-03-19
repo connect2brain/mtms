@@ -34,7 +34,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CountValidTrials.srv"
   "srv/LogTrial.srv"
   "srv/PerformExperiment.srv"
-  "srv/SetVoltages.srv"
 
   "srv/CancelExperiment.srv"
   "srv/PauseExperiment.srv"
