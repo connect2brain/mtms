@@ -93,7 +93,7 @@ target_include_directories(start_device_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_device_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
+ament_target_dependencies(start_device_handler rclcpp std_msgs std_srvs mtms_device_interfaces realtime_utils)
 
 # Start session handler
 
@@ -150,7 +150,7 @@ target_include_directories(stop_device_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_device_handler rclcpp std_msgs mtms_device_interfaces realtime_utils)
+ament_target_dependencies(stop_device_handler rclcpp std_msgs std_srvs mtms_device_interfaces realtime_utils)
 
 # Allow stimulation handler
 
