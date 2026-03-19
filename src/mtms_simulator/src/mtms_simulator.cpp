@@ -274,7 +274,8 @@ bool MTMSSimulator::validate_charge_or_discharge(
     error_value = event_interfaces::msg::ChargeError::INVALID_CHANNEL;
     return false;
   }
-  if (target_voltage >= max_voltage_) {
+  // `max_voltage_` is the inclusive maximum supported voltage.
+  if (target_voltage > max_voltage_) {
     RCLCPP_ERROR(
       this->get_logger(),
       "Too high voltage. Requested %u, maximum supported is %u",
