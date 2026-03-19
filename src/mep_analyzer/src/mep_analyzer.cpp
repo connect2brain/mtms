@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cinttypes>
 #include <limits>
 #include <thread>
 
@@ -66,6 +67,7 @@ void MepAnalyzerNode::device_info_callback(const eeg_interfaces::msg::EegDeviceI
     const double fs_hz = static_cast<double>(*sampling_frequency_hz);
     const size_t capacity = static_cast<size_t>(std::ceil(eeg_bufferWINDOW_S * fs_hz));
     eeg_buffer.reset(std::max<size_t>(capacity, 1));
+    RCLCPP_INFO(this->get_logger(), "Initialized EEG buffer: sampling_frequency=%.3fHz capacity=%zu window=%.3fs", fs_hz, eeg_buffer.max_size(), eeg_bufferWINDOW_S);
   }
 
   buffer_cv.notify_all();
@@ -83,6 +85,8 @@ void MepAnalyzerNode::eeg_sample_callback(const eeg_interfaces::msg::Sample::Sha
   if (last_sample_index.has_value()) {
     const uint64_t expected = *last_sample_index + 1;
     if (msg->sample_index != expected) {
+      RCLCPP_WARN(this->get_logger(), "Sample index mismatch: expected=%" PRIu64 " got=%" PRIu64, expected, msg->sample_index);
+
       // Non-contiguous sample indices indicate a gap (drop) or reset.
       samples_dropped_counter++;
     }
@@ -91,6 +95,7 @@ void MepAnalyzerNode::eeg_sample_callback(const eeg_interfaces::msg::Sample::Sha
 
   if (msg->trigger_a) {
     last_trigger_a_time_s = msg->time;
+    RCLCPP_INFO(this->get_logger(), "Trigger_a received: time=%.6f", msg->time);
   }
 
   eeg_buffer.append(*msg);
@@ -182,6 +187,8 @@ void MepAnalyzerNode::analyze_mep_handler(
   const std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Request> request,
   std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> response)
 {
+  RCLCPP_INFO(this->get_logger(), "analyze_mep_handler called: emg_channel=%u mep_window=[%.3f,%.3f] preactivation_enabled=%s pre_window=[%.3f,%.3f] pre_range_limit=%.3f", static_cast<unsigned>(request->emg_channel), request->mep_time_window_start, request->mep_time_window_end, request->preactivation_check_enabled ? "true" : "false", request->preactivation_check_time_window_start, request->preactivation_check_time_window_end, request->preactivation_check_voltage_range_limit);
+
   response->preactivation_passed = true;
   response->amplitude = 0.0;
   response->latency = 0.0;
@@ -191,6 +198,7 @@ void MepAnalyzerNode::analyze_mep_handler(
   double stimulation_time_s = 0.0;
   if (!wait_for_next_stimulation_time(stimulation_time_s)) {
     response->status = mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
+    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler aborted before next trigger: status=%d", response->status);
     return;
   }
 
@@ -212,6 +220,7 @@ void MepAnalyzerNode::analyze_mep_handler(
 
   if (!wait_until_buffer_covers(required_start, required_end)) {
     response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler failed to get required EEG coverage: status=%d required=[%.3f,%.3f]", response->status, required_start, required_end);
     return;
   }
 
@@ -227,12 +236,16 @@ void MepAnalyzerNode::analyze_mep_handler(
 
   if (snapshot.empty()) {
     response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler snapshot is empty: status=%d", response->status);
     return;
   }
+
+  RCLCPP_INFO(this->get_logger(), "analyze_mep_handler snapshot ready: samples=%zu time_range=[%.3f,%.3f]", snapshot.size(), snapshot.front().time, snapshot.back().time);
 
   // Validate EMG channel against first sample in snapshot.
   if (request->emg_channel >= snapshot.front().emg.size()) {
     response->status = mep_interfaces::srv::AnalyzeMep::Response::INVALID_EMG_CHANNEL;
+    RCLCPP_WARN(this->get_logger(), "analyze_mep_handler invalid emg_channel=%u (snapshot emg.size()=%zu): status=%d", static_cast<unsigned>(request->emg_channel), snapshot.front().emg.size(), response->status);
     return;
   }
 
@@ -306,6 +319,8 @@ void MepAnalyzerNode::analyze_mep_handler(
   if (dropped_after != dropped_before) {
     response->status = mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
   }
+
+  RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, response->preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
 }
 
 int main(int argc, char ** argv)
