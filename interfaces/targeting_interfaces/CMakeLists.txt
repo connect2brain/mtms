@@ -26,7 +26,6 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CoilTarget.msg"
   "msg/ElectricTarget.msg"
-  "msg/TargetingAlgorithm.msg"
 
   "srv/ApproximateWaveform.srv"
   "srv/EstimateVoltageAfterPulse.srv"

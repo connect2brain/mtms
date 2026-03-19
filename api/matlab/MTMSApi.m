@@ -643,24 +643,6 @@ classdef MTMSApi < handle
             waveform = obj.node.reverse_polarity(waveform);
         end
 
-        function [algorithm] = get_targeting_algorithm(obj, algorithm_str)
-        % Return the targeting algorithm.
-        %
-        % :param algorithm_str: Either 'least_squares' or 'genetic'.
-        % :type algorithm_str: string
-        %
-        % :return: Targeting algorithm.
-        % :rtype: ROS message (TargetingAlgorithm)
-
-            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
-            if strcmp(algorithm_str, 'least_squares')
-                algorithm.value = algorithm.LEAST_SQUARES;
-            elseif strcmp(algorithm_str, 'genetic')
-                algorithm.value = algorithm.GENETIC;
-            else
-                error('Unknown targeting algorithm: %s', algorithm_str);
-            end
-        end
 
         function [voltages, reverse_polarities] = get_target_voltages(obj, target)
         % Return the target voltages (V), given a target ROS message.
@@ -674,7 +656,7 @@ classdef MTMSApi < handle
             [voltages, reverse_polarities] = obj.node.get_target_voltages(target);
         end
 
-        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm)
+        function maximum_intensity = get_maximum_intensity(obj, displacement_x, displacement_y, rotation_angle, algorithm_str)
         % Return the maximum intensity given the displacements and rotation angle.
         %
         % :param displacement_x: Displacement in the x direction.
@@ -683,9 +665,20 @@ classdef MTMSApi < handle
         % :type displacement_y: int
         % :param rotation_angle: Rotation angle in degrees.
         % :type rotation_angle: int
+        % :param algorithm_str: Targeting algorithm, either 'least_squares' or 'genetic'.
+        % :type algorithm_str: string
         %
         % :return: The maximum intensity.
         % :rtype: float
+
+            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+            if strcmp(algorithm_str, 'least_squares')
+                algorithm.value = algorithm.LEAST_SQUARES;
+            elseif strcmp(algorithm_str, 'genetic')
+                algorithm.value = algorithm.GENETIC;
+            else
+                error('Unknown targeting algorithm: %s', algorithm_str);
+            end
 
             maximum_intensity = obj.node.get_maximum_intensity(displacement_x, displacement_y, rotation_angle, algorithm);
         end
@@ -768,7 +761,7 @@ classdef MTMSApi < handle
             mep_configuration.preactivation_check_voltage_range_limit = preactivation_voltage_range_limit;
         end
 
-        function [target] = create_target(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm)
+        function [target] = create_target(obj, displacement_x, displacement_y, rotation_angle, intensity, algorithm_str)
             % Create a target ROS message.
             %
             % :param displacement_x: Displacement in the x direction.
@@ -779,8 +772,8 @@ classdef MTMSApi < handle
             % :type rotation_angle: int
             % :param intensity: Intensity value.
             % :type intensity: int
-            % :param algorithm: Targeting algorithm.
-            % :type algorithm: ROS message (TargetingAlgorithm)
+            % :param algorithm_str: Targeting algorithm, either 'least_squares' or 'genetic'.
+            % :type algorithm_str: string
             %
             % :return: Target message.
             % :rtype: ROS message (ElectricTarget)
@@ -804,6 +797,15 @@ classdef MTMSApi < handle
             assert(intensity >= 0 && intensity <= 255 && mod(intensity, 1) == 0, ...
                 "Intensity must be an integer in range 0-255.");
             target.intensity = uint8(intensity);
+
+            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+            if strcmp(algorithm_str, 'least_squares')
+                algorithm.value = algorithm.LEAST_SQUARES;
+            elseif strcmp(algorithm_str, 'genetic')
+                algorithm.value = algorithm.GENETIC;
+            else
+                error('Unknown targeting algorithm: %s', algorithm_str);
+            end
 
             target.algorithm = algorithm;
         end

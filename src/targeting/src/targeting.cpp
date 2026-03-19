@@ -6,7 +6,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-#include "targeting_interfaces/msg/targeting_algorithm.hpp"
+#include "targeting_interfaces/msg/electric_target.hpp"
 
 #include "targeting_interfaces/srv/get_target_voltages.hpp"
 #include "targeting_interfaces/srv/get_maximum_intensity.hpp"
@@ -42,8 +42,8 @@ const uint16_t NUM_OF_ROTATION_ANGLES = MAX_ROTATION_ANGLE + 1;
 const uint8_t NUM_OF_ALGORITHMS = 2;
 
 std::map<uint8_t, std::string> algorithmMap = {
-    {targeting_interfaces::msg::TargetingAlgorithm::LEAST_SQUARES, "least-squares"},
-    {targeting_interfaces::msg::TargetingAlgorithm::GENETIC, "genetic"}
+    {targeting_interfaces::msg::ElectricTarget::LEAST_SQUARES, "least-squares"},
+    {targeting_interfaces::msg::ElectricTarget::GENETIC, "genetic"}
 };
 
 class Target {
@@ -99,7 +99,7 @@ public:
       int8_t displacement_x = request->target.displacement_x;
       int8_t displacement_y = request->target.displacement_y;
       int16_t rotation_angle = request->target.rotation_angle;
-      uint8_t algorithm = request->target.algorithm.value;
+      uint8_t algorithm = request->target.algorithm;
       uint8_t intensity = request->target.intensity;
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for channel voltages: (x, y, angle, intensity) = (%d, %d, %d, %d) with algorithm %s",
@@ -149,7 +149,7 @@ public:
       int8_t displacement_x = request->displacement_x;
       int8_t displacement_y = request->displacement_y;
       int16_t rotation_angle = request->rotation_angle;
-      uint8_t algorithm = request->algorithm.value;
+      uint8_t algorithm = request->algorithm;
 
       RCLCPP_INFO(rclcpp::get_logger("targeting"), "Request received for maximum intensity: (x, y, angle) = (%d, %d, %d) with algorithm %s",
         displacement_x,

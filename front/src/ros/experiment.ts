@@ -157,7 +157,7 @@ export const visualizeTargets = (targets: any, is_ordered: boolean, callback: ()
 const pauseExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/pause',
-  serviceType: 'experiment_interfaces/PauseExperiment',
+  serviceType: 'std_srvs/Trigger',
 })
 
 export const pauseExperiment = (callback: () => void) => {
@@ -183,7 +183,7 @@ export const pauseExperiment = (callback: () => void) => {
 const resumeExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/resume',
-  serviceType: 'experiment_interfaces/ResumeExperiment',
+  serviceType: 'std_srvs/Trigger',
 })
 
 export const resumeExperiment = (callback: () => void) => {
@@ -209,7 +209,7 @@ export const resumeExperiment = (callback: () => void) => {
 const cancelExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/cancel',
-  serviceType: 'experiment_interfaces/CancelExperiment',
+  serviceType: 'std_srvs/Trigger',
 })
 
 export const cancelExperiment = (callback: () => void) => {

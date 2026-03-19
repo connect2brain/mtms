@@ -1,10 +1,7 @@
 from MTMSApi import MTMSApi
 
 from experiment_interfaces.msg import Experiment, IntertrialInterval
-from targeting_interfaces.msg import (
-    TargetingAlgorithm,
-    ElectricTarget,
-)
+from targeting_interfaces.msg import ElectricTarget
 from trial_interfaces.msg import (
     Trial,
 )
@@ -22,9 +19,7 @@ target = ElectricTarget(
     displacement_y=0,  # mm
     rotation_angle=45,  # deg
     intensity=10,  # V/m
-    algorithm=TargetingAlgorithm(
-        value=TargetingAlgorithm.LEAST_SQUARES,
-    ),
+    algorithm=ElectricTarget.LEAST_SQUARES,
 )
 
 mep_config = {

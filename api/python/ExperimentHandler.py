@@ -3,7 +3,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 from experiment_interfaces.msg import ExperimentFeedback
 from experiment_interfaces.srv import PerformExperiment
-from experiment_interfaces.srv import CancelExperiment, PauseExperiment, ResumeExperiment
+from std_srvs.srv import Trigger
 
 from trial_interfaces.srv import ValidateTrial
 
@@ -12,9 +12,9 @@ class ExperimentHandler:
     ROS_SERVICE_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
     ROS_TOPIC_EXPERIMENT_FEEDBACK = ('/mtms/experiment/feedback', ExperimentFeedback)
 
-    ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', CancelExperiment)
-    ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', PauseExperiment)
-    ROS_SERVICE_RESUME_EXPERIMENT = ('/mtms/experiment/resume', ResumeExperiment)
+    ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', Trigger)
+    ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', Trigger)
+    ROS_SERVICE_RESUME_EXPERIMENT = ('/mtms/experiment/resume', Trigger)
 
     ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/validate', ValidateTrial)
 

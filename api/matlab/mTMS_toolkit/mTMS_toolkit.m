@@ -270,7 +270,7 @@ classdef mTMS_toolkit < handle
             % :return: target_voltages: Array of computed target voltages
             % :rtype: double array
 
-            algorithm = obj.api.get_targeting_algorithm('genetic');
+            algorithm = 'genetic';
             target = obj.api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
             [target_voltages, reverse_polarities] = obj.api.get_target_voltages(target);
             target_voltages(reverse_polarities) = -target_voltages(reverse_polarities);

@@ -5,10 +5,7 @@ from MTMSApi import MTMSApi
 from event_interfaces.msg import (
     ExecutionCondition,
 )
-from targeting_interfaces.msg import (
-    TargetingAlgorithm,
-    ElectricTarget
-)
+from targeting_interfaces.msg import ElectricTarget
 
 
 api = MTMSApi()
@@ -38,8 +35,7 @@ if use_electrical_targeting:
 
     algorithm_str = input('Algorithm, [g]enetic or [l]east squares: ')
 
-    value = TargetingAlgorithm.GENETIC if algorithm_str.lower() == 'g' else TargetingAlgorithm.LEAST_SQUARES
-    algorithm = TargetingAlgorithm(value=value)
+    algorithm = ElectricTarget.GENETIC if algorithm_str.lower() == 'g' else ElectricTarget.LEAST_SQUARES
 
     target = ElectricTarget(
         displacement_x=displacement_x,
@@ -76,7 +72,7 @@ try:
                     displacement_y,
                     rotation_angle,
                     intensity,
-                    'genetic' if algorithm.value == TargetingAlgorithm.GENETIC else 'least squares'
+                    'genetic' if algorithm == ElectricTarget.GENETIC else 'least squares'
                 ))
 
             time_before_charging = time.time()

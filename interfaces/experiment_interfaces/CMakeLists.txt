@@ -32,10 +32,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/LogTrial.srv"
   "srv/PerformExperiment.srv"
 
-  "srv/CancelExperiment.srv"
-  "srv/PauseExperiment.srv"
-  "srv/ResumeExperiment.srv"
-
   DEPENDENCIES mep_interfaces targeting_interfaces trial_interfaces
 )
 

@@ -8,10 +8,7 @@ from waveform_interfaces.msg import (
     WaveformPiece,
     Waveform
 )
-from targeting_interfaces.msg import (
-    TargetingAlgorithm,
-    ElectricTarget
-)
+from targeting_interfaces.msg import ElectricTarget
 
 api = MTMSApi()
 
@@ -153,12 +150,10 @@ latency = mep.latency
 # Define the target.
 
 # Available algorithms:
-#   TargetingAlgorithm.LEAST_SQUARES
-#   TargetingAlgorithm.GENETIC
+#   ElectricTarget.LEAST_SQUARES
+#   ElectricTarget.GENETIC
 
-algorithm = TargetingAlgorithm(
-    value=TargetingAlgorithm.GENETIC
-)
+algorithm = ElectricTarget.GENETIC
 displacement_x = 0  # mm
 displacement_y = 0  # mm
 rotation_angle = 45  # deg
@@ -189,9 +184,7 @@ api.wait_for_completion()
 
 ## Paired pulse targeting
 
-algorithm = TargetingAlgorithm(
-    value=TargetingAlgorithm.GENETIC
-)
+algorithm = ElectricTarget.GENETIC
 
 # Define the targets.
 first_target = ElectricTarget(
@@ -243,9 +236,7 @@ api.wait_for_completion()
 ## Targeting-related utilities
 
 # Get maximum intensity
-algorithm = TargetingAlgorithm(
-    value=TargetingAlgorithm.GENETIC
-)
+algorithm = ElectricTarget.GENETIC
 displacement_x = 0  # mm
 displacement_y = 0  # mm
 rotation_angle = 45  # deg
@@ -270,7 +261,7 @@ target_voltages, reverse_polarities = api.get_target_voltages(
     displacement_y=displacement_y,
     rotation_angle=rotation_angle,
     intensity=intensity,
-    algorithm=TargetingAlgorithm.GENETIC
+    algorithm=ElectricTarget.GENETIC
 )
 
 # Charge all channels to target voltages.

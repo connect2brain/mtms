@@ -106,7 +106,7 @@ api.send_immediate_custom_pulse_to_all_channels(waveforms_for_coil_set);
 
 %% Paired pulse targeting
 
-algorithm = api.get_targeting_algorithm('genetic');
+algorithm = 'genetic';
 
 displacement_x = 0;  % mm
 displacement_y = 0;  % mm
@@ -151,7 +151,7 @@ displacement_x = 1;  % mm
 displacement_y = 0;  % mm
 rotation_angle = 0;  % deg
 intensity = 5;  % V/m
-algorithm = api.get_targeting_algorithm('genetic');
+algorithm = 'genetic';
 
 target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
 
@@ -179,7 +179,7 @@ for a = 1:10
     displacement_y = round((rand(1)-0.5)*30); ;  % mm
     rotation_angle = round((rand(1))*359); ;  % deg
     intensity = 1;  % V/m
-    algorithm = api.get_targeting_algorithm('genetic');
+    algorithm = 'genetic';
     
     target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
     
@@ -207,7 +207,7 @@ displacement_x = 5;  % mm
 displacement_y = 5;  % mm
 rotation_angle = 90;  % deg
 intensity = 5;  % V/m
-algorithm = api.get_targeting_algorithm('genetic');
+algorithm = 'genetic';
 
 target = api.create_target(displacement_x, displacement_y, rotation_angle, intensity, algorithm);
 

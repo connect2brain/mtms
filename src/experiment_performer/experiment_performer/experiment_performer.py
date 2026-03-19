@@ -5,12 +5,13 @@ import numpy as np
 import uuid
 
 from experiment_interfaces.msg import ExperimentFeedback
-from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial, PerformExperiment
+from experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
 from trial_interfaces.srv import PerformTrial, ValidateTrial
 from trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool
+from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 
@@ -70,7 +71,7 @@ class ExperimentPerformerNode(Node):
         # Create service for pausing an ongoing experiment.
 
         self.pause_experiment_service = self.create_service(
-            PauseExperiment,
+            Trigger,
             '/mtms/experiment/pause',
             self.pause_experiment_callback,
             callback_group=self.callback_group,
@@ -79,7 +80,7 @@ class ExperimentPerformerNode(Node):
         # Create service for resuming an ongoing experiment.
 
         self.resume_experiment_service = self.create_service(
-            ResumeExperiment,
+            Trigger,
             '/mtms/experiment/resume',
             self.resume_experiment_callback,
             callback_group=self.callback_group,
@@ -88,7 +89,7 @@ class ExperimentPerformerNode(Node):
         # Create service for canceling an ongoing experiment.
 
         self.cancel_experiment_service = self.create_service(
-            CancelExperiment,
+            Trigger,
             '/mtms/experiment/cancel',
             self.cancel_experiment_callback,
             callback_group=self.callback_group,

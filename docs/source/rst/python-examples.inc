@@ -18,10 +18,7 @@ Initialize device and session
         PreactivationCheck
     )
     from mep_interfaces.msg import TimeWindow
-    from targeting_interfaces.msg import (
-        TargetingAlgorithm,
-        ElectricTarget
-    )
+    from targeting_interfaces.msg import ElectricTarget
 
     api = MTMSApi()
 
@@ -140,9 +137,7 @@ Targeting
 .. rubric:: Get channel voltages for targeting
 .. code-block::
 
-    algorithm = TargetingAlgorithm(
-        value=TargetingAlgorithm.GENETIC
-    )
+    algorithm = ElectricTarget.GENETIC
     displacement_x = 0  # mm
     displacement_y = 0  # mm
     rotation_angle = 45  # deg
@@ -189,9 +184,7 @@ Targeting combined with MEP analysis
 .. rubric:: Get channel voltages for targeting
 .. code-block::
 
-    algorithm = TargetingAlgorithm(
-        value=TargetingAlgorithm.GENETIC
-    )
+    algorithm = ElectricTarget.GENETIC
     displacement_x = 5  # mm
     displacement_y = 5  # mm
     rotation_angle = 90  # deg
