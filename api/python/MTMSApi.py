@@ -851,8 +851,10 @@ class MTMSApi:
         assert self.is_session_started(), "Session not started."
 
         ids = []
+        waveforms = waveforms_for_coil_set.waveforms
+
         for channel in range(self.channel_count):
-            waveform = waveforms_for_coil_set[channel]
+            waveform = waveforms[channel]
 
             id = self.send_pulse(
                 execution_condition=ExecutionCondition.TIMED,

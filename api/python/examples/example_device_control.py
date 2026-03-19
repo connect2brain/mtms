@@ -3,12 +3,14 @@ from MTMSApi import MTMSApi
 from event_interfaces.msg import (
     ExecutionCondition,
 )
+from mep_interfaces.srv import AnalyzeMep
 from waveform_interfaces.msg import (
     WaveformPhase,
     WaveformPiece,
     Waveform
 )
 from targeting_interfaces.msg import ElectricTarget
+
 
 api = MTMSApi()
 
@@ -125,7 +127,19 @@ api.send_pulse(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on the first EMG channel, coinciding with the pulse.
+# MEP analysis is based on a coinciding trigger: thus, send a trigger out together with the pulse.
+port = 1
+duration_us = 1000
+
+# Use the same time and execution condition as for the pulse.
+api.send_trigger_out(
+    port=port,
+    duration_us=duration_us,
+    execution_condition=execution_condition,
+    time=time,
+)
+
+# Analyze MEP on the first EMG channel.
 mep_configuration = {
     "emg_channel": 0,  # Indexing starts from 0
     "mep_time_window_start": 0.020,  # s, after stimulation pulse
@@ -136,13 +150,15 @@ mep_configuration = {
     "preactivation_check_voltage_range_limit": 70.0,  # uV
 }
 
-mep, errors = api.analyze_mep(
+mep, status = api.analyze_mep(
     time=time,
     mep_configuration=mep_configuration,
 )
 
-amplitude = mep.amplitude
-latency = mep.latency
+if status == AnalyzeMep.Response.NO_ERROR:
+    print(f"MEP analysis: amplitude={mep['amplitude']}, latency={mep['latency']}")
+else:
+    print(f"MEP analysis failed: status={status}")
 
 
 ## Targeting
@@ -219,13 +235,13 @@ time_between_pulses = 0.003
 
 # Send the first pulse.
 api.send_timed_pulse_to_all_channels(
-    waveforms=approximated_waveforms[0],
+    waveforms_for_coil_set=approximated_waveforms[0],
     time=time,
 )
 
 # Send the second pulse.
 api.send_timed_pulse_to_all_channels(
-    waveforms=approximated_waveforms[1],
+    waveforms_for_coil_set=approximated_waveforms[1],
     time=time + time_between_pulses,
 )
 
@@ -279,7 +295,20 @@ api.send_timed_default_pulse_to_all_channels(
 )
 # Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
 
-# Analyze MEP on the first EMG channel, coinciding with the pulse.
+# MEP analysis is based on a coinciding trigger: thus, send a trigger out together with the pulse.
+port = 1
+duration_us = 1000
+
+execution_condition = ExecutionCondition.TIMED
+
+api.send_trigger_out(
+    port=port,
+    duration_us=duration_us,
+    execution_condition=execution_condition,
+    time=time,
+)
+
+# Analyze MEP on the first EMG channel.
 mep_configuration = {
     "emg_channel": 0,  # Indexing starts from 0
     "mep_time_window_start": 0.020,  # s, after stimulation pulse
@@ -290,13 +319,15 @@ mep_configuration = {
     "preactivation_check_voltage_range_limit": 70.0,  # uV
 }
 
-mep, errors = api.analyze_mep(
+mep, status = api.analyze_mep(
     time=time,
     mep_configuration=mep_configuration,
 )
 
-amplitude = mep.amplitude
-latency = mep.latency
+if status == AnalyzeMep.Response.NO_ERROR:
+    print(f"MEP analysis: amplitude={mep['amplitude']}, latency={mep['latency']}")
+else:
+    print(f"MEP analysis failed: status={status}")
 
 ## Define custom waveform
 

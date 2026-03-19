@@ -141,7 +141,8 @@ class MTMSApiPrinter():
 
         time_str = '{}Time (s){}: {:.2f}'.format(self.TIME_COLOR, bcolors.ENDC, session.time)
         state_str = 'Device state: {}'.format(self.enum_to_str(device_state.value, MTMSApiEnums.DEVICE_STATES))
-        session_str = 'Session: {}'.format(self.enum_to_str(session_state.value, MTMSApiEnums.SESSION_STATES))
+        session_str = 'Session: {}'.format(self.enum_to_str(session_state, MTMSApiEnums.SESSION_STATES))
+
         startup_error_str = 'Startup error: {}'.format(self.enum_to_str(startup_error.value, MTMSApiEnums.STARTUP_ERRORS))
 
         status_str = ', '.join(filter(None, [
