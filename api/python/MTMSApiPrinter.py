@@ -220,7 +220,7 @@ class MTMSApiPrinter():
         attempt_number = feedback.attempt_number
         trial_number = feedback.trial_number
         total_trials = feedback.total_trials
-        experiment_state = feedback.experiment_state.value
+        experiment_state = feedback.state
 
         print('Trial: {}/{}, Attempt: {}'.format(
             trial_number, total_trials, attempt_number,

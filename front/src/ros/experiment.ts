@@ -93,7 +93,7 @@ export const performExperiment = (
 
   let previousExperimentState: number | null = null
   const onFeedback = (feedback: any) => {
-    const currentExperimentState = feedback?.experiment_state?.value
+    const currentExperimentState = feedback?.state
     if (typeof currentExperimentState === 'number') {
       if (currentExperimentState === 0) {
         experimentFeedbackTopic.unsubscribe(onFeedback)

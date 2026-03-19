@@ -513,7 +513,7 @@ export const ExperimentView = () => {
       visualizeFeedback(feedback)
       setTrialNumber(feedback.trial_number)
       setAttemptNumber(feedback.attempt_number)
-      setExperimentState(feedback.experiment_state.value)
+      setExperimentState(feedback.state)
     }
     performExperiment(experiment, done_callback, feedback_callback)
   }
