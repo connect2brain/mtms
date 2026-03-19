@@ -233,6 +233,19 @@ void MTMSSimulator::stop_session_handler(
   [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StopSession::Request> request,
   std::shared_ptr<system_interfaces::srv::StopSession::Response> response)
 {
+  session_state_value_ = system_interfaces::msg::Session::STOPPING;
+  RCLCPP_INFO(this->get_logger(), "Session stopping");
+
+  // Drive all channel voltages to 0 before reporting STOPPED.
+  for (size_t channel_idx = 0; channel_idx < num_of_channels_; ++channel_idx) {
+    event_interfaces::msg::DischargeFeedback feedback;
+    {
+      std::lock_guard<std::mutex> lock(state_mutex_);
+      feedback = channels_[channel_idx].discharge(0, static_cast<uint16_t>(channel_idx));
+    }
+    discharge_feedback_publisher_->publish(feedback);
+  }
+
   session_state_value_ = system_interfaces::msg::Session::STOPPED;
   RCLCPP_INFO(this->get_logger(), "Session stopped");
   response->success = true;
@@ -473,6 +486,11 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
 {
   RCLCPP_INFO(this->get_logger(), "Pulse requested: channel=%u, id=%u", message.channel, message.event_info.id);
 
+  if (session_not_started()) {
+    RCLCPP_WARN(this->get_logger(), "Session not started. Can't generate pulse.");
+    return;
+  }
+
   wait_for_execution_condition(
     message.event_info.execution_condition,
     message.event_info.execution_time);
@@ -500,6 +518,11 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
 
 void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message)
 {
+  if (session_not_started()) {
+    RCLCPP_WARN(this->get_logger(), "Session not started. Can't generate trigger out.");
+    return;
+  }
+
   (void)allow_trigger_out_;
   RCLCPP_INFO(this->get_logger(), "Trigger out requested: port=%u, id=%u, condition=%u, time=%.3f s", message.port, message.event_info.id,
     message.event_info.execution_condition.value, message.event_info.execution_time);
