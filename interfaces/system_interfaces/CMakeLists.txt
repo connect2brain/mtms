@@ -28,6 +28,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SessionState.msg"
   "msg/Session.msg"
 
+  "msg/TimebaseMapping.msg"
+
   "srv/StartSession.srv"
   "srv/StopSession.srv"
   "srv/GetStimulationAllowed.srv"

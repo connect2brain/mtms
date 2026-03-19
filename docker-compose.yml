@@ -153,6 +153,16 @@ services:
     privileged: true
     network_mode: host
 
+  timebase_calibrator:
+    build:
+      context: .
+      dockerfile: src/timebase_calibrator/Dockerfile
+    env_file:
+      - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    network_mode: host
+
   # eeg_gatherer:
   #   build:
   #     context: .
