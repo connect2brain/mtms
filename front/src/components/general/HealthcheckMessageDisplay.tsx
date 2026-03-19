@@ -35,11 +35,11 @@ export const HealthcheckMessageDisplay: React.FC = () => {
 
   // Prioritize mtmsDeviceHealthcheck > eegHealthcheck
   if (
-    mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.READY &&
-    mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED
+    mtmsDeviceHealthcheck?.status !== HealthcheckStatus.READY &&
+    mtmsDeviceHealthcheck?.status !== HealthcheckStatus.DISABLED
   ) {
     displayMessage = mtmsDeviceHealthcheck?.actionable_message
-  } else if (eegHealthcheck?.status.value !== HealthcheckStatus.READY) {
+  } else if (eegHealthcheck?.status !== HealthcheckStatus.READY) {
     displayMessage = eegHealthcheck?.actionable_message
   } else {
     displayMessage = 'Ready'

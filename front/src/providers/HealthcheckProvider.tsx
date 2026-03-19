@@ -10,12 +10,8 @@ export const HealthcheckStatus = {
   ERROR: 3,
 }
 
-interface HealthcheckStatusMessage {
-  value: number
-}
-
 interface Healthcheck extends ROSLIB.Message {
-  status: HealthcheckStatusMessage
+  status: number
   status_message: string
   actionable_message: string
 }

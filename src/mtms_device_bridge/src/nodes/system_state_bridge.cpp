@@ -12,7 +12,6 @@
 #include "mtms_device_interfaces/msg/system_error.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
-#include "system_interfaces/msg/healthcheck_status.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -114,7 +113,7 @@ private:
   void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
     auto healthcheck = system_interfaces::msg::Healthcheck();
 
-    healthcheck.status.value = status_value;
+    healthcheck.status = status_value;
     healthcheck.status_message = status_message;
     healthcheck.actionable_message = actionable_message;
 
@@ -248,12 +247,12 @@ private:
 
     uint8_t status_value;
     if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-      status_value = system_interfaces::msg::HealthcheckStatus::READY;
+      status_value = system_interfaces::msg::Healthcheck::READY;
       publish_healthcheck(status_value,
                           "Ready",
                           "");
     } else {
-      status_value = system_interfaces::msg::HealthcheckStatus::NOT_READY;
+      status_value = system_interfaces::msg::Healthcheck::NOT_READY;
       publish_healthcheck(status_value,
                           "mTMS device is not operational",
                           "Please start the mTMS device.");

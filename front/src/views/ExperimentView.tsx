@@ -945,7 +945,7 @@ export const ExperimentView = () => {
 
   /* Update MEP healthcheck ok status. */
   useEffect(() => {
-    setMepHealthcheckOk(mepHealthcheck?.status.value === HealthcheckStatus.READY)
+    setMepHealthcheckOk(mepHealthcheck?.status === HealthcheckStatus.READY)
   }, [mepHealthcheck])
 
   /* Keep selected EMG channel within the available range from EEG info. */

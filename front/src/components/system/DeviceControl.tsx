@@ -36,7 +36,7 @@ export const DeviceControl = () => {
       stopDevice()
     }
   }
-  return mtmsDeviceHealthcheck?.status.value !== HealthcheckStatus.DISABLED ? (
+  return mtmsDeviceHealthcheck?.status !== HealthcheckStatus.DISABLED ? (
     <StyledButton
       onClick={toggleDevice}
       disabled={

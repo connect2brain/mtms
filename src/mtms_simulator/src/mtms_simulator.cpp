@@ -15,7 +15,6 @@
 #include "event_interfaces/msg/discharge_error.hpp"
 #include "event_interfaces/msg/trigger_out_error.hpp"
 #include "mtms_device_interfaces/msg/channel_state.hpp"
-#include "system_interfaces/msg/healthcheck_status.hpp"
 #include "waveform_interfaces/msg/waveform_phase.hpp"
 
 using std::placeholders::_1;
@@ -594,7 +593,7 @@ void MTMSSimulator::event_worker_loop()
 void MTMSSimulator::publish_healthcheck() const
 {
   system_interfaces::msg::Healthcheck msg;
-  msg.status.value = system_interfaces::msg::HealthcheckStatus::READY;
+  msg.status = system_interfaces::msg::Healthcheck::READY;
   msg.status_message = "Simulator is ready";
   msg.actionable_message = "";
   healthcheck_publisher_->publish(msg);
