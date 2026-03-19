@@ -228,6 +228,17 @@ class ExperimentPerformerNode(Node):
         self.logger.info('Intertrial interval:')
         self.logger.info('  - Minimum: {}'.format(experiment.intertrial_interval_min))
         self.logger.info('  - Maximum: {}'.format(experiment.intertrial_interval_max))
+        self.logger.info('Preactivation check enabled: {}'.format(experiment.preactivation_check_enabled))
+        if experiment.preactivation_check_enabled:
+            self.logger.info('  - Preactivation check time window start: {}'.format(experiment.preactivation_check_time_window_start))
+            self.logger.info('  - Preactivation check time window end: {}'.format(experiment.preactivation_check_time_window_end))
+            self.logger.info('  - Preactivation check voltage range limit: {}'.format(experiment.preactivation_check_voltage_range_limit))
+
+        self.logger.info('MEP analysis enabled: {}'.format(experiment.analyze_mep))
+        if experiment.analyze_mep:
+            self.logger.info('  - MEP EMG channel: {}'.format(experiment.mep_emg_channel))
+            self.logger.info('  - MEP time window start: {}'.format(experiment.mep_time_window_start))
+            self.logger.info('  - MEP time window end: {}'.format(experiment.mep_time_window_end))
 
     ## Asynchronous service callers
 
