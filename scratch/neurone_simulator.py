@@ -398,14 +398,20 @@ class NeurOneSimulator:
         self.send_measurement_start_packet()
         time.sleep(0.1)  # Brief pause
 
-        # Calculate sleep time between samples
-        sleep_time = 1.0 / self.sampling_rate
-
-        start_time = time.time()
-        last_sample_time = start_time
+        # Schedule each sample attempt to absolute deadlines:
+        # target_time = start + sample_index * period.
+        # This avoids drift from per-loop processing jitter.
+        sample_period = 1.0 / self.sampling_rate
+        run_start_wall_time = time.time()
+        run_start_monotonic = time.perf_counter()
 
         try:
             while self.running:
+                target_monotonic_time = run_start_monotonic + (self.sample_index * sample_period)
+                sleep_duration = target_monotonic_time - time.perf_counter()
+                if sleep_duration > 0:
+                    time.sleep(sleep_duration)
+
                 current_time = time.time()
 
                 if self.should_drop_current_sample(current_time):
@@ -417,15 +423,8 @@ class NeurOneSimulator:
                     self.send_sample_packet()
 
                 # Check if we should stop after duration
-                if duration_seconds and (current_time - start_time) >= duration_seconds:
+                if duration_seconds and (current_time - run_start_wall_time) >= duration_seconds:
                     break
-
-                # Sleep to maintain sampling rate (accounting for processing time)
-                processing_time = current_time - last_sample_time
-                sleep_duration = max(0, sleep_time - processing_time)
-                time.sleep(sleep_duration)
-
-                last_sample_time = time.time()
 
         except KeyboardInterrupt:
             print("\nInterrupted by user")
