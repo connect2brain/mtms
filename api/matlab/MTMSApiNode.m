@@ -455,7 +455,21 @@ classdef MTMSApiNode < handle
 
         % Other
 
-        function [mep, errors] = analyze_mep(obj, time, mep_configuration)
+        function [mep, status] = analyze_mep(obj, time, mep_configuration)
+            %analyze_mep Analyze MEP
+            %
+            %   Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
+            %
+            %   :param time: Time point to analyze the MEP.
+            %   :type time: float
+            %   :param mep_configuration: Configuration object for the MEP.
+            %   :type mep_configuration: struct
+            %
+            %   :return: MEP object containing amplitude and latency, and status code.
+            %   :rtype: struct
+            %   :return: Status code.
+            %   :rtype: uint8
+
             client = obj.analyze_mep_client;
 
             request = ros2message(client);
@@ -477,7 +491,7 @@ classdef MTMSApiNode < handle
             mep.latency = response.latency;
             mep.emg_buffer = response.emg_buffer;
 
-            errors = response.status;
+            status = response.status;
         end
 
         % System state

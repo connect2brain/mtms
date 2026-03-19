@@ -24,7 +24,7 @@ api.start_session()
 target_voltage = 20
 
 # Note that the TMS channel indexing starts from 0.
-channel = 1
+channel = 0
 execution_condition = ExecutionCondition.IMMEDIATE
 
 api.send_charge(
@@ -35,7 +35,7 @@ api.send_charge(
 api.wait_for_completion()
 
 # Execute pulse on channel 0, using the default waveform.
-channel = 2
+channel = 0
 
 waveform = api.get_default_waveform(channel)
 reverse_polarity = False
@@ -151,7 +151,6 @@ mep_configuration = {
 }
 
 mep, status = api.analyze_mep(
-    time=time,
     mep_configuration=mep_configuration,
 )
 

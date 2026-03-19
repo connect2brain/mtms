@@ -410,7 +410,7 @@ class MTMSApiNode(Node):
 
     # MEP analysis
 
-    def analyze_mep(self, time, mep_configuration):
+    def analyze_mep(self, mep_configuration):
         topic, service_type = self.ROS_SERVICE_ANALYZE_MEP
         client = self.ros_service_clients[topic]
 

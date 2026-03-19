@@ -34,6 +34,13 @@ classdef MTMSApi < handle
 
         latest_event_id
         incomplete_events
+
+        MEP_STATUS_CODES = struct( ...
+            'NO_ERROR', 0, ...
+            'LATE', 1, ...
+            'SAMPLES_DROPPED', 2, ...
+            'INVALID_EMG_CHANNEL', 3, ...
+            'TIMEOUT', 4);
     end
 
     methods
@@ -671,11 +678,11 @@ classdef MTMSApi < handle
         % :return: The maximum intensity.
         % :rtype: float
 
-            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+            electric_target_msg = ros2message('targeting_interfaces/ElectricTarget');
             if strcmp(algorithm_str, 'least_squares')
-                algorithm.value = algorithm.LEAST_SQUARES;
+                algorithm = electric_target_msg.LEAST_SQUARES;
             elseif strcmp(algorithm_str, 'genetic')
-                algorithm.value = algorithm.GENETIC;
+                algorithm = electric_target_msg.GENETIC;
             else
                 error('Unknown targeting algorithm: %s', algorithm_str);
             end
@@ -704,7 +711,7 @@ classdef MTMSApi < handle
 
         % Other
 
-        function [mep, errors] = analyze_mep(obj, time, mep_configuration)
+        function [mep, status] = analyze_mep(obj, time, mep_configuration)
         % Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
         %
         % :param time: Time point to analyze the MEP.
@@ -715,7 +722,7 @@ classdef MTMSApi < handle
         % :return: A MEP object containing amplitude and latency, and an errors object containing any errors encountered during the analysis.
         % :rtype: list
 
-            [mep, errors] = obj.node.analyze_mep(time, mep_configuration);
+            [mep, status] = obj.node.analyze_mep(time, mep_configuration);
 
             % HACK: ROS2 does not support NaN in float64 type, work around by using 0.0 instead of NaN in message; map to NaN here.
             if mep.amplitude == 0.0
@@ -798,16 +805,14 @@ classdef MTMSApi < handle
                 "Intensity must be an integer in range 0-255.");
             target.intensity = uint8(intensity);
 
-            algorithm = ros2message('targeting_interfaces/TargetingAlgorithm');
+            electric_target_msg = ros2message('targeting_interfaces/ElectricTarget');
             if strcmp(algorithm_str, 'least_squares')
-                algorithm.value = algorithm.LEAST_SQUARES;
+                target.algorithm = uint8(electric_target_msg.LEAST_SQUARES);
             elseif strcmp(algorithm_str, 'genetic')
-                algorithm.value = algorithm.GENETIC;
+                target.algorithm = uint8(electric_target_msg.GENETIC);
             else
                 error('Unknown targeting algorithm: %s', algorithm_str);
             end
-
-            target.algorithm = algorithm;
         end
 
         function create_marker_msg = create_navigation_marker(obj, targets, mep)

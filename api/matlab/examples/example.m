@@ -63,7 +63,7 @@ time = api.get_time() + 3.0;
 channel = 0;
 
 api.send_pulse(channel, waveform, reverse_polarity, execution_condition, time);
-% Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
+% Do not wait for completion here, as we want to analyze the MEP simultaneously with the pulse.
 
 % MEP analysis is based on a trigger coinciding with the pulse: thus, send a trigger out.
 
@@ -88,10 +88,13 @@ preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside 
 
 mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-[mep, errors] = api.analyze_mep(time, mep_configuration);
+[mep, status] = api.analyze_mep(time, mep_configuration);
 
-amplitude = mep.amplitude;
-latency = mep.latency;
+if status == api.MEP_STATUS_CODES.NO_ERROR
+    fprintf('MEP analysis successful: amplitude=%.3f, latency=%.3f\n', mep.amplitude, mep.latency);
+else
+    fprintf('MEP analysis failed: status=%d\n', status);
+end
 
 %% Custom waveforms
 
@@ -232,9 +235,18 @@ api.wait_for_completion();
 time = api.get_time() + 3.0;
 
 api.send_timed_default_pulse_to_all_channels(reverse_polarities, time);
-% Do not wait for completion here, as we want to execute the pulse simultaneously with the MEP analysis.
+% Do not wait for completion here, as we want to analyze the MEP simultaneously with the pulse.
 
-% Analyze MEP on EMG channel 0, coinciding with the pulse.
+% MEP analysis is based on a trigger coinciding with the pulse: thus, send a trigger out.
+
+duration_us = 1000;
+
+port = 1;
+execution_condition = api.execution_conditions.TIMED;
+
+api.send_trigger_out(port, duration_us, execution_condition, time);
+
+% Analyze MEP on EMG channel 0.
 
 % Note that the EMG channel indexing starts from 0.
 emg_channel = 0;
@@ -248,10 +260,13 @@ preactivation_voltage_range_limit = 70;  % Maximum allowed voltage range inside 
 
 mep_configuration = api.create_mep_configuration(emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit);
 
-[mep, errors] = api.analyze_mep(time, mep_configuration);
+[mep, status] = api.analyze_mep(time, mep_configuration);
 
-amplitude = mep.amplitude;
-latency = mep.latency;
+if status == api.MEP_STATUS_CODES.NO_ERROR
+    fprintf('MEP analysis successful: amplitude=%.3f, latency=%.3f\n', mep.amplitude, mep.latency);
+else
+    fprintf('MEP analysis failed: status=%d\n', status);
+end
 
 %% Restart session
 

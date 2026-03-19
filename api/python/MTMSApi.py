@@ -910,14 +910,15 @@ class MTMSApi:
 
     # MEP analysis
 
-    def analyze_mep(self, time, mep_configuration):
+    def analyze_mep(self, mep_configuration):
         """
-        Analyze an MEP (motor evoked potential) by passing the time, EMG (electromyogram) channel, and MEP configuration.
+        Analyze an MEP (motor evoked potential) of the next pulse, EMG (electromyogram) channel, and MEP configuration.
+
+        The next pulse time is determined by the next trigger received in the EEG signal. If no trigger is received,
+        the MEP analysis will time out in 10 seconds.
 
         Parameters
         ----------
-        time : float
-            The time at which MEP analysis begins.
         mep_configuration : object
             Configuration object for the MEP.
 
@@ -927,7 +928,6 @@ class MTMSApi:
             A tuple containing the MEP message, consisting of the fields amplitude and latency, and any errors encountered during the analysis.
         """
         mep, status = self.node.analyze_mep(
-            time=time,
             mep_configuration=mep_configuration,
         )
 
