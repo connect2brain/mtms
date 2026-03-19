@@ -1,4 +1,5 @@
 ExperimentMetadata metadata
+string experiment_id
 
 uint16 trial_number
 

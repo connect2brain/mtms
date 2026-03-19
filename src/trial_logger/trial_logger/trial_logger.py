@@ -35,6 +35,10 @@ class TrialLoggerNode(Node):
         if not self.logs_dir:
             raise RuntimeError('MTMS_EXPERIMENT_LOGS_DIR is not set.')
 
+        self.current_experiment_id = None
+        self.current_log_file = None
+        self.current_log_filename = None
+
         # Create service for logging trial.
 
         self.service = self.create_service(
@@ -45,7 +49,7 @@ class TrialLoggerNode(Node):
 
         self.get_logger().info('Trial logs directory: {}.'.format(self.logs_dir))
 
-    def open_log_file(self, metadata):
+    def open_new_log_file(self, metadata, experiment_id):
         subject_name = self.sanitize_filename(metadata.subject_name)
         experiment_name = self.sanitize_filename(metadata.experiment_name)
 
@@ -55,40 +59,16 @@ class TrialLoggerNode(Node):
         if not os.path.exists(basepath):
             os.makedirs(basepath)
 
-        # The pattern below matches filenames with the format:
-        #
-        # YYYY-DD-MM-hh-mm-ss_[experiment_name]_[subject-name].csv
-        pattern = re.compile(r"(\d{4}-\d{2}-\d{2}-\d{2}-\d{2}-\d{2})_" + re.escape(experiment_name) + "_" + re.escape(subject_name) + r"\.csv")
+        current_timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        filename = f"{current_timestamp}_{experiment_name}_{subject_name}_{experiment_id}.csv"
+        filepath = os.path.join(basepath, filename)
 
-        matching_files = []
-        for filename in os.listdir(basepath):
-            if pattern.match(filename):
-                matching_files.append(filename)
-
-        # Sort the files based on their timestamp in descending order
-        matching_files.sort(reverse=True)
-
-        if matching_files:
-            # Take the file with the latest timestamp
-            filename = matching_files[0]
-            filepath = os.path.join(basepath, filename)
-            mode = 'a+'
-
-            new_file_created = False
-        else:
-            # Create a new file
-            current_timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            filename = f"{current_timestamp}_{experiment_name}_{subject_name}.csv"
-            filepath = os.path.join(basepath, filename)
-            mode = 'w+'
-
-            new_file_created = True
-            self.get_logger().info('New log file created!')
-
-        file = open(filepath, mode)
+        file = open(filepath, 'w+')
+        self.current_log_filename = filename
+        self.get_logger().info('New log file created!')
         self.get_logger().info('Logging into the file: {}.'.format(filename))
 
-        return file, new_file_created
+        return file
 
     def sanitize_filename(self, filename):
         # Replace any characters not in the whitelist with an underscore. The whitelist consists
@@ -127,12 +107,23 @@ class TrialLoggerNode(Node):
         )
         file.write(row)
 
-    def log_trial(self, metadata, trial_number, trial, trial_result, num_of_attempts):
-        file, new_file_created = self.open_log_file(metadata)
+    def rotate_log_file_if_needed(self, metadata, experiment_id):
+        if self.current_experiment_id == experiment_id and self.current_log_file is not None:
+            return
 
-        # If the file was just created, write the header as the first line.
-        if new_file_created:
-            self.write_header(file)
+        if self.current_log_file is not None:
+            try:
+                self.current_log_file.close()
+            except Exception:
+                pass
+
+        self.current_experiment_id = experiment_id
+        self.current_log_file = self.open_new_log_file(metadata, experiment_id)
+        self.write_header(self.current_log_file)
+
+    def log_trial(self, metadata, experiment_id, trial_number, trial, trial_result, num_of_attempts):
+        self.rotate_log_file_if_needed(metadata, experiment_id)
+        file = self.current_log_file
 
         self.log_trial_row(
             file=file,
@@ -141,18 +132,21 @@ class TrialLoggerNode(Node):
             trial_result=trial_result,
             num_of_attempts=num_of_attempts,
         )
+        file.flush()
 
     def log_trial_callback(self, request, response):
         metadata = request.metadata
+        experiment_id = request.experiment_id
         trial_number = request.trial_number
         trial = request.trial
         trial_result = request.trial_result
         num_of_attempts = request.num_of_attempts
 
-        self.get_logger().info('Logging a trial with the index {}.'.format(trial_number))
+        self.get_logger().info('Logging trial {} (experiment_id={}).'.format(trial_number, experiment_id))
 
         self.log_trial(
             metadata=metadata,
+            experiment_id=experiment_id,
             trial_number=trial_number,
             trial=trial,
             trial_result=trial_result,
@@ -163,6 +157,15 @@ class TrialLoggerNode(Node):
         self.get_logger().info('Done.')
 
         return response
+
+    def destroy_node(self):
+        if self.current_log_file is not None:
+            try:
+                self.current_log_file.close()
+            except Exception:
+                pass
+            self.current_log_file = None
+        super().destroy_node()
 
 def main(args=None):
     rclpy.init(args=args)

@@ -2,6 +2,7 @@ import time
 from threading import Event, Lock, Thread
 
 import numpy as np
+import uuid
 
 from experiment_interfaces.msg import ExperimentState, ExperimentFeedback
 from experiment_interfaces.srv import CountValidTrials, PauseExperiment, ResumeExperiment, CancelExperiment, LogTrial, PerformExperiment
@@ -142,6 +143,8 @@ class ExperimentPerformerNode(Node):
         self.experiment_state = ExperimentState.NOT_RUNNING
         self.perform_experiment_thread = None
 
+        self.get_logger().info('ExperimentPerformerNode initialized.')
+
     # Experiment state
 
     def set_experiment_state(self, state):
@@ -205,24 +208,19 @@ class ExperimentPerformerNode(Node):
 
     # Logging
 
-    def log_experiment_config(self, goal_id, experiment):
-        self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Experiment configuration:'.format(goal_id))
+    def log_experiment_config(self, experiment):
+        self.logger.info('Experiment configuration:')
 
-        self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Metadata:'.format(goal_id))
-        self.logger.info('{}:   - Experiment name: {}'.format(goal_id, experiment.metadata.experiment_name))
-        self.logger.info('{}:   - Subject name: {}'.format(goal_id, experiment.metadata.subject_name))
-        self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Trials:'.format(goal_id))
-        self.logger.info('{}:   - Total # of trials: {}'.format(goal_id, len(experiment.trials)))
+        self.logger.info('Metadata:')
+        self.logger.info('  - Experiment name: {}'.format(experiment.metadata.experiment_name))
+        self.logger.info('  - Subject name: {}'.format(experiment.metadata.subject_name))
+        self.logger.info('Trials:')
+        self.logger.info('  - Total # of trials: {}'.format(len(experiment.trials)))
         # TODO
-        self.logger.info('{}:   - # of valid trials: {}'.format(goal_id, len(experiment.trials)))
-        self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: Intertrial interval:'.format(goal_id))
-        self.logger.info('{}:   - Minimum: {}'.format(goal_id, experiment.intertrial_interval.min))
-        self.logger.info('{}:   - Maximum: {}'.format(goal_id, experiment.intertrial_interval.max))
-        self.logger.info('{}:'.format(goal_id))
+        self.logger.info('  - # of valid trials: {}'.format(len(experiment.trials)))
+        self.logger.info('Intertrial interval:')
+        self.logger.info('  - Minimum: {}'.format(experiment.intertrial_interval.min))
+        self.logger.info('  - Maximum: {}'.format(experiment.intertrial_interval.max))
 
     ## Asynchronous action and service callers
 
@@ -367,10 +365,11 @@ class ExperimentPerformerNode(Node):
 
         return response.is_trial_valid
 
-    def log_trial(self, metadata, trial, trial_number, trial_result, num_of_attempts):
+    def log_trial(self, metadata, experiment_id, trial, trial_number, trial_result, num_of_attempts):
         request = LogTrial.Request()
 
         request.metadata = metadata
+        request.experiment_id = experiment_id
         request.trial = trial
         request.trial_number = trial_number
         request.trial_result = trial_result
@@ -402,11 +401,11 @@ class ExperimentPerformerNode(Node):
             response.trial_results = []
             return response
 
-        request_id = "{:04x}".format(time.time_ns() & 0xffff)
+        experiment_id = uuid.uuid4().hex
         experiment = request.experiment
         self.perform_experiment_thread = Thread(
             target=self.perform_experiment_thread_target,
-            args=(request_id, experiment),
+            args=(experiment_id, experiment),
             daemon=True,
         )
         self.perform_experiment_thread.start()
@@ -416,7 +415,7 @@ class ExperimentPerformerNode(Node):
         response.trial_results = []
         return response
 
-    def perform_experiment_thread_target(self, goal_id, experiment):
+    def perform_experiment_thread_target(self, experiment_id, experiment):
         valid_trials = []
         success = False
         trial_results = []
@@ -429,24 +428,17 @@ class ExperimentPerformerNode(Node):
         autopause = experiment.autopause
         autopause_interval = experiment.autopause_interval
 
-        self.logger.info('{}:'.format(goal_id))
-        self.logger.info('{}: New experiment request: {}.'.format(goal_id, goal_id))
+        self.logger.info('New experiment request.')
 
-        # XXX: There should probably be an Experiment message so the request wouldn't have
-        #   to be passed directly.
         self.log_experiment_config(
-            goal_id=goal_id,
             experiment=experiment
         )
 
         try:
-            valid_trials = self.get_valid_trials(
-                goal_id=goal_id,
-                trials=trials,
-            )
+            valid_trials = self.get_valid_trials(trials)
 
             success, trial_results = self.perform_experiment(
-                goal_id=goal_id,
+                experiment_id=experiment_id,
                 metadata=metadata,
                 valid_trials=valid_trials,
                 intertrial_interval=intertrial_interval,
@@ -456,7 +448,7 @@ class ExperimentPerformerNode(Node):
                 autopause_interval=autopause_interval,
             )
         except Exception as error:
-            self.logger.error('{}: Experiment thread failed: {}'.format(goal_id, str(error)))
+            self.logger.error('Experiment thread failed: {}'.format(str(error)))
 
         # Mark experiment as finished so pause/cancel calls are rejected after completion.
         self.set_experiment_state(ExperimentState.NOT_RUNNING)
@@ -474,29 +466,16 @@ class ExperimentPerformerNode(Node):
             total_trials=len(valid_trials),
         )
 
-        self.logger.info('{}: Done (success={}, trial_results={}).'.format(goal_id, success, len(trial_results)))
+        self.logger.info('Experiment done (success={}, trial_results={}).'.format(success, len(trial_results)))
 
     def pause_experiment_callback(self, request, response):
-        # TODO: This service callback, as well as resuming and canceling an experiment, need to be
-        #   more disciplined about the experiment that they affect. Overall, need to think about
-        #   how to communicate state within the node: is it enough to use node-wide variables for
-        #   the state, as long as only one experiment is going on at a time? Should starting
-        #   several experiments at the same time be prevented? Probably these service calls should
-        #   also check that there is an ongoing experiment in the first place. Before doing any of
-        #   this, these services affect node-wide state and therefore assume only one ongoing
-        #   experiment at a time.
-        #
-        goal_id = "abcd"
-
-        self.logger.info('{}:'.format(goal_id))
-
         if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
-            self.logger.error('{}: Trying to pause while experiment not running.'.format(goal_id))
+            self.logger.error('Trying to pause while experiment not running.')
 
             response.success = False
             return response
 
-        self.logger.info('{}: Pausing the experiment after the current trial attempt...'.format(goal_id))
+        self.logger.info('Pausing experiment after current trial attempt.')
 
         self.set_experiment_state(ExperimentState.PAUSED)
 
@@ -504,17 +483,13 @@ class ExperimentPerformerNode(Node):
         return response
 
     def resume_experiment_callback(self, request, response):
-        goal_id = "abcd"
-
-        self.logger.info('{}:'.format(goal_id))
-
         if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
-            self.logger.error('{}: Trying to resume while experiment not running.'.format(goal_id))
+            self.logger.error('Trying to resume while experiment not running.')
 
             response.success = False
             return response
 
-        self.logger.info('{}: Resuming the experiment.'.format(goal_id))
+        self.logger.info('Resuming experiment.')
 
         self.set_experiment_state(ExperimentState.RUNNING)
 
@@ -522,31 +497,26 @@ class ExperimentPerformerNode(Node):
         return response
 
     def cancel_experiment_callback(self, request, response):
-        goal_id = "abcd"
-
-        self.logger.info('{}:'.format(goal_id))
-
         if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
-            self.logger.error('{}: Trying to cancel while experiment not running.'.format(goal_id))
+            self.logger.error('Trying to cancel while experiment not running.')
 
             response.success = False
             return response
 
-        self.logger.info('{}: Canceling the experiment after the current trial attempt...'.format(goal_id))
+        self.logger.info('Canceling experiment after current trial attempt.')
 
         self.set_experiment_state(ExperimentState.CANCELED)
 
         response.success = True
         return response
 
-    def get_valid_trials(self, goal_id, trials):
+    def get_valid_trials(self, trials):
         valid_trials = []
         for trial in trials:
             if self.validate_trial(trial):
                 valid_trials.append(trial)
 
-        self.logger.info('{}: {}/{} of the trials are valid.'.format(
-            goal_id,
+        self.logger.info('{}/{} of the trials are valid.'.format(
             len(valid_trials),
             len(trials),
         ))
@@ -560,8 +530,7 @@ class ExperimentPerformerNode(Node):
             num_of_trials
         ))
 
-        # XXX: This is not very clean. ValidTrialCounter should probably be another ROS node?
-        valid_trials = self.get_valid_trials('0000', trials)
+        valid_trials = self.get_valid_trials(trials)
 
         num_of_valid_trials = len(valid_trials)
 
@@ -570,15 +539,15 @@ class ExperimentPerformerNode(Node):
 
         return response
 
-    def check_experiment_feasible(self, goal_id, valid_trials):
+    def check_experiment_feasible(self, valid_trials):
         # Check that the mTMS device is started.
         if not self.is_device_started():
-            self.logger.info('{}: mTMS device not started, aborting.'.format(goal_id))
+            self.logger.info('mTMS device not started, aborting.')
             return False
 
         # Check that there is at least one valid trial.
         if len(valid_trials) == 0:
-            self.logger.info('{}: None of the trials are valid, aborting.'.format(goal_id))
+            self.logger.info('None of the trials are valid, aborting.')
             return False
 
         return True
@@ -607,50 +576,49 @@ class ExperimentPerformerNode(Node):
 
         self.experiment_feedback_publisher.publish(feedback_msg)
 
-    def initialize_session(self, goal_id):
+    def initialize_session(self):
 
         # If session is already started, stop it first.
         if self.is_session_started():
-            self.logger.info('{}: Session already started on the mTMS device, stopping...'.format(goal_id))
+            self.logger.info('Session already started on the mTMS device, stopping...')
             session_stopped = self.stop_session()
             if not session_stopped:
-                self.logger.error('{}: Could not stop existing session before starting a new one.'.format(goal_id))
+                self.logger.error('Could not stop existing session before starting a new one.')
                 return False
 
-            if not self.wait_for_session_stop(goal_id):
+            if not self.wait_for_session_stop():
                 return False
 
-        self.logger.info('{}: Starting session.'.format(goal_id))
+        self.logger.info('Starting session.')
         session_started = self.start_session()
         if not session_started:
-            self.logger.error('{}: Could not start session.'.format(goal_id))
+            self.logger.error('Could not start session.')
             return False
 
-        if not self.wait_for_session_start(goal_id):
+        if not self.wait_for_session_start():
             return False
 
         return True
 
-    def finalize_session(self, goal_id):
-        self.logger.info('{}: Stopping session...'.format(goal_id))
+    def finalize_session(self):
+        self.logger.info('Stopping session...')
         session_stopped = self.stop_session()
         if not session_stopped:
             self.logger.warning(
-                '{}: Stop session call did not complete; continuing shutdown without waiting for session state.'
-                .format(goal_id)
+                'Stop session call did not complete; continuing shutdown without waiting for session state.'
             )
             return
 
-        if not self.wait_for_session_stop(goal_id):
-            self.logger.warning('{}: Session did not reach STOPPED state before timeout.'.format(goal_id))
+        if not self.wait_for_session_stop():
+            self.logger.warning('Session did not reach STOPPED state before timeout.')
 
-    def wait_for_session_start(self, goal_id):
+    def wait_for_session_start(self):
         deadline = time.monotonic() + self.SESSION_STATE_WAIT_TIMEOUT_S
         while not self.is_session_started():
             if time.monotonic() >= deadline:
                 self.logger.warning(
-                    '{}: Timed out after {:.1f} s while waiting for session state STARTED.'
-                    .format(goal_id, self.SESSION_STATE_WAIT_TIMEOUT_S)
+                    'Timed out after {:.1f} s while waiting for session state STARTED.'
+                    .format(self.SESSION_STATE_WAIT_TIMEOUT_S)
                 )
                 return False
 
@@ -658,13 +626,13 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def wait_for_session_stop(self, goal_id):
+    def wait_for_session_stop(self):
         deadline = time.monotonic() + self.SESSION_STATE_WAIT_TIMEOUT_S
         while not self.is_session_stopped():
             if time.monotonic() >= deadline:
                 self.logger.warning(
-                    '{}: Timed out after {:.1f} s while waiting for session state STOPPED.'
-                    .format(goal_id, self.SESSION_STATE_WAIT_TIMEOUT_S)
+                    'Timed out after {:.1f} s while waiting for session state STOPPED.'
+                    .format(self.SESSION_STATE_WAIT_TIMEOUT_S)
                 )
                 return False
 
@@ -672,14 +640,13 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, goal_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, experiment_id, metadata, valid_trials, intertrial_interval, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentState.RUNNING)
 
         # Check that the experiment is feasible
         feasible = self.check_experiment_feasible(
-            goal_id=goal_id,
             valid_trials=valid_trials
         )
         if not feasible:
@@ -698,7 +665,7 @@ class ExperimentPerformerNode(Node):
             np.random.seed(1234)
             valid_trials = np.random.permutation(valid_trials)
 
-        if not self.initialize_session(goal_id):
+        if not self.initialize_session():
             return False, trial_results
 
         # Loop over trials and perform each.
@@ -732,12 +699,12 @@ class ExperimentPerformerNode(Node):
 
             # Check if the experiment was paused, wait until resumed.
             if experiment_state == ExperimentState.PAUSED:
-                self.logger.info('{}: Experiment paused...'.format(goal_id))
+                self.logger.info('Experiment paused...')
                 while experiment_state == ExperimentState.PAUSED:
                     time.sleep(0.1)
                     experiment_state = self.get_experiment_state()
 
-                self.logger.info('{}: Experiment resumed.'.format(goal_id))
+                self.logger.info('Experiment resumed.')
                 last_resume_time = self.get_current_time()
 
                 # Re-send feedback after pausing has been finished.
@@ -753,7 +720,7 @@ class ExperimentPerformerNode(Node):
 
             # Check if the experiment was canceled.
             if experiment_state == ExperimentState.CANCELED:
-                self.logger.info('{}: Experiment canceled.'.format(goal_id))
+                self.logger.info('Experiment canceled.')
 
                 success = False
                 break
@@ -762,7 +729,7 @@ class ExperimentPerformerNode(Node):
             is_first_trial = i == 0
 
             if wait_for_pedal_press:
-                self.logger.info('{}: Waiting for a pedal press...'.format(goal_id))
+                self.logger.info('Waiting for a pedal press...')
 
                 # Wait for a pedal press.
                 while not (self.is_pedal_pressed or experiment_state == ExperimentState.CANCELED):
@@ -771,7 +738,7 @@ class ExperimentPerformerNode(Node):
 
                 # Check if the experiment was canceled.
                 if experiment_state == ExperimentState.CANCELED:
-                    self.logger.info('{}: Experiment canceled while waiting for pedal press.'.format(goal_id))
+                    self.logger.info('Experiment canceled while waiting for pedal press.')
 
                     success = False
                     break
@@ -795,8 +762,7 @@ class ExperimentPerformerNode(Node):
                 allow_late=allow_late,
             )
 
-            self.logger.info('{}: Performing trial {} / {}, attempt number {}'.format(
-                goal_id,
+            self.logger.info('Performing trial {} / {}, attempt number {}'.format(
                 i + 1,
                 num_of_valid_trials,
                 num_of_attempts,
@@ -824,14 +790,14 @@ class ExperimentPerformerNode(Node):
             success = result.success
 
             if success:
-                self.logger.info('{}: Successfully performed trial {} / {}.'.format(
-                    goal_id,
+                self.logger.info('Successfully performed trial {} / {}.'.format(
                     i + 1,
                     num_of_valid_trials
                 ))
 
                 trial_logged = self.log_trial(
                     metadata=metadata,
+                    experiment_id=experiment_id,
                     trial=trial,
                     trial_number=trial_number,
                     trial_result=trial_result,
@@ -839,8 +805,7 @@ class ExperimentPerformerNode(Node):
                 )
                 if not trial_logged:
                     self.logger.error(
-                        '{}: Trial {} / {} was performed, but logging did not complete; aborting experiment.'.format(
-                            goal_id,
+                        'Trial {} / {} was performed, but logging did not complete; aborting experiment.'.format(
                             i + 1,
                             num_of_valid_trials,
                         )
@@ -853,15 +818,14 @@ class ExperimentPerformerNode(Node):
                 i += 1
                 num_of_attempts = 0
             else:
-                self.logger.info('{}: Trial not successful, attempting again in {} seconds.'.format(
-                    goal_id,
+                self.logger.info('Trial not successful, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
 
             # Add a delay to allow other ROS service calls to run.
             time.sleep(0.1)
 
-        self.finalize_session(goal_id)
+        self.finalize_session()
 
         return success, trial_results
 
