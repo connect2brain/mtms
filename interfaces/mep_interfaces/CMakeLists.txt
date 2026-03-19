@@ -23,18 +23,7 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/AnalyzeMepErrors.msg"
-  "msg/GatherEegError.msg"
-  "msg/Mep.msg"
-  "msg/MepConfiguration.msg"
-  "msg/MepError.msg"
-  "msg/PreactivationCheck.msg"
-  "msg/TimeWindow.msg"
-
-  "srv/AnalyzeMepService.srv"
-
-  "action/AnalyzeMep.action"
-  "action/GatherEeg.action"
+  "srv/AnalyzeMep.srv"
 
   DEPENDENCIES eeg_interfaces
 )
