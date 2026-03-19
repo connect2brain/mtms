@@ -18,7 +18,6 @@
 #include "mtms_device_interfaces/srv/request_events.hpp"
 #include "neuronavigation_interfaces/msg/create_marker.hpp"
 #include "system_interfaces/msg/session.hpp"
-#include "system_interfaces/msg/session_state.hpp"
 #include "targeting_interfaces/srv/get_target_voltages.hpp"
 #include "targeting_interfaces/srv/reverse_polarity.hpp"
 #include "targeting_interfaces/srv/get_default_waveform.hpp"
