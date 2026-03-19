@@ -35,6 +35,12 @@ Example with custom ports and channels:
   --emg-channels 10
 ```
 
+Example with simulated device clock drift (+70 ppm):
+
+```bash
+./neurone_simulator --drift-ppm 70
+```
+
 Show CLI options:
 
 ```bash
@@ -55,3 +61,4 @@ printf "trigger_b\n" | nc 127.0.0.1 60000
 - `trigger_a` can be delayed with `--trigger-a-delay`.
 - `trigger_b` can be disabled with `--disable-trigger-b`.
 - Dropped samples can be simulated with `--simulate-dropped-samples`.
+- Clock drift can be simulated with `--drift-ppm` (supports negative values).

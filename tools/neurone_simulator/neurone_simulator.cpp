@@ -88,6 +88,7 @@ struct Config {
   int eeg_channels = DEFAULT_EEG_CHANNELS;
   int emg_channels = DEFAULT_EMG_CHANNELS;
   double trigger_a_delay = DEFAULT_TRIGGER_A_DELAY;
+  double drift_ppm = 0.0;
   double duration_seconds = -1.0;
   bool enable_trigger_b = true;
   bool simulate_dropped_samples = false;
@@ -110,6 +111,7 @@ void PrintUsage(const char* prog_name) {
       << DEFAULT_EMG_CHANNELS << ")\n"
       << "  --trigger-a-delay <float>       trigger_a delay seconds (default: "
       << DEFAULT_TRIGGER_A_DELAY << ")\n"
+      << "  --drift-ppm <float>             Device clock drift vs computer clock in ppm (default: 0)\n"
       << "  --duration <float>              Duration seconds (default: run until interrupted)\n"
       << "  --disable-trigger-b             Disable trigger_b in trigger channel\n"
       << "  --simulate-dropped-samples      Skip sample packets in increasing bursts\n"
@@ -154,6 +156,10 @@ ParseResult ParseArgs(int argc, char** argv, Config& cfg) {
       const char* v = read_next("--trigger-a-delay");
       if (!v) return ParseResult::kError;
       cfg.trigger_a_delay = std::stod(v);
+    } else if (arg == "--drift-ppm") {
+      const char* v = read_next("--drift-ppm");
+      if (!v) return ParseResult::kError;
+      cfg.drift_ppm = std::stod(v);
     } else if (arg == "--duration") {
       const char* v = read_next("--duration");
       if (!v) return ParseResult::kError;
@@ -169,6 +175,10 @@ ParseResult ParseArgs(int argc, char** argv, Config& cfg) {
       std::cerr << "Unknown option: " << arg << "\n";
       return ParseResult::kError;
     }
+  }
+  if ((1.0 + cfg.drift_ppm * 1e-6) <= 0.0) {
+    std::cerr << "--drift-ppm must be greater than -1000000\n";
+    return ParseResult::kError;
   }
   return ParseResult::kOk;
 }
@@ -209,6 +219,7 @@ class NeurOneSimulator {
     std::cout << "EEG channels: " << cfg_.eeg_channels << ", EMG channels: " << cfg_.emg_channels << "\n";
     std::cout << "Trigger server listening on port " << cfg_.trigger_port << "\n";
     std::cout << "Trigger A delay: " << (cfg_.trigger_a_delay * 1000.0) << " ms\n";
+    std::cout << "Clock drift: " << cfg_.drift_ppm << " ppm\n";
     if (cfg_.simulate_dropped_samples) {
       std::cout << "Dropped sample simulation enabled (burst every 1s, +1 burst size every 5s)\n";
     }
@@ -221,11 +232,13 @@ class NeurOneSimulator {
     const auto run_start_wall = std::chrono::steady_clock::now();
     const auto run_start_steady = std::chrono::steady_clock::now();
     const double sample_period = 1.0 / static_cast<double>(cfg_.sampling_rate);
+    const double drift_multiplier = 1.0 + cfg_.drift_ppm * 1e-6;
+    const double real_sample_period = sample_period / drift_multiplier;
 
     while (running_.load(std::memory_order_relaxed)) {
       const auto target =
           run_start_steady +
-          std::chrono::nanoseconds(static_cast<long long>(sample_index_ * sample_period * 1e9));
+          std::chrono::nanoseconds(static_cast<long long>(sample_index_ * real_sample_period * 1e9));
       std::this_thread::sleep_until(target);
 
       const auto now = std::chrono::steady_clock::now();
@@ -518,9 +531,8 @@ class NeurOneSimulator {
     WriteU16BE(packet, SamplesPacketFieldIndex::SAMPLE_NUM_SAMPLE_BUNDLES, 1);
     WriteU64BE(packet, SamplesPacketFieldIndex::SAMPLE_FIRST_SAMPLE_INDEX, sample_index_);
 
-    const auto now_sys = std::chrono::system_clock::now().time_since_epoch();
     const uint64_t current_time_us =
-        static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now_sys).count());
+        (sample_index_ * 1000000ULL) / static_cast<uint64_t>(cfg_.sampling_rate);
     WriteU64BE(packet, SamplesPacketFieldIndex::SAMPLE_FIRST_SAMPLE_TIME, current_time_us);
 
     bool trigger_a = false;
