@@ -163,6 +163,8 @@ if api.is_interrupted():
 # 'results' is a list containing TrialResults objects, each including the actual start time of each trial
 # and the results of the MEP analysis if it was enabled. The MEP analysis results also include the raw EMG buffer
 # for custom analysis. See TrialResult.msg and Mep.msg for more information.
+#
+# TODO: Likely bitrotten.
 results = handler.get_trial_results()
 
 api.stop_session()

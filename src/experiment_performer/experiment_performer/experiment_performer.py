@@ -381,13 +381,11 @@ class ExperimentPerformerNode(Node):
         if self.get_experiment_state() != ExperimentFeedback.NOT_RUNNING:
             self.logger.error('Could not start experiment: another experiment is already running.')
             response.success = False
-            response.trial_results = []
             return response
 
         if self.perform_experiment_thread is not None and self.perform_experiment_thread.is_alive():
             self.logger.error('Could not start experiment: perform thread is already active.')
             response.success = False
-            response.trial_results = []
             return response
 
         experiment_id = uuid.uuid4().hex
@@ -401,24 +399,11 @@ class ExperimentPerformerNode(Node):
 
         # Return immediately; updates are provided via /mtms/experiment/feedback.
         response.success = True
-        response.trial_results = []
         return response
 
     def perform_experiment_thread_target(self, experiment_id, experiment):
         valid_trials = []
         success = False
-
-        experiment_name = experiment.experiment_name
-        subject_name = experiment.subject_name
-        trials = experiment.trials
-        intertrial_interval_min = experiment.intertrial_interval_min
-        intertrial_interval_max = experiment.intertrial_interval_max
-        intertrial_interval_tolerance = experiment.intertrial_interval_tolerance
-        wait_for_pedal_press = experiment.wait_for_pedal_press
-        randomize_trials = experiment.randomize_trials
-        autopause = experiment.autopause
-        autopause_interval = experiment.autopause_interval
-        analyze_mep = experiment.analyze_mep
 
         self.logger.info('New experiment request.')
 
@@ -427,19 +412,9 @@ class ExperimentPerformerNode(Node):
         )
 
         try:
-            valid_trials = self.get_valid_trials(trials)
-
-            success = self.perform_experiment(
+            success, valid_trials = self.perform_experiment(
                 experiment_id=experiment_id,
-                experiment_name=experiment_name,
-                subject_name=subject_name,
-                valid_trials=valid_trials,
-                intertrial_interval_min=intertrial_interval_min,
-                intertrial_interval_max=intertrial_interval_max,
-                wait_for_pedal_press=wait_for_pedal_press,
-                randomize_trials=randomize_trials,
-                autopause=autopause,
-                autopause_interval=autopause_interval,
+                experiment=experiment,
             )
         except Exception as error:
             self.logger.error('Experiment thread failed: {}'.format(str(error)))
@@ -634,7 +609,20 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def perform_experiment(self, experiment_id, experiment_name, subject_name, valid_trials, intertrial_interval_min, intertrial_interval_max, wait_for_pedal_press, randomize_trials, autopause, autopause_interval):
+    def perform_experiment(self, experiment_id, experiment):
+
+        experiment_name = experiment.experiment_name
+        subject_name = experiment.subject_name
+        trials = experiment.trials
+        intertrial_interval_min = experiment.intertrial_interval_min
+        intertrial_interval_max = experiment.intertrial_interval_max
+        wait_for_pedal_press = experiment.wait_for_pedal_press
+        randomize_trials = experiment.randomize_trials
+        autopause = experiment.autopause
+        autopause_interval = experiment.autopause_interval
+        analyze_mep = experiment.analyze_mep
+
+        valid_trials = self.get_valid_trials(trials)
 
         # Initialize experiment state
         self.set_experiment_state(ExperimentFeedback.RUNNING)
@@ -645,7 +633,7 @@ class ExperimentPerformerNode(Node):
         )
         if not feasible:
             success = False
-            return success
+            return success, valid_trials
 
         num_of_valid_trials = len(valid_trials)
 
@@ -657,7 +645,7 @@ class ExperimentPerformerNode(Node):
             valid_trials = np.random.permutation(valid_trials)
 
         if not self.initialize_session():
-            return False
+            return False, valid_trials
 
         # Loop over trials and perform each.
         success = True
@@ -854,8 +842,6 @@ class ExperimentPerformerNode(Node):
                 )
                 break
 
-            trial_results.append(trial_result)
-
             i += 1
             num_of_attempts = 0
 
@@ -864,7 +850,7 @@ class ExperimentPerformerNode(Node):
 
         self.finalize_session()
 
-        return success
+        return success, valid_trials
 
 def main(args=None):
     rclpy.init(args=args)

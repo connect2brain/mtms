@@ -305,9 +305,7 @@ type Target = {
   displacement_y: number
   rotation_angle: number
   intensity: number
-  algorithm: {
-    value: number
-  }
+  algorithm: number
 }
 
 type TimeWindow = {
@@ -500,7 +498,7 @@ export const ExperimentView = () => {
   const perform = () => {
     const experiment: Experiment = formExperiment()
 
-    const done_callback = (trial_results: any, success: boolean) => {
+    const done_callback = (success: boolean) => {
       setTrialNumber(null)
       setAttemptNumber(null)
       setExperimentState(ExperimentState.NotRunning)
@@ -558,9 +556,7 @@ export const ExperimentView = () => {
             displacement_y: point.y,
             rotation_angle: angle,
             intensity: intensity,
-            algorithm: {
-              value: targetingAlgorithm,
-            },
+        algorithm: targetingAlgorithm,
           }
 
           const trial: Trial = {
@@ -587,9 +583,7 @@ export const ExperimentView = () => {
         displacement_y: selectedPoints[0].y,
         rotation_angle: selectedAngles[0],
         intensity: intensity,
-        algorithm: {
-          value: targetingAlgorithm,
-        },
+        algorithm: targetingAlgorithm,
       }
 
       const trial: Trial = {
@@ -615,18 +609,14 @@ export const ExperimentView = () => {
         displacement_y: selectedPointFirstPulse[0].y,
         rotation_angle: selectedAngleFirstPulse[0],
         intensity: intensityFirstPulse,
-        algorithm: {
-          value: targetingAlgorithm,
-        },
+        algorithm: targetingAlgorithm,
       }
       const targetSecondPulse: Target = {
         displacement_x: selectedPointSecondPulse[0].x,
         displacement_y: selectedPointSecondPulse[0].y,
         rotation_angle: selectedAngleSecondPulse[0],
         intensity: intensitySecondPulse,
-        algorithm: {
-          value: targetingAlgorithm,
-        },
+        algorithm: targetingAlgorithm,
       }
 
       const trial: Trial = {

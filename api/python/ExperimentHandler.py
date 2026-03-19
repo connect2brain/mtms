@@ -139,12 +139,6 @@ class ExperimentHandler:
         service_future = client.call_async(request)
         service_future.add_done_callback(self._perform_experiment_response_callback)
 
-    def get_trial_results(self):
-        if self.result is None:
-            return
-
-        return self.result.trial_results
-
     def print_feedback(self):
         if self.feedback is None:
             return

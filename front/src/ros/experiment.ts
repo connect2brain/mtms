@@ -19,9 +19,7 @@ export const getMaximumIntensity = (
     displacement_x: x,
     displacement_y: y,
     rotation_angle: angle,
-    algorithm: {
-      value: algorithm,
-    },
+    algorithm: algorithm,
   }) as any
 
   getMaximumIntensityService.callService(
