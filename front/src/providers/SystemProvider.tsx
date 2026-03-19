@@ -83,6 +83,10 @@ export const HumanReadableDeviceState = {
   SHUTDOWN: 'Shutting down...',
 }
 
+export interface DeviceStateMessage {
+  value: number
+}
+
 export interface SystemState extends ROSLIB.Message {
   channel_states: ChannelState[]
 
@@ -92,7 +96,7 @@ export interface SystemState extends ROSLIB.Message {
 
   startup_error: Error
 
-  device_state: DeviceState
+  device_state: DeviceStateMessage
 }
 
 interface Error {
