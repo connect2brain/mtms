@@ -24,21 +24,25 @@ TimebaseCalibrator::TimebaseCalibrator()
     EEG_RAW_TOPIC, 65535,
     std::bind(&TimebaseCalibrator::eeg_callback, this, _1));
 
-  /* Session publisher uses reliable + transient_local; match both to receive
-     the most recent message even if we start after the publisher. */
   auto session_qos = rclcpp::QoS(rclcpp::KeepLast(1))
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
   session_subscription = this->create_subscription<system_interfaces::msg::Session>(
     SESSION_TOPIC, session_qos,
     std::bind(&TimebaseCalibrator::session_callback, this, _1));
 
-  eeg_to_mtms_publisher = this->create_publisher<system_interfaces::msg::TimebaseMapping>(
-    EEG_TO_MTMS_TOPIC, 10);
+  auto mapping_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  mtms_to_eeg_publisher = this->create_publisher<system_interfaces::msg::TimebaseMapping>(
-    MTMS_TO_EEG_TOPIC, 10);
+  eeg_to_mtms_publisher =
+    this->create_publisher<system_interfaces::msg::TimebaseMapping>(
+      EEG_TO_MTMS_TOPIC, mapping_qos);
+
+  mtms_to_eeg_publisher =
+    this->create_publisher<system_interfaces::msg::TimebaseMapping>(
+      MTMS_TO_EEG_TOPIC, mapping_qos);
 
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized. "
     "Listening to '%s' and '%s'. Buffer size: %zu pairs.",

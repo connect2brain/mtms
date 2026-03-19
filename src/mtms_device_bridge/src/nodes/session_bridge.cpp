@@ -27,7 +27,7 @@ public:
 
     auto qos = rclcpp::QoS(rclcpp::KeepLast(1))
         .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-        .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL)
+        .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE)
         .deadline(DEADLINE_NS)
         .lifespan(DEADLINE_NS);
 

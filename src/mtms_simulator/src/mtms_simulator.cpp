@@ -73,7 +73,7 @@ MTMSSimulator::MTMSSimulator()
 
   auto session_qos = rclcpp::QoS(rclcpp::KeepLast(1))
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+    .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
   const auto session_lifetime =
     session_period + std::chrono::milliseconds(SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS);
   session_qos.deadline(rclcpp::Duration::from_seconds(
