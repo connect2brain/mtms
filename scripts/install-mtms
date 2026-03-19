@@ -62,10 +62,10 @@ if [ "$response" != "n" ]; then
     source scripts/build-mtms-matlab
 else
     echo "Skipping MATLAB ROS interfaces build."
-fi
 
-# Register MATLAB ROS interfaces
-source scripts/register-mtms-matlab
+    # Still register the pre-built MATLAB ROS interfaces.
+    source scripts/register-mtms-matlab
+fi
 
 # Build mTMS containers
 source scripts/build-mtms
