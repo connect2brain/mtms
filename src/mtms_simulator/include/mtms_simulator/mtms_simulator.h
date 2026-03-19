@@ -34,8 +34,6 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/srv/request_events.hpp"
 #include "mtms_device_interfaces/srv/send_settings.hpp"
-#include "mtms_device_interfaces/srv/start_device.hpp"
-#include "mtms_device_interfaces/srv/stop_device.hpp"
 
 #include "system_interfaces/msg/healthcheck.hpp"
 #include "system_interfaces/msg/session.hpp"
@@ -89,11 +87,11 @@ private:
     const std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Request> request,
     std::shared_ptr<mtms_device_interfaces::srv::SendSettings::Response> response);
   void start_device_handler(
-    const std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Request> request,
-    std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Response> response);
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   void stop_device_handler(
-    const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
-    std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Response> response);
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   void start_session_handler(
     const std::shared_ptr<system_interfaces::srv::StartSession::Request> request,
     std::shared_ptr<system_interfaces::srv::StartSession::Response> response);
@@ -162,8 +160,8 @@ private:
   std::thread event_worker_;
 
   rclcpp::Service<mtms_device_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
-  rclcpp::Service<mtms_device_interfaces::srv::StartDevice>::SharedPtr start_device_service_;
-  rclcpp::Service<mtms_device_interfaces::srv::StopDevice>::SharedPtr stop_device_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_device_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_device_service_;
   rclcpp::Service<system_interfaces::srv::StartSession>::SharedPtr start_session_service_;
   rclcpp::Service<system_interfaces::srv::StopSession>::SharedPtr stop_session_service_;
   rclcpp::Service<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_service_;

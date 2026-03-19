@@ -36,9 +36,9 @@ MTMSSimulator::MTMSSimulator()
 
   send_settings_service_ = this->create_service<mtms_device_interfaces::srv::SendSettings>(
     "/mtms/device/send_settings", std::bind(&MTMSSimulator::send_settings_handler, this, _1, _2));
-  start_device_service_ = this->create_service<mtms_device_interfaces::srv::StartDevice>(
+  start_device_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/device/start", std::bind(&MTMSSimulator::start_device_handler, this, _1, _2));
-  stop_device_service_ = this->create_service<mtms_device_interfaces::srv::StopDevice>(
+  stop_device_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/device/stop", std::bind(&MTMSSimulator::stop_device_handler, this, _1, _2));
   start_session_service_ = this->create_service<system_interfaces::srv::StartSession>(
     "/mtms/device/session/start", std::bind(&MTMSSimulator::start_session_handler, this, _1, _2));
@@ -192,8 +192,8 @@ void MTMSSimulator::send_settings_handler(
 }
 
 void MTMSSimulator::start_device_handler(
-  [[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Request> request,
-  std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Response> response)
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   system_state_.device_state.value = mtms_device_interfaces::msg::DeviceState::OPERATIONAL;
   RCLCPP_INFO(this->get_logger(), "Device started");
@@ -201,8 +201,8 @@ void MTMSSimulator::start_device_handler(
 }
 
 void MTMSSimulator::stop_device_handler(
-  [[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Request> request,
-  std::shared_ptr<mtms_device_interfaces::srv::StopDevice::Response> response)
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   system_state_.device_state.value = mtms_device_interfaces::msg::DeviceState::NOT_OPERATIONAL;
   RCLCPP_INFO(this->get_logger(), "Device stopped");

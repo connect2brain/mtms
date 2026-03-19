@@ -1,6 +1,0 @@
-# Stop device
-#
-# Response: Boolean indicating if stopping was successful.
-
----
-bool success

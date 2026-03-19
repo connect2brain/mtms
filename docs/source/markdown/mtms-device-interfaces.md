@@ -28,8 +28,8 @@ policies and other behaviour will be described in their own sections.
 | Topic                            | Type         | Message definition                            |
 |----------------------------------|--------------|-----------------------------------------------|
 | `/mtms/device/send_settings`     | Service      | `mtms_device_interfaces.srv.SendSettings`     |
-| `/mtms/device/start`      | Service      | `mtms_device_interfaces.srv.StartDevice`      |
-| `/mtms/device/stop`       | Service      | `mtms_device_interfaces.srv.StopDevice`       |
+| `/mtms/device/start`      | Service      | `std_srvs.srv.Trigger`                        |
+| `/mtms/device/stop`       | Service      | `std_srvs.srv.Trigger`                        |
 | `/mtms_device/start_session`     | Service      | `mtms_device_interfaces.srv.StartSession`     |
 | `/mtms_device/stop_session`      | Service      | `mtms_device_interfaces.srv.StopSession`      |
 | `/mtms/device/events/request`    | Service      | `mtms_device_interfaces.srv.RequestEvents`    |
@@ -215,7 +215,7 @@ QoS: ROS2 Default
     bool success
 
 ### Topic: `/mtms/device/start`
-#### Service: `mtms_device_interfaces.srv.StartDevice`
+#### Service: `std_srvs.srv.Trigger`
 QoS: ROS2 Default
 
 Start device. Response: Boolean indicating if starting was successful.
@@ -223,9 +223,10 @@ Start device. Response: Boolean indicating if starting was successful.
 
     ---
     bool success
-
+    string message
+    
 ### Topic: `/mtms/device/stop`
-#### Service: `mtms_device_interfaces.srv.StopDevice`
+#### Service: `std_srvs.srv.Trigger`
 QoS: ROS2 Default
 
 Stop device. Response: Boolean indicating if stopping was successful.
@@ -233,6 +234,7 @@ Stop device. Response: Boolean indicating if stopping was successful.
 
     ---
     bool success
+    string message
 
 ### Topic: `/mtms/device/events/request`
 #### Service: `mtms_device_interfaces.srv.RequestEvents`

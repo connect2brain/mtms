@@ -59,8 +59,8 @@ classdef MTMSApiNode < handle
 
             % To mTMS device
 
-            obj.start_device_client = ros2svcclient(obj.node, "/mtms/device/start", "mtms_device_interfaces/StartDevice");
-            obj.stop_device_client = ros2svcclient(obj.node, "/mtms/device/stop", "mtms_device_interfaces/StopDevice");
+            obj.start_device_client = ros2svcclient(obj.node, "/mtms/device/start", "std_srvs/Trigger");
+            obj.stop_device_client = ros2svcclient(obj.node, "/mtms/device/stop", "std_srvs/Trigger");
 
             obj.request_events_client = ros2svcclient(obj.node, "/mtms/device/events/request", "mtms_device_interfaces/RequestEvents");
 

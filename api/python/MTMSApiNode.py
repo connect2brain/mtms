@@ -7,7 +7,7 @@ from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState
-from mtms_device_interfaces.srv import StartDevice, StopDevice, RequestEvents
+from mtms_device_interfaces.srv import RequestEvents
 
 from system_interfaces.msg import Session
 from system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed
@@ -40,8 +40,8 @@ from ExperimentHandler import ExperimentHandler
 
 class MTMSApiNode(Node):
     # To mTMS device
-    ROS_SERVICE_START_DEVICE = ('/mtms/device/start', StartDevice)
-    ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', StopDevice)
+    ROS_SERVICE_START_DEVICE = ('/mtms/device/start', Trigger)
+    ROS_SERVICE_STOP_DEVICE = ('/mtms/device/stop', Trigger)
 
     ROS_SERVICE_REQUEST_EVENTS = ('/mtms/device/events/request', RequestEvents)
     ROS_SERVICE_TRIGGER_EVENTS = ('/mtms/device/events/trigger', Trigger)

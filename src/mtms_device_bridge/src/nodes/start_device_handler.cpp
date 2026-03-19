@@ -1,12 +1,12 @@
 #include "rclcpp/rclcpp.hpp"
 
-#include "mtms_device_interfaces/srv/start_device.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
 
-void start_device([[maybe_unused]] const std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Request> request,
-                  std::shared_ptr<mtms_device_interfaces::srv::StartDevice::Response> response) {
+void start_device([[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+                  std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("start_device_handler"), "FPGA not in OK state during service call");
     response->success = false;
@@ -23,11 +23,11 @@ class StartDevice : public rclcpp::Node {
 public:
   StartDevice()
       : Node("start_device") {
-    start_device_service_ = this->create_service<mtms_device_interfaces::srv::StartDevice>("/mtms/device/start", start_device);
+    start_device_service_ = this->create_service<std_srvs::srv::Trigger>("/mtms/device/start", start_device);
   }
 
 private:
-  rclcpp::Service<mtms_device_interfaces::srv::StartDevice>::SharedPtr start_device_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_device_service_;
 };
 
 int main(int argc, char **argv) {

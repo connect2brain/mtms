@@ -33,9 +33,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
         "msg/Settings.msg"
         "msg/Version.msg"
 
-        "srv/StartDevice.srv"
-        "srv/StopDevice.srv"
-
         "srv/RequestEvents.srv"
 
         "srv/SendSettings.srv"
