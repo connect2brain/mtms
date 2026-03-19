@@ -313,26 +313,37 @@ type TimeWindow = {
   end: number
 }
 
-type PreactivationCheck = {
-  enabled: boolean
-  time_window: TimeWindow
-  voltage_range_limit: number
+type TrialTiming = {
+  desired_start_time: number
+  allow_late: boolean
 }
 
-type MepConfiguration = {
-  emg_channel: number
-  time_window: TimeWindow
-  preactivation_check: PreactivationCheck
+type TrialConfig = {
+  voltage_tolerance_proportion_for_precharging: number
+  recharge_after_trial: boolean
+  use_pulse_width_modulation_approximation: boolean
+  dry_run: boolean
 }
 
 type Trial = {
   targets: Target[]
   pulse_times_since_trial_start: number[]
 
+  /* Note: experiment performer overwrites these if needed. */
+  timing: TrialTiming
+  config: TrialConfig
+
   triggers: TriggerConfig[]
 
   analyze_mep: boolean
-  mep_config: MepConfiguration
+  mep_emg_channel: number
+  mep_time_window_start: number
+  mep_time_window_end: number
+
+  preactivation_check_enabled: boolean
+  preactivation_check_time_window_start: number
+  preactivation_check_time_window_end: number
+  preactivation_check_voltage_range_limit: number
 }
 
 enum StartButtonState {
@@ -565,19 +576,13 @@ export const ExperimentView = () => {
     }
 
     /* TODO: Hard-coded for now - make configurable. */
-    const preactivation_check: PreactivationCheck = {
-      enabled: false,
-      time_window: preactivation_check_time_window,
-      voltage_range_limit: 90,
-    }
+    const preactivation_check_enabled = false
+    const preactivation_check_voltage_range_limit = 90
 
-    const mep_config: MepConfiguration = {
-      /* 0-based indexing is internally used for EMG channels, hence decrement to allow
-        the user to use 1-based indexing. */
-      emg_channel: emgChannel - 1,
-      time_window: mep_config_time_window,
-      preactivation_check: preactivation_check,
-    }
+    const analyze_mep = mepHealthcheckOk ? mepEnabled : false
+    /* 0-based indexing is internally used for EMG channels, hence decrement to allow
+      the user to use 1-based indexing. */
+    const mep_emg_channel = emgChannel - 1
 
     if (activeTab === ExperimentTab.MultipleLocations) {
       const singleRepetitionTrials: Trial[] = []
@@ -598,11 +603,25 @@ export const ExperimentView = () => {
             targets: [target],
             pulse_times_since_trial_start: [0],
 
+            timing: { desired_start_time: 0.0, allow_late: true },
+            config: {
+              voltage_tolerance_proportion_for_precharging: 0.03,
+              recharge_after_trial: true,
+              use_pulse_width_modulation_approximation: false,
+              dry_run: false,
+            },
+
             triggers: triggers,
 
-            /* Override mepEnabled if MEP healthcheck is not ok. */
-            analyze_mep: mepHealthcheckOk ? mepEnabled : false,
-            mep_config: mep_config,
+            analyze_mep: analyze_mep,
+            mep_emg_channel: mep_emg_channel,
+            mep_time_window_start: mep_config_time_window.start,
+            mep_time_window_end: mep_config_time_window.end,
+
+            preactivation_check_enabled: preactivation_check_enabled,
+            preactivation_check_time_window_start: preactivation_check_time_window.start,
+            preactivation_check_time_window_end: preactivation_check_time_window.end,
+            preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
           }
           singleRepetitionTrials.push(trial)
         })
@@ -624,11 +643,25 @@ export const ExperimentView = () => {
         targets: [target],
         pulse_times_since_trial_start: [0],
 
+        timing: { desired_start_time: 0.0, allow_late: true },
+        config: {
+          voltage_tolerance_proportion_for_precharging: 0.03,
+          recharge_after_trial: true,
+          use_pulse_width_modulation_approximation: false,
+          dry_run: false,
+        },
+
         triggers: triggers,
 
-        /* Override mepEnabled if MEP healthcheck is not ok. */
-        analyze_mep: mepHealthcheckOk ? mepEnabled : false,
-        mep_config: mep_config,
+        analyze_mep: analyze_mep,
+        mep_emg_channel: mep_emg_channel,
+        mep_time_window_start: mep_config_time_window.start,
+        mep_time_window_end: mep_config_time_window.end,
+
+        preactivation_check_enabled: preactivation_check_enabled,
+        preactivation_check_time_window_start: preactivation_check_time_window.start,
+        preactivation_check_time_window_end: preactivation_check_time_window.end,
+        preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
@@ -658,11 +691,25 @@ export const ExperimentView = () => {
         targets: [targetFirstPulse, targetSecondPulse],
         pulse_times_since_trial_start: [0, pairedPulseDelay / 1000],
 
+        timing: { desired_start_time: 0.0, allow_late: true },
+        config: {
+          voltage_tolerance_proportion_for_precharging: 0.03,
+          recharge_after_trial: true,
+          use_pulse_width_modulation_approximation: true,
+          dry_run: false,
+        },
+
         triggers: triggers,
 
-        /* Override mepEnabled if MEP healthcheck is not ok. */
-        analyze_mep: mepHealthcheckOk ? mepEnabled : false,
-        mep_config: mep_config,
+        analyze_mep: analyze_mep,
+        mep_emg_channel: mep_emg_channel,
+        mep_time_window_start: mep_config_time_window.start,
+        mep_time_window_end: mep_config_time_window.end,
+
+        preactivation_check_enabled: preactivation_check_enabled,
+        preactivation_check_time_window_start: preactivation_check_time_window.start,
+        preactivation_check_time_window_end: preactivation_check_time_window.end,
+        preactivation_check_voltage_range_limit: preactivation_check_voltage_range_limit,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
