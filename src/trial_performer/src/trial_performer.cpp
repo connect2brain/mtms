@@ -295,6 +295,14 @@ void TrialPerformerNode::log_trial(const trial_interfaces::msg::Trial &trial) {
   if (!trial.dry_run) {
     RCLCPP_INFO(this->get_logger(), "    Start time: %.3f s", trial.start_time);
   }
+  RCLCPP_INFO(this->get_logger(), "  Number of pulses: %zu", trial.pulse_times_since_trial_start.size());
+  for (size_t i = 0; i < trial.pulse_times_since_trial_start.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "    Pulse %zu time: %.3f s", i, trial.pulse_times_since_trial_start[i]);
+  }
+  for (size_t i = 0; i < trial.trigger_enabled.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "    Trigger %zu enabled: %s", i, trial.trigger_enabled[i] ? "true" : "false");
+    RCLCPP_INFO(this->get_logger(), "    Trigger %zu delay: %.3f s", i, trial.trigger_delay[i]);
+  }
 }
 
 void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
