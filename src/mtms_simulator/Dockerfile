@@ -30,7 +30,7 @@ COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/mtms_simulator src/mtms/mtms_simulator/
+COPY src/mtms_simulator src/mtms_simulator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
 
 # Copy entrypoint
