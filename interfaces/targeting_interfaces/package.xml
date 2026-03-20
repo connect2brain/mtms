@@ -4,7 +4,7 @@
   <name>targeting_interfaces</name>
   <version>0.1.0</version>
   <description>Targeting messages</description>
-  <maintainer email="okahilak@gmail.com">Olli-Pekka Kahilakoski</maintainer>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
   <license>GPL-3.0-only</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
