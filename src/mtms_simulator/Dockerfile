@@ -25,8 +25,6 @@ COPY interfaces/system_interfaces interfaces/system_interfaces/
 COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
 
-COPY interfaces/targeting_interfaces interfaces/targeting_interfaces/
-
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
