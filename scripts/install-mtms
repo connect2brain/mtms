@@ -41,15 +41,13 @@ ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/instal
 # Install mTMS
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml
 
-set +e  # Allow sourcing of .bash_env before ROS workspace is built
-source $HOME/.bash_env
-set -e
+source $HOME/.bash_mtms
 
 # Build the ROS workspace
 source $MTMS_ROOT/scripts/build-mtms-ros-workspace
 
 # Source again after building the ROS workspace
-source $HOME/.bash_env
+source $HOME/.bash_mtms
 
 # Build documentation
 source scripts/build-docs

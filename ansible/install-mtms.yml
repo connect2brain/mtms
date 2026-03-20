@@ -197,74 +197,69 @@
         mode: '0755'
         
     ########################################################################
-    # 5. Update environment variables in .bash_env and .bashrc
+    # 5. Create .bash_mtms and ensure it is sourced in .bashrc
     ########################################################################
-    - name: Ensure .bash_env exists
-      file:
-        path: "{{ target_home }}/.bash_env"
-        state: touch
+    - name: Create fresh .bash_mtms file
+      copy:
+        dest: "{{ target_home }}/.bash_mtms"
         owner: "{{ target_user }}"
         group: "{{ target_user }}"
         mode: "0644"
+        content: |
+          # mTMS environment configuration
+          # This file is managed by Ansible - do not edit manually
 
-    - name: Ensure MTMS_ROOT is exported
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export MTMS_ROOT={{ repo_root }}"
-        state: present
+          # Add mTMS scripts to PATH
+          export PATH=$PATH:{{ repo_root }}/scripts/
 
-    - name: Ensure MTMS_ENV_FILE points to the .env file
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export MTMS_ENV_FILE={{ repo_root }}/.env"
-        state: present
+          # mTMS root directory
+          export MTMS_ROOT={{ repo_root }}
 
-    - name: Ensure script directory is in PATH
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export PATH=$PATH:{{ repo_root }}/scripts/"
-        state: present
+          # Location where mTMS experiment logs are stored
+          export MTMS_EXPERIMENT_LOGS_DIR={{ mtms_experiment_logs_dir }}
 
-    - name: Ensure MTMS_EXPERIMENT_LOGS_DIR is exported
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export MTMS_EXPERIMENT_LOGS_DIR={{ mtms_experiment_logs_dir }}"
-        state: present
-        
-    - name: Ensure RMW_IMPLEMENTATION is set to CycloneDDS
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp"
-        state: present
+          # .env file used by docker-compose/systemd scripts
+          export MTMS_ENV_FILE={{ repo_root }}/.env
 
-    - name: Ensure CYCLONEDDS_URI points to local CycloneDDS config
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "export CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml"
-        state: present
+          # ROS2 middleware configuration
+          export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+          export CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 
-    - name: Ensure ROS is sourced
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "source /opt/ros/{{ ros_distro }}/setup.bash"
-        state: present
+          # Source local ROS workspace if it exists
+          if [ -f {{ repo_root }}/install/local_setup.bash ]; then
+              source {{ repo_root }}/install/local_setup.bash
+          fi
 
-    - name: Ensure local ROS workspace is sourced
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: "source $MTMS_ROOT/install/local_setup.bash"
-        state: present
+          # Python API (used by scripts and integrations)
+          export PYTHONPATH={{ repo_root }}/api/python:$PYTHONPATH
 
-    - name: Ensure PYTHONPATH for the Python API is set
-      lineinfile:
-        dest: "{{ target_home }}/.bash_env"
-        line: 'export PYTHONPATH=$MTMS_ROOT/api/python:$PYTHONPATH'
-        state: present
+          # Export selected ROS variables from .env file if it exists
+          if [ -f {{ repo_root }}/.env ]; then
+              # Import values into the shell.
+              source {{ repo_root }}/.env
 
-    - name: Ensure .bash_env is sourced in .bashrc
+              # Export ROS_DOMAIN_ID if set.
+              if [ "${ROS_DOMAIN_ID+x}" = "x" ]; then
+                  export ROS_DOMAIN_ID="${ROS_DOMAIN_ID}"
+              fi
+
+              # Export ROS_LOG_LEVEL if set.
+              if [ "${ROS_LOG_LEVEL+x}" = "x" ]; then
+                  export ROS_LOG_LEVEL="${ROS_LOG_LEVEL}"
+              fi
+          fi
+
+    - name: Ensure ROS2 base installation is sourced in .bashrc
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
-        line: "source {{ target_home }}/.bash_env"
+        line: "source /opt/ros/{{ ros_distro }}/setup.bash"
+        state: present
+        insertafter: EOF
+
+    - name: Ensure .bash_mtms is sourced in .bashrc
+      lineinfile:
+        dest: "{{ target_home }}/.bashrc"
+        line: "source {{ target_home }}/.bash_mtms"
         state: present
         insertafter: EOF
 
