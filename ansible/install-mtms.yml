@@ -250,7 +250,22 @@
         insertafter: EOF
 
     ########################################################################
-    # 6. Install busylight-for-humans
+    # 6. Install extra packages
+    ########################################################################
+    - name: Install extra packages
+      apt:
+        name:
+          - python3-pip
+          - python3.10-venv  # Required for building ROS2 packages for MATLAB
+        state: present
+
+    - name: Install Python packages
+      pip:
+        name:
+          - Cython  # Required for building ROS2 packages for neuronavigation
+
+    ########################################################################
+    # 7. Install busylight-for-humans
     ########################################################################
     - name: Install busylight-for-humans
       pip:
@@ -271,20 +286,6 @@
 
     - name: Reload udev rules
       shell: udevadm control -R
-
-    ########################################################################
-    # 7. Install extra packages
-    ########################################################################
-    - name: Install extra packages
-      apt:
-        name:
-          - python3.10-venv  # Required for building ROS2 packages for MATLAB
-        state: present
-
-    - name: Install Python packages
-      pip:
-        name:
-          - Cython  # Required for building ROS2 packages for neuronavigation
 
     ########################################################################
     # 8. Install Sphinx requirements

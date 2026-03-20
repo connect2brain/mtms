@@ -17,8 +17,8 @@ LimitMEMLOCK=10000000000
 
 WorkingDirectory={{ repo_root }}
 
-ExecStart=docker-compose up
-ExecStop=docker-compose down --remove-orphans
+ExecStart=docker compose up
+ExecStop=docker compose down --remove-orphans
 
 Restart=always
 
