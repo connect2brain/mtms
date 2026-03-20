@@ -9,6 +9,16 @@ GENERIC_ENV_FILE="${REPO_ROOT}/.env.example"
 
 target_site="${1:-}"
 
+confirm_replace_existing_env() {
+    if [ -f "$ROOT_ENV_FILE" ]; then
+        read -r -p "A .env file already exists in repo root. Replace it? [y/N] " replace_response
+        if [ "$replace_response" != "y" ] && [ "$replace_response" != "Y" ]; then
+            echo "Keeping existing .env."
+            exit 0
+        fi
+    fi
+}
+
 if [ -z "$target_site" ]; then
     echo "Warning: no site provided. Usage: scripts/install-mtms <site-name>"
     echo ""
@@ -20,6 +30,7 @@ if [ -z "$target_site" ]; then
         echo "Cancelled."
         exit 1
     fi
+    confirm_replace_existing_env
     cp "$GENERIC_ENV_FILE" "$ROOT_ENV_FILE"
     echo "Copied .env.example to .env."
     exit 0
@@ -31,5 +42,6 @@ if [ ! -d "$SITES_DIR" ] || [ ! -f "$SITE_ENV_FILE" ]; then
     exit 1
 fi
 
+confirm_replace_existing_env
 cp "$SITE_ENV_FILE" "$ROOT_ENV_FILE"
 echo "Copied sites/${target_site}/.env to .env."
