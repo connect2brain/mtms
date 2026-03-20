@@ -266,6 +266,11 @@
     ########################################################################
     # 6. Install busylight-for-humans
     ########################################################################
+    - name: Install python3-pip (provides pip3)
+      apt:
+        name: python3-pip
+        state: present
+
     - name: Install busylight-for-humans
       pip:
         name: busylight-for-humans
@@ -310,7 +315,6 @@
           - gcc-12
           - g++-12
           - python3-venv
-          - python3-pip
         state: present
 
     - name: Install Python packages
