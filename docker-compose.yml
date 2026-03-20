@@ -36,6 +36,16 @@ services:
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
+  
+  remote_controller:
+    build:
+      context: .
+      dockerfile: src/remote_controller/Dockerfile
+    env_file:
+      - ${MTMS_ENV_FILE}
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    network_mode: host
 
   stimulation_allower:
     build:

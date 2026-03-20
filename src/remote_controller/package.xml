@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>remote_controller</name>
+  <version>0.1.0</version>
+  <description>Remote controller</description>
+  <maintainer email="connect2brain@aalto.fi">Connect2Brain</maintainer>
+  <license>GPL-3.0-only</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>rclcpp</depend>
+  <depend>system_interfaces</depend>
+  <depend>stimulation_interfaces</depend>
+  <depend>trial_interfaces</depend>
+  <depend>targeting_interfaces</depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
