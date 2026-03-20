@@ -52,18 +52,8 @@ source $HOME/.bash_mtms
 # Build documentation
 source scripts/build-docs
 
-# Build MATLAB ROS interfaces if requested
-echo "Do you want to build the MATLAB ROS interfaces? (Y/n) (Note: This can take 6-8 minutes to complete.)"
-read -r response
-
-if [ "$response" != "n" ]; then
-    source scripts/build-mtms-matlab
-else
-    echo "Skipping MATLAB ROS interfaces build."
-
-    # Still register the pre-built MATLAB ROS interfaces.
-    source scripts/register-mtms-matlab
-fi
+# Register the pre-built MATLAB ROS interfaces.
+source scripts/register-mtms-matlab
 
 # Build mTMS containers
 source scripts/build-mtms
