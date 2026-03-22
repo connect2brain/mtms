@@ -12,20 +12,7 @@ However, the software can be used as a reference for developing similar systems 
 1. **Prerequisites**: Ensure your system meets the following requirements:
    - Supported operating system: Ubuntu 24.04.4 LTS
 
-2. **System setup**: Follow the [Installation guide](docs/source/markdown/installation-guide.md) to prepare your computer, operating system, and external software.
-
-3. **Install mTMS software**: Run the installation script:
-   ```bash
-   scripts/install-mtms [site]
-
-Replace [site] with a valid site name from the sites directory:
-
-```bash
-ls sites
-```
-
-The installation script will install the mTMS software and its dependencies, and prompt
-to reboot the computer at the end.
+2. **Installation**: Follow the [Installation guide](docs/source/markdown/installation-guide.md) to prepare your computer and operating system, and install the mTMS software.
 
 ### Desktop app setup
 The installer builds and installs the Electron-based desktop app automatically.

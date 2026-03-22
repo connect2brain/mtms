@@ -133,6 +133,32 @@ Note that the software installation steps are in `README.md`, while the hardware
    - Disable status reports to MathWorks
    - Set keyboard shortcuts to "Windows Default Set"
 
+### mTMS Software Installation
+1. Run the installation script:
+   ```bash
+   scripts/install-mtms [site]
+   ```
+
+See the list of available sites in the `sites` directory:
+```bash
+ls sites
+```
+
+After the installation, the computer will be rebooted.
+
+### External EEG software (e.g. NeuroSimo)
+
+`scripts/install-mtms` installs a system service that listens for UDP traffic on one port and sends a copy of each packet to two destinations on localhost:
+
+- **50000** — listen port. Configure the Bittium NeurOne amplifier to send EEG packets to this UDP port.
+- **50001** — used by mTMS.
+- **50002** — reserved for additional software on the same machine (for example NeuroSimo).
+
+To run NeuroSimo on the mTMS computer:
+
+1. Install it using the instructions in the NeuroSimo repository.
+2. Configure NeuroSimo to receive EEG data on **UDP port 50002**.
+
 ## Site-Specific Configurations
 
 ### MATLAB License Configuration
@@ -141,7 +167,7 @@ Note that the software installation steps are in `README.md`, while the hardware
 - No specific configuration needed
 - Ensure computer is on Aalto's internal network
 
-TODO: Note: As of Mar 2026, the MATLAB license server configuration is not working. Please use the local license file for now, and check the IT for help.
+TODO: Note: As of Mar 2026, the MATLAB license server configuration seems to not be working. Please use the local license file for now, and check the IT for help.
 
 #### Tubingen
 ```bash
