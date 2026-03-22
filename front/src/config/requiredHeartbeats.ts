@@ -6,4 +6,5 @@ export const REQUIRED_MTMS_HEARTBEATS = [
   { id: 'trial_logger', topic: '/mtms/trial_logger/heartbeat', label: 'trial_logger' },
   { id: 'trial_validator', topic: '/mtms/trial_validator/heartbeat', label: 'trial_validator' },
   { id: 'voltage_setter', topic: '/mtms/voltage_setter/heartbeat', label: 'voltage_setter' },
+  { id: 'waveform_approximator', topic: '/mtms/waveform_approximator/heartbeat', label: 'waveform_approximator' },
 ] as const
