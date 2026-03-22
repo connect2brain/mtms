@@ -9,12 +9,12 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 
-find_package(event_interfaces REQUIRED)
-find_package(experiment_interfaces REQUIRED)
+find_package(mtms_event_interfaces REQUIRED)
+find_package(mtms_experiment_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
-find_package(neuronavigation_interfaces REQUIRED)
-find_package(system_interfaces REQUIRED)
-find_package(trial_interfaces REQUIRED)
+find_package(mtms_neuronavigation_interfaces REQUIRED)
+find_package(mtms_system_interfaces REQUIRED)
+find_package(mtms_trial_interfaces REQUIRED)
 
 add_executable(
         trial_performer
@@ -32,12 +32,12 @@ ament_target_dependencies(
         trial_performer
         rclcpp
         std_msgs
-        event_interfaces
-        experiment_interfaces
+        mtms_event_interfaces
+        mtms_experiment_interfaces
         mtms_device_interfaces
-        neuronavigation_interfaces
-        system_interfaces
-        trial_interfaces
+        mtms_neuronavigation_interfaces
+        mtms_system_interfaces
+        mtms_trial_interfaces
 )
 
 install(

@@ -1,0 +1,3 @@
+uint8 channel
+mtms_waveform_interfaces/Waveform waveform
+EventInfo event_info

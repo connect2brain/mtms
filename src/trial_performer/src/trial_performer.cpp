@@ -16,7 +16,7 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
 
 void TrialPerformerNode::initialize_services() {
   /* Service for performing trial. */
-  perform_trial_service = this->create_service<trial_interfaces::srv::PerformTrial>(
+  perform_trial_service = this->create_service<mtms_trial_interfaces::srv::PerformTrial>(
       "/mtms/trial/perform",
       std::bind(
           &TrialPerformerNode::handle_perform_trial,
@@ -29,14 +29,14 @@ void TrialPerformerNode::initialize_services() {
 }
 
 void TrialPerformerNode::initialize_service_clients() {
-  targeting_client = this->create_client<targeting_interfaces::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
+  targeting_client = this->create_client<mtms_targeting_interfaces::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
 
-  reverse_polarity_client = this->create_client<targeting_interfaces::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
+  reverse_polarity_client = this->create_client<mtms_targeting_interfaces::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
   while (!reverse_polarity_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/reverse_polarity not available, waiting...");
   }
 
-  get_default_waveform_client = this->create_client<targeting_interfaces::srv::GetDefaultWaveform>(
+  get_default_waveform_client = this->create_client<mtms_targeting_interfaces::srv::GetDefaultWaveform>(
       "/mtms/waveforms/get_default",
       rclcpp::QoS(rclcpp::ServicesQoS()),
       reentrant_callback_group);
@@ -44,7 +44,7 @@ void TrialPerformerNode::initialize_service_clients() {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_default not available, waiting...");
   }
 
-  get_multipulse_waveforms_client = this->create_client<targeting_interfaces::srv::GetMultipulseWaveforms>("/mtms/waveforms/get_multipulse_waveforms");
+  get_multipulse_waveforms_client = this->create_client<mtms_targeting_interfaces::srv::GetMultipulseWaveforms>("/mtms/waveforms/get_multipulse_waveforms");
   while (!get_multipulse_waveforms_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/get_multipulse_waveforms not available, waiting...");
   }
@@ -55,7 +55,7 @@ void TrialPerformerNode::initialize_service_clients() {
   }
 
   /* Service client for setting voltages. */
-  set_voltages_client = this->create_client<trial_interfaces::srv::SetVoltages>("/mtms/trial/set_voltages");
+  set_voltages_client = this->create_client<mtms_trial_interfaces::srv::SetVoltages>("/mtms/trial/set_voltages");
   while (!set_voltages_client->wait_for_service(2s)) {
     RCLCPP_INFO(get_logger(), "Service /mtms/trial/set_voltages not available, waiting...");
   }
@@ -67,22 +67,22 @@ void TrialPerformerNode::initialize_subscribers() {
       1,
       std::bind(&TrialPerformerNode::handle_system_state, this, std::placeholders::_1));
 
-  session_subscriber = this->create_subscription<system_interfaces::msg::Session>(
+  session_subscriber = this->create_subscription<mtms_system_interfaces::msg::Session>(
       "/mtms/device/session",
       1,
       std::bind(&TrialPerformerNode::handle_session, this, std::placeholders::_1));
 
-  pulse_feedback_subscriber = this->create_subscription<event_interfaces::msg::PulseFeedback>(
+  pulse_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::PulseFeedback>(
       "/mtms/device/events/feedback/pulse", 10,
       std::bind(&TrialPerformerNode::update_pulse_feedback, this, std::placeholders::_1));
 
-  trigger_out_feedback_subscriber = this->create_subscription<event_interfaces::msg::TriggerOutFeedback>(
+  trigger_out_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::TriggerOutFeedback>(
       "/mtms/device/events/feedback/trigger_out", 10,
       std::bind(&TrialPerformerNode::update_trigger_out_feedback, this, std::placeholders::_1));
 }
 
 void TrialPerformerNode::initialize_publishers() {
-  create_marker_publisher = this->create_publisher<neuronavigation_interfaces::msg::CreateMarker>("/neuronavigation/create_marker", 10);
+  create_marker_publisher = this->create_publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>("/neuronavigation/create_marker", 10);
 }
 
 /* Subscriber callbacks */
@@ -91,11 +91,11 @@ void TrialPerformerNode::handle_system_state(const mtms_device_interfaces::msg::
   system_state = msg;
 }
 
-void TrialPerformerNode::handle_session(const system_interfaces::msg::Session::SharedPtr msg) {
+void TrialPerformerNode::handle_session(const mtms_system_interfaces::msg::Session::SharedPtr msg) {
   session = msg;
 }
 
-void TrialPerformerNode::update_pulse_feedback(const event_interfaces::msg::PulseFeedback::SharedPtr msg) {
+void TrialPerformerNode::update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg) {
   pulse_feedback[msg->id] = msg;
 
   auto error_code = msg->error.value;
@@ -109,7 +109,7 @@ void TrialPerformerNode::update_pulse_feedback(const event_interfaces::msg::Puls
   }
 }
 
-void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
+void TrialPerformerNode::update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
   trigger_out_feedback[msg->id] = msg;
 
   auto error_code = msg->error.value;
@@ -125,10 +125,10 @@ void TrialPerformerNode::update_trigger_out_feedback(const event_interfaces::msg
 
 /* Using publishers */
 
-void TrialPerformerNode::create_marker(const trial_interfaces::msg::Trial &trial) {
+void TrialPerformerNode::create_marker(const mtms_trial_interfaces::msg::Trial &trial) {
   RCLCPP_INFO(this->get_logger(), "Creating marker...");
 
-  auto msg = std::make_shared<neuronavigation_interfaces::msg::CreateMarker>();
+  auto msg = std::make_shared<mtms_neuronavigation_interfaces::msg::CreateMarker>();
   msg->targets = trial.targets;
   create_marker_publisher->publish(*msg);
 }
@@ -152,7 +152,7 @@ bool TrialPerformerNode::is_device_started() const {
 }
 
 bool TrialPerformerNode::is_session_started() const {
-  return session && session->state == system_interfaces::msg::Session::STARTED;
+  return session && session->state == mtms_system_interfaces::msg::Session::STARTED;
 }
 
 double TrialPerformerNode::get_current_time() const {
@@ -176,16 +176,16 @@ std::vector<uint16_t> TrialPerformerNode::get_actual_voltages() const {
 
 /* ROS message creation */
 
-std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &waveforms, const trial_interfaces::msg::Trial &trial, double start_time) {
+std::pair<std::vector<mtms_event_interfaces::msg::Pulse>, std::vector<uint16_t>> TrialPerformerNode::create_pulses(const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &waveforms, const mtms_trial_interfaces::msg::Trial &trial, double start_time) {
   std::vector<uint16_t> pulse_ids;
-  std::vector<event_interfaces::msg::Pulse> pulses;
+  std::vector<mtms_event_interfaces::msg::Pulse> pulses;
 
   for (uint8_t i = 0; i < trial.targets.size(); ++i) {
     auto waveforms_for_coil_set = waveforms[i];
     for (uint8_t channel = 0; channel < NUM_OF_CHANNELS; ++channel) {
       uint16_t id = get_next_id();
       auto waveform = waveforms_for_coil_set.waveforms[channel];
-      auto pulse = create_pulse(id, channel, waveform, start_time + trial.pulse_times_since_trial_start[i], event_interfaces::msg::ExecutionCondition::TIMED);
+      auto pulse = create_pulse(id, channel, waveform, start_time + trial.pulse_times_since_trial_start[i], mtms_event_interfaces::msg::ExecutionCondition::TIMED);
       pulse_ids.push_back(id);
       pulses.push_back(pulse);
     }
@@ -194,13 +194,13 @@ std::pair<std::vector<event_interfaces::msg::Pulse>, std::vector<uint16_t>> Tria
   return {pulses, pulse_ids};
 }
 
-event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8_t channel, const waveform_interfaces::msg::Waveform &waveform, double time, uint8_t execution_condition) {
-  event_interfaces::msg::EventInfo event_info;
+mtms_event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8_t channel, const mtms_waveform_interfaces::msg::Waveform &waveform, double time, uint8_t execution_condition) {
+  mtms_event_interfaces::msg::EventInfo event_info;
   event_info.id = id;
   event_info.execution_condition.value = execution_condition;
   event_info.execution_time = time;
 
-  event_interfaces::msg::Pulse pulse;
+  mtms_event_interfaces::msg::Pulse pulse;
   pulse.event_info = event_info;
   pulse.channel = channel;
   pulse.waveform = waveform;
@@ -208,9 +208,9 @@ event_interfaces::msg::Pulse TrialPerformerNode::create_pulse(uint16_t id, uint8
   return pulse;
 }
 
-std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const trial_interfaces::msg::Trial &trial, double pulse_time) {
+std::pair<std::vector<mtms_event_interfaces::msg::TriggerOut>, std::vector<uint16_t>> TrialPerformerNode::create_trigger_outs(const mtms_trial_interfaces::msg::Trial &trial, double pulse_time) {
   std::vector<uint16_t> trigger_out_ids;
-  std::vector<event_interfaces::msg::TriggerOut> trigger_outs;
+  std::vector<mtms_event_interfaces::msg::TriggerOut> trigger_outs;
 
   const auto n = std::min(trial.trigger_enabled.size(), trial.trigger_delay.size());
   for (size_t i = 0; i < n; ++i) {
@@ -219,7 +219,7 @@ std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>>
       auto trigger_out = create_trigger_out(
           id,
           pulse_time + trial.trigger_delay[i],
-          event_interfaces::msg::ExecutionCondition::TIMED,
+          mtms_event_interfaces::msg::ExecutionCondition::TIMED,
           static_cast<uint8_t>(i + 1));
       trigger_out_ids.push_back(id);
       trigger_outs.push_back(trigger_out);
@@ -229,13 +229,13 @@ std::pair<std::vector<event_interfaces::msg::TriggerOut>, std::vector<uint16_t>>
   return {trigger_outs, trigger_out_ids};
 }
 
-event_interfaces::msg::TriggerOut TrialPerformerNode::create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port) {
-  event_interfaces::msg::EventInfo event_info;
+mtms_event_interfaces::msg::TriggerOut TrialPerformerNode::create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port) {
+  mtms_event_interfaces::msg::EventInfo event_info;
   event_info.id = id;
   event_info.execution_condition.value = execution_condition;
   event_info.execution_time = time;
 
-  event_interfaces::msg::TriggerOut trigger_out;
+  mtms_event_interfaces::msg::TriggerOut trigger_out;
   trigger_out.event_info = event_info;
   trigger_out.port = port;
   trigger_out.duration_us = TRIGGER_DURATION_US;
@@ -286,7 +286,7 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
 
 /* Logging */
 
-void TrialPerformerNode::log_trial(const trial_interfaces::msg::Trial &trial) {
+void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &trial) {
   RCLCPP_INFO(this->get_logger(), "Trial:");
   if (trial.dry_run) {
     RCLCPP_INFO(this->get_logger(), "  Dry run");
@@ -327,11 +327,11 @@ void TrialPerformerNode::toc(const std::string &prefix) {
 
 /* Service requests */
 
-std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
-    const std::vector<targeting_interfaces::msg::ElectricTarget> &targets,
-    const std::vector<waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms) {
+std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
+    const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets,
+    const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::GetMultipulseWaveforms::Request>();
+  auto request = std::make_shared<mtms_targeting_interfaces::srv::GetMultipulseWaveforms::Request>();
   request->targets = targets;
   request->target_waveforms = target_waveforms;
 
@@ -348,16 +348,16 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::Waveforms
     throw std::runtime_error("Call to GetMultipulseWaveforms service failed");
   }
 
-  std::vector<waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(
+  std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(
       response->approximated_waveforms.begin(), response->approximated_waveforms.end());
 
   return {response->initial_voltages, approximated_waveforms};
 }
 
 std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_target_voltages(
-    const targeting_interfaces::msg::ElectricTarget &target) {
+    const mtms_targeting_interfaces::msg::ElectricTarget &target) {
 
-  auto request = std::make_shared<targeting_interfaces::srv::GetTargetVoltages::Request>();
+  auto request = std::make_shared<mtms_targeting_interfaces::srv::GetTargetVoltages::Request>();
   request->target = target;
 
   auto future = targeting_client->async_send_request(request);
@@ -376,8 +376,8 @@ std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_targ
   return {response->voltages, response->reversed_polarities};
 }
 
-waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
-  auto request = std::make_shared<targeting_interfaces::srv::GetDefaultWaveform::Request>();
+mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
+  auto request = std::make_shared<mtms_targeting_interfaces::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
 
   auto future = get_default_waveform_client->async_send_request(request);
@@ -393,8 +393,8 @@ waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint
   return waveform;
 }
 
-waveform_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const waveform_interfaces::msg::Waveform &waveform) {
-  auto request = std::make_shared<targeting_interfaces::srv::ReversePolarity::Request>();
+mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const mtms_waveform_interfaces::msg::Waveform &waveform) {
+  auto request = std::make_shared<mtms_targeting_interfaces::srv::ReversePolarity::Request>();
   request->waveform = waveform;
 
   auto future = reverse_polarity_client->async_send_request(request);
@@ -413,7 +413,7 @@ waveform_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const wa
   return response->waveform;
 }
 
-void TrialPerformerNode::request_events(const std::vector<event_interfaces::msg::Pulse> &pulses, const std::vector<event_interfaces::msg::TriggerOut> &trigger_outs) {
+void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs) {
   auto request = std::make_shared<mtms_device_interfaces::srv::RequestEvents::Request>();
   request->pulses = pulses;
   request->trigger_outs = trigger_outs;
@@ -435,7 +435,7 @@ void TrialPerformerNode::request_events(const std::vector<event_interfaces::msg:
 /* Action clients */
 
 bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
-  auto request = std::make_shared<trial_interfaces::srv::SetVoltages::Request>();
+  auto request = std::make_shared<mtms_trial_interfaces::srv::SetVoltages::Request>();
   request->voltages = voltages;
 
   auto future = set_voltages_client->async_send_request(request);
@@ -456,8 +456,8 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
 }
 
 void TrialPerformerNode::handle_perform_trial(
-    const std::shared_ptr<trial_interfaces::srv::PerformTrial::Request> request,
-    std::shared_ptr<trial_interfaces::srv::PerformTrial::Response> response) {
+    const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
   RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
   try {
     /* Log trial details. */
@@ -488,7 +488,7 @@ void TrialPerformerNode::handle_perform_trial(
   }
 }
 
-bool TrialPerformerNode::perform_trial(const trial_interfaces::msg::Trial &trial) {
+bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
   tic();
 
   bool success = true;
@@ -549,10 +549,10 @@ bool TrialPerformerNode::perform_trial(const trial_interfaces::msg::Trial &trial
   return success;
 }
 
-std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
-  std::vector<waveform_interfaces::msg::WaveformsForCoilSet> target_waveforms;
+std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
+  std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> target_waveforms;
   for (uint8_t i = 0; i < targets.size(); ++i) {
-    waveform_interfaces::msg::WaveformsForCoilSet waveforms;
+    mtms_waveform_interfaces::msg::WaveformsForCoilSet waveforms;
     for (uint8_t channel = 0; channel < NUM_OF_CHANNELS; ++channel) {
       waveforms.waveforms.push_back(get_default_waveform(channel));
     }
@@ -572,7 +572,7 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::Waveforms
   }
 }
 
-std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const targeting_interfaces::msg::ElectricTarget &target, const waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms) {
+std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const mtms_targeting_interfaces::msg::ElectricTarget &target, const mtms_waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms) {
   auto [desired_voltages_float, reversed_polarities] = get_target_voltages(target);
 
   /* Convert initial voltages from float to integer.
@@ -592,7 +592,7 @@ std::pair<std::vector<uint16_t>, std::vector<waveform_interfaces::msg::Waveforms
   }
 
   /* Create the approximated waveforms. */
-  std::vector<waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(1);
+  std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(1);
   approximated_waveforms[0].waveforms = target_waveforms_reversed;
 
   return {desired_voltages, approximated_waveforms};

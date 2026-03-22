@@ -1,0 +1,6 @@
+# ROS service for reversing waveform polarity.
+
+mtms_waveform_interfaces/Waveform waveform
+---
+bool success
+mtms_waveform_interfaces/Waveform waveform

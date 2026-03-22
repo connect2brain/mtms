@@ -2,7 +2,7 @@ import os
 import re
 from datetime import datetime
 
-from experiment_interfaces.srv import LogTrial
+from mtms_experiment_interfaces.srv import LogTrial
 
 import rclpy
 from rclpy.node import Node

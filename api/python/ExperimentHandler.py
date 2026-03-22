@@ -1,11 +1,11 @@
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from experiment_interfaces.msg import ExperimentFeedback
-from experiment_interfaces.srv import PerformExperiment
+from mtms_experiment_interfaces.msg import ExperimentFeedback
+from mtms_experiment_interfaces.srv import PerformExperiment
 from std_srvs.srv import Trigger
 
-from trial_interfaces.srv import ValidateTrial
+from mtms_trial_interfaces.srv import ValidateTrial
 
 
 class ExperimentHandler:

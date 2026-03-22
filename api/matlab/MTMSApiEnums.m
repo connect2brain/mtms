@@ -12,13 +12,13 @@ classdef MTMSApiEnums < handle
     methods
         function obj = MTMSApiEnums()
             device_state = ros2message("mtms_device_interfaces/DeviceState");
-            session_state = ros2message("system_interfaces/Session");
+            session_state = ros2message("mtms_system_interfaces/Session");
             startup_error = ros2message("mtms_device_interfaces/StartupError");
 
-            pulse_error = ros2message("event_interfaces/PulseError");
-            charge_error = ros2message("event_interfaces/ChargeError");
-            discharge_error = ros2message("event_interfaces/DischargeError");
-            trigger_out_error = ros2message("event_interfaces/TriggerOutError");
+            pulse_error = ros2message("mtms_event_interfaces/PulseError");
+            charge_error = ros2message("mtms_event_interfaces/ChargeError");
+            discharge_error = ros2message("mtms_event_interfaces/DischargeError");
+            trigger_out_error = ros2message("mtms_event_interfaces/TriggerOutError");
 
             obj.DEVICE_STATES = {
                 {device_state.NOT_OPERATIONAL,  "Not operational", ""},

@@ -5,9 +5,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "event_interfaces/msg/charge_feedback.hpp"
-#include "event_interfaces/msg/discharge_feedback.hpp"
-#include "event_interfaces/msg/pulse_feedback.hpp"
+#include "mtms_event_interfaces/msg/charge_feedback.hpp"
+#include "mtms_event_interfaces/msg/discharge_feedback.hpp"
+#include "mtms_event_interfaces/msg/pulse_feedback.hpp"
 
 #include "mtms_device_interfaces/msg/channel_error.hpp"
 #include "mtms_device_interfaces/msg/settings.hpp"
@@ -24,9 +24,9 @@ public:
     uint16_t max_voltage,
     const rclcpp::Logger & logger);
 
-  event_interfaces::msg::ChargeFeedback charge(uint16_t target_voltage, uint16_t event_id);
-  event_interfaces::msg::DischargeFeedback discharge(uint16_t requested_target_voltage, uint16_t event_id);
-  event_interfaces::msg::PulseFeedback pulse(uint16_t event_id, uint16_t duration_ticks);
+  mtms_event_interfaces::msg::ChargeFeedback charge(uint16_t target_voltage, uint16_t event_id);
+  mtms_event_interfaces::msg::DischargeFeedback discharge(uint16_t requested_target_voltage, uint16_t event_id);
+  mtms_event_interfaces::msg::PulseFeedback pulse(uint16_t event_id, uint16_t duration_ticks);
 
   double current_voltage() const;
   uint16_t temperature() const;

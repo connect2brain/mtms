@@ -1,0 +1,13 @@
+string experiment_name
+string subject_name
+string experiment_id
+
+uint16 trial_number
+
+mtms_trial_interfaces/Trial trial
+uint16 num_of_attempts
+
+float64 mep_amplitude
+float64 mep_latency
+---
+bool success

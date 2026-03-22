@@ -1,7 +1,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/string.hpp"
-#include "system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/healthcheck.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -13,11 +13,11 @@ const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
 class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
-    this->healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+    this->healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
   }
 
   void publish_healthcheck(uint8_t status_value, const std::string &status_message, const std::string &actionable_message) {
-    auto healthcheck = system_interfaces::msg::Healthcheck();
+    auto healthcheck = mtms_system_interfaces::msg::Healthcheck();
 
     healthcheck.status = status_value;
     healthcheck.status_message = status_message;
@@ -27,7 +27,7 @@ public:
   }
 
 private:
-  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };
 
 /* Initialize FPGA with health checks */
@@ -46,12 +46,12 @@ void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first
       oss << "Please wait for " << waiting_time_left << " seconds before powering on the mTMS device.";
       std::string msg = oss.str();
 
-      status_value = system_interfaces::msg::Healthcheck::NOT_READY;
+      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
       node->publish_healthcheck(status_value, "mTMS device not powered on", msg);
 
       waiting_time_left--;
     } else {
-      status_value = system_interfaces::msg::Healthcheck::NOT_READY;
+      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
       node->publish_healthcheck(status_value, "mTMS device not powered on", "Please power on the mTMS device.");
     }
 
@@ -72,7 +72,7 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
   if (NiFpga_IsError(status)) {
     RCLCPP_ERROR(node->get_logger(), "NiFpga_Run failed with status: %u", status);
     node->publish_healthcheck(
-      system_interfaces::msg::Healthcheck::ERROR,
+      mtms_system_interfaces::msg::Healthcheck::ERROR,
       "FPGA Run Failed",
       "Failed to start FPGA operation."
     );
@@ -86,7 +86,7 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
     if (NiFpga_IsError(ni_status)) {
       RCLCPP_ERROR(node->get_logger(), "NiFpga_GetFpgaViState failed with status: %u", ni_status);
       node->publish_healthcheck(
-        system_interfaces::msg::Healthcheck::ERROR,
+        mtms_system_interfaces::msg::Healthcheck::ERROR,
         "FPGA State Check Failed",
         "Failed to retrieve FPGA state."
       );

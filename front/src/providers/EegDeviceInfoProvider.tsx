@@ -25,7 +25,7 @@ export const EegDeviceInfoProvider: React.FC<EegDeviceInfoProviderProps> = ({ ch
     const eegDeviceInfoSubscriber = new ROSLIB.Topic<EegDeviceInfoMessage>({
       ros: ros,
       name: '/mtms/eeg_device/info',
-      messageType: 'eeg_interfaces/msg/EegDeviceInfo',
+      messageType: 'mtms_eeg_interfaces/msg/EegDeviceInfo',
     })
 
     const callback = (message: EegDeviceInfoMessage) => {

@@ -24,7 +24,7 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  eeg_to_mtms_subscriber = this->create_subscription<system_interfaces::msg::TimebaseMapping>(
+  eeg_to_mtms_subscriber = this->create_subscription<mtms_system_interfaces::msg::TimebaseMapping>(
     EEG_TO_MTMS_TOPIC,
     mapping_qos,
     std::bind(&RemoteController::eeg_to_mtms_callback, this, _1));
@@ -41,14 +41,14 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 
   /* Service client for performing trials. */
   perform_trial_client =
-    this->create_client<trial_interfaces::srv::PerformTrial>(PERFORM_TRIAL_SERVICE);
+    this->create_client<mtms_trial_interfaces::srv::PerformTrial>(PERFORM_TRIAL_SERVICE);
 
   while (!perform_trial_client->wait_for_service(std::chrono::seconds(2))) {
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", PERFORM_TRIAL_SERVICE.c_str());
   }
 }
 
-void RemoteController::eeg_to_mtms_callback(const system_interfaces::msg::TimebaseMapping::SharedPtr msg)
+void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
 {
   latest_eeg_to_mtms = *msg;
 }
@@ -91,8 +91,8 @@ uint8_t RemoteController::clamp_intensity_to_uint8(double intensity_v_m)
 
 bool RemoteController::build_trial_from_message(
   const stimulation_interfaces::msg::TargetedPulses & msg,
-  const system_interfaces::msg::TimebaseMapping & mapping,
-  trial_interfaces::msg::Trial & trial_out) const
+  const mtms_system_interfaces::msg::TimebaseMapping & mapping,
+  mtms_trial_interfaces::msg::Trial & trial_out) const
 {
   if (msg.pulses.empty()) {
     return false;
@@ -115,12 +115,12 @@ bool RemoteController::build_trial_from_message(
   trial_out.start_time = mapping.scale * ref_eeg_time_s + mapping.offset;
 
   for (const auto & pulse : msg.pulses) {
-    targeting_interfaces::msg::ElectricTarget target;
+    mtms_targeting_interfaces::msg::ElectricTarget target;
     target.displacement_x = clamp_displacement_mm_to_int8(pulse.displacement_x);
     target.displacement_y = clamp_displacement_mm_to_int8(pulse.displacement_y);
     target.rotation_angle = wrap_rotation_deg_to_int16(pulse.rotation_angle);
     target.intensity = clamp_intensity_to_uint8(pulse.intensity);
-    target.algorithm = targeting_interfaces::msg::ElectricTarget::LEAST_SQUARES;
+    target.algorithm = mtms_targeting_interfaces::msg::ElectricTarget::LEAST_SQUARES;
 
     trial_out.targets.push_back(target);
     trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time);
@@ -137,7 +137,7 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
-  system_interfaces::msg::TimebaseMapping mapping;
+  mtms_system_interfaces::msg::TimebaseMapping mapping;
   if (!latest_eeg_to_mtms.has_value()) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
@@ -148,7 +148,7 @@ void RemoteController::targeted_pulses_callback(const stimulation_interfaces::ms
   }
   mapping = *latest_eeg_to_mtms;
 
-  trial_interfaces::msg::Trial trial;
+  mtms_trial_interfaces::msg::Trial trial;
   if (!build_trial_from_message(*msg, mapping, trial)) {
     RCLCPP_WARN(this->get_logger(), "Failed to build a valid Trial from incoming TargetedPulses.");
     return;
@@ -165,7 +165,7 @@ void RemoteController::targeted_pulses_callback(const stimulation_interfaces::ms
     trial_ongoing = true;
   }
 
-  auto request = std::make_shared<trial_interfaces::srv::PerformTrial::Request>();
+  auto request = std::make_shared<mtms_trial_interfaces::srv::PerformTrial::Request>();
   request->trial = trial;
 
   auto future = perform_trial_client->async_send_request(request);

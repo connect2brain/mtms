@@ -36,10 +36,10 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
                                 .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
   this->eeg_sample_publisher =
-      this->create_publisher<eeg_interfaces::msg::Sample>(EEG_RAW_TOPIC, EEG_QUEUE_LENGTH);
+      this->create_publisher<mtms_eeg_interfaces::msg::Sample>(EEG_RAW_TOPIC, EEG_QUEUE_LENGTH);
 
   this->device_info_publisher =
-      this->create_publisher<eeg_interfaces::msg::EegDeviceInfo>(DEVICE_INFO_TOPIC, qos_persist_latest);
+      this->create_publisher<mtms_eeg_interfaces::msg::EegDeviceInfo>(DEVICE_INFO_TOPIC, qos_persist_latest);
 
   this->dropped_samples_publisher =
     this->create_publisher<std_msgs::msg::Int32>(DROPPED_SAMPLES_TOPIC, 10);
@@ -169,9 +169,9 @@ void EegBridge::check_for_sample_timeout() {
   }
 }
 
-eeg_interfaces::msg::Sample EegBridge::create_ros_sample(const AdapterSample& adapter_sample,
-                                                    const eeg_interfaces::msg::EegDeviceInfo& [[maybe_unused]] device_info) {
-  auto sample = eeg_interfaces::msg::Sample();
+mtms_eeg_interfaces::msg::Sample EegBridge::create_ros_sample(const AdapterSample& adapter_sample,
+                                                    const mtms_eeg_interfaces::msg::EegDeviceInfo& [[maybe_unused]] device_info) {
+  auto sample = mtms_eeg_interfaces::msg::Sample();
   sample.eeg = adapter_sample.eeg;
   sample.emg = adapter_sample.emg;
   sample.time = adapter_sample.time;
@@ -181,7 +181,7 @@ eeg_interfaces::msg::Sample EegBridge::create_ros_sample(const AdapterSample& ad
   return sample;
 }
 
-void EegBridge::handle_sample(eeg_interfaces::msg::Sample sample) {
+void EegBridge::handle_sample(mtms_eeg_interfaces::msg::Sample sample) {
   /* If this is the first sample, set the time offset. */
   if (std::isnan(this->time_offset)) {
     this->time_offset = sample.time;

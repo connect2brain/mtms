@@ -23,7 +23,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  device_info_subscriber = this->create_subscription<eeg_interfaces::msg::EegDeviceInfo>(
+  device_info_subscriber = this->create_subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>(
     EEG_DEVICE_INFO_TOPIC.c_str(),
     qos_persist_latest,
     std::bind(&MepAnalyzerNode::device_info_callback, this, std::placeholders::_1),
@@ -37,7 +37,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
-  eeg_subscriber = this->create_subscription<eeg_interfaces::msg::Sample>(
+  eeg_subscriber = this->create_subscription<mtms_eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC.c_str(),
     qos,
     std::bind(&MepAnalyzerNode::eeg_sample_callback, this, std::placeholders::_1),
@@ -47,14 +47,14 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
       return opts;
     }());
 
-  analyze_mep_service = this->create_service<mep_interfaces::srv::AnalyzeMep>(
+  analyze_mep_service = this->create_service<mtms_mep_interfaces::srv::AnalyzeMep>(
     SERVICE_ANALYZE_MEP.c_str(),
     std::bind(&MepAnalyzerNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
 }
 
-void MepAnalyzerNode::device_info_callback(const eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
+void MepAnalyzerNode::device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
 {
   if (msg->sampling_frequency == 0u) {
     return;
@@ -74,7 +74,7 @@ void MepAnalyzerNode::device_info_callback(const eeg_interfaces::msg::EegDeviceI
   buffer_cv.notify_all();
 }
 
-void MepAnalyzerNode::eeg_sample_callback(const eeg_interfaces::msg::Sample::SharedPtr msg)
+void MepAnalyzerNode::eeg_sample_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
@@ -190,8 +190,8 @@ double MepAnalyzerNode::max_minus_min(const std::vector<double> & v)
 }
 
 void MepAnalyzerNode::analyze_mep_handler(
-  const std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Request> request,
-  std::shared_ptr<mep_interfaces::srv::AnalyzeMep::Response> response)
+  const std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Request> request,
+  std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Response> response)
 {
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler called: emg_channel=%u mep_window=[%.3f,%.3f] preactivation_enabled=%s pre_window=[%.3f,%.3f] pre_range_limit=%.3f", static_cast<unsigned>(request->emg_channel), request->mep_time_window_start, request->mep_time_window_end, request->preactivation_check_enabled ? "true" : "false", request->preactivation_check_time_window_start, request->preactivation_check_time_window_end, request->preactivation_check_voltage_range_limit);
 
@@ -199,11 +199,11 @@ void MepAnalyzerNode::analyze_mep_handler(
   response->amplitude = 0.0;
   response->latency = 0.0;
   response->emg_buffer.clear();
-  response->status = mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR;
+  response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR;
 
   double stimulation_time_s = 0.0;
   if (!wait_for_next_stimulation_time(stimulation_time_s, ANALYZE_MEP_TIMEOUT_S)) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::TIMEOUT;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::TIMEOUT;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler timed out waiting for next trigger: status=%d", response->status);
     return;
   }
@@ -225,13 +225,13 @@ void MepAnalyzerNode::analyze_mep_handler(
   const uint64_t dropped_before = samples_dropped_counter;
 
   if (!wait_until_buffer_covers(required_start, required_end)) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler failed to get required EEG coverage: status=%d required=[%.3f,%.3f]", response->status, required_start, required_end);
     return;
   }
 
   // From this point on, work on a stable snapshot.
-  std::vector<eeg_interfaces::msg::Sample> snapshot;
+  std::vector<mtms_eeg_interfaces::msg::Sample> snapshot;
   {
     std::lock_guard<std::mutex> lock(buffer_mutex);
     snapshot.reserve(eeg_buffer.size());
@@ -241,7 +241,7 @@ void MepAnalyzerNode::analyze_mep_handler(
   }
 
   if (snapshot.empty()) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler snapshot is empty: status=%d", response->status);
     return;
   }
@@ -250,7 +250,7 @@ void MepAnalyzerNode::analyze_mep_handler(
 
   // Validate EMG channel against first sample in snapshot.
   if (request->emg_channel >= snapshot.front().emg.size()) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::INVALID_EMG_CHANNEL;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::INVALID_EMG_CHANNEL;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler invalid emg_channel=%u (snapshot emg.size()=%zu): status=%d", static_cast<unsigned>(request->emg_channel), snapshot.front().emg.size(), response->status);
     return;
   }
@@ -273,19 +273,19 @@ void MepAnalyzerNode::analyze_mep_handler(
   if (preactivation_enabled) {
     std::vector<double> pre;
     if (!extract_window_from_snapshot(std::min(pre_start, pre_end), std::max(pre_start, pre_end), pre)) {
-      response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+      response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
       return;
     }
     const double voltage_range = max_minus_min(pre);
     preactivation_passed = voltage_range <= request->preactivation_check_voltage_range_limit;
     if (!preactivation_passed) {
-      response->status = mep_interfaces::srv::AnalyzeMep::Response::PREACTIVATION_FAILED;
+      response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::PREACTIVATION_FAILED;
     }
   }
 
   std::vector<double> mep;
   if (!extract_window_from_snapshot(std::min(mep_start, mep_end), std::max(mep_start, mep_end), mep)) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
     return;
   }
   response->emg_buffer = mep;
@@ -323,7 +323,7 @@ void MepAnalyzerNode::analyze_mep_handler(
 
   const uint64_t dropped_after = samples_dropped_counter;
   if (dropped_after != dropped_before) {
-    response->status = mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
+    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
   }
 
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);

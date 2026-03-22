@@ -6,12 +6,12 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 
-from event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFeedback, DischargeFeedback, EventInfo
+from mtms_event_interfaces.msg import ExecutionCondition, Charge, Discharge, ChargeFeedback, DischargeFeedback, EventInfo
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_device_interfaces.srv import RequestEvents
-from trial_interfaces.srv import SetVoltages
-from system_interfaces.msg import Session
+from mtms_trial_interfaces.srv import SetVoltages
+from mtms_system_interfaces.msg import Session
 
 
 class VoltageSetterNode(Node):

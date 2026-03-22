@@ -2,7 +2,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "system_interfaces/msg/session.hpp"
+#include "mtms_system_interfaces/msg/session.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -30,7 +30,7 @@ public:
         .deadline(DEADLINE_NS)
         .lifespan(DEADLINE_NS);
 
-    session_publisher = this->create_publisher<system_interfaces::msg::Session>(
+    session_publisher = this->create_publisher<mtms_system_interfaces::msg::Session>(
       "/mtms/device/session",
       qos);
 
@@ -43,7 +43,7 @@ private:
       return;
     }
 
-    auto session_msg = system_interfaces::msg::Session();
+    auto session_msg = mtms_system_interfaces::msg::Session();
 
     NiFpga_MergeStatus(&status,
                         NiFpga_ReadU8(
@@ -66,7 +66,7 @@ private:
   }
 
   rclcpp::TimerBase::SharedPtr timer;
-  rclcpp::Publisher<system_interfaces::msg::Session>::SharedPtr session_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Session>::SharedPtr session_publisher;
 };
 
 int main(int argc, char **argv) {

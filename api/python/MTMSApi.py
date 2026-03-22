@@ -11,10 +11,10 @@ import time
 
 import rclpy
 
-from system_interfaces.msg import Session
+from mtms_system_interfaces.msg import Session
 from mtms_device_interfaces.msg import DeviceState
-from event_interfaces.msg import ExecutionCondition
-from waveform_interfaces.msg import WaveformsForCoilSet
+from mtms_event_interfaces.msg import ExecutionCondition
+from mtms_waveform_interfaces.msg import WaveformsForCoilSet
 
 from MTMSApiNode import MTMSApiNode
 

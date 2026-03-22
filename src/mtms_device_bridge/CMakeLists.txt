@@ -15,8 +15,8 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
-find_package(event_interfaces REQUIRED)
-find_package(system_interfaces REQUIRED)
+find_package(mtms_event_interfaces REQUIRED)
+find_package(mtms_system_interfaces REQUIRED)
 find_package(realtime_utils REQUIRED)
 
 # Run_fpga executable
@@ -36,7 +36,7 @@ target_include_directories(run_fpga
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
+ament_target_dependencies(run_fpga rclcpp std_msgs mtms_device_interfaces mtms_system_interfaces realtime_utils)
 
 # System state bridge
 
@@ -55,7 +55,7 @@ target_include_directories(system_state_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
+ament_target_dependencies(system_state_bridge rclcpp std_msgs mtms_device_interfaces mtms_system_interfaces realtime_utils)
 
 # Session bridge
 
@@ -74,7 +74,7 @@ target_include_directories(session_bridge
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(session_bridge rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
+ament_target_dependencies(session_bridge rclcpp std_msgs mtms_device_interfaces mtms_system_interfaces realtime_utils)
 
 # Start device handler
 
@@ -112,7 +112,7 @@ target_include_directories(start_session_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
+ament_target_dependencies(start_session_handler rclcpp std_msgs mtms_device_interfaces mtms_system_interfaces realtime_utils)
 
 # Stop session handler
 
@@ -131,7 +131,7 @@ target_include_directories(stop_session_handler
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces system_interfaces realtime_utils)
+ament_target_dependencies(stop_session_handler rclcpp std_msgs mtms_device_interfaces mtms_system_interfaces realtime_utils)
 
 # Stop device handler
 
@@ -208,7 +208,7 @@ target_include_directories(event_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(event_handler rclcpp std_msgs event_interfaces mtms_device_interfaces realtime_utils)
+ament_target_dependencies(event_handler rclcpp std_msgs mtms_event_interfaces mtms_device_interfaces realtime_utils)
 
 # Trigger events handler
 
@@ -227,7 +227,7 @@ target_include_directories(trigger_events_handler
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(trigger_events_handler rclcpp std_msgs std_srvs event_interfaces mtms_device_interfaces realtime_utils)
+ament_target_dependencies(trigger_events_handler rclcpp std_msgs std_srvs mtms_event_interfaces mtms_device_interfaces realtime_utils)
 
 # Feedback monitor bridge
 
@@ -246,7 +246,7 @@ target_include_directories(feedback_monitor_bridge
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs event_interfaces realtime_utils)
+ament_target_dependencies(feedback_monitor_bridge rclcpp std_msgs mtms_event_interfaces realtime_utils)
 
 # Settings handler
 

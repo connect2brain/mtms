@@ -1,20 +1,20 @@
 #include "rclcpp/rclcpp.hpp"
-#include "targeting_interfaces/srv/reverse_polarity.hpp"
-#include "waveform_interfaces/msg/waveform_phase.hpp"
-#include "waveform_interfaces/msg/waveform_piece.hpp"
-#include "waveform_interfaces/msg/waveform.hpp"
+#include "mtms_targeting_interfaces/srv/reverse_polarity.hpp"
+#include "mtms_waveform_interfaces/msg/waveform_phase.hpp"
+#include "mtms_waveform_interfaces/msg/waveform_piece.hpp"
+#include "mtms_waveform_interfaces/msg/waveform.hpp"
 
 using namespace std;
 
 const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
-  {waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
-  {waveform_interfaces::msg::WaveformPhase::RISING, waveform_interfaces::msg::WaveformPhase::FALLING},
-  {waveform_interfaces::msg::WaveformPhase::FALLING, waveform_interfaces::msg::WaveformPhase::RISING},
+  {mtms_waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, mtms_waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
+  {mtms_waveform_interfaces::msg::WaveformPhase::RISING, mtms_waveform_interfaces::msg::WaveformPhase::FALLING},
+  {mtms_waveform_interfaces::msg::WaveformPhase::FALLING, mtms_waveform_interfaces::msg::WaveformPhase::RISING},
 
   /* HOLD is mapped to ALTERNATIVE_HOLD and vice versa so that the IGBT bridges for both are used roughly
      equally, making them wear out at the same rate. */
-  {waveform_interfaces::msg::WaveformPhase::HOLD, waveform_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
-  {waveform_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, waveform_interfaces::msg::WaveformPhase::HOLD}
+  {mtms_waveform_interfaces::msg::WaveformPhase::HOLD, mtms_waveform_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD},
+  {mtms_waveform_interfaces::msg::WaveformPhase::ALTERNATIVE_HOLD, mtms_waveform_interfaces::msg::WaveformPhase::HOLD}
 };
 
 class ReversePolarity : public rclcpp::Node {
@@ -23,13 +23,13 @@ public:
   ReversePolarity() : Node("reverse_polarity") {
 
     auto service_callback = [this](
-        const std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Request> request,
-        std::shared_ptr<targeting_interfaces::srv::ReversePolarity::Response> response) -> void {
+        const std::shared_ptr<mtms_targeting_interfaces::srv::ReversePolarity::Request> request,
+        std::shared_ptr<mtms_targeting_interfaces::srv::ReversePolarity::Response> response) -> void {
 
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Request received: Reverse polarity.");
 
-      waveform_interfaces::msg::Waveform waveform = request->waveform;
-      waveform_interfaces::msg::WaveformPiece piece;
+      mtms_waveform_interfaces::msg::Waveform waveform = request->waveform;
+      mtms_waveform_interfaces::msg::WaveformPiece piece;
 
       uint8_t num_of_pieces = std::size(waveform.pieces);
       for (uint8_t i = 0; i < num_of_pieces; i++) {
@@ -56,12 +56,12 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("reverse_polarity"), "Responded to request.");
     };
 
-    reverse_polarity_service = this->create_service<targeting_interfaces::srv::ReversePolarity>(
+    reverse_polarity_service = this->create_service<mtms_targeting_interfaces::srv::ReversePolarity>(
         "/mtms/waveforms/reverse_polarity", service_callback);
   }
 
 private:
-  rclcpp::Service<targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_service;
+  rclcpp::Service<mtms_targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_service;
 };
 
 

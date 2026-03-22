@@ -1,9 +1,0 @@
-# ROS service for getting waveforms and initial voltages for multi-pulse stimulation, where the
-# resulting waveforms are approximations of the target waveform, approximated with pulse-width modulation (PWM).
-
-targeting_interfaces/ElectricTarget[] targets
-waveform_interfaces/WaveformsForCoilSet[] target_waveforms
----
-bool success
-uint16[] initial_voltages
-waveform_interfaces/WaveformsForCoilSet[] approximated_waveforms

@@ -7,10 +7,10 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(eeg_interfaces REQUIRED)
-find_package(system_interfaces REQUIRED)
-find_package(event_interfaces REQUIRED)
-find_package(waveform_interfaces REQUIRED)
+find_package(mtms_eeg_interfaces REQUIRED)
+find_package(mtms_system_interfaces REQUIRED)
+find_package(mtms_event_interfaces REQUIRED)
+find_package(mtms_waveform_interfaces REQUIRED)
 
 add_executable(timebase_calibrator
   src/timebase_calibrator.cpp
@@ -23,10 +23,10 @@ target_include_directories(timebase_calibrator
 
 ament_target_dependencies(timebase_calibrator
   rclcpp
-  eeg_interfaces
-  event_interfaces
-  waveform_interfaces
-  system_interfaces)
+  mtms_eeg_interfaces
+  mtms_event_interfaces
+  mtms_waveform_interfaces
+  mtms_system_interfaces)
 
 install(TARGETS
   timebase_calibrator

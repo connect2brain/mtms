@@ -13,11 +13,11 @@
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
-#include "event_interfaces/msg/charge_error.hpp"
-#include "event_interfaces/msg/discharge_error.hpp"
-#include "event_interfaces/msg/trigger_out_error.hpp"
+#include "mtms_event_interfaces/msg/charge_error.hpp"
+#include "mtms_event_interfaces/msg/discharge_error.hpp"
+#include "mtms_event_interfaces/msg/trigger_out_error.hpp"
 #include "mtms_device_interfaces/msg/channel_state.hpp"
-#include "waveform_interfaces/msg/waveform_phase.hpp"
+#include "mtms_waveform_interfaces/msg/waveform_phase.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -41,22 +41,22 @@ MTMSSimulator::MTMSSimulator()
     "/mtms/device/start", std::bind(&MTMSSimulator::start_device_handler, this, _1, _2));
   stop_device_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/device/stop", std::bind(&MTMSSimulator::stop_device_handler, this, _1, _2));
-  start_session_service_ = this->create_service<system_interfaces::srv::StartSession>(
+  start_session_service_ = this->create_service<mtms_system_interfaces::srv::StartSession>(
     "/mtms/device/session/start", std::bind(&MTMSSimulator::start_session_handler, this, _1, _2));
-  stop_session_service_ = this->create_service<system_interfaces::srv::StopSession>(
+  stop_session_service_ = this->create_service<mtms_system_interfaces::srv::StopSession>(
     "/mtms/device/session/stop", std::bind(&MTMSSimulator::stop_session_handler, this, _1, _2));
   request_events_service_ = this->create_service<mtms_device_interfaces::srv::RequestEvents>(
     "/mtms/device/events/request", std::bind(&MTMSSimulator::request_events_handler, this, _1, _2));
   trigger_events_service_ = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/device/events/trigger", std::bind(&MTMSSimulator::trigger_events_handler, this, _1, _2));
 
-  pulse_feedback_publisher_ = this->create_publisher<event_interfaces::msg::PulseFeedback>(
+  pulse_feedback_publisher_ = this->create_publisher<mtms_event_interfaces::msg::PulseFeedback>(
     "/mtms/device/events/feedback/pulse", 10);
-  charge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::ChargeFeedback>(
+  charge_feedback_publisher_ = this->create_publisher<mtms_event_interfaces::msg::ChargeFeedback>(
     "/mtms/device/events/feedback/charge", 10);
-  discharge_feedback_publisher_ = this->create_publisher<event_interfaces::msg::DischargeFeedback>(
+  discharge_feedback_publisher_ = this->create_publisher<mtms_event_interfaces::msg::DischargeFeedback>(
     "/mtms/device/events/feedback/discharge", 10);
-  trigger_out_feedback_publisher_ = this->create_publisher<event_interfaces::msg::TriggerOutFeedback>(
+  trigger_out_feedback_publisher_ = this->create_publisher<mtms_event_interfaces::msg::TriggerOutFeedback>(
     "/mtms/device/events/feedback/trigger_out", 10);
 
   auto state_qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -81,7 +81,7 @@ MTMSSimulator::MTMSSimulator()
     std::chrono::duration<double>(session_lifetime).count()));
   session_qos.lifespan(rclcpp::Duration::from_seconds(
     std::chrono::duration<double>(session_lifetime).count()));
-  session_publisher_ = this->create_publisher<system_interfaces::msg::Session>(
+  session_publisher_ = this->create_publisher<mtms_system_interfaces::msg::Session>(
     "/mtms/device/session", session_qos);
 
   auto system_state_qos = rclcpp::QoS(rclcpp::KeepLast(1))
@@ -96,7 +96,7 @@ MTMSSimulator::MTMSSimulator()
   system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
     "/mtms/device/system_state", system_state_qos);
 
-  healthcheck_publisher_ = this->create_publisher<system_interfaces::msg::Healthcheck>(
+  healthcheck_publisher_ = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(
     "/mtms/device/healthcheck", 10);
 
   system_state_ = mtms_device_interfaces::msg::SystemState();
@@ -214,8 +214,8 @@ void MTMSSimulator::stop_device_handler(
 }
 
 void MTMSSimulator::start_session_handler(
-  [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StartSession::Request> request,
-  std::shared_ptr<system_interfaces::srv::StartSession::Response> response)
+  [[maybe_unused]] const std::shared_ptr<mtms_system_interfaces::srv::StartSession::Request> request,
+  std::shared_ptr<mtms_system_interfaces::srv::StartSession::Response> response)
 {
   if (system_state_.device_state.value != mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
     RCLCPP_WARN(this->get_logger(), "Device not started. Can't start session");
@@ -223,22 +223,22 @@ void MTMSSimulator::start_session_handler(
     return;
   }
 
-  session_state_value_ = system_interfaces::msg::Session::STARTED;
+  session_state_value_ = mtms_system_interfaces::msg::Session::STARTED;
   session_start_time_ = this->get_clock()->now().seconds();
   RCLCPP_INFO(this->get_logger(), "Session started");
   response->success = true;
 }
 
 void MTMSSimulator::stop_session_handler(
-  [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::StopSession::Request> request,
-  std::shared_ptr<system_interfaces::srv::StopSession::Response> response)
+  [[maybe_unused]] const std::shared_ptr<mtms_system_interfaces::srv::StopSession::Request> request,
+  std::shared_ptr<mtms_system_interfaces::srv::StopSession::Response> response)
 {
-  session_state_value_ = system_interfaces::msg::Session::STOPPING;
+  session_state_value_ = mtms_system_interfaces::msg::Session::STOPPING;
   RCLCPP_INFO(this->get_logger(), "Session stopping");
 
   // Drive all channel voltages to 0 before reporting STOPPED.
   for (size_t channel_idx = 0; channel_idx < num_of_channels_; ++channel_idx) {
-    event_interfaces::msg::DischargeFeedback feedback;
+    mtms_event_interfaces::msg::DischargeFeedback feedback;
     {
       std::lock_guard<std::mutex> lock(state_mutex_);
       feedback = channels_[channel_idx].discharge(0, static_cast<uint16_t>(channel_idx));
@@ -246,7 +246,7 @@ void MTMSSimulator::stop_session_handler(
     discharge_feedback_publisher_->publish(feedback);
   }
 
-  session_state_value_ = system_interfaces::msg::Session::STOPPED;
+  session_state_value_ = mtms_system_interfaces::msg::Session::STOPPED;
   RCLCPP_INFO(this->get_logger(), "Session stopped");
   response->success = true;
 }
@@ -271,7 +271,7 @@ void MTMSSimulator::trigger_events_handler(
 
 bool MTMSSimulator::session_not_started() const
 {
-  return session_state_value_.load() != system_interfaces::msg::Session::STARTED;
+  return session_state_value_.load() != mtms_system_interfaces::msg::Session::STARTED;
 }
 
 bool MTMSSimulator::validate_charge_or_discharge(
@@ -284,7 +284,7 @@ bool MTMSSimulator::validate_charge_or_discharge(
       this->get_logger(),
       "Trying to use invalid channel %u, configured channel count is %zu",
       channel, num_of_channels_);
-    error_value = event_interfaces::msg::ChargeError::INVALID_CHANNEL;
+    error_value = mtms_event_interfaces::msg::ChargeError::INVALID_CHANNEL;
     return false;
   }
   // `max_voltage_` is the inclusive maximum supported voltage.
@@ -293,20 +293,20 @@ bool MTMSSimulator::validate_charge_or_discharge(
       this->get_logger(),
       "Too high voltage. Requested %u, maximum supported is %u",
       target_voltage, max_voltage_);
-    error_value = event_interfaces::msg::ChargeError::INVALID_VOLTAGE;
+    error_value = mtms_event_interfaces::msg::ChargeError::INVALID_VOLTAGE;
     return false;
   }
 
-  error_value = event_interfaces::msg::ChargeError::NO_ERROR;
+  error_value = mtms_event_interfaces::msg::ChargeError::NO_ERROR;
   return true;
 }
 
 void MTMSSimulator::wait_for_execution_condition(
-  const event_interfaces::msg::ExecutionCondition & execution_condition,
+  const mtms_event_interfaces::msg::ExecutionCondition & execution_condition,
   const double execution_time) const
 {
   switch (execution_condition.value) {
-    case event_interfaces::msg::ExecutionCondition::TIMED:
+    case mtms_event_interfaces::msg::ExecutionCondition::TIMED:
     {
       const double wait =
         execution_time - (this->get_clock()->now().seconds() - session_start_time_.load());
@@ -315,12 +315,12 @@ void MTMSSimulator::wait_for_execution_condition(
       }
       break;
     }
-    case event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER:
+    case mtms_event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER:
       RCLCPP_WARN(
         this->get_logger(),
         "Execution condition WAIT_FOR_TRIGGER not supported. Doing nothing.");
       break;
-    case event_interfaces::msg::ExecutionCondition::IMMEDIATE:
+    case mtms_event_interfaces::msg::ExecutionCondition::IMMEDIATE:
       break;
     default:
       RCLCPP_WARN(
@@ -332,7 +332,7 @@ void MTMSSimulator::wait_for_execution_condition(
 }
 
 std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durations(
-  const waveform_interfaces::msg::Waveform & waveform) const
+  const mtms_waveform_interfaces::msg::Waveform & waveform) const
 {
   uint32_t total_duration = 0;
   uint32_t rising_duration = 0;
@@ -341,9 +341,9 @@ std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durat
   for (const auto & piece : waveform.pieces) {
     const uint32_t duration = piece.duration_in_ticks;
     total_duration += duration;
-    if (piece.waveform_phase.value == waveform_interfaces::msg::WaveformPhase::RISING) {
+    if (piece.waveform_phase.value == mtms_waveform_interfaces::msg::WaveformPhase::RISING) {
       rising_duration += duration;
-    } else if (piece.waveform_phase.value == waveform_interfaces::msg::WaveformPhase::FALLING) {
+    } else if (piece.waveform_phase.value == mtms_waveform_interfaces::msg::WaveformPhase::FALLING) {
       falling_duration += duration;
     }
   }
@@ -351,14 +351,14 @@ std::tuple<uint32_t, uint32_t, uint32_t> MTMSSimulator::calculate_waveform_durat
   return {total_duration, rising_duration, falling_duration};
 }
 
-event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const event_interfaces::msg::Pulse & message) const
+mtms_event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const mtms_event_interfaces::msg::Pulse & message) const
 {
-  event_interfaces::msg::PulseError error;
-  error.value = event_interfaces::msg::PulseError::NO_ERROR;
+  mtms_event_interfaces::msg::PulseError error;
+  error.value = mtms_event_interfaces::msg::PulseError::NO_ERROR;
 
   if (!allow_stimulation_.load()) {
     RCLCPP_WARN(this->get_logger(), "Stimulation not allowed, skipping pulse.");
-    error.value = event_interfaces::msg::PulseError::NOT_ALLOWED;
+    error.value = mtms_event_interfaces::msg::PulseError::NOT_ALLOWED;
     return error;
   }
 
@@ -366,27 +366,27 @@ event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const event_inte
 
   if (message.channel >= system_state_.channel_states.size()) {
     RCLCPP_WARN(this->get_logger(), "Invalid channel index: %u", message.channel);
-    error.value = event_interfaces::msg::PulseError::INVALID_CHANNEL;
+    error.value = mtms_event_interfaces::msg::PulseError::INVALID_CHANNEL;
     return error;
   }
 
   const auto execution_condition = message.event_info.execution_condition.value;
   if (
-    execution_condition != event_interfaces::msg::ExecutionCondition::IMMEDIATE &&
-    execution_condition != event_interfaces::msg::ExecutionCondition::TIMED &&
-    execution_condition != event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER)
+    execution_condition != mtms_event_interfaces::msg::ExecutionCondition::IMMEDIATE &&
+    execution_condition != mtms_event_interfaces::msg::ExecutionCondition::TIMED &&
+    execution_condition != mtms_event_interfaces::msg::ExecutionCondition::WAIT_FOR_TRIGGER)
   {
-    error.value = event_interfaces::msg::PulseError::INVALID_EXECUTION_CONDITION;
+    error.value = mtms_event_interfaces::msg::PulseError::INVALID_EXECUTION_CONDITION;
     return error;
   }
 
   const auto & channel = channels_[message.channel];
   if (channel.is_charging) {
-    error.value = event_interfaces::msg::PulseError::OVERLAPPING_WITH_CHARGING;
+    error.value = mtms_event_interfaces::msg::PulseError::OVERLAPPING_WITH_CHARGING;
     return error;
   }
   if (channel.is_discharging) {
-    error.value = event_interfaces::msg::PulseError::OVERLAPPING_WITH_DISCHARGING;
+    error.value = mtms_event_interfaces::msg::PulseError::OVERLAPPING_WITH_DISCHARGING;
     return error;
   }
 
@@ -398,7 +398,7 @@ event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const event_inte
       this->get_logger(),
       "Pulse duration invalid: total=%u ticks exceeds max=%u ticks",
       total_duration, settings_.maximum_pulse_duration_ticks);
-    error.value = event_interfaces::msg::PulseError::INVALID_DURATIONS;
+    error.value = mtms_event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
 
@@ -411,14 +411,14 @@ event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const event_inte
       "Pulse duration invalid: rising=%u ticks, falling=%u ticks, diff=%u ticks exceeds max_diff=%u ticks",
       rising_duration, falling_duration, rise_fall_diff,
       settings_.maximum_rising_falling_difference_ticks);
-    error.value = event_interfaces::msg::PulseError::INVALID_DURATIONS;
+    error.value = mtms_event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
 
   return error;
 }
 
-void MTMSSimulator::process_charge(const event_interfaces::msg::Charge & message)
+void MTMSSimulator::process_charge(const mtms_event_interfaces::msg::Charge & message)
 {
   RCLCPP_INFO(this->get_logger(), "Charge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
@@ -427,9 +427,9 @@ void MTMSSimulator::process_charge(const event_interfaces::msg::Charge & message
     return;
   }
 
-  uint8_t error_value = event_interfaces::msg::ChargeError::NO_ERROR;
+  uint8_t error_value = mtms_event_interfaces::msg::ChargeError::NO_ERROR;
   if (!validate_charge_or_discharge(message.channel, message.target_voltage, error_value)) {
-    event_interfaces::msg::ChargeFeedback feedback;
+    mtms_event_interfaces::msg::ChargeFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error.value = error_value;
     charge_feedback_publisher_->publish(feedback);
@@ -440,7 +440,7 @@ void MTMSSimulator::process_charge(const event_interfaces::msg::Charge & message
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
-  event_interfaces::msg::ChargeFeedback feedback;
+  mtms_event_interfaces::msg::ChargeFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].charge(message.target_voltage, message.event_info.id);
@@ -450,7 +450,7 @@ void MTMSSimulator::process_charge(const event_interfaces::msg::Charge & message
   RCLCPP_INFO(this->get_logger(), "Charge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
-void MTMSSimulator::process_discharge(const event_interfaces::msg::Discharge & message)
+void MTMSSimulator::process_discharge(const mtms_event_interfaces::msg::Discharge & message)
 {
   RCLCPP_INFO(this->get_logger(), "Discharge requested: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 
@@ -459,9 +459,9 @@ void MTMSSimulator::process_discharge(const event_interfaces::msg::Discharge & m
     return;
   }
 
-  uint8_t error_value = event_interfaces::msg::DischargeError::NO_ERROR;
+  uint8_t error_value = mtms_event_interfaces::msg::DischargeError::NO_ERROR;
   if (!validate_charge_or_discharge(message.channel, message.target_voltage, error_value)) {
-    event_interfaces::msg::DischargeFeedback feedback;
+    mtms_event_interfaces::msg::DischargeFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error.value = error_value;
     discharge_feedback_publisher_->publish(feedback);
@@ -472,7 +472,7 @@ void MTMSSimulator::process_discharge(const event_interfaces::msg::Discharge & m
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
-  event_interfaces::msg::DischargeFeedback feedback;
+  mtms_event_interfaces::msg::DischargeFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].discharge(message.target_voltage, message.event_info.id);
@@ -482,7 +482,7 @@ void MTMSSimulator::process_discharge(const event_interfaces::msg::Discharge & m
   RCLCPP_INFO(this->get_logger(), "Discharge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
 }
 
-void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
+void MTMSSimulator::process_pulse(const mtms_event_interfaces::msg::Pulse & message)
 {
   RCLCPP_INFO(this->get_logger(), "Pulse requested: channel=%u, id=%u", message.channel, message.event_info.id);
 
@@ -496,8 +496,8 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
     message.event_info.execution_time);
 
   auto error = validate_pulse(message);
-  if (error.value != event_interfaces::msg::PulseError::NO_ERROR) {
-    event_interfaces::msg::PulseFeedback feedback;
+  if (error.value != mtms_event_interfaces::msg::PulseError::NO_ERROR) {
+    mtms_event_interfaces::msg::PulseFeedback feedback;
     feedback.id = message.event_info.id;
     feedback.error = error;
     pulse_feedback_publisher_->publish(feedback);
@@ -505,7 +505,7 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
   }
 
   const auto total_duration = std::get<0>(calculate_waveform_durations(message.waveform));
-  event_interfaces::msg::PulseFeedback feedback;
+  mtms_event_interfaces::msg::PulseFeedback feedback;
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     feedback = channels_[message.channel].pulse(
@@ -516,7 +516,7 @@ void MTMSSimulator::process_pulse(const event_interfaces::msg::Pulse & message)
   RCLCPP_INFO(this->get_logger(), "Pulse completed: channel=%u, id=%u", message.channel, message.event_info.id);
 }
 
-void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut & message)
+void MTMSSimulator::process_trigger_out(const mtms_event_interfaces::msg::TriggerOut & message)
 {
   if (session_not_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started. Can't generate trigger out.");
@@ -537,9 +537,9 @@ void MTMSSimulator::process_trigger_out(const event_interfaces::msg::TriggerOut 
 
   std::this_thread::sleep_for(std::chrono::duration<double>(message.duration_us / 1e6));
 
-  event_interfaces::msg::TriggerOutFeedback feedback;
+  mtms_event_interfaces::msg::TriggerOutFeedback feedback;
   feedback.id = message.event_info.id;
-  feedback.error.value = event_interfaces::msg::TriggerOutError::NO_ERROR;
+  feedback.error.value = mtms_event_interfaces::msg::TriggerOutError::NO_ERROR;
   trigger_out_feedback_publisher_->publish(feedback);
 
   RCLCPP_INFO(this->get_logger(), "Trigger out completed: port=%u, id=%u", message.port, message.event_info.id);
@@ -567,20 +567,20 @@ void MTMSSimulator::publish_system_state()
 
 void MTMSSimulator::publish_session()
 {
-  system_interfaces::msg::Session msg;
+  mtms_system_interfaces::msg::Session msg;
   msg.state = session_state_value_.load();
   msg.time = 0.0;
-  if (msg.state == system_interfaces::msg::Session::STARTED) {
+  if (msg.state == mtms_system_interfaces::msg::Session::STARTED) {
     msg.time = this->get_clock()->now().seconds() - session_start_time_.load();
   }
   session_publisher_->publish(msg);
 }
 
 void MTMSSimulator::queue_event_batch(
-  const std::vector<event_interfaces::msg::Pulse> & pulses,
-  const std::vector<event_interfaces::msg::Charge> & charges,
-  const std::vector<event_interfaces::msg::Discharge> & discharges,
-  const std::vector<event_interfaces::msg::TriggerOut> & trigger_outs)
+  const std::vector<mtms_event_interfaces::msg::Pulse> & pulses,
+  const std::vector<mtms_event_interfaces::msg::Charge> & charges,
+  const std::vector<mtms_event_interfaces::msg::Discharge> & discharges,
+  const std::vector<mtms_event_interfaces::msg::TriggerOut> & trigger_outs)
 {
   EventBatch batch;
   batch.pulses = pulses;
@@ -630,8 +630,8 @@ void MTMSSimulator::event_worker_loop()
 
 void MTMSSimulator::publish_healthcheck() const
 {
-  system_interfaces::msg::Healthcheck msg;
-  msg.status = system_interfaces::msg::Healthcheck::READY;
+  mtms_system_interfaces::msg::Healthcheck msg;
+  msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
   msg.status_message = "Simulator is ready";
   msg.actionable_message = "";
   healthcheck_publisher_->publish(msg);

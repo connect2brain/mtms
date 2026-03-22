@@ -1,6 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "system_interfaces/srv/get_stimulation_allowed.hpp"
+#include "mtms_system_interfaces/srv/get_stimulation_allowed.hpp"
 
 using namespace std;
 using namespace std::chrono;
@@ -19,8 +19,8 @@ public:
   StimulationAllower() : Node("stimulation_allower") {
 
     auto get_stimulation_allowed_callback = [this](
-        [[maybe_unused]] const std::shared_ptr<system_interfaces::srv::GetStimulationAllowed::Request> request,
-        std::shared_ptr<system_interfaces::srv::GetStimulationAllowed::Response> response) -> void {
+        [[maybe_unused]] const std::shared_ptr<mtms_system_interfaces::srv::GetStimulationAllowed::Request> request,
+        std::shared_ptr<mtms_system_interfaces::srv::GetStimulationAllowed::Response> response) -> void {
 
       response->success = true;
       response->stimulation_allowed = this->stimulation_allowed;
@@ -61,7 +61,7 @@ public:
     allow_trigger_out_publisher_ = this->create_publisher<std_msgs::msg::Bool>(ALLOW_TRIGGER_OUT_TOPIC_NAME, qos_persist_latest);
 
     /* Create service for querying status of stimulation allowed.*/
-    get_stimulation_allowed_service_ = this->create_service<system_interfaces::srv::GetStimulationAllowed>(
+    get_stimulation_allowed_service_ = this->create_service<mtms_system_interfaces::srv::GetStimulationAllowed>(
         "/mtms/stimulation/get_allowed", get_stimulation_allowed_callback);
 
     /* Update initial default state even if no neuronavigation topics are publishing. */
@@ -135,7 +135,7 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr allow_stimulation_publisher_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr allow_trigger_out_publisher_;
 
-  rclcpp::Service<system_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
+  rclcpp::Service<mtms_system_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
 };
 
 

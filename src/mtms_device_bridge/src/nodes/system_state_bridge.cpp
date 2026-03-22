@@ -11,7 +11,7 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
 
-#include "system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/healthcheck.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -106,12 +106,12 @@ public:
         "/mtms/device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
 
-    healthcheck_publisher = this->create_publisher<system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+    healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
   }
 
 private:
   void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
-    auto healthcheck = system_interfaces::msg::Healthcheck();
+    auto healthcheck = mtms_system_interfaces::msg::Healthcheck();
 
     healthcheck.status = status_value;
     healthcheck.status_message = status_message;
@@ -247,12 +247,12 @@ private:
 
     uint8_t status_value;
     if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-      status_value = system_interfaces::msg::Healthcheck::READY;
+      status_value = mtms_system_interfaces::msg::Healthcheck::READY;
       publish_healthcheck(status_value,
                           "Ready",
                           "");
     } else {
-      status_value = system_interfaces::msg::Healthcheck::NOT_READY;
+      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
       publish_healthcheck(status_value,
                           "mTMS device is not operational",
                           "Please start the mTMS device.");
@@ -263,7 +263,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
-  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };
 
 int main(int argc, char **argv) {

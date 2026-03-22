@@ -55,8 +55,8 @@ classdef MTMSApi < handle
         %   * 'event_id' - A numerical ID, initialized to 0.
         %   * 'incomplete_events' - An empty list.
         %   * 'device_states' - A ROS2 message object, of type "mtms_device_interfaces/DeviceState".
-        %   * 'session_states' - A ROS2 message object, of type "system_interfaces/Session".
-        %   * 'execution_conditions' - A ROS2 message object, of type "event_interfaces/ExecutionCondition".
+        %   * 'session_states' - A ROS2 message object, of type "mtms_system_interfaces/Session".
+        %   * 'execution_conditions' - A ROS2 message object, of type "mtms_event_interfaces/ExecutionCondition".
 
             % TODO: Should receive channel count automatically from .env so that the user of the API wouldn't have to care.
 
@@ -74,9 +74,9 @@ classdef MTMSApi < handle
             obj.incomplete_events = [];
 
             obj.device_states = ros2message("mtms_device_interfaces/DeviceState");
-            obj.session_states = ros2message("system_interfaces/Session");
+            obj.session_states = ros2message("mtms_system_interfaces/Session");
 
-            obj.execution_conditions = ros2message("event_interfaces/ExecutionCondition");
+            obj.execution_conditions = ros2message("mtms_event_interfaces/ExecutionCondition");
 
             % Print configuration
             disp("Configuration:")
@@ -592,7 +592,7 @@ classdef MTMSApi < handle
 
             assert(length(modes) == length(durations), 'Length of modes must be equal to the length of durations.');
 
-            waveform = ros2message('waveform_interfaces/Waveform');
+            waveform = ros2message('mtms_waveform_interfaces/Waveform');
             for i = 1:length(modes)
                 mode = modes{i};
                 duration_in_ticks = durations{i} / 25e-9;
@@ -610,7 +610,7 @@ classdef MTMSApi < handle
                 allowed_modes = {'NON_CONDUCTIVE', 'RISING', 'HOLD', 'FALLING', 'ALTERNATIVE_HOLD'};
                 assert(ismember(mode, allowed_modes), ['Mode must be one of ' strjoin(allowed_modes, ', ')]);
 
-                piece = ros2message('waveform_interfaces/WaveformPiece');
+                piece = ros2message('mtms_waveform_interfaces/WaveformPiece');
                 assert (duration_in_ticks >= 0 && duration_in_ticks <= 65535, 'Duration in ticks must be in range 0-65535.');
                 piece.duration_in_ticks = uint16(duration_in_ticks);
 
@@ -630,7 +630,7 @@ classdef MTMSApi < handle
         % :return: A WaveformsForCoilSet object.
         % :rtype: ROS message (WaveformsForCoilSet)
 
-            waveforms_for_coil_set = ros2message('waveform_interfaces/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('mtms_waveform_interfaces/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = waveforms(channel + 1);
             end
@@ -641,7 +641,7 @@ classdef MTMSApi < handle
         end
 
         function waveforms_for_coil_set = get_default_waveforms_for_coil_set(obj)
-            waveforms_for_coil_set = ros2message('waveform_interfaces/WaveformsForCoilSet');
+            waveforms_for_coil_set = ros2message('mtms_waveform_interfaces/WaveformsForCoilSet');
             for channel = 0:obj.channel_count - 1
                 waveforms_for_coil_set.waveforms(channel + 1) = obj.get_default_waveform(channel);
             end
@@ -679,7 +679,7 @@ classdef MTMSApi < handle
         % :return: The maximum intensity.
         % :rtype: float
 
-            electric_target_msg = ros2message('targeting_interfaces/ElectricTarget');
+            electric_target_msg = ros2message('mtms_targeting_interfaces/ElectricTarget');
             if strcmp(algorithm_str, 'least_squares')
                 algorithm = electric_target_msg.LEAST_SQUARES;
             elseif strcmp(algorithm_str, 'genetic')
@@ -754,7 +754,7 @@ classdef MTMSApi < handle
             %    exceeds this limit, the preactivation check will fail.
             % :type preactivation_voltage_range_limit: float
             %
-            % :return: MEP configuration (struct matching mep_interfaces/AnalyzeMep request)
+            % :return: MEP configuration (struct matching mtms_mep_interfaces/AnalyzeMep request)
             % :rtype: struct
 
             mep_configuration = struct();
@@ -786,7 +786,7 @@ classdef MTMSApi < handle
             % :return: Target message.
             % :rtype: ROS message (ElectricTarget)
 
-            target = ros2message('targeting_interfaces/ElectricTarget');
+            target = ros2message('mtms_targeting_interfaces/ElectricTarget');
 
             % Check that the values are within the allowed ranges to avoid MATLAB's int8 and int16 silently
             % casting the values to the nearest allowed value. Also check that the values are integers.
@@ -806,7 +806,7 @@ classdef MTMSApi < handle
                 "Intensity must be an integer in range 0-255.");
             target.intensity = uint8(intensity);
 
-            electric_target_msg = ros2message('targeting_interfaces/ElectricTarget');
+            electric_target_msg = ros2message('mtms_targeting_interfaces/ElectricTarget');
             if strcmp(algorithm_str, 'least_squares')
                 target.algorithm = uint8(electric_target_msg.LEAST_SQUARES);
             elseif strcmp(algorithm_str, 'genetic')
@@ -824,9 +824,9 @@ classdef MTMSApi < handle
                 mep = 0;
             end
 
-            create_marker_msg = ros2message("neuronavigation_interfaces/CreateMarker");
+            create_marker_msg = ros2message("mtms_neuronavigation_interfaces/CreateMarker");
 
-            % Fill targets (array of targeting_interfaces/ElectricTarget)
+            % Fill targets (array of mtms_targeting_interfaces/ElectricTarget)
             if nargin >= 2 && ~isempty(targets)
                 create_marker_msg.targets = targets;
             else

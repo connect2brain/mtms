@@ -18,16 +18,16 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
-#include "event_interfaces/msg/charge.hpp"
-#include "event_interfaces/msg/charge_feedback.hpp"
-#include "event_interfaces/msg/discharge.hpp"
-#include "event_interfaces/msg/discharge_feedback.hpp"
-#include "event_interfaces/msg/execution_condition.hpp"
-#include "event_interfaces/msg/pulse.hpp"
-#include "event_interfaces/msg/pulse_error.hpp"
-#include "event_interfaces/msg/pulse_feedback.hpp"
-#include "event_interfaces/msg/trigger_out.hpp"
-#include "event_interfaces/msg/trigger_out_feedback.hpp"
+#include "mtms_event_interfaces/msg/charge.hpp"
+#include "mtms_event_interfaces/msg/charge_feedback.hpp"
+#include "mtms_event_interfaces/msg/discharge.hpp"
+#include "mtms_event_interfaces/msg/discharge_feedback.hpp"
+#include "mtms_event_interfaces/msg/execution_condition.hpp"
+#include "mtms_event_interfaces/msg/pulse.hpp"
+#include "mtms_event_interfaces/msg/pulse_error.hpp"
+#include "mtms_event_interfaces/msg/pulse_feedback.hpp"
+#include "mtms_event_interfaces/msg/trigger_out.hpp"
+#include "mtms_event_interfaces/msg/trigger_out_feedback.hpp"
 
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/settings.hpp"
@@ -35,12 +35,12 @@
 #include "mtms_device_interfaces/srv/request_events.hpp"
 #include "mtms_device_interfaces/srv/send_settings.hpp"
 
-#include "system_interfaces/msg/healthcheck.hpp"
-#include "system_interfaces/msg/session.hpp"
-#include "system_interfaces/srv/start_session.hpp"
-#include "system_interfaces/srv/stop_session.hpp"
+#include "mtms_system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/session.hpp"
+#include "mtms_system_interfaces/srv/start_session.hpp"
+#include "mtms_system_interfaces/srv/stop_session.hpp"
 
-#include "waveform_interfaces/msg/waveform.hpp"
+#include "mtms_waveform_interfaces/msg/waveform.hpp"
 
 #include "mtms_simulator/channel.h"
 
@@ -92,11 +92,11 @@ private:
     const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
   void start_session_handler(
-    const std::shared_ptr<system_interfaces::srv::StartSession::Request> request,
-    std::shared_ptr<system_interfaces::srv::StartSession::Response> response);
+    const std::shared_ptr<mtms_system_interfaces::srv::StartSession::Request> request,
+    std::shared_ptr<mtms_system_interfaces::srv::StartSession::Response> response);
   void stop_session_handler(
-    const std::shared_ptr<system_interfaces::srv::StopSession::Request> request,
-    std::shared_ptr<system_interfaces::srv::StopSession::Response> response);
+    const std::shared_ptr<mtms_system_interfaces::srv::StopSession::Request> request,
+    std::shared_ptr<mtms_system_interfaces::srv::StopSession::Response> response);
   void request_events_handler(
     const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
     std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response);
@@ -109,22 +109,22 @@ private:
     uint8_t channel, uint16_t target_voltage,
     uint8_t & error_value) const;
   void wait_for_execution_condition(
-    const event_interfaces::msg::ExecutionCondition & execution_condition,
+    const mtms_event_interfaces::msg::ExecutionCondition & execution_condition,
     double execution_time) const;
   std::tuple<uint32_t, uint32_t, uint32_t> calculate_waveform_durations(
-    const waveform_interfaces::msg::Waveform & waveform) const;
-  event_interfaces::msg::PulseError validate_pulse(const event_interfaces::msg::Pulse & message) const;
+    const mtms_waveform_interfaces::msg::Waveform & waveform) const;
+  mtms_event_interfaces::msg::PulseError validate_pulse(const mtms_event_interfaces::msg::Pulse & message) const;
 
-  void process_charge(const event_interfaces::msg::Charge & message);
-  void process_discharge(const event_interfaces::msg::Discharge & message);
-  void process_pulse(const event_interfaces::msg::Pulse & message);
-  void process_trigger_out(const event_interfaces::msg::TriggerOut & message);
+  void process_charge(const mtms_event_interfaces::msg::Charge & message);
+  void process_discharge(const mtms_event_interfaces::msg::Discharge & message);
+  void process_pulse(const mtms_event_interfaces::msg::Pulse & message);
+  void process_trigger_out(const mtms_event_interfaces::msg::TriggerOut & message);
   void event_worker_loop();
   void queue_event_batch(
-    const std::vector<event_interfaces::msg::Pulse> & pulses,
-    const std::vector<event_interfaces::msg::Charge> & charges,
-    const std::vector<event_interfaces::msg::Discharge> & discharges,
-    const std::vector<event_interfaces::msg::TriggerOut> & trigger_outs);
+    const std::vector<mtms_event_interfaces::msg::Pulse> & pulses,
+    const std::vector<mtms_event_interfaces::msg::Charge> & charges,
+    const std::vector<mtms_event_interfaces::msg::Discharge> & discharges,
+    const std::vector<mtms_event_interfaces::msg::TriggerOut> & trigger_outs);
 
   void publish_system_state();
   void publish_session();
@@ -136,15 +136,15 @@ private:
 
   struct EventBatch
   {
-    std::vector<event_interfaces::msg::Pulse> pulses;
-    std::vector<event_interfaces::msg::Charge> charges;
-    std::vector<event_interfaces::msg::Discharge> discharges;
-    std::vector<event_interfaces::msg::TriggerOut> trigger_outs;
+    std::vector<mtms_event_interfaces::msg::Pulse> pulses;
+    std::vector<mtms_event_interfaces::msg::Charge> charges;
+    std::vector<mtms_event_interfaces::msg::Discharge> discharges;
+    std::vector<mtms_event_interfaces::msg::TriggerOut> trigger_outs;
   };
 
   std::atomic<bool> allow_stimulation_ {false};
   std::atomic<bool> allow_trigger_out_ {true};
-  std::atomic<uint8_t> session_state_value_ {system_interfaces::msg::Session::STOPPED};
+  std::atomic<uint8_t> session_state_value_ {mtms_system_interfaces::msg::Session::STOPPED};
   std::atomic<double> session_start_time_ {0.0};
 
   mutable std::mutex state_mutex_;
@@ -161,18 +161,18 @@ private:
   rclcpp::Service<mtms_device_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_device_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_device_service_;
-  rclcpp::Service<system_interfaces::srv::StartSession>::SharedPtr start_session_service_;
-  rclcpp::Service<system_interfaces::srv::StopSession>::SharedPtr stop_session_service_;
+  rclcpp::Service<mtms_system_interfaces::srv::StartSession>::SharedPtr start_session_service_;
+  rclcpp::Service<mtms_system_interfaces::srv::StopSession>::SharedPtr stop_session_service_;
   rclcpp::Service<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr trigger_events_service_;
 
-  rclcpp::Publisher<event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
-  rclcpp::Publisher<event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
+  rclcpp::Publisher<mtms_event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_publisher_;
+  rclcpp::Publisher<mtms_event_interfaces::msg::ChargeFeedback>::SharedPtr charge_feedback_publisher_;
+  rclcpp::Publisher<mtms_event_interfaces::msg::DischargeFeedback>::SharedPtr discharge_feedback_publisher_;
+  rclcpp::Publisher<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
-  rclcpp::Publisher<system_interfaces::msg::Session>::SharedPtr session_publisher_;
-  rclcpp::Publisher<system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher_;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Session>::SharedPtr session_publisher_;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher_;
 
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr allow_stimulation_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr allow_trigger_out_subscription_;

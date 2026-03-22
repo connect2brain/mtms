@@ -9,10 +9,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
-find_package(event_interfaces REQUIRED)
-find_package(waveform_interfaces REQUIRED)
+find_package(mtms_event_interfaces REQUIRED)
+find_package(mtms_waveform_interfaces REQUIRED)
 find_package(mtms_device_interfaces REQUIRED)
-find_package(system_interfaces REQUIRED)
+find_package(mtms_system_interfaces REQUIRED)
 
 # Install mtms_simulator executable.
 
@@ -32,10 +32,10 @@ ament_target_dependencies(
   rclcpp
   std_msgs
   std_srvs
-  event_interfaces
-  waveform_interfaces
+  mtms_event_interfaces
+  mtms_waveform_interfaces
   mtms_device_interfaces
-  system_interfaces
+  mtms_system_interfaces
 )
 
 install(TARGETS

@@ -1,9 +1,0 @@
-# ROS service for approximating waveform of a lower target voltage using a higher actual voltage.
-
-uint16 actual_voltage
-uint16 target_voltage
-waveform_interfaces/Waveform target_waveform
-uint8 coil_number
----
-bool success
-waveform_interfaces/Waveform approximated_waveform

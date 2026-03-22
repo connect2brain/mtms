@@ -3,11 +3,11 @@ from threading import Event
 
 import numpy as np
 
-from trial_interfaces.msg import Trial
-from trial_interfaces.srv import ValidateTrial
+from mtms_trial_interfaces.msg import Trial
+from mtms_trial_interfaces.srv import ValidateTrial
 
-from waveform_interfaces.msg import WaveformsForCoilSet
-from targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
+from mtms_waveform_interfaces.msg import WaveformsForCoilSet
+from mtms_targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup

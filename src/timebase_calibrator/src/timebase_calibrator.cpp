@@ -20,7 +20,7 @@ TimebaseCalibrator::TimebaseCalibrator()
   pairs.reset(PAIR_BUFFER_SIZE);
 
   /* EEG is published with a large reliable queue; match that. */
-  eeg_subscription = this->create_subscription<eeg_interfaces::msg::Sample>(
+  eeg_subscription = this->create_subscription<mtms_eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC, 65535,
     std::bind(&TimebaseCalibrator::eeg_callback, this, _1));
 
@@ -28,7 +28,7 @@ TimebaseCalibrator::TimebaseCalibrator()
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
-  session_subscription = this->create_subscription<system_interfaces::msg::Session>(
+  session_subscription = this->create_subscription<mtms_system_interfaces::msg::Session>(
     SESSION_TOPIC, session_qos,
     std::bind(&TimebaseCalibrator::session_callback, this, _1));
 
@@ -37,11 +37,11 @@ TimebaseCalibrator::TimebaseCalibrator()
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
   eeg_to_mtms_publisher =
-    this->create_publisher<system_interfaces::msg::TimebaseMapping>(
+    this->create_publisher<mtms_system_interfaces::msg::TimebaseMapping>(
       EEG_TO_MTMS_TOPIC, mapping_qos);
 
   mtms_to_eeg_publisher =
-    this->create_publisher<system_interfaces::msg::TimebaseMapping>(
+    this->create_publisher<mtms_system_interfaces::msg::TimebaseMapping>(
       MTMS_TO_EEG_TOPIC, mapping_qos);
 
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized. "
@@ -49,13 +49,13 @@ TimebaseCalibrator::TimebaseCalibrator()
     EEG_RAW_TOPIC.c_str(), SESSION_TOPIC.c_str(), PAIR_BUFFER_SIZE);
 }
 
-void TimebaseCalibrator::eeg_callback(const eeg_interfaces::msg::Sample::SharedPtr msg)
+void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
   latest_eeg_sample = *msg;
 }
 
-void TimebaseCalibrator::session_callback(const system_interfaces::msg::Session::SharedPtr msg)
+void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
@@ -83,13 +83,13 @@ void TimebaseCalibrator::session_callback(const system_interfaces::msg::Session:
     return;
   }
 
-  system_interfaces::msg::TimebaseMapping eeg_to_mtms_msg;
+  mtms_system_interfaces::msg::TimebaseMapping eeg_to_mtms_msg;
   eeg_to_mtms_msg.scale  = scale;
   eeg_to_mtms_msg.offset = offset;
   eeg_to_mtms_publisher->publish(eeg_to_mtms_msg);
 
   /* Inverse mapping: eeg_time = (session_time - offset) / scale */
-  system_interfaces::msg::TimebaseMapping mtms_to_eeg_msg;
+  mtms_system_interfaces::msg::TimebaseMapping mtms_to_eeg_msg;
   mtms_to_eeg_msg.scale  = 1.0 / scale;
   mtms_to_eeg_msg.offset = -offset / scale;
   mtms_to_eeg_publisher->publish(mtms_to_eeg_msg);

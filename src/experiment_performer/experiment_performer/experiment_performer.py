@@ -4,21 +4,21 @@ from threading import Event, Lock, Thread
 import numpy as np
 import uuid
 
-from experiment_interfaces.msg import ExperimentFeedback
-from experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
+from mtms_experiment_interfaces.msg import ExperimentFeedback
+from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from trial_interfaces.srv import PerformTrial, ValidateTrial
-from trial_interfaces.msg import Trial
+from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
+from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
 
-from system_interfaces.msg import Session
-from system_interfaces.srv import StartSession, StopSession
+from mtms_system_interfaces.msg import Session
+from mtms_system_interfaces.srv import StartSession, StopSession
 
-from mep_interfaces.srv import AnalyzeMep
+from mtms_mep_interfaces.srv import AnalyzeMep
 
 import rclpy
 from rclpy.node import Node

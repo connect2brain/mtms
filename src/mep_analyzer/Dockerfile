@@ -18,8 +18,8 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app
 
 # ROS interfaces
-COPY interfaces/eeg_interfaces interfaces/eeg_interfaces/
-COPY interfaces/mep_interfaces interfaces/mep_interfaces/
+COPY interfaces/mtms_eeg_interfaces interfaces/mtms_eeg_interfaces/
+COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

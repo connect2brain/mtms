@@ -7,10 +7,10 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(system_interfaces REQUIRED)
+find_package(mtms_system_interfaces REQUIRED)
 find_package(stimulation_interfaces REQUIRED)
-find_package(trial_interfaces REQUIRED)
-find_package(targeting_interfaces REQUIRED)
+find_package(mtms_trial_interfaces REQUIRED)
+find_package(mtms_targeting_interfaces REQUIRED)
 
 # Install remote_controller executable.
 
@@ -26,10 +26,10 @@ target_include_directories(remote_controller
 ament_target_dependencies(
   remote_controller
   rclcpp
-  system_interfaces
+  mtms_system_interfaces
   stimulation_interfaces
-  trial_interfaces
-  targeting_interfaces
+  mtms_trial_interfaces
+  mtms_targeting_interfaces
 )
 
 install(TARGETS

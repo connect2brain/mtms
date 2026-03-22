@@ -5,9 +5,9 @@
 #include <cmath>
 #include <thread>
 
-#include "event_interfaces/msg/charge_error.hpp"
-#include "event_interfaces/msg/discharge_error.hpp"
-#include "event_interfaces/msg/pulse_error.hpp"
+#include "mtms_event_interfaces/msg/charge_error.hpp"
+#include "mtms_event_interfaces/msg/discharge_error.hpp"
+#include "mtms_event_interfaces/msg/pulse_error.hpp"
 
 Channel::Channel(
   const double charge_rate,
@@ -26,7 +26,7 @@ Channel::Channel(
   (void)max_voltage_;
 }
 
-event_interfaces::msg::ChargeFeedback Channel::charge(const uint16_t target_voltage, const uint16_t event_id)
+mtms_event_interfaces::msg::ChargeFeedback Channel::charge(const uint16_t target_voltage, const uint16_t event_id)
 {
   const double charge_rate_constant = capacitance_ / (2.0 * charge_rate_);
   const double t =
@@ -41,22 +41,22 @@ event_interfaces::msg::ChargeFeedback Channel::charge(const uint16_t target_volt
 
   current_voltage_ = static_cast<double>(target_voltage);
 
-  event_interfaces::msg::ChargeFeedback feedback;
+  mtms_event_interfaces::msg::ChargeFeedback feedback;
   feedback.id = event_id;
-  feedback.error.value = event_interfaces::msg::ChargeError::NO_ERROR;
+  feedback.error.value = mtms_event_interfaces::msg::ChargeError::NO_ERROR;
   return feedback;
 }
 
-event_interfaces::msg::DischargeFeedback Channel::discharge(
+mtms_event_interfaces::msg::DischargeFeedback Channel::discharge(
   const uint16_t requested_target_voltage,
   const uint16_t event_id)
 {
   const double target_voltage = std::max<double>(requested_target_voltage, 3.0);
 
   if (current_voltage_ <= target_voltage) {
-    event_interfaces::msg::DischargeFeedback feedback;
+    mtms_event_interfaces::msg::DischargeFeedback feedback;
     feedback.id = event_id;
-    feedback.error.value = event_interfaces::msg::DischargeError::NO_ERROR;
+    feedback.error.value = mtms_event_interfaces::msg::DischargeError::NO_ERROR;
     return feedback;
   }
 
@@ -70,13 +70,13 @@ event_interfaces::msg::DischargeFeedback Channel::discharge(
 
   current_voltage_ = target_voltage;
 
-  event_interfaces::msg::DischargeFeedback feedback;
+  mtms_event_interfaces::msg::DischargeFeedback feedback;
   feedback.id = event_id;
-  feedback.error.value = event_interfaces::msg::DischargeError::NO_ERROR;
+  feedback.error.value = mtms_event_interfaces::msg::DischargeError::NO_ERROR;
   return feedback;
 }
 
-event_interfaces::msg::PulseFeedback Channel::pulse(const uint16_t event_id, const uint16_t duration_ticks)
+mtms_event_interfaces::msg::PulseFeedback Channel::pulse(const uint16_t event_id, const uint16_t duration_ticks)
 {
   const double next_voltage =
     current_voltage_ - pulse_voltage_drop_proportion_ * current_voltage_;
@@ -93,9 +93,9 @@ event_interfaces::msg::PulseFeedback Channel::pulse(const uint16_t event_id, con
   const double after_pulse_voltage_proportion = 1.0 - pulse_voltage_drop_proportion_;
   current_voltage_ = after_pulse_voltage_proportion * current_voltage_;
 
-  event_interfaces::msg::PulseFeedback feedback;
+  mtms_event_interfaces::msg::PulseFeedback feedback;
   feedback.id = event_id;
-  feedback.error.value = event_interfaces::msg::PulseError::NO_ERROR;
+  feedback.error.value = mtms_event_interfaces::msg::PulseError::NO_ERROR;
   return feedback;
 }
 

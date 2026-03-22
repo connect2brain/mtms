@@ -24,11 +24,11 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 WORKDIR /app
 
 # ROS interfaces
-COPY interfaces/event_interfaces interfaces/event_interfaces/
+COPY interfaces/mtms_event_interfaces interfaces/mtms_event_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
-COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
+COPY interfaces/mtms_waveform_interfaces interfaces/mtms_waveform_interfaces/
 
-COPY interfaces/system_interfaces interfaces/system_interfaces/
+COPY interfaces/mtms_system_interfaces interfaces/mtms_system_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

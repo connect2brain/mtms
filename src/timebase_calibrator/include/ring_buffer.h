@@ -4,7 +4,7 @@
 #include <vector>
 #include <stdexcept>
 
-#include "eeg_interfaces/msg/sample.hpp"
+#include "mtms_eeg_interfaces/msg/sample.hpp"
 
 #include <vector>
 #include <stdexcept>

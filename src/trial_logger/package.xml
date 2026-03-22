@@ -9,10 +9,10 @@
 
   <depend>rclpy</depend>
 
-  <depend>mep_interfaces</depend>
-  <depend>targeting_interfaces</depend>
+  <depend>mtms_mep_interfaces</depend>
+  <depend>mtms_targeting_interfaces</depend>
   <depend>mtms_device_interfaces</depend>
-  <depend>experiment_interfaces</depend>
+  <depend>mtms_experiment_interfaces</depend>
 
   <export>
     <build_type>ament_python</build_type>

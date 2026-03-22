@@ -8,8 +8,8 @@
 
 #include "std_msgs/msg/int32.hpp"
 
-#include "eeg_interfaces/msg/eeg_device_info.hpp"
-#include "eeg_interfaces/msg/sample.hpp"
+#include "mtms_eeg_interfaces/msg/eeg_device_info.hpp"
+#include "mtms_eeg_interfaces/msg/sample.hpp"
 
 #include "adapters/eeg_adapter.h"
 #include "adapters/socket.h"
@@ -46,10 +46,10 @@ private:
 
   void process_eeg_packet();
 
-  eeg_interfaces::msg::Sample create_ros_sample(const AdapterSample& adapter_sample,
-                                          const eeg_interfaces::msg::EegDeviceInfo& device_info);
+  mtms_eeg_interfaces::msg::Sample create_ros_sample(const AdapterSample& adapter_sample,
+                                          const mtms_eeg_interfaces::msg::EegDeviceInfo& device_info);
 
-  void handle_sample(eeg_interfaces::msg::Sample sample);
+  void handle_sample(mtms_eeg_interfaces::msg::Sample sample);
   bool check_for_dropped_samples(uint64_t device_sample_index);
   void check_for_sample_timeout();
 
@@ -72,8 +72,8 @@ private:
   std::chrono::steady_clock::time_point last_sample_time;
 
   /* Publishers */
-  rclcpp::Publisher<eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
-  rclcpp::Publisher<eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_publisher;
+  rclcpp::Publisher<mtms_eeg_interfaces::msg::Sample>::SharedPtr eeg_sample_publisher;
+  rclcpp::Publisher<mtms_eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_publisher;
   rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr dropped_samples_publisher;
 
   /* Device sample tracking for dropped sample detection */

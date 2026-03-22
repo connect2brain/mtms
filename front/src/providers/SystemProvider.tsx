@@ -148,7 +148,7 @@ export const SystemProvider: React.FC<SystemProviderProps> = ({ children }) => {
     const sessionSubscriber = new ROSLIB.Topic<Session>({
       ros: ros,
       name: '/mtms/device/session',
-      messageType: 'system_interfaces/Session',
+      messageType: 'mtms_system_interfaces/Session',
     })
 
     sessionSubscriber.subscribe((message) => {

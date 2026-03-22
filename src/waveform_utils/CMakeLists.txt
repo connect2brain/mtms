@@ -9,8 +9,8 @@ find_package(ament_cmake REQUIRED)
 
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(event_interfaces REQUIRED)
-find_package(targeting_interfaces REQUIRED)
+find_package(mtms_event_interfaces REQUIRED)
+find_package(mtms_targeting_interfaces REQUIRED)
 
 find_package(Boost REQUIRED)
 
@@ -25,7 +25,7 @@ target_include_directories(get_default_waveform
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(get_default_waveform rclcpp std_msgs event_interfaces targeting_interfaces)
+ament_target_dependencies(get_default_waveform rclcpp std_msgs mtms_event_interfaces mtms_targeting_interfaces)
 
 # Install get_multipulse_waveforms executable.
 
@@ -38,7 +38,7 @@ target_include_directories(get_multipulse_waveforms
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(get_multipulse_waveforms rclcpp std_msgs event_interfaces targeting_interfaces)
+ament_target_dependencies(get_multipulse_waveforms rclcpp std_msgs mtms_event_interfaces mtms_targeting_interfaces)
 
 target_link_libraries(get_multipulse_waveforms Boost::boost)
 
@@ -53,7 +53,7 @@ PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
-ament_target_dependencies(reverse_polarity rclcpp std_msgs event_interfaces targeting_interfaces)
+ament_target_dependencies(reverse_polarity rclcpp std_msgs mtms_event_interfaces mtms_targeting_interfaces)
 
 
 install(TARGETS

@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from neuronavigation_interfaces.srv import VisualizeTargets
+from mtms_neuronavigation_interfaces.srv import VisualizeTargets
 
 class TargetVisualizer(Node):
     def __init__(self, callback_group):

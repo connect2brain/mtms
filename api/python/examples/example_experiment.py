@@ -1,8 +1,8 @@
 from MTMSApi import MTMSApi
 
-from experiment_interfaces.msg import Experiment
-from targeting_interfaces.msg import ElectricTarget
-from trial_interfaces.msg import Trial
+from mtms_experiment_interfaces.msg import Experiment
+from mtms_targeting_interfaces.msg import ElectricTarget
+from mtms_trial_interfaces.msg import Trial
 
 
 api = MTMSApi(

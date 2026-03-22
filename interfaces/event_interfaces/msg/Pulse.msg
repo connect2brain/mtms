@@ -1,3 +1,0 @@
-uint8 channel
-waveform_interfaces/Waveform waveform
-EventInfo event_info

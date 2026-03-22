@@ -1,16 +1,16 @@
 #include "rclcpp/rclcpp.hpp"
-#include "targeting_interfaces/srv/get_default_waveform.hpp"
-#include "waveform_interfaces/msg/waveform_phase.hpp"
-#include "waveform_interfaces/msg/waveform_piece.hpp"
+#include "mtms_targeting_interfaces/srv/get_default_waveform.hpp"
+#include "mtms_waveform_interfaces/msg/waveform_phase.hpp"
+#include "mtms_waveform_interfaces/msg/waveform_piece.hpp"
 
 using namespace std;
 
 const uint8_t N_CHANNELS = 5;
 
 const uint16_t DEFAULT_WAVEFORM[][2] = {
-  {waveform_interfaces::msg::WaveformPhase::RISING, 2400},
-  {waveform_interfaces::msg::WaveformPhase::HOLD, 1200},
-  {waveform_interfaces::msg::WaveformPhase::FALLING, 0}
+  {mtms_waveform_interfaces::msg::WaveformPhase::RISING, 2400},
+  {mtms_waveform_interfaces::msg::WaveformPhase::HOLD, 1200},
+  {mtms_waveform_interfaces::msg::WaveformPhase::FALLING, 0}
 };
 
 const uint16_t LAST_WAVEFORM_PHASE_DURATION[N_CHANNELS] = {1570, 1570, 1610, 1630, 1790};
@@ -21,8 +21,8 @@ public:
   GetDefaultWaveform() : Node("get_default_waveform") {
 
     auto service_callback = [this](
-        const std::shared_ptr<targeting_interfaces::srv::GetDefaultWaveform::Request> request,
-        std::shared_ptr<targeting_interfaces::srv::GetDefaultWaveform::Response> response) -> void {
+        const std::shared_ptr<mtms_targeting_interfaces::srv::GetDefaultWaveform::Request> request,
+        std::shared_ptr<mtms_targeting_interfaces::srv::GetDefaultWaveform::Response> response) -> void {
 
       int8_t channel = request->channel;
 
@@ -35,7 +35,7 @@ public:
         return;
       }
 
-      waveform_interfaces::msg::WaveformPiece piece;
+      mtms_waveform_interfaces::msg::WaveformPiece piece;
       for (uint8_t i = 0; i < std::size(DEFAULT_WAVEFORM); i++) {
         piece.waveform_phase.value = DEFAULT_WAVEFORM[i][0];
 
@@ -53,12 +53,12 @@ public:
       RCLCPP_INFO(rclcpp::get_logger("get_default_waveform"), "Responded to request.");
     };
 
-    get_default_waveform_service = this->create_service<targeting_interfaces::srv::GetDefaultWaveform>(
+    get_default_waveform_service = this->create_service<mtms_targeting_interfaces::srv::GetDefaultWaveform>(
         "/mtms/waveforms/get_default", service_callback);
   }
 
 private:
-  rclcpp::Service<targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_service;
+  rclcpp::Service<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_service;
 };
 
 

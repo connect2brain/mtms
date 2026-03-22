@@ -5,7 +5,7 @@ import { ros } from './ros'
 const getMaximumIntensityService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/targeting/get_maximum_intensity',
-  serviceType: 'targeting_interfaces/GetMaximumIntensity',
+  serviceType: 'mtms_targeting_interfaces/GetMaximumIntensity',
 })
 
 export const getMaximumIntensity = (
@@ -42,7 +42,7 @@ export const getMaximumIntensity = (
 const countValidTrialsService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/count_valid_trials',
-  serviceType: 'experiment_interfaces/CountValidTrials',
+  serviceType: 'mtms_experiment_interfaces/CountValidTrials',
 })
 
 export const countValidTrials = (trials: any, callback: (numOfValidTrials: number) => void) => {
@@ -70,14 +70,14 @@ export const countValidTrials = (trials: any, callback: (numOfValidTrials: numbe
 const performExperimentService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/experiment/perform',
-  serviceType: 'experiment_interfaces/PerformExperiment',
+  serviceType: 'mtms_experiment_interfaces/PerformExperiment',
 })
 
 /* Experiment feedback topic */
 const experimentFeedbackTopic = new ROSLIB.Topic({
   ros: ros,
   name: '/mtms/experiment/feedback',
-  messageType: 'experiment_interfaces/ExperimentFeedback',
+  messageType: 'mtms_experiment_interfaces/ExperimentFeedback',
 })
 
 export const subscribeToExperimentFeedback = (callback: (response: any) => void) => {
@@ -139,7 +139,7 @@ export const performExperiment = (
 const visualizeTargetsService = new ROSLIB.Service({
   ros: ros,
   name: '/neuronavigation/visualize/targets',
-  serviceType: 'neuronavigation_interfaces/VisualizeTargets',
+  serviceType: 'mtms_neuronavigation_interfaces/VisualizeTargets',
 })
 
 export const visualizeTargets = (targets: any, is_ordered: boolean, callback: () => void) => {

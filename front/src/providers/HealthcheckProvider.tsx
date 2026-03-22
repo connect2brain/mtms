@@ -43,19 +43,19 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
     const eegSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/eeg/healthcheck',
-      messageType: 'system_interfaces/Healthcheck',
+      messageType: 'mtms_system_interfaces/Healthcheck',
     })
 
     const mtmsSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/device/healthcheck',
-      messageType: 'system_interfaces/Healthcheck',
+      messageType: 'mtms_system_interfaces/Healthcheck',
     })
 
     const mepSubscriber = new ROSLIB.Topic<Healthcheck>({
       ros: ros,
       name: '/mtms/mep/healthcheck',
-      messageType: 'system_interfaces/Healthcheck',
+      messageType: 'mtms_system_interfaces/Healthcheck',
     })
 
     let eegTimeout: NodeJS.Timeout | null = null

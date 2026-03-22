@@ -1,8 +1,8 @@
 from util.bcolors import bcolors
 
 from mtms_device_interfaces.msg import DeviceState, StartupError
-from system_interfaces.msg import Session
-from event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
+from mtms_system_interfaces.msg import Session
+from mtms_event_interfaces.msg import ExecutionCondition, PulseError, DischargeError, ChargeError, TriggerOutError
 
 class MTMSApiEnums():
     DEVICE_STATES = (

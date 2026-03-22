@@ -5,20 +5,20 @@ Initialize device and session
 
     from MTMSApi import MTMSApi
 
-    from event_interfaces.msg import (
+    from mtms_event_interfaces.msg import (
         ExecutionCondition,
     )
-    from waveform_interfaces.msg import (
+    from mtms_waveform_interfaces.msg import (
         WaveformPhase,
         WaveformPiece,
         Waveform
     )
-    from mep_interfaces.msg import (
+    from mtms_mep_interfaces.msg import (
         MepConfiguration,
         PreactivationCheck
     )
-    from mep_interfaces.msg import TimeWindow
-    from targeting_interfaces.msg import ElectricTarget
+    from mtms_mep_interfaces.msg import TimeWindow
+    from mtms_targeting_interfaces.msg import ElectricTarget
 
     api = MTMSApi()
 
@@ -268,7 +268,7 @@ Implementation of a simple experiment, consisting of charging the coil on channe
 
 .. code-block::
 
-    from event_interfaces.msg import ExecutionCondition
+    from mtms_event_interfaces.msg import ExecutionCondition
 
     from MTMSApi import MTMSApi
 

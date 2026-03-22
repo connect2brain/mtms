@@ -9,10 +9,10 @@ from std_srvs.srv import Trigger
 from mtms_device_interfaces.msg import SystemState
 from mtms_device_interfaces.srv import RequestEvents
 
-from system_interfaces.msg import Session
-from system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed
+from mtms_system_interfaces.msg import Session
+from mtms_system_interfaces.srv import StartSession, StopSession, GetStimulationAllowed
 
-from event_interfaces.msg import (
+from mtms_event_interfaces.msg import (
     Charge,
     ChargeFeedback,
     Discharge,
@@ -24,9 +24,9 @@ from event_interfaces.msg import (
     TriggerOutFeedback,
 )
 
-from mep_interfaces.srv import AnalyzeMep
+from mtms_mep_interfaces.srv import AnalyzeMep
 
-from targeting_interfaces.srv import (
+from mtms_targeting_interfaces.srv import (
     GetTargetVoltages,
     GetMaximumIntensity,
     GetDefaultWaveform,

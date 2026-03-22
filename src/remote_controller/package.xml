@@ -10,10 +10,10 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>system_interfaces</depend>
+  <depend>mtms_system_interfaces</depend>
   <depend>stimulation_interfaces</depend>
-  <depend>trial_interfaces</depend>
-  <depend>targeting_interfaces</depend>
+  <depend>mtms_trial_interfaces</depend>
+  <depend>mtms_targeting_interfaces</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

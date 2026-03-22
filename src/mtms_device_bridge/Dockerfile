@@ -46,10 +46,10 @@ WORKDIR /app
 COPY src/mtms_device_bridge src/mtms_device_bridge/
 
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
-COPY interfaces/event_interfaces interfaces/event_interfaces/
-COPY interfaces/waveform_interfaces interfaces/waveform_interfaces/
+COPY interfaces/mtms_event_interfaces interfaces/mtms_event_interfaces/
+COPY interfaces/mtms_waveform_interfaces interfaces/mtms_waveform_interfaces/
 
-COPY interfaces/system_interfaces interfaces/system_interfaces/
+COPY interfaces/mtms_system_interfaces interfaces/mtms_system_interfaces/
 COPY src/realtime_utils src/realtime_utils/
 
 # Build ROS packages

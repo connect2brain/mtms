@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
-from system_interfaces.msg import Session
+from mtms_system_interfaces.msg import Session
 
 from busylight_core import Light, NoLightsFoundError
 

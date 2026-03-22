@@ -8,8 +8,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(eeg_interfaces REQUIRED)
-find_package(mep_interfaces REQUIRED)
+find_package(mtms_eeg_interfaces REQUIRED)
+find_package(mtms_mep_interfaces REQUIRED)
 
 # Install mep_analyzer executable.
 
@@ -26,8 +26,8 @@ ament_target_dependencies(
   mep_analyzer
   rclcpp
   std_msgs
-  eeg_interfaces
-  mep_interfaces
+  mtms_eeg_interfaces
+  mtms_mep_interfaces
 )
 
 install(TARGETS
