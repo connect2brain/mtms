@@ -18,6 +18,7 @@ def generate_launch_description():
     node = Node(
         package="trial_performer",
         executable="trial_performer",
+        namespace="mtms",
         name="trial_performer",
         arguments=['--ros-args', '--log-level', logger]
     )

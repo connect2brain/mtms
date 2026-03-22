@@ -22,6 +22,7 @@ def generate_launch_description():
         node = Node(
             package="experiment_performer",
             executable=node_executable,
+            namespace="mtms",
             arguments=['--ros-args', '--log-level', logger]
         )
         ld.add_action(node)

@@ -23,6 +23,7 @@ def generate_launch_description():
     node = Node(
             package="targeting",
             executable="targeting",
+            namespace="mtms",
             name="targeting",
             parameters=[
                 {

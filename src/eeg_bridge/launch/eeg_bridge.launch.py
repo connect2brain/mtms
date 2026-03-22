@@ -32,6 +32,7 @@ def generate_launch_description():
     node = Node(
             package="eeg_bridge",
             executable="eeg_bridge",
+            namespace="mtms",
             name="eeg_bridge",
             output="screen",
             emulate_tty=True,

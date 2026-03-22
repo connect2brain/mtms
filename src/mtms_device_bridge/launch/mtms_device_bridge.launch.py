@@ -52,6 +52,7 @@ def generate_launch_description():
         node = Node(
             package="mtms_device_bridge",
             executable=node_executable,
+            namespace="mtms",
             parameters=[
                 {
                     "safe-mode": safe_mode,

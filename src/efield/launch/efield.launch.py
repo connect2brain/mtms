@@ -18,6 +18,7 @@ def generate_launch_description():
     node = Node(
         package="efield",
         executable="efield",
+        namespace="mtms",
         name="efield",
         arguments=['--ros-args', '--log-level', logger],
         output = "screen"
