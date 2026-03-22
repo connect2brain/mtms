@@ -19,14 +19,12 @@ export const SystemState = () => {
       <ChannelTable>
         <colgroup>
           <ColStyle className='indexCol' />
-          <ColStyle className='voltageCol' />
           <ColStyle className='pulseCol' />
           <ColStyle className='errorCol' />
         </colgroup>
         <Thead>
           <tr>
             <Th>#</Th>
-            <Th>Voltage (V)</Th>
             {/*<Th>Temperature</Th>*/}
             <Th># of pulses</Th>
             <Th>Errors</Th>
@@ -154,16 +152,13 @@ const ChannelTable = styled.table`
 
 const ColStyle = styled.col`
   &.indexCol {
-    width: 10%;
-  }
-  &.voltageCol {
-    width: 30%;
+    width: 15%;
   }
   &.pulseCol {
-    width: 30%;
+    width: 42.5%;
   }
   &.errorCol {
-    width: 30%;
+    width: 42.5%;
   }
 `
 
