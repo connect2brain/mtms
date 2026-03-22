@@ -2,6 +2,7 @@ import React from 'react'
 import { ThemeProvider } from 'styled-components'
 import theme from 'styles/theme'
 
+import { RosConnectionProvider } from './RosConnectionProvider'
 import { SystemProvider } from './SystemProvider'
 import { ConfigProvider } from './ConfigProvider'
 import { HealthcheckProvider } from './HealthcheckProvider'
@@ -15,15 +16,17 @@ interface Props {
 const Providers: React.FC<Props> = ({ children }) => {
   return (
     <ThemeProvider theme={theme}>
-      <SystemProvider>
-        <ConfigProvider>
-          <HealthcheckProvider>
-            <EegDeviceInfoProvider>
-              <ExperimentProvider>{children}</ExperimentProvider>
-            </EegDeviceInfoProvider>
-          </HealthcheckProvider>
-        </ConfigProvider>
-      </SystemProvider>
+      <RosConnectionProvider>
+        <SystemProvider>
+          <ConfigProvider>
+            <HealthcheckProvider>
+              <EegDeviceInfoProvider>
+                <ExperimentProvider>{children}</ExperimentProvider>
+              </EegDeviceInfoProvider>
+            </HealthcheckProvider>
+          </ConfigProvider>
+        </SystemProvider>
+      </RosConnectionProvider>
     </ThemeProvider>
   )
 }
