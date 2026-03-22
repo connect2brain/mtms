@@ -386,7 +386,9 @@ function formatExperimentStateLabel(state: number | undefined): string {
     case EXPERIMENT_STATE.PAUSED:
       return 'Paused'
     case EXPERIMENT_STATE.CANCEL_REQUESTED:
-      return 'Canceling'
+       /* There's no distinction between requesting a cancel and waiting for the experiment to stop from the user's point of view,
+          hence use the same texzt. */
+       return 'Stopping'
     case EXPERIMENT_STATE.STOPPING:
       return 'Stopping'
     default:

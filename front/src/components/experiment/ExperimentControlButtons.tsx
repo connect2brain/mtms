@@ -36,7 +36,9 @@ export const ExperimentControlButtons: React.FC<{
     primaryDisabled = true
     runPrimary = () => undefined
   } else if (experimentState === EXPERIMENT_STATE.CANCEL_REQUESTED) {
-    primaryLabel = 'Canceling...'
+    /* There's no distinction between requesting a cancel and waiting for the experiment to stop from the user's point of view,
+       hence use the same label. */
+    primaryLabel = 'Stopping...'
     primaryDisabled = true
     runPrimary = () => undefined
   } else if (experimentState === EXPERIMENT_STATE.PAUSE_REQUESTED) {
