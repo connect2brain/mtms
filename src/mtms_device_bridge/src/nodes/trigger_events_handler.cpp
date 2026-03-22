@@ -1,4 +1,7 @@
+#include <chrono>
+
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
 #include "NiFpga_mTMS.h"
@@ -28,6 +31,12 @@ public:
   TriggerEventsHandler() : Node("trigger_events_handler") {
     trigger_service_ = this->create_service<std_srvs::srv::Trigger>(
         "/mtms/device/events/trigger", &handle_request);
+
+    const std::string heartbeat_topic = "/mtms/device/heartbeat";
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(heartbeat_topic, 10);
+    this->create_wall_timer(std::chrono::milliseconds(500), [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

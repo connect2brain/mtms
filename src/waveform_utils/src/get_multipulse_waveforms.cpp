@@ -1,6 +1,13 @@
 #include "get_multipulse_waveforms.h"
 
+#include <chrono>
+
+#include "std_msgs/msg/empty.hpp"
+
 const uint8_t NUM_OF_COILS = 5;
+
+const std::string HEARTBEAT_TOPIC = "/mtms/waveform_utils/get_multipulse_waveforms/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 const uint16_t INITIAL_VOLTAGE = 1500;
 
@@ -34,6 +41,11 @@ GetMultipulseWaveforms::GetMultipulseWaveforms() : Node("get_multipulse_waveform
       "/mtms/waveforms/reverse_polarity",
       rclcpp::QoS(10),
       callback_group);
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 std::string generate_md5_hash(const std::shared_ptr<mtms_targeting_interfaces::srv::GetMultipulseWaveforms_Request> request) {

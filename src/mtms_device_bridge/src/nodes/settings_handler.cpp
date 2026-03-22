@@ -1,5 +1,9 @@
+#include <chrono>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
 
+#include "std_msgs/msg/empty.hpp"
 #include "mtms_device_interfaces/srv/send_settings.hpp"
 
 #include "NiFpga_mTMS.h"
@@ -64,6 +68,12 @@ public:
       : Node("settings_handler") {
     send_settings_service_ = this->create_service<mtms_device_interfaces::srv::SendSettings>("/mtms/device/send_settings",
                                                                                       send_settings);
+
+    const std::string heartbeat_topic = "/mtms/device/heartbeat";
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(heartbeat_topic, 10);
+    this->create_wall_timer(std::chrono::milliseconds(500), [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

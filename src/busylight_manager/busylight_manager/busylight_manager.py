@@ -7,6 +7,8 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_system_interfaces.msg import Session
 
+from std_msgs.msg import Empty
+
 from busylight_core import Light, NoLightsFoundError
 
 class BusylightManagerNode(Node):
@@ -23,8 +25,14 @@ class BusylightManagerNode(Node):
 
     REFRESH_PERIOD_IN_SECONDS = 25
 
+    HEARTBEAT_TOPIC = '/mtms/busylight_manager/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
+
     def __init__(self):
         super().__init__('busylight_manager')
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Persist the latest sample.
         qos = QoSProfile(

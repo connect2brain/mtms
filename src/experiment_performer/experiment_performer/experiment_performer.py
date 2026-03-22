@@ -10,7 +10,7 @@ from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformEx
 from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
 from mtms_trial_interfaces.msg import Trial
 
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Empty
 from std_srvs.srv import Trigger
 
 from mtms_device_interfaces.msg import SystemState, DeviceState
@@ -45,6 +45,9 @@ class ExperimentPerformerNode(Node):
     SERVICE_CALL_TIMEOUT_S = 16.0  # Stopping a session can take up to 15 seconds.
     SESSION_STATE_WAIT_TIMEOUT_S = 5.0
 
+    HEARTBEAT_TOPIC = '/mtms/experiment_performer/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD = 0.5
+
     def __init__(self):
         super().__init__('experiment_performer_node')
 
@@ -52,6 +55,9 @@ class ExperimentPerformerNode(Node):
 
         # Allow nested service/action calls from long-running callbacks.
         self.callback_group = ReentrantCallbackGroup()
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Create service for performing experiment.
         self.perform_experiment_service = self.create_service(

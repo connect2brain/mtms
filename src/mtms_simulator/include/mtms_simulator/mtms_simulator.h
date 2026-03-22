@@ -16,6 +16,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
 #include "mtms_event_interfaces/msg/charge.hpp"

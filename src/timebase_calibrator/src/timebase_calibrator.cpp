@@ -1,5 +1,7 @@
 #include "timebase_calibrator.h"
 
+#include <chrono>
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -7,12 +9,16 @@
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
+#include "std_msgs/msg/empty.hpp"
+
 using std::placeholders::_1;
 
 static const std::string EEG_RAW_TOPIC      = "/mtms/eeg/raw";
 static const std::string SESSION_TOPIC      = "/mtms/device/session";
 static const std::string EEG_TO_MTMS_TOPIC  = "/mtms/timebase/eeg_to_mtms";
 static const std::string MTMS_TO_EEG_TOPIC  = "/mtms/timebase/mtms_to_eeg";
+static const std::string HEARTBEAT_TOPIC    = "/mtms/timebase_calibrator/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 TimebaseCalibrator::TimebaseCalibrator()
 : Node("timebase_calibrator")
@@ -47,6 +53,11 @@ TimebaseCalibrator::TimebaseCalibrator()
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized. "
     "Listening to '%s' and '%s'. Buffer size: %zu pairs.",
     EEG_RAW_TOPIC.c_str(), SESSION_TOPIC.c_str(), PAIR_BUFFER_SIZE);
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)

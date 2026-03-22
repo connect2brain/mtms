@@ -1,4 +1,8 @@
+#include <chrono>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "mtms_targeting_interfaces/srv/get_default_waveform.hpp"
 #include "mtms_waveform_interfaces/msg/waveform_phase.hpp"
 #include "mtms_waveform_interfaces/msg/waveform_piece.hpp"
@@ -6,6 +10,9 @@
 using namespace std;
 
 const uint8_t N_CHANNELS = 5;
+
+const std::string HEARTBEAT_TOPIC = "/mtms/waveform_utils/get_default_waveform/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 const uint16_t DEFAULT_WAVEFORM[][2] = {
   {mtms_waveform_interfaces::msg::WaveformPhase::RISING, 2400},
@@ -55,6 +62,11 @@ public:
 
     get_default_waveform_service = this->create_service<mtms_targeting_interfaces::srv::GetDefaultWaveform>(
         "/mtms/waveforms/get_default", service_callback);
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

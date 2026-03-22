@@ -13,7 +13,7 @@ from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 
 from geometry_msgs.msg import Point
 from shape_msgs.msg import Mesh, MeshTriangle
-from std_msgs.msg import Bool, MultiArrayDimension
+from std_msgs.msg import Bool, Empty, MultiArrayDimension
 
 from mtms_neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
 from mtms_neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
@@ -44,8 +44,14 @@ class NeuronavigationNode(Node):
     # HACK: Needs to match the corresponding value in stimulation allower ROS node.
     COIL_AT_TARGET_DEADLINE_S = 0.6
 
+    HEARTBEAT_TOPIC = '/mtms/neuronavigation_bridge/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
+
     def __init__(self, callback_group):
         super().__init__("neuronavigation")
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
 
         ## ROS parameters
 

@@ -1,6 +1,11 @@
 #include "headers/trial_performer.h"
 
+#include "std_msgs/msg/empty.hpp"
+
 using namespace std::chrono_literals;
+
+const std::string HEARTBEAT_TOPIC = "/mtms/trial_performer/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
     : Node("trial_performer_node", options),
@@ -12,6 +17,11 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
   initialize_service_clients();
   initialize_subscribers();
   initialize_publishers();
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 void TrialPerformerNode::initialize_services() {

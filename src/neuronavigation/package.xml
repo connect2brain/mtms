@@ -9,6 +9,7 @@
   <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
+  <depend>std_msgs</depend>
 
   <depend>geometry_msgs</depend>
   <depend>shape_msgs</depend>

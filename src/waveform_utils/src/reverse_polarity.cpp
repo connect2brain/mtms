@@ -1,10 +1,17 @@
+#include <chrono>
+#include <string>
+
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "mtms_targeting_interfaces/srv/reverse_polarity.hpp"
 #include "mtms_waveform_interfaces/msg/waveform_phase.hpp"
 #include "mtms_waveform_interfaces/msg/waveform_piece.hpp"
 #include "mtms_waveform_interfaces/msg/waveform.hpp"
 
 using namespace std;
+
+const std::string HEARTBEAT_TOPIC = "/mtms/waveform_utils/reverse_polarity/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 const uint16_t WAVEFORM_PHASE_MAPPING[][2] = {
   {mtms_waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE, mtms_waveform_interfaces::msg::WaveformPhase::NON_CONDUCTIVE},
@@ -58,6 +65,11 @@ public:
 
     reverse_polarity_service = this->create_service<mtms_targeting_interfaces::srv::ReversePolarity>(
         "/mtms/waveforms/reverse_polarity", service_callback);
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

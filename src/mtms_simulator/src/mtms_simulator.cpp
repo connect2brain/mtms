@@ -22,6 +22,9 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
+const std::string HEARTBEAT_TOPIC = "/mtms/mtms_simulator/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
+
 MTMSSimulator::MTMSSimulator()
 : Node("mtms_simulator")
 {
@@ -132,6 +135,11 @@ MTMSSimulator::MTMSSimulator()
     system_state_period, std::bind(&MTMSSimulator::publish_system_state, this));
   healthcheck_timer_ = this->create_wall_timer(
     healthcheck_period, std::bind(&MTMSSimulator::publish_healthcheck, this));
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 
   event_worker_ = std::thread(&MTMSSimulator::event_worker_loop, this);
 }

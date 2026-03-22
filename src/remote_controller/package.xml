@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
   <depend>mtms_system_interfaces</depend>
   <depend>shared_stimulation_interfaces</depend>
   <depend>mtms_trial_interfaces</depend>

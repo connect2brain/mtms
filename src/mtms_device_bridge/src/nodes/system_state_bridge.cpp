@@ -1,4 +1,5 @@
 #include <chrono>
+#include <string>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -12,6 +13,8 @@
 #include "mtms_device_interfaces/msg/system_error.hpp"
 
 #include "mtms_system_interfaces/msg/healthcheck.hpp"
+
+#include "std_msgs/msg/empty.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
@@ -107,6 +110,11 @@ public:
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
 
     healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

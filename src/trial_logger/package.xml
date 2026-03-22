@@ -8,6 +8,7 @@
   <license>GPL-3.0-only</license>
 
   <depend>rclpy</depend>
+  <depend>std_msgs</depend>
 
   <depend>mtms_mep_interfaces</depend>
   <depend>mtms_targeting_interfaces</depend>

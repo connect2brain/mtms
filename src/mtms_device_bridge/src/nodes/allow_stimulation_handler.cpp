@@ -1,5 +1,8 @@
+#include <chrono>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 
 #include "NiFpga_mTMS.h"
 #include "fpga.h"
@@ -15,6 +18,12 @@ public:
         "/mtms/stimulation/allowed",
         qos_persist_latest,
         std::bind(&AllowStimulation::allow_stimulation_callback, this, std::placeholders::_1));
+
+    const std::string heartbeat_topic = "/mtms/device/heartbeat";
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(heartbeat_topic, 10);
+    this->create_wall_timer(std::chrono::milliseconds(500), [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
   void ensure_fpga_and_apply_cached_state() {

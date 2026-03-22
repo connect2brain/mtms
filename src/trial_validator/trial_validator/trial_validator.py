@@ -9,6 +9,8 @@ from mtms_trial_interfaces.srv import ValidateTrial
 from mtms_waveform_interfaces.msg import WaveformsForCoilSet
 from mtms_targeting_interfaces.srv import GetMaximumIntensity, GetMultipulseWaveforms, GetDefaultWaveform
 
+from std_msgs.msg import Empty
+
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
@@ -19,6 +21,9 @@ class TrialValidatorNode(Node):
     # TODO: Channel count hardcoded for now.
     NUM_OF_CHANNELS = 5
 
+    HEARTBEAT_TOPIC = '/mtms/trial_validator/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
+
     def __init__(self):
         super().__init__('trial_validator_node')
 
@@ -26,6 +31,9 @@ class TrialValidatorNode(Node):
 
         # Needed to enable calling another service inside a service handler. See also using MultiThreadedExecutor.
         self.callback_group = ReentrantCallbackGroup()
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Service for validating trial.
 

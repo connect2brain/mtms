@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <chrono>
+
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
 
@@ -15,6 +18,9 @@
 #include <string>
 
 using namespace std;
+
+const std::string HEARTBEAT_TOPIC = "/mtms/targeting/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 const uint8_t NUM_OF_CHANNELS = 5;
 
@@ -193,6 +199,11 @@ public:
 
     /* TODO: Disable validation for now, as we don't have yet computed both genetic and least-squares lookup tables. */
     //validate_lookup_table();
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

@@ -10,11 +10,15 @@
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
+#include "std_msgs/msg/empty.hpp"
+
 using std::placeholders::_1;
 
 const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
+const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
@@ -46,6 +50,11 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
   while (!perform_trial_client->wait_for_service(std::chrono::seconds(2))) {
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", PERFORM_TRIAL_SERVICE.c_str());
   }
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)

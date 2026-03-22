@@ -1,7 +1,10 @@
 //
 // Created by alqio on 11.11.2022.
 //
+#include <chrono>
+
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "mtms_neuronavigation_interfaces/srv/efield.hpp"
 #include "mtms_neuronavigation_interfaces/srv/initialize_efield.hpp"
 #include "mtms_neuronavigation_interfaces/srv/set_coil.hpp"
@@ -10,6 +13,9 @@
 #include "mtms_neuronavigation_interfaces/srv/efield_roi_max.hpp"
 #include "mtms_neuronavigation_interfaces/srv/setdiperdt.hpp"
 #include "efield_estimation.h"
+
+const std::string HEARTBEAT_TOPIC = "/mtms/efield/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 class EField : public rclcpp::Node {
 public:
@@ -119,6 +125,11 @@ public:
       efield_service_vectorfield_ROI = this->create_service<mtms_neuronavigation_interfaces::srv::EfieldRoi>("/mtms/efield/get_ROIefieldvector", service_callback_efield_vector_ROI);
       efield_service_vectorfield_ROI_max_loc = this->create_service<mtms_neuronavigation_interfaces::srv::EfieldRoiMax>("/mtms/efield/get_ROIefieldvectorMax", service_callback_efield_vector_ROI_max_loc);
       efield_service_dIperdt = this->create_service<mtms_neuronavigation_interfaces::srv::Setdiperdt>("/mtms/efield/set_dIperdt",service_callback_set_dIperdt);
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

@@ -6,6 +6,8 @@
 #include <string>
 #include <unistd.h>
 
+#include "std_msgs/msg/empty.hpp"
+
 #include "realtime_utils/utils.h"
 
 #include "eeg_bridge.h"
@@ -20,6 +22,8 @@ using namespace std::chrono_literals;
 const std::string EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
 const std::string DROPPED_SAMPLES_TOPIC = "/eeg_bridge/dropped_samples";
+const std::string HEARTBEAT_TOPIC = "/mtms/eeg_bridge/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 /* Have a long queue to avoid dropping messages. */
 const uint16_t EEG_QUEUE_LENGTH = 65535;
@@ -67,6 +71,12 @@ EegBridge::EegBridge() : Node("eeg_bridge") {
   RCLCPP_INFO(this->get_logger(), "  • EEG device: %s", this->eeg_device_type.c_str());
   RCLCPP_INFO(this->get_logger(), "  • Maximum dropped samples: %d", this->maximum_dropped_samples);
   publish_device_info();
+
+  /* TODO: Doesn't work because of the tight loop. Fix this. */
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 void EegBridge::publish_device_info() {

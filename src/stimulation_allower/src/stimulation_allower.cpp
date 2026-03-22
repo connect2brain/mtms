@@ -1,5 +1,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_msgs/msg/empty.hpp"
 #include "mtms_system_interfaces/srv/get_stimulation_allowed.hpp"
 
 using namespace std;
@@ -12,6 +13,8 @@ const milliseconds COIL_AT_TARGET_PUBLISHING_INTERVAL = 600ms;
 
 const std::string ALLOW_STIMULATION_TOPIC_NAME = "/mtms/stimulation/allowed";
 const std::string ALLOW_TRIGGER_OUT_TOPIC_NAME = "/mtms/trigger_out/allowed";
+const std::string HEARTBEAT_TOPIC = "/mtms/stimulation_allower/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 class StimulationAllower : public rclcpp::Node {
 
@@ -68,6 +71,11 @@ public:
     update_stimulation_allowed();
 
     RCLCPP_INFO(this->get_logger(), "Stimulation allower ready.");
+
+    auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+      heartbeat_publisher->publish(std_msgs::msg::Empty());
+    });
   }
 
 private:

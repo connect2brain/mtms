@@ -4,11 +4,16 @@ from datetime import datetime
 
 from mtms_experiment_interfaces.srv import LogTrial
 
+from std_msgs.msg import Empty
+
 import rclpy
 from rclpy.node import Node
 
 
 class TrialLoggerNode(Node):
+
+    HEARTBEAT_TOPIC = '/mtms/trial/log/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
 
     TRIAL_COLUMNS = [
         "Trial index",
@@ -31,6 +36,10 @@ class TrialLoggerNode(Node):
         super().__init__('trial_logger_node')
 
         self.logger = self.get_logger()
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
+
         self.logs_dir = os.getenv('MTMS_EXPERIMENT_LOGS_DIR')
         if not self.logs_dir:
             raise RuntimeError('MTMS_EXPERIMENT_LOGS_DIR is not set.')

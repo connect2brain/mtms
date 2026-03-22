@@ -1,5 +1,7 @@
 #include "mep_analyzer.h"
 
+#include "std_msgs/msg/empty.hpp"
+
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -12,6 +14,8 @@ using namespace std::chrono_literals;
 const std::string MepAnalyzerNode::EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string MepAnalyzerNode::EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
 const std::string MepAnalyzerNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
+const std::string HEARTBEAT_TOPIC = "/mtms/mep_analyzer/heartbeat";
+constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
 : Node("mep_analyzer", options)
@@ -52,6 +56,11 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
     std::bind(&MepAnalyzerNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
+
+  auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
+  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_publisher->publish(std_msgs::msg::Empty());
+  });
 }
 
 void MepAnalyzerNode::device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)

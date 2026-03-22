@@ -13,6 +13,8 @@ from mtms_device_interfaces.srv import RequestEvents
 from mtms_trial_interfaces.srv import SetVoltages
 from mtms_system_interfaces.msg import Session
 
+from std_msgs.msg import Empty
+
 
 class VoltageSetterNode(Node):
 
@@ -26,12 +28,18 @@ class VoltageSetterNode(Node):
     SESSION_START_WAIT_TIMEOUT_S = 3.0
     SESSION_START_POLL_INTERVAL_S = 0.05
 
+    HEARTBEAT_TOPIC = '/mtms/voltage_setter/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
+
     def __init__(self):
         super().__init__('voltage_setter_node')
 
         self.logger = self.get_logger()
 
         self.reentrant_callback_group = ReentrantCallbackGroup()
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Service for setting voltages.
 

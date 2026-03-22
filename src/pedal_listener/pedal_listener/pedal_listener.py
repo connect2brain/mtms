@@ -5,18 +5,24 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Empty
 
 class PedalListenerNode(Node):
 
     RECONNECT_PERIOD_IN_SECONDS = 1.0
     READER_PERIOD_IN_SECONDS = 0.02
 
+    HEARTBEAT_TOPIC = '/mtms/pedal_listener/heartbeat'
+    HEARTBEAT_PUBLISH_PERIOD_S = 0.5
+
     def __init__(self):
         super().__init__('pedal_listener')
 
         self.port = os.getenv("PEDAL_PORT")
         self.baud_rate = int(os.getenv("PEDAL_BAUD_RATE"))
+
+        self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Persist the latest sample.
         qos = QoSProfile(
