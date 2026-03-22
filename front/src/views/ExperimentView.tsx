@@ -1,6 +1,6 @@
 /* TODO: This could be split into multiple files. */
 
-import React, { useCallback, useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import styled from 'styled-components'
 
 import { TabBar, Select, GrayedOutPanel, ActiveProps } from 'styles/General'
@@ -16,24 +16,16 @@ import { SmallerTitle } from 'styles/ExperimentStyles'
 import {
   StyledPanel,
   StyledButton,
-  StyledRedButton,
   ConfigRow,
   CloseConfigRow,
   ConfigLabel,
   IndentedLabel,
 } from 'styles/General'
 
-import {
-  countValidTrials,
-  performExperiment,
-  pauseExperiment,
-  resumeExperiment,
-  cancelExperiment,
-  visualizeTargets,
-  getMaximumIntensity,
-  subscribeToExperimentState,
-  subscribeToExperimentFeedback,
-} from 'ros/experiment'
+import { countValidTrials, performExperiment, visualizeTargets, getMaximumIntensity } from 'ros/experiment'
+
+import { ExperimentControlButtons } from 'components/experiment/ExperimentControlButtons'
+import { EXPERIMENT_STATE, ExperimentContext } from 'providers/ExperimentProvider'
 
 import { SystemContext } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
@@ -329,26 +321,6 @@ type Trial = {
   dry_run: boolean
 }
 
-enum StartButtonState {
-  Start,
-  Updating,
-  Pausing,
-  Pause,
-  Resume,
-}
-
-enum CancelButtonState {
-  Cancel,
-  Canceling,
-}
-
-enum ExperimentState {
-  NotRunning,
-  Running,
-  Paused,
-  Canceled,
-}
-
 enum ExperimentTab {
   SingleLocation,
   MultipleLocations,
@@ -400,6 +372,37 @@ const getKey = (key: string, defaultValue: any): any => {
   return key in data ? data[key] : defaultValue
 }
 
+function formatExperimentStateLabel(state: number | undefined): string {
+  if (state === undefined) {
+    return '\u2013'
+  }
+  switch (state) {
+    case EXPERIMENT_STATE.NOT_RUNNING:
+      return 'Not running'
+    case EXPERIMENT_STATE.RUNNING:
+      return 'Running'
+    case EXPERIMENT_STATE.PAUSE_REQUESTED:
+      return 'Pausing'
+    case EXPERIMENT_STATE.PAUSED:
+      return 'Paused'
+    case EXPERIMENT_STATE.CANCEL_REQUESTED:
+      return 'Canceling'
+    case EXPERIMENT_STATE.STOPPING:
+      return 'Stopping'
+    default:
+      return 'Unknown'
+  }
+}
+
+function shouldShowTrialFeedback(state: number | undefined): boolean {
+  return (
+    state !== undefined &&
+    state !== EXPERIMENT_STATE.NOT_RUNNING &&
+    state !== EXPERIMENT_STATE.CANCEL_REQUESTED &&
+    state !== EXPERIMENT_STATE.STOPPING
+  )
+}
+
 export const ExperimentView = () => {
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
@@ -407,6 +410,9 @@ export const ExperimentView = () => {
   const { session } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
   const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
+  const { experimentStateMessage, experimentFeedbackMessage } = useContext(ExperimentContext)
+  const experimentState = experimentStateMessage?.state
+  const feedbackAny = experimentFeedbackMessage as { trial_number?: number; attempt_number?: number } | null
   const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
   const maxEmgChannel = Math.max(1, eegDeviceInfo?.num_emg_channels ?? 0)
 
@@ -476,100 +482,29 @@ export const ExperimentView = () => {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  const [startButtonState, setStartButtonState] = useState(StartButtonState.Start)
-  const [cancelButtonState, setCancelButtonState] = useState(CancelButtonState.Cancel)
-
-  /* Time (in seconds) at which the experiment was paused; used for showing the pause duration for the user. */
-  const [pauseTime, setPauseTime] = useState<number | null>(null)
-
-  const [trialNumber, setTrialNumber] = useState<number | null>(null)
-  const [attemptNumber, setAttemptNumber] = useState<number | null>(null)
-  const [experimentState, setExperimentState] = useState<number>(() =>
-    getKey('experimentState', ExperimentState.NotRunning)
-  )
-
-  const visualizeFeedback = useCallback((feedback: any) => {
-    /* TODO: Only visualize the first target for now. */
-    const target = feedback.trial.targets[0]
-    const x: number = target.displacement_x
-    const y: number = target.displacement_y
-    const angle: number = target.rotation_angle
-
-    setHighlightedPoints([{ x: x, y: y }])
-    setHighlightedAngles([angle])
-  }, [])
-
-  // Keep session/execution state in sync with ROS feedback while this view is mounted.
-  //
-  // Without this, the experiment state would not be retained when switching between tabs.
-  //
-  // XXX: This seems like a hack - maybe remove or do a proper fix later? Added in commit ID: a49998bc.
-  const lastRosExperimentStateRef = useRef<number | null>(null)
-
   useEffect(() => {
-    const unsubState = subscribeToExperimentState((msg: any) => {
-      const feedbackState = msg?.state
-      if (typeof feedbackState === 'number') {
-        lastRosExperimentStateRef.current = feedbackState
-      }
-      setExperimentState(feedbackState)
-
-      // Keep derived UI state consistent even if feedback callbacks race with `performExperiment`'s
-      // done callback.
-      if (feedbackState === ExperimentState.NotRunning) {
-        setTrialNumber(null)
-        setAttemptNumber(null)
-        setCancelButtonState(CancelButtonState.Cancel)
-        setHighlightedPoints([])
-        setHighlightedAngles([])
-        return
-      }
-
-      if (feedbackState === ExperimentState.Canceled) {
-        setTrialNumber(null)
-        setAttemptNumber(null)
-        setCancelButtonState(CancelButtonState.Cancel)
-        setHighlightedPoints([])
-        setHighlightedAngles([])
-        return
-      }
-    })
-
-    const unsubFeedback = subscribeToExperimentFeedback((feedback: any) => {
-      const s = lastRosExperimentStateRef.current
-      if (s === ExperimentState.NotRunning || s === ExperimentState.Canceled) {
-        return
-      }
-
-      visualizeFeedback(feedback)
-      setTrialNumber(feedback.trial_number)
-      setAttemptNumber(feedback.attempt_number)
-    })
-
-    return () => {
-      unsubState()
-      unsubFeedback()
-    }
-  }, [visualizeFeedback])
-
-  const perform = () => {
-    const experiment: Experiment = formExperiment()
-
-    const done_callback = (success: boolean) => {
-      setTrialNumber(null)
-      setAttemptNumber(null)
-      setExperimentState(ExperimentState.NotRunning)
-      setCancelButtonState(CancelButtonState.Cancel)
+    if (
+      experimentState === EXPERIMENT_STATE.NOT_RUNNING ||
+      experimentState === EXPERIMENT_STATE.CANCEL_REQUESTED ||
+      experimentState === EXPERIMENT_STATE.STOPPING
+    ) {
       setHighlightedPoints([])
       setHighlightedAngles([])
+      return
     }
+    const feedback = experimentFeedbackMessage as { trial?: { targets?: unknown[] } } | null
+    const target = feedback?.trial?.targets?.[0] as
+      | { displacement_x: number; displacement_y: number; rotation_angle: number }
+      | undefined
+    if (target == null) {
+      return
+    }
+    setHighlightedPoints([{ x: target.displacement_x, y: target.displacement_y }])
+    setHighlightedAngles([target.rotation_angle])
+  }, [experimentState, experimentFeedbackMessage])
 
-    const feedback_callback = (feedback: any) => {
-      visualizeFeedback(feedback)
-      setTrialNumber(feedback.trial_number)
-      setAttemptNumber(feedback.attempt_number)
-    }
-    performExperiment(experiment, done_callback, feedback_callback)
+  const perform = () => {
+    performExperiment(formExperiment())
   }
 
   const handleIntensityChange = (intensity: number) => {
@@ -760,16 +695,12 @@ export const ExperimentView = () => {
     countValidTrials(experiment.trials, (numOfValidTrials) => {
       if (currentCallCount === callCountRef.current) {
         setNumOfValidTrials(numOfValidTrials)
-        setStartButtonState(StartButtonState.Start)
-
         setIsValidating(false)
       }
     })
   }
 
   const updateValidTrialsWithDebounce = (experiment: Experiment) => {
-    setStartButtonState(StartButtonState.Updating)
-
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
@@ -971,26 +902,6 @@ export const ExperimentView = () => {
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
 
-  /* Update experiment state. */
-  useEffect(() => {
-    switch (experimentState) {
-      case ExperimentState.NotRunning:
-        setStartButtonState(StartButtonState.Start)
-        break
-
-      case ExperimentState.Running:
-        setStartButtonState(StartButtonState.Pause)
-        break
-
-      case ExperimentState.Paused:
-        setStartButtonState(StartButtonState.Resume)
-        if (session) {
-          setPauseTime(session.time)
-        }
-        break
-    }
-  }, [experimentState])
-
   /* Update MEP healthcheck ok status. */
   useEffect(() => {
     setMepHealthcheckOk(mepHealthcheck?.status === HealthcheckStatus.READY)
@@ -1015,10 +926,6 @@ export const ExperimentView = () => {
   useEffect(() => {
     storeKey('activeTab', activeTab)
   }, [activeTab])
-
-  useEffect(() => {
-    storeKey('experimentState', experimentState)
-  }, [experimentState])
 
   useEffect(() => {
     storeKey('selectedPulse', selectedPulse)
@@ -1116,77 +1023,14 @@ export const ExperimentView = () => {
     storeKey('autopauseIntervalMinutes', autopauseIntervalMinutes)
   }, [autopauseIntervalMinutes])
 
-  /* Utilities */
-  const formatExperimentState = (): string => {
-    switch (experimentState) {
-      case ExperimentState.NotRunning:
-        return 'Not running'
-      case ExperimentState.Running:
-        return 'Running'
-      case ExperimentState.Paused:
-        return 'Paused'
-      case ExperimentState.Canceled:
-        return 'Canceled'
-    }
-    return 'Unknown'
-  }
-
-  const formatTrialNumber = () => {
-    if (trialNumber === null || numOfValidTrials === null) {
-      return '\u2013'
-    }
-    return trialNumber.toString() + '/' + numOfValidTrials.toString()
-  }
-
-  const startButtonStateToString = (startButtonState: StartButtonState): string => {
-    switch (startButtonState) {
-      case StartButtonState.Updating:
-        return 'Updating...'
-      case StartButtonState.Start:
-        return 'Start'
-      case StartButtonState.Pausing:
-        return 'Pausing...'
-      case StartButtonState.Pause:
-        return 'Pause'
-      case StartButtonState.Resume:
-        return 'Resume'
-    }
-  }
-
-  const cancelButtonStateToString = (cancelButtonState: CancelButtonState): string => {
-    switch (cancelButtonState) {
-      case CancelButtonState.Cancel:
-        return 'Cancel'
-      case CancelButtonState.Canceling:
-        return 'Canceling...'
-    }
-  }
-
-  const runStartButtonAction = (startButtonState: StartButtonState) => {
-    switch (startButtonState) {
-      case StartButtonState.Updating:
-        break
-      case StartButtonState.Start:
-        perform()
-        break
-      case StartButtonState.Pause:
-        pauseExperiment(() => {
-          setStartButtonState(StartButtonState.Pausing)
-        })
-        break
-      case StartButtonState.Resume:
-        resumeExperiment(() => {
-          console.log('resumed')
-        })
-        break
-    }
-  }
-
-  const runCancelButtonAction = () => {
-    cancelExperiment(() => {
-      setCancelButtonState(CancelButtonState.Canceling)
-    })
-  }
+  const trialLabel =
+    shouldShowTrialFeedback(experimentState) && feedbackAny?.trial_number != null && numOfValidTrials != null
+      ? `${feedbackAny.trial_number}/${numOfValidTrials}`
+      : '\u2013'
+  const attemptLabel =
+    shouldShowTrialFeedback(experimentState) && feedbackAny?.attempt_number != null
+      ? String(feedbackAny.attempt_number)
+      : '\u2013'
 
   return (
     <>
@@ -1486,56 +1330,46 @@ export const ExperimentView = () => {
           <SmallerTitle>Status</SmallerTitle>
           <ConfigRow>
             <ConfigLabel>Experiment:</ConfigLabel>
-            <ConfigLabel>{formatExperimentState()} </ConfigLabel>
+            <ConfigLabel>{formatExperimentStateLabel(experimentState)} </ConfigLabel>
           </ConfigRow>
           <ConfigRow>
             <IndentedLabel>Trial</IndentedLabel>
-            <ConfigLabel>{formatTrialNumber()} </ConfigLabel>
+            <ConfigLabel>{trialLabel} </ConfigLabel>
           </ConfigRow>
           <CloseConfigRow>
             <IndentedLabel>Attempt</IndentedLabel>
-            <ConfigLabel>{attemptNumber !== null ? attemptNumber : '\u2013'}</ConfigLabel>
+            <ConfigLabel>{attemptLabel}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow></CloseConfigRow>
           <ConfigRow>
             <ConfigLabel>Time:</ConfigLabel>
             <ConfigLabel>
-              {experimentState === ExperimentState.Running || experimentState === ExperimentState.Paused
+              {experimentState === EXPERIMENT_STATE.RUNNING ||
+              experimentState === EXPERIMENT_STATE.PAUSE_REQUESTED ||
+              experimentState === EXPERIMENT_STATE.PAUSED ||
+              experimentState === EXPERIMENT_STATE.CANCEL_REQUESTED ||
+              experimentState === EXPERIMENT_STATE.STOPPING
                 ? formatTime(session?.time)
                 : '\u2013'}
             </ConfigLabel>
           </ConfigRow>
           {/* Gray out 'Paused for' if experiment is not paused. */}
-          <GrayedOutPanel isGrayedOut={!(experimentState === ExperimentState.Paused)}>
+          <GrayedOutPanel isGrayedOut={!(experimentState === EXPERIMENT_STATE.PAUSED)}>
             <ConfigRow>
               <ConfigLabel>Paused for:</ConfigLabel>
               <ConfigLabel>
-                {experimentState === ExperimentState.Paused && pauseTime && session
-                  ? formatTime(session?.time - pauseTime)
+                {experimentState === EXPERIMENT_STATE.PAUSED &&
+                typeof experimentStateMessage?.paused_for_seconds === 'number'
+                  ? formatTime(Math.round(experimentStateMessage.paused_for_seconds))
                   : '\u2013'}
               </ConfigLabel>
             </ConfigRow>
           </GrayedOutPanel>
           <CloseConfigRow></CloseConfigRow>
-          <StyledButton
-            onClick={() => runStartButtonAction(startButtonState)}
-            disabled={
-              startButtonState === StartButtonState.Updating ||
-              startButtonState === StartButtonState.Pausing ||
-              selectedPoints.length == 0 ||
-              selectedAngles.length == 0
-            }
-          >
-            {startButtonStateToString(startButtonState)}
-          </StyledButton>
-          <StyledRedButton
-            onClick={() => runCancelButtonAction()}
-            disabled={
-              experimentState === ExperimentState.NotRunning || cancelButtonState == CancelButtonState.Canceling
-            }
-          >
-            {cancelButtonStateToString(cancelButtonState)}
-          </StyledRedButton>
+          <ExperimentControlButtons
+            onStart={() => perform()}
+            startDisabled={isValidating || selectedPoints.length == 0 || selectedAngles.length == 0}
+          />
         </StatusPanel>
       </ConfigPanel>
     </>

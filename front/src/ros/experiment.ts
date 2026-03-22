@@ -73,91 +73,21 @@ const performExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_experiment_interfaces/PerformExperiment',
 })
 
-const experimentStateTopic = new ROSLIB.Topic({
-  ros: ros,
-  name: '/mtms/experiment/state',
-  messageType: 'mtms_experiment_interfaces/ExperimentState',
-})
-
-const experimentFeedbackTopic = new ROSLIB.Topic({
-  ros: ros,
-  name: '/mtms/experiment/feedback',
-  messageType: 'mtms_experiment_interfaces/ExperimentFeedback',
-})
-
-export const subscribeToExperimentState = (callback: (response: any) => void) => {
-  const onState = (state: any) => {
-    callback(state)
-  }
-
-  experimentStateTopic.subscribe(onState)
-
-  return () => {
-    experimentStateTopic.unsubscribe(onState)
-  }
-}
-
-export const subscribeToExperimentFeedback = (callback: (response: any) => void) => {
-  const onFeedback = (msg: any) => {
-    callback(msg)
-  }
-
-  experimentFeedbackTopic.subscribe(onFeedback)
-
-  return () => {
-    experimentFeedbackTopic.unsubscribe(onFeedback)
-  }
-}
-
-export const performExperiment = (
-  experiment: any,
-  done_callback: (trialResults: any, success: boolean) => void,
-  feedback_callback: (response: any) => void
-) => {
+export const performExperiment = (experiment: any) => {
   const request = new ROSLIB.ServiceRequest({
     experiment: experiment,
   })
-
-  let previousExperimentState: number | null = null
-
-  const unsubscribeAll = () => {
-    experimentStateTopic.unsubscribe(onStateMsg)
-    experimentFeedbackTopic.unsubscribe(onFeedbackMsg)
-  }
-
-  const onStateMsg = (stateMsg: any) => {
-    const currentExperimentState = stateMsg?.state
-    if (typeof currentExperimentState === 'number') {
-      if (currentExperimentState === 0) {
-        unsubscribeAll()
-        done_callback([], previousExperimentState !== 3)
-        return
-      }
-      previousExperimentState = currentExperimentState
-    }
-  }
-
-  const onFeedbackMsg = (feedbackMsg: any) => {
-    feedback_callback(feedbackMsg)
-  }
-
-  experimentStateTopic.subscribe(onStateMsg)
-  experimentFeedbackTopic.subscribe(onFeedbackMsg)
 
   performExperimentService.callService(
     request,
     (response: any) => {
       if (!response.success) {
-        unsubscribeAll()
         console.log('ERROR: Failed to perform experiment: success field was false.')
-        done_callback([], false)
       }
     },
     (error: any) => {
-      unsubscribeAll()
       console.log('ERROR: Failed to perform experiment, error:')
       console.log(error)
-      done_callback([], false)
     }
   )
 }
@@ -250,7 +180,7 @@ const cancelExperimentService = new ROSLIB.Service({
   serviceType: 'std_srvs/Trigger',
 })
 
-export const cancelExperiment = (callback: () => void) => {
+export const cancelExperiment = (callback?: () => void) => {
   const request = new ROSLIB.ServiceRequest({}) as any
 
   cancelExperimentService.callService(
@@ -259,7 +189,7 @@ export const cancelExperiment = (callback: () => void) => {
       if (!response.success) {
         console.log('ERROR: Failed to cancel experiment: success field was false.')
       } else {
-        callback()
+        callback?.()
       }
     },
     (error: any) => {

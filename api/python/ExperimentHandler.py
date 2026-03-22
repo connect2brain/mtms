@@ -73,7 +73,7 @@ class ExperimentHandler:
 
     # Internal callbacks
     def _experiment_state_callback(self, state_msg):
-        if state_msg.state == ExperimentState.CANCELED:
+        if state_msg.state in (ExperimentState.CANCEL_REQUESTED, ExperimentState.STOPPING):
             self.was_canceled = True
 
         # The performer publishes a final NOT_RUNNING state when the experiment
