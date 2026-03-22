@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from mtms_experiment_interfaces.msg import ExperimentFeedback
+from mtms_experiment_interfaces.msg import ExperimentState
 from mtms_experiment_interfaces.srv import PerformExperiment
 from std_srvs.srv import Trigger
 
@@ -10,7 +10,7 @@ from mtms_trial_interfaces.srv import ValidateTrial
 
 class ExperimentHandler:
     ROS_SERVICE_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
-    ROS_TOPIC_EXPERIMENT_FEEDBACK = ('/mtms/experiment/feedback', ExperimentFeedback)
+    ROS_TOPIC_EXPERIMENT_STATE = ('/mtms/experiment/feedback', ExperimentState)
 
     ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', Trigger)
     ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', Trigger)
@@ -38,7 +38,7 @@ class ExperimentHandler:
 
         # Completion is signaled by the performer via /mtms/experiment/feedback.
         self.experiment_completed = False
-        self._waiting_for_experiment_feedback = False
+        self._waiting_for_experiment_state = False
         self.was_canceled = False
 
         # Service clients
@@ -52,10 +52,10 @@ class ExperimentHandler:
 
             self.ros_service_clients[topic] = client
 
-        feedback_topic, feedback_type = self.ROS_TOPIC_EXPERIMENT_FEEDBACK
+        state_topic, state_type = self.ROS_TOPIC_EXPERIMENT_STATE
         self.feedback_subscriber = self.node.create_subscription(
-            feedback_type,
-            feedback_topic,
+            state_type,
+            state_topic,
             self._feedback_callback,
             10,
             callback_group=callback_group,
@@ -64,14 +64,14 @@ class ExperimentHandler:
     # Internal callbacks
     def _feedback_callback(self, feedback_msg):
         self.feedback = feedback_msg
-        if feedback_msg.state == ExperimentFeedback.CANCELED:
+        if feedback_msg.state == ExperimentState.CANCELED:
             self.was_canceled = True
 
-        # The performer publishes a final NOT_RUNNING feedback when the experiment
+        # The performer publishes a final NOT_RUNNING state when the experiment
         # thread ends; use that as the completion condition.
-        if self._waiting_for_experiment_feedback and feedback_msg.state == ExperimentFeedback.NOT_RUNNING:
+        if self._waiting_for_experiment_state and feedback_msg.state == ExperimentState.NOT_RUNNING:
             self.experiment_completed = True
-            self._waiting_for_experiment_feedback = False
+            self._waiting_for_experiment_state = False
 
     def _perform_experiment_response_callback(self, future):
         self.result = future.result()
@@ -149,7 +149,7 @@ class ExperimentHandler:
         self.feedback = None
         self.result = None
         self.experiment_completed = False
-        self._waiting_for_experiment_feedback = True
+        self._waiting_for_experiment_state = True
         self.was_canceled = False
 
         service_future = client.call_async(request)

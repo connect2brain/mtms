@@ -31,7 +31,7 @@ import {
   cancelExperiment,
   visualizeTargets,
   getMaximumIntensity,
-  subscribeToExperimentFeedback,
+  subscribeToExperimentState,
 } from 'ros/experiment'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -504,7 +504,7 @@ export const ExperimentView = () => {
   //
   // XXX: This seems like a hack - maybe remove or do a proper fix later? Added in commit ID: a49998bc.
   useEffect(() => {
-    const unsubscribe = subscribeToExperimentFeedback((feedback: any) => {
+    const unsubscribe = subscribeToExperimentState((feedback: any) => {
       const feedbackState = feedback?.state
       setExperimentState(feedbackState)
 

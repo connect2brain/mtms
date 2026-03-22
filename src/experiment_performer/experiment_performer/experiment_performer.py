@@ -4,7 +4,7 @@ from threading import Event, Lock, Thread
 import numpy as np
 import uuid
 
-from mtms_experiment_interfaces.msg import ExperimentFeedback
+from mtms_experiment_interfaces.msg import ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
 from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
@@ -62,8 +62,8 @@ class ExperimentPerformerNode(Node):
         )
 
         # Publish experiment progress updates for UIs.
-        self.experiment_feedback_publisher = self.create_publisher(
-            ExperimentFeedback,
+        self.experiment_state_publisher = self.create_publisher(
+            ExperimentState,
             '/mtms/experiment/feedback',
             10,
         )
@@ -156,7 +156,7 @@ class ExperimentPerformerNode(Node):
 
         # Create a lock so that service and action calls can modify the experiment state concurrently.
         self.experiment_state_lock = Lock()
-        self.experiment_state = ExperimentFeedback.NOT_RUNNING
+        self.experiment_state = ExperimentState.NOT_RUNNING
         self.perform_experiment_thread = None
 
         self.get_logger().info('ExperimentPerformerNode initialized.')
@@ -398,7 +398,7 @@ class ExperimentPerformerNode(Node):
     # Performing experiment
 
     def perform_experiment_service_callback(self, request, response):
-        if self.get_experiment_state() != ExperimentFeedback.NOT_RUNNING:
+        if self.get_experiment_state() != ExperimentState.NOT_RUNNING:
             self.logger.error('Could not start experiment: another experiment is already running.')
             response.success = False
             return response
@@ -440,7 +440,7 @@ class ExperimentPerformerNode(Node):
             self.logger.error('Experiment thread failed: {}'.format(str(error)))
 
         # Mark experiment as finished so pause/cancel calls are rejected after completion.
-        self.set_experiment_state(ExperimentFeedback.NOT_RUNNING)
+        self.set_experiment_state(ExperimentState.NOT_RUNNING)
 
         # Publish final state update so UI can detect completion.
         final_trial = Trial()
@@ -448,7 +448,7 @@ class ExperimentPerformerNode(Node):
             final_trial = valid_trials[-1]
 
         self.publish_feedback(
-            experiment_state=ExperimentFeedback.NOT_RUNNING,
+            experiment_state=ExperimentState.NOT_RUNNING,
             trial=final_trial,
             num_of_attempts=0,
             trial_number=len(valid_trials),
@@ -458,7 +458,7 @@ class ExperimentPerformerNode(Node):
         self.logger.info('Experiment done (success={}).'.format(success))
 
     def pause_experiment_callback(self, request, response):
-        if self.get_experiment_state() == ExperimentFeedback.NOT_RUNNING:
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
             self.logger.error('Trying to pause while experiment not running.')
 
             response.success = False
@@ -466,13 +466,13 @@ class ExperimentPerformerNode(Node):
 
         self.logger.info('Pausing experiment after current trial attempt.')
 
-        self.set_experiment_state(ExperimentFeedback.PAUSED)
+        self.set_experiment_state(ExperimentState.PAUSED)
 
         response.success = True
         return response
 
     def resume_experiment_callback(self, request, response):
-        if self.get_experiment_state() == ExperimentFeedback.NOT_RUNNING:
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
             self.logger.error('Trying to resume while experiment not running.')
 
             response.success = False
@@ -480,13 +480,13 @@ class ExperimentPerformerNode(Node):
 
         self.logger.info('Resuming experiment.')
 
-        self.set_experiment_state(ExperimentFeedback.RUNNING)
+        self.set_experiment_state(ExperimentState.RUNNING)
 
         response.success = True
         return response
 
     def cancel_experiment_callback(self, request, response):
-        if self.get_experiment_state() == ExperimentFeedback.NOT_RUNNING:
+        if self.get_experiment_state() == ExperimentState.NOT_RUNNING:
             self.logger.error('Trying to cancel while experiment not running.')
 
             response.success = False
@@ -494,7 +494,7 @@ class ExperimentPerformerNode(Node):
 
         self.logger.info('Canceling experiment after current trial attempt.')
 
-        self.set_experiment_state(ExperimentFeedback.CANCELED)
+        self.set_experiment_state(ExperimentState.CANCELED)
 
         response.success = True
         return response
@@ -555,15 +555,15 @@ class ExperimentPerformerNode(Node):
             )
 
     def publish_feedback(self, experiment_state, trial, num_of_attempts, trial_number, total_trials):
-        feedback_msg = ExperimentFeedback()
+        state_msg = ExperimentState()
 
-        feedback_msg.state = experiment_state
-        feedback_msg.trial = trial
-        feedback_msg.attempt_number = num_of_attempts
-        feedback_msg.trial_number = trial_number
-        feedback_msg.total_trials = total_trials
+        state_msg.state = experiment_state
+        state_msg.trial = trial
+        state_msg.attempt_number = num_of_attempts
+        state_msg.trial_number = trial_number
+        state_msg.total_trials = total_trials
 
-        self.experiment_feedback_publisher.publish(feedback_msg)
+        self.experiment_state_publisher.publish(state_msg)
 
     def initialize_session(self):
 
@@ -645,7 +645,7 @@ class ExperimentPerformerNode(Node):
         valid_trials = self.get_valid_trials(trials)
 
         # Initialize experiment state
-        self.set_experiment_state(ExperimentFeedback.RUNNING)
+        self.set_experiment_state(ExperimentState.RUNNING)
 
         # Check that the experiment is feasible
         feasible = self.check_experiment_feasible(
@@ -683,7 +683,7 @@ class ExperimentPerformerNode(Node):
             if autopause:
                 current_time = self.get_current_time()
                 if current_time > last_resume_time + autopause_interval:
-                    self.set_experiment_state(ExperimentFeedback.PAUSED)
+                    self.set_experiment_state(ExperimentState.PAUSED)
 
             experiment_state = self.get_experiment_state()
 
@@ -697,9 +697,9 @@ class ExperimentPerformerNode(Node):
             )
 
             # Check if the experiment was paused, wait until resumed.
-            if experiment_state == ExperimentFeedback.PAUSED:
+            if experiment_state == ExperimentState.PAUSED:
                 self.logger.info('Experiment paused...')
-                while experiment_state == ExperimentFeedback.PAUSED:
+                while experiment_state == ExperimentState.PAUSED:
                     time.sleep(0.1)
                     experiment_state = self.get_experiment_state()
 
@@ -718,7 +718,7 @@ class ExperimentPerformerNode(Node):
                 )
 
             # Check if the experiment was canceled.
-            if experiment_state == ExperimentFeedback.CANCELED:
+            if experiment_state == ExperimentState.CANCELED:
                 self.logger.info('Experiment canceled.')
 
                 success = False
@@ -731,12 +731,12 @@ class ExperimentPerformerNode(Node):
                 self.logger.info('Waiting for a pedal press...')
 
                 # Wait for a pedal press.
-                while not (self.is_pedal_pressed or experiment_state == ExperimentFeedback.CANCELED):
+                while not (self.is_pedal_pressed or experiment_state == ExperimentState.CANCELED):
                     time.sleep(0.1)
                     experiment_state = self.get_experiment_state()
 
                 # Check if the experiment was canceled.
-                if experiment_state == ExperimentFeedback.CANCELED:
+                if experiment_state == ExperimentState.CANCELED:
                     self.logger.info('Experiment canceled while waiting for pedal press.')
 
                     success = False
