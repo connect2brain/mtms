@@ -33,16 +33,6 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
-  mtms_simulator:
-    build:
-      context: .
-      dockerfile: src/mtms_simulator/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    network_mode: host
-
   neuronavigation:
     build:
       context: .
