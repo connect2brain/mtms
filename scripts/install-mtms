@@ -2,6 +2,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "$REPO_ROOT"
 
 bash "${SCRIPT_DIR}/set-site-config" "${1:-}"
 
@@ -21,24 +23,12 @@ if ! command -v ansible-playbook &> /dev/null; then
     sudo apt install -y ansible
 fi
 
-# Run the Ansible playbooks
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
 
-# Prompt for sudo password once
 read -r -s -p "Enter sudo password: " SUDO_PASS
 echo ""
 
-# Install Docker
-ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-docker.yml
-
-# Install ROS
-ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-ros.yml
-
-# Install samplicator
-ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-samplicator.yml
-
-# Install mTMS
 ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml
 
 source $HOME/.bash_mtms

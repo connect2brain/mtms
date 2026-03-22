@@ -1,0 +1,40 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "$REPO_ROOT"
+
+# Check if Ansible is installed
+if ! command -v ansible-playbook &> /dev/null; then
+    echo "Ansible is not installed. Installing Ansible..."
+    sudo apt update
+    sudo apt install -y software-properties-common
+    sudo add-apt-repository --yes --update ppa:ansible/ansible
+    sudo apt install -y ansible
+fi
+
+echo "Installing required Ansible collections..."
+ansible-galaxy collection install -r ansible/requirements.yml
+
+read -r -s -p "Enter sudo password: " SUDO_PASS
+echo ""
+
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-docker.yml
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-ros.yml
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-samplicator.yml
+
+echo ""
+echo "A reboot is required before continuing with mTMS installation."
+echo ""
+echo "After reboot, from this repository run:"
+echo "  bash scripts/install-mtms [site-name]"
+echo ""
+read -r -p "Reboot now? (Y/n): " reboot_response
+
+if [[ "$reboot_response" =~ ^[Nn]([Oo])?$ ]]; then
+    echo "Please reboot manually, then run install-mtms as shown above."
+else
+    echo "Rebooting now..."
+    sudo reboot
+fi

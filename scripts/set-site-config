@@ -20,7 +20,7 @@ confirm_replace_existing_env() {
 }
 
 if [ -z "$target_site" ]; then
-    echo "Warning: no site provided. Usage: scripts/install-mtms <site-name>"
+    echo "Warning: no site provided. Usage: bash scripts/install-mtms <site-name>"
     echo ""
     echo "Available sites:"
     ls "$SITES_DIR"

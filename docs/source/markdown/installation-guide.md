@@ -134,21 +134,38 @@ Note that the software installation steps are in `README.md`, while the hardware
    - Set keyboard shortcuts to "Windows Default Set"
 
 ### mTMS Software Installation
-1. Run the installation script:
-   ```bash
-   scripts/install-mtms [site]
-   ```
 
-See the list of available sites in the `sites` directory:
+Installation is split into two phases, each followed by a reboot.
+
+**Phase 1: system stack**
+
+From the repository root run:
+
+```bash
+bash scripts/install-mtms-system
+```
+
+After this phase, the computer needs to be rebooted.
+
+**Phase 2: mTMS application**
+
+From the repository root, run:
+
+```bash
+bash scripts/install-mtms [site]
+```
+
+`[site]` selects site-specific `.env` from `sites/<site>/.env`. List available sites:
+
 ```bash
 ls sites
 ```
 
-After the installation, the computer will be rebooted.
+After this phase, the computer needs to be rebooted again.
 
 ### External EEG software (e.g. NeuroSimo)
 
-`scripts/install-mtms` installs a system service that listens for UDP traffic on one port and sends a copy of each packet to two destinations on localhost:
+During mTMS installation, a system service is installed that listens for UDP traffic on one port and sends a copy of each packet to two destinations on localhost:
 
 - **50000** — listen port. Configure the Bittium NeurOne amplifier to send EEG packets to this UDP port.
 - **50001** — used by mTMS.
