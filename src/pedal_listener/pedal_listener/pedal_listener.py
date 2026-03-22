@@ -22,7 +22,7 @@ class PedalListenerNode(Node):
         self.baud_rate = int(os.getenv("PEDAL_BAUD_RATE"))
 
         self.heartbeat_publisher = self.create_publisher(Empty, self.HEARTBEAT_TOPIC, 10)
-        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD, lambda: self.heartbeat_publisher.publish(Empty()))
+        self.create_timer(self.HEARTBEAT_PUBLISH_PERIOD_S, lambda: self.heartbeat_publisher.publish(Empty()))
 
         # Persist the latest sample.
         qos = QoSProfile(

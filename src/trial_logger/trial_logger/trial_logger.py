@@ -12,7 +12,7 @@ from rclpy.node import Node
 
 class TrialLoggerNode(Node):
 
-    HEARTBEAT_TOPIC = '/mtms/trial/log/heartbeat'
+    HEARTBEAT_TOPIC = '/mtms/trial_logger/heartbeat'
     HEARTBEAT_PUBLISH_PERIOD_S = 0.5
 
     TRIAL_COLUMNS = [
