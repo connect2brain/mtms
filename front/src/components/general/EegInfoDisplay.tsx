@@ -7,7 +7,7 @@ import { StyledPanel } from 'styles/General'
 const EegInfoPanel = styled(StyledPanel)<{ isGrayedOut: boolean }>`
   width: 250px;
   position: fixed;
-  top: 230px;
+  top: 410px;
   right: 5px;
   z-index: 1000;
   padding: 15px 20px;
@@ -32,7 +32,7 @@ const EegHeader = styled.div<{ isGrayedOut: boolean }>`
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
   position: fixed;
-  top: 210px;
+  top: 400px;
   right: 270px;
   z-index: 1001;
   transition: color 0.3s ease;

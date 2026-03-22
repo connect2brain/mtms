@@ -8,6 +8,7 @@ import Providers from './providers/Providers'
 import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
 import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
 import { EegInfoDisplay } from 'components/general/EegInfoDisplay'
+import { ChannelVoltageDisplay } from 'components/general/ChannelVoltageDisplay'
 import { MultipleViews } from 'views/MultipleViews'
 
 const App = () => {
@@ -16,6 +17,7 @@ const App = () => {
       <HealthcheckStatusDisplay />
       <HealthcheckMessageDisplay />
       <EegInfoDisplay />
+      <ChannelVoltageDisplay />
       <Wrapper>
         <MultipleViews />
       </Wrapper>
