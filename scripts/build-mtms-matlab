@@ -75,7 +75,7 @@ mv "$TEMP_INTERFACES_DIR/matlab_msg_gen.zip" "$MTMS_ROOT/api/matlab/"
 echo "Done."
 echo "Registering the MATLAB interfaces..."
 
-source scripts/register-mtms-matlab
+source "$MTMS_ROOT/scripts/register-mtms-matlab"
 
 echo "Done."
 echo ""
