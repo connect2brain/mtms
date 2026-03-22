@@ -49,6 +49,7 @@ else
   echo "Using MATLAB local license file: $MLM_LICENSE_FILE"
 fi
 
+echo "Using coil array: $COIL_ARRAY"
 echo "Starting ROS node in MATLAB..."
 
 # XXX: Starting a full MATLAB session with the command
