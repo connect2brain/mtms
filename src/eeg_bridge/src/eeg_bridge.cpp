@@ -21,7 +21,7 @@ using namespace std::chrono_literals;
 /* Publisher topics */
 const std::string EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
-const std::string DROPPED_SAMPLES_TOPIC = "/eeg_bridge/dropped_samples";
+const std::string DROPPED_SAMPLES_TOPIC = "/mtms/eeg_device/dropped_samples";
 const std::string HEARTBEAT_TOPIC = "/mtms/eeg_bridge/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
