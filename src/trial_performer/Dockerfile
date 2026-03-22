@@ -10,10 +10,6 @@ RUN apt-get update && \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Copy ROS workspace and build packages
 
 WORKDIR /app
@@ -35,6 +31,10 @@ RUN source /opt/ros/jazzy/setup.bash && colcon build
 # ROS node
 COPY src/trial_performer src/trial_performer/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trial_performer
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 COPY src/trial_performer/ros_entrypoint.sh .

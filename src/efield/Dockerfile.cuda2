@@ -85,10 +85,6 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 WORKDIR /ap
 
 
@@ -121,7 +117,11 @@ RUN cd src/efield/efield_libraries && cmake . && make
 # Build efield packages
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select efield
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
+# Copy entrypoint
 COPY src/efield/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

@@ -36,10 +36,6 @@ RUN apt-get update
 RUN apt-get install -y \
     dos2unix
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Copy ROS workspace
 
 WORKDIR /app
@@ -57,6 +53,10 @@ COPY src/realtime_utils src/realtime_utils/
 WORKDIR /app
 RUN source /opt/ros/jazzy/setup.bash && \
     colcon build
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 

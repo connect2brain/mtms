@@ -9,10 +9,6 @@ RUN apt-get update && \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Copy ROS workspace
 
 WORKDIR /app
@@ -30,6 +26,10 @@ RUN source /opt/ros/jazzy/setup.bash && colcon build
 # ROS node
 COPY src/mtms_simulator src/mtms_simulator/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mtms_simulator
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 

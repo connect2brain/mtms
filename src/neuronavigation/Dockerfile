@@ -49,10 +49,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 ## InVesalius
 
 WORKDIR /app
@@ -101,6 +97,10 @@ RUN set -eux; \
 COPY src/neuronavigation src/neuronavigation/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select neuronavigation
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 

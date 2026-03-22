@@ -15,10 +15,6 @@ RUN apt-get update && \
 
 RUN pip install --break-system-packages PySerial
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Copy ROS workspace and build packages
 
 WORKDIR /app
@@ -32,6 +28,10 @@ RUN source /opt/ros/jazzy/setup.bash && colcon build
 # ROS node
 COPY src/pedal_listener src/pedal_listener/
 RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select pedal_listener
+
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 COPY src/pedal_listener/ros_entrypoint.sh .

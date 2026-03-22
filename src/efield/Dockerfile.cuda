@@ -73,10 +73,6 @@ RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
 WORKDIR /app
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Build interfaces
 COPY interfaces/mtms_neuronavigation_interfaces interfaces/mtms_neuronavigation_interfaces/
 COPY interfaces/mtms_eeg_interfaces interfaces/mtms_eeg_interfaces/
@@ -103,7 +99,11 @@ RUN cd src/efield/efield_libraries && cmake . && make
 # Build efield packages
 RUN source /opt/ros/jazzy/setup.bash && colcon build --packages-select efield
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
+# Copy entrypoint
 COPY src/efield/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh

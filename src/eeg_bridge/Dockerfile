@@ -10,10 +10,6 @@ RUN apt-get update && \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-# Set the Cyclone DDS configuration
-COPY config/cyclonedds.xml /config/
-ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
-
 # Copy ROS workspace and build packages
 
 WORKDIR /app
@@ -33,6 +29,11 @@ RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --package
 
 WORKDIR /app
 
+# Set the Cyclone DDS configuration
+COPY config/cyclonedds.xml /config/
+ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
+
+# Copy entrypoint
 COPY src/eeg_bridge/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
