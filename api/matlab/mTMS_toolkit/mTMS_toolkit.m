@@ -749,7 +749,12 @@ classdef mTMS_toolkit < handle
             % Measure readout (when last pulse is given)
             if ~isempty(p.readout_type)
                 if strcmp(p.readout_type,'EMG')
-                    [readout,readout_err] = obj.api.analyze_mep(stim_time(end), obj.mep_configuration);
+                    [mep, status] = obj.api.analyze_mep(stim_time(end), obj.mep_configuration);
+                    readout = struct( ...
+                        'buffer', mep.emg_buffer(:), ...
+                        'amplitude', mep.amplitude, ...
+                        'latency', mep.latency, ...
+                        'mep_status', status);
                 elseif strcmp(p.readout_type,'EEG')
                     % TODO
                     readout = [];
@@ -791,19 +796,23 @@ classdef mTMS_toolkit < handle
                 end
             end
             
-            if isstruct(readout) && isfield(readout,'buffer')
-                if isempty(readout.buffer)
-                    fprintf('Error in readout.\n');
+            if strcmp(p.readout_type,'EMG') && isstruct(readout)
+                emg_ok = (readout.mep_status == obj.api.MEP_STATUS_CODES.NO_ERROR) ...
+                    && ~isempty(readout.buffer);
+                if emg_ok
+                    readout.buffer_filt = obj.filter_EMG(readout.buffer);
+                    readout = obj.calculate_p2p(readout);
+                    plot_mep_data(readout, obj.mep_configuration, 5)
+                    pulse_diagnostic.readout_failed = 0;
+                else
+                    if readout.mep_status ~= obj.api.MEP_STATUS_CODES.NO_ERROR
+                        fprintf('MEP analysis failed: status=%d\n', readout.mep_status);
+                    end
+                    if isempty(readout.buffer)
+                        fprintf('Error in readout.\n');
+                    end
                     pulse_diagnostic.readout_failed = 1;
                     pulse_diagnostic.ok_flag = 0;
-                else
-                    if strcmp(p.readout_type,'EMG')
-                        % Process buffer
-                        readout.buffer_filt = obj.filter_EMG(readout.buffer);
-                        readout = obj.calculate_p2p(readout);
-                        plot_mep_data(readout, obj.mep_configuration, 5)
-                        pulse_diagnostic.readout_failed = 0;
-                    end
                 end
             end
 
@@ -940,7 +949,7 @@ classdef mTMS_toolkit < handle
             % :rtype: struct
 
             mep_window = obj.MEP_time_window*1000;
-            buffer_window = [obj.mep_configuration.time_window.start, obj.mep_configuration.time_window.end];
+            buffer_window = [obj.mep_configuration.mep_time_window_start, obj.mep_configuration.mep_time_window_end];
 
             time = (buffer_window(1) + (0:length(readout.buffer)-1) / obj.readout_fs) * 1000;  % Time in ms
             mep_mask = time > mep_window(1) & time < mep_window(2);

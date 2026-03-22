@@ -19,7 +19,7 @@ function plot_mep_data(readout, mep_configuration, N)
     figure(f);  % Ensure the figure is the current one
 
     % Time window and sampling frequency
-    window = [mep_configuration.time_window.start, mep_configuration.time_window.end];
+    window = [mep_configuration.mep_time_window_start, mep_configuration.mep_time_window_end];
     fs = 5000;
     time = (window(1) + (0:length(readout.buffer)-1) / fs) * 1000;  % Time in ms
     
