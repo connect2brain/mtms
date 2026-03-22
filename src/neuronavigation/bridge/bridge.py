@@ -17,7 +17,7 @@ from std_msgs.msg import Bool, MultiArrayDimension
 
 from mtms_neuronavigation_interfaces.msg import EulerAngles, PoseUsingEulerAngles, OptitrackPoses, ElectricField, CreateMarker
 from mtms_neuronavigation_interfaces.srv import Efield, OpenOrientationDialog, InitializeEfield, SetCoil, EfieldNorm, EfieldRoi, EfieldRoiMax, Setdiperdt
-from mtms_targeting_interfaces.msg import CoilTarget
+from shared_stimulation_interfaces.msg import CoilTarget
 
 from invesalius3 import app
 import invesalius.data.transformations as tr

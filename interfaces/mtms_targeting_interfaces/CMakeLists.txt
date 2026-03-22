@@ -24,7 +24,6 @@ endif()
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/CoilTarget.msg"
   "msg/ElectricTarget.msg"
 
   "srv/ApproximateWaveform.srv"

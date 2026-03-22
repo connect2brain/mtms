@@ -77,10 +77,10 @@ COPY interfaces/mtms_experiment_interfaces interfaces/mtms_experiment_interfaces
 COPY interfaces/mtms_neuronavigation_interfaces interfaces/mtms_neuronavigation_interfaces/
 COPY interfaces/mtms_targeting_interfaces interfaces/mtms_targeting_interfaces/
 COPY interfaces/mtms_waveform_interfaces interfaces/mtms_waveform_interfaces/
-
 COPY interfaces/mtms_eeg_interfaces interfaces/mtms_eeg_interfaces/
 COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
 COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
+COPY interfaces/shared_stimulation_interfaces interfaces/shared_stimulation_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
