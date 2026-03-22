@@ -489,7 +489,7 @@ mtms_tk.full_discharge()
 % E-field targeting scripts as a file called 'targeting_results.mat'.
 
 % Load targeting results
-targeting_results = load('/home/mtms/projects/mTMS_toolkit/targeting_results_TS.mat');
+targeting_results = load('/home/mtms/mTMS_toolkit_results/targeting_results_TS.mat');
 didt = targeting_results.weights;
 
 % Convert coil weights from the E-field targeting results to load voltages
