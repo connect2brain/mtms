@@ -141,6 +141,8 @@ Note that the software installation steps are in `README.md`, while the hardware
 - No specific configuration needed
 - Ensure computer is on Aalto's internal network
 
+TODO: Note: As of Mar 2026, the MATLAB license server configuration is not working. Please use the local license file for now, and check the IT for help.
+
 #### Tubingen
 ```bash
 sudo cp ~/MATLAB-license/license.lic /usr/local/MATLAB/R2025b/licenses
@@ -148,4 +150,4 @@ sudo cp ~/MATLAB-license/license.lic /usr/local/MATLAB/R2025b/licenses
 
 #### Chieti
 - Configuration as of Jan 2025 requires manual modification of `ros_entrypoint.sh` in `waveform_approximator`.
-Effort could be put into integrating these changes into the `main` branch for easier SW deployment.
+TODO: Integrate these changes into the `main` branch for easier deployment.
