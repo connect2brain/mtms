@@ -48,7 +48,7 @@ api.start_session()
 
 %% Initialize mTMS toolkit
 
-addpath(genpath("/home/mtms/mtms/api/matlab/mTMS_toolkit"))
+addpath(genpath("~/mtms/api/matlab/mTMS_toolkit"))
 
 % Set directory for automatic saving. Set to [] no disable saving.
 save_dir = [];
