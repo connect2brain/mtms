@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.callback_groups import ReentrantCallbackGroup
 
-from mtms_experiment_interfaces.msg import ExperimentState
+from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import PerformExperiment
 from std_srvs.srv import Trigger
 
@@ -10,7 +10,8 @@ from mtms_trial_interfaces.srv import ValidateTrial
 
 class ExperimentHandler:
     ROS_SERVICE_PERFORM_EXPERIMENT = ('/mtms/experiment/perform', PerformExperiment)
-    ROS_TOPIC_EXPERIMENT_STATE = ('/mtms/experiment/feedback', ExperimentState)
+    ROS_TOPIC_EXPERIMENT_STATE = ('/mtms/experiment/state', ExperimentState)
+    ROS_TOPIC_EXPERIMENT_FEEDBACK = ('/mtms/experiment/feedback', ExperimentFeedback)
 
     ROS_SERVICE_CANCEL_EXPERIMENT = ('/mtms/experiment/cancel', Trigger)
     ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', Trigger)
@@ -36,7 +37,7 @@ class ExperimentHandler:
         # Use ReentrantCallbackGroup to allow simultaneous actions and services.
         callback_group = ReentrantCallbackGroup()
 
-        # Completion is signaled by the performer via /mtms/experiment/feedback.
+        # Completion is signaled by the performer via /mtms/experiment/state.
         self.experiment_completed = False
         self._waiting_for_experiment_state = False
         self.was_canceled = False
@@ -53,25 +54,36 @@ class ExperimentHandler:
             self.ros_service_clients[topic] = client
 
         state_topic, state_type = self.ROS_TOPIC_EXPERIMENT_STATE
-        self.feedback_subscriber = self.node.create_subscription(
+        self.experiment_state_subscriber = self.node.create_subscription(
             state_type,
             state_topic,
-            self._feedback_callback,
+            self._experiment_state_callback,
+            10,
+            callback_group=callback_group,
+        )
+
+        feedback_topic, feedback_type = self.ROS_TOPIC_EXPERIMENT_FEEDBACK
+        self.experiment_feedback_subscriber = self.node.create_subscription(
+            feedback_type,
+            feedback_topic,
+            self._experiment_feedback_callback,
             10,
             callback_group=callback_group,
         )
 
     # Internal callbacks
-    def _feedback_callback(self, feedback_msg):
-        self.feedback = feedback_msg
-        if feedback_msg.state == ExperimentState.CANCELED:
+    def _experiment_state_callback(self, state_msg):
+        if state_msg.state == ExperimentState.CANCELED:
             self.was_canceled = True
 
         # The performer publishes a final NOT_RUNNING state when the experiment
         # thread ends; use that as the completion condition.
-        if self._waiting_for_experiment_state and feedback_msg.state == ExperimentState.NOT_RUNNING:
+        if self._waiting_for_experiment_state and state_msg.state == ExperimentState.NOT_RUNNING:
             self.experiment_completed = True
             self._waiting_for_experiment_state = False
+
+    def _experiment_feedback_callback(self, feedback_msg):
+        self.feedback = feedback_msg
 
     def _perform_experiment_response_callback(self, future):
         self.result = future.result()

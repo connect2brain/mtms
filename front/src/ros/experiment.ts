@@ -73,11 +73,16 @@ const performExperimentService = new ROSLIB.Service({
   serviceType: 'mtms_experiment_interfaces/PerformExperiment',
 })
 
-/* Experiment state topic */
 const experimentStateTopic = new ROSLIB.Topic({
   ros: ros,
-  name: '/mtms/experiment/feedback',
+  name: '/mtms/experiment/state',
   messageType: 'mtms_experiment_interfaces/ExperimentState',
+})
+
+const experimentFeedbackTopic = new ROSLIB.Topic({
+  ros: ros,
+  name: '/mtms/experiment/feedback',
+  messageType: 'mtms_experiment_interfaces/ExperimentFeedback',
 })
 
 export const subscribeToExperimentState = (callback: (response: any) => void) => {
@@ -87,9 +92,20 @@ export const subscribeToExperimentState = (callback: (response: any) => void) =>
 
   experimentStateTopic.subscribe(onState)
 
-  // Return an unsubscribe function for React effect cleanup.
   return () => {
     experimentStateTopic.unsubscribe(onState)
+  }
+}
+
+export const subscribeToExperimentFeedback = (callback: (response: any) => void) => {
+  const onFeedback = (msg: any) => {
+    callback(msg)
+  }
+
+  experimentFeedbackTopic.subscribe(onFeedback)
+
+  return () => {
+    experimentFeedbackTopic.unsubscribe(onFeedback)
   }
 }
 
@@ -103,31 +119,42 @@ export const performExperiment = (
   })
 
   let previousExperimentState: number | null = null
-  const onState = (stateMsg: any) => {
+
+  const unsubscribeAll = () => {
+    experimentStateTopic.unsubscribe(onStateMsg)
+    experimentFeedbackTopic.unsubscribe(onFeedbackMsg)
+  }
+
+  const onStateMsg = (stateMsg: any) => {
     const currentExperimentState = stateMsg?.state
     if (typeof currentExperimentState === 'number') {
       if (currentExperimentState === 0) {
-        experimentStateTopic.unsubscribe(onState)
+        unsubscribeAll()
         done_callback([], previousExperimentState !== 3)
         return
       }
       previousExperimentState = currentExperimentState
     }
-    feedback_callback(stateMsg)
   }
-  experimentStateTopic.subscribe(onState)
+
+  const onFeedbackMsg = (feedbackMsg: any) => {
+    feedback_callback(feedbackMsg)
+  }
+
+  experimentStateTopic.subscribe(onStateMsg)
+  experimentFeedbackTopic.subscribe(onFeedbackMsg)
 
   performExperimentService.callService(
     request,
     (response: any) => {
       if (!response.success) {
-        experimentStateTopic.unsubscribe(onState)
+        unsubscribeAll()
         console.log('ERROR: Failed to perform experiment: success field was false.')
         done_callback([], false)
       }
     },
     (error: any) => {
-      experimentStateTopic.unsubscribe(onState)
+      unsubscribeAll()
       console.log('ERROR: Failed to perform experiment, error:')
       console.log(error)
       done_callback([], false)

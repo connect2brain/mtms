@@ -27,6 +27,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Experiment.msg"
   "msg/ExperimentState.msg"
+  "msg/ExperimentFeedback.msg"
 
   "srv/CountValidTrials.srv"
   "srv/LogTrial.srv"

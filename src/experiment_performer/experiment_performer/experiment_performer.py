@@ -4,7 +4,7 @@ from threading import Event, Lock, Thread
 import numpy as np
 import uuid
 
-from mtms_experiment_interfaces.msg import ExperimentState
+from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
 from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
@@ -61,9 +61,14 @@ class ExperimentPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Publish experiment progress updates for UIs.
         self.experiment_state_publisher = self.create_publisher(
             ExperimentState,
+            '/mtms/experiment/state',
+            10,
+        )
+
+        self.experiment_feedback_publisher = self.create_publisher(
+            ExperimentFeedback,
             '/mtms/experiment/feedback',
             10,
         )
@@ -166,6 +171,10 @@ class ExperimentPerformerNode(Node):
     def set_experiment_state(self, state):
         with self.experiment_state_lock:
             self.experiment_state = state
+
+        state_msg = ExperimentState()
+        state_msg.state = state
+        self.experiment_state_publisher.publish(state_msg)
 
     def get_experiment_state(self):
         with self.experiment_state_lock:
@@ -439,21 +448,20 @@ class ExperimentPerformerNode(Node):
         except Exception as error:
             self.logger.error('Experiment thread failed: {}'.format(str(error)))
 
-        # Mark experiment as finished so pause/cancel calls are rejected after completion.
-        self.set_experiment_state(ExperimentState.NOT_RUNNING)
-
-        # Publish final state update so UI can detect completion.
+        # Publish final trial progress first.
         final_trial = Trial()
         if len(valid_trials) > 0:
             final_trial = valid_trials[-1]
 
         self.publish_feedback(
-            experiment_state=ExperimentState.NOT_RUNNING,
             trial=final_trial,
             num_of_attempts=0,
             trial_number=len(valid_trials),
             total_trials=len(valid_trials),
         )
+
+        # Mark experiment as finished so pause/cancel calls are rejected after completion.
+        self.set_experiment_state(ExperimentState.NOT_RUNNING)
 
         self.logger.info('Experiment done (success={}).'.format(success))
 
@@ -554,16 +562,14 @@ class ExperimentPerformerNode(Node):
                 high=intertrial_interval_max,
             )
 
-    def publish_feedback(self, experiment_state, trial, num_of_attempts, trial_number, total_trials):
-        state_msg = ExperimentState()
+    def publish_feedback(self, trial, num_of_attempts, trial_number, total_trials):
+        feedback_msg = ExperimentFeedback()
+        feedback_msg.trial = trial
+        feedback_msg.attempt_number = num_of_attempts
+        feedback_msg.trial_number = trial_number
+        feedback_msg.total_trials = total_trials
 
-        state_msg.state = experiment_state
-        state_msg.trial = trial
-        state_msg.attempt_number = num_of_attempts
-        state_msg.trial_number = trial_number
-        state_msg.total_trials = total_trials
-
-        self.experiment_state_publisher.publish(state_msg)
+        self.experiment_feedback_publisher.publish(feedback_msg)
 
     def initialize_session(self):
 
@@ -689,7 +695,6 @@ class ExperimentPerformerNode(Node):
 
             # Send feedback at the start of a new trial attempt.
             self.publish_feedback(
-                experiment_state=experiment_state,
                 trial=trial,
                 num_of_attempts=num_of_attempts,
                 trial_number=trial_number,
@@ -710,7 +715,6 @@ class ExperimentPerformerNode(Node):
                 #
                 # XXX: Is this needed? If it is, please document why.
                 self.publish_feedback(
-                    experiment_state=experiment_state,
                     trial=trial,
                     num_of_attempts=num_of_attempts,
                     trial_number=trial_number,

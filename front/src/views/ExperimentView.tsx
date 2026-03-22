@@ -32,6 +32,7 @@ import {
   visualizeTargets,
   getMaximumIntensity,
   subscribeToExperimentState,
+  subscribeToExperimentFeedback,
 } from 'ros/experiment'
 
 import { SystemContext } from 'providers/SystemProvider'
@@ -503,9 +504,14 @@ export const ExperimentView = () => {
   // Without this, the experiment state would not be retained when switching between tabs.
   //
   // XXX: This seems like a hack - maybe remove or do a proper fix later? Added in commit ID: a49998bc.
+  const lastRosExperimentStateRef = useRef<number | null>(null)
+
   useEffect(() => {
-    const unsubscribe = subscribeToExperimentState((feedback: any) => {
-      const feedbackState = feedback?.state
+    const unsubState = subscribeToExperimentState((msg: any) => {
+      const feedbackState = msg?.state
+      if (typeof feedbackState === 'number') {
+        lastRosExperimentStateRef.current = feedbackState
+      }
       setExperimentState(feedbackState)
 
       // Keep derived UI state consistent even if feedback callbacks race with `performExperiment`'s
@@ -527,6 +533,13 @@ export const ExperimentView = () => {
         setHighlightedAngles([])
         return
       }
+    })
+
+    const unsubFeedback = subscribeToExperimentFeedback((feedback: any) => {
+      const s = lastRosExperimentStateRef.current
+      if (s === ExperimentState.NotRunning || s === ExperimentState.Canceled) {
+        return
+      }
 
       visualizeFeedback(feedback)
       setTrialNumber(feedback.trial_number)
@@ -534,7 +547,8 @@ export const ExperimentView = () => {
     })
 
     return () => {
-      unsubscribe()
+      unsubState()
+      unsubFeedback()
     }
   }, [visualizeFeedback])
 
@@ -554,7 +568,6 @@ export const ExperimentView = () => {
       visualizeFeedback(feedback)
       setTrialNumber(feedback.trial_number)
       setAttemptNumber(feedback.attempt_number)
-      setExperimentState(feedback.state)
     }
     performExperiment(experiment, done_callback, feedback_callback)
   }
