@@ -34,7 +34,7 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
 
-  targeted_pulses_subscriber = this->create_subscription<stimulation_interfaces::msg::TargetedPulses>(
+  targeted_pulses_subscriber = this->create_subscription<shared_stimulation_interfaces::msg::TargetedPulses>(
     TARGETED_PULSES_TOPIC,
     pulses_qos,
     std::bind(&RemoteController::targeted_pulses_callback, this, _1));
@@ -90,7 +90,7 @@ uint8_t RemoteController::clamp_intensity_to_uint8(double intensity_v_m)
 }
 
 bool RemoteController::build_trial_from_message(
-  const stimulation_interfaces::msg::TargetedPulses & msg,
+  const shared_stimulation_interfaces::msg::TargetedPulses & msg,
   const mtms_system_interfaces::msg::TimebaseMapping & mapping,
   mtms_trial_interfaces::msg::Trial & trial_out) const
 {
@@ -135,7 +135,7 @@ bool RemoteController::build_trial_from_message(
   return true;
 }
 
-void RemoteController::targeted_pulses_callback(const stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
+void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
   mtms_system_interfaces::msg::TimebaseMapping mapping;
   if (!latest_eeg_to_mtms.has_value()) {

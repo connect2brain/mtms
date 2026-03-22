@@ -8,7 +8,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
-#include "stimulation_interfaces/msg/targeted_pulses.hpp"
+#include "shared_stimulation_interfaces/msg/targeted_pulses.hpp"
 
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
@@ -22,11 +22,11 @@ public:
 private:
   // ROS callbacks
   void eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
-  void targeted_pulses_callback(const stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
+  void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
 
   // Helpers
   bool build_trial_from_message(
-    const stimulation_interfaces::msg::TargetedPulses & msg,
+    const shared_stimulation_interfaces::msg::TargetedPulses & msg,
     const mtms_system_interfaces::msg::TimebaseMapping & mapping,
     mtms_trial_interfaces::msg::Trial & trial_out) const;
 
@@ -36,7 +36,7 @@ private:
 
   // Subscriptions
   rclcpp::Subscription<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr eeg_to_mtms_subscriber;
-  rclcpp::Subscription<stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
+  rclcpp::Subscription<shared_stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
 
   // Service client
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;

@@ -8,7 +8,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(mtms_system_interfaces REQUIRED)
-find_package(stimulation_interfaces REQUIRED)
+find_package(shared_stimulation_interfaces REQUIRED)
 find_package(mtms_trial_interfaces REQUIRED)
 find_package(mtms_targeting_interfaces REQUIRED)
 
@@ -27,7 +27,7 @@ ament_target_dependencies(
   remote_controller
   rclcpp
   mtms_system_interfaces
-  stimulation_interfaces
+  shared_stimulation_interfaces
   mtms_trial_interfaces
   mtms_targeting_interfaces
 )

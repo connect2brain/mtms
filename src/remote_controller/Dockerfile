@@ -23,7 +23,7 @@ COPY interfaces/mtms_event_interfaces interfaces/mtms_event_interfaces/
 COPY interfaces/mtms_waveform_interfaces interfaces/mtms_waveform_interfaces/
 COPY interfaces/mtms_neuronavigation_interfaces interfaces/mtms_neuronavigation_interfaces/
 COPY interfaces/mtms_system_interfaces interfaces/mtms_system_interfaces/
-COPY interfaces/stimulation_interfaces interfaces/stimulation_interfaces/
+COPY interfaces/shared_stimulation_interfaces interfaces/shared_stimulation_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
 COPY interfaces/mtms_targeting_interfaces interfaces/mtms_targeting_interfaces/
 COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
