@@ -8,7 +8,12 @@ if [ ! -f "$MTMS_ENV_FILE" ]; then
 fi
 
 # Load and export the environment variables
-export $(grep -E "^(MTMS_DEVICE_GENERATION|BITFILE_VERSION|RESOURCE|CHANNEL_COUNT)=" "$MTMS_ENV_FILE" | xargs)
+export $(grep -E "^(MTMS_DEVICE_GENERATION|BITFILE_VERSION|RESOURCE|CHANNEL_COUNT|USE_MTMS_SIMULATOR)=" "$MTMS_ENV_FILE" | xargs)
+
+if [ "$USE_MTMS_SIMULATOR" = "true" ]; then
+    echo "USE_MTMS_SIMULATOR is true; not starting mTMS device bridge."
+    exec sleep infinity
+fi
 
 # Ensure required environment variables are set
 if [ -z "$CHANNEL_COUNT" ] || [ -z "$MTMS_DEVICE_GENERATION" ] || [ -z "$BITFILE_VERSION" ]; then
