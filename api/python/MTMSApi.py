@@ -245,7 +245,7 @@ class MTMSApi:
             * Session.STARTED : Session is started.
             * Session.STOPPING : Session is stopping.
         """
-        self.node.wait_for_new_state()
+        self.node.wait_for_new_session()
         return self.node.session.state
 
     def get_current_voltage(self, channel):
@@ -323,7 +323,7 @@ class MTMSApi:
         float
             The current time as seconds.
         """
-        self.node.wait_for_new_state()
+        self.node.wait_for_new_session()
         return self.node.session.time
 
     def get_event_feedback(self, id):

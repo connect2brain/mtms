@@ -449,6 +449,11 @@ class MTMSApiNode(Node):
         while self.system_state is None:
             rclpy.spin_once(self)
 
+    def wait_for_new_session(self):
+        self.session = None
+        while self.session is None:
+            rclpy.spin_once(self)
+
     def print_state(self, force=False):
         self.printer.print_state(
             state=self.system_state,
