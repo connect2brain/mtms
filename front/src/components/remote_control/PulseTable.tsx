@@ -330,6 +330,17 @@ export const PulseTable: React.FC = () => {
     <Wrapper>
       <Title>Pulse definitions</Title>
       <Table>
+        <colgroup>
+          <col style={{ width: 28 }} />
+          {[0, 1, 2].map((pi) => (
+            <React.Fragment key={pi}>
+              {pi > 0 && <col style={{ width: 6 }} />}
+              {FIELDS.map((f) => (
+                <col key={f.key} style={{ width: 50 }} />
+              ))}
+            </React.Fragment>
+          ))}
+        </colgroup>
         <Thead>
           <tr>
             <Th />
