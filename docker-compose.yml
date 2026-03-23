@@ -100,16 +100,6 @@ services:
     privileged: true
     network_mode: host
 
-  trial_validator:
-    build:
-      context: .
-      dockerfile: src/trial_validator/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    network_mode: host
-
   voltage_setter:
     build:
       context: .
