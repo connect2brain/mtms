@@ -19,6 +19,7 @@ from mtms_system_interfaces.msg import Session
 from mtms_system_interfaces.srv import StartSession, StopSession
 
 from mtms_mep_interfaces.srv import AnalyzeMep
+from mtms_targeting_interfaces.srv import GetMaximumIntensity
 
 import rclpy
 from rclpy.node import Node
@@ -135,6 +136,15 @@ class ExperimentPerformerNode(Node):
         self.cache_trial_client = self.create_client(CacheTrial, '/mtms/trial/cache', callback_group=self.callback_group)
         while not self.cache_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /mtms/trial/cache not available, waiting...')
+
+        # Create service client for maximum intensity validation (single-pulse validation path).
+        self.get_maximum_intensity_client = self.create_client(
+            GetMaximumIntensity,
+            '/mtms/targeting/get_maximum_intensity',
+            callback_group=self.callback_group,
+        )
+        while not self.get_maximum_intensity_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /mtms/targeting/get_maximum_intensity not available, waiting...')
 
         # Create service client for analyzing MEP.
 
@@ -387,6 +397,29 @@ class ExperimentPerformerNode(Node):
         success = response.success
         return success
 
+    def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
+        request = GetMaximumIntensity.Request()
+        request.displacement_x = displacement_x
+        request.displacement_y = displacement_y
+        request.rotation_angle = rotation_angle
+        request.algorithm = algorithm
+
+        response = self.async_service_call(
+            self.get_maximum_intensity_client,
+            request,
+            '/mtms/targeting/get_maximum_intensity',
+        )
+
+        if response is None:
+            self.logger.error('Service /mtms/targeting/get_maximum_intensity did not return a response.')
+            return None
+
+        if not response.success:
+            self.logger.error('Service /mtms/targeting/get_maximum_intensity returned success=false.')
+            return None
+
+        return response.maximum_intensity
+
     def log_trial(self, experiment_name, subject_name, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency):
         request = LogTrial.Request()
 
@@ -546,11 +579,35 @@ class ExperimentPerformerNode(Node):
         response.success = True
         return response
 
+    def is_single_pulse_trial_valid(self, trial):
+        targets = trial.targets
+        if len(targets) != 1:
+            return False
+
+        target = targets[0]
+        max_intensity = self.get_maximum_intensity(
+            displacement_x=target.displacement_x,
+            displacement_y=target.displacement_y,
+            rotation_angle=target.rotation_angle,
+            algorithm=target.algorithm,
+        )
+        if max_intensity is None:
+            return False
+
+        return target.intensity <= max_intensity
+
     def get_valid_trials(self, trials):
         valid_trials = []
         for trial in trials:
-            if self.cache_trial(trial):
-                valid_trials.append(trial)
+            targets = trial.targets
+            if len(targets) == 1:
+                if not self.is_single_pulse_trial_valid(trial):
+                    continue
+            else:
+                if not self.cache_trial(trial):
+                    continue
+
+            valid_trials.append(trial)
 
         self.logger.info('{}/{} of the trials are valid.'.format(
             len(valid_trials),
