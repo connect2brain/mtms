@@ -16,6 +16,7 @@ find_package(mtms_device_interfaces REQUIRED)
 find_package(mtms_neuronavigation_interfaces REQUIRED)
 find_package(mtms_system_interfaces REQUIRED)
 find_package(mtms_trial_interfaces REQUIRED)
+find_package(realtime_utils REQUIRED)
 
 add_executable(
         trial_performer
@@ -29,6 +30,10 @@ target_include_directories(trial_performer
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib>
         $<INSTALL_INTERFACE:lib>)
 
+target_link_libraries(trial_performer
+  realtime_utils::utils
+)
+
 ament_target_dependencies(
         trial_performer
         rclcpp
@@ -40,6 +45,7 @@ ament_target_dependencies(
         mtms_neuronavigation_interfaces
         mtms_system_interfaces
         mtms_trial_interfaces
+        realtime_utils
 )
 
 install(

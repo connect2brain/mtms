@@ -18,6 +18,7 @@
   <depend>mtms_neuronavigation_interfaces</depend>
   <depend>mtms_system_interfaces</depend>
   <depend>mtms_trial_interfaces</depend>
+  <depend>realtime_utils</depend>
 
   <buildtool_depend>rosidl_default_generators</buildtool_depend>
 

@@ -25,6 +25,7 @@ COPY interfaces/mtms_waveform_interfaces interfaces/mtms_waveform_interfaces/
 COPY interfaces/mtms_system_interfaces interfaces/mtms_system_interfaces/
 COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
 COPY interfaces/mtms_neuronavigation_interfaces interfaces/mtms_neuronavigation_interfaces/
+COPY src/realtime_utils src/realtime_utils/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

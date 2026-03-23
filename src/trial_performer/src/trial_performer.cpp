@@ -4,6 +4,8 @@
 
 #include "std_msgs/msg/empty.hpp"
 
+#include "realtime_utils/utils.h"
+
 using namespace std::chrono_literals;
 
 const std::string HEARTBEAT_TOPIC = "/mtms/trial_performer/heartbeat";
@@ -592,7 +594,24 @@ bool TrialPerformerNode::is_ready_for_trial(bool verbose) const {
 int main(int argc, char **argv) {
   rclcpp::init(argc, argv);
 
-  /* TODO: Should this be set to real-time priority, as it's a part of the RT pathway to the mTMS device? */
+  auto logger = rclcpp::get_logger("trial_performer");
+
+  realtime_utils::MemoryConfig mem_config;
+  mem_config.enable_memory_optimization = true;
+  mem_config.preallocate_size = 10 * 1024 * 1024; // 10 MB
+
+  realtime_utils::SchedulingConfig sched_config;
+  sched_config.enable_scheduling_optimization = true;
+  sched_config.scheduling_policy = SCHED_RR;
+  sched_config.priority_level = realtime_utils::PriorityLevel::HIGHEST_REALTIME;
+
+  try {
+    realtime_utils::initialize_scheduling(sched_config, logger);
+    realtime_utils::initialize_memory(mem_config, logger);
+  } catch (const std::exception& e) {
+    RCLCPP_FATAL(logger, "Initialization failed: %s", e.what());
+    return -1;
+  }
 
   auto trial_performer_node = std::make_shared<TrialPerformerNode>();
 
