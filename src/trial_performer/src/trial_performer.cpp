@@ -439,9 +439,9 @@ void TrialPerformerNode::handle_perform_trial(
 
   tic();
 
+  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
 
-  /* Log trial details. */
   log_trial(request->trial);
 
   /* Check feasibility. */
@@ -452,8 +452,8 @@ void TrialPerformerNode::handle_perform_trial(
   }
 
   const auto &trial = request->trial;
-
   auto targets = trial.targets;
+
   /* Always get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
   (void)desired_voltages;
@@ -487,6 +487,7 @@ void TrialPerformerNode::handle_perform_trial(
 
   /* Wait for events to finish. */
   bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
+  response->success = success;
 
   auto voltages_after_trial = get_actual_voltages();
 
@@ -495,15 +496,15 @@ void TrialPerformerNode::handle_perform_trial(
     create_marker(trial);
   }
 
-  /* Log trial success. */
   RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
-
-  response->success = success;
+  RCLCPP_INFO(this->get_logger(), " ");
 }
 
 void TrialPerformerNode::handle_prepare_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Response> response) {
+
+  RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Received prepare trial request, executing...");
 
   /* Log trial details. */
@@ -520,8 +521,10 @@ void TrialPerformerNode::handle_prepare_trial(
   auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets);
 
   bool success = set_voltages(desired_voltages);
-  RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
   response->success = success;
+
+  RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
+  RCLCPP_INFO(this->get_logger(), " ");
 }
 
 std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) {
