@@ -8,6 +8,7 @@ endif ()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 find_package(mtms_event_interfaces REQUIRED)
 find_package(mtms_experiment_interfaces REQUIRED)
@@ -32,6 +33,7 @@ ament_target_dependencies(
         trial_performer
         rclcpp
         std_msgs
+        std_srvs
         mtms_event_interfaces
         mtms_experiment_interfaces
         mtms_device_interfaces

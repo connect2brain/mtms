@@ -7,7 +7,7 @@ import uuid
 from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, PrepareTrial, ValidateTrial
+from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
 from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool, Empty
@@ -39,7 +39,7 @@ ANALYZE_MEP_STATUS_TO_REASON = {
 class ExperimentPerformerNode(Node):
 
     ROS_SERVICE_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
-    ROS_SERVICE_PREPARE_TRIAL = ('/mtms/trial/prepare', PrepareTrial)
+    ROS_SERVICE_PREPARE_TRIAL = ('/mtms/trial/prepare', Trigger)
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
@@ -335,10 +335,8 @@ class ExperimentPerformerNode(Node):
 
         return response
 
-    def prepare_trial(self, trial):
-        request = PrepareTrial.Request()
-        request.trial = trial
-
+    def prepare_trial(self):
+        request = Trigger.Request()
         response = self.async_service_call(self.prepare_trial_client, request, '/mtms/trial/prepare')
 
         if response is None:
@@ -818,9 +816,7 @@ class ExperimentPerformerNode(Node):
             trial.start_time = designated_trial_time
 
             # Prepare the trial.
-            prepare_response = self.prepare_trial(
-                trial=trial,
-            )
+            prepare_response = self.prepare_trial()
             if prepare_response is None:
                 self.logger.info('Prepare trial service did not return a response, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,

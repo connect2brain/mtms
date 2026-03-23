@@ -11,6 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>mtms_device_interfaces</depend>
   <depend>mtms_event_interfaces</depend>
   <depend>mtms_experiment_interfaces</depend>

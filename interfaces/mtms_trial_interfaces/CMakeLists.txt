@@ -28,7 +28,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
   "srv/ValidateTrial.srv"
   "srv/PerformTrial.srv"
-  "srv/PrepareTrial.srv"
   "srv/SetVoltages.srv"
 
   DEPENDENCIES mtms_mep_interfaces mtms_targeting_interfaces

@@ -11,9 +11,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
-#include "mtms_trial_interfaces/srv/prepare_trial.hpp"
 #include "mtms_trial_interfaces/srv/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
@@ -40,7 +40,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
-  rclcpp::Service<mtms_trial_interfaces::srv::PrepareTrial>::SharedPtr prepare_trial_service;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr prepare_trial_service;
   rclcpp::Client<mtms_trial_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
@@ -70,7 +70,6 @@ private:
   void update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg);
 
   /* Helpers */
-  bool check_trial_feasible();
   bool is_device_started() const;
   bool is_session_started() const;
   double get_current_time() const;
@@ -107,8 +106,8 @@ private:
       std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
 
   void handle_prepare_trial(
-      const std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Request> request,
-      std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Response> response);
+      const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+      std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
   /* Publishers */
   void create_marker(const mtms_trial_interfaces::msg::Trial &trial);

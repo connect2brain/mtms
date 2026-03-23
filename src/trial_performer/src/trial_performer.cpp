@@ -44,7 +44,7 @@ void TrialPerformerNode::initialize_services() {
       rmw_qos_profile_services_default,
       callback_group);
 
-  prepare_trial_service = this->create_service<mtms_trial_interfaces::srv::PrepareTrial>(
+  prepare_trial_service = this->create_service<std_srvs::srv::Trigger>(
       "/mtms/trial/prepare",
       std::bind(
           &TrialPerformerNode::handle_prepare_trial,
@@ -164,19 +164,6 @@ void TrialPerformerNode::create_marker(const mtms_trial_interfaces::msg::Trial &
 }
 
 /* Helpers */
-
-bool TrialPerformerNode::check_trial_feasible() {
-  if (!is_device_started()) {
-    RCLCPP_WARN(this->get_logger(), "Device not started.");
-    return false;
-  }
-  if (!is_session_started()) {
-    RCLCPP_WARN(this->get_logger(), "Session not started.");
-    return false;
-  }
-  return true;
-}
-
 bool TrialPerformerNode::is_device_started() const {
   return system_state && system_state->device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL;
 }
@@ -442,9 +429,15 @@ void TrialPerformerNode::handle_perform_trial(
 
   log_trial(request->trial);
 
-  /* Check feasibility. */
-  if (!check_trial_feasible()) {
-    RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
+  /* Check that the device and session are started. */
+  if (!is_device_started()) {
+    RCLCPP_WARN(this->get_logger(), "Device not started.");
+    response->success = false;
+    return;
+  }
+
+  if (!is_session_started()) {
+    RCLCPP_WARN(this->get_logger(), "Session not started.");
     response->success = false;
     return;
   }
@@ -489,26 +482,28 @@ void TrialPerformerNode::handle_perform_trial(
 }
 
 void TrialPerformerNode::handle_prepare_trial(
-    const std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Request> request,
-    std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Response> response) {
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
+
+  (void)request;  // No request data; this call is used purely as a trigger.
 
   RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Received prepare trial request, executing...");
+  RCLCPP_INFO(this->get_logger(), "Received prepare trial request, charging max voltages...");
 
-  /* Log trial details. */
-  log_trial(request->trial);
-
-  if (!check_trial_feasible()) {
-    RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
+  /* Check that the device and session are started. */
+  if (!is_device_started()) {
+    RCLCPP_WARN(this->get_logger(), "Device not started.");
     response->success = false;
     return;
   }
 
-  auto targets = request->trial.targets;
+  if (!is_session_started()) {
+    RCLCPP_WARN(this->get_logger(), "Session not started.");
+    response->success = false;
+    return;
+  }
 
-  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets);
-
-  bool success = set_voltages(desired_voltages);
+  bool success = set_voltages(fixed_desired_voltages);
   response->success = success;
 
   RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
