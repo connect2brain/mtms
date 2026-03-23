@@ -123,6 +123,8 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 
 void RemoteController::set_state(uint8_t new_state)
 {
+  RCLCPP_INFO(this->get_logger(), "Setting remote controller state to %d", new_state);
+
   {
     std::lock_guard<std::mutex> lock(state_mutex);
     this->state.state = new_state;
