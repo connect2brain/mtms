@@ -140,6 +140,12 @@ void RemoteController::start_service_handler(
   const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
   std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response)
 {
+  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED) {
+    RCLCPP_ERROR(this->get_logger(), "Remote controller is not in NOT_STARTED state; cannot start.");
+    response->success = false;
+    return;
+  }
+
   std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
     request->target_lists.begin(), request->target_lists.end());
 
@@ -147,7 +153,7 @@ void RemoteController::start_service_handler(
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
     cache_target_lists_async(std::move(target_lists));
 
-    /* Start the device/session before enabling trial readiness callback behavior. */
+    /* Start the device before enabling trial readiness callback behavior. */
     if (!start_session()) {
       RCLCPP_ERROR(this->get_logger(), "StartSession did not succeed; state will remain NOT_STARTED.");
       set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
@@ -166,6 +172,11 @@ void RemoteController::stop_service_handler(
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request;
+  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
+    RCLCPP_ERROR(this->get_logger(), "Remote controller is not in STARTED state; cannot stop.");
+    response->success = false;
+    return;
+  }
 
   std::thread([this]() {
     if (!stop_session()) {
