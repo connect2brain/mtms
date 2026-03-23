@@ -136,7 +136,6 @@ bool RemoteController::build_trial_from_message(
   }
 
   trial_out.use_pulse_width_modulation_approximation = (trial_out.targets.size() > 1);
-  trial_out.dry_run = false;
 
   return true;
 }

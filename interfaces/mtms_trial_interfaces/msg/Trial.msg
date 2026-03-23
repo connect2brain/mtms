@@ -19,4 +19,3 @@ float64[] trigger_delay
 # Configuration
 # ====================================================
 bool use_pulse_width_modulation_approximation
-bool dry_run
