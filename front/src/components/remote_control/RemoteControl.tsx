@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import styled from 'styled-components'
 
 import { StyledButton, StyledRedButton, StyledPanel } from 'styles/General'
@@ -47,6 +47,23 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
 
   const isDeviceOperational = systemState?.device_state.value === DeviceState.OPERATIONAL
 
+  // Debounce visual updates so the button "inertia" doesn't flicker when state changes.
+  const [displayRemoteControllerState, setDisplayRemoteControllerState] = useState(remoteControllerState)
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDisplayRemoteControllerState(remoteControllerState)
+    }, 200)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [remoteControllerState])
+
+  const label = useMemo(() => {
+    if (displayRemoteControllerState === null) return 'Waiting...'
+    if (displayRemoteControllerState === RemoteControllerState.CACHING) return 'Caching...'
+    if (displayRemoteControllerState === RemoteControllerState.STARTED) return 'Stop'
+    return 'Start'
+  }, [displayRemoteControllerState])
+
   const onToggle = () => {
     if (remoteControllerState === RemoteControllerState.STARTED) {
       stopRemoteController()
@@ -66,20 +83,22 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
     return null
   }
 
+  // Use debounced state for button color/text selection.
+  const isWaitingOrCaching =
+    displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING
+  const isStarted = displayRemoteControllerState === RemoteControllerState.STARTED
+  const isDisabled = isWaitingOrCaching || !isDeviceOperational
+
   return (
     <RemoteControlPanel>
       <RemoteControlTitle>Remote control</RemoteControlTitle>
-      {remoteControllerState === null ? (
-        <StyledButton disabled={true}>Waiting...</StyledButton>
-      ) : remoteControllerState === RemoteControllerState.CACHING ? (
-        <StyledButton disabled={true}>Caching...</StyledButton>
-      ) : remoteControllerState === RemoteControllerState.STARTED ? (
-        <StyledRedButton onClick={onToggle} disabled={!isDeviceOperational}>
-          Stop
+      {isStarted ? (
+        <StyledRedButton onClick={onToggle} disabled={isDisabled}>
+          {label}
         </StyledRedButton>
       ) : (
-        <StyledButton onClick={onToggle} disabled={!isDeviceOperational}>
-          Start
+        <StyledButton onClick={isWaitingOrCaching ? undefined : onToggle} disabled={isDisabled}>
+          {label}
         </StyledButton>
       )}
     </RemoteControlPanel>
