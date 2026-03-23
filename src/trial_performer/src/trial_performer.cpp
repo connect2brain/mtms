@@ -1,5 +1,7 @@
 #include "headers/trial_performer.h"
 
+#include <cassert>
+
 #include "std_msgs/msg/empty.hpp"
 
 using namespace std::chrono_literals;
@@ -7,13 +9,20 @@ using namespace std::chrono_literals;
 const std::string HEARTBEAT_TOPIC = "/mtms/trial_performer/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
+const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
+
 static constexpr float VOLTAGE_RELATIVE_ERROR_TOLERANCE = 0.03f;
+
+/* NOTE: If this value changes, update all places that assume fixed maximum voltage. */
+static constexpr uint16_t FIXED_DESIRED_VOLTAGE = 1500;
 
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
     : Node("trial_performer_node", options),
       callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)),
       reentrant_callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)),
       id_counter(0) {
+
+  fixed_desired_voltages.assign(NUM_OF_CHANNELS, FIXED_DESIRED_VOLTAGE);
 
   initialize_services();
   initialize_service_clients();
@@ -96,12 +105,22 @@ void TrialPerformerNode::initialize_subscribers() {
 
 void TrialPerformerNode::initialize_publishers() {
   create_marker_publisher = this->create_publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>("/neuronavigation/create_marker", 10);
+
+  /* Persist the latest `trial_readiness` sample for late-joining subscribers. */
+  auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
+      .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+      .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+  trial_readiness_publisher = this->create_publisher<std_msgs::msg::Bool>(TRIAL_READINESS_TOPIC, qos_persist_latest);
 }
 
 /* Subscriber callbacks */
 
 void TrialPerformerNode::handle_system_state(const mtms_device_interfaces::msg::SystemState::SharedPtr msg) {
   system_state = msg;
+
+  std_msgs::msg::Bool readiness_msg;
+  readiness_msg.data = is_ready_for_trial();
+  trial_readiness_publisher->publish(readiness_msg);
 }
 
 void TrialPerformerNode::handle_session(const mtms_system_interfaces::msg::Session::SharedPtr msg) {
@@ -437,12 +456,11 @@ void TrialPerformerNode::handle_perform_trial(
   auto targets = trial.targets;
   /* Always get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  (void)desired_voltages;
 
-  /* Voltages must already be within margin; fail if they are not. */
-  auto actual_voltages = get_actual_voltages();
-
-  if (!are_voltages_within_margin(desired_voltages)) {
-    RCLCPP_ERROR(this->get_logger(), "Voltages not within margin; call prepare_trial first.");
+  /* Check if the trial is ready to be performed. */
+  if (!is_ready_for_trial()) {
+    RCLCPP_ERROR(this->get_logger(), "Trial not ready to be performed; call prepare_trial first.");
     response->success = false;
     return;
   }
@@ -515,14 +533,22 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
     }
     target_waveforms.push_back(waveforms);
   }
-  return get_approximated_waveforms(targets, target_waveforms);
+  auto [desired_voltages, approximated_waveforms] = get_approximated_waveforms(targets, target_waveforms);
+
+  /* XXX: Have this check just to ensure the PWM approximation is made with the same desired voltage (1500 V) assumed by trial performer. */
+  assert(desired_voltages == fixed_desired_voltages &&
+      "Desired voltages from get_approximated_waveforms do not match FIXED_DESIRED_VOLTAGE");
+
+  return {desired_voltages, approximated_waveforms};
 }
 
-bool TrialPerformerNode::are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const {
+bool TrialPerformerNode::is_ready_for_trial() const {
   auto actual_voltages = get_actual_voltages();
+  const auto &desired_voltages = fixed_desired_voltages;
 
   for (uint8_t i = 0; i < actual_voltages.size(); ++i) {
     auto relative_error = std::abs(actual_voltages[i] - desired_voltages[i]) / static_cast<float>(actual_voltages[i]);
+
     if (relative_error > VOLTAGE_RELATIVE_ERROR_TOLERANCE &&
         std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING) {
       RCLCPP_WARN(this->get_logger(), "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",

@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
 #include "mtms_trial_interfaces/srv/prepare_trial.hpp"
@@ -50,12 +51,14 @@ private:
   rclcpp::Subscription<mtms_event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
   rclcpp::Publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>::SharedPtr create_marker_publisher;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr trial_readiness_publisher;
 
   mtms_device_interfaces::msg::SystemState::SharedPtr system_state;
   mtms_system_interfaces::msg::Session::SharedPtr session;
   std::unordered_map<uint16_t, mtms_event_interfaces::msg::PulseFeedback::SharedPtr> pulse_feedback;
   std::unordered_map<uint16_t, mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr> trigger_out_feedback;
   uint16_t id_counter;
+  std::vector<uint16_t> fixed_desired_voltages;
 
   void initialize_services();
   void initialize_service_clients();
@@ -97,7 +100,7 @@ private:
   mtms_waveform_interfaces::msg::Waveform get_default_waveform(uint8_t channel);
   void request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
-  bool are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const;
+  bool is_ready_for_trial() const;
 
   /* Service handlers */
   void handle_perform_trial(
