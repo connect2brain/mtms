@@ -83,8 +83,8 @@ app.on('activate', () => {
 })
 
 app.on('web-contents-created', (_, contents) => {
-  contents.on('new-window', (event, navigationUrl) => {
-    event.preventDefault()
-    shell.openExternal(navigationUrl)
+  contents.setWindowOpenHandler(({ url }) => {
+    shell.openExternal(url)
+    return { action: 'deny' }
   })
 })
