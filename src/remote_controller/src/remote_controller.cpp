@@ -168,13 +168,19 @@ void RemoteController::start_service_handler(
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
     cache_target_lists_async(std::move(target_lists));
 
-    /* Start the device before enabling trial readiness callback behavior. */
+    set_state(mtms_trial_interfaces::msg::RemoteControllerState::STARTING);
+
+    /* Start the device. */
     if (!start_session()) {
       RCLCPP_ERROR(this->get_logger(), "StartSession did not succeed; state will remain NOT_STARTED.");
       set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
       return;
     }
 
+    /* Prepare the trial. */
+    prepare_trial();
+
+    /* Set the state to STARTED. */
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STARTED);
   }).detach();
 
@@ -431,17 +437,17 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 
 void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)
 {
-  this->trial_readiness = msg->data;
-  if (!this->trial_readiness) {
+  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
+    return;
+  }
+  if (!msg->data) {
+    RCLCPP_INFO(this->get_logger(), "Trial readiness is false; preparing trial.");
     prepare_trial();
   }
 }
 
 void RemoteController::prepare_trial()
 {
-  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
-    return;
-  }
   if (this->prepare_trial_ongoing) {
     return;
   }
