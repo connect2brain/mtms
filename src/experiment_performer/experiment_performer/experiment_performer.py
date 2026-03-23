@@ -392,7 +392,7 @@ class ExperimentPerformerNode(Node):
 
         if response is None:
             self.logger.error('Service /mtms/trial/cache did not return a response.')
-            return False
+            return None
 
         success = response.success
         return success
@@ -869,6 +869,24 @@ class ExperimentPerformerNode(Node):
             ))
 
             trial.start_time = designated_trial_time
+
+            # Cache the trial.
+            cache_ok = self.cache_trial(trial)
+            if cache_ok is None:
+                self.logger.info('Cache trial service did not return a response, attempting again in {} seconds.'.format(
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
+                continue
+
+            if not cache_ok:
+                # XXX: It can happen at least in theory that a single-pulse trial passes the previous validity check,
+                #   but the waveform approximation (done during caching) fails. This is because the validity check uses
+                #   only the known maximum intensity for the pulse to have a higher speed, and does not perform the full
+                #   waveform approximation. If this happens, skip to the next trial instead of retrying.
+                self.logger.info('Trial is invalid, skipping.')
+                i += 1
+                num_of_attempts = 0
+                continue
 
             # Prepare the trial.
             prepare_response = self.prepare_trial()
