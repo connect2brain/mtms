@@ -135,7 +135,6 @@ bool RemoteController::build_trial_from_message(
     trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time);
   }
 
-  trial_out.recharge_after_trial = true;
   trial_out.use_pulse_width_modulation_approximation = (trial_out.targets.size() > 1);
   trial_out.dry_run = false;
 

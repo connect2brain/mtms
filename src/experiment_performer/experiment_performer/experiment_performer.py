@@ -797,12 +797,10 @@ class ExperimentPerformerNode(Node):
 
             use_pulse_width_modulation_approximation = True if len(trial.targets) > 1 else False
             dry_run = False
-            recharge_after_trial = True
 
             trial.start_time = trial_time
             trial.use_pulse_width_modulation_approximation = use_pulse_width_modulation_approximation
             trial.dry_run = dry_run
-            trial.recharge_after_trial = recharge_after_trial
 
             mep_event = None
             mep_result_container = None

@@ -315,7 +315,6 @@ type Trial = {
   trigger_enabled: boolean[]
   trigger_delay: number[]
 
-  recharge_after_trial: boolean
   use_pulse_width_modulation_approximation: boolean
   dry_run: boolean
 }
@@ -558,7 +557,6 @@ export const ExperimentView = () => {
             start_time: 0.0,
             trigger_enabled: trigger_enabled,
             trigger_delay: trigger_delay,
-            recharge_after_trial: true,
             use_pulse_width_modulation_approximation: false,
             dry_run: false,
           }
@@ -583,7 +581,6 @@ export const ExperimentView = () => {
         start_time: 0.0,
         trigger_enabled: trigger_enabled,
         trigger_delay: trigger_delay,
-        recharge_after_trial: true,
         use_pulse_width_modulation_approximation: false,
         dry_run: false,
       }
@@ -614,7 +611,6 @@ export const ExperimentView = () => {
         start_time: 0.0,
         trigger_enabled: trigger_enabled,
         trigger_delay: trigger_delay,
-        recharge_after_trial: true,
         use_pulse_width_modulation_approximation: true,
         dry_run: false,
       }

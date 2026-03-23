@@ -49,7 +49,6 @@ single_pulse_trial = Trial(
 
     # These are the same for all trials.
     use_pulse_width_modulation_approximation=True,  # This can be kept as is.
-    recharge_after_trial=True,
     dry_run=False,
 )
 
@@ -61,7 +60,6 @@ paired_pulse_trial = Trial(
 
     # These are the same for all trials.
     use_pulse_width_modulation_approximation=True,  # This can be kept as is.
-    recharge_after_trial=True,
     dry_run=False,
 )
 
