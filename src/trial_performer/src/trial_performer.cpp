@@ -25,7 +25,6 @@ TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
 }
 
 void TrialPerformerNode::initialize_services() {
-  /* Service for performing trial. */
   perform_trial_service = this->create_service<mtms_trial_interfaces::srv::PerformTrial>(
       "/mtms/trial/perform",
       std::bind(
@@ -36,6 +35,15 @@ void TrialPerformerNode::initialize_services() {
       rmw_qos_profile_services_default,
       callback_group);
 
+  prepare_trial_service = this->create_service<mtms_trial_interfaces::srv::PrepareTrial>(
+      "/mtms/trial/prepare",
+      std::bind(
+          &TrialPerformerNode::handle_prepare_trial,
+          this,
+          std::placeholders::_1,
+          std::placeholders::_2),
+      rmw_qos_profile_services_default,
+      callback_group);
 }
 
 void TrialPerformerNode::initialize_service_clients() {
@@ -469,33 +477,50 @@ void TrialPerformerNode::handle_perform_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
   RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
-  try {
-    /* Log trial details. */
-    log_trial(request->trial);
 
-    /* Check feasibility. */
-    if (!check_trial_feasible()) {
-      RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
-      response->success = false;
-      return;
-    }
+  /* Log trial details. */
+  log_trial(request->trial);
 
-    /* Perform the trial. */
-    bool success = perform_trial(request->trial);
-
-    /* Log trial success. */
-    RCLCPP_INFO(this->get_logger(), "%s completed %s.",
-      request->trial.dry_run ? "Dry run" : "Trial",
-      success ? "successfully" : "with errors");
-
-    response->success = success;
-  } catch (const std::exception &e) {
-    RCLCPP_ERROR(this->get_logger(), "Trial execution failed with exception: %s", e.what());
+  /* Check feasibility. */
+  if (!check_trial_feasible()) {
+    RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
     response->success = false;
-  } catch (...) {
-    RCLCPP_ERROR(this->get_logger(), "Trial execution failed with unknown exception");
-    response->success = false;
+    return;
   }
+
+  /* Perform the trial. */
+  bool success = perform_trial(request->trial);
+
+  /* Log trial success. */
+  RCLCPP_INFO(this->get_logger(), "%s completed %s.",
+    request->trial.dry_run ? "Dry run" : "Trial",
+    success ? "successfully" : "with errors");
+
+  response->success = success;
+}
+
+void TrialPerformerNode::handle_prepare_trial(
+    const std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Response> response) {
+  RCLCPP_INFO(this->get_logger(), "Received prepare trial request, executing...");
+
+  /* Log trial details. */
+  log_trial(request->trial);
+
+  if (!check_trial_feasible()) {
+    RCLCPP_WARN(this->get_logger(), "Trial not feasible.");
+    response->success = false;
+    return;
+  }
+
+  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(
+      request->trial.targets, request->trial.use_pulse_width_modulation_approximation);
+
+  log_voltages(desired_voltages, "Desired voltages");
+
+  bool success = set_voltages(desired_voltages);
+  RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
+  response->success = success;
 }
 
 bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
@@ -504,15 +529,18 @@ bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &
   bool success = true;
   double_t start_time;
 
-  /* Always get initial voltages and waveforms to warm up the cache. */
+  /* Always get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, trial.use_pulse_width_modulation_approximation);
 
   log_voltages(desired_voltages, "Desired voltages");
 
-  /* Actually set voltages and perform pulses if not in dry run mode. */
+  /* Actually perform pulses if not in dry run mode. */
   if (!trial.dry_run) {
-    success = success && set_voltages_if_needed(desired_voltages, trial.voltage_tolerance_proportion_for_precharging);
-    if (!success) {
+    /* Voltages must already be within margin; fail if they are not. */
+    auto actual_voltages = get_actual_voltages();
+    log_voltages(actual_voltages, "Actual voltages");
+    if (!are_voltages_within_margin(desired_voltages, trial.voltage_tolerance_proportion_for_precharging)) {
+      RCLCPP_ERROR(this->get_logger(), "Voltages not within margin. Call prepare_trial first.");
       return false;
     }
 
@@ -542,14 +570,6 @@ bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &
 
   auto voltages_after_trial = get_actual_voltages();
   log_voltages(voltages_after_trial, "Voltages after trial");
-
-  if (trial.recharge_after_trial) {
-    RCLCPP_INFO(this->get_logger(), "Recharging...");
-    success = success && set_voltages(desired_voltages);
-
-    auto voltages_after_recharging = get_actual_voltages();
-    log_voltages(voltages_after_recharging, "Voltages after recharging");
-  }
 
   /* If trial was successful, create a marker in neuronavigation. */
   if (success) {
@@ -608,32 +628,21 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
   return {desired_voltages, approximated_waveforms};
 }
 
-bool TrialPerformerNode::set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging) {
-  bool success = true;
-
+bool TrialPerformerNode::are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion) const {
   auto actual_voltages = get_actual_voltages();
-  log_voltages(actual_voltages, "Actual voltages");
 
-  bool precharge_needed = false;
   for (uint8_t i = 0; i < actual_voltages.size(); ++i) {
     auto relative_error = std::abs(actual_voltages[i] - desired_voltages[i]) / static_cast<float>(actual_voltages[i]);
-    if (relative_error > voltage_tolerance_proportion_for_precharging &&
+    if (relative_error > voltage_tolerance_proportion &&
         std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING) {
-
-      RCLCPP_INFO(this->get_logger(), "Voltage tolerance exceeded on channel %d (relative error: %.0f%%, absolute error: %d V). Precharging...",
+      RCLCPP_WARN(this->get_logger(), "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",
         i,
         100 * relative_error,
         std::abs(actual_voltages[i] - desired_voltages[i]));
-
-      precharge_needed = true;
-      break;
+      return false;
     }
   }
-
-  if (precharge_needed) {
-    success = set_voltages(desired_voltages);
-  }
-  return success;
+  return true;
 }
 
 int main(int argc, char **argv) {

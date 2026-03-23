@@ -12,6 +12,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
+#include "mtms_trial_interfaces/srv/prepare_trial.hpp"
 #include "mtms_trial_interfaces/srv/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
@@ -41,6 +42,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group;
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
+  rclcpp::Service<mtms_trial_interfaces::srv::PrepareTrial>::SharedPtr prepare_trial_service;
   rclcpp::Client<mtms_trial_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
@@ -103,12 +105,16 @@ private:
   mtms_waveform_interfaces::msg::Waveform reverse_polarity(const mtms_waveform_interfaces::msg::Waveform &waveform);
   void request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
-  bool set_voltages_if_needed(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion_for_precharging);
+  bool are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion) const;
 
   /* Service handlers */
   void handle_perform_trial(
       const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
       std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
+
+  void handle_prepare_trial(
+      const std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Request> request,
+      std::shared_ptr<mtms_trial_interfaces::srv::PrepareTrial::Response> response);
 
   /* Publishers */
   void create_marker(const mtms_trial_interfaces::msg::Trial &trial);
