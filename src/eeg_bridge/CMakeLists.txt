@@ -9,7 +9,6 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_eeg_interfaces REQUIRED)
-find_package(realtime_utils REQUIRED)
 
 add_executable(eeg_bridge
         src/adapters/eeg_adapter.h
@@ -21,11 +20,7 @@ add_executable(eeg_bridge
         src/eeg_bridge.h
 )
 
-target_link_libraries(eeg_bridge
-  realtime_utils::utils
-)
-
-ament_target_dependencies(eeg_bridge rclcpp std_msgs mtms_eeg_interfaces realtime_utils)
+ament_target_dependencies(eeg_bridge rclcpp std_msgs mtms_eeg_interfaces)
 
 
 install(TARGETS
