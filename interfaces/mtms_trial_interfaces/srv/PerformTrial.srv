@@ -1,4 +1,3 @@
 mtms_trial_interfaces/Trial trial
-bool use_pulse_width_modulation_approximation
 ---
 bool success

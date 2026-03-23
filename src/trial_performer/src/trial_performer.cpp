@@ -49,13 +49,6 @@ void TrialPerformerNode::initialize_services() {
 }
 
 void TrialPerformerNode::initialize_service_clients() {
-  targeting_client = this->create_client<mtms_targeting_interfaces::srv::GetTargetVoltages>("/mtms/targeting/get_target_voltages");
-
-  reverse_polarity_client = this->create_client<mtms_targeting_interfaces::srv::ReversePolarity>("/mtms/waveforms/reverse_polarity");
-  while (!reverse_polarity_client->wait_for_service(2s)) {
-    RCLCPP_INFO(get_logger(), "Service /mtms/waveforms/reverse_polarity not available, waiting...");
-  }
-
   get_default_waveform_client = this->create_client<mtms_targeting_interfaces::srv::GetDefaultWaveform>(
       "/mtms/waveforms/get_default",
       rclcpp::QoS(rclcpp::ServicesQoS()),
@@ -369,28 +362,6 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
   return {response->initial_voltages, approximated_waveforms};
 }
 
-std::pair<std::vector<double_t>, std::vector<bool>> TrialPerformerNode::get_target_voltages(
-    const mtms_targeting_interfaces::msg::ElectricTarget &target) {
-
-  auto request = std::make_shared<mtms_targeting_interfaces::srv::GetTargetVoltages::Request>();
-  request->target = target;
-
-  auto future = targeting_client->async_send_request(request);
-
-  /* Wait for the response. */
-  auto future_status = future.wait_for(10s);
-  if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Call to GetTargetVoltages service timed out");
-  }
-  auto response = future.get();
-
-  if (!response->success) {
-    throw std::runtime_error("Call to GetTargetVoltages service failed");
-  }
-
-  return {response->voltages, response->reversed_polarities};
-}
-
 mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
   auto request = std::make_shared<mtms_targeting_interfaces::srv::GetDefaultWaveform::Request>();
   request->channel = channel;
@@ -406,26 +377,6 @@ mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform
 
   auto waveform = response->waveform;
   return waveform;
-}
-
-mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::reverse_polarity(const mtms_waveform_interfaces::msg::Waveform &waveform) {
-  auto request = std::make_shared<mtms_targeting_interfaces::srv::ReversePolarity::Request>();
-  request->waveform = waveform;
-
-  auto future = reverse_polarity_client->async_send_request(request);
-
-  /* Wait for the response. */
-  auto future_status = future.wait_for(10s);
-  if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Call to ReversePolarity service timed out");
-  }
-  auto response = future.get();
-
-  if (!response->success) {
-    throw std::runtime_error("Call to ReversePolarity service failed");
-  }
-
-  return response->waveform;
 }
 
 void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs) {
@@ -491,10 +442,8 @@ void TrialPerformerNode::handle_perform_trial(
   const auto &trial = request->trial;
 
   auto targets = trial.targets;
-  bool use_pulse_width_modulation_approximation = request->use_pulse_width_modulation_approximation;
-
   /* Always get desired voltages and waveforms (also warms up the cache). */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets, use_pulse_width_modulation_approximation);
+  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
 
   log_voltages(desired_voltages, "Desired voltages");
 
@@ -559,10 +508,9 @@ void TrialPerformerNode::handle_prepare_trial(
     return;
   }
 
-  bool use_pulse_width_modulation_approximation = request->use_pulse_width_modulation_approximation;
   auto targets = request->trial.targets;
 
-  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets, use_pulse_width_modulation_approximation);
+  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets);
 
   log_voltages(desired_voltages, "Desired voltages");
 
@@ -571,7 +519,7 @@ void TrialPerformerNode::handle_prepare_trial(
   response->success = success;
 }
 
-std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {
+std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) {
   std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> target_waveforms;
   for (uint8_t i = 0; i < targets.size(); ++i) {
     mtms_waveform_interfaces::msg::WaveformsForCoilSet waveforms;
@@ -580,44 +528,7 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
     }
     target_waveforms.push_back(waveforms);
   }
-
-  if (use_pwm_approximation) {
-    return get_approximated_waveforms(targets, target_waveforms);
-  } else {
-    if (targets.size() != 1) {
-      throw std::runtime_error("Pulse-width modulation must be used for multiple targets.");
-    }
-    /* TODO: This should follow the same codepath as the approximated waveforms; most likely
-         a good solution would be to use the same ROS service for both approximated and
-        non-approximated waveforms. */
-    return get_non_approximated_waveforms(targets[0], target_waveforms[0]);
-  }
-}
-
-std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_non_approximated_waveforms(const mtms_targeting_interfaces::msg::ElectricTarget &target, const mtms_waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms) {
-  auto [desired_voltages_float, reversed_polarities] = get_target_voltages(target);
-
-  /* Convert initial voltages from float to integer.
-
-     TODO: Probably they should be integers in the first place. */
-  std::vector<uint16_t> desired_voltages;
-  for (auto voltage : desired_voltages_float) {
-    desired_voltages.push_back(static_cast<uint16_t>(voltage));
-  }
-
-  /* Copy the target waveforms and reverse polarities if necessary. */
-  auto target_waveforms_reversed = target_waveforms.waveforms;
-  for (uint8_t channel = 0; channel < target_waveforms_reversed.size(); ++channel) {
-    if (reversed_polarities[channel]) {
-      target_waveforms_reversed[channel] = reverse_polarity(target_waveforms.waveforms[channel]);
-    }
-  }
-
-  /* Create the approximated waveforms. */
-  std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(1);
-  approximated_waveforms[0].waveforms = target_waveforms_reversed;
-
-  return {desired_voltages, approximated_waveforms};
+  return get_approximated_waveforms(targets, target_waveforms);
 }
 
 bool TrialPerformerNode::are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const {

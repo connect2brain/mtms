@@ -326,7 +326,6 @@ class ExperimentPerformerNode(Node):
     def perform_trial(self, trial):
         request = PerformTrial.Request()
         request.trial = trial
-        request.use_pulse_width_modulation_approximation = len(trial.targets) > 1
 
         response = self.async_service_call(self.perform_trial_client, request, '/mtms/trial/perform')
 
@@ -339,7 +338,6 @@ class ExperimentPerformerNode(Node):
     def prepare_trial(self, trial):
         request = PrepareTrial.Request()
         request.trial = trial
-        request.use_pulse_width_modulation_approximation = len(trial.targets) > 1
 
         response = self.async_service_call(self.prepare_trial_client, request, '/mtms/trial/prepare')
 

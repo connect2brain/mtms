@@ -19,8 +19,6 @@
 #include "mtms_device_interfaces/srv/request_events.hpp"
 #include "mtms_neuronavigation_interfaces/msg/create_marker.hpp"
 #include "mtms_system_interfaces/msg/session.hpp"
-#include "mtms_targeting_interfaces/srv/get_target_voltages.hpp"
-#include "mtms_targeting_interfaces/srv/reverse_polarity.hpp"
 #include "mtms_targeting_interfaces/srv/get_default_waveform.hpp"
 #include "mtms_targeting_interfaces/srv/get_multipulse_waveforms.hpp"
 #include "mtms_event_interfaces/msg/event_info.hpp"
@@ -44,8 +42,6 @@ private:
   rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
   rclcpp::Service<mtms_trial_interfaces::srv::PrepareTrial>::SharedPtr prepare_trial_service;
   rclcpp::Client<mtms_trial_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
-  rclcpp::Client<mtms_targeting_interfaces::srv::GetTargetVoltages>::SharedPtr targeting_client;
-  rclcpp::Client<mtms_targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
@@ -98,11 +94,7 @@ private:
       const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets,
       const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms);
 
-  std::pair<std::vector<double_t>, std::vector<bool>> get_target_voltages(
-      const mtms_targeting_interfaces::msg::ElectricTarget &target);
-
   mtms_waveform_interfaces::msg::Waveform get_default_waveform(uint8_t channel);
-  mtms_waveform_interfaces::msg::Waveform reverse_polarity(const mtms_waveform_interfaces::msg::Waveform &waveform);
   void request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const;
@@ -128,11 +120,8 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
-      const mtms_targeting_interfaces::msg::ElectricTarget &target, const mtms_waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms);
-
   std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
-      const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation);
+      const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets);
 };
 
 #endif // TRIAL_PERFORMER_H

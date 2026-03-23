@@ -170,7 +170,6 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 
   auto request = std::make_shared<mtms_trial_interfaces::srv::PerformTrial::Request>();
   request->trial = trial;
-  request->use_pulse_width_modulation_approximation = (trial.targets.size() > 1);
 
   auto future = perform_trial_client->async_send_request(request);
 
