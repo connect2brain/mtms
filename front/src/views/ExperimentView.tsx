@@ -473,6 +473,7 @@ export const ExperimentView = () => {
   )
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
+  const [isValidated, setIsValidated] = useState<boolean>(false)
   const [isValidating, setIsValidating] = useState<boolean>(false)
   const [numOfTrials, setNumOfTrials] = useState<number>(10)
   const [duration, setDuration] = useState<number | null>(null)
@@ -672,17 +673,23 @@ export const ExperimentView = () => {
     callCountRef.current += 1
     const currentCallCount = callCountRef.current
 
+    setIsValidated(false)
     setIsValidating(true)
 
     countValidTrials(experiment.trials, (numOfValidTrials) => {
       if (currentCallCount === callCountRef.current) {
         setNumOfValidTrials(numOfValidTrials)
+        setIsValidated(true)
         setIsValidating(false)
       }
     })
   }
 
   const updateValidTrialsWithDebounce = (experiment: Experiment) => {
+    setIsValidated(false)
+    setNumOfValidTrials(null)
+    setDuration(null)
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
@@ -709,12 +716,16 @@ export const ExperimentView = () => {
 
         setNumOfTrials(10)
         setNumOfValidTrials(null)
+        setIsValidated(false)
 
         setNumOfRepetitions(1)
 
         break
 
       case ExperimentTab.MultipleLocations:
+        setNumOfValidTrials(null)
+        setDuration(null)
+        setIsValidated(false)
         setNumOfRepetitions(3)
 
         break
@@ -723,6 +734,7 @@ export const ExperimentView = () => {
         setNumOfTrials(10)
         setNumOfValidTrials(null)
         setDuration(null)
+        setIsValidated(false)
 
         setNumOfRepetitions(1)
 
@@ -843,6 +855,7 @@ export const ExperimentView = () => {
       setNumOfTrials(0)
       setNumOfValidTrials(null)
       setDuration(null)
+      setIsValidated(false)
 
       return
     }
@@ -863,6 +876,7 @@ export const ExperimentView = () => {
     if (activeTab === ExperimentTab.PairedPulse) {
       setNumOfValidTrials(null)
       setDuration(null)
+      setIsValidated(false)
     }
   }, [
     numOfTrials,
@@ -1350,7 +1364,7 @@ export const ExperimentView = () => {
           <CloseConfigRow></CloseConfigRow>
           <ExperimentControlButtons
             onStart={() => perform()}
-            startDisabled={isValidating || selectedPoints.length == 0 || selectedAngles.length == 0}
+            startDisabled={!isValidated || numOfValidTrials === null || numOfValidTrials === 0}
           />
         </StatusPanel>
       </ConfigPanel>
