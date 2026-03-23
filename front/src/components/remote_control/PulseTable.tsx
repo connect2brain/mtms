@@ -210,39 +210,62 @@ export const PulseTable: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSave = useCallback(() => {
-    const data = rows.map((r) => r.pulses.filter((p): p is Pulse => p !== null))
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'pulse_table.json'
-    a.click()
-    URL.revokeObjectURL(url)
-  }, [rows])
-
-  const handleLoad = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result as string)
-        if (!Array.isArray(data)) return
-        const loaded: PulseRow[] = data.map((pulses: Pulse[]) => {
-          const padded: (Pulse | null)[] = [...pulses.slice(0, 3)]
-          while (padded.length < 3) padded.push(null)
-          return { id: nextId++, pulses: padded }
-        })
-        setRows(loaded)
-        setSelectedId(loaded.length > 0 ? loaded[loaded.length - 1].id : null)
-      } catch {
-        // ignore malformed files
-      }
+  const loadFromJson = useCallback((json: string) => {
+    try {
+      const data = JSON.parse(json)
+      if (!Array.isArray(data)) return
+      const loaded: PulseRow[] = data.map((pulses: Pulse[]) => {
+        const padded: (Pulse | null)[] = [...pulses.slice(0, 3)]
+        while (padded.length < 3) padded.push(null)
+        return { id: nextId++, pulses: padded }
+      })
+      setRows(loaded)
+      setSelectedId(loaded.length > 0 ? loaded[loaded.length - 1].id : null)
+    } catch {
+      // ignore malformed files
     }
-    reader.readAsText(file)
-    e.target.value = ''
   }, [])
+
+  const electronAPI = (window as any).electronAPI as
+    | { saveFile: (name: string, content: string) => Promise<boolean>; loadFile: () => Promise<string | null> }
+    | undefined
+
+  const handleSave = useCallback(async () => {
+    const data = rows.map((r) => r.pulses.filter((p): p is Pulse => p !== null))
+    const json = JSON.stringify(data, null, 2)
+    if (electronAPI?.saveFile) {
+      await electronAPI.saveFile('pulse_table.json', json)
+    } else {
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'pulse_table.json'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  }, [rows, electronAPI])
+
+  const handleLoad = useCallback(async () => {
+    if (electronAPI?.loadFile) {
+      const content = await electronAPI.loadFile()
+      if (content !== null) loadFromJson(content)
+    } else {
+      fileInputRef.current?.click()
+    }
+  }, [electronAPI, loadFromJson])
+
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => loadFromJson(reader.result as string)
+      reader.readAsText(file)
+      e.target.value = ''
+    },
+    [loadFromJson],
+  )
 
   const addRow = useCallback(() => {
     const id = nextId++
@@ -396,13 +419,13 @@ export const PulseTable: React.FC = () => {
         <SmallBtn onClick={handleSave} disabled={rows.length === 0}>
           Save as…
         </SmallBtn>
-        <SmallBtn onClick={() => fileInputRef.current?.click()}>Load</SmallBtn>
+        <SmallBtn onClick={handleLoad}>Load</SmallBtn>
         <input
           ref={fileInputRef}
           type="file"
           accept=".json"
           style={{ display: 'none' }}
-          onChange={handleLoad}
+          onChange={handleFileInput}
         />
       </ButtonRow>
     </Wrapper>

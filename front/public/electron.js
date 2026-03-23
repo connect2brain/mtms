@@ -1,5 +1,6 @@
-const { app, BrowserWindow, Menu, shell, screen } = require('electron')
+const { app, BrowserWindow, Menu, shell, screen, dialog, ipcMain } = require('electron')
 const path = require('path')
+const fs = require('fs')
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -42,6 +43,25 @@ function createWindow() {
     mainWindow = null
   })
 }
+
+ipcMain.handle('dialog:saveFile', async (_event, defaultName, content) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: defaultName,
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  })
+  if (canceled || !filePath) return false
+  fs.writeFileSync(filePath, content, 'utf-8')
+  return true
+})
+
+ipcMain.handle('dialog:loadFile', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+    properties: ['openFile'],
+  })
+  if (canceled || filePaths.length === 0) return null
+  return fs.readFileSync(filePaths[0], 'utf-8')
+})
 
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null)
