@@ -96,7 +96,7 @@ private:
   std::mutex state_mutex;
 
   // Trial readiness state.
-  bool prepare_trial_ongoing{false};
+  std::atomic<bool> prepare_trial_ongoing{false};
 
   // Prevent overlapping trials.
   std::atomic<bool> trial_ongoing{false};
