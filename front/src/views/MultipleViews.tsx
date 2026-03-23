@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { ConfigView } from './ConfigView'
 import { SystemView } from './SystemView'
 import { ExperimentView } from './ExperimentView'
+import { RemoteControlView } from './RemoteControlView'
 
 /* Session storage utilities. */
 
@@ -42,6 +43,13 @@ export const MultipleViews = () => {
         </a>
         <a
           href='#'
+          onClick={() => setCurrentView('remote_control')}
+          className={currentView === 'remote_control' ? 'active' : ''}
+        >
+          Remote control
+        </a>
+        <a
+          href='#'
           onClick={() => setCurrentView('config')}
           className={currentView === 'config' ? 'active' : ''}
         >
@@ -64,6 +72,11 @@ export const MultipleViews = () => {
           <ConfigView />
         </Wrapper>
         )}
+        {currentView === 'remote_control' && (
+        <Wrapper>
+          <RemoteControlView />
+        </Wrapper>
+        )}
       </ViewContainer>
     </div>
   )
@@ -80,7 +93,7 @@ const ViewContainer = styled.div`
     position: absolute;
     top: 0;
     left: 0.5rem;
-    width: 250px;
+    width: 365px;
     border-top: 2px solid ${(p) => p.theme.colors.gray};
   }
 `

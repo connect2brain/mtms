@@ -10,6 +10,7 @@ import { HealthcheckProvider } from './HealthcheckProvider'
 import { TrialProvider } from './TrialProvider'
 import { EegDeviceInfoProvider } from './EegDeviceInfoProvider'
 import { ExperimentProvider } from './ExperimentProvider'
+import { RemoteControllerProvider } from './RemoteControllerProvider'
 
 interface Props {
   children: React.ReactNode
@@ -23,11 +24,13 @@ const Providers: React.FC<Props> = ({ children }) => {
           <SystemProvider>
             <ConfigProvider>
               <HealthcheckProvider>
+                <RemoteControllerProvider>
                 <TrialProvider>
                   <EegDeviceInfoProvider>
                     <ExperimentProvider>{children}</ExperimentProvider>
                   </EegDeviceInfoProvider>
                 </TrialProvider>
+                </RemoteControllerProvider>
               </HealthcheckProvider>
             </ConfigProvider>
           </SystemProvider>
