@@ -96,12 +96,10 @@ private:
   std::mutex state_mutex;
 
   // Trial readiness state.
-  bool trial_readiness{false};
   bool prepare_trial_ongoing{false};
 
   // Prevent overlapping trials.
-  bool trial_ongoing{false};
-  std::mutex trial_ongoing_mutex;
+  std::atomic<bool> trial_ongoing{false};
 
   // Constants aligned with `targeting` validation.
   static constexpr int8_t MAX_ABSOLUTE_DISPLACEMENT_MM = 18;

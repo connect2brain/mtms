@@ -398,16 +398,13 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     return;
   }
 
-  {
-    std::lock_guard<std::mutex> lock(trial_ongoing_mutex);
-    if (trial_ongoing) {
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Previous PerformTrial request is still running; skipping this TargetedPulses message.");
-      return;
-    }
-    trial_ongoing = true;
+  if (trial_ongoing) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Previous PerformTrial request is still running; skipping this TargetedPulses message.");
+    return;
   }
+  trial_ongoing = true;
 
   auto request = std::make_shared<mtms_trial_interfaces::srv::PerformTrial::Request>();
   request->trial = trial;
@@ -429,8 +426,6 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "PerformTrial failed: %s", e.what());
     }
-
-    std::lock_guard<std::mutex> lock(trial_ongoing_mutex);
     trial_ongoing = false;
   }).detach();
 }
