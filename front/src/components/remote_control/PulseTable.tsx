@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import styled from 'styled-components'
 
 /* ── types ── */
@@ -167,6 +167,10 @@ const SmallBtn = styled.button`
   }
 `
 
+const Spacer = styled.div`
+  flex: 1;
+`
+
 const RemoveBtn = styled(SmallBtn)`
   background: #e57373;
   &:hover {
@@ -204,6 +208,41 @@ let nextId = 1
 export const PulseTable: React.FC = () => {
   const [rows, setRows] = useState<PulseRow[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSave = useCallback(() => {
+    const data = rows.map((r) => r.pulses.filter((p): p is Pulse => p !== null))
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'pulse_table.json'
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [rows])
+
+  const handleLoad = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result as string)
+        if (!Array.isArray(data)) return
+        const loaded: PulseRow[] = data.map((pulses: Pulse[]) => {
+          const padded: (Pulse | null)[] = [...pulses.slice(0, 3)]
+          while (padded.length < 3) padded.push(null)
+          return { id: nextId++, pulses: padded }
+        })
+        setRows(loaded)
+        setSelectedId(loaded.length > 0 ? loaded[loaded.length - 1].id : null)
+      } catch {
+        // ignore malformed files
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }, [])
 
   const addRow = useCallback(() => {
     const id = nextId++
@@ -353,6 +392,18 @@ export const PulseTable: React.FC = () => {
         <RemoveBtn onClick={removeRow} disabled={selectedId === null}>
           − Remove
         </RemoveBtn>
+        <Spacer />
+        <SmallBtn onClick={handleSave} disabled={rows.length === 0}>
+          Save as…
+        </SmallBtn>
+        <SmallBtn onClick={() => fileInputRef.current?.click()}>Load</SmallBtn>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          style={{ display: 'none' }}
+          onChange={handleLoad}
+        />
       </ButtonRow>
     </Wrapper>
   )
