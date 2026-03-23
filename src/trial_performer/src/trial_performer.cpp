@@ -11,8 +11,6 @@ constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 
-static constexpr float VOLTAGE_RELATIVE_ERROR_TOLERANCE = 0.03f;
-
 /* NOTE: If this value changes, update all places that assume fixed maximum voltage. */
 static constexpr uint16_t FIXED_DESIRED_VOLTAGE = 1500;
 
@@ -540,15 +538,11 @@ bool TrialPerformerNode::is_ready_for_trial(bool verbose) const {
   const auto &desired_voltages = fixed_desired_voltages;
 
   for (uint8_t i = 0; i < actual_voltages.size(); ++i) {
-    auto relative_error = std::abs(actual_voltages[i] - desired_voltages[i]) / static_cast<float>(actual_voltages[i]);
-
-    if (relative_error > VOLTAGE_RELATIVE_ERROR_TOLERANCE &&
-        std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING) {
+    if (std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_TOLERANCE) {
       if (verbose) {
         RCLCPP_WARN(this->get_logger(),
-          "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",
+          "Voltage out of margin on channel %d (absolute error: %d V).",
           i,
-          100 * relative_error,
           std::abs(actual_voltages[i] - desired_voltages[i]));
       }
       return false;

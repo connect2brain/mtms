@@ -32,7 +32,7 @@ class TrialPerformerNode : public rclcpp::Node {
 public:
   static constexpr int NUM_OF_CHANNELS = 5;
   static constexpr int TRIGGER_DURATION_US = 1000;
-  static constexpr float ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING = 5.0;
+  static constexpr float ABSOLUTE_VOLTAGE_ERROR_TOLERANCE = 5.0;
 
   explicit TrialPerformerNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
