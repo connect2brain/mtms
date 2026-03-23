@@ -119,7 +119,7 @@ void TrialPerformerNode::handle_system_state(const mtms_device_interfaces::msg::
   system_state = msg;
 
   std_msgs::msg::Bool readiness_msg;
-  readiness_msg.data = is_ready_for_trial();
+  readiness_msg.data = is_ready_for_trial(false);
   trial_readiness_publisher->publish(readiness_msg);
 }
 
@@ -459,7 +459,7 @@ void TrialPerformerNode::handle_perform_trial(
   (void)desired_voltages;
 
   /* Check if the trial is ready to be performed. */
-  if (!is_ready_for_trial()) {
+  if (!is_ready_for_trial(true)) {
     RCLCPP_ERROR(this->get_logger(), "Trial not ready to be performed; call prepare_trial first.");
     response->success = false;
     return;
@@ -542,7 +542,7 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
   return {desired_voltages, approximated_waveforms};
 }
 
-bool TrialPerformerNode::is_ready_for_trial() const {
+bool TrialPerformerNode::is_ready_for_trial(bool verbose) const {
   auto actual_voltages = get_actual_voltages();
   const auto &desired_voltages = fixed_desired_voltages;
 
@@ -551,10 +551,13 @@ bool TrialPerformerNode::is_ready_for_trial() const {
 
     if (relative_error > VOLTAGE_RELATIVE_ERROR_TOLERANCE &&
         std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING) {
-      RCLCPP_WARN(this->get_logger(), "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",
-        i,
-        100 * relative_error,
-        std::abs(actual_voltages[i] - desired_voltages[i]));
+      if (verbose) {
+        RCLCPP_WARN(this->get_logger(),
+          "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",
+          i,
+          100 * relative_error,
+          std::abs(actual_voltages[i] - desired_voltages[i]));
+      }
       return false;
     }
   }
