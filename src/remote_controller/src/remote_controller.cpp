@@ -138,15 +138,15 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
     try {
       auto response = future.get();
       if (response->success) {
-        RCLCPP_INFO(this->get_logger(), "Target list %zu cached successfully.", i);
+        RCLCPP_INFO(this->get_logger(), "Target list %zu cached successfully.", i + 1);
       } else {
-        RCLCPP_WARN(this->get_logger(), "CacheTargetList returned failure for target list %zu.", i);
+        RCLCPP_WARN(this->get_logger(), "CacheTargetList returned failure for target list %zu.", i + 1);
       }
     } catch (const std::exception & e) {
-      RCLCPP_ERROR(this->get_logger(), "CacheTargetList failed for target list %zu: %s", i, e.what());
+      RCLCPP_ERROR(this->get_logger(), "CacheTargetList failed for target list %zu: %s", i + 1, e.what());
     }
   }
-  RCLCPP_INFO(this->get_logger(), "Done caching trials.");
+  RCLCPP_INFO(this->get_logger(), "Done caching target lists.");
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
