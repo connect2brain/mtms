@@ -4,7 +4,7 @@ import styled from 'styled-components'
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { StyledPanel } from 'styles/General'
 
-const VoltagePanel = styled(StyledPanel)<{ isGrayedOut: boolean }>`
+const VoltagePanel = styled(StyledPanel)`
   width: 250px;
   position: fixed;
   top: 200px;
@@ -13,19 +13,6 @@ const VoltagePanel = styled(StyledPanel)<{ isGrayedOut: boolean }>`
   padding: 15px 20px;
   max-height: 280px;
   overflow-y: auto;
-
-  ${({ isGrayedOut }) =>
-    isGrayedOut &&
-    `
-    background-color: #ebebeb;
-    filter: grayscale(100%);
-    opacity: 0.78;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.06);
-
-    &, & * {
-      color: #959595 !important;
-    }
-  `}
 `
 
 const VoltageTable = styled.table`
@@ -39,14 +26,14 @@ const TableHead = styled.thead`
   border-bottom: 1px solid #d8d8d8;
 `
 
-const ThCol = styled.th`
+const ThCol = styled.th<{ $muted?: boolean }>`
   padding: 0 0 0.5rem;
   text-align: left;
   font-weight: 600;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #666;
+  color: ${({ $muted }) => ($muted ? '#959595' : '#666')};
 `
 
 const ThVoltage = styled(ThCol)`
@@ -54,23 +41,25 @@ const ThVoltage = styled(ThCol)`
   padding-left: 1rem;
 `
 
-const TdIndex = styled.td`
+const TdIndex = styled.td<{ $muted?: boolean }>`
   padding: 0.4rem 0 0;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  color: ${({ $muted }) => ($muted ? '#959595' : undefined)};
 `
 
-const TdVolts = styled.td`
+const TdVolts = styled.td<{ $muted?: boolean }>`
   padding: 0.4rem 0 0;
   text-align: right;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  color: ${({ $muted }) => ($muted ? '#959595' : undefined)};
 `
 
-const TdPlaceholder = styled.td`
+const TdPlaceholder = styled.td<{ $muted?: boolean }>`
   padding: 0.5rem 0 0;
   text-align: center;
-  color: #888;
+  color: ${({ $muted }) => ($muted ? '#959595' : '#888')};
   font-size: 0.85rem;
 `
 
@@ -87,6 +76,7 @@ export const ChannelVoltageDisplay: React.FC = () => {
   const isDeviceOn =
     systemState?.device_state?.value !== undefined &&
     systemState.device_state.value !== DeviceState.NOT_OPERATIONAL
+  const muted = !isDeviceOn
 
   const rows = useMemo(() => {
     if (!systemState?.channel_states?.length) {
@@ -97,24 +87,30 @@ export const ChannelVoltageDisplay: React.FC = () => {
 
   return (
     <>
-      <VoltagePanel isGrayedOut={!isDeviceOn}>
+      <VoltagePanel>
         <VoltageTable>
           <TableHead>
             <tr>
-              <ThCol scope="col">Channel</ThCol>
-              <ThVoltage scope="col">Voltage</ThVoltage>
+              <ThCol scope="col" $muted={muted}>
+                Channel
+              </ThCol>
+              <ThVoltage scope="col" $muted={muted}>
+                Voltage
+              </ThVoltage>
             </tr>
           </TableHead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <TdPlaceholder colSpan={2}>{'\u2013'}</TdPlaceholder>
+                <TdPlaceholder colSpan={2} $muted={muted}>
+                  {'\u2013'}
+                </TdPlaceholder>
               </tr>
             ) : (
               rows.map((ch) => (
                 <tr key={ch.channel_index}>
-                  <TdIndex>{ch.channel_index + 1}</TdIndex>
-                  <TdVolts>{formatVoltage(ch.voltage)}</TdVolts>
+                  <TdIndex $muted={muted}>{ch.channel_index + 1}</TdIndex>
+                  <TdVolts $muted={muted}>{formatVoltage(ch.voltage)}</TdVolts>
                 </tr>
               ))
             )}
