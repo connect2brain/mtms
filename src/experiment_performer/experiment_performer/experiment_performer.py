@@ -7,7 +7,7 @@ import uuid
 from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
+from mtms_trial_interfaces.srv import PerformTrial, PrepareTrial, ValidateTrial
 from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool, Empty
@@ -39,9 +39,11 @@ ANALYZE_MEP_STATUS_TO_REASON = {
 class ExperimentPerformerNode(Node):
 
     ROS_SERVICE_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
+    ROS_SERVICE_PREPARE_TRIAL = ('/mtms/trial/prepare', PrepareTrial)
 
     FIRST_TRIAL_TIME_S = 2.0
     TRIAL_REDO_INTERVAL_S = 3.0
+    PREPARE_TO_PERFORM_MARGIN_S = 0.1
     SERVICE_CALL_TIMEOUT_S = 16.0  # Stopping a session can take up to 15 seconds.
     SESSION_STATE_WAIT_TIMEOUT_S = 5.0
 
@@ -121,6 +123,12 @@ class ExperimentPerformerNode(Node):
 
         self.perform_trial_client = self.create_client(service_type, service_name, callback_group=self.callback_group)
         while not self.perform_trial_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service {} not available, waiting...'.format(service_name))
+
+        # Create service client for preparing a trial.
+        service_name, service_type = self.ROS_SERVICE_PREPARE_TRIAL
+        self.prepare_trial_client = self.create_client(service_type, service_name, callback_group=self.callback_group)
+        while not self.prepare_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service {} not available, waiting...'.format(service_name))
 
         # Create service client for validating a trial.
@@ -324,6 +332,19 @@ class ExperimentPerformerNode(Node):
 
         if response is None:
             self.logger.error('Service /mtms/trial/perform did not return a response.')
+            return None
+
+        return response
+
+    def prepare_trial(self, trial):
+        request = PrepareTrial.Request()
+        request.trial = trial
+        request.use_pulse_width_modulation_approximation = len(trial.targets) > 1
+
+        response = self.async_service_call(self.prepare_trial_client, request, '/mtms/trial/prepare')
+
+        if response is None:
+            self.logger.error('Service /mtms/trial/prepare did not return a response.')
             return None
 
         return response
@@ -787,8 +808,8 @@ class ExperimentPerformerNode(Node):
                     intertrial_interval_max=intertrial_interval_max,
                 )
 
-            # Determine the time of the next trial.
-            trial_time = self.get_current_time() + time_to_next_trial
+            # Determine the designated time of the next trial.
+            designated_trial_time = self.get_current_time() + time_to_next_trial
 
             self.logger.info('Performing trial {} / {}, attempt number {}'.format(
                 i + 1,
@@ -796,8 +817,30 @@ class ExperimentPerformerNode(Node):
                 num_of_attempts,
             ))
 
-            trial.start_time = trial_time
+            trial.start_time = designated_trial_time
 
+            # Prepare the trial.
+            prepare_response = self.prepare_trial(
+                trial=trial,
+            )
+            if prepare_response is None:
+                self.logger.info('Prepare trial service did not return a response, attempting again in {} seconds.'.format(
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
+                continue
+
+            if not prepare_response.success:
+                self.logger.info('Preparing trial was not successful, attempting again in {} seconds.'.format(
+                    self.TRIAL_REDO_INTERVAL_S,
+                ))
+                time.sleep(0.1)
+                continue
+
+            # Determine the earliest possible start time for the trial.
+            earliest_possible_trial_time = self.get_current_time() + self.PREPARE_TO_PERFORM_MARGIN_S
+            trial.start_time = max(designated_trial_time, earliest_possible_trial_time)
+
+            # Analyze MEP.
             mep_event = None
             mep_result_container = None
             if analyze_mep:
@@ -805,19 +848,18 @@ class ExperimentPerformerNode(Node):
                 # so the analyzer can start waiting for the upcoming data.
                 mep_event, mep_result_container = self.async_analyze_mep(experiment)
 
-            response = self.perform_trial(
+            # Perform the trial.
+            perform_response = self.perform_trial(
                 trial=trial,
             )
-            if response is None:
+            if perform_response is None:
                 self.logger.info('Trial service did not return a response, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
                 continue
 
-            success = response.success
-
-            if not success:
-                self.logger.info('Trial not successful, attempting again in {} seconds.'.format(
+            if not perform_response.success:
+                self.logger.info('Performing trial was not successful, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,
                 ))
 
