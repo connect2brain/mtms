@@ -15,7 +15,6 @@ import { ValidatedInput } from 'components/experiment/ValidatedInput'
 import { SmallerTitle } from 'styles/ExperimentStyles'
 import {
   StyledPanel,
-  StyledButton,
   ConfigRow,
   CloseConfigRow,
   ConfigLabel,
@@ -474,7 +473,6 @@ export const ExperimentView = () => {
 
   const [numOfValidTrials, setNumOfValidTrials] = useState<number | null>(null)
   const [isValidated, setIsValidated] = useState<boolean>(false)
-  const [isValidating, setIsValidating] = useState<boolean>(false)
   const [numOfTrials, setNumOfTrials] = useState<number>(10)
   const [duration, setDuration] = useState<number | null>(null)
 
@@ -674,13 +672,11 @@ export const ExperimentView = () => {
     const currentCallCount = callCountRef.current
 
     setIsValidated(false)
-    setIsValidating(true)
 
     countValidTrials(experiment.trials, (numOfValidTrials) => {
       if (currentCallCount === callCountRef.current) {
         setNumOfValidTrials(numOfValidTrials)
         setIsValidated(true)
-        setIsValidating(false)
       }
     })
   }
@@ -740,11 +736,6 @@ export const ExperimentView = () => {
 
         break
     }
-  }
-
-  const validateTrials = () => {
-    const experiment: Experiment = formExperiment()
-    updateValidTrials(experiment)
   }
 
   /* Updates the maximum intensity display. */
@@ -845,24 +836,57 @@ export const ExperimentView = () => {
     activeTab,
   ])
 
-  /* Update the number of valid trials. */
+  /* Update the number of valid trials (debounced automatic validation). */
   useEffect(() => {
-    /* Do it automatically only for single location and multiple locations, not for paired pulse due to its slowness. */
-    if (activeTab === ExperimentTab.PairedPulse) {
-      return
-    }
-    if (selectedPoints.length == 0 || selectedAngles.length == 0) {
+    const areSingleOrMultipleSelectionsMissing = selectedPoints.length === 0 || selectedAngles.length === 0
+    const arePairedSelectionsMissing =
+      selectedPointFirstPulse.length === 0 ||
+      selectedPointSecondPulse.length === 0 ||
+      selectedAngleFirstPulse.length === 0 ||
+      selectedAngleSecondPulse.length === 0
+
+    if (
+      (activeTab === ExperimentTab.SingleLocation || activeTab === ExperimentTab.MultipleLocations) &&
+      areSingleOrMultipleSelectionsMissing
+    ) {
       setNumOfTrials(0)
       setNumOfValidTrials(null)
       setDuration(null)
       setIsValidated(false)
-
       return
     }
+
+    if (activeTab === ExperimentTab.PairedPulse && arePairedSelectionsMissing) {
+      setNumOfTrials(0)
+      setNumOfValidTrials(null)
+      setDuration(null)
+      setIsValidated(false)
+      return
+    }
+
     const experiment: Experiment = formExperiment()
 
     updateValidTrialsWithDebounce(experiment)
-  }, [selectedAngles, selectedPoints, intensity, targetingAlgorithm, numOfRepetitions, numOfTrials])
+  }, [
+    activeTab,
+    selectedAngles,
+    selectedPoints,
+    intensity,
+    selectedAngleFirstPulse,
+    selectedAngleSecondPulse,
+    selectedPointFirstPulse,
+    selectedPointSecondPulse,
+    intensityFirstPulse,
+    intensitySecondPulse,
+    pairedPulseDelay,
+    numOfRepetitions,
+    numOfTrials,
+    targetingAlgorithm,
+    trigger1Enabled,
+    trigger1Delay,
+    trigger2Enabled,
+    trigger2Delay,
+  ])
 
   /* Update the total number of trials. */
   useEffect(() => {
@@ -870,24 +894,6 @@ export const ExperimentView = () => {
       setNumOfTrials(numOfRepetitions * selectedPoints.length * selectedAngles.length)
     }
   }, [numOfRepetitions, selectedPoints, selectedAngles, activeTab])
-
-  /* Do not show valid trials in paired pulse tab if the number of valid trials is not yet known. */
-  useEffect(() => {
-    if (activeTab === ExperimentTab.PairedPulse) {
-      setNumOfValidTrials(null)
-      setDuration(null)
-      setIsValidated(false)
-    }
-  }, [
-    numOfTrials,
-    selectedPointFirstPulse,
-    selectedPointSecondPulse,
-    selectedAngleFirstPulse,
-    selectedAngleSecondPulse,
-    intensityFirstPulse,
-    intensitySecondPulse,
-    targetingAlgorithm,
-  ])
 
   /* Update the experiment duration. */
   useEffect(() => {
@@ -1318,9 +1324,6 @@ export const ExperimentView = () => {
             <ConfigLabel>{duration ? formatTime(duration) : '\u2013'}</ConfigLabel>
           </CloseConfigRow>
           <CloseConfigRow></CloseConfigRow>
-          <StyledButton isHidden={activeTab !== ExperimentTab.PairedPulse} onClick={() => validateTrials()}>
-            {isValidating ? 'Validating...' : 'Validate'}
-          </StyledButton>
         </ExperimentPanel>
         <StatusPanel>
           <SmallerTitle>Status</SmallerTitle>
