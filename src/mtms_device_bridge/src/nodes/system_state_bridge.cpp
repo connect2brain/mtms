@@ -22,7 +22,7 @@
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 100ms;
+const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL = 50ms;
 const milliseconds SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE = 10ms;
 
 #define CHECK_BIT(var, pos) (((var)>>(pos)) & 1)

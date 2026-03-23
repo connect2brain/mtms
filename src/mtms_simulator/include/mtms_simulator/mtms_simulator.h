@@ -51,9 +51,9 @@ public:
   ~MTMSSimulator() override;
 
 private:
-  static constexpr int SESSION_PUBLISHING_INTERVAL_MS = 100;
+  static constexpr int SESSION_PUBLISHING_INTERVAL_MS = 50;
   static constexpr int SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
-  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 100;
+  static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 50;
   static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
   static constexpr int HEALTHCHECK_PUBLISHING_INTERVAL_MS = 800;
 
