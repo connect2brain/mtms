@@ -7,8 +7,9 @@ import { useRosConnection } from './RosConnectionProvider'
 export const RemoteControllerState = {
   NOT_STARTED: 0,
   CACHING: 1,
-  STARTED: 2,
-  STOPPING: 3,
+  STARTING: 2,
+  STARTED: 3,
+  STOPPING: 4,
 } as const
 
 interface RemoteControllerStateMessage extends ROSLIB.Message {

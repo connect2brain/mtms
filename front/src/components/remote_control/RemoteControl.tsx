@@ -59,7 +59,9 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
 
   const label = useMemo(() => {
     if (displayRemoteControllerState === null) return 'Waiting...'
-    if (displayRemoteControllerState === RemoteControllerState.CACHING) return 'Caching...'
+    /* Do not expose to the user the distinction between CACHING and STARTING. It's an internal state. */
+    if (displayRemoteControllerState === RemoteControllerState.CACHING) return 'Starting...'
+    if (displayRemoteControllerState === RemoteControllerState.STARTING) return 'Starting...'
     if (displayRemoteControllerState === RemoteControllerState.STARTED) return 'Stop'
     if (displayRemoteControllerState === RemoteControllerState.STOPPING) return 'Stopping...'
     return 'Start'
@@ -68,16 +70,17 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   const onToggle = () => {
     if (remoteControllerState === RemoteControllerState.STARTED) {
       stopRemoteController()
+      return
+    }
+    if (remoteControllerState === RemoteControllerState.CACHING) return
+    if (remoteControllerState === RemoteControllerState.STOPPING) return
+    if (remoteControllerState === RemoteControllerState.STARTING) return
+    if (getTargetLists) {
+      const targetLists = getTargetLists()
+      if (targetLists === null) return
+      startRemoteController(targetLists)
     } else {
-      if (remoteControllerState === RemoteControllerState.CACHING) return
-      if (remoteControllerState === RemoteControllerState.STOPPING) return
-      if (getTargetLists) {
-        const targetLists = getTargetLists()
-        if (targetLists === null) return
-        startRemoteController(targetLists)
-      } else {
-        startRemoteController([])
-      }
+      startRemoteController([])
     }
   }
 
