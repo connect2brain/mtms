@@ -4,16 +4,22 @@ import ROSLIB from '@foxglove/roslibjs'
 import { ros } from 'ros/ros'
 import { useRosConnection } from './RosConnectionProvider'
 
-interface RemoteControllerStartedMessage extends ROSLIB.Message {
-  data: boolean
+export const RemoteControllerState = {
+  NOT_STARTED: 0,
+  CACHING: 1,
+  STARTED: 2,
+} as const
+
+interface RemoteControllerStateMessage extends ROSLIB.Message {
+  state: number
 }
 
 interface RemoteControllerContextType {
-  started: boolean | null
+  state: number | null
 }
 
 const defaultRemoteControllerContext: RemoteControllerContextType = {
-  started: null,
+  state: null,
 }
 
 export const RemoteControllerContext = React.createContext<RemoteControllerContextType>(defaultRemoteControllerContext)
@@ -24,29 +30,29 @@ interface Props {
 
 export const RemoteControllerProvider: React.FC<Props> = ({ children }) => {
   const { isConnected } = useRosConnection()
-  const [started, setStarted] = useState<boolean | null>(null)
+  const [state, setState] = useState<number | null>(null)
 
   useEffect(() => {
     if (!isConnected) {
-      setStarted(null)
+      setState(null)
       return
     }
 
-    const startedSubscriber = new ROSLIB.Topic<RemoteControllerStartedMessage>({
+    const stateSubscriber = new ROSLIB.Topic<RemoteControllerStateMessage>({
       ros: ros,
-      name: '/mtms/remote_controller/started',
-      messageType: 'std_msgs/Bool',
+      name: '/mtms/remote_controller/state',
+      messageType: 'mtms_trial_interfaces/msg/RemoteControllerState',
     })
 
-    startedSubscriber.subscribe((message) => {
-      setStarted(Boolean(message.data))
+    stateSubscriber.subscribe((message) => {
+      setState(message.state)
     })
 
     return () => {
-      startedSubscriber.unsubscribe()
+      stateSubscriber.unsubscribe()
     }
   }, [isConnected])
 
-  return <RemoteControllerContext.Provider value={{ started }}>{children}</RemoteControllerContext.Provider>
+  return <RemoteControllerContext.Provider value={{ state }}>{children}</RemoteControllerContext.Provider>
 }
 

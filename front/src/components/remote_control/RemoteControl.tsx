@@ -7,7 +7,7 @@ import { ElectricTarget, startRemoteController, stopRemoteController } from 'ros
 
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
-import { RemoteControllerContext } from 'providers/RemoteControllerProvider'
+import { RemoteControllerContext, RemoteControllerState } from 'providers/RemoteControllerProvider'
 
 const RemoteControlPanel = styled(StyledPanel)`
   width: 280px;
@@ -43,14 +43,15 @@ interface RemoteControlProps {
 export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   const { systemState } = useContext(SystemContext)
   const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
-  const { started: remoteControllerStarted } = useContext(RemoteControllerContext)
+  const { state: remoteControllerState } = useContext(RemoteControllerContext)
 
   const isDeviceOperational = systemState?.device_state.value === DeviceState.OPERATIONAL
 
   const onToggle = () => {
-    if (remoteControllerStarted) {
+    if (remoteControllerState === RemoteControllerState.STARTED) {
       stopRemoteController()
     } else {
+      if (remoteControllerState === RemoteControllerState.CACHING) return
       if (getTargetLists) {
         const targetLists = getTargetLists()
         if (targetLists === null) return
@@ -68,9 +69,11 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   return (
     <RemoteControlPanel>
       <RemoteControlTitle>Remote control</RemoteControlTitle>
-      {remoteControllerStarted === null ? (
+      {remoteControllerState === null ? (
         <StyledButton disabled={true}>Waiting...</StyledButton>
-      ) : remoteControllerStarted ? (
+      ) : remoteControllerState === RemoteControllerState.CACHING ? (
+        <StyledButton disabled={true}>Caching...</StyledButton>
+      ) : remoteControllerState === RemoteControllerState.STARTED ? (
         <StyledRedButton onClick={onToggle} disabled={!isDeviceOperational}>
           Stop
         </StyledRedButton>

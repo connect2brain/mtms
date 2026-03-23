@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useContext, useRef } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
@@ -29,4 +29,3 @@ const RemoteControlPage = styled.div`
 const PulseTableWrapper = styled.div`
   width: 100%;
 `
-
