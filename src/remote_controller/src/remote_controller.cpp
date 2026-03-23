@@ -20,6 +20,7 @@ using std::placeholders::_1;
 const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
+const std::string CACHE_TRIAL_SERVICE = "/mtms/trial/cache";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
 const std::string STARTED_TOPIC = "/mtms/remote_controller/started";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
@@ -35,7 +36,7 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
   started_publisher = this->create_publisher<std_msgs::msg::Bool>(STARTED_TOPIC, latched_qos);
 
   /* Start and stop services. */
-  start_service = this->create_service<std_srvs::srv::Trigger>(
+  start_service = this->create_service<mtms_trial_interfaces::srv::StartRemoteController>(
     "/mtms/remote_controller/start",
     std::bind(&RemoteController::start_service_handler, this, _1, std::placeholders::_2));
 
@@ -67,6 +68,14 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", PERFORM_TRIAL_SERVICE.c_str());
   }
 
+  /* Service client for caching trials. */
+  cache_trial_client =
+    this->create_client<mtms_trial_interfaces::srv::CacheTrial>(CACHE_TRIAL_SERVICE);
+
+  while (!cache_trial_client->wait_for_service(std::chrono::seconds(2))) {
+    RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", CACHE_TRIAL_SERVICE.c_str());
+  }
+
   auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
   this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
     heartbeat_publisher->publish(std_msgs::msg::Empty());
@@ -86,13 +95,17 @@ void RemoteController::publish_started_state()
 }
 
 void RemoteController::start_service_handler(
-  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
+  std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response)
 {
-  (void)request;
   started = true;
 
   publish_started_state();
+
+  if (!request->trials.empty()) {
+    std::vector<mtms_trial_interfaces::msg::Trial> trials(request->trials.begin(), request->trials.end());
+    std::thread([this, trials = std::move(trials)]() mutable { cache_trials_async(std::move(trials)); }).detach();
+  }
 
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller started");
@@ -109,6 +122,28 @@ void RemoteController::stop_service_handler(
 
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
+}
+
+void RemoteController::cache_trials_async(std::vector<mtms_trial_interfaces::msg::Trial> trials)
+{
+  RCLCPP_INFO(this->get_logger(), "Caching %zu trial(s)...", trials.size());
+  for (size_t i = 0; i < trials.size(); ++i) {
+    auto request = std::make_shared<mtms_trial_interfaces::srv::CacheTrial::Request>();
+    request->trial = trials[i];
+
+    auto future = cache_trial_client->async_send_request(request);
+    try {
+      auto response = future.get();
+      if (response->success) {
+        RCLCPP_INFO(this->get_logger(), "Trial %zu cached successfully.", i);
+      } else {
+        RCLCPP_WARN(this->get_logger(), "CacheTrial returned failure for trial %zu.", i);
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR(this->get_logger(), "CacheTrial failed for trial %zu: %s", i, e.what());
+    }
+  }
+  RCLCPP_INFO(this->get_logger(), "Done caching trials.");
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)

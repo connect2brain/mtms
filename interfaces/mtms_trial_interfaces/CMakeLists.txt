@@ -29,6 +29,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/CacheTrial.srv"
   "srv/PerformTrial.srv"
   "srv/SetVoltages.srv"
+  "srv/StartRemoteController.srv"
 
   DEPENDENCIES mtms_mep_interfaces mtms_targeting_interfaces
 )

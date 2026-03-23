@@ -4,6 +4,7 @@
 #include <optional>
 #include <cstdint>
 #include <mutex>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -15,6 +16,8 @@
 
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
+#include "mtms_trial_interfaces/srv/cache_trial.hpp"
+#include "mtms_trial_interfaces/srv/start_remote_controller.hpp"
 
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
 
@@ -25,8 +28,8 @@ public:
 private:
   // ROS service handlers
   void start_service_handler(
-    [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
-    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+    const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response);
   void stop_service_handler(
     [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
@@ -35,6 +38,9 @@ private:
   void eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
   void publish_started_state();
+
+  // Trial caching
+  void cache_trials_async(std::vector<mtms_trial_interfaces::msg::Trial> trials);
 
   // Helpers
   bool build_trial_from_message(
@@ -50,12 +56,13 @@ private:
   rclcpp::Subscription<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr eeg_to_mtms_subscriber;
   rclcpp::Subscription<shared_stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
 
-  // Service client
+  // Service clients
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;
+  rclcpp::Client<mtms_trial_interfaces::srv::CacheTrial>::SharedPtr cache_trial_client;
 
   // Start/stop gating.
   bool started{false};
-  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_service;
+  rclcpp::Service<mtms_trial_interfaces::srv::StartRemoteController>::SharedPtr start_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_service;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr started_publisher;
 
