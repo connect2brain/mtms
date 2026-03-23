@@ -473,6 +473,9 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
 void TrialPerformerNode::handle_perform_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
+
+  tic();
+
   RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
 
   /* Log trial details. */
@@ -489,10 +492,6 @@ void TrialPerformerNode::handle_perform_trial(
 
   auto targets = trial.targets;
   bool use_pulse_width_modulation_approximation = request->use_pulse_width_modulation_approximation;
-
-  tic();
-
-  bool success = true;
 
   /* Always get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets, use_pulse_width_modulation_approximation);
@@ -530,7 +529,7 @@ void TrialPerformerNode::handle_perform_trial(
   toc("Time passed after requesting events");
 
   /* Wait for events to finish. */
-  success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
+  bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
 
   auto voltages_after_trial = get_actual_voltages();
   log_voltages(voltages_after_trial, "Voltages after trial");
@@ -541,8 +540,7 @@ void TrialPerformerNode::handle_perform_trial(
   }
 
   /* Log trial success. */
-  RCLCPP_INFO(this->get_logger(), "Trial completed %s.",
-    success ? "successfully" : "with errors");
+  RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
 
   response->success = success;
 }
