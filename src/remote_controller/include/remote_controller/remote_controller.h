@@ -47,8 +47,9 @@ private:
   void session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
   void publish_remote_controller_state();
 
-  // Trial caching
+  // Trial caching and validation
   void cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::TargetList> target_lists);
+  bool is_trial_target_list_compatible(const mtms_trial_interfaces::msg::Trial & trial);
 
   void set_state(uint8_t new_state);
   uint8_t get_state();
@@ -101,6 +102,9 @@ private:
 
   // Prevent overlapping trials.
   std::atomic<bool> trial_ongoing{false};
+
+  // Stored target lists for validating trials.
+  std::vector<std::vector<mtms_targeting_interfaces::msg::ElectricTarget>> stored_target_lists;
 
   // Constants aligned with `targeting` validation.
   static constexpr int8_t MAX_ABSOLUTE_DISPLACEMENT_MM = 18;

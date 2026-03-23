@@ -166,6 +166,13 @@ void RemoteController::start_service_handler(
   std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
     request->target_lists.begin(), request->target_lists.end());
 
+  stored_target_lists.clear();
+  for (const auto & tl : target_lists) {
+    stored_target_lists.push_back(
+      std::vector<mtms_targeting_interfaces::msg::ElectricTarget>(
+        tl.targets.begin(), tl.targets.end()));
+  }
+
   std::thread([this, target_lists = std::move(target_lists)]() mutable {
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
     cache_target_lists_async(std::move(target_lists));
@@ -205,6 +212,8 @@ void RemoteController::stop_service_handler(
     response->success = false;
     return;
   }
+
+  stored_target_lists.clear();
 
   std::thread([this]() {
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STOPPING);
@@ -249,6 +258,16 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
     }
   }
   RCLCPP_INFO(this->get_logger(), "Done caching target lists.");
+}
+
+bool RemoteController::is_trial_target_list_compatible(const mtms_trial_interfaces::msg::Trial & trial)
+{
+  for (const auto & stored : stored_target_lists) {
+    if (stored == trial.targets) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void RemoteController::session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
@@ -405,10 +424,17 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     return;
   }
 
+  if (!is_trial_target_list_compatible(trial)) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "Trial target list does not match any cached target list; skipping TargetedPulses.");
+    return;
+  }
+
   if (trial_ongoing) {
     RCLCPP_WARN(
       this->get_logger(),
-      "Previous PerformTrial request is still running; skipping this TargetedPulses message.");
+      "Previous PerformTrial request is still running; skipping TargetedPulses.");
     return;
   }
   trial_ongoing = true;
