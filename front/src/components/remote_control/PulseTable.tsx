@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
+import React, { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import styled from 'styled-components'
 
 import { ElectricTarget } from 'ros/remote_controller'
@@ -216,12 +216,20 @@ export interface PulseTableHandle {
   getTargetLists: () => ElectricTarget[][] | null
 }
 
-export const PulseTable = forwardRef<PulseTableHandle>(function PulseTable(_, ref) {
+interface PulseTableProps {
+  onRowCountChange?: (count: number) => void
+}
+
+export const PulseTable = forwardRef<PulseTableHandle, PulseTableProps>(function PulseTable({ onRowCountChange }, ref) {
   const [rows, setRows] = useState<PulseRow[]>([])
   const [showValidationErrors, setShowValidationErrors] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    onRowCountChange?.(rows.length)
+  }, [rows.length, onRowCountChange])
 
   const flashValidationErrors = useCallback(() => {
     setShowValidationErrors(true)

@@ -1,4 +1,4 @@
-import React, { useContext, useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
@@ -7,15 +7,19 @@ import { PulseTable, PulseTableHandle } from 'components/remote_control/PulseTab
 
 export const RemoteControlView = () => {
   const pulseTableRef = useRef<PulseTableHandle>(null)
+  const [rowCount, setRowCount] = useState(0)
 
   return (
     <RemoteControlPage>
       <ControlRow>
-        <RemoteControl getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null} />
+        <RemoteControl
+          getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null}
+          canStart={rowCount > 0}
+        />
         <StimulationReadinessDisplay />
       </ControlRow>
       <PulseTableWrapper>
-        <PulseTable ref={pulseTableRef} />
+        <PulseTable ref={pulseTableRef} onRowCountChange={setRowCount} />
       </PulseTableWrapper>
     </RemoteControlPage>
   )

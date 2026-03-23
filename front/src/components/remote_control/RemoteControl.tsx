@@ -38,9 +38,11 @@ interface RemoteControlProps {
    * the target lists to cache, or null to abort the start.
    */
   getTargetLists?: () => ElectricTarget[][] | null
+  /** When false, the Start button is disabled. Defaults to true. */
+  canStart?: boolean
 }
 
-export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
+export const RemoteControl = ({ getTargetLists, canStart = true }: RemoteControlProps) => {
   const { systemState } = useContext(SystemContext)
   const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
   const { state: remoteControllerState } = useContext(RemoteControllerContext)
@@ -93,7 +95,7 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
     displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING || displayRemoteControllerState === RemoteControllerState.STARTING
   const isStopping = displayRemoteControllerState === RemoteControllerState.STOPPING
   const isStarted = displayRemoteControllerState === RemoteControllerState.STARTED
-  const isDisabled = isWaitingOrCachingOrStarting || isStopping || !isDeviceOperational
+  const isDisabled = isWaitingOrCachingOrStarting || isStopping || !isDeviceOperational || (!isStarted && !canStart)
 
   return (
     <RemoteControlPanel>
