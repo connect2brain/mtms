@@ -8,6 +8,7 @@ export const RemoteControllerState = {
   NOT_STARTED: 0,
   CACHING: 1,
   STARTED: 2,
+  STOPPING: 3,
 } as const
 
 interface RemoteControllerStateMessage extends ROSLIB.Message {

@@ -61,6 +61,7 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
     if (displayRemoteControllerState === null) return 'Waiting...'
     if (displayRemoteControllerState === RemoteControllerState.CACHING) return 'Caching...'
     if (displayRemoteControllerState === RemoteControllerState.STARTED) return 'Stop'
+    if (displayRemoteControllerState === RemoteControllerState.STOPPING) return 'Stopping...'
     return 'Start'
   }, [displayRemoteControllerState])
 
@@ -69,6 +70,7 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
       stopRemoteController()
     } else {
       if (remoteControllerState === RemoteControllerState.CACHING) return
+      if (remoteControllerState === RemoteControllerState.STOPPING) return
       if (getTargetLists) {
         const targetLists = getTargetLists()
         if (targetLists === null) return
@@ -86,8 +88,9 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   // Use debounced state for button color/text selection.
   const isWaitingOrCaching =
     displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING
+  const isStopping = displayRemoteControllerState === RemoteControllerState.STOPPING
   const isStarted = displayRemoteControllerState === RemoteControllerState.STARTED
-  const isDisabled = isWaitingOrCaching || !isDeviceOperational
+  const isDisabled = isWaitingOrCaching || isStopping || !isDeviceOperational
 
   return (
     <RemoteControlPanel>
