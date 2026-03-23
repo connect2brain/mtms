@@ -2,6 +2,7 @@
 #define MTMS_SIMULATOR__CHANNEL_HPP_
 
 #include <cstdint>
+#include <mutex>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -28,26 +29,38 @@ public:
   mtms_event_interfaces::msg::DischargeFeedback discharge(uint16_t requested_target_voltage, uint16_t event_id);
   mtms_event_interfaces::msg::PulseFeedback pulse(uint16_t event_id, uint16_t duration_ticks);
 
+  // Thread-safe state accessors. These are used by `/mtms/device/system_state` publishing.
   double current_voltage() const;
   uint16_t temperature() const;
 
-  mtms_device_interfaces::msg::ChannelError errors;
-  bool is_charging {false};
-  bool is_discharging {false};
-  bool is_pulse_in_progress {false};
-  bool allow_stimulation {false};
-  uint32_t pulse_count {0};
-  mtms_device_interfaces::msg::Settings settings;
+  bool is_charging() const;
+  bool is_discharging() const;
+  bool is_pulse_in_progress() const;
+  uint32_t pulse_count() const;
+  mtms_device_interfaces::msg::ChannelError channel_error() const;
+
+  void set_settings(const mtms_device_interfaces::msg::Settings & settings);
 
 private:
+  mutable std::mutex mutex_;
+
   rclcpp::Logger logger_;
   double charge_rate_ {0.0};
   double capacitance_ {0.0};
   double time_constant_ {0.0};
   double pulse_voltage_drop_proportion_ {0.0};
   uint16_t max_voltage_ {0};
+
+  // Channel state (protected by mutex_).
   double current_voltage_ {0.0};
   uint16_t temperature_ {24};
+
+  mtms_device_interfaces::msg::ChannelError errors_;
+  bool is_charging_ {false};
+  bool is_discharging_ {false};
+  bool is_pulse_in_progress_ {false};
+  uint32_t pulse_count_ {0};
+  mtms_device_interfaces::msg::Settings settings_;
 };
 
 #endif  // MTMS_SIMULATOR__CHANNEL_HPP_

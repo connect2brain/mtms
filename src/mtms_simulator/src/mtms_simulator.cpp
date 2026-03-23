@@ -107,10 +107,10 @@ MTMSSimulator::MTMSSimulator()
 
   channels_.reserve(num_of_channels_);
   for (size_t i = 0; i < num_of_channels_; ++i) {
-    channels_.emplace_back(
+    channels_.push_back(std::make_unique<Channel>(
       charge_rate_, CAPACITANCE, TIME_CONSTANT,
       PULSE_VOLTAGE_DROP_PROPORTION, max_voltage_,
-      this->get_logger());
+      this->get_logger()));
   }
 
   settings_ = mtms_device_interfaces::msg::Settings();
@@ -146,6 +146,7 @@ MTMSSimulator::MTMSSimulator()
 
 MTMSSimulator::~MTMSSimulator()
 {
+  shutdown_requested_.store(true);
   {
     std::lock_guard<std::mutex> lock(event_queue_mutex_);
     stop_event_worker_ = true;
@@ -153,6 +154,9 @@ MTMSSimulator::~MTMSSimulator()
   event_queue_cv_.notify_one();
   if (event_worker_.joinable()) {
     event_worker_.join();
+  }
+  if (stop_session_worker_.joinable()) {
+    stop_session_worker_.join();
   }
 }
 
@@ -197,7 +201,7 @@ void MTMSSimulator::send_settings_handler(
     std::lock_guard<std::mutex> lock(state_mutex_);
     settings_ = request->settings;
     for (auto & channel : channels_) {
-      channel.settings = settings_;
+      channel->set_settings(settings_);
     }
   }
   response->success = true;
@@ -244,19 +248,52 @@ void MTMSSimulator::stop_session_handler(
   session_state_value_ = mtms_system_interfaces::msg::Session::STOPPING;
   RCLCPP_INFO(this->get_logger(), "Session stopping");
 
-  // Drive all channel voltages to 0 before reporting STOPPED.
+  // Finish channel shutdown in the background so that `system_state_timer_` can keep publishing.
+  if (stop_session_worker_running_.exchange(true)) {
+    response->success = true;
+    return;
+  }
+
+  if (stop_session_worker_.joinable()) {
+    stop_session_worker_.join();
+  }
+
+  stop_session_worker_ = std::thread(&MTMSSimulator::stop_session_worker_loop, this);
+  response->success = true;
+}
+
+void MTMSSimulator::stop_session_worker_loop()
+{
+  // Wait for any currently running channel operations (charge/discharge/pulse)
+  // to finish before driving the channels to their stopped voltages.
+  while (!shutdown_requested_.load(std::memory_order_relaxed) &&
+    in_flight_channel_ops_.load(std::memory_order_relaxed) != 0)
+  {
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+  }
+
+  if (shutdown_requested_.load(std::memory_order_relaxed)) {
+    stop_session_worker_running_.store(false, std::memory_order_relaxed);
+    return;
+  }
+
+  // Drive all channel voltages down before reporting STOPPED.
   for (size_t channel_idx = 0; channel_idx < num_of_channels_; ++channel_idx) {
-    mtms_event_interfaces::msg::DischargeFeedback feedback;
-    {
-      std::lock_guard<std::mutex> lock(state_mutex_);
-      feedback = channels_[channel_idx].discharge(0, static_cast<uint16_t>(channel_idx));
+    if (shutdown_requested_.load(std::memory_order_relaxed)) {
+      stop_session_worker_running_.store(false, std::memory_order_relaxed);
+      return;
     }
+
+    mtms_event_interfaces::msg::DischargeFeedback feedback;
+    feedback =
+      channels_[channel_idx]->discharge(0, static_cast<uint16_t>(channel_idx));
     discharge_feedback_publisher_->publish(feedback);
   }
 
-  session_state_value_ = mtms_system_interfaces::msg::Session::STOPPED;
+  session_state_value_.store(mtms_system_interfaces::msg::Session::STOPPED, std::memory_order_relaxed);
   RCLCPP_INFO(this->get_logger(), "Session stopped");
-  response->success = true;
+
+  stop_session_worker_running_.store(false, std::memory_order_relaxed);
 }
 
 void MTMSSimulator::request_events_handler(
@@ -287,7 +324,7 @@ bool MTMSSimulator::validate_charge_or_discharge(
   const uint16_t target_voltage,
   uint8_t & error_value) const
 {
-  if (channel >= system_state_.channel_states.size()) {
+  if (channel >= num_of_channels_) {
     RCLCPP_ERROR(
       this->get_logger(),
       "Trying to use invalid channel %u, configured channel count is %zu",
@@ -370,9 +407,7 @@ mtms_event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const mtms_
     return error;
   }
 
-  std::lock_guard<std::mutex> lock(state_mutex_);
-
-  if (message.channel >= system_state_.channel_states.size()) {
+  if (message.channel >= num_of_channels_) {
     RCLCPP_WARN(this->get_logger(), "Invalid channel index: %u", message.channel);
     error.value = mtms_event_interfaces::msg::PulseError::INVALID_CHANNEL;
     return error;
@@ -388,24 +423,30 @@ mtms_event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const mtms_
     return error;
   }
 
-  const auto & channel = channels_[message.channel];
-  if (channel.is_charging) {
+  const auto & channel = *channels_[message.channel];
+  if (channel.is_charging()) {
     error.value = mtms_event_interfaces::msg::PulseError::OVERLAPPING_WITH_CHARGING;
     return error;
   }
-  if (channel.is_discharging) {
+  if (channel.is_discharging()) {
     error.value = mtms_event_interfaces::msg::PulseError::OVERLAPPING_WITH_DISCHARGING;
     return error;
+  }
+
+  mtms_device_interfaces::msg::Settings settings_copy;
+  {
+    std::lock_guard<std::mutex> lock(state_mutex_);
+    settings_copy = settings_;
   }
 
   auto [total_duration, rising_duration, falling_duration] =
     calculate_waveform_durations(message.waveform);
 
-  if (total_duration > settings_.maximum_pulse_duration_ticks) {
+  if (total_duration > settings_copy.maximum_pulse_duration_ticks) {
     RCLCPP_WARN(
       this->get_logger(),
       "Pulse duration invalid: total=%u ticks exceeds max=%u ticks",
-      total_duration, settings_.maximum_pulse_duration_ticks);
+      total_duration, settings_copy.maximum_pulse_duration_ticks);
     error.value = mtms_event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
@@ -413,12 +454,12 @@ mtms_event_interfaces::msg::PulseError MTMSSimulator::validate_pulse(const mtms_
   const uint32_t rise_fall_diff =
     static_cast<uint32_t>(std::abs(
     static_cast<int64_t>(rising_duration) - static_cast<int64_t>(falling_duration)));
-  if (rise_fall_diff > settings_.maximum_rising_falling_difference_ticks) {
+  if (rise_fall_diff > settings_copy.maximum_rising_falling_difference_ticks) {
     RCLCPP_WARN(
       this->get_logger(),
       "Pulse duration invalid: rising=%u ticks, falling=%u ticks, diff=%u ticks exceeds max_diff=%u ticks",
       rising_duration, falling_duration, rise_fall_diff,
-      settings_.maximum_rising_falling_difference_ticks);
+      settings_copy.maximum_rising_falling_difference_ticks);
     error.value = mtms_event_interfaces::msg::PulseError::INVALID_DURATIONS;
     return error;
   }
@@ -449,10 +490,13 @@ void MTMSSimulator::process_charge(const mtms_event_interfaces::msg::Charge & me
     message.event_info.execution_time);
 
   mtms_event_interfaces::msg::ChargeFeedback feedback;
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    feedback = channels_[message.channel].charge(message.target_voltage, message.event_info.id);
+  in_flight_channel_ops_.fetch_add(1, std::memory_order_relaxed);
+  if (session_not_started()) {
+    in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
+    return;
   }
+  feedback = channels_[message.channel]->charge(message.target_voltage, message.event_info.id);
+  in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
   charge_feedback_publisher_->publish(feedback);
 
   RCLCPP_INFO(this->get_logger(), "Charge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
@@ -481,10 +525,13 @@ void MTMSSimulator::process_discharge(const mtms_event_interfaces::msg::Discharg
     message.event_info.execution_time);
 
   mtms_event_interfaces::msg::DischargeFeedback feedback;
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    feedback = channels_[message.channel].discharge(message.target_voltage, message.event_info.id);
+  in_flight_channel_ops_.fetch_add(1, std::memory_order_relaxed);
+  if (session_not_started()) {
+    in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
+    return;
   }
+  feedback = channels_[message.channel]->discharge(message.target_voltage, message.event_info.id);
+  in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
   discharge_feedback_publisher_->publish(feedback);
 
   RCLCPP_INFO(this->get_logger(), "Discharge completed: channel=%u, target_voltage=%u, id=%u", message.channel, message.target_voltage, message.event_info.id);
@@ -503,6 +550,10 @@ void MTMSSimulator::process_pulse(const mtms_event_interfaces::msg::Pulse & mess
     message.event_info.execution_condition,
     message.event_info.execution_time);
 
+  if (session_not_started()) {
+    return;
+  }
+
   auto error = validate_pulse(message);
   if (error.value != mtms_event_interfaces::msg::PulseError::NO_ERROR) {
     mtms_event_interfaces::msg::PulseFeedback feedback;
@@ -514,11 +565,14 @@ void MTMSSimulator::process_pulse(const mtms_event_interfaces::msg::Pulse & mess
 
   const auto total_duration = std::get<0>(calculate_waveform_durations(message.waveform));
   mtms_event_interfaces::msg::PulseFeedback feedback;
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    feedback = channels_[message.channel].pulse(
-      message.event_info.id, static_cast<uint16_t>(total_duration));
+  in_flight_channel_ops_.fetch_add(1, std::memory_order_relaxed);
+  if (session_not_started()) {
+    in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
+    return;
   }
+  feedback = channels_[message.channel]->pulse(
+    message.event_info.id, static_cast<uint16_t>(total_duration));
+  in_flight_channel_ops_.fetch_sub(1, std::memory_order_relaxed);
   pulse_feedback_publisher_->publish(feedback);
 
   RCLCPP_INFO(this->get_logger(), "Pulse completed: channel=%u, id=%u", message.channel, message.event_info.id);
@@ -559,16 +613,17 @@ void MTMSSimulator::publish_system_state()
   {
     std::lock_guard<std::mutex> lock(state_mutex_);
     msg = system_state_;
-    for (size_t i = 0; i < num_of_channels_; ++i) {
-      const auto & channel = channels_[i];
-      mtms_device_interfaces::msg::ChannelState channel_state;
-      channel_state.channel_index = static_cast<uint8_t>(clamp_uint(i, UINT8_MAX_V));
-      channel_state.voltage = static_cast<uint16_t>(clamp_uint(channel.current_voltage(), UINT16_MAX_V));
-      channel_state.temperature = static_cast<uint16_t>(clamp_uint(channel.temperature(), UINT16_MAX_V));
-      channel_state.pulse_count = static_cast<uint32_t>(clamp_uint(channel.pulse_count, UINT32_MAX_V));
-      channel_state.channel_error = channel.errors;
-      msg.channel_states[i] = channel_state;
-    }
+  }
+
+  for (size_t i = 0; i < num_of_channels_; ++i) {
+    const auto & channel = *channels_[i];
+    mtms_device_interfaces::msg::ChannelState channel_state;
+    channel_state.channel_index = static_cast<uint8_t>(clamp_uint(i, UINT8_MAX_V));
+    channel_state.voltage = static_cast<uint16_t>(clamp_uint(channel.current_voltage(), UINT16_MAX_V));
+    channel_state.temperature = static_cast<uint16_t>(clamp_uint(channel.temperature(), UINT16_MAX_V));
+    channel_state.pulse_count = static_cast<uint32_t>(clamp_uint(channel.pulse_count(), UINT32_MAX_V));
+    channel_state.channel_error = channel.channel_error();
+    msg.channel_states[i] = channel_state;
   }
   system_state_publisher_->publish(msg);
 }

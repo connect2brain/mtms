@@ -98,6 +98,7 @@ private:
   void stop_session_handler(
     const std::shared_ptr<mtms_system_interfaces::srv::StopSession::Request> request,
     std::shared_ptr<mtms_system_interfaces::srv::StopSession::Response> response);
+  void stop_session_worker_loop();
   void request_events_handler(
     const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
     std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response);
@@ -151,13 +152,22 @@ private:
   mutable std::mutex state_mutex_;
   mtms_device_interfaces::msg::SystemState system_state_;
   mtms_device_interfaces::msg::Settings settings_;
-  std::vector<Channel> channels_;
+  // Channel is non-movable (contains std::mutex), so store via pointers.
+  std::vector<std::unique_ptr<Channel>> channels_;
 
   std::mutex event_queue_mutex_;
   std::condition_variable event_queue_cv_;
   std::deque<EventBatch> event_queue_;
   bool stop_event_worker_ {false};
   std::thread event_worker_;
+
+  // Background worker that finishes session stop without blocking ROS timers.
+  std::thread stop_session_worker_;
+  std::atomic<bool> stop_session_worker_running_ {false};
+
+  // Guards channel simulation calls started by the event worker.
+  std::atomic<uint32_t> in_flight_channel_ops_ {0};
+  std::atomic<bool> shutdown_requested_ {false};
 
   rclcpp::Service<mtms_device_interfaces::srv::SendSettings>::SharedPtr send_settings_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_device_service_;
