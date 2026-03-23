@@ -2,6 +2,7 @@ import React, { useContext, useRef } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
+import { StimulationReadinessDisplay } from 'components/remote_control/StimulationReadinessDisplay'
 import { PulseTable, PulseTableHandle } from 'components/remote_control/PulseTable'
 
 export const RemoteControlView = () => {
@@ -9,7 +10,10 @@ export const RemoteControlView = () => {
 
   return (
     <RemoteControlPage>
-      <RemoteControl getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null} />
+      <ControlRow>
+        <RemoteControl getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null} />
+        <StimulationReadinessDisplay />
+      </ControlRow>
       <PulseTableWrapper>
         <PulseTable ref={pulseTableRef} />
       </PulseTableWrapper>
@@ -22,6 +26,13 @@ const RemoteControlPage = styled.div`
   min-height: 550px;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+`
+
+const ControlRow = styled.div`
+  display: flex;
+  flex-direction: row;
   align-items: flex-start;
   gap: 16px;
 `

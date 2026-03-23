@@ -9,7 +9,6 @@ import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessage
 import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
 import { EegInfoDisplay } from 'components/general/EegInfoDisplay'
 import { ChannelVoltageDisplay } from 'components/general/ChannelVoltageDisplay'
-import { MTMSStatusDisplay } from 'components/general/MtmsStatusDisplay'
 import { RosConnectionOverlay } from 'components/general/RosConnectionOverlay'
 import { MultipleViews } from 'views/MultipleViews'
 
@@ -20,7 +19,6 @@ const App = () => {
       <HealthcheckMessageDisplay />
       <EegInfoDisplay />
       <ChannelVoltageDisplay />
-      <MTMSStatusDisplay />
       <Wrapper>
         <MultipleViews />
       </Wrapper>

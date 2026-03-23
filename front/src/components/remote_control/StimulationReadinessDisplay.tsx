@@ -6,19 +6,9 @@ import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { StyledPanel } from 'styles/General'
 
 const StatusPanel = styled(StyledPanel)`
-  width: 250px;
-  position: fixed;
-  top: 390px;
-  right: 5px;
-  z-index: 1000;
+  width: 120px;
   padding: 15px 20px;
-`
-
-const Header = styled.div<{ $muted: boolean }>`
-  color: ${({ $muted }) => ($muted ? '#959595' : '#333')};
-  font-weight: bold;
-  font-size: 1.05rem;
-  margin-bottom: 0.65rem;
+  margin-top: 134px;
 `
 
 const StatusRow = styled.div`
@@ -50,14 +40,14 @@ const StatusText = styled.div<{ $muted: boolean }>`
   font-weight: 600;
 `
 
-export const MTMSStatusDisplay: React.FC = () => {
+export const StimulationReadinessDisplay: React.FC = () => {
   const { trialReadiness } = useContext(TrialReadinessContext)
   const { systemState } = useContext(SystemContext)
 
   const status: 'ready' | 'not_ready' | 'unknown' =
     trialReadiness === null ? 'unknown' : trialReadiness ? 'ready' : 'not_ready'
 
-  const statusText = status === 'ready' ? 'Trial ready' : status === 'not_ready' ? 'Trial not ready' : 'Trial unknown'
+  const statusText = status === 'ready' ? 'Ready' : status === 'not_ready' ? 'Not ready' : 'Unknown'
 
   const isDeviceOn =
     systemState?.device_state?.value !== undefined && systemState.device_state.value !== DeviceState.NOT_OPERATIONAL
@@ -65,7 +55,6 @@ export const MTMSStatusDisplay: React.FC = () => {
 
   return (
     <StatusPanel>
-      <Header $muted={muted}>Readiness</Header>
       <StatusRow>
         <StatusSquare $status={status} />
         <StatusText $muted={muted}>{statusText}</StatusText>
@@ -73,4 +62,3 @@ export const MTMSStatusDisplay: React.FC = () => {
     </StatusPanel>
   )
 }
-
