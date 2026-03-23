@@ -485,8 +485,56 @@ void TrialPerformerNode::handle_perform_trial(
     return;
   }
 
-  /* Perform the trial. */
-  bool success = perform_trial(request->trial);
+  const auto &trial = request->trial;
+  tic();
+
+  bool success = true;
+
+  /* Always get desired voltages and waveforms (also warms up the cache). */
+  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, trial.use_pulse_width_modulation_approximation);
+
+  log_voltages(desired_voltages, "Desired voltages");
+
+  /* Voltages must already be within margin; fail if they are not. */
+  auto actual_voltages = get_actual_voltages();
+  log_voltages(actual_voltages, "Actual voltages");
+
+  if (!are_voltages_within_margin(desired_voltages)) {
+    RCLCPP_ERROR(this->get_logger(), "Voltages not within margin. Call prepare_trial first.");
+    response->success = false;
+    return;
+  }
+
+  /* Check if the trial can be performed at the desired start time. */
+  const double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
+  if (earliest_start_time > trial.start_time) {
+    RCLCPP_ERROR(this->get_logger(),
+      "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
+      trial.start_time, earliest_start_time);
+    response->success = false;
+    return;
+  }
+
+  /* Create and send pulses and trigger outs. */
+  auto [pulses, pulse_ids] = create_pulses(waveforms, trial, trial.start_time);
+  auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, trial.start_time);
+
+  /* Request events. */
+  request_events(pulses, trigger_outs);
+
+  /* For troubleshooting purposes, log the time passed after requesting events. */
+  toc("Time passed after requesting events");
+
+  /* Wait for events to finish. */
+  success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
+
+  auto voltages_after_trial = get_actual_voltages();
+  log_voltages(voltages_after_trial, "Voltages after trial");
+
+  /* If trial was successful, create a marker in neuronavigation. */
+  if (success) {
+    create_marker(trial);
+  }
 
   /* Log trial success. */
   RCLCPP_INFO(this->get_logger(), "Trial completed %s.",
@@ -517,60 +565,6 @@ void TrialPerformerNode::handle_prepare_trial(
   bool success = set_voltages(desired_voltages);
   RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
   response->success = success;
-}
-
-bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &trial) {
-  tic();
-
-  bool success = true;
-  double_t start_time;
-
-  /* Always get desired voltages and waveforms (also warms up the cache). */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, trial.use_pulse_width_modulation_approximation);
-
-  log_voltages(desired_voltages, "Desired voltages");
-
-  /* Voltages must already be within margin; fail if they are not. */
-  auto actual_voltages = get_actual_voltages();
-  log_voltages(actual_voltages, "Actual voltages");
-
-  if (!are_voltages_within_margin(desired_voltages)) {
-    RCLCPP_ERROR(this->get_logger(), "Voltages not within margin. Call prepare_trial first.");
-    return false;
-  }
-
-  /* Check if the trial can be performed at the desired start time. */
-  const double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
-  if (earliest_start_time > trial.start_time) {
-    RCLCPP_ERROR(this->get_logger(),
-      "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
-      trial.start_time, earliest_start_time);
-    return false;
-  }
-  start_time = trial.start_time;
-
-  /* Create and send pulses and trigger outs. */
-  auto [pulses, pulse_ids] = create_pulses(waveforms, trial, start_time);
-  auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, start_time);
-
-  /* Request events. */
-  request_events(pulses, trigger_outs);
-
-  /* For troubleshooting purposes, log the time passed after requesting events. */
-  toc("Time passed after requesting events");
-
-  /* Wait for events to finish. */
-  success = success && wait_for_events_to_finish(pulse_ids, trigger_out_ids);
-
-  auto voltages_after_trial = get_actual_voltages();
-  log_voltages(voltages_after_trial, "Voltages after trial");
-
-  /* If trial was successful, create a marker in neuronavigation. */
-  if (success) {
-    create_marker(trial);
-  }
-
-  return success;
 }
 
 std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets, const bool use_pwm_approximation) {

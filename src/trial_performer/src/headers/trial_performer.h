@@ -128,8 +128,6 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  bool perform_trial(const mtms_trial_interfaces::msg::Trial &trial);
-
   std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_non_approximated_waveforms(
       const mtms_targeting_interfaces::msg::ElectricTarget &target, const mtms_waveform_interfaces::msg::WaveformsForCoilSet &target_waveforms);
 
