@@ -15,8 +15,11 @@
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/bool.hpp"
 
+using namespace std::chrono_literals;
+
 using std::placeholders::_1;
 
+const std::string SESSION_TOPIC = "/mtms/device/session";
 const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
@@ -71,6 +74,16 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     TRIAL_READINESS_TOPIC,
     latched_qos,
     std::bind(&RemoteController::trial_readiness_callback, this, _1));
+
+  /* Subscription for session state. */
+  const auto session_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_VOLATILE);
+
+  session_subscriber = this->create_subscription<mtms_system_interfaces::msg::Session>(
+    SESSION_TOPIC,
+    session_qos,
+    std::bind(&RemoteController::session_state_callback, this, _1));
 
   /* Service client for performing trials. */
   perform_trial_client =
@@ -222,12 +235,29 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
   RCLCPP_INFO(this->get_logger(), "Done caching target lists.");
 }
 
+void RemoteController::session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
+{
+  is_session_started = (msg->state == mtms_system_interfaces::msg::Session::STARTED || msg->state == mtms_system_interfaces::msg::Session::STOPPING);
+}
+
 bool RemoteController::start_session()
 {
   auto request = std::make_shared<mtms_system_interfaces::srv::StartSession::Request>();
   auto future = start_session_client->async_send_request(request);
   auto response = future.get();
-  return response && response->success;
+  if (!response || !response->success) {
+    return false;
+  }
+
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+  while (!is_session_started) {
+    if (std::chrono::steady_clock::now() > deadline) {
+      RCLCPP_ERROR(this->get_logger(), "Timed out waiting for session to reach STARTED state.");
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+  return true;
 }
 
 bool RemoteController::stop_session()
@@ -235,7 +265,19 @@ bool RemoteController::stop_session()
   auto request = std::make_shared<mtms_system_interfaces::srv::StopSession::Request>();
   auto future = stop_session_client->async_send_request(request);
   auto response = future.get();
-  return response && response->success;
+  if (!response || !response->success) {
+    return false;
+  }
+
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(30);
+  while (is_session_started) {
+    if (std::chrono::steady_clock::now() > deadline) {
+      RCLCPP_ERROR(this->get_logger(), "Timed out waiting for session to reach STOPPED state.");
+      return false;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+  return true;
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
