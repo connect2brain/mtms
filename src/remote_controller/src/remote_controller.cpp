@@ -23,6 +23,7 @@ const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
 const std::string CACHE_TARGET_LIST_SERVICE = "/mtms/trial/cache";
 const std::string PREPARE_TRIAL_SERVICE = "/mtms/trial/prepare";
 const std::string START_SESSION_SERVICE = "/mtms/device/session/start";
+const std::string STOP_SESSION_SERVICE = "/mtms/device/session/stop";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
 const std::string REMOTE_CONTROLLER_STATE_TOPIC = "/mtms/remote_controller/state";
 const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
@@ -87,12 +88,20 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", CACHE_TARGET_LIST_SERVICE.c_str());
   }
 
-  /* Service client for starting the device/session. */
+  /* Service client for starting the session. */
   start_session_client =
     this->create_client<mtms_system_interfaces::srv::StartSession>(START_SESSION_SERVICE);
 
   while (!start_session_client->wait_for_service(std::chrono::seconds(2))) {
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", START_SESSION_SERVICE.c_str());
+  }
+
+  /* Service client for stopping the session. */
+  stop_session_client =
+    this->create_client<mtms_system_interfaces::srv::StopSession>(STOP_SESSION_SERVICE);
+
+  while (!stop_session_client->wait_for_service(std::chrono::seconds(2))) {
+    RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", STOP_SESSION_SERVICE.c_str());
   }
 
   /* Service client for preparing trials. */
@@ -131,12 +140,11 @@ void RemoteController::start_service_handler(
   const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
   std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response)
 {
-  set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
-
   std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
     request->target_lists.begin(), request->target_lists.end());
 
   std::thread([this, target_lists = std::move(target_lists)]() mutable {
+    set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
     cache_target_lists_async(std::move(target_lists));
 
     /* Start the device/session before enabling trial readiness callback behavior. */
@@ -165,6 +173,12 @@ void RemoteController::stop_service_handler(
   (void)request;
   set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
+  if (!stop_session()) {
+    RCLCPP_ERROR(this->get_logger(), "StopSession did not succeed.");
+    return;
+  }
+
+  set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
 }
@@ -193,14 +207,18 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
 
 bool RemoteController::start_session()
 {
-  bool session_started = false;
-
   auto request = std::make_shared<mtms_system_interfaces::srv::StartSession::Request>();
   auto future = start_session_client->async_send_request(request);
   auto response = future.get();
-  session_started = response && response->success;
+  return response && response->success;
+}
 
-  return session_started;
+bool RemoteController::stop_session()
+{
+  auto request = std::make_shared<mtms_system_interfaces::srv::StopSession::Request>();
+  auto future = stop_session_client->async_send_request(request);
+  auto response = future.get();
+  return response && response->success;
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)

@@ -23,6 +23,7 @@
 
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
 #include "mtms_system_interfaces/srv/start_session.hpp"
+#include "mtms_system_interfaces/srv/stop_session.hpp"
 
 class RemoteController : public rclcpp::Node {
 public:
@@ -53,6 +54,7 @@ private:
 
   // Helpers
   bool start_session();
+  bool stop_session();
   bool build_trial_from_message(
     const shared_stimulation_interfaces::msg::TargetedPulses & msg,
     const mtms_system_interfaces::msg::TimebaseMapping & mapping,
@@ -71,6 +73,7 @@ private:
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;
   rclcpp::Client<mtms_trial_interfaces::srv::CacheTargetList>::SharedPtr cache_target_list_client;
   rclcpp::Client<mtms_system_interfaces::srv::StartSession>::SharedPtr start_session_client;
+  rclcpp::Client<mtms_system_interfaces::srv::StopSession>::SharedPtr stop_session_client;
   rclcpp::Client<std_srvs::srv::Trigger>::SharedPtr prepare_trial_client;
 
   // Start/stop gating.
