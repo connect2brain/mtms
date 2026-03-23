@@ -5,7 +5,7 @@ from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import PerformExperiment
 from std_srvs.srv import Trigger
 
-from mtms_trial_interfaces.srv import CacheTrial
+from mtms_trial_interfaces.srv import CacheTargetList
 
 
 class ExperimentHandler:
@@ -17,7 +17,7 @@ class ExperimentHandler:
     ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', Trigger)
     ROS_SERVICE_RESUME_EXPERIMENT = ('/mtms/experiment/resume', Trigger)
 
-    ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/cache', CacheTrial)
+    ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/cache', CacheTargetList)
 
     ROS_SERVICES = (
         ROS_SERVICE_PERFORM_EXPERIMENT,

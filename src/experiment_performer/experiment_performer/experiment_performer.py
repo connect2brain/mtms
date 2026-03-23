@@ -7,7 +7,7 @@ import uuid
 from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, CacheTrial
+from mtms_trial_interfaces.srv import PerformTrial, CacheTargetList
 from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool, Empty
@@ -133,8 +133,8 @@ class ExperimentPerformerNode(Node):
             self.get_logger().info('Service {} not available, waiting...'.format(service_name))
 
         # Create service client for warming the cache, also used for validating a trial.
-        self.cache_trial_client = self.create_client(CacheTrial, '/mtms/trial/cache', callback_group=self.callback_group)
-        while not self.cache_trial_client.wait_for_service(timeout_sec=1.0):
+        self.cache_target_list_client = self.create_client(CacheTargetList, '/mtms/trial/cache', callback_group=self.callback_group)
+        while not self.cache_target_list_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service /mtms/trial/cache not available, waiting...')
 
         # Create service client for maximum intensity validation (single-pulse validation path).
@@ -384,11 +384,11 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def cache_trial(self, trial):
-        request = CacheTrial.Request()
-        request.trial = trial
+    def cache_target_list(self, trial):
+        request = CacheTargetList.Request()
+        request.targets = trial.targets
 
-        response = self.async_service_call(self.cache_trial_client, request, '/mtms/trial/cache')
+        response = self.async_service_call(self.cache_target_list_client, request, '/mtms/trial/cache')
 
         if response is None:
             self.logger.error('Service /mtms/trial/cache did not return a response.')
@@ -604,7 +604,7 @@ class ExperimentPerformerNode(Node):
                 if not self.is_single_pulse_trial_valid(trial):
                     continue
             else:
-                if not self.cache_trial(trial):
+                if not self.cache_target_list(trial):
                     continue
 
             valid_trials.append(trial)
@@ -871,7 +871,7 @@ class ExperimentPerformerNode(Node):
             trial.start_time = designated_trial_time
 
             # Cache the trial.
-            cache_ok = self.cache_trial(trial)
+            cache_ok = self.cache_target_list(trial)
             if cache_ok is None:
                 self.logger.info('Cache trial service did not return a response, attempting again in {} seconds.'.format(
                     self.TRIAL_REDO_INTERVAL_S,

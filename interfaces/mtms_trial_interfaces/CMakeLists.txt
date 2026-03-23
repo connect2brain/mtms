@@ -26,7 +26,7 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Trial.msg"
 
-  "srv/CacheTrial.srv"
+  "srv/CacheTargetList.srv"
   "srv/PerformTrial.srv"
   "srv/SetVoltages.srv"
   "srv/StartRemoteController.srv"

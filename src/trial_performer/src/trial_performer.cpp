@@ -44,10 +44,10 @@ void TrialPerformerNode::initialize_services() {
       rmw_qos_profile_services_default,
       callback_group);
 
-  cache_trial_service = this->create_service<mtms_trial_interfaces::srv::CacheTrial>(
+  cache_target_list_service = this->create_service<mtms_trial_interfaces::srv::CacheTargetList>(
       "/mtms/trial/cache",
       std::bind(
-          &TrialPerformerNode::handle_cache_trial,
+          &TrialPerformerNode::handle_cache_target_list,
           this,
           std::placeholders::_1,
           std::placeholders::_2),
@@ -525,16 +525,15 @@ void TrialPerformerNode::handle_prepare_trial(
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
-void TrialPerformerNode::handle_cache_trial(
-    const std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Request> request,
-    std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Response> response) {
+void TrialPerformerNode::handle_cache_target_list(
+    const std::shared_ptr<mtms_trial_interfaces::srv::CacheTargetList::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::CacheTargetList::Response> response) {
   tic();
 
   RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Received cache trial request, warming cache...");
+  RCLCPP_INFO(this->get_logger(), "Received cache target list request, warming cache...");
 
-  const auto &trial = request->trial;
-  const auto targets = trial.targets;
+  const auto targets = request->targets;
 
   /* Warm the waveform cache by calling get_desired_voltages_and_waveforms(). */
   auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);

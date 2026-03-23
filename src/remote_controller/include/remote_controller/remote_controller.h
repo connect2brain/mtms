@@ -16,7 +16,7 @@
 
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
-#include "mtms_trial_interfaces/srv/cache_trial.hpp"
+#include "mtms_trial_interfaces/srv/cache_target_list.hpp"
 #include "mtms_trial_interfaces/srv/start_remote_controller.hpp"
 
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
@@ -40,7 +40,7 @@ private:
   void publish_started_state();
 
   // Trial caching
-  void cache_trials_async(std::vector<mtms_trial_interfaces::msg::Trial> trials);
+  void cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::Trial> trials);
 
   // Helpers
   bool build_trial_from_message(
@@ -58,7 +58,7 @@ private:
 
   // Service clients
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;
-  rclcpp::Client<mtms_trial_interfaces::srv::CacheTrial>::SharedPtr cache_trial_client;
+  rclcpp::Client<mtms_trial_interfaces::srv::CacheTargetList>::SharedPtr cache_target_list_client;
 
   // Start/stop gating.
   bool started{false};
