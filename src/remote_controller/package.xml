@@ -16,6 +16,7 @@
   <depend>shared_stimulation_interfaces</depend>
   <depend>mtms_trial_interfaces</depend>
   <depend>mtms_targeting_interfaces</depend>
+  <depend>realtime_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

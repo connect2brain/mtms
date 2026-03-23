@@ -13,6 +13,7 @@ find_package(mtms_system_interfaces REQUIRED)
 find_package(shared_stimulation_interfaces REQUIRED)
 find_package(mtms_trial_interfaces REQUIRED)
 find_package(mtms_targeting_interfaces REQUIRED)
+find_package(realtime_utils REQUIRED)
 
 # Install remote_controller executable.
 
@@ -25,6 +26,10 @@ target_include_directories(remote_controller
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
+target_link_libraries(remote_controller
+  realtime_utils::utils
+)
+
 ament_target_dependencies(
   remote_controller
   rclcpp
@@ -34,6 +39,7 @@ ament_target_dependencies(
   shared_stimulation_interfaces
   mtms_trial_interfaces
   mtms_targeting_interfaces
+  realtime_utils
 )
 
 install(TARGETS

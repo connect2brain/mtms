@@ -12,6 +12,8 @@
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
+#include "realtime_utils/utils.h"
+
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/bool.hpp"
 
@@ -472,6 +474,25 @@ void RemoteController::prepare_trial()
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
+
+  auto logger = rclcpp::get_logger("remote_controller");
+
+  realtime_utils::MemoryConfig mem_config;
+  mem_config.enable_memory_optimization = true;
+  mem_config.preallocate_size = 10 * 1024 * 1024; // 10 MB
+
+  realtime_utils::SchedulingConfig sched_config;
+  sched_config.enable_scheduling_optimization = true;
+  sched_config.scheduling_policy = SCHED_RR;
+  sched_config.priority_level = realtime_utils::PriorityLevel::HIGHEST_REALTIME;
+
+  try {
+    realtime_utils::initialize_scheduling(sched_config, logger);
+    realtime_utils::initialize_memory(mem_config, logger);
+  } catch (const std::exception& e) {
+    RCLCPP_FATAL(logger, "Initialization failed: %s", e.what());
+    return -1;
+  }
 
   rclcpp::executors::SingleThreadedExecutor executor;
   auto node = std::make_shared<RemoteController>();
