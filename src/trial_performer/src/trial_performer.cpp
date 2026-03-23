@@ -342,7 +342,7 @@ void TrialPerformerNode::toc(const std::string &prefix) {
 
 /* Service requests */
 
-std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
+std::tuple<bool, std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_approximated_waveforms(
     const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets,
     const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms) {
 
@@ -360,13 +360,13 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Call to GetMultipulseWaveforms service failed");
+    return {false, {}, {}};
   }
 
   std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> approximated_waveforms(
       response->approximated_waveforms.begin(), response->approximated_waveforms.end());
 
-  return {response->initial_voltages, approximated_waveforms};
+  return {true, response->initial_voltages, approximated_waveforms};
 }
 
 mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform(uint8_t channel) {
@@ -456,7 +456,12 @@ void TrialPerformerNode::handle_perform_trial(
   auto targets = trial.targets;
 
   /* Get desired voltages and waveforms (also warms up the cache). */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  if (!approximation_success) {
+    RCLCPP_ERROR(this->get_logger(), "Perform trial war failed: waveform approximation could not be performed.");
+    response->success = false;
+    return;
+  }
   (void)desired_voltages;
 
   /* Check if the trial is ready to be performed. */
@@ -532,7 +537,12 @@ void TrialPerformerNode::handle_cache_trial(
   const auto targets = trial.targets;
 
   /* Warm the waveform cache by calling get_desired_voltages_and_waveforms(). */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  if (!approximation_success) {
+    RCLCPP_ERROR(this->get_logger(), "Cache trial warm-up failed: waveform approximation could not be performed.");
+    response->success = false;
+    return;
+  }
   (void)desired_voltages;
   (void)waveforms;
 
@@ -541,7 +551,7 @@ void TrialPerformerNode::handle_cache_trial(
   toc("Time passed while warming cache");
 }
 
-std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) {
+std::tuple<bool, std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) {
   std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> target_waveforms;
   for (uint8_t i = 0; i < targets.size(); ++i) {
     mtms_waveform_interfaces::msg::WaveformsForCoilSet waveforms;
@@ -550,13 +560,16 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
     }
     target_waveforms.push_back(waveforms);
   }
-  auto [desired_voltages, approximated_waveforms] = get_approximated_waveforms(targets, target_waveforms);
+  auto [approximation_success, desired_voltages, approximated_waveforms] = get_approximated_waveforms(targets, target_waveforms);
+  if (!approximation_success) {
+    return {false, {}, {}};
+  }
 
   /* XXX: Have this check just to ensure the PWM approximation is made with the same desired voltage (1500 V) assumed by trial performer. */
   assert(desired_voltages == fixed_desired_voltages &&
       "Desired voltages from get_approximated_waveforms do not match FIXED_DESIRED_VOLTAGE");
 
-  return {desired_voltages, approximated_waveforms};
+  return {true, desired_voltages, approximated_waveforms};
 }
 
 bool TrialPerformerNode::is_ready_for_trial(bool verbose) const {

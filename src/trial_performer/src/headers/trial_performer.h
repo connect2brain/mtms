@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <sstream>
+#include <tuple>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -93,7 +94,7 @@ private:
   mtms_event_interfaces::msg::TriggerOut create_trigger_out(uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 
   /* Service calls */
-  std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_approximated_waveforms(
+  std::tuple<bool, std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_approximated_waveforms(
       const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets,
       const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms);
 
@@ -127,7 +128,7 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
-  std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
+  std::tuple<bool, std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
       const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets);
 };
 
