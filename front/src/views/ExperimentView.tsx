@@ -26,7 +26,7 @@ import { countValidTrials, performExperiment, visualizeTargets, getMaximumIntens
 import { ExperimentControlButtons } from 'components/experiment/ExperimentControlButtons'
 import { EXPERIMENT_STATE, ExperimentContext } from 'providers/ExperimentProvider'
 
-import { SystemContext } from 'providers/SystemProvider'
+import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
@@ -403,12 +403,15 @@ export const ExperimentView = () => {
   const { mepHealthcheck } = useContext(HealthcheckContext)
   const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
 
-  const { session } = useContext(SystemContext)
+  const { session, systemState } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
   const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
   const { experimentStateMessage, experimentFeedbackMessage } = useContext(ExperimentContext)
   const experimentState = experimentStateMessage?.state
   const feedbackAny = experimentFeedbackMessage as { trial_number?: number; attempt_number?: number } | null
+  const isDeviceOperational =
+    systemState?.device_state?.value !== undefined &&
+    systemState.device_state.value !== DeviceState.NOT_OPERATIONAL
   const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
   const maxEmgChannel = Math.max(1, eegDeviceInfo?.num_emg_channels ?? 0)
 
@@ -1367,7 +1370,12 @@ export const ExperimentView = () => {
           <CloseConfigRow></CloseConfigRow>
           <ExperimentControlButtons
             onStart={() => perform()}
-            startDisabled={!isValidated || numOfValidTrials === null || numOfValidTrials === 0}
+            startDisabled={
+              !isValidated ||
+              numOfValidTrials === null ||
+              numOfValidTrials === 0 ||
+              !isDeviceOperational
+            }
           />
         </StatusPanel>
       </ConfigPanel>
