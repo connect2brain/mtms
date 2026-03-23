@@ -198,8 +198,8 @@ const ToggleBtn = styled.button<{ $active: boolean }>`
 const FIELDS: { key: keyof Pulse; label: string }[] = [
   { key: 'x', label: 'X' },
   { key: 'y', label: 'Y' },
-  { key: 'angle', label: 'Ang' },
-  { key: 'intensity', label: 'Int' },
+  { key: 'angle', label: 'Angle' },
+  { key: 'intensity', label: 'Int.' },
 ]
 
 /* ── component ── */
