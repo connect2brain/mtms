@@ -13,6 +13,7 @@
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
 #include "std_msgs/msg/empty.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 using std::placeholders::_1;
 
@@ -20,11 +21,19 @@ const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
+const std::string STARTED_TOPIC = "/mtms/remote_controller/started";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
 {
+  const auto latched_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+  /* Publish current started state so the frontend can reflect it accurately. */
+  started_publisher = this->create_publisher<std_msgs::msg::Bool>(STARTED_TOPIC, latched_qos);
+
   /* Start and stop services. */
   start_service = this->create_service<std_srvs::srv::Trigger>(
     "/mtms/remote_controller/start",
@@ -35,13 +44,9 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     std::bind(&RemoteController::stop_service_handler, this, _1, std::placeholders::_2));
 
   /* Subscription for eeg_to_mtms mapping. */
-  const auto mapping_qos = rclcpp::QoS(rclcpp::KeepLast(1))
-    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
-    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
-
   eeg_to_mtms_subscriber = this->create_subscription<mtms_system_interfaces::msg::TimebaseMapping>(
     EEG_TO_MTMS_TOPIC,
-    mapping_qos,
+    latched_qos,
     std::bind(&RemoteController::eeg_to_mtms_callback, this, _1));
 
   /* Subscription for targeted pulses. */
@@ -67,7 +72,17 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
+  /* Publish initial started state. */
+  publish_started_state();
+
   RCLCPP_INFO(this->get_logger(), "Remote controller initialized");
+}
+
+void RemoteController::publish_started_state()
+{
+  std_msgs::msg::Bool started_msg;
+  started_msg.data = started;
+  started_publisher->publish(started_msg);
 }
 
 void RemoteController::start_service_handler(
@@ -76,6 +91,9 @@ void RemoteController::start_service_handler(
 {
   (void)request;
   started = true;
+
+  publish_started_state();
+
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller started");
 }
@@ -86,6 +104,9 @@ void RemoteController::stop_service_handler(
 {
   (void)request;
   started = false;
+
+  publish_started_state();
+
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
 }

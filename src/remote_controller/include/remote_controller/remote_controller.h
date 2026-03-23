@@ -7,6 +7,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
 
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
@@ -30,9 +31,10 @@ private:
     [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
-  // ROS callbacks
+  // ROS subscribers and publishers
   void eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
+  void publish_started_state();
 
   // Helpers
   bool build_trial_from_message(
@@ -55,6 +57,7 @@ private:
   bool started{false};
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_service;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr started_publisher;
 
   // Latest timebase mapping (EEG device time -> mTMS session time).
   std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_eeg_to_mtms;
