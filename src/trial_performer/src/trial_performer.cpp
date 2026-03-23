@@ -486,12 +486,16 @@ void TrialPerformerNode::handle_perform_trial(
   }
 
   const auto &trial = request->trial;
+
+  auto targets = trial.targets;
+  bool use_pulse_width_modulation_approximation = request->use_pulse_width_modulation_approximation;
+
   tic();
 
   bool success = true;
 
   /* Always get desired voltages and waveforms (also warms up the cache). */
-  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(trial.targets, trial.use_pulse_width_modulation_approximation);
+  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets, use_pulse_width_modulation_approximation);
 
   log_voltages(desired_voltages, "Desired voltages");
 
@@ -557,8 +561,10 @@ void TrialPerformerNode::handle_prepare_trial(
     return;
   }
 
-  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(
-      request->trial.targets, request->trial.use_pulse_width_modulation_approximation);
+  bool use_pulse_width_modulation_approximation = request->use_pulse_width_modulation_approximation;
+  auto targets = request->trial.targets;
+
+  auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets, use_pulse_width_modulation_approximation);
 
   log_voltages(desired_voltages, "Desired voltages");
 

@@ -318,6 +318,7 @@ class ExperimentPerformerNode(Node):
     def perform_trial(self, trial):
         request = PerformTrial.Request()
         request.trial = trial
+        request.use_pulse_width_modulation_approximation = len(trial.targets) > 1
 
         response = self.async_service_call(self.perform_trial_client, request, '/mtms/trial/perform')
 
@@ -795,10 +796,7 @@ class ExperimentPerformerNode(Node):
                 num_of_attempts,
             ))
 
-            use_pulse_width_modulation_approximation = True if len(trial.targets) > 1 else False
-
             trial.start_time = trial_time
-            trial.use_pulse_width_modulation_approximation = use_pulse_width_modulation_approximation
 
             mep_event = None
             mep_result_container = None

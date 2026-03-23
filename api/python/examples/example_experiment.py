@@ -46,8 +46,6 @@ single_pulse_trial = Trial(
     pulse_times_since_trial_start=[0.0],
     trigger_enabled=trigger_enabled,
     trigger_delay=trigger_delay,
-
-    use_pulse_width_modulation_approximation=True,  # Single-pulse trials do not strictly need PWM; it can still be used.
 )
 
 paired_pulse_trial = Trial(
@@ -55,8 +53,6 @@ paired_pulse_trial = Trial(
     pulse_times_since_trial_start=[0.0, 0.1],
     trigger_enabled=trigger_enabled,
     trigger_delay=trigger_delay,
-
-    use_pulse_width_modulation_approximation=True,  # Paired-pulse trials require PWM.
 )
 
 print("Validating single pulse trial...")

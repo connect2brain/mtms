@@ -314,8 +314,6 @@ type Trial = {
   start_time: number
   trigger_enabled: boolean[]
   trigger_delay: number[]
-
-  use_pulse_width_modulation_approximation: boolean
 }
 
 enum ExperimentTab {
@@ -556,7 +554,6 @@ export const ExperimentView = () => {
             start_time: 0.0,
             trigger_enabled: trigger_enabled,
             trigger_delay: trigger_delay,
-            use_pulse_width_modulation_approximation: false,
           }
           singleRepetitionTrials.push(trial)
         })
@@ -579,7 +576,6 @@ export const ExperimentView = () => {
         start_time: 0.0,
         trigger_enabled: trigger_enabled,
         trigger_delay: trigger_delay,
-        use_pulse_width_modulation_approximation: false,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
@@ -608,7 +604,6 @@ export const ExperimentView = () => {
         start_time: 0.0,
         trigger_enabled: trigger_enabled,
         trigger_delay: trigger_delay,
-        use_pulse_width_modulation_approximation: true,
       }
       for (let i = 0; i < numOfTrials; i++) {
         trials.push(trial)
