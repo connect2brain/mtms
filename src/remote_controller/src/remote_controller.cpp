@@ -166,16 +166,18 @@ void RemoteController::stop_service_handler(
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request;
-  set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
-  if (!stop_session()) {
-    RCLCPP_ERROR(this->get_logger(), "StopSession did not succeed.");
-    return;
-  }
+  std::thread([this]() {
+    if (!stop_session()) {
+      RCLCPP_ERROR(this->get_logger(), "StopSession did not succeed.");
+      return;
+    }
 
-  set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
+    set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
+    RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
+  }).detach();
+
   response->success = true;
-  RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
 }
 
 void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::TargetList> target_lists)
