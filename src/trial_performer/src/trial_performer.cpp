@@ -585,7 +585,7 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
     return get_approximated_waveforms(targets, target_waveforms);
   } else {
     if (targets.size() != 1) {
-      throw std::runtime_error("Non-approximated waveforms are only supported for one target.");
+      throw std::runtime_error("Pulse-width modulation must be used for multiple targets.");
     }
     /* TODO: This should follow the same codepath as the approximated waveforms; most likely
          a good solution would be to use the same ROS service for both approximated and
