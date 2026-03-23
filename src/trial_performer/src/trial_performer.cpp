@@ -465,16 +465,6 @@ void TrialPerformerNode::handle_perform_trial(
     return;
   }
 
-  /* Check if the trial can be performed at the desired start time. */
-  const double_t earliest_start_time = get_current_time() + TRIAL_TIME_MARGINAL_S;
-  if (earliest_start_time > trial.start_time) {
-    RCLCPP_ERROR(this->get_logger(),
-      "Trial desired start time (%.3f s) is in the past (earliest possible start: %.3f s).",
-      trial.start_time, earliest_start_time);
-    response->success = false;
-    return;
-  }
-
   /* Create and send pulses and trigger outs. */
   auto [pulses, pulse_ids] = create_pulses(waveforms, trial, trial.start_time);
   auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, trial.start_time);
