@@ -278,16 +278,22 @@ void MTMSSimulator::stop_session_worker_loop()
   }
 
   // Drive all channel voltages down before reporting STOPPED.
-  for (size_t channel_idx = 0; channel_idx < num_of_channels_; ++channel_idx) {
-    if (shutdown_requested_.load(std::memory_order_relaxed)) {
-      stop_session_worker_running_.store(false, std::memory_order_relaxed);
-      return;
-    }
+  // Do it in parallel so system-state sampling sees the ramp-down concurrently.
+  std::vector<std::thread> workers;
+  workers.reserve(num_of_channels_);
 
-    mtms_event_interfaces::msg::DischargeFeedback feedback;
-    feedback =
-      channels_[channel_idx]->discharge(0, static_cast<uint16_t>(channel_idx));
-    discharge_feedback_publisher_->publish(feedback);
+  for (size_t channel_idx = 0; channel_idx < num_of_channels_; ++channel_idx) {
+    workers.emplace_back([this, channel_idx]() {
+      mtms_event_interfaces::msg::DischargeFeedback feedback =
+        channels_[channel_idx]->discharge(0, static_cast<uint16_t>(channel_idx));
+      discharge_feedback_publisher_->publish(feedback);
+    });
+  }
+
+  for (auto & worker : workers) {
+    if (worker.joinable()) {
+      worker.join();
+    }
   }
 
   session_state_value_.store(mtms_system_interfaces::msg::Session::STOPPED, std::memory_order_relaxed);
