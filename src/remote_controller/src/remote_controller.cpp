@@ -179,11 +179,18 @@ void RemoteController::stop_service_handler(
   }
 
   std::thread([this]() {
+    /* Wait until trial is not being prepared before stopping the session. */
+    while (this->prepare_trial_ongoing) {
+      std::this_thread::sleep_for(100ms);
+    }
+
+    /* Stop the session. */
     if (!stop_session()) {
       RCLCPP_ERROR(this->get_logger(), "StopSession did not succeed.");
       return;
     }
 
+    /* Set the state to NOT_STARTED. */
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
     RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
   }).detach();
