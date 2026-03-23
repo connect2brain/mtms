@@ -5,7 +5,7 @@ from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import PerformExperiment
 from std_srvs.srv import Trigger
 
-from mtms_trial_interfaces.srv import ValidateTrial
+from mtms_trial_interfaces.srv import CacheTrial
 
 
 class ExperimentHandler:
@@ -17,7 +17,7 @@ class ExperimentHandler:
     ROS_SERVICE_PAUSE_EXPERIMENT = ('/mtms/experiment/pause', Trigger)
     ROS_SERVICE_RESUME_EXPERIMENT = ('/mtms/experiment/resume', Trigger)
 
-    ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/validate', ValidateTrial)
+    ROS_SERVICE_VALIDATE_TRIAL = ('/mtms/trial/cache', CacheTrial)
 
     ROS_SERVICES = (
         ROS_SERVICE_PERFORM_EXPERIMENT,
@@ -134,9 +134,8 @@ class ExperimentHandler:
 
         response = self.node.call_service(client, request)
 
-        assert response.success, 'Trial validation failed.'
-
-        return response.is_trial_valid
+        success = response.success
+        return success
 
     def perform_experiment(self, experiment):
         """

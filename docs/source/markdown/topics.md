@@ -87,7 +87,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/experiment/pause` - Pause an ongoing experiment.
 - `/mtms/experiment/resume` - Resume a paused experiment.
 - `/mtms/experiment/cancel` - Cancel an ongoing experiment.
-- `/mtms/trial/validate` - Validate trial feasibility before execution.
+- `/mtms/trial/cache` - Warm waveform cache to validate trial feasibility before execution.
 - `/mtms/trial/log` - Log trial results and experiment metadata.
 
 ### Actions

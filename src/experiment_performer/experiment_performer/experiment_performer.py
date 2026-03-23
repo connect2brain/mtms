@@ -7,7 +7,7 @@ import uuid
 from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, ValidateTrial
+from mtms_trial_interfaces.srv import PerformTrial, CacheTrial
 from mtms_trial_interfaces.msg import Trial
 
 from std_msgs.msg import Bool, Empty
@@ -131,11 +131,10 @@ class ExperimentPerformerNode(Node):
         while not self.prepare_trial_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('Service {} not available, waiting...'.format(service_name))
 
-        # Create service client for validating a trial.
-
-        self.validate_trial_client = self.create_client(ValidateTrial, '/mtms/trial/validate', callback_group=self.callback_group)
-        while not self.validate_trial_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms/trial/validate not available, waiting...')
+        # Create service client for warming the cache, also used for validating a trial.
+        self.cache_trial_client = self.create_client(CacheTrial, '/mtms/trial/cache', callback_group=self.callback_group)
+        while not self.cache_trial_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service /mtms/trial/cache not available, waiting...')
 
         # Create service client for analyzing MEP.
 
@@ -375,19 +374,18 @@ class ExperimentPerformerNode(Node):
 
         return True
 
-    def validate_trial(self, trial):
-        request = ValidateTrial.Request()
+    def cache_trial(self, trial):
+        request = CacheTrial.Request()
         request.trial = trial
 
-        response = self.async_service_call(self.validate_trial_client, request, '/mtms/trial/validate')
+        response = self.async_service_call(self.cache_trial_client, request, '/mtms/trial/cache')
 
         if response is None:
-            self.logger.error('Service /mtms/trial/validate did not return a response.')
+            self.logger.error('Service /mtms/trial/cache did not return a response.')
             return False
 
-        assert response.success, "Validating trial was not successful."
-
-        return response.is_trial_valid
+        success = response.success
+        return success
 
     def log_trial(self, experiment_name, subject_name, experiment_id, trial, trial_number, num_of_attempts, mep_amplitude, mep_latency):
         request = LogTrial.Request()
@@ -551,7 +549,7 @@ class ExperimentPerformerNode(Node):
     def get_valid_trials(self, trials):
         valid_trials = []
         for trial in trials:
-            if self.validate_trial(trial):
+            if self.cache_trial(trial):
                 valid_trials.append(trial)
 
         self.logger.info('{}/{} of the trials are valid.'.format(
