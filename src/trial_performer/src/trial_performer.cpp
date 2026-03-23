@@ -313,13 +313,6 @@ void TrialPerformerNode::log_trial(const mtms_trial_interfaces::msg::Trial &tria
   }
 }
 
-void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
-  RCLCPP_INFO(this->get_logger(), "%s:", prefix.c_str());
-  for (uint8_t i = 0; i < voltages.size(); ++i) {
-    RCLCPP_INFO(this->get_logger(), "  Channel %d: %d V", i, voltages[i]);
-  }
-}
-
 void TrialPerformerNode::tic() {
   start_time = std::chrono::high_resolution_clock::now();
 }
@@ -445,14 +438,11 @@ void TrialPerformerNode::handle_perform_trial(
   /* Always get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
 
-  log_voltages(desired_voltages, "Desired voltages");
-
   /* Voltages must already be within margin; fail if they are not. */
   auto actual_voltages = get_actual_voltages();
-  log_voltages(actual_voltages, "Actual voltages");
 
   if (!are_voltages_within_margin(desired_voltages)) {
-    RCLCPP_ERROR(this->get_logger(), "Voltages not within margin. Call prepare_trial first.");
+    RCLCPP_ERROR(this->get_logger(), "Voltages not within margin; call prepare_trial first.");
     response->success = false;
     return;
   }
@@ -481,7 +471,6 @@ void TrialPerformerNode::handle_perform_trial(
   bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
 
   auto voltages_after_trial = get_actual_voltages();
-  log_voltages(voltages_after_trial, "Voltages after trial");
 
   /* If trial was successful, create a marker in neuronavigation. */
   if (success) {
@@ -511,8 +500,6 @@ void TrialPerformerNode::handle_prepare_trial(
   auto targets = request->trial.targets;
 
   auto [desired_voltages, _] = get_desired_voltages_and_waveforms(targets);
-
-  log_voltages(desired_voltages, "Desired voltages");
 
   bool success = set_voltages(desired_voltages);
   RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
