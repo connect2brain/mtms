@@ -89,11 +89,11 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   }
 
   // Use debounced state for button color/text selection.
-  const isWaitingOrCaching =
-    displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING
+  const isWaitingOrCachingOrStarting =
+    displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING || displayRemoteControllerState === RemoteControllerState.STARTING
   const isStopping = displayRemoteControllerState === RemoteControllerState.STOPPING
   const isStarted = displayRemoteControllerState === RemoteControllerState.STARTED
-  const isDisabled = isWaitingOrCaching || isStopping || !isDeviceOperational
+  const isDisabled = isWaitingOrCachingOrStarting || isStopping || !isDeviceOperational
 
   return (
     <RemoteControlPanel>
@@ -103,7 +103,7 @@ export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
           {label}
         </StyledRedButton>
       ) : (
-        <StyledButton onClick={isWaitingOrCaching ? undefined : onToggle} disabled={isDisabled}>
+        <StyledButton onClick={isWaitingOrCachingOrStarting ? undefined : onToggle} disabled={isDisabled}>
           {label}
         </StyledButton>
       )}
