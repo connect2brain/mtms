@@ -7,6 +7,8 @@ using namespace std::chrono_literals;
 const std::string HEARTBEAT_TOPIC = "/mtms/trial_performer/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
+static constexpr float VOLTAGE_RELATIVE_ERROR_TOLERANCE = 0.03f;
+
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
     : Node("trial_performer_node", options),
       callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)),
@@ -539,7 +541,7 @@ bool TrialPerformerNode::perform_trial(const mtms_trial_interfaces::msg::Trial &
     /* Voltages must already be within margin; fail if they are not. */
     auto actual_voltages = get_actual_voltages();
     log_voltages(actual_voltages, "Actual voltages");
-    if (!are_voltages_within_margin(desired_voltages, trial.voltage_tolerance_proportion_for_precharging)) {
+    if (!are_voltages_within_margin(desired_voltages)) {
       RCLCPP_ERROR(this->get_logger(), "Voltages not within margin. Call prepare_trial first.");
       return false;
     }
@@ -628,12 +630,12 @@ std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::Wave
   return {desired_voltages, approximated_waveforms};
 }
 
-bool TrialPerformerNode::are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion) const {
+bool TrialPerformerNode::are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const {
   auto actual_voltages = get_actual_voltages();
 
   for (uint8_t i = 0; i < actual_voltages.size(); ++i) {
     auto relative_error = std::abs(actual_voltages[i] - desired_voltages[i]) / static_cast<float>(actual_voltages[i]);
-    if (relative_error > voltage_tolerance_proportion &&
+    if (relative_error > VOLTAGE_RELATIVE_ERROR_TOLERANCE &&
         std::abs(actual_voltages[i] - desired_voltages[i]) > ABSOLUTE_VOLTAGE_ERROR_THRESHOLD_FOR_PRECHARGING) {
       RCLCPP_WARN(this->get_logger(), "Voltage out of margin on channel %d (relative error: %.0f%%, absolute error: %d V).",
         i,

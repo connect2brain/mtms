@@ -18,7 +18,6 @@ float64[] trigger_delay
 # ====================================================
 # Configuration
 # ====================================================
-float64 voltage_tolerance_proportion_for_precharging
 bool recharge_after_trial
 bool use_pulse_width_modulation_approximation
 bool dry_run

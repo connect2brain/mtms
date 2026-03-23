@@ -52,7 +52,6 @@ private:
   static constexpr int8_t MAX_ABSOLUTE_DISPLACEMENT_MM = 18;
   static constexpr uint8_t INTENSITY_LIMIT_V_M = 135;
   static constexpr uint16_t MAX_ROTATION_ANGLE_DEG = 359;
-  static constexpr double DEFAULT_VOLTAGE_TOLERANCE_PROPORTION_FOR_PRECHARGING = 0.03;
 };
 
 #endif  // remote_controller__remote_controller_HPP_

@@ -105,7 +105,7 @@ private:
   mtms_waveform_interfaces::msg::Waveform reverse_polarity(const mtms_waveform_interfaces::msg::Waveform &waveform);
   void request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
-  bool are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages, float voltage_tolerance_proportion) const;
+  bool are_voltages_within_margin(const std::vector<uint16_t> &desired_voltages) const;
 
   /* Service handlers */
   void handle_perform_trial(

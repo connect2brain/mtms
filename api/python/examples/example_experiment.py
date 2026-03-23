@@ -48,7 +48,6 @@ single_pulse_trial = Trial(
     trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    voltage_tolerance_proportion_for_precharging=0.1,  # This can be kept as is.
     use_pulse_width_modulation_approximation=True,  # This can be kept as is.
     recharge_after_trial=True,
     dry_run=False,
@@ -61,7 +60,6 @@ paired_pulse_trial = Trial(
     trigger_delay=trigger_delay,
 
     # These are the same for all trials.
-    voltage_tolerance_proportion_for_precharging=0.1,  # This can be kept as is.
     use_pulse_width_modulation_approximation=True,  # This can be kept as is.
     recharge_after_trial=True,
     dry_run=False,
