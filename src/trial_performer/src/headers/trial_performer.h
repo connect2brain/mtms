@@ -13,6 +13,7 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
+#include "mtms_trial_interfaces/srv/cache_trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
 #include "mtms_trial_interfaces/srv/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
@@ -41,6 +42,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr reentrant_callback_group;
   rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr prepare_trial_service;
+  rclcpp::Service<mtms_trial_interfaces::srv::CacheTrial>::SharedPtr cache_trial_service;
   rclcpp::Client<mtms_trial_interfaces::srv::SetVoltages>::SharedPtr set_voltages_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
@@ -104,6 +106,10 @@ private:
   void handle_perform_trial(
       const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
       std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
+
+  void handle_cache_trial(
+      const std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Request> request,
+      std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Response> response);
 
   void handle_prepare_trial(
       const std::shared_ptr<std_srvs::srv::Trigger::Request> request,

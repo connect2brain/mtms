@@ -44,6 +44,16 @@ void TrialPerformerNode::initialize_services() {
       rmw_qos_profile_services_default,
       callback_group);
 
+  cache_trial_service = this->create_service<mtms_trial_interfaces::srv::CacheTrial>(
+      "/mtms/trial/cache",
+      std::bind(
+          &TrialPerformerNode::handle_cache_trial,
+          this,
+          std::placeholders::_1,
+          std::placeholders::_2),
+      rmw_qos_profile_services_default,
+      callback_group);
+
   prepare_trial_service = this->create_service<std_srvs::srv::Trigger>(
       "/mtms/trial/prepare",
       std::bind(
@@ -445,7 +455,7 @@ void TrialPerformerNode::handle_perform_trial(
   const auto &trial = request->trial;
   auto targets = trial.targets;
 
-  /* Always get desired voltages and waveforms (also warms up the cache). */
+  /* Get desired voltages and waveforms (also warms up the cache). */
   auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
   (void)desired_voltages;
 
@@ -508,6 +518,27 @@ void TrialPerformerNode::handle_prepare_trial(
 
   RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
   RCLCPP_INFO(this->get_logger(), " ");
+}
+
+void TrialPerformerNode::handle_cache_trial(
+    const std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Request> request,
+    std::shared_ptr<mtms_trial_interfaces::srv::CacheTrial::Response> response) {
+  tic();
+
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Received cache trial request, warming cache...");
+
+  const auto &trial = request->trial;
+  const auto targets = trial.targets;
+
+  /* Warm the waveform cache by calling get_desired_voltages_and_waveforms(). */
+  auto [desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
+  (void)desired_voltages;
+  (void)waveforms;
+
+  response->success = true;
+
+  toc("Time passed while warming cache");
 }
 
 std::pair<std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> TrialPerformerNode::get_desired_voltages_and_waveforms(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) {
