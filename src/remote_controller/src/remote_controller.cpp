@@ -102,9 +102,12 @@ void RemoteController::start_service_handler(
 
   publish_started_state();
 
-  if (!request->trials.empty()) {
-    std::vector<mtms_trial_interfaces::msg::Trial> trials(request->trials.begin(), request->trials.end());
-    std::thread([this, trials = std::move(trials)]() mutable { cache_target_lists_async(std::move(trials)); }).detach();
+  if (!request->target_lists.empty()) {
+    std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
+      request->target_lists.begin(), request->target_lists.end());
+    std::thread([this, target_lists = std::move(target_lists)]() mutable {
+      cache_target_lists_async(std::move(target_lists));
+    }).detach();
   }
 
   response->success = true;
@@ -124,23 +127,23 @@ void RemoteController::stop_service_handler(
   RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
 }
 
-void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::Trial> trials)
+void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::TargetList> target_lists)
 {
-  RCLCPP_INFO(this->get_logger(), "Caching %zu trial(s)...", trials.size());
-  for (size_t i = 0; i < trials.size(); ++i) {
+  RCLCPP_INFO(this->get_logger(), "Caching %zu target list(s)...", target_lists.size());
+  for (size_t i = 0; i < target_lists.size(); ++i) {
     auto request = std::make_shared<mtms_trial_interfaces::srv::CacheTargetList::Request>();
-    request->targets = trials[i].targets;
+    request->targets = target_lists[i].targets;
 
     auto future = cache_target_list_client->async_send_request(request);
     try {
       auto response = future.get();
       if (response->success) {
-        RCLCPP_INFO(this->get_logger(), "Trial %zu cached successfully.", i);
+        RCLCPP_INFO(this->get_logger(), "Target list %zu cached successfully.", i);
       } else {
-        RCLCPP_WARN(this->get_logger(), "CacheTargetList returned failure for trial %zu.", i);
+        RCLCPP_WARN(this->get_logger(), "CacheTargetList returned failure for target list %zu.", i);
       }
     } catch (const std::exception & e) {
-      RCLCPP_ERROR(this->get_logger(), "CacheTargetList failed for trial %zu: %s", i, e.what());
+      RCLCPP_ERROR(this->get_logger(), "CacheTargetList failed for target list %zu: %s", i, e.what());
     }
   }
   RCLCPP_INFO(this->get_logger(), "Done caching trials.");

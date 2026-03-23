@@ -3,7 +3,7 @@ import styled from 'styled-components'
 
 import { StyledButton, StyledRedButton, StyledPanel } from 'styles/General'
 import { SmallerTitle } from 'styles/ExperimentStyles'
-import { startRemoteController, stopRemoteController } from 'ros/remote_controller'
+import { ElectricTarget, startRemoteController, stopRemoteController } from 'ros/remote_controller'
 
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
@@ -33,11 +33,14 @@ const RemoteControlTitle = styled(SmallerTitle)`
 `
 
 interface RemoteControlProps {
-  /** Called before starting; return false to block the start due to validation errors. */
-  onBeforeStart?: () => boolean
+  /**
+   * Called before starting; should validate the pulse table, show any errors, and return
+   * the target lists to cache, or null to abort the start.
+   */
+  getTargetLists?: () => ElectricTarget[][] | null
 }
 
-export const RemoteControl = ({ onBeforeStart }: RemoteControlProps) => {
+export const RemoteControl = ({ getTargetLists }: RemoteControlProps) => {
   const { systemState } = useContext(SystemContext)
   const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
   const { started: remoteControllerStarted } = useContext(RemoteControllerContext)
@@ -48,8 +51,13 @@ export const RemoteControl = ({ onBeforeStart }: RemoteControlProps) => {
     if (remoteControllerStarted) {
       stopRemoteController()
     } else {
-      if (onBeforeStart && !onBeforeStart()) return
-      startRemoteController()
+      if (getTargetLists) {
+        const targetLists = getTargetLists()
+        if (targetLists === null) return
+        startRemoteController(targetLists)
+      } else {
+        startRemoteController([])
+      }
     }
   }
 

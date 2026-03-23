@@ -9,7 +9,7 @@ export const RemoteControlView = () => {
 
   return (
     <RemoteControlPage>
-      <RemoteControl onBeforeStart={() => pulseTableRef.current?.triggerValidation() ?? true} />
+      <RemoteControl getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null} />
       <PulseTableWrapper>
         <PulseTable ref={pulseTableRef} />
       </PulseTableWrapper>

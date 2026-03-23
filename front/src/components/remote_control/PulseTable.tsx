@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import styled from 'styled-components'
 
+import { ElectricTarget } from 'ros/remote_controller'
+
 /* ── types ── */
 
 interface Pulse {
@@ -207,8 +209,11 @@ const FIELDS: { key: keyof Pulse; label: string }[] = [
 let nextId = 1
 
 export interface PulseTableHandle {
-  /** Show validation errors on all fields and return whether the table is valid. */
-  triggerValidation: () => boolean
+  /**
+   * Validate the table, flash any errors, and return the target lists if valid or null if not.
+   * Each row becomes one target list; null pulses within a row are skipped.
+   */
+  getTargetLists: () => ElectricTarget[][] | null
 }
 
 export const PulseTable = forwardRef<PulseTableHandle>(function PulseTable(_, ref) {
@@ -340,11 +345,24 @@ export const PulseTable = forwardRef<PulseTableHandle>(function PulseTable(_, re
   )
 
   useImperativeHandle(ref, () => ({
-    triggerValidation: () => {
+    getTargetLists: () => {
       flashValidationErrors()
-      return isTableValid()
+      if (!isTableValid()) return null
+      return rows
+        .filter((row) => row.pulses.some((p) => p !== null))
+        .map((row) =>
+          row.pulses
+            .filter((p): p is Pulse => p !== null)
+            .map((p) => ({
+              displacement_x: parseInt(p.x, 10),
+              displacement_y: parseInt(p.y, 10),
+              rotation_angle: parseInt(p.angle, 10),
+              intensity: parseInt(p.intensity, 10),
+              algorithm: 0,
+            }))
+        )
     },
-  }), [flashValidationErrors, isTableValid])
+  }), [flashValidationErrors, isTableValid, rows])
 
   const isFieldInvalid = (pulse: Pulse, field: keyof Pulse): boolean => {
     const val = pulse[field]

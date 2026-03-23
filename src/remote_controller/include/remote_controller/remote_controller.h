@@ -14,6 +14,7 @@
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
 #include "shared_stimulation_interfaces/msg/targeted_pulses.hpp"
 
+#include "mtms_trial_interfaces/msg/target_list.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
 #include "mtms_trial_interfaces/srv/perform_trial.hpp"
 #include "mtms_trial_interfaces/srv/cache_target_list.hpp"
@@ -40,7 +41,7 @@ private:
   void publish_started_state();
 
   // Trial caching
-  void cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::Trial> trials);
+  void cache_target_lists_async(std::vector<mtms_trial_interfaces::msg::TargetList> target_lists);
 
   // Helpers
   bool build_trial_from_message(

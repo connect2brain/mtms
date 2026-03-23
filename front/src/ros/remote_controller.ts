@@ -2,10 +2,18 @@ import ROSLIB from '@foxglove/roslibjs'
 
 import { ros } from './ros'
 
+export interface ElectricTarget {
+  displacement_x: number
+  displacement_y: number
+  rotation_angle: number
+  intensity: number
+  algorithm: number
+}
+
 const startRemoteControllerService = new ROSLIB.Service({
   ros: ros,
   name: '/mtms/remote_controller/start',
-  serviceType: 'std_srvs/Trigger',
+  serviceType: 'mtms_trial_interfaces/StartRemoteController',
 })
 
 const stopRemoteControllerService = new ROSLIB.Service({
@@ -14,8 +22,10 @@ const stopRemoteControllerService = new ROSLIB.Service({
   serviceType: 'std_srvs/Trigger',
 })
 
-export const startRemoteController = (onSuccess?: () => void) => {
-  const request = new ROSLIB.ServiceRequest({})
+export const startRemoteController = (targetLists: ElectricTarget[][], onSuccess?: () => void) => {
+  const request = new ROSLIB.ServiceRequest({
+    target_lists: targetLists.map((targets) => ({ targets })),
+  })
   startRemoteControllerService.callService(
     request,
     (response: any) => {
@@ -49,4 +59,3 @@ export const stopRemoteController = (onSuccess?: () => void) => {
     }
   )
 }
-
