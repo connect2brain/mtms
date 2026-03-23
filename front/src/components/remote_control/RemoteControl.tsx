@@ -32,7 +32,12 @@ const RemoteControlTitle = styled(SmallerTitle)`
   margin-right: 0;
 `
 
-export const RemoteControl = () => {
+interface RemoteControlProps {
+  /** Called before starting; return false to block the start due to validation errors. */
+  onBeforeStart?: () => boolean
+}
+
+export const RemoteControl = ({ onBeforeStart }: RemoteControlProps) => {
   const { systemState } = useContext(SystemContext)
   const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
   const { started: remoteControllerStarted } = useContext(RemoteControllerContext)
@@ -43,6 +48,7 @@ export const RemoteControl = () => {
     if (remoteControllerStarted) {
       stopRemoteController()
     } else {
+      if (onBeforeStart && !onBeforeStart()) return
       startRemoteController()
     }
   }

@@ -1,15 +1,17 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
-import { PulseTable } from 'components/remote_control/PulseTable'
+import { PulseTable, PulseTableHandle } from 'components/remote_control/PulseTable'
 
 export const RemoteControlView = () => {
+  const pulseTableRef = useRef<PulseTableHandle>(null)
+
   return (
     <RemoteControlPage>
-      <RemoteControl />
+      <RemoteControl onBeforeStart={() => pulseTableRef.current?.triggerValidation() ?? true} />
       <PulseTableWrapper>
-        <PulseTable />
+        <PulseTable ref={pulseTableRef} />
       </PulseTableWrapper>
     </RemoteControlPage>
   )

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import styled from 'styled-components'
 
 /* ── types ── */
@@ -132,6 +132,7 @@ const CellInput = styled.input<{ $invalid?: boolean }>`
   outline: none;
   background: ${({ $invalid }) => ($invalid ? '#fff5f5' : '#fff')};
   color: ${({ $invalid }) => ($invalid ? '#c62828' : '#333')};
+  transition: border-color 0.4s, background-color 0.4s, color 0.4s;
   &:focus {
     border-color: ${({ $invalid }) => ($invalid ? '#e53935' : '#5c8fdb')};
   }
@@ -205,10 +206,23 @@ const FIELDS: { key: keyof Pulse; label: string }[] = [
 
 let nextId = 1
 
-export const PulseTable: React.FC = () => {
+export interface PulseTableHandle {
+  /** Show validation errors on all fields and return whether the table is valid. */
+  triggerValidation: () => boolean
+}
+
+export const PulseTable = forwardRef<PulseTableHandle>(function PulseTable(_, ref) {
   const [rows, setRows] = useState<PulseRow[]>([])
+  const [showValidationErrors, setShowValidationErrors] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flashValidationErrors = useCallback(() => {
+    setShowValidationErrors(true)
+    if (validationTimerRef.current) clearTimeout(validationTimerRef.current)
+    validationTimerRef.current = setTimeout(() => setShowValidationErrors(false), 1000)
+  }, [])
 
   const loadFromJson = useCallback((json: string) => {
     try {
@@ -320,9 +334,21 @@ export const PulseTable: React.FC = () => {
     [],
   )
 
+  const isTableValid = useCallback(
+    () => rows.every((row) => row.pulses.every((p) => p === null || isPulseValid(p))),
+    [rows],
+  )
+
+  useImperativeHandle(ref, () => ({
+    triggerValidation: () => {
+      flashValidationErrors()
+      return isTableValid()
+    },
+  }), [flashValidationErrors, isTableValid])
+
   const isFieldInvalid = (pulse: Pulse, field: keyof Pulse): boolean => {
     const val = pulse[field]
-    if (val === '') return false // empty = not yet filled, not invalid
+    if (val === '') return showValidationErrors // empty only flagged when validation errors are shown
     return !validators[field](val)
   }
 
@@ -427,7 +453,13 @@ export const PulseTable: React.FC = () => {
           − Remove
         </RemoveBtn>
         <Spacer />
-        <SmallBtn onClick={handleSave} disabled={rows.length === 0}>
+        <SmallBtn
+          onClick={() => {
+            flashValidationErrors()
+            if (isTableValid()) handleSave()
+          }}
+          disabled={rows.length === 0}
+        >
           Save as…
         </SmallBtn>
         <SmallBtn onClick={handleLoad}>Load</SmallBtn>
@@ -441,4 +473,4 @@ export const PulseTable: React.FC = () => {
       </ButtonRow>
     </Wrapper>
   )
-}
+})
