@@ -7,6 +7,7 @@ import { HeartbeatProvider } from './HeartbeatProvider'
 import { SystemProvider } from './SystemProvider'
 import { ConfigProvider } from './ConfigProvider'
 import { HealthcheckProvider } from './HealthcheckProvider'
+import { TrialProvider } from './TrialProvider'
 import { EegDeviceInfoProvider } from './EegDeviceInfoProvider'
 import { ExperimentProvider } from './ExperimentProvider'
 
@@ -22,9 +23,11 @@ const Providers: React.FC<Props> = ({ children }) => {
           <SystemProvider>
             <ConfigProvider>
               <HealthcheckProvider>
-                <EegDeviceInfoProvider>
-                  <ExperimentProvider>{children}</ExperimentProvider>
-                </EegDeviceInfoProvider>
+                <TrialProvider>
+                  <EegDeviceInfoProvider>
+                    <ExperimentProvider>{children}</ExperimentProvider>
+                  </EegDeviceInfoProvider>
+                </TrialProvider>
               </HealthcheckProvider>
             </ConfigProvider>
           </SystemProvider>

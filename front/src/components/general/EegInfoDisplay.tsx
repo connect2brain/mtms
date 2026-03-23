@@ -7,7 +7,7 @@ import { StyledPanel } from 'styles/General'
 const EegInfoPanel = styled(StyledPanel)`
   width: 250px;
   position: fixed;
-  top: 395px;
+  top: 476px;
   right: 5px;
   z-index: 1000;
   padding: 15px 20px;

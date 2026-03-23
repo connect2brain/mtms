@@ -108,9 +108,7 @@ export const ChannelVoltageDisplay: React.FC = () => {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <TdPlaceholder colSpan={2}>
-                  {'\u2013'}
-                </TdPlaceholder>
+                <TdPlaceholder colSpan={2}>{'\u2013'}</TdPlaceholder>
               </tr>
             ) : (
               rows.map((ch) => (
@@ -126,3 +124,4 @@ export const ChannelVoltageDisplay: React.FC = () => {
     </>
   )
 }
+
