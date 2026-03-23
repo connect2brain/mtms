@@ -1,11 +1,13 @@
 #ifndef remote_controller__remote_controller_HPP_
 #define remote_controller__remote_controller_HPP_
 
-#include <mutex>
 #include <optional>
 #include <cstdint>
+#include <mutex>
 
 #include "rclcpp/rclcpp.hpp"
+
+#include "std_srvs/srv/trigger.hpp"
 
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
 #include "shared_stimulation_interfaces/msg/targeted_pulses.hpp"
@@ -20,6 +22,14 @@ public:
   explicit RemoteController(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
+  // ROS service handlers
+  void start_service_handler(
+    [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+  void stop_service_handler(
+    [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response);
+
   // ROS callbacks
   void eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
@@ -41,12 +51,17 @@ private:
   // Service client
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;
 
+  // Start/stop gating.
+  bool started{false};
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_service;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_service;
+
   // Latest timebase mapping (EEG device time -> mTMS session time).
   std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_eeg_to_mtms;
 
   // Prevent overlapping trials.
-  std::mutex trial_ongoing_mutex;
   bool trial_ongoing{false};
+  std::mutex trial_ongoing_mutex;
 
   // Constants aligned with `targeting` validation.
   static constexpr int8_t MAX_ABSOLUTE_DISPLACEMENT_MM = 18;

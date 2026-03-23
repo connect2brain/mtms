@@ -8,6 +8,8 @@
 #include <string>
 #include <utility>
 
+#include "std_srvs/srv/trigger.hpp"
+
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
 #include "std_msgs/msg/empty.hpp"
@@ -23,6 +25,15 @@ constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
 {
+  /* Start and stop services. */
+  start_service = this->create_service<std_srvs::srv::Trigger>(
+    "/mtms/remote_controller/start",
+    std::bind(&RemoteController::start_service_handler, this, _1, std::placeholders::_2));
+
+  stop_service = this->create_service<std_srvs::srv::Trigger>(
+    "/mtms/remote_controller/stop",
+    std::bind(&RemoteController::stop_service_handler, this, _1, std::placeholders::_2));
+
   /* Subscription for eeg_to_mtms mapping. */
   const auto mapping_qos = rclcpp::QoS(rclcpp::KeepLast(1))
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -55,6 +66,28 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
   this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
+
+  RCLCPP_INFO(this->get_logger(), "Remote controller initialized");
+}
+
+void RemoteController::start_service_handler(
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  (void)request;
+  started = true;
+  response->success = true;
+  RCLCPP_INFO(this->get_logger(), "Remote controller started");
+}
+
+void RemoteController::stop_service_handler(
+  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+{
+  (void)request;
+  started = false;
+  response->success = true;
+  RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
@@ -140,6 +173,15 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
+  if (!started) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(),
+      *this->get_clock(),
+      5000,
+      "Remote controller not started; ignoring TargetedPulses.");
+    return;
+  }
+
   mtms_system_interfaces::msg::TimebaseMapping mapping;
   if (!latest_eeg_to_mtms.has_value()) {
     RCLCPP_WARN_THROTTLE(
