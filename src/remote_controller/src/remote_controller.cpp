@@ -155,11 +155,6 @@ void RemoteController::start_service_handler(
     }
 
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STARTED);
-
-    /* If we are not ready, prepare the trial. */
-    if (!this->trial_readiness) {
-      prepare_trial();
-    }
   }).detach();
 
   response->success = true;
