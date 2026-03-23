@@ -21,8 +21,12 @@ const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
 const std::string CACHE_TARGET_LIST_SERVICE = "/mtms/trial/cache";
+const std::string PREPARE_TRIAL_SERVICE = "/mtms/trial/prepare";
+const std::string START_SESSION_SERVICE = "/mtms/device/session/start";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
-const std::string STARTED_TOPIC = "/mtms/remote_controller/started";
+const std::string REMOTE_CONTROLLER_STATE_TOPIC = "/mtms/remote_controller/state";
+const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
+
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
@@ -32,8 +36,9 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  /* Publish current started state so the frontend can reflect it accurately. */
-  started_publisher = this->create_publisher<std_msgs::msg::Bool>(STARTED_TOPIC, latched_qos);
+  state_publisher =
+    this->create_publisher<mtms_trial_interfaces::msg::RemoteControllerState>(
+      REMOTE_CONTROLLER_STATE_TOPIC, latched_qos);
 
   /* Start and stop services. */
   start_service = this->create_service<mtms_trial_interfaces::srv::StartRemoteController>(
@@ -60,6 +65,12 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     pulses_qos,
     std::bind(&RemoteController::targeted_pulses_callback, this, _1));
 
+  /* Subscription for trial readiness. */
+  trial_readiness_subscriber = this->create_subscription<std_msgs::msg::Bool>(
+    TRIAL_READINESS_TOPIC,
+    latched_qos,
+    std::bind(&RemoteController::trial_readiness_callback, this, _1));
+
   /* Service client for performing trials. */
   perform_trial_client =
     this->create_client<mtms_trial_interfaces::srv::PerformTrial>(PERFORM_TRIAL_SERVICE);
@@ -76,39 +87,72 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", CACHE_TARGET_LIST_SERVICE.c_str());
   }
 
+  /* Service client for starting the device/session. */
+  start_session_client =
+    this->create_client<mtms_system_interfaces::srv::StartSession>(START_SESSION_SERVICE);
+
+  while (!start_session_client->wait_for_service(std::chrono::seconds(2))) {
+    RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", START_SESSION_SERVICE.c_str());
+  }
+
+  /* Service client for preparing trials. */
+  prepare_trial_client =
+    this->create_client<std_srvs::srv::Trigger>(PREPARE_TRIAL_SERVICE);
+  while (!prepare_trial_client->wait_for_service(std::chrono::seconds(2))) {
+    RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", PREPARE_TRIAL_SERVICE.c_str());
+  }
+
   auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
   this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
-  /* Publish initial started state. */
-  publish_started_state();
+  set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
   RCLCPP_INFO(this->get_logger(), "Remote controller initialized");
 }
 
-void RemoteController::publish_started_state()
+void RemoteController::set_state(uint8_t new_state)
 {
-  std_msgs::msg::Bool started_msg;
-  started_msg.data = started;
-  started_publisher->publish(started_msg);
+  {
+    std::lock_guard<std::mutex> lock(state_mutex);
+    this->state.state = new_state;
+  }
+  state_publisher->publish(this->state);
+}
+
+uint8_t RemoteController::get_state()
+{
+  std::lock_guard<std::mutex> lock(state_mutex);
+  return this->state.state;
 }
 
 void RemoteController::start_service_handler(
   const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
   std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response)
 {
-  started = true;
+  set_state(mtms_trial_interfaces::msg::RemoteControllerState::CACHING);
 
-  publish_started_state();
+  std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
+    request->target_lists.begin(), request->target_lists.end());
 
-  if (!request->target_lists.empty()) {
-    std::vector<mtms_trial_interfaces::msg::TargetList> target_lists(
-      request->target_lists.begin(), request->target_lists.end());
-    std::thread([this, target_lists = std::move(target_lists)]() mutable {
-      cache_target_lists_async(std::move(target_lists));
-    }).detach();
-  }
+  std::thread([this, target_lists = std::move(target_lists)]() mutable {
+    cache_target_lists_async(std::move(target_lists));
+
+    /* Start the device/session before enabling trial readiness callback behavior. */
+    if (!start_session()) {
+      RCLCPP_ERROR(this->get_logger(), "StartSession did not succeed; state will remain NOT_STARTED.");
+      set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
+      return;
+    }
+
+    set_state(mtms_trial_interfaces::msg::RemoteControllerState::STARTED);
+
+    /* If we are not ready, prepare the trial. */
+    if (!this->trial_readiness) {
+      prepare_trial();
+    }
+  }).detach();
 
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller started");
@@ -119,9 +163,7 @@ void RemoteController::stop_service_handler(
   std::shared_ptr<std_srvs::srv::Trigger::Response> response)
 {
   (void)request;
-  started = false;
-
-  publish_started_state();
+  set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
   response->success = true;
   RCLCPP_INFO(this->get_logger(), "Remote controller stopped");
@@ -147,6 +189,18 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
     }
   }
   RCLCPP_INFO(this->get_logger(), "Done caching target lists.");
+}
+
+bool RemoteController::start_session()
+{
+  bool session_started = false;
+
+  auto request = std::make_shared<mtms_system_interfaces::srv::StartSession::Request>();
+  auto future = start_session_client->async_send_request(request);
+  auto response = future.get();
+  session_started = response && response->success;
+
+  return session_started;
 }
 
 void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
@@ -232,7 +286,7 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
-  if (!started) {
+  if (!get_state() == mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
       *this->get_clock(),
@@ -292,6 +346,39 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 
     std::lock_guard<std::mutex> lock(trial_ongoing_mutex);
     trial_ongoing = false;
+  }).detach();
+}
+
+void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  this->trial_readiness = msg->data;
+  if (!this->trial_readiness) {
+    prepare_trial();
+  }
+}
+
+void RemoteController::prepare_trial()
+{
+  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
+    return;
+  }
+  if (this->prepare_trial_ongoing) {
+    return;
+  }
+  this->prepare_trial_ongoing = true;
+
+  auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+  auto future = prepare_trial_client->async_send_request(request);
+
+  std::thread([this, future = std::move(future)]() mutable {
+    auto response = future.get();
+    if (response && response->success) {
+      RCLCPP_INFO(this->get_logger(), "Prepare trial completed successfully.");
+    } else {
+      RCLCPP_WARN(this->get_logger(), "Prepare trial completed with failure (success=false).");
+    }
+
+    this->prepare_trial_ongoing = false;
   }).detach();
 }
 
