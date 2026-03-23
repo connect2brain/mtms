@@ -32,17 +32,45 @@ Channel::Channel(
 mtms_event_interfaces::msg::ChargeFeedback Channel::charge(const uint16_t target_voltage, const uint16_t event_id)
 {
   const double charge_rate_constant = capacitance_ / (2.0 * charge_rate_);
-  double t = 0.0;
+  double start_voltage = 0.0;
+  double total_charge_time_s = 0.0;
+  bool should_charge = false;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    t =
-      charge_rate_constant *
-      ((target_voltage * target_voltage) - (current_voltage_ * current_voltage_));
+    start_voltage = current_voltage_;
+    // Model used in the existing implementation:
+    // t_total = (C/(2*charge_rate)) * (Vt^2 - V0^2)
+    total_charge_time_s =
+      charge_rate_constant * ((target_voltage * target_voltage) - (start_voltage * start_voltage));
+    should_charge = total_charge_time_s > 0.0;
     is_charging_ = true;
   }
 
-  if (t > 0.0) {
-    std::this_thread::sleep_for(std::chrono::duration<double>(t));
+  if (should_charge) {
+    // Update `current_voltage_` periodically so system_state can observe the ramp.
+    constexpr double STEP_S = 0.02;  // 20ms
+    double elapsed_s = 0.0;
+
+    const double v0_sq = start_voltage * start_voltage;
+    const double vt = static_cast<double>(target_voltage);
+    const double vt_sq = vt * vt;
+
+    while (elapsed_s < total_charge_time_s) {
+      const double remaining_s = total_charge_time_s - elapsed_s;
+      const double dt_s = std::min(STEP_S, remaining_s);
+      std::this_thread::sleep_for(std::chrono::duration<double>(dt_s));
+      elapsed_s += dt_s;
+
+      // With the above model: V(t)^2 = V0^2 + (Vt^2 - V0^2) * (t / t_total)
+      double v_sq = v0_sq + (vt_sq - v0_sq) * (elapsed_s / total_charge_time_s);
+      if (v_sq > vt_sq) {
+        v_sq = vt_sq;
+      }
+      const double v = std::sqrt(std::max(0.0, v_sq));
+
+      std::lock_guard<std::mutex> lock(mutex_);
+      current_voltage_ = v;
+    }
   }
 
   {
@@ -62,22 +90,43 @@ mtms_event_interfaces::msg::DischargeFeedback Channel::discharge(
   const uint16_t event_id)
 {
   double target_voltage = 0.0;
-  double t = 0.0;
+  double start_voltage = 0.0;
+  double total_discharge_time_s = 0.0;
   bool should_discharge = false;
   {
     std::lock_guard<std::mutex> lock(mutex_);
     target_voltage = std::max<double>(requested_target_voltage, 3.0);
     if (current_voltage_ > target_voltage) {
-      t = time_constant_ * std::log(current_voltage_ / target_voltage);
+      start_voltage = current_voltage_;
+      // Model: V(t) = V0 * exp(-t / tau), where t_total satisfies V(t_total)=target.
+      total_discharge_time_s = time_constant_ * std::log(start_voltage / target_voltage);
       is_discharging_ = true;
       should_discharge = true;
     }
   }
 
   if (should_discharge) {
-    if (t > 0.0) {
-      std::this_thread::sleep_for(std::chrono::duration<double>(t));
+    // Update `current_voltage_` periodically during the discharge so that
+    // `/mtms/device/system_state` can observe the voltage ramp-down.
+    //
+    // Keep the step relatively coarse to avoid overhead; system_state publishes at 100ms.
+    constexpr double STEP_S = 0.02;  // 20ms
+    double elapsed_s = 0.0;
+
+    while (elapsed_s < total_discharge_time_s) {
+      const double remaining_s = total_discharge_time_s - elapsed_s;
+      const double dt_s = std::min(STEP_S, remaining_s);
+      std::this_thread::sleep_for(std::chrono::duration<double>(dt_s));
+      elapsed_s += dt_s;
+
+      double v = start_voltage * std::exp(-elapsed_s / time_constant_);
+      if (v < target_voltage) {
+        v = target_voltage;
+      }
+      std::lock_guard<std::mutex> lock(mutex_);
+      current_voltage_ = v;
     }
+
     std::lock_guard<std::mutex> lock(mutex_);
     is_discharging_ = false;
     current_voltage_ = target_voltage;
