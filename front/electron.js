@@ -44,8 +44,9 @@ function createWindow() {
   })
 }
 
-ipcMain.handle('dialog:saveFile', async (_event, defaultName, content) => {
-  const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+ipcMain.handle('dialog:saveFile', async (event, defaultName, content) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
     defaultPath: defaultName,
     filters: [{ name: 'JSON', extensions: ['json'] }],
   })
@@ -54,8 +55,9 @@ ipcMain.handle('dialog:saveFile', async (_event, defaultName, content) => {
   return true
 })
 
-ipcMain.handle('dialog:loadFile', async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+ipcMain.handle('dialog:loadFile', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile'],
   })
