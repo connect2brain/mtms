@@ -21,8 +21,6 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   mtms_simulator:
@@ -65,8 +63,6 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   targeting:
@@ -77,8 +73,6 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   trial_logger:
@@ -114,8 +108,6 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   voltage_setter:
@@ -126,8 +118,6 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   waveform_utils:
@@ -169,8 +159,6 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - EEG_PORT=50001
       - EEG_DEVICE=neurone
-    # The container needs to be privileged to set real-time priority.
-    privileged: true
     network_mode: host
 
   timebase_calibrator:
