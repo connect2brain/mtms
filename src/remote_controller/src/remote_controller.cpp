@@ -177,8 +177,13 @@ void RemoteController::start_service_handler(
       return;
     }
 
-    /* Prepare the trial. */
+    /* Start preparing the trial. */
     prepare_trial();
+
+    /* Wait for trial readiness. */
+    while (!trial_readiness) {
+      std::this_thread::sleep_for(50ms);
+    }
 
     /* Set the state to STARTED. */
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STARTED);
@@ -432,10 +437,11 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 
 void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)
 {
+  this->trial_readiness = msg->data;
   if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
     return;
   }
-  if (!msg->data) {
+  if (!trial_readiness) {
     RCLCPP_INFO(this->get_logger(), "Trial readiness is false; preparing trial.");
     prepare_trial();
   }
