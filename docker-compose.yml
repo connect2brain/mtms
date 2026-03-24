@@ -49,6 +49,8 @@ services:
     build:
       context: .
       dockerfile: src/remote_controller/Dockerfile
+    # The container needs to be privileged to set real-time priority.
+    privileged: true
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
