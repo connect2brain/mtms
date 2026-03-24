@@ -14,12 +14,11 @@ Note that the software installation steps are in `README.md`, while the hardware
 ## Table of Contents
 
 1. [Router Configuration](#router-configuration)
-2. [Windows Configuration](#windows-configuration)
-3. [BIOS Configuration](#bios-configuration)
-4. [Operating System Installation](#operating-system-installation)
-5. [Ubuntu Configuration](#ubuntu-configuration)
-6. [Software Installation](#software-installation)
-7. [Site-Specific Configurations](#site-specific-configurations)
+2. [BIOS Configuration](#bios-configuration)
+3. [Operating System Installation](#operating-system-installation)
+4. [Ubuntu Configuration](#ubuntu-configuration)
+5. [Software Installation](#software-installation)
+6. [Site-Specific Configurations](#site-specific-configurations)
 
 ## Router Configuration
 
