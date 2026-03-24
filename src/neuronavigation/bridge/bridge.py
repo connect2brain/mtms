@@ -60,7 +60,7 @@ class NeuronavigationNode(Node):
             name='Enable or disable electric field',
             type=ParameterType.PARAMETER_BOOL,
         )
-        self.declare_parameter('electric_field_enable', descriptor=descriptor)
+        self.declare_parameter('electric_field_enable', False, descriptor=descriptor)
         self.electric_field_enable = self.get_parameter('electric_field_enable').value
 
         # Robot
@@ -68,7 +68,7 @@ class NeuronavigationNode(Node):
             name='Enable or disable robot',
             type=ParameterType.PARAMETER_BOOL,
         )
-        self.declare_parameter('robot_enable', descriptor=descriptor)
+        self.declare_parameter('robot_enable', False, descriptor=descriptor)
         self.robot_enable = self.get_parameter('robot_enable').value
 
         # Create publishers, subscribers, and services
