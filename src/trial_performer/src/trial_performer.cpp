@@ -16,6 +16,8 @@ const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 /* NOTE: If this value changes, update all places that assume fixed maximum voltage. */
 static constexpr uint16_t FIXED_DESIRED_VOLTAGE = 1500;
 
+static constexpr std::chrono::seconds VOLTAGE_WAIT_TIMEOUT{10};
+
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
     : Node("trial_performer_node", options),
       callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)),
@@ -407,28 +409,14 @@ void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces:
   }
 }
 
-/* Action clients */
-
-bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
+void TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   auto request = std::make_shared<mtms_trial_interfaces::srv::SetVoltages::Request>();
   request->voltages = voltages;
 
-  auto future = set_voltages_client->async_send_request(request);
-
-  /* Wait for the response. */
-  if (future.wait_for(10s) != std::future_status::ready) {
-    RCLCPP_ERROR(this->get_logger(), "Call to SetVoltages service timed out");
-    return false;
-  }
-
-  auto response = future.get();
-  if (!response->success) {
-    RCLCPP_ERROR(this->get_logger(), "Call to SetVoltages service failed");
-    return false;
-  }
-
-  return true;
+  set_voltages_client->async_send_request(request);
 }
+
+/* Service handlers */
 
 void TrialPerformerNode::handle_perform_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
@@ -510,6 +498,7 @@ void TrialPerformerNode::handle_prepare_trial(
     std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
 
   (void)request;  // No request data; this call is used purely as a trigger.
+  response->success = false;
 
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Received prepare trial request, charging max voltages...");
@@ -517,22 +506,28 @@ void TrialPerformerNode::handle_prepare_trial(
   /* Check that the device and session are started. */
   if (!is_device_started()) {
     RCLCPP_WARN(this->get_logger(), "Device not started.");
-    response->success = false;
     return;
   }
 
   if (!is_session_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started.");
-    response->success = false;
     return;
   }
 
-  bool success = set_voltages(fixed_desired_voltages);
-  response->success = success;
+  set_voltages(fixed_desired_voltages);
 
-  log_voltages(get_actual_voltages(), "Voltages after trial preparation");
+  /* Wait until trial is ready. */
+  auto wait_start = std::chrono::steady_clock::now();
+  while (!is_ready_for_trial(false)) {
+    if (std::chrono::steady_clock::now() - wait_start > VOLTAGE_WAIT_TIMEOUT) {
+      RCLCPP_ERROR(this->get_logger(), "Timed out waiting for voltages to reach target.");
+      return;
+    }
+    std::this_thread::sleep_for(50ms);
+  }
 
-  RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
+  response->success = true;
+  RCLCPP_INFO(this->get_logger(), "Prepare trial completed successfully.");
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
