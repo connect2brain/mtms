@@ -26,7 +26,7 @@ import { countValidTrials, performExperiment, visualizeTargets, getMaximumIntens
 import { ExperimentControlButtons } from 'components/experiment/ExperimentControlButtons'
 import { EXPERIMENT_STATE, ExperimentContext } from 'providers/ExperimentProvider'
 
-import { SystemContext, DeviceState } from 'providers/SystemProvider'
+import { SystemContext, DeviceState, SessionState } from 'providers/SystemProvider'
 import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
@@ -478,6 +478,8 @@ export const ExperimentView = () => {
   const [isValidated, setIsValidated] = useState<boolean>(false)
   const [numOfTrials, setNumOfTrials] = useState<number>(10)
   const [duration, setDuration] = useState<number | null>(null)
+
+  const isSessionOngoing = session !== null && session.state !== SessionState.STOPPED
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -1374,7 +1376,8 @@ export const ExperimentView = () => {
               !isValidated ||
               numOfValidTrials === null ||
               numOfValidTrials === 0 ||
-              !isDeviceOperational
+              !isDeviceOperational ||
+              isSessionOngoing
             }
           />
         </StatusPanel>
