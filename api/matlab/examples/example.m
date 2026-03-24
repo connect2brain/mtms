@@ -96,6 +96,43 @@ else
     fprintf('MEP analysis failed: status=%d\n', status);
 end
 
+%% Get EEG/EMG data around trigger.
+
+% Send a pulse and a trigger out, then retrieve the EEG/EMG data around the trigger.
+
+waveform = api.get_default_waveform(channel);
+reverse_polarity = false;
+
+channel = 0;
+execution_condition = api.execution_conditions.TIMED;
+time = api.get_time() + 3.0;
+
+api.send_pulse(channel, waveform, reverse_polarity, execution_condition, time);
+
+% Send a trigger out at the same time as the pulse.
+
+duration_us = 1000;
+
+port = 1;
+execution_condition = api.execution_conditions.TIMED;
+
+api.send_trigger_out(port, duration_us, execution_condition, time);
+
+% Get EEG/EMG data from 0.1 s before to 0.1 s after the trigger.
+
+window_start = -0.1;  % s, before the trigger
+window_end = 0.1;  % s, after the trigger
+
+[result, status] = api.get_trigger_window(window_start, window_end);
+
+if status == api.TRIGGER_WINDOW_STATUS_CODES.NO_ERROR
+    fprintf('Trigger window: eeg_samples=%d, emg_samples=%d, sampling_frequency=%d, trigger_index=%d\n', ...
+        length(result.eeg_buffer), length(result.emg_buffer), result.sampling_frequency, result.trigger_index);
+else
+    fprintf('Get trigger window failed: status=%d\n', status);
+end
+
+
 %% Custom waveforms
 
 % Create a custom waveform.

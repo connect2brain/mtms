@@ -37,6 +37,7 @@ classdef MTMSApiNode < handle
         reverse_polarity_client
 
         analyze_mep_client
+        get_trigger_window_client
     end
 
     methods
@@ -103,6 +104,7 @@ classdef MTMSApiNode < handle
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/mtms/waveforms/reverse_polarity", "mtms_targeting_interfaces/ReversePolarity");
 
             obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/eeg/analyze_mep", "mtms_mep_interfaces/AnalyzeMep");
+            obj.get_trigger_window_client = ros2svcclient(obj.node, "/mtms/eeg/get_trigger_window", "mtms_mep_interfaces/GetTriggerWindow");
         end
 
         % Starting and stopping
@@ -490,6 +492,39 @@ classdef MTMSApiNode < handle
             mep.amplitude = response.amplitude;
             mep.latency = response.latency;
             mep.emg_buffer = response.emg_buffer;
+
+            status = response.status;
+        end
+
+        function [result, status] = get_trigger_window(obj, window_start, window_end)
+            %get_trigger_window Get EEG and EMG data around the next trigger
+            %
+            %   Get EEG and EMG data around the next trigger within the specified time window.
+            %
+            %   :param window_start: Start of the time window relative to the trigger time (in seconds).
+            %   :type window_start: float
+            %   :param window_end: End of the time window relative to the trigger time (in seconds).
+            %   :type window_end: float
+            %
+            %   :return: Result struct with fields eeg_buffer, emg_buffer, sampling_frequency, and trigger_index.
+            %   :rtype: struct
+            %   :return: Status code.
+            %   :rtype: uint8
+
+            client = obj.get_trigger_window_client;
+
+            request = ros2message(client);
+
+            request.window_start = double(window_start);
+            request.window_end = double(window_end);
+
+            response = call(client, request);
+
+            result = struct();
+            result.eeg_buffer = response.eeg_buffer;
+            result.emg_buffer = response.emg_buffer;
+            result.sampling_frequency = response.sampling_frequency;
+            result.trigger_index = response.trigger_index;
 
             status = response.status;
         end

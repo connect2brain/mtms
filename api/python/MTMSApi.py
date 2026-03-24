@@ -944,6 +944,33 @@ class MTMSApi:
 
         return mep, status
 
+    def get_trigger_window(self, window_start, window_end):
+        """
+        Get EEG and EMG data around the next trigger within the specified time window.
+
+        The next trigger time is determined by the next trigger received in the EEG signal. If no trigger is received,
+        the request will time out in 10 seconds.
+
+        Parameters
+        ----------
+        window_start : float
+            Start of the time window relative to the trigger time (in seconds). Typically negative for pre-trigger data.
+        window_end : float
+            End of the time window relative to the trigger time (in seconds). Typically positive for post-trigger data.
+
+        Returns
+        -------
+        tuple
+            A tuple containing a dict with keys 'eeg_buffer', 'emg_buffer', 'sampling_frequency', and 'trigger_index',
+            and a status code.
+        """
+        result, status = self.node.get_trigger_window(
+            window_start=window_start,
+            window_end=window_end,
+        )
+
+        return result, status
+
     # Experiment
     def get_experiment_handler(self):
         return self.node.get_experiment_handler()

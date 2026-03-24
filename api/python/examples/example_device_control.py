@@ -3,7 +3,7 @@ from MTMSApi import MTMSApi
 from mtms_event_interfaces.msg import (
     ExecutionCondition,
 )
-from mtms_mep_interfaces.srv import AnalyzeMep
+from mtms_mep_interfaces.srv import AnalyzeMep, GetTriggerWindow
 from mtms_waveform_interfaces.msg import (
     WaveformPhase,
     WaveformPiece,
@@ -158,6 +158,48 @@ if status == AnalyzeMep.Response.NO_ERROR:
     print(f"MEP analysis: amplitude={mep['amplitude']}, latency={mep['latency']}")
 else:
     print(f"MEP analysis failed: status={status}")
+
+
+## Get EEG/EMG data around trigger.
+
+# Send a pulse and a trigger out, then retrieve the EEG/EMG data around the trigger.
+waveform = api.get_default_waveform(channel)
+reverse_polarity = False
+
+channel = 0
+execution_condition = ExecutionCondition.TIMED
+time = api.get_time() + 3.0
+
+api.send_pulse(
+    channel=channel,
+    waveform=waveform,
+    reverse_polarity=reverse_polarity,
+    execution_condition=execution_condition,
+    time=time,
+)
+
+# Send a trigger out at the same time as the pulse.
+port = 1
+duration_us = 1000
+
+api.send_trigger_out(
+    port=port,
+    duration_us=duration_us,
+    execution_condition=execution_condition,
+    time=time,
+)
+
+# Get EEG/EMG data from 0.1 s before to 0.1 s after the trigger.
+result, status = api.get_trigger_window(
+    window_start=-0.1,
+    window_end=0.1,
+)
+
+if status == GetTriggerWindow.Response.NO_ERROR:
+    print(f"Trigger window: eeg_samples={len(result['eeg_buffer'])}, emg_samples={len(result['emg_buffer'])}, "
+          f"sampling_frequency={result['sampling_frequency']}, trigger_index={result['trigger_index']}")
+else:
+    print(f"Get trigger window failed: status={status}")
 
 
 ## Targeting

@@ -24,7 +24,7 @@ from mtms_event_interfaces.msg import (
     TriggerOutFeedback,
 )
 
-from mtms_mep_interfaces.srv import AnalyzeMep
+from mtms_mep_interfaces.srv import AnalyzeMep, GetTriggerWindow
 
 from mtms_targeting_interfaces.srv import (
     GetTargetVoltages,
@@ -59,6 +59,7 @@ class MTMSApiNode(Node):
     ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/get_allowed', GetStimulationAllowed)
 
     ROS_SERVICE_ANALYZE_MEP = ('/mtms/eeg/analyze_mep', AnalyzeMep)
+    ROS_SERVICE_GET_TRIGGER_WINDOW = ('/mtms/eeg/get_trigger_window', GetTriggerWindow)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,
@@ -74,6 +75,7 @@ class MTMSApiNode(Node):
         ROS_SERVICE_REQUEST_EVENTS,
         ROS_SERVICE_TRIGGER_EVENTS,
         ROS_SERVICE_ANALYZE_MEP,
+        ROS_SERVICE_GET_TRIGGER_WINDOW,
     )
 
     def __init__(self, channel_count, verbose):
@@ -434,6 +436,25 @@ class MTMSApiNode(Node):
         }
 
         return mep, response.status
+
+    def get_trigger_window(self, window_start, window_end):
+        topic, service_type = self.ROS_SERVICE_GET_TRIGGER_WINDOW
+        client = self.ros_service_clients[topic]
+
+        request = service_type.Request()
+        request.window_start = float(window_start)
+        request.window_end = float(window_end)
+
+        response = self.call_service(client, request)
+
+        result = {
+            "eeg_buffer": response.eeg_buffer,
+            "emg_buffer": response.emg_buffer,
+            "sampling_frequency": response.sampling_frequency,
+            "trigger_index": response.trigger_index,
+        }
+
+        return result, response.status
 
     # Experiment
     def get_experiment_handler(self):

@@ -42,6 +42,12 @@ classdef MTMSApi < handle
             'TIMEOUT', 3, ...
             'SAMPLES_DROPPED', 4, ...
             'INVALID_EMG_CHANNEL', 5);
+
+        TRIGGER_WINDOW_STATUS_CODES = struct( ...
+            'NO_ERROR', 0, ...
+            'LATE', 1, ...
+            'TIMEOUT', 2, ...
+            'SAMPLES_DROPPED', 3);
     end
 
     methods
@@ -732,6 +738,25 @@ classdef MTMSApi < handle
             if mep.latency == 0.0
                 mep.amplitude = NaN;
             end
+        end
+
+        function [result, status] = get_trigger_window(obj, window_start, window_end)
+        % Get EEG and EMG data around the next trigger within the specified time window.
+        %
+        % The next trigger time is determined by the next trigger received in the EEG signal. If no trigger is received,
+        % the request will time out in 10 seconds.
+        %
+        % :param window_start: Start of the time window relative to the trigger time (in seconds).
+        % :type window_start: float
+        % :param window_end: End of the time window relative to the trigger time (in seconds).
+        % :type window_end: float
+        %
+        % :return: Result struct with fields eeg_buffer, emg_buffer, sampling_frequency, and trigger_index.
+        % :rtype: struct
+        % :return: Status code.
+        % :rtype: uint8
+
+            [result, status] = obj.node.get_trigger_window(window_start, window_end);
         end
 
         function mep_configuration = create_mep_configuration(obj, emg_channel, mep_start_time, mep_end_time, preactivation_check_enabled, preactivation_start_time, preactivation_end_time, preactivation_voltage_range_limit)
