@@ -12,8 +12,8 @@
 
 #include "mtms_eeg_interfaces/msg/eeg_device_info.hpp"
 #include "mtms_eeg_interfaces/msg/sample.hpp"
-#include "mtms_mep_interfaces/srv/analyze_mep.hpp"
-#include "mtms_mep_interfaces/srv/get_trigger_window.hpp"
+#include "mtms_trigger_interfaces/srv/analyze_mep.hpp"
+#include "mtms_trigger_interfaces/srv/get_trigger_window.hpp"
 
 #include "ring_buffer.h"
 
@@ -35,12 +35,12 @@ private:
   void eeg_sample_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg);
 
   void analyze_mep_handler(
-    const std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Request> request,
-    std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Response> response);
+    const std::shared_ptr<mtms_trigger_interfaces::srv::AnalyzeMep::Request> request,
+    std::shared_ptr<mtms_trigger_interfaces::srv::AnalyzeMep::Response> response);
 
   void get_trigger_window_handler(
-    const std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Request> request,
-    std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Response> response);
+    const std::shared_ptr<mtms_trigger_interfaces::srv::GetTriggerWindow::Request> request,
+    std::shared_ptr<mtms_trigger_interfaces::srv::GetTriggerWindow::Response> response);
 
   bool wait_for_next_stimulation_time(double & stimulation_time_s, double timeout_s);
   bool wait_until_buffer_covers(double start_time_s, double end_time_s);
@@ -59,8 +59,8 @@ private:
   rclcpp::CallbackGroup::SharedPtr service_callback_group;
   rclcpp::Subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>::SharedPtr device_info_subscriber;
   rclcpp::Subscription<mtms_eeg_interfaces::msg::Sample>::SharedPtr eeg_subscriber;
-  rclcpp::Service<mtms_mep_interfaces::srv::AnalyzeMep>::SharedPtr analyze_mep_service;
-  rclcpp::Service<mtms_mep_interfaces::srv::GetTriggerWindow>::SharedPtr get_trigger_window_service;
+  rclcpp::Service<mtms_trigger_interfaces::srv::AnalyzeMep>::SharedPtr analyze_mep_service;
+  rclcpp::Service<mtms_trigger_interfaces::srv::GetTriggerWindow>::SharedPtr get_trigger_window_service;
 
   mutable std::mutex buffer_mutex;
   std::condition_variable buffer_cv;

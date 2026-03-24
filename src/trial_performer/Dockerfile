@@ -16,7 +16,7 @@ WORKDIR /app
 
 # ROS interfaces
 COPY interfaces/mtms_eeg_interfaces interfaces/mtms_eeg_interfaces/
-COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
+COPY interfaces/mtms_trigger_interfaces interfaces/mtms_trigger_interfaces/
 COPY interfaces/mtms_event_interfaces interfaces/mtms_event_interfaces/
 COPY interfaces/mtms_experiment_interfaces interfaces/mtms_experiment_interfaces/
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/

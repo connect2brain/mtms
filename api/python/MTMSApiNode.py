@@ -24,7 +24,7 @@ from mtms_event_interfaces.msg import (
     TriggerOutFeedback,
 )
 
-from mtms_mep_interfaces.srv import AnalyzeMep, GetTriggerWindow
+from mtms_trigger_interfaces.srv import AnalyzeMep, GetTriggerWindow
 
 from mtms_targeting_interfaces.srv import (
     GetTargetVoltages,

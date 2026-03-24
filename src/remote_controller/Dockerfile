@@ -23,7 +23,7 @@ COPY interfaces/shared_stimulation_interfaces interfaces/shared_stimulation_inte
 COPY interfaces/mtms_device_interfaces interfaces/mtms_device_interfaces/
 COPY interfaces/mtms_targeting_interfaces interfaces/mtms_targeting_interfaces/
 COPY interfaces/mtms_trial_interfaces interfaces/mtms_trial_interfaces/
-COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
+COPY interfaces/mtms_trigger_interfaces interfaces/mtms_trigger_interfaces/
 COPY src/realtime_utils src/realtime_utils/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build

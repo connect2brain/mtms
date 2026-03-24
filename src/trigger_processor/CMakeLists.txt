@@ -9,7 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(mtms_eeg_interfaces REQUIRED)
-find_package(mtms_mep_interfaces REQUIRED)
+find_package(mtms_trigger_interfaces REQUIRED)
 
 # Install trigger_processor executable.
 
@@ -27,7 +27,7 @@ ament_target_dependencies(
   rclcpp
   std_msgs
   mtms_eeg_interfaces
-  mtms_mep_interfaces
+  mtms_trigger_interfaces
 )
 
 install(TARGETS

@@ -15,7 +15,7 @@ WORKDIR /app
 
 # ROS interfaces
 COPY interfaces/mtms_eeg_interfaces interfaces/mtms_eeg_interfaces/
-COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
+COPY interfaces/mtms_trigger_interfaces interfaces/mtms_trigger_interfaces/
 
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 

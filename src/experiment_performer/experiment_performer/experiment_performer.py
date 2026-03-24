@@ -18,7 +18,7 @@ from mtms_device_interfaces.msg import SystemState, DeviceState
 from mtms_system_interfaces.msg import Session
 from mtms_system_interfaces.srv import StartSession, StopSession
 
-from mtms_mep_interfaces.srv import AnalyzeMep
+from mtms_trigger_interfaces.srv import AnalyzeMep
 from mtms_targeting_interfaces.srv import GetMaximumIntensity
 
 import rclpy

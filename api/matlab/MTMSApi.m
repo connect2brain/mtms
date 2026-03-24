@@ -779,7 +779,7 @@ classdef MTMSApi < handle
             %    exceeds this limit, the preactivation check will fail.
             % :type preactivation_voltage_range_limit: float
             %
-            % :return: MEP configuration (struct matching mtms_mep_interfaces/AnalyzeMep request)
+            % :return: MEP configuration (struct matching mtms_trigger_interfaces/AnalyzeMep request)
             % :rtype: struct
 
             mep_configuration = struct();

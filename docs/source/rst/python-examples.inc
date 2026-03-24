@@ -13,11 +13,11 @@ Initialize device and session
         WaveformPiece,
         Waveform
     )
-    from mtms_mep_interfaces.msg import (
+    from mtms_trigger_interfaces.msg import (
         MepConfiguration,
         PreactivationCheck
     )
-    from mtms_mep_interfaces.msg import TimeWindow
+    from mtms_trigger_interfaces.msg import TimeWindow
     from mtms_targeting_interfaces.msg import ElectricTarget
 
     api = MTMSApi()

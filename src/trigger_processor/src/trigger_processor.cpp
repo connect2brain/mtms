@@ -52,13 +52,13 @@ TriggerProcessorNode::TriggerProcessorNode(const rclcpp::NodeOptions & options)
       return opts;
     }());
 
-  analyze_mep_service = this->create_service<mtms_mep_interfaces::srv::AnalyzeMep>(
+  analyze_mep_service = this->create_service<mtms_trigger_interfaces::srv::AnalyzeMep>(
     SERVICE_ANALYZE_MEP.c_str(),
     std::bind(&TriggerProcessorNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
 
-  get_trigger_window_service = this->create_service<mtms_mep_interfaces::srv::GetTriggerWindow>(
+  get_trigger_window_service = this->create_service<mtms_trigger_interfaces::srv::GetTriggerWindow>(
     SERVICE_GET_TRIGGER_WINDOW.c_str(),
     std::bind(&TriggerProcessorNode::get_trigger_window_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
@@ -206,8 +206,8 @@ double TriggerProcessorNode::max_minus_min(const std::vector<double> & v)
 }
 
 void TriggerProcessorNode::analyze_mep_handler(
-  const std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Request> request,
-  std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Response> response)
+  const std::shared_ptr<mtms_trigger_interfaces::srv::AnalyzeMep::Request> request,
+  std::shared_ptr<mtms_trigger_interfaces::srv::AnalyzeMep::Response> response)
 {
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler called: emg_channel=%u mep_window=[%.3f,%.3f] preactivation_enabled=%s pre_window=[%.3f,%.3f] pre_range_limit=%.3f", static_cast<unsigned>(request->emg_channel), request->mep_time_window_start, request->mep_time_window_end, request->preactivation_check_enabled ? "true" : "false", request->preactivation_check_time_window_start, request->preactivation_check_time_window_end, request->preactivation_check_voltage_range_limit);
 
@@ -215,11 +215,11 @@ void TriggerProcessorNode::analyze_mep_handler(
   response->amplitude = 0.0;
   response->latency = 0.0;
   response->emg_buffer.clear();
-  response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::NO_ERROR;
+  response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::NO_ERROR;
 
   double stimulation_time_s = 0.0;
   if (!wait_for_next_stimulation_time(stimulation_time_s, ANALYZE_MEP_TIMEOUT_S)) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::TIMEOUT;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::TIMEOUT;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler timed out waiting for next trigger: status=%d", response->status);
     return;
   }
@@ -241,7 +241,7 @@ void TriggerProcessorNode::analyze_mep_handler(
   const uint64_t dropped_before = samples_dropped_counter;
 
   if (!wait_until_buffer_covers(required_start, required_end)) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::LATE;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler failed to get required EEG coverage: status=%d required=[%.3f,%.3f]", response->status, required_start, required_end);
     return;
   }
@@ -257,7 +257,7 @@ void TriggerProcessorNode::analyze_mep_handler(
   }
 
   if (snapshot.empty()) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::LATE;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler snapshot is empty: status=%d", response->status);
     return;
   }
@@ -266,7 +266,7 @@ void TriggerProcessorNode::analyze_mep_handler(
 
   // Validate EMG channel against first sample in snapshot.
   if (request->emg_channel >= snapshot.front().emg.size()) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::INVALID_EMG_CHANNEL;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::INVALID_EMG_CHANNEL;
     RCLCPP_WARN(this->get_logger(), "analyze_mep_handler invalid emg_channel=%u (snapshot emg.size()=%zu): status=%d", static_cast<unsigned>(request->emg_channel), snapshot.front().emg.size(), response->status);
     return;
   }
@@ -289,19 +289,19 @@ void TriggerProcessorNode::analyze_mep_handler(
   if (preactivation_enabled) {
     std::vector<double> pre;
     if (!extract_window_from_snapshot(std::min(pre_start, pre_end), std::max(pre_start, pre_end), pre)) {
-      response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
+      response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::LATE;
       return;
     }
     const double voltage_range = max_minus_min(pre);
     preactivation_passed = voltage_range <= request->preactivation_check_voltage_range_limit;
     if (!preactivation_passed) {
-      response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::PREACTIVATION_FAILED;
+      response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::PREACTIVATION_FAILED;
     }
   }
 
   std::vector<double> mep;
   if (!extract_window_from_snapshot(std::min(mep_start, mep_end), std::max(mep_start, mep_end), mep)) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::LATE;
     return;
   }
   response->emg_buffer = mep;
@@ -339,15 +339,15 @@ void TriggerProcessorNode::analyze_mep_handler(
 
   const uint64_t dropped_after = samples_dropped_counter;
   if (dropped_after != dropped_before) {
-    response->status = mtms_mep_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
+    response->status = mtms_trigger_interfaces::srv::AnalyzeMep::Response::SAMPLES_DROPPED;
   }
 
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
 }
 
 void TriggerProcessorNode::get_trigger_window_handler(
-  const std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Request> request,
-  std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Response> response)
+  const std::shared_ptr<mtms_trigger_interfaces::srv::GetTriggerWindow::Request> request,
+  std::shared_ptr<mtms_trigger_interfaces::srv::GetTriggerWindow::Response> response)
 {
   RCLCPP_INFO(this->get_logger(), "get_trigger_window_handler called: window=[%.3f,%.3f]",
     request->window_start, request->window_end);
@@ -356,11 +356,11 @@ void TriggerProcessorNode::get_trigger_window_handler(
   response->emg_buffer.clear();
   response->sampling_frequency = 0;
   response->trigger_index = 0;
-  response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::NO_ERROR;
+  response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::NO_ERROR;
 
   double stimulation_time_s = 0.0;
   if (!wait_for_next_stimulation_time(stimulation_time_s, ANALYZE_MEP_TIMEOUT_S)) {
-    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::TIMEOUT;
+    response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::TIMEOUT;
     RCLCPP_WARN(this->get_logger(), "get_trigger_window_handler timed out waiting for trigger: status=%d", response->status);
     return;
   }
@@ -371,7 +371,7 @@ void TriggerProcessorNode::get_trigger_window_handler(
   const uint64_t dropped_before = samples_dropped_counter;
 
   if (!wait_until_buffer_covers(win_start, win_end)) {
-    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::LATE;
     RCLCPP_WARN(this->get_logger(), "get_trigger_window_handler failed to get required EEG coverage: status=%d window=[%.3f,%.3f]", response->status, win_start, win_end);
     return;
   }
@@ -391,7 +391,7 @@ void TriggerProcessorNode::get_trigger_window_handler(
   }
 
   if (snapshot.empty()) {
-    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::LATE;
     return;
   }
 
@@ -428,7 +428,7 @@ void TriggerProcessorNode::get_trigger_window_handler(
   }
 
   if (!in_window) {
-    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::LATE;
     return;
   }
 
@@ -436,7 +436,7 @@ void TriggerProcessorNode::get_trigger_window_handler(
 
   const uint64_t dropped_after = samples_dropped_counter;
   if (dropped_after != dropped_before) {
-    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::SAMPLES_DROPPED;
+    response->status = mtms_trigger_interfaces::srv::GetTriggerWindow::Response::SAMPLES_DROPPED;
   }
 
   RCLCPP_INFO(this->get_logger(),

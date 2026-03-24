@@ -12,8 +12,8 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 
-  <build_depend>mtms_mep_interfaces</build_depend>
-  <exec_depend>mtms_mep_interfaces</exec_depend>
+  <build_depend>mtms_trigger_interfaces</build_depend>
+  <exec_depend>mtms_trigger_interfaces</exec_depend>
 
   <build_depend>mtms_targeting_interfaces</build_depend>
   <exec_depend>mtms_targeting_interfaces</exec_depend>

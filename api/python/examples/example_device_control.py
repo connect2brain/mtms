@@ -3,7 +3,7 @@ from MTMSApi import MTMSApi
 from mtms_event_interfaces.msg import (
     ExecutionCondition,
 )
-from mtms_mep_interfaces.srv import AnalyzeMep, GetTriggerWindow
+from mtms_trigger_interfaces.srv import AnalyzeMep, GetTriggerWindow
 from mtms_waveform_interfaces.msg import (
     WaveformPhase,
     WaveformPiece,

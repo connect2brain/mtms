@@ -7,7 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(mtms_mep_interfaces REQUIRED)
+find_package(mtms_trigger_interfaces REQUIRED)
 find_package(mtms_targeting_interfaces REQUIRED)
 
 if(BUILD_TESTING)
@@ -33,7 +33,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/SetVoltages.srv"
   "srv/StartRemoteController.srv"
 
-  DEPENDENCIES mtms_mep_interfaces mtms_targeting_interfaces
+  DEPENDENCIES mtms_trigger_interfaces mtms_targeting_interfaces
 )
 
 ament_package()

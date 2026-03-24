@@ -18,7 +18,7 @@ The system has four main layers:
 
 4. **Frontend** — `front/` (React 18 + TypeScript + Electron): Desktop application using ROSLib.js for real-time ROS communication and Chart.js for data visualization.
 
-**ROS2 interfaces** are defined in `interfaces/` (12 packages: `mtms_waveform_interfaces`, `mtms_eeg_interfaces`, `mtms_mep_interfaces`, `mtms_device_interfaces`, `mtms_targeting_interfaces`, `mtms_trial_interfaces`, etc.). These must be built before any service.
+**ROS2 interfaces** are defined in `interfaces/` (12 packages: `mtms_waveform_interfaces`, `mtms_eeg_interfaces`, `mtms_trigger_interfaces`, `mtms_device_interfaces`, `mtms_targeting_interfaces`, `mtms_trial_interfaces`, etc.). These must be built before any service.
 
 **Multi-site support**: `sites/` submodule holds site-specific `.env` configs (device generation, channel count, coil array, FPGA resource IDs, etc.).
 
