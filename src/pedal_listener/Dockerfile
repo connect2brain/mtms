@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 # Python dependencies
 
-RUN pip install --break-system-packages PySerial
+RUN pip install --break-system-packages PySerial==3.5
 
 # Copy ROS workspace and build packages
 

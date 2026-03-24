@@ -32,7 +32,7 @@ RUN apt-get update && \
 
 # Install Python dependencies
 
-RUN pip install cython vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.9 pypolaris==0.0.6 python-socketio scikit-learn
+RUN pip install cython==3.2.4 vtk==9.2.6 plaidml-keras==0.7.0 pyacvd==0.2.9 pypolaris==0.0.6 python-socketio==5.16.1 scikit-learn==1.8.0
 RUN pip install numpy==1.26.4 scipy==1.14.0
 # HACK: As of now, wxPython >=4.1.0 (required by InVesalius) for Ubuntu 22 is not stored in PyPi, hence
 #       install using an own wheel file.

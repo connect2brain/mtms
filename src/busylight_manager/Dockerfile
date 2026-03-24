@@ -13,7 +13,7 @@ RUN apt-get update && \
 
 # Python dependencies
 
-RUN pip3 install --break-system-packages busylight-core
+RUN pip3 install --break-system-packages busylight-core==2.0.1
 
 # Copy ROS workspace and build packages
 

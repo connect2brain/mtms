@@ -14,7 +14,7 @@ RUN apt-get update && \
     ros-jazzy-rmw-cyclonedds-cpp && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install --break-system-packages pymongo tornado
+RUN pip install --break-system-packages pymongo==4.16.0 tornado==6.5.5
 
 # Copy ROS workspace and build packages
 
