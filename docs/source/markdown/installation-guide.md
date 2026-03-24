@@ -109,7 +109,7 @@ Note that the software installation steps are in `README.md`, while the hardware
 ### Repository Setup
 1. Clone Repository
    ```bash
-   git clone git@github.com:connect2brain/mtms.git --recurse-submodules
+   git clone https://github.com/connect2brain/mtms.git --recurse-submodules
    ```
 
 ### MATLAB Installation
