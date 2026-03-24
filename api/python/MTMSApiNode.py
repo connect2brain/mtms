@@ -58,7 +58,7 @@ class MTMSApiNode(Node):
 
     ROS_SERVICE_IS_STIMULATION_ALLOWED= ('/mtms/stimulation/get_allowed', GetStimulationAllowed)
 
-    ROS_SERVICE_ANALYZE_MEP = ('/mtms/mep/analyze', AnalyzeMep)
+    ROS_SERVICE_ANALYZE_MEP = ('/mtms/eeg/analyze_mep', AnalyzeMep)
 
     ROS_SERVICES = (
         ROS_SERVICE_START_DEVICE,

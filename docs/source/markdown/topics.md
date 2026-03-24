@@ -72,11 +72,11 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 
 ### Services
 
-- `/mtms/mep/analyze` - MEP analysis endpoint.
+- `/mtms/eeg/analyze_mep` - MEP analysis endpoint.
 
 ### Actions
 
-- `/mtms/mep/analyze` - Analyze MEP response for a stimulation event.
+- `/mtms/eeg/analyze_mep` - Analyze MEP response for a stimulation event.
 - `/mtms/eeg/gather` - Gather EEG samples from a requested time window.
 
 ## Experiment and Trial

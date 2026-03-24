@@ -13,8 +13,8 @@ using namespace std::chrono_literals;
 
 const std::string TriggerProcessorNode::EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string TriggerProcessorNode::EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
-const std::string TriggerProcessorNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
-const std::string TriggerProcessorNode::SERVICE_GET_TRIGGER_WINDOW = "/mtms/mep/get_trigger_window";
+const std::string TriggerProcessorNode::SERVICE_ANALYZE_MEP = "/mtms/eeg/analyze_mep";
+const std::string TriggerProcessorNode::SERVICE_GET_TRIGGER_WINDOW = "/mtms/eeg/get_trigger_window";
 const std::string HEARTBEAT_TOPIC = "/mtms/trigger_processor/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 

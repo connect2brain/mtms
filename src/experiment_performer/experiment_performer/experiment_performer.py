@@ -148,9 +148,9 @@ class ExperimentPerformerNode(Node):
 
         # Create service client for analyzing MEP.
 
-        self.analyze_mep_client = self.create_client(AnalyzeMep, '/mtms/mep/analyze', callback_group=self.callback_group)
+        self.analyze_mep_client = self.create_client(AnalyzeMep, '/mtms/eeg/analyze_mep', callback_group=self.callback_group)
         while not self.analyze_mep_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service /mtms/mep/analyze not available, waiting...')
+            self.get_logger().info('Service /mtms/eeg/analyze_mep not available, waiting...')
 
         # Create service client for logging a trial.
 
@@ -464,7 +464,7 @@ class ExperimentPerformerNode(Node):
             try:
                 response_value[0] = future.result()
             except Exception as error:
-                self.logger.error('Service /mtms/mep/analyze call failed: {}'.format(str(error)))
+                self.logger.error('Service /mtms/eeg/analyze_mep call failed: {}'.format(str(error)))
                 response_value[0] = None
             call_service_event.set()
 
@@ -948,7 +948,7 @@ class ExperimentPerformerNode(Node):
                 completed = mep_event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
                 if not completed:
                     self.logger.warning(
-                        'Service /mtms/mep/analyze timed out after {:.1f} s.'.format(
+                        'Service /mtms/eeg/analyze_mep timed out after {:.1f} s.'.format(
                             self.SERVICE_CALL_TIMEOUT_S,
                         )
                     )

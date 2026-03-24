@@ -102,7 +102,7 @@ classdef MTMSApiNode < handle
             obj.get_multipulse_waveforms_client = ros2svcclient(obj.node, "/mtms/waveforms/get_multipulse_waveforms", "mtms_targeting_interfaces/GetMultipulseWaveforms");
             obj.reverse_polarity_client = ros2svcclient(obj.node, "/mtms/waveforms/reverse_polarity", "mtms_targeting_interfaces/ReversePolarity");
 
-            obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/mep/analyze", "mtms_mep_interfaces/AnalyzeMep");
+            obj.analyze_mep_client = ros2svcclient(obj.node, "/mtms/eeg/analyze_mep", "mtms_mep_interfaces/AnalyzeMep");
         end
 
         % Starting and stopping
