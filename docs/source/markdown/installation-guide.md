@@ -170,6 +170,7 @@ During mTMS installation, a system service is installed that listens for UDP tra
 - **50000** — listen port. Configure the Bittium NeurOne amplifier to send EEG packets to this UDP port.
 - **50001** — used by mTMS.
 - **50002** — reserved for additional software on the same machine (for example NeuroSimo).
+- **50003** — reserved for user applications, e.g., custom MATLAB scripts that need the EEG stream.
 
 To run NeuroSimo on the mTMS computer:
 

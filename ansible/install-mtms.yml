@@ -25,6 +25,7 @@
     eeg_udp_fanout_destinations:
       - 127.0.0.1/50001
       - 127.0.0.1/50002
+      - 127.0.0.1/50003
 
   collections:
     - community.general
