@@ -20,8 +20,8 @@ COPY interfaces/mtms_mep_interfaces interfaces/mtms_mep_interfaces/
 RUN source /opt/ros/jazzy/setup.bash && colcon build
 
 # ROS node
-COPY src/mep_analyzer src/mep_analyzer/
-RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select mep_analyzer
+COPY src/trigger_processor src/trigger_processor/
+RUN source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select trigger_processor
 
 # Set the Cyclone DDS configuration
 COPY config/cyclonedds.xml /config/
@@ -29,7 +29,7 @@ ENV CYCLONEDDS_URI=file:///config/cyclonedds.xml
 
 # Copy entrypoint
 
-COPY src/mep_analyzer/ros_entrypoint.sh .
+COPY src/trigger_processor/ros_entrypoint.sh .
 RUN dos2unix ros_entrypoint.sh
 RUN chmod +x ros_entrypoint.sh
 

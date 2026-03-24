@@ -163,10 +163,10 @@ services:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
     network_mode: host
 
-  mep_analyzer:
+  trigger_processor:
     build:
       context: .
-      dockerfile: src/mep_analyzer/Dockerfile
+      dockerfile: src/trigger_processor/Dockerfile
     env_file:
       - ${MTMS_ENV_FILE}
     environment:

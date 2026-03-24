@@ -16,12 +16,12 @@ def generate_launch_description():
     logger = LaunchConfiguration("log-level")
 
     node_executables = [
-        "mep_analyzer",
+        "trigger_processor",
     ]
 
     for node_executable in node_executables:
         node = Node(
-            package="mep_analyzer",
+            package="trigger_processor",
             executable=node_executable,
             namespace="mtms",
             arguments=['--ros-args', '--log-level', logger]

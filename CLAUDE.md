@@ -12,7 +12,7 @@ The system has four main layers:
 
 1. **Hardware layer** — `src/mtms_device_bridge/` (C++): Interfaces with a National Instruments FPGA (CompactRIO) via the NI FPGA C API. Provides ~12 ROS2 executables for real-time device control (state, sessions, stimulation triggers, event publishing).
 
-2. **Service layer** — `src/*/` (Python + C++): ~22 containerized ROS2 nodes communicating via CycloneDDS middleware. Key services: `experiment_performer`, `trial_performer`, `targeting`, `waveform_approximator` (MATLAB), `mep_analyzer`, `eeg_bridge`, `mtms_simulator`.
+2. **Service layer** — `src/*/` (Python + C++): ~22 containerized ROS2 nodes communicating via CycloneDDS middleware. Key services: `experiment_performer`, `trial_performer`, `targeting`, `waveform_approximator` (MATLAB), `trigger_processor`, `eeg_bridge`, `mtms_simulator`.
 
 3. **Communication layer** — ROSBridge running on port 9091: bridges ROS2 topics/services to WebSocket for the frontend.
 

@@ -11,7 +11,7 @@ export const REQUIRED_MTMS_HEARTBEATS = [
   { id: 'reverse_polarity', topic: '/mtms/waveform_utils/reverse_polarity/heartbeat', label: 'reverse_polarity' },
   { id: 'mtms_device', topic: '/mtms/device/heartbeat', label: 'mtms_device' },
   { id: 'eeg_bridge', topic: '/mtms/eeg_bridge/heartbeat', label: 'eeg_bridge' },
-  { id: 'mep_analyzer', topic: '/mtms/mep_analyzer/heartbeat', label: 'mep_analyzer' },
+  { id: 'trigger_processor', topic: '/mtms/trigger_processor/heartbeat', label: 'trigger_processor' },
   { id: 'remote_controller', topic: '/mtms/remote_controller/heartbeat', label: 'remote_controller' },
   { id: 'targeting', topic: '/mtms/targeting/heartbeat', label: 'targeting' },
   { id: 'stimulation_allower', topic: '/mtms/stimulation_allower/heartbeat', label: 'stimulation_allower' },

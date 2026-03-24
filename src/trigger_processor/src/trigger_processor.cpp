@@ -1,4 +1,4 @@
-#include "mep_analyzer.h"
+#include "trigger_processor.h"
 
 #include "std_msgs/msg/empty.hpp"
 
@@ -11,15 +11,15 @@
 
 using namespace std::chrono_literals;
 
-const std::string MepAnalyzerNode::EEG_RAW_TOPIC = "/mtms/eeg/raw";
-const std::string MepAnalyzerNode::EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
-const std::string MepAnalyzerNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
-const std::string MepAnalyzerNode::SERVICE_GET_TRIGGER_WINDOW = "/mtms/mep/get_trigger_window";
-const std::string HEARTBEAT_TOPIC = "/mtms/mep_analyzer/heartbeat";
+const std::string TriggerProcessorNode::EEG_RAW_TOPIC = "/mtms/eeg/raw";
+const std::string TriggerProcessorNode::EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
+const std::string TriggerProcessorNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
+const std::string TriggerProcessorNode::SERVICE_GET_TRIGGER_WINDOW = "/mtms/mep/get_trigger_window";
+const std::string HEARTBEAT_TOPIC = "/mtms/trigger_processor/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
-MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
-: Node("mep_analyzer", options)
+TriggerProcessorNode::TriggerProcessorNode(const rclcpp::NodeOptions & options)
+: Node("trigger_processor", options)
 {
   data_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   service_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
@@ -31,7 +31,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
   device_info_subscriber = this->create_subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>(
     EEG_DEVICE_INFO_TOPIC.c_str(),
     qos_persist_latest,
-    std::bind(&MepAnalyzerNode::device_info_callback, this, std::placeholders::_1),
+    std::bind(&TriggerProcessorNode::device_info_callback, this, std::placeholders::_1),
     [&]() {
       rclcpp::SubscriptionOptions opts;
       opts.callback_group = data_callback_group;
@@ -45,7 +45,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
   eeg_subscriber = this->create_subscription<mtms_eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC.c_str(),
     qos,
-    std::bind(&MepAnalyzerNode::eeg_sample_callback, this, std::placeholders::_1),
+    std::bind(&TriggerProcessorNode::eeg_sample_callback, this, std::placeholders::_1),
     [&]() {
       rclcpp::SubscriptionOptions opts;
       opts.callback_group = data_callback_group;
@@ -54,13 +54,13 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
 
   analyze_mep_service = this->create_service<mtms_mep_interfaces::srv::AnalyzeMep>(
     SERVICE_ANALYZE_MEP.c_str(),
-    std::bind(&MepAnalyzerNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(&TriggerProcessorNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
 
   get_trigger_window_service = this->create_service<mtms_mep_interfaces::srv::GetTriggerWindow>(
     SERVICE_GET_TRIGGER_WINDOW.c_str(),
-    std::bind(&MepAnalyzerNode::get_trigger_window_handler, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(&TriggerProcessorNode::get_trigger_window_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
 
@@ -70,7 +70,7 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
   });
 }
 
-void MepAnalyzerNode::device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
+void TriggerProcessorNode::device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
 {
   if (msg->sampling_frequency == 0u) {
     return;
@@ -90,7 +90,7 @@ void MepAnalyzerNode::device_info_callback(const mtms_eeg_interfaces::msg::EegDe
   buffer_cv.notify_all();
 }
 
-void MepAnalyzerNode::eeg_sample_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
+void TriggerProcessorNode::eeg_sample_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(buffer_mutex);
 
@@ -119,7 +119,7 @@ void MepAnalyzerNode::eeg_sample_callback(const mtms_eeg_interfaces::msg::Sample
   buffer_cv.notify_all();
 }
 
-bool MepAnalyzerNode::wait_for_next_stimulation_time(double & stimulation_time_s, double timeout_s)
+bool TriggerProcessorNode::wait_for_next_stimulation_time(double & stimulation_time_s, double timeout_s)
 {
   std::optional<double> baseline_trigger;
   {
@@ -145,7 +145,7 @@ bool MepAnalyzerNode::wait_for_next_stimulation_time(double & stimulation_time_s
   return false;
 }
 
-bool MepAnalyzerNode::wait_until_buffer_covers(double start_time_s, double end_time_s)
+bool TriggerProcessorNode::wait_until_buffer_covers(double start_time_s, double end_time_s)
 {
   while (rclcpp::ok()) {
     std::unique_lock<std::mutex> lock(buffer_mutex);
@@ -169,7 +169,7 @@ bool MepAnalyzerNode::wait_until_buffer_covers(double start_time_s, double end_t
   return false;
 }
 
-bool MepAnalyzerNode::extract_emg_window(
+bool TriggerProcessorNode::extract_emg_window(
   uint8_t emg_channel,
   double start_time_s,
   double end_time_s,
@@ -196,7 +196,7 @@ bool MepAnalyzerNode::extract_emg_window(
   return !out_emg.empty();
 }
 
-double MepAnalyzerNode::max_minus_min(const std::vector<double> & v)
+double TriggerProcessorNode::max_minus_min(const std::vector<double> & v)
 {
   if (v.empty()) {
     return 0.0;
@@ -205,7 +205,7 @@ double MepAnalyzerNode::max_minus_min(const std::vector<double> & v)
   return *mx_it - *mn_it;
 }
 
-void MepAnalyzerNode::analyze_mep_handler(
+void TriggerProcessorNode::analyze_mep_handler(
   const std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Request> request,
   std::shared_ptr<mtms_mep_interfaces::srv::AnalyzeMep::Response> response)
 {
@@ -345,7 +345,7 @@ void MepAnalyzerNode::analyze_mep_handler(
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
 }
 
-void MepAnalyzerNode::get_trigger_window_handler(
+void TriggerProcessorNode::get_trigger_window_handler(
   const std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Request> request,
   std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Response> response)
 {
@@ -449,7 +449,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<MepAnalyzerNode>();
+  auto node = std::make_shared<TriggerProcessorNode>();
 
   // Service handler may wait while subscription keeps filling the buffer.
   rclcpp::executors::MultiThreadedExecutor executor;

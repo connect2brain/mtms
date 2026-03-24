@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(mep_analyzer)
+project(trigger_processor)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -11,19 +11,19 @@ find_package(std_msgs REQUIRED)
 find_package(mtms_eeg_interfaces REQUIRED)
 find_package(mtms_mep_interfaces REQUIRED)
 
-# Install mep_analyzer executable.
+# Install trigger_processor executable.
 
-add_executable(mep_analyzer
-  src/mep_analyzer.cpp
+add_executable(trigger_processor
+  src/trigger_processor.cpp
 )
 
-target_include_directories(mep_analyzer
+target_include_directories(trigger_processor
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 
 ament_target_dependencies(
-  mep_analyzer
+  trigger_processor
   rclcpp
   std_msgs
   mtms_eeg_interfaces
@@ -31,7 +31,7 @@ ament_target_dependencies(
 )
 
 install(TARGETS
-  mep_analyzer
+  trigger_processor
   DESTINATION lib/${PROJECT_NAME})
 
 # Install the launch directory.

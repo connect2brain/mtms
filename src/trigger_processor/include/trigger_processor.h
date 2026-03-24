@@ -1,5 +1,5 @@
-#ifndef MEP_ANALYZER__MEP_ANALYZER_H_
-#define MEP_ANALYZER__MEP_ANALYZER_H_
+#ifndef trigger_processor__trigger_processor_H_
+#define trigger_processor__trigger_processor_H_
 
 #include <condition_variable>
 #include <cstdint>
@@ -17,9 +17,9 @@
 
 #include "ring_buffer.h"
 
-class MepAnalyzerNode : public rclcpp::Node {
+class TriggerProcessorNode : public rclcpp::Node {
 public:
-  explicit MepAnalyzerNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  explicit TriggerProcessorNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
   static const std::string EEG_RAW_TOPIC;
@@ -74,4 +74,4 @@ private:
   rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
-#endif  // MEP_ANALYZER__MEP_ANALYZER_H_
+#endif  // trigger_processor__trigger_processor_H_
