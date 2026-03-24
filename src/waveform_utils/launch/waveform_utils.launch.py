@@ -13,7 +13,13 @@ def generate_launch_description():
         description="Logging level",
     )
 
+    ramp_down_timings_arg = DeclareLaunchArgument(
+        "ramp-down-timings",
+        description="Ramp-down timings in ticks",
+    )
+
     logger = LaunchConfiguration("log-level")
+    ramp_down_timings = LaunchConfiguration("ramp-down-timings")
 
     node_executables = [
         "get_default_waveform",
@@ -26,10 +32,12 @@ def generate_launch_description():
             package="waveform_utils",
             executable=node_executable,
             namespace="mtms",
-            arguments=['--ros-args', '--log-level', logger]
+            arguments=['--ros-args', '--log-level', logger],
+            parameters=[{'ramp_down_timings': ramp_down_timings}]
         )
         ld.add_action(node)
 
     ld.add_action(log_arg)
+    ld.add_action(ramp_down_timings_arg)
 
     return ld

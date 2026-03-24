@@ -1,5 +1,9 @@
 #include <chrono>
+#include <limits>
+#include <sstream>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/empty.hpp"
@@ -8,8 +12,6 @@
 #include "mtms_waveform_interfaces/msg/waveform_piece.hpp"
 
 using namespace std;
-
-const uint8_t N_CHANNELS = 5;
 
 const std::string HEARTBEAT_TOPIC = "/mtms/waveform_utils/get_default_waveform/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
@@ -20,13 +22,24 @@ const uint16_t DEFAULT_WAVEFORM[][2] = {
   {mtms_waveform_interfaces::msg::WaveformPhase::FALLING, 0}
 };
 
-const uint16_t LAST_WAVEFORM_PHASE_DURATION[N_CHANNELS] = {1570, 1570, 1610, 1630, 1790};
-
 class GetDefaultWaveform : public rclcpp::Node {
 
 public:
   GetDefaultWaveform() : Node("get_default_waveform") {
+    /* Read ramp-down timings from parameters. */
+    this->declare_parameter<std::string>("ramp_down_timings", "");
+    ramp_down_timings = parse_ramp_down_timings(
+        this->get_parameter("ramp_down_timings").as_string());
 
+    /* Log ramp-down timings. */
+    std::string timings_log;
+    for (size_t i = 0; i < ramp_down_timings.size(); i++) {
+      if (i > 0) timings_log += ", ";
+      timings_log += std::to_string(ramp_down_timings[i]);
+    }
+    RCLCPP_INFO(this->get_logger(), "Ramp-down timings (ticks): [%s]", timings_log.c_str());
+
+    /* Define service callback. */
     auto service_callback = [this](
         const std::shared_ptr<mtms_targeting_interfaces::srv::GetDefaultWaveform::Request> request,
         std::shared_ptr<mtms_targeting_interfaces::srv::GetDefaultWaveform::Response> response) -> void {
@@ -35,19 +48,21 @@ public:
 
       RCLCPP_INFO(rclcpp::get_logger("get_default_waveform"), "Request received: Default waveform for channel %d", channel);
 
-      if (channel >= N_CHANNELS) {
+      /* Validate channel.*/
+      if (channel < 0 || static_cast<size_t>(channel) >= ramp_down_timings.size()) {
         RCLCPP_WARN(rclcpp::get_logger("get_default_waveform"), "Invalid channel: %d.", channel);
 
         response->success = false;
         return;
       }
 
+      /* Construct waveform. */
       mtms_waveform_interfaces::msg::WaveformPiece piece;
       for (uint8_t i = 0; i < std::size(DEFAULT_WAVEFORM); i++) {
         piece.waveform_phase.value = DEFAULT_WAVEFORM[i][0];
 
         if (i == std::size(DEFAULT_WAVEFORM) - 1) {
-          piece.duration_in_ticks = LAST_WAVEFORM_PHASE_DURATION[channel];
+          piece.duration_in_ticks = ramp_down_timings[channel];
         } else {
           piece.duration_in_ticks = DEFAULT_WAVEFORM[i][1];
         }
@@ -70,6 +85,24 @@ public:
   }
 
 private:
+  static std::vector<uint16_t> parse_ramp_down_timings(const std::string& timings_str) {
+    if (timings_str.empty()) {
+      throw std::runtime_error("ramp_down_timings parameter is empty");
+    }
+    std::vector<uint16_t> timings;
+    std::stringstream ss(timings_str);
+    std::string token;
+    while (std::getline(ss, token, ',')) {
+      unsigned long value = std::stoul(token);  // throws on invalid input
+      if (value == 0 || value > std::numeric_limits<uint16_t>::max()) {
+        throw std::runtime_error("ramp_down_timings value out of range (1–65535): " + token);
+      }
+      timings.push_back(static_cast<uint16_t>(value));
+    }
+    return timings;
+  }
+
+  std::vector<uint16_t> ramp_down_timings;
   rclcpp::Service<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_service;
 };
 

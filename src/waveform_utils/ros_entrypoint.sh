@@ -4,4 +4,5 @@ set -e
 source /opt/ros/jazzy/setup.bash
 source /app/install/setup.bash
 
-ros2 launch waveform_utils waveform_utils.launch.py log-level:="$ROS_LOG_LEVEL"
+ros2 launch waveform_utils waveform_utils.launch.py log-level:="$ROS_LOG_LEVEL" ramp-down-timings:="$RAMP_DOWN_TIMINGS"
+
