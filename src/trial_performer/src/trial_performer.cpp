@@ -498,6 +498,13 @@ void TrialPerformerNode::handle_perform_trial(
   RCLCPP_INFO(this->get_logger(), " ");
 }
 
+void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
+  RCLCPP_INFO(this->get_logger(), "%s:", prefix.c_str());
+  for (uint8_t i = 0; i < voltages.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "  Channel %d: %d V", i, voltages[i]);
+  }
+}
+
 void TrialPerformerNode::handle_prepare_trial(
     const std::shared_ptr<std_srvs::srv::Trigger::Request> request,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response) {
@@ -522,6 +529,8 @@ void TrialPerformerNode::handle_prepare_trial(
 
   bool success = set_voltages(fixed_desired_voltages);
   response->success = success;
+
+  log_voltages(get_actual_voltages(), "Voltages after trial preparation");
 
   RCLCPP_INFO(this->get_logger(), "Prepare trial completed %s.", success ? "successfully" : "with errors");
   RCLCPP_INFO(this->get_logger(), " ");
