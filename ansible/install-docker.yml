@@ -10,6 +10,13 @@
     docker_repo_file: /etc/apt/sources.list.d/docker.list
     docker_apt_arch: "{{ 'arm64' if ansible_facts.architecture == 'aarch64' else 'amd64' }}"
     target_user: "{{ lookup('env', 'SUDO_USER') | default(lookup('env','USER'), true) }}"
+    # Pin exact package versions to ensure reproducible installs.
+    # To find available versions: apt-cache madison docker-ce
+    docker_ce_version: "5:29.3.0-1~ubuntu.24.04~noble"
+    docker_ce_cli_version: "5:29.3.0-1~ubuntu.24.04~noble"
+    containerd_version: "2.2.2-1~ubuntu.24.04~noble"
+    buildx_version: "0.31.1-1~ubuntu.24.04~noble"
+    compose_version: "5.1.1-1~ubuntu.24.04~noble"
     apt_connectivity_urls:
       - https://archive.ubuntu.com/ubuntu/dists/noble/Release
       - https://security.ubuntu.com/ubuntu/dists/noble-security/Release
@@ -144,11 +151,11 @@
     - name: Install Docker packages
       apt:
         name:
-          - docker-ce
-          - docker-ce-cli
-          - containerd.io
-          - docker-buildx-plugin
-          - docker-compose-plugin
+          - "docker-ce={{ docker_ce_version }}"
+          - "docker-ce-cli={{ docker_ce_cli_version }}"
+          - "containerd.io={{ containerd_version }}"
+          - "docker-buildx-plugin={{ buildx_version }}"
+          - "docker-compose-plugin={{ compose_version }}"
         state: present
 
     # -------------------------------------------------------------------------
