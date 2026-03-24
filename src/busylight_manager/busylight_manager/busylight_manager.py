@@ -142,7 +142,7 @@ class BusylightManagerNode(Node):
     def reconnect(self):
         try:
             self.light = Light.first_light()
-        except NoLightsFoundError:
+        except (NoLightsFoundError, OSError):
             pass
 
 def main():
