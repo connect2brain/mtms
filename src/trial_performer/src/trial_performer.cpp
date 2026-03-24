@@ -422,6 +422,13 @@ void TrialPerformerNode::handle_perform_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
 
+  response->success = false;
+  if (busy.exchange(true)) {
+    RCLCPP_ERROR(this->get_logger(), "Perform trial request received while busy.");
+    return;
+  }
+  BusyGuard busy_guard{busy};
+
   tic();
 
   RCLCPP_INFO(this->get_logger(), " ");
@@ -432,13 +439,11 @@ void TrialPerformerNode::handle_perform_trial(
   /* Check that the device and session are started. */
   if (!is_device_started()) {
     RCLCPP_WARN(this->get_logger(), "Device not started.");
-    response->success = false;
     return;
   }
 
   if (!is_session_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started.");
-    response->success = false;
     return;
   }
 
@@ -449,7 +454,6 @@ void TrialPerformerNode::handle_perform_trial(
   auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
   if (!approximation_success) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial failed: waveform approximation could not be performed.");
-    response->success = false;
     return;
   }
   (void)desired_voltages;
@@ -457,7 +461,6 @@ void TrialPerformerNode::handle_perform_trial(
   /* Check if the trial is ready to be performed. */
   if (!is_ready_for_trial(true)) {
     RCLCPP_ERROR(this->get_logger(), "Trial not ready to be performed; call prepare_trial first.");
-    response->success = false;
     return;
   }
 
@@ -500,6 +503,12 @@ void TrialPerformerNode::handle_prepare_trial(
   (void)request;  // No request data; this call is used purely as a trigger.
   response->success = false;
 
+  if (busy.exchange(true)) {
+    RCLCPP_ERROR(this->get_logger(), "Prepare trial request received while busy.");
+    return;
+  }
+  BusyGuard busy_guard{busy};
+
   RCLCPP_INFO(this->get_logger(), " ");
   RCLCPP_INFO(this->get_logger(), "Received prepare trial request, charging max voltages...");
 
@@ -534,6 +543,15 @@ void TrialPerformerNode::handle_prepare_trial(
 void TrialPerformerNode::handle_cache_target_list(
     const std::shared_ptr<mtms_trial_interfaces::srv::CacheTargetList::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::CacheTargetList::Response> response) {
+
+  response->success = false;
+
+  if (busy.exchange(true)) {
+    RCLCPP_ERROR(this->get_logger(), "Cache target list request received while busy.");
+    return;
+  }
+  BusyGuard busy_guard{busy};
+
   tic();
 
   RCLCPP_INFO(this->get_logger(), " ");
@@ -545,7 +563,6 @@ void TrialPerformerNode::handle_cache_target_list(
   auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
   if (!approximation_success) {
     RCLCPP_ERROR(this->get_logger(), "Cache trial warm-up failed: waveform approximation could not be performed.");
-    response->success = false;
     return;
   }
   (void)desired_voltages;

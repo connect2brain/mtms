@@ -123,6 +123,15 @@ private:
   void log_trial(const mtms_trial_interfaces::msg::Trial &trial);
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
 
+  /* Concurrency */
+  std::atomic<bool> busy{false};
+
+  struct BusyGuard {
+    std::atomic<bool>& flag;
+    explicit BusyGuard(std::atomic<bool>& f) : flag(f) {}
+    ~BusyGuard() { flag = false; }
+  };
+
   /* Timing */
   std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
   void tic();
