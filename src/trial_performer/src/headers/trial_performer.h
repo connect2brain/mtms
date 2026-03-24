@@ -128,6 +128,7 @@ private:
   std::atomic<bool> busy{false};
   mutable std::mutex state_mutex;
   mutable std::mutex session_mutex;
+  mutable std::mutex feedback_mutex;
 
   struct BusyGuard {
     std::atomic<bool>& flag;

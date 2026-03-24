@@ -144,7 +144,10 @@ void TrialPerformerNode::handle_session(const mtms_system_interfaces::msg::Sessi
 }
 
 void TrialPerformerNode::update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg) {
-  pulse_feedback[msg->id] = msg;
+  {
+    std::lock_guard<std::mutex> lock(feedback_mutex);
+    pulse_feedback[msg->id] = msg;
+  }
 
   auto error_code = msg->error.value;
   auto execution_time = msg->execution_time;
@@ -158,7 +161,10 @@ void TrialPerformerNode::update_pulse_feedback(const mtms_event_interfaces::msg:
 }
 
 void TrialPerformerNode::update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
-  trigger_out_feedback[msg->id] = msg;
+  {
+    std::lock_guard<std::mutex> lock(feedback_mutex);
+    trigger_out_feedback[msg->id] = msg;
+  }
 
   auto error_code = msg->error.value;
   auto execution_time = msg->execution_time;
@@ -286,22 +292,26 @@ mtms_event_interfaces::msg::TriggerOut TrialPerformerNode::create_trigger_out(ui
 
 bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids, const std::vector<uint16_t> &trigger_out_ids) {
   while (true) {
-    bool all_pulses_finished = std::all_of(pulse_ids.begin(), pulse_ids.end(), [this](uint16_t id) {
-      return pulse_feedback.find(id) != pulse_feedback.end();
-    });
+    {
+      std::lock_guard<std::mutex> lock(feedback_mutex);
+      bool all_pulses_finished = std::all_of(pulse_ids.begin(), pulse_ids.end(), [this](uint16_t id) {
+        return pulse_feedback.find(id) != pulse_feedback.end();
+      });
 
-    bool all_triggers_finished = std::all_of(trigger_out_ids.begin(), trigger_out_ids.end(), [this](uint16_t id) {
-      return trigger_out_feedback.find(id) != trigger_out_feedback.end();
-    });
+      bool all_triggers_finished = std::all_of(trigger_out_ids.begin(), trigger_out_ids.end(), [this](uint16_t id) {
+        return trigger_out_feedback.find(id) != trigger_out_feedback.end();
+      });
 
-    if (all_pulses_finished && all_triggers_finished) {
-      break;
+      if (all_pulses_finished && all_triggers_finished) {
+        break;
+      }
     }
 
     std::this_thread::sleep_for(1ms);
   }
 
   /* Check that all error codes are zero. */
+  std::lock_guard<std::mutex> lock(feedback_mutex);
   bool all_error_codes_zero = true;
   for (const auto &entry : pulse_feedback) {
     if (entry.second->error.value != 0) {
