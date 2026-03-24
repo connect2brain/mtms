@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -48,7 +49,7 @@ private:
   rclcpp::Client<mtms_targeting_interfaces::srv::GetDefaultWaveform>::SharedPtr get_default_waveform_client;
   rclcpp::Client<mtms_targeting_interfaces::srv::GetMultipulseWaveforms>::SharedPtr get_multipulse_waveforms_client;
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
-  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_statesubscriber;
+  rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscriber;
   rclcpp::Subscription<mtms_event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
   rclcpp::Subscription<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
@@ -125,6 +126,8 @@ private:
 
   /* Concurrency */
   std::atomic<bool> busy{false};
+  mutable std::mutex state_mutex;
+  mutable std::mutex session_mutex;
 
   struct BusyGuard {
     std::atomic<bool>& flag;

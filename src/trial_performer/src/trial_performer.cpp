@@ -96,7 +96,7 @@ void TrialPerformerNode::initialize_service_clients() {
 }
 
 void TrialPerformerNode::initialize_subscribers() {
-  system_statesubscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
+  system_state_subscriber = this->create_subscription<mtms_device_interfaces::msg::SystemState>(
       "/mtms/device/system_state",
       1,
       std::bind(&TrialPerformerNode::handle_system_state, this, std::placeholders::_1));
@@ -128,7 +128,10 @@ void TrialPerformerNode::initialize_publishers() {
 /* Subscriber callbacks */
 
 void TrialPerformerNode::handle_system_state(const mtms_device_interfaces::msg::SystemState::SharedPtr msg) {
-  system_state = msg;
+  {
+    std::lock_guard<std::mutex> lock(state_mutex);
+    system_state = msg;
+  }
 
   std_msgs::msg::Bool readiness_msg;
   readiness_msg.data = is_ready_for_trial(false);
@@ -136,6 +139,7 @@ void TrialPerformerNode::handle_system_state(const mtms_device_interfaces::msg::
 }
 
 void TrialPerformerNode::handle_session(const mtms_system_interfaces::msg::Session::SharedPtr msg) {
+  std::lock_guard<std::mutex> lock(session_mutex);
   session = msg;
 }
 
@@ -179,14 +183,17 @@ void TrialPerformerNode::create_marker(const mtms_trial_interfaces::msg::Trial &
 
 /* Helpers */
 bool TrialPerformerNode::is_device_started() const {
+  std::lock_guard<std::mutex> lock(state_mutex);
   return system_state && system_state->device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL;
 }
 
 bool TrialPerformerNode::is_session_started() const {
+  std::lock_guard<std::mutex> lock(session_mutex);
   return session && session->state == mtms_system_interfaces::msg::Session::STARTED;
 }
 
 double TrialPerformerNode::get_current_time() const {
+  std::lock_guard<std::mutex> lock(session_mutex);
   if (session) {
     return session->time;
   }
@@ -198,6 +205,7 @@ int TrialPerformerNode::get_next_id() {
 }
 
 std::vector<uint16_t> TrialPerformerNode::get_actual_voltages() const {
+  std::lock_guard<std::mutex> lock(state_mutex);
   std::vector<uint16_t> voltages;
   for (uint8_t i = 0; i < NUM_OF_CHANNELS; ++i) {
     voltages.push_back(system_state->channel_states[i].voltage);
