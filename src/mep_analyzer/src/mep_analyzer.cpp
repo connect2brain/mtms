@@ -14,6 +14,7 @@ using namespace std::chrono_literals;
 const std::string MepAnalyzerNode::EEG_RAW_TOPIC = "/mtms/eeg/raw";
 const std::string MepAnalyzerNode::EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
 const std::string MepAnalyzerNode::SERVICE_ANALYZE_MEP = "/mtms/mep/analyze";
+const std::string MepAnalyzerNode::SERVICE_GET_TRIGGER_WINDOW = "/mtms/mep/get_trigger_window";
 const std::string HEARTBEAT_TOPIC = "/mtms/mep_analyzer/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
@@ -54,6 +55,12 @@ MepAnalyzerNode::MepAnalyzerNode(const rclcpp::NodeOptions & options)
   analyze_mep_service = this->create_service<mtms_mep_interfaces::srv::AnalyzeMep>(
     SERVICE_ANALYZE_MEP.c_str(),
     std::bind(&MepAnalyzerNode::analyze_mep_handler, this, std::placeholders::_1, std::placeholders::_2),
+    rmw_qos_profile_services_default,
+    service_callback_group);
+
+  get_trigger_window_service = this->create_service<mtms_mep_interfaces::srv::GetTriggerWindow>(
+    SERVICE_GET_TRIGGER_WINDOW.c_str(),
+    std::bind(&MepAnalyzerNode::get_trigger_window_handler, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
     service_callback_group);
 
@@ -336,6 +343,106 @@ void MepAnalyzerNode::analyze_mep_handler(
   }
 
   RCLCPP_INFO(this->get_logger(), "analyze_mep_handler finished: amplitude=%.6f latency=%.6f preactivation_passed=%s status=%d dropped_before=%" PRIu64 " dropped_after=%" PRIu64, response->amplitude, response->latency, preactivation_passed ? "true" : "false", response->status, dropped_before, dropped_after);
+}
+
+void MepAnalyzerNode::get_trigger_window_handler(
+  const std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Request> request,
+  std::shared_ptr<mtms_mep_interfaces::srv::GetTriggerWindow::Response> response)
+{
+  RCLCPP_INFO(this->get_logger(), "get_trigger_window_handler called: window=[%.3f,%.3f]",
+    request->window_start, request->window_end);
+
+  response->eeg_buffer.clear();
+  response->emg_buffer.clear();
+  response->sampling_frequency = 0;
+  response->trigger_index = 0;
+  response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::NO_ERROR;
+
+  double stimulation_time_s = 0.0;
+  if (!wait_for_next_stimulation_time(stimulation_time_s, ANALYZE_MEP_TIMEOUT_S)) {
+    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::TIMEOUT;
+    RCLCPP_WARN(this->get_logger(), "get_trigger_window_handler timed out waiting for trigger: status=%d", response->status);
+    return;
+  }
+
+  const double win_start = stimulation_time_s + request->window_start;
+  const double win_end   = stimulation_time_s + request->window_end;
+
+  const uint64_t dropped_before = samples_dropped_counter;
+
+  if (!wait_until_buffer_covers(win_start, win_end)) {
+    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    RCLCPP_WARN(this->get_logger(), "get_trigger_window_handler failed to get required EEG coverage: status=%d window=[%.3f,%.3f]", response->status, win_start, win_end);
+    return;
+  }
+
+  // Stable snapshot under lock.
+  std::vector<mtms_eeg_interfaces::msg::Sample> snapshot;
+  uint32_t fs_hz = 0;
+  {
+    std::lock_guard<std::mutex> lock(buffer_mutex);
+    snapshot.reserve(eeg_buffer.size());
+    for (size_t i = 0; i < eeg_buffer.size(); ++i) {
+      snapshot.push_back(eeg_buffer.at(i));
+    }
+    if (sampling_frequency_hz.has_value()) {
+      fs_hz = *sampling_frequency_hz;
+    }
+  }
+
+  if (snapshot.empty()) {
+    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    return;
+  }
+
+  response->sampling_frequency = fs_hz;
+
+  // Extract samples in [win_start, win_end] and build interleaved channel buffers.
+  // Layout: [t0_ch0, t0_ch1, ..., t1_ch0, t1_ch1, ...] (time-major).
+  uint32_t trigger_index = 0;
+  bool trigger_index_set = false;
+  bool in_window = false;
+  for (const auto & s : snapshot) {
+    if (s.time < win_start) {
+      continue;
+    }
+    if (s.time > win_end) {
+      break;
+    }
+    in_window = true;
+
+    // Count samples before the stimulation to find trigger_index.
+    if (!trigger_index_set && s.time >= stimulation_time_s) {
+      trigger_index_set = true;
+    }
+    if (!trigger_index_set) {
+      trigger_index++;
+    }
+
+    for (const double v : s.eeg) {
+      response->eeg_buffer.push_back(v);
+    }
+    for (const double v : s.emg) {
+      response->emg_buffer.push_back(v);
+    }
+  }
+
+  if (!in_window) {
+    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::LATE;
+    return;
+  }
+
+  response->trigger_index = trigger_index;
+
+  const uint64_t dropped_after = samples_dropped_counter;
+  if (dropped_after != dropped_before) {
+    response->status = mtms_mep_interfaces::srv::GetTriggerWindow::Response::SAMPLES_DROPPED;
+  }
+
+  RCLCPP_INFO(this->get_logger(),
+    "get_trigger_window_handler finished: eeg_buffer=%zu emg_buffer=%zu trigger_index=%u fs=%u status=%d",
+    response->eeg_buffer.size(), response->emg_buffer.size(), response->trigger_index,
+    response->sampling_frequency, response->status);
 }
 
 int main(int argc, char ** argv)
