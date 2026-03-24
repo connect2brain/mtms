@@ -8,4 +8,13 @@ export const REQUIRED_MTMS_HEARTBEATS = [
   { id: 'waveform_approximator', topic: '/mtms/waveform_approximator/heartbeat', label: 'waveform_approximator' },
   { id: 'get_default_waveform', topic: '/mtms/waveform_utils/get_default_waveform/heartbeat', label: 'get_default_waveform' },
   { id: 'get_multipulse_waveforms', topic: '/mtms/waveform_utils/get_multipulse_waveforms/heartbeat', label: 'get_multipulse_waveforms' },
+  { id: 'reverse_polarity', topic: '/mtms/waveform_utils/reverse_polarity/heartbeat', label: 'reverse_polarity' },
+  { id: 'mtms_device', topic: '/mtms/device/heartbeat', label: 'mtms_device' },
+  { id: 'eeg_bridge', topic: '/mtms/eeg_bridge/heartbeat', label: 'eeg_bridge' },
+  { id: 'mep_analyzer', topic: '/mtms/mep_analyzer/heartbeat', label: 'mep_analyzer' },
+  { id: 'remote_controller', topic: '/mtms/remote_controller/heartbeat', label: 'remote_controller' },
+  { id: 'targeting', topic: '/mtms/targeting/heartbeat', label: 'targeting' },
+  { id: 'stimulation_allower', topic: '/mtms/stimulation_allower/heartbeat', label: 'stimulation_allower' },
+  { id: 'timebase_calibrator', topic: '/mtms/timebase_calibrator/heartbeat', label: 'timebase_calibrator' },
+  { id: 'trial_performer', topic: '/mtms/trial_performer/heartbeat', label: 'trial_performer' },
 ] as const
