@@ -6,4 +6,6 @@ export const REQUIRED_MTMS_HEARTBEATS = [
   { id: 'trial_logger', topic: '/mtms/trial_logger/heartbeat', label: 'trial_logger' },
   { id: 'voltage_setter', topic: '/mtms/voltage_setter/heartbeat', label: 'voltage_setter' },
   { id: 'waveform_approximator', topic: '/mtms/waveform_approximator/heartbeat', label: 'waveform_approximator' },
+  { id: 'get_default_waveform', topic: '/mtms/waveform_utils/get_default_waveform/heartbeat', label: 'get_default_waveform' },
+  { id: 'get_multipulse_waveforms', topic: '/mtms/waveform_utils/get_multipulse_waveforms/heartbeat', label: 'get_multipulse_waveforms' },
 ] as const
