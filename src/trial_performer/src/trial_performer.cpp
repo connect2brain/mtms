@@ -460,7 +460,7 @@ void TrialPerformerNode::handle_perform_trial(
   /* Get desired voltages and waveforms (also warms up the cache). */
   auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
   if (!approximation_success) {
-    RCLCPP_ERROR(this->get_logger(), "Perform trial war failed: waveform approximation could not be performed.");
+    RCLCPP_ERROR(this->get_logger(), "Perform trial failed: waveform approximation could not be performed.");
     response->success = false;
     return;
   }
