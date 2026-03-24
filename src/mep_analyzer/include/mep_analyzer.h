@@ -63,6 +63,8 @@ private:
   std::optional<uint64_t> last_sample_index;
   std::optional<double> last_trigger_a_time_s;
   uint64_t samples_dropped_counter {0};
+
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 #endif  // MEP_ANALYZER__MEP_ANALYZER_H_

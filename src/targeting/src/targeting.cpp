@@ -201,7 +201,7 @@ public:
     //validate_lookup_table();
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
       heartbeat_publisher->publish(std_msgs::msg::Empty());
     });
   }
@@ -313,6 +313,7 @@ private:
   rclcpp::Service<mtms_targeting_interfaces::srv::GetMaximumIntensity>::SharedPtr get_maximum_intensity;
 
   std::string coil_array;
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 

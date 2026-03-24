@@ -50,6 +50,8 @@ private:
 
   rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr eeg_to_mtms_publisher;
   rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr mtms_to_eeg_publisher;
+
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 #endif  // TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_

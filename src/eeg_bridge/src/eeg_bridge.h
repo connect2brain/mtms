@@ -84,6 +84,8 @@ private:
   uint64_t session_sample_index = 0;
 
   double_t time_offset = UNSET_TIME;     // in seconds
+
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 #endif

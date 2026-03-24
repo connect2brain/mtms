@@ -127,7 +127,7 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
   }
 
   auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-  this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+  heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 

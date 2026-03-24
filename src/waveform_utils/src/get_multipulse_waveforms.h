@@ -65,4 +65,6 @@ private:
   rclcpp::Client<mtms_targeting_interfaces::srv::ReversePolarity>::SharedPtr reverse_polarity_client;
 
   std::unordered_map<std::string, std::shared_ptr<mtms_targeting_interfaces::srv::GetMultipulseWaveforms::Response>> cache;
+
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };

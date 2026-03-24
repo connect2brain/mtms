@@ -128,6 +128,8 @@ private:
   void tic();
   void toc(const std::string &prefix);
 
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
+
   std::tuple<bool, std::vector<uint16_t>, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> get_desired_voltages_and_waveforms(
       const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets);
 };

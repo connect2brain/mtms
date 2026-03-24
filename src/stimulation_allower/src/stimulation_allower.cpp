@@ -73,7 +73,7 @@ public:
     RCLCPP_INFO(this->get_logger(), "Stimulation allower ready.");
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
       heartbeat_publisher->publish(std_msgs::msg::Empty());
     });
   }
@@ -144,6 +144,8 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr allow_trigger_out_publisher_;
 
   rclcpp::Service<mtms_system_interfaces::srv::GetStimulationAllowed>::SharedPtr get_stimulation_allowed_service_;
+
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 

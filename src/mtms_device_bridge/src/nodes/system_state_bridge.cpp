@@ -79,6 +79,8 @@ NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devices
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
 const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
+const std::string HEARTBEAT_TOPIC = "/mtms/device/heartbeat";
+const milliseconds HEARTBEAT_PUBLISH_PERIOD = 500ms;
 
 
 class SystemStateBridge : public rclcpp::Node {
@@ -112,7 +114,7 @@ public:
     healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
       heartbeat_publisher->publish(std_msgs::msg::Empty());
     });
   }
@@ -270,6 +272,7 @@ private:
   uint8_t channel_count;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
   rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 };

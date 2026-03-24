@@ -127,7 +127,7 @@ public:
       efield_service_dIperdt = this->create_service<mtms_neuronavigation_interfaces::srv::Setdiperdt>("/mtms/efield/set_dIperdt",service_callback_set_dIperdt);
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
-    this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
+    heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
       heartbeat_publisher->publish(std_msgs::msg::Empty());
     });
   }
@@ -140,6 +140,7 @@ private:
   rclcpp::Service<mtms_neuronavigation_interfaces::srv::EfieldRoi>::SharedPtr efield_service_vectorfield_ROI;
   rclcpp::Service<mtms_neuronavigation_interfaces::srv::EfieldRoiMax>::SharedPtr efield_service_vectorfield_ROI_max_loc;
   rclcpp::Service<mtms_neuronavigation_interfaces::srv::Setdiperdt>::SharedPtr efield_service_dIperdt;
+  rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };
 
 

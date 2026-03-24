@@ -191,6 +191,7 @@ private:
   rclcpp::TimerBase::SharedPtr session_timer_;
   rclcpp::TimerBase::SharedPtr system_state_timer_;
   rclcpp::TimerBase::SharedPtr healthcheck_timer_;
+  rclcpp::TimerBase::SharedPtr heartbeat_timer_;
 
   // Sends trigger tokens to NeurOne. Retries TCP connection in the background.
   std::unique_ptr<class NeurOneTriggerClient> neurone_trigger_client_;
