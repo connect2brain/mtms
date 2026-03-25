@@ -162,6 +162,17 @@ ls sites
 
 After this phase, the computer needs to be rebooted again.
 
+### Setting up the neuronavigation computer
+
+TBD: The modern way of setting it up should be documented here.
+
+An important note: "Wake on LAN" needs to be disabled on the neuronavigation computer. Otherwise, the network
+interface card won't respond properly to multicast traffic sent by the mTMS computer, causing EEG streaming
+to drop samples. Here are the steps to disable "Wake on LAN":
+
+1. In BIOS, disable "Wake on LAN".
+2. In Windows 11, go to Device Manager → Network adapter → Properties → Power Management, and uncheck "Allow the computer to turn off this device to save power."
+
 ### External EEG software (e.g. NeuroSimo)
 
 During mTMS installation, a system service is installed that listens for UDP traffic on one port and sends a copy of each packet to two destinations on localhost:
