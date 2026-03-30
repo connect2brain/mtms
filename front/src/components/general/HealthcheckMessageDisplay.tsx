@@ -34,14 +34,16 @@ export const HealthcheckMessageDisplay: React.FC = () => {
   let displayMessage
 
   // Prioritize mtmsDeviceHealthcheck > eegHealthcheck > remoteControllerHealthcheck
+  //
+  // XXX: This whole healthcheck logic would need some work.
   if (
     mtmsDeviceHealthcheck?.status !== HealthcheckStatus.READY &&
     mtmsDeviceHealthcheck?.status !== HealthcheckStatus.DISABLED
   ) {
     displayMessage = mtmsDeviceHealthcheck?.actionable_message
-  } else if (eegHealthcheck?.status !== HealthcheckStatus.READY) {
+  } else if (eegHealthcheck?.status !== HealthcheckStatus.READY && eegHealthcheck?.status !== HealthcheckStatus.DISABLED && eegHealthcheck !== null) {
     displayMessage = eegHealthcheck?.actionable_message
-  } else if (remoteControllerHealthcheck?.status === HealthcheckStatus.NOT_READY || remoteControllerHealthcheck?.status === HealthcheckStatus.ERROR) {
+  } else if (remoteControllerHealthcheck?.status !== HealthcheckStatus.READY && remoteControllerHealthcheck?.status !== HealthcheckStatus.DISABLED) {
     displayMessage = remoteControllerHealthcheck?.actionable_message
   } else {
     displayMessage = 'Ready'
