@@ -84,9 +84,9 @@ void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Ses
 
   RCLCPP_DEBUG(
     this->get_logger(),
-    "Pair recorded: EEG sample_index=%lu, eeg_time=%.6f s, session_time=%.6f s",
+    "Pair recorded: EEG sample_index=%lu, eeg_device_timestamp=%.6f s, session_time=%.6f s",
     pair.eeg_sample.sample_index,
-    pair.eeg_sample.time,
+    pair.eeg_sample.eeg_device_timestamp,
     pair.session.time);
 
   double scale, offset;
@@ -121,7 +121,7 @@ bool TimebaseCalibrator::compute_lms(double & scale, double & offset) const
 
   double sum_x = 0.0, sum_y = 0.0, sum_xy = 0.0, sum_xx = 0.0;
   for (const auto & p : snapshot) {
-    const double x = p.eeg_sample.time;
+    const double x = p.eeg_sample.eeg_device_timestamp;
     const double y = p.session.time;
     sum_x  += x;
     sum_y  += y;
@@ -147,12 +147,12 @@ bool TimebaseCalibrator::compute_lms(double & scale, double & offset) const
   RCLCPP_INFO(
     this->get_logger(),
     "Example pair 0: EEG time=%.6f s, session time=%.6f s",
-    snapshot[0].eeg_sample.time,
+    snapshot[0].eeg_sample.eeg_device_timestamp,
     snapshot[0].session.time);
   RCLCPP_INFO(
     this->get_logger(),
     "Example pair 1: EEG time=%.6f s, session time=%.6f s",
-    snapshot[1].eeg_sample.time,
+    snapshot[1].eeg_sample.eeg_device_timestamp,
     snapshot[1].session.time);
 
   return true;
