@@ -242,6 +242,20 @@ void RemoteController::cache_target_lists_async(std::vector<mtms_trial_interface
 {
   RCLCPP_INFO(this->get_logger(), "Caching %zu target list(s)...", target_lists.size());
   for (size_t i = 0; i < target_lists.size(); ++i) {
+    const auto & targets = target_lists[i].targets;
+    RCLCPP_INFO(this->get_logger(), "  Target list %zu (%zu target(s)):", i + 1, targets.size());
+    for (size_t j = 0; j < targets.size(); ++j) {
+      const auto & t = targets[j];
+      RCLCPP_INFO(
+        this->get_logger(),
+        "    [%zu] dx=%d mm, dy=%d mm, rotation=%d deg, intensity=%u V/m",
+        j + 1,
+        static_cast<int>(t.displacement_x),
+        static_cast<int>(t.displacement_y),
+        static_cast<int>(t.rotation_angle),
+        static_cast<unsigned>(t.intensity));
+    }
+
     auto request = std::make_shared<mtms_trial_interfaces::srv::CacheTargetList::Request>();
     request->targets = target_lists[i].targets;
 
@@ -461,6 +475,19 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     }
     trial_ongoing = false;
   }).detach();
+
+  /* Log the trial. */
+  RCLCPP_INFO(this->get_logger(), "Trial:");
+  RCLCPP_INFO(this->get_logger(), "  Start time: %.3f s", trial.start_time);
+  RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
+  RCLCPP_INFO(this->get_logger(), "  Number of pulses: %zu", trial.pulse_times_since_trial_start.size());
+  for (size_t i = 0; i < trial.pulse_times_since_trial_start.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "    Pulse %zu time: %.3f s", i, trial.pulse_times_since_trial_start[i]);
+  }
+  for (size_t i = 0; i < trial.trigger_enabled.size(); ++i) {
+    RCLCPP_INFO(this->get_logger(), "    Trigger %zu enabled: %s", i, trial.trigger_enabled[i] ? "true" : "false");
+    RCLCPP_INFO(this->get_logger(), "    Trigger %zu delay: %.3f s", i, trial.trigger_delay[i]);
+  }
 }
 
 void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)
