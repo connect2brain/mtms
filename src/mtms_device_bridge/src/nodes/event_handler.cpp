@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "mtms_device_interfaces/srv/request_events.hpp"
@@ -20,6 +22,9 @@ const NiFpga_mTMS_HostToTargetFifoU8 trigger_out_fifo = NiFpga_mTMS_HostToTarget
 const NiFpga_mTMS_ControlBool event_aggregation_lock = NiFpga_mTMS_ControlBool_Eventaggregationlock;
 
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
+
+const NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
+const double MINIMUM_MARGIN_S = 0.003; // 3 ms
 
 class EventHandler : public rclcpp::Node {
 public:
@@ -51,6 +56,32 @@ EventHandler::EventHandler() : Node("event_handler") {
 
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                                          std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
+  double earliest_event_time = std::numeric_limits<double>::max();
+  for (const auto &pulse : request->pulses)
+    earliest_event_time = std::min(earliest_event_time, pulse.event_info.execution_time);
+  for (const auto &charge : request->charges)
+    earliest_event_time = std::min(earliest_event_time, charge.event_info.execution_time);
+  for (const auto &discharge : request->discharges)
+    earliest_event_time = std::min(earliest_event_time, discharge.event_info.execution_time);
+  for (const auto &trigger_out : request->trigger_outs)
+    earliest_event_time = std::min(earliest_event_time, trigger_out.event_info.execution_time);
+
+  /* Read current time from FPGA. */
+  uint64_t current_time_ticks;
+  NiFpga_MergeStatus(&status, NiFpga_ReadU64(session, time_indicator, &current_time_ticks));
+  double current_mtms_time = (double)current_time_ticks / CLOCK_FREQUENCY_HZ;
+
+  /* Check if there is enough time to process the events. */
+  double margin = earliest_event_time - current_mtms_time;
+
+  if (margin < MINIMUM_MARGIN_S) {
+    RCLCPP_WARN(rclcpp::get_logger("event_handler"),
+                "Insufficient time margin (%.1f ms), rejecting batch (earliest event time: %.1f ms, current time: %.1f ms)",
+                margin * 1000, earliest_event_time * 1000, current_mtms_time * 1000);
+    response->success = false;
+    return;
+  }
+
   /* Set event aggregation lock before processing events. */
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, event_aggregation_lock, NiFpga_True));
 
