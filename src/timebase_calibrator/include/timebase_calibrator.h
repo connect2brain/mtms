@@ -1,7 +1,6 @@
 #ifndef TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_
 #define TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_
 
-#include <mutex>
 #include <optional>
 
 #include "rclcpp/rclcpp.hpp"
@@ -17,9 +16,6 @@ public:
 private:
   void eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg);
   void session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
-
-  /* Protects all mutable state. */
-  mutable std::mutex mutex;
 
   /* Session tracking. */
   bool session_active = false;

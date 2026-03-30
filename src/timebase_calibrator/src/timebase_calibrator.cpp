@@ -55,8 +55,6 @@ TimebaseCalibrator::TimebaseCalibrator()
 
 void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
   latest_eeg_timestamp = msg->eeg_device_timestamp;
 
   /* Only process sync triggers. */
@@ -92,8 +90,6 @@ void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::Sh
 
 void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
   const bool started = (msg->state == mtms_system_interfaces::msg::Session::STARTED);
 
   if (started && !session_active) {
