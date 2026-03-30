@@ -10,6 +10,7 @@ TO=""
 FOLLOW=true          # Default to follow mode
 SAVE_TO=""
 TIME_FILTERS=false   # Indicator for specific time filters
+LINES=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -19,6 +20,8 @@ while [[ "$#" -gt 0 ]]; do
         --last-hour) FROM="1 hour ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
         --last-day) FROM="1 day ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
         --last-minute) FROM="1 minute ago"; FOLLOW=false; TIME_FILTERS=true; shift;;
+        -n|--lines) LINES=$2; shift 2;;
+        -n*) LINES="${1#-n}"; shift;;
         --save) SAVE_TO=$2; shift 2;;
         --follow) FOLLOW=true; shift;;
         *)
@@ -39,6 +42,7 @@ fi
 CMD="journalctl -u mtms-bridge"
 [ ! -z "$FROM" ] && CMD="$CMD --since \"$FROM\""
 [ ! -z "$TO" ] && CMD="$CMD --until \"$TO\""
+[ ! -z "$LINES" ] && CMD="$CMD -n $LINES"
 [ "$FOLLOW" = true ] && CMD="$CMD -f"
 [ ! -z "$CONTAINER_NAME" ] && CMD="$CMD | grep \"mtms-$CONTAINER_NAME\""
 [ ! -z "$SAVE_TO" ] && CMD="$CMD > $SAVE_TO"
