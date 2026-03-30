@@ -13,6 +13,11 @@
 
 using std::placeholders::_1;
 
+/* Filtering in the EEG device introduces a fixed output latency. The timestamp on each
+ * sample marks the end of the filter window, so the sample's effective time is
+ * that timestamp plus this latency. */
+static constexpr double EEG_FILTERING_LATENCY = 0.0025;  /* 2.5 ms, in seconds */
+
 static const std::string EEG_RAW_TOPIC      = "/mtms/eeg/raw";
 static const std::string SESSION_TOPIC      = "/mtms/device/session";
 static const std::string EEG_TO_MTMS_TOPIC  = "/mtms/timebase/eeg_to_mtms";
@@ -121,7 +126,7 @@ bool TimebaseCalibrator::compute_lms(double & scale, double & offset) const
 
   double sum_x = 0.0, sum_y = 0.0, sum_xy = 0.0, sum_xx = 0.0;
   for (const auto & p : snapshot) {
-    const double x = p.eeg_sample.eeg_device_timestamp;
+    const double x = p.eeg_sample.eeg_device_timestamp + EEG_FILTERING_LATENCY;
     const double y = p.session.time;
     sum_x  += x;
     sum_y  += y;
