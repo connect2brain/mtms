@@ -218,6 +218,7 @@ void EegBridge::handle_sample(mtms_eeg_interfaces::msg::Sample sample) {
     RCLCPP_INFO(this->get_logger(), "Received TMS pulse at time: %.4f s", sample.time);
   }
 
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "Streaming sample %lu at time: %.4f s", sample.sample_index, sample.time);
 }
 
 void EegBridge::process_eeg_packet() {
