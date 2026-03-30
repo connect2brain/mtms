@@ -417,8 +417,24 @@ bool RemoteController::build_trial_from_message(
   // Each pulse time in `TargetedPulses` is relative to `reference_eeg_device_timestamp`.
   const double ref_eeg_time_s = msg.reference_eeg_device_timestamp;
   trial_out.start_time = mapping.scale * ref_eeg_time_s + mapping.offset;
+  if (trial_out.start_time < 0.0) {
+    RCLCPP_INFO(
+      rclcpp::get_logger("remote_controller"),
+      "Trial start time is negative (%.6f s); rejecting trial.",
+      trial_out.start_time);
+    return false;
+  }
 
   for (const auto & pulse : msg.pulses) {
+    const double pulse_time = mapping.scale * pulse.time_offset;
+    if (pulse_time < 0.0) {
+      RCLCPP_INFO(
+        rclcpp::get_logger("remote_controller"),
+        "Pulse time since trial start is negative (%.6f s); rejecting trial.",
+        pulse_time);
+      return false;
+    }
+
     mtms_targeting_interfaces::msg::ElectricTarget target;
     target.displacement_x = clamp_displacement_mm_to_int8(pulse.displacement_x);
     target.displacement_y = clamp_displacement_mm_to_int8(pulse.displacement_y);
@@ -427,7 +443,7 @@ bool RemoteController::build_trial_from_message(
     target.algorithm = mtms_targeting_interfaces::msg::ElectricTarget::LEAST_SQUARES;
 
     trial_out.targets.push_back(target);
-    trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time_offset);
+    trial_out.pulse_times_since_trial_start.push_back(pulse_time);
   }
 
   /* Enable both triggers to coincide with the first pulse. */
