@@ -182,6 +182,7 @@ mtms_eeg_interfaces::msg::Sample EegBridge::create_ros_sample(const AdapterSampl
   sample.eeg = adapter_sample.eeg;
   sample.emg = adapter_sample.emg;
   sample.time = adapter_sample.time;
+  sample.eeg_device_timestamp = adapter_sample.time;
   sample.trigger_a = adapter_sample.trigger_a;
   sample.trigger_b = adapter_sample.trigger_b;
   
@@ -193,7 +194,6 @@ void EegBridge::handle_sample(mtms_eeg_interfaces::msg::Sample sample) {
   if (std::isnan(this->time_offset)) {
     this->time_offset = sample.time;
   }
-
   sample.time -= this->time_offset;
 
   /* Set the streaming sample index. */
