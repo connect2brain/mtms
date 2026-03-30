@@ -138,10 +138,22 @@ bool TimebaseCalibrator::compute_lms(double & scale, double & offset) const
   scale  = (n * sum_xy - sum_x * sum_y) / denom;
   offset = (sum_y - scale * sum_x) / n;
 
-  RCLCPP_DEBUG(
+  RCLCPP_INFO(
     this->get_logger(),
     "LMS fit over %zu pairs: scale=%.9f, offset=%.6f s",
     snapshot.size(), scale, offset);
+
+  /* Print an example pair. */
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Example pair 0: EEG time=%.6f s, session time=%.6f s",
+    snapshot[0].eeg_sample.time,
+    snapshot[0].session.time);
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Example pair 1: EEG time=%.6f s, session time=%.6f s",
+    snapshot[1].eeg_sample.time,
+    snapshot[1].session.time);
 
   return true;
 }
