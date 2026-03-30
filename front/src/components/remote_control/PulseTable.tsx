@@ -204,6 +204,24 @@ const FIELDS: { key: keyof Pulse; label: string }[] = [
   { key: 'intensity', label: 'Int.' },
 ]
 
+/* ── session storage ── */
+
+const getStorageData = (): any => {
+  const data = sessionStorage.getItem('pulseTable')
+  return data ? JSON.parse(data) : {}
+}
+
+const storeStorageKey = (key: string, value: any) => {
+  const current = getStorageData()
+  current[key] = value
+  sessionStorage.setItem('pulseTable', JSON.stringify(current))
+}
+
+const getStorageKey = (key: string, defaultValue: any): any => {
+  const data = getStorageData()
+  return key in data ? data[key] : defaultValue
+}
+
 /* ── component ── */
 
 let nextId = 1
@@ -221,15 +239,29 @@ interface PulseTableProps {
 }
 
 export const PulseTable = forwardRef<PulseTableHandle, PulseTableProps>(function PulseTable({ onRowCountChange }, ref) {
-  const [rows, setRows] = useState<PulseRow[]>([])
+  const [rows, setRows] = useState<PulseRow[]>(() => {
+    const saved: PulseRow[] = getStorageKey('rows', [])
+    if (saved.length > 0) {
+      nextId = Math.max(...saved.map((r) => r.id)) + 1
+    }
+    return saved
+  })
   const [showValidationErrors, setShowValidationErrors] = useState(false)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(() => getStorageKey('selectedId', null))
   const fileInputRef = useRef<HTMLInputElement>(null)
   const validationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     onRowCountChange?.(rows.length)
   }, [rows.length, onRowCountChange])
+
+  useEffect(() => {
+    storeStorageKey('rows', rows)
+  }, [rows])
+
+  useEffect(() => {
+    storeStorageKey('selectedId', selectedId)
+  }, [selectedId])
 
   const flashValidationErrors = useCallback(() => {
     setShowValidationErrors(true)
