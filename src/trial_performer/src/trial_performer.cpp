@@ -16,7 +16,7 @@ const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 /* NOTE: If this value changes, update all places that assume fixed maximum voltage. */
 static constexpr uint16_t FIXED_DESIRED_VOLTAGE = 1500;
 
-static constexpr std::chrono::seconds VOLTAGE_WAIT_TIMEOUT{10};
+static constexpr std::chrono::seconds VOLTAGE_WAIT_TIMEOUT{20};
 static constexpr std::chrono::seconds EVENT_FEEDBACK_TIMEOUT{10};
 
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
@@ -437,11 +437,25 @@ void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces:
   }
 }
 
-void TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
+bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   auto request = std::make_shared<mtms_trial_interfaces::srv::SetVoltages::Request>();
   request->voltages = voltages;
 
-  set_voltages_client->async_send_request(request);
+  auto future = set_voltages_client->async_send_request(request);
+
+  auto future_status = future.wait_for(VOLTAGE_WAIT_TIMEOUT);
+  if (future_status != std::future_status::ready) {
+    RCLCPP_ERROR(this->get_logger(), "Timed out waiting for /mtms/trial/set_voltages response.");
+    return false;
+  }
+
+  auto response = future.get();
+  if (!response->success) {
+    RCLCPP_ERROR(this->get_logger(), "Voltage setter returned failure.");
+    return false;
+  }
+
+  return true;
 }
 
 /* Service handlers */
@@ -551,16 +565,10 @@ void TrialPerformerNode::handle_prepare_trial(
     return;
   }
 
-  set_voltages(fixed_desired_voltages);
-
-  /* Wait until trial is ready. */
-  auto wait_start = std::chrono::steady_clock::now();
-  while (!is_ready_for_trial(false)) {
-    if (std::chrono::steady_clock::now() - wait_start > VOLTAGE_WAIT_TIMEOUT) {
-      RCLCPP_ERROR(this->get_logger(), "Timed out waiting for voltages to reach target.");
-      return;
-    }
-    std::this_thread::sleep_for(50ms);
+  /* Wait for voltage setter to finish and report final status. */
+  if (!set_voltages(fixed_desired_voltages)) {
+    RCLCPP_ERROR(this->get_logger(), "Failed to set voltages.");
+    return;
   }
 
   response->success = true;
