@@ -23,6 +23,7 @@ TOPICS_GLOB="\"[\
 '/mtms/waveform_approximator/heartbeat',\
 '/mtms/waveform_utils/get_default_waveform/heartbeat',\
 '/mtms/waveform_utils/get_multipulse_waveforms/heartbeat',\
+'/mtms/waveform_utils/reverse_polarity/heartbeat',\
 '/mtms/device/heartbeat',\
 '/mtms/eeg_bridge/heartbeat',\
 '/mtms/trigger_processor/heartbeat',\
