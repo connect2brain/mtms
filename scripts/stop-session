@@ -17,5 +17,4 @@ if [ -n "$SESSION_STATE" ] && [ "$SESSION_STATE" != "0" ]; then
         [ "$STATE" = "0" ] && break
         sleep 0.5
     done
-    echo "${BOLD}Session stopped.${RESET}"
 fi
