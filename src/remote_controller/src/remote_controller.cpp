@@ -23,7 +23,7 @@ using std::placeholders::_1;
 
 const std::string SESSION_TOPIC = "/mtms/device/session";
 const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
-const std::string TARGETED_PULSES_TOPIC = "/mtms/stimulation/targeted_pulses";
+const std::string TARGETED_PULSES_TOPIC = "/mtms/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
 const std::string CACHE_TARGET_LIST_SERVICE = "/mtms/trial/cache";
 const std::string PREPARE_TRIAL_SERVICE = "/mtms/trial/prepare";
