@@ -49,6 +49,7 @@ SERVICES_GLOB="\"[\
 
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml \
   port:=$ROSBRIDGE_PORT \
+  namespace:=mtms \
   topics_glob:="$TOPICS_GLOB" \
   services_glob:="$SERVICES_GLOB" \
   params_glob:="[]"
