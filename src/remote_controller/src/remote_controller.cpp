@@ -407,6 +407,15 @@ bool RemoteController::build_trial_from_message(
     trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time_offset);
   }
 
+  /* Enable both triggers to coincide with the first pulse. */
+  if (msg.pulses.size() > 0) {
+    trial_out.trigger_enabled.push_back(true);
+    trial_out.trigger_delay.push_back(msg.pulses[0].time_offset);
+
+    trial_out.trigger_enabled.push_back(true);
+    trial_out.trigger_delay.push_back(msg.pulses[0].time_offset);
+  }
+
   return true;
 }
 
