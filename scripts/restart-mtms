@@ -5,6 +5,12 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
+source /opt/ros/jazzy/setup.bash
+source /home/mtms/mtms/install/setup.bash
+
+# Stop session if active.
+source $MTMS_ROOT/scripts/stop-session
+
 # Restart core containers.
 echo "${BOLD}Restarting...${RESET}"
 

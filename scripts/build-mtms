@@ -64,6 +64,9 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Stop session if active.
+source $MTMS_ROOT/scripts/stop-session
+
 # Restart containers.
 echo "${BOLD}Restarting...${RESET}"
 
