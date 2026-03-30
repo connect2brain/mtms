@@ -20,12 +20,14 @@ interface HealthcheckContextType {
   eegHealthcheck: Healthcheck | null
   mtmsDeviceHealthcheck: Healthcheck | null
   mepHealthcheck: Healthcheck | null
+  remoteControllerHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
   eegHealthcheck: null,
   mtmsDeviceHealthcheck: null,
   mepHealthcheck: null,
+  remoteControllerHealthcheck: null,
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -38,6 +40,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [eegHealthcheck, setEegHealthcheck] = useState<Healthcheck | null>(null)
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
+  const [remoteControllerHealthcheck, setRemoteControllerHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
     const eegSubscriber = new ROSLIB.Topic<Healthcheck>({
@@ -58,9 +61,16 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'mtms_system_interfaces/Healthcheck',
     })
 
+    const remoteControllerSubscriber = new ROSLIB.Topic<Healthcheck>({
+      ros: ros,
+      name: '/mtms/remote_controller/healthcheck',
+      messageType: 'mtms_system_interfaces/Healthcheck',
+    })
+
     let eegTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
     let mepTimeout: NodeJS.Timeout | null = null
+    let remoteControllerTimeout: NodeJS.Timeout | null = null
 
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
@@ -92,10 +102,21 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }, 1200)
     })
 
+    remoteControllerSubscriber.subscribe((message) => {
+      setRemoteControllerHealthcheck(message)
+      if (remoteControllerTimeout) {
+        clearTimeout(remoteControllerTimeout)
+      }
+      remoteControllerTimeout = setTimeout(() => {
+        setRemoteControllerHealthcheck(null)
+      }, 1200)
+    })
+
     return () => {
       eegSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
       mepSubscriber.unsubscribe()
+      remoteControllerSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
       }
@@ -104,6 +125,9 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }
       if (mepTimeout) {
         clearTimeout(mepTimeout)
+      }
+      if (remoteControllerTimeout) {
+        clearTimeout(remoteControllerTimeout)
       }
     }
   }, [])
@@ -114,6 +138,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
         eegHealthcheck,
         mtmsDeviceHealthcheck,
         mepHealthcheck,
+        remoteControllerHealthcheck,
       }}
     >
       {children}

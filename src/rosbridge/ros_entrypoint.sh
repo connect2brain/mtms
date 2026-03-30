@@ -15,6 +15,7 @@ TOPICS_GLOB="\"[\
 '/mtms/eeg/healthcheck',\
 '/mtms/device/healthcheck',\
 '/mtms/mep/healthcheck',\
+'/mtms/remote_controller/healthcheck',\
 '/mtms/busylight_manager/heartbeat',\
 '/mtms/experiment_performer/heartbeat',\
 '/mtms/pedal_listener/heartbeat',\

@@ -32,8 +32,10 @@ const std::string STOP_SESSION_SERVICE = "/mtms/device/session/stop";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
 const std::string REMOTE_CONTROLLER_STATE_TOPIC = "/mtms/remote_controller/state";
 const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
+const std::string HEALTHCHECK_TOPIC = "/mtms/remote_controller/healthcheck";
 
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
+constexpr std::chrono::milliseconds HEALTHCHECK_PUBLISH_PERIOD{800};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
@@ -131,6 +133,11 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
+  healthcheck_publisher =
+    this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+  healthcheck_timer = this->create_wall_timer(
+    HEALTHCHECK_PUBLISH_PERIOD, std::bind(&RemoteController::publish_healthcheck, this));
+
   set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
   RCLCPP_INFO(this->get_logger(), "Remote controller initialized");
@@ -151,6 +158,21 @@ uint8_t RemoteController::get_state()
 {
   std::lock_guard<std::mutex> lock(state_mutex);
   return this->state.state;
+}
+
+void RemoteController::publish_healthcheck()
+{
+  mtms_system_interfaces::msg::Healthcheck msg;
+  if (target_list_mismatch) {
+    msg.status = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
+    msg.status_message = "Target list mismatch";
+    msg.actionable_message = "A non-configured target requested";
+  } else {
+    msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
+    msg.status_message = "Ready";
+    msg.actionable_message = "";
+  }
+  healthcheck_publisher->publish(msg);
 }
 
 void RemoteController::start_service_handler(
@@ -214,6 +236,7 @@ void RemoteController::stop_service_handler(
   }
 
   stored_target_lists.clear();
+  target_list_mismatch = false;
 
   std::thread([this]() {
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STOPPING);
@@ -451,8 +474,10 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     RCLCPP_WARN(
       this->get_logger(),
       "Trial target list does not match any cached target list; skipping TargetedPulses.");
+    target_list_mismatch = true;
     return;
   }
+  target_list_mismatch = false;
 
   if (trial_ongoing) {
     RCLCPP_WARN(
