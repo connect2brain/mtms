@@ -17,6 +17,7 @@ const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 static constexpr uint16_t FIXED_DESIRED_VOLTAGE = 1500;
 
 static constexpr std::chrono::seconds VOLTAGE_WAIT_TIMEOUT{10};
+static constexpr std::chrono::seconds EVENT_FEEDBACK_TIMEOUT{10};
 
 TrialPerformerNode::TrialPerformerNode(const rclcpp::NodeOptions &options)
     : Node("trial_performer_node", options),
@@ -291,6 +292,8 @@ mtms_event_interfaces::msg::TriggerOut TrialPerformerNode::create_trigger_out(ui
 /* Events */
 
 bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids, const std::vector<uint16_t> &trigger_out_ids) {
+  auto wait_start = std::chrono::steady_clock::now();
+
   while (true) {
     {
       std::lock_guard<std::mutex> lock(feedback_mutex);
@@ -305,6 +308,13 @@ bool TrialPerformerNode::wait_for_events_to_finish(const std::vector<uint16_t> &
       if (all_pulses_finished && all_triggers_finished) {
         break;
       }
+    }
+
+    if (std::chrono::steady_clock::now() - wait_start > EVENT_FEEDBACK_TIMEOUT) {
+      RCLCPP_ERROR(this->get_logger(), "Timed out waiting for event feedback; device may have dropped events.");
+      pulse_feedback.clear();
+      trigger_out_feedback.clear();
+      return false;
     }
 
     std::this_thread::sleep_for(1ms);
