@@ -10,46 +10,36 @@
 #include "mtms_system_interfaces/msg/session.hpp"
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
 
-#include "ring_buffer.h"
-
-/* A matched pair of one EEG sample and the session message that triggered pairing. */
-struct SamplePair {
-  mtms_eeg_interfaces::msg::Sample eeg_sample;
-  mtms_system_interfaces::msg::Session session;
-};
-
 class TimebaseCalibrator : public rclcpp::Node {
 public:
   TimebaseCalibrator();
 
-  /* Returns a copy of all currently stored pairs (oldest first). */
-  std::vector<SamplePair> get_pairs() const;
-
 private:
-  static constexpr size_t PAIR_BUFFER_SIZE = 10;
-
   void eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg);
   void session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
 
-  /* Fits session_time = scale * eeg_time + offset over all buffered pairs.
-     Returns false if the fit cannot be computed (fewer than 2 pairs, or
-     degenerate timestamps). */
-  bool compute_lms(double & scale, double & offset) const;
-
-  /* Protects latest_eeg_sample and pairs. */
+  /* Protects all mutable state. */
   mutable std::mutex mutex;
 
-  /* Most-recently received EEG sample; empty until the first sample arrives. */
-  std::optional<mtms_eeg_interfaces::msg::Sample> latest_eeg_sample;
+  /* Session tracking. */
+  bool session_active = false;
 
-  /* Ring buffer holding the last PAIR_BUFFER_SIZE matched pairs. */
-  RingBuffer<SamplePair> pairs;
+  /* Sync trigger counting: increments by 1 each time trigger_b is true.
+     Corresponds to mTMS session time in whole seconds. */
+  int sync_trigger_count = -1;
+
+  /* EEG device timestamp of the most recent sync trigger (trigger_b),
+     regardless of whether a session is active. Used for the staleness
+     check when a session starts. */
+  std::optional<double> last_sync_trigger_eeg_timestamp;
+
+  /* Latest EEG device timestamp seen (any sample), used to judge staleness. */
+  double latest_eeg_timestamp = 0.0;
 
   rclcpp::Subscription<mtms_eeg_interfaces::msg::Sample>::SharedPtr eeg_subscription;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscription;
 
-  rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr eeg_to_mtms_publisher;
-  rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr mtms_to_eeg_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr mapping_publisher;
 
   rclcpp::TimerBase::SharedPtr heartbeat_timer;
 };

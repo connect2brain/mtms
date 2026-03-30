@@ -1,11 +1,9 @@
 #include "timebase_calibrator.h"
 
 #include <chrono>
-
 #include <functional>
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "rclcpp/executors/single_threaded_executor.hpp"
 
@@ -13,23 +11,19 @@
 
 using std::placeholders::_1;
 
-/* Filtering in the EEG device introduces a fixed output latency. The timestamp on each
- * sample marks the end of the filter window, so the sample's effective time is
- * that timestamp plus this latency. */
-static constexpr double EEG_FILTERING_LATENCY = 0.0025;  /* 2.5 ms, in seconds */
-
-static const std::string EEG_RAW_TOPIC      = "/mtms/eeg/raw";
-static const std::string SESSION_TOPIC      = "/mtms/device/session";
-static const std::string EEG_TO_MTMS_TOPIC  = "/mtms/timebase/eeg_to_mtms";
-static const std::string MTMS_TO_EEG_TOPIC  = "/mtms/timebase/mtms_to_eeg";
-static const std::string HEARTBEAT_TOPIC    = "/mtms/timebase_calibrator/heartbeat";
+static const std::string EEG_RAW_TOPIC           = "/mtms/eeg/raw";
+static const std::string SESSION_TOPIC           = "/mtms/device/session";
+static const std::string TIMEBASE_MAPPING_TOPIC  = "/mtms/timebase/mapping";
+static const std::string HEARTBEAT_TOPIC         = "/mtms/timebase_calibrator/heartbeat";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
+
+/* Maximum age (in seconds) of a sync trigger to be considered fresh when a
+   session starts. Measured as (latest_eeg_timestamp - trigger_eeg_timestamp). */
+static constexpr double STALE_THRESHOLD_S = 1.0;
 
 TimebaseCalibrator::TimebaseCalibrator()
 : Node("timebase_calibrator")
 {
-  pairs.reset(PAIR_BUFFER_SIZE);
-
   /* EEG is published with a large reliable queue; match that. */
   eeg_subscription = this->create_subscription<mtms_eeg_interfaces::msg::Sample>(
     EEG_RAW_TOPIC, 65535,
@@ -47,133 +41,96 @@ TimebaseCalibrator::TimebaseCalibrator()
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
     .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
 
-  eeg_to_mtms_publisher =
+  mapping_publisher =
     this->create_publisher<mtms_system_interfaces::msg::TimebaseMapping>(
-      EEG_TO_MTMS_TOPIC, mapping_qos);
-
-  mtms_to_eeg_publisher =
-    this->create_publisher<mtms_system_interfaces::msg::TimebaseMapping>(
-      MTMS_TO_EEG_TOPIC, mapping_qos);
-
-  RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized. "
-    "Listening to '%s' and '%s'. Buffer size: %zu pairs.",
-    EEG_RAW_TOPIC.c_str(), SESSION_TOPIC.c_str(), PAIR_BUFFER_SIZE);
+      TIMEBASE_MAPPING_TOPIC, mapping_qos);
 
   auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
   heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
+
+  RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized.");
 }
 
 void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  latest_eeg_sample = *msg;
+
+  latest_eeg_timestamp = msg->eeg_device_timestamp;
+
+  /* Only process sync triggers. */
+  if (!msg->trigger_b) {
+    return;
+  }
+
+  /* Always track the most recent sync trigger timestamp, even outside a session,
+     so we can check staleness when a session starts. */
+  last_sync_trigger_eeg_timestamp = msg->eeg_device_timestamp;
+
+  /* Only process sync triggers if a session is active. */
+  if (!session_active) {
+    return;
+  }
+
+  sync_trigger_count++;
+
+  /* Each sync trigger corresponds to one second of mTMS session time, hence the conversion is straightforward. */
+  const double mtms_session_time = static_cast<double>(sync_trigger_count);
+
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Sync trigger #%d: eeg_device_timestamp=%.6f s -> mtms_session_time=%.1f s",
+    sync_trigger_count, msg->eeg_device_timestamp, mtms_session_time);
+
+  mtms_system_interfaces::msg::TimebaseMapping mapping;
+  mapping.valid = true;
+  mapping.eeg_device_timestamp = msg->eeg_device_timestamp;
+  mapping.mtms_session_time = mtms_session_time;
+  mapping_publisher->publish(mapping);
 }
 
 void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
-  if (!latest_eeg_sample.has_value()) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000,
-      "Session received but no EEG sample has arrived yet; skipping pair.");
-    return;
+  const bool started = (msg->state == mtms_system_interfaces::msg::Session::STARTED);
+
+  if (started && !session_active) {
+    session_active = true;
+    sync_trigger_count = -1;
+
+    /* Check if the most recent sync trigger is fresh enough to serve as t=0. */
+    if (last_sync_trigger_eeg_timestamp.has_value() &&
+        (latest_eeg_timestamp - *last_sync_trigger_eeg_timestamp) < STALE_THRESHOLD_S)
+    {
+      RCLCPP_INFO(this->get_logger(),
+        "Session started. Recent sync trigger (age %.3f s); using as trigger 0.",
+        latest_eeg_timestamp - *last_sync_trigger_eeg_timestamp);
+
+      sync_trigger_count++;
+
+      mtms_system_interfaces::msg::TimebaseMapping mapping;
+      mapping.valid = true;
+      mapping.eeg_device_timestamp = *last_sync_trigger_eeg_timestamp;
+      mapping.mtms_session_time = 0.0;
+      mapping_publisher->publish(mapping);
+    } else {
+      RCLCPP_INFO(this->get_logger(),
+      "Session started. No recent sync trigger; waiting for first trigger_b.");
+    }
   }
+  if (!started && session_active) {
+    /* Session is stopping or has stopped - invalidate the mapping. */
+    session_active = false;
+    sync_trigger_count = -1;
 
-  SamplePair pair;
-  pair.eeg_sample = *latest_eeg_sample;
-  pair.session = *msg;
-  pairs.append(pair);
+    mtms_system_interfaces::msg::TimebaseMapping mapping;
+    mapping.valid = false;
+    mapping_publisher->publish(mapping);
 
-  RCLCPP_DEBUG(
-    this->get_logger(),
-    "Pair recorded: EEG sample_index=%lu, eeg_device_timestamp=%.6f s, session_time=%.6f s",
-    pair.eeg_sample.sample_index,
-    pair.eeg_sample.eeg_device_timestamp,
-    pair.session.time);
-
-  double scale, offset;
-  if (!compute_lms(scale, offset)) {
-    return;
+    RCLCPP_INFO(this->get_logger(), "Session no longer active; calibration invalidated.");
   }
-
-  mtms_system_interfaces::msg::TimebaseMapping eeg_to_mtms_msg;
-  eeg_to_mtms_msg.scale  = scale;
-  eeg_to_mtms_msg.offset = offset;
-  eeg_to_mtms_publisher->publish(eeg_to_mtms_msg);
-
-  /* Inverse mapping: eeg_time = (session_time - offset) / scale */
-  mtms_system_interfaces::msg::TimebaseMapping mtms_to_eeg_msg;
-  mtms_to_eeg_msg.scale  = 1.0 / scale;
-  mtms_to_eeg_msg.offset = -offset / scale;
-  mtms_to_eeg_publisher->publish(mtms_to_eeg_msg);
-}
-
-bool TimebaseCalibrator::compute_lms(double & scale, double & offset) const
-{
-  std::vector<SamplePair> snapshot;
-  snapshot.reserve(PAIR_BUFFER_SIZE);
-  pairs.process_elements([&snapshot](const SamplePair & p) {
-    snapshot.push_back(p);
-  });
-
-  const double n = static_cast<double>(snapshot.size());
-  if (n < 2) {
-    return false;
-  }
-
-  double sum_x = 0.0, sum_y = 0.0, sum_xy = 0.0, sum_xx = 0.0;
-  for (const auto & p : snapshot) {
-    const double x = p.eeg_sample.eeg_device_timestamp + EEG_FILTERING_LATENCY;
-    const double y = p.session.time;
-    sum_x  += x;
-    sum_y  += y;
-    sum_xy += x * y;
-    sum_xx += x * x;
-  }
-
-  const double denom = n * sum_xx - sum_x * sum_x;
-  if (denom == 0.0) {
-    RCLCPP_WARN(this->get_logger(), "LMS fit degenerate (all EEG timestamps identical); skipping.");
-    return false;
-  }
-
-  scale  = (n * sum_xy - sum_x * sum_y) / denom;
-  offset = (sum_y - scale * sum_x) / n;
-
-  /* Logging to help in debugging. */
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000,
-    "LMS fit over %zu pairs: scale=%.9f, offset=%.6f s",
-    snapshot.size(), scale, offset);
-
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000,
-    "Example pair 0: EEG time=%.6f s, session time=%.6f s",
-    snapshot[0].eeg_sample.eeg_device_timestamp,
-    snapshot[0].session.time);
-
-  RCLCPP_INFO_THROTTLE(
-    this->get_logger(), *this->get_clock(), 1000,
-    "Example pair 1: EEG time=%.6f s, session time=%.6f s",
-    snapshot[1].eeg_sample.eeg_device_timestamp,
-    snapshot[1].session.time);
-
-  return true;
-}
-
-
-std::vector<SamplePair> TimebaseCalibrator::get_pairs() const
-{
-  std::lock_guard<std::mutex> lock(mutex);
-  std::vector<SamplePair> result;
-  result.reserve(PAIR_BUFFER_SIZE);
-  pairs.process_elements([&result](const SamplePair & p) {
-    result.push_back(p);
-  });
-  return result;
 }
 
 int main(int argc, char * argv[])

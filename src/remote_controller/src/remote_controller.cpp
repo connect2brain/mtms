@@ -22,7 +22,7 @@ using namespace std::chrono_literals;
 using std::placeholders::_1;
 
 const std::string SESSION_TOPIC = "/mtms/device/session";
-const std::string EEG_TO_MTMS_TOPIC = "/mtms/timebase/eeg_to_mtms";
+const std::string TIMEBASE_MAPPING_TOPIC = "/mtms/timebase/mapping";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/targeted_pulses";
 const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
 const std::string CACHE_TARGET_LIST_SERVICE = "/mtms/trial/cache";
@@ -57,11 +57,11 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     "/mtms/remote_controller/stop",
     std::bind(&RemoteController::stop_service_handler, this, _1, std::placeholders::_2));
 
-  /* Subscription for eeg_to_mtms mapping. */
-  eeg_to_mtms_subscriber = this->create_subscription<mtms_system_interfaces::msg::TimebaseMapping>(
-    EEG_TO_MTMS_TOPIC,
+  /* Subscription for timebase mapping. */
+  timebase_mapping_subscriber = this->create_subscription<mtms_system_interfaces::msg::TimebaseMapping>(
+    TIMEBASE_MAPPING_TOPIC,
     latched_qos,
-    std::bind(&RemoteController::eeg_to_mtms_callback, this, _1));
+    std::bind(&RemoteController::timebase_mapping_callback, this, _1));
 
   /* Subscription for targeted pulses. */
   const auto pulses_qos = rclcpp::QoS(rclcpp::KeepLast(10))
@@ -352,9 +352,9 @@ bool RemoteController::stop_session()
   return true;
 }
 
-void RemoteController::eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
+void RemoteController::timebase_mapping_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg)
 {
-  latest_eeg_to_mtms = *msg;
+  latest_timebase_mapping = *msg;
 }
 
 int8_t RemoteController::clamp_displacement_mm_to_int8(double mm)
@@ -399,9 +399,11 @@ bool RemoteController::build_trial_from_message(
   mtms_trial_interfaces::msg::Trial & trial_out) const
 {
   if (msg.pulses.empty()) {
+    RCLCPP_INFO(this->get_logger(), "No pulses in TargetedPulses; rejecting trial.");
     return false;
   }
-  if (!std::isfinite(mapping.scale) || !std::isfinite(mapping.offset) || mapping.scale == 0.0) {
+  if (!mapping.valid) {
+    RCLCPP_INFO(this->get_logger(), "No valid timebase mapping received yet; rejecting trial.");
     return false;
   }
 
@@ -413,10 +415,11 @@ bool RemoteController::build_trial_from_message(
   trial_out.targets.reserve(msg.pulses.size());
   trial_out.pulse_times_since_trial_start.reserve(msg.pulses.size());
 
-  // Mapping: mtms_time = scale * eeg_time + offset.
+  // Mapping: desired_mtms_time = (desired_eeg_time - mapping.eeg_device_timestamp) + mapping.mtms_session_time.
+  //
   // Each pulse time in `TargetedPulses` is relative to `reference_eeg_device_timestamp`.
   const double ref_eeg_time_s = msg.reference_eeg_device_timestamp;
-  trial_out.start_time = mapping.scale * ref_eeg_time_s + mapping.offset;
+  trial_out.start_time = (ref_eeg_time_s - mapping.eeg_device_timestamp) + mapping.mtms_session_time;
   if (trial_out.start_time < 0.0) {
     RCLCPP_INFO(
       rclcpp::get_logger("remote_controller"),
@@ -426,7 +429,7 @@ bool RemoteController::build_trial_from_message(
   }
 
   for (const auto & pulse : msg.pulses) {
-    const double pulse_time = mapping.scale * pulse.time_offset;
+    const double pulse_time = pulse.time_offset;
     if (pulse_time < 0.0) {
       RCLCPP_INFO(
         rclcpp::get_logger("remote_controller"),
@@ -470,15 +473,15 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
   }
 
   mtms_system_interfaces::msg::TimebaseMapping mapping;
-  if (!latest_eeg_to_mtms.has_value()) {
+  if (!latest_timebase_mapping.has_value()) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
       *this->get_clock(),
       5000,
-      "No eeg_to_mtms mapping received yet; cannot build trial.");
+      "No timebase mapping received yet; cannot build trial.");
     return;
   }
-  mapping = *latest_eeg_to_mtms;
+  mapping = *latest_timebase_mapping;
 
   mtms_trial_interfaces::msg::Trial trial;
   if (!build_trial_from_message(*msg, mapping, trial)) {

@@ -42,7 +42,7 @@ private:
     std::shared_ptr<std_srvs::srv::Trigger::Response> response);
 
   // ROS subscribers and publishers
-  void eeg_to_mtms_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
+  void timebase_mapping_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
   void trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg);
   void session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
@@ -71,7 +71,7 @@ private:
   static uint8_t clamp_intensity_to_uint8(double intensity_v_m);
 
   // Subscriptions
-  rclcpp::Subscription<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr eeg_to_mtms_subscriber;
+  rclcpp::Subscription<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr timebase_mapping_subscriber;
   rclcpp::Subscription<shared_stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trial_readiness_subscriber;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscriber;
@@ -94,7 +94,7 @@ private:
   rclcpp::TimerBase::SharedPtr healthcheck_timer;
 
   // Latest timebase mapping (EEG device time -> mTMS session time).
-  std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_eeg_to_mtms;
+  std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_timebase_mapping;
 
   // Remote controller state machine.
   mtms_trial_interfaces::msg::RemoteControllerState state;
