@@ -187,6 +187,32 @@ To run NeuroSimo on the mTMS computer:
 1. Install it using the instructions in the NeuroSimo repository.
 2. Configure NeuroSimo to receive EEG data on **UDP port 50002**.
 
+### EEG device configuration
+
+Use the following settings for the Bittium NeurOne, found in the protocol settings under "Real-Time Out" -> "Settings":
+
+## Main settings
+
+- **Packet Frequency (Hz):** [needs to match the sampling frequency of the protocol, e.g. 5000 Hz]
+- **Target IP Address:** `192.168.200.221`
+- **Target UDP Port:** `50000`
+
+## Trigger Sending Mode
+
+Select:
+
+- `(x) Send Triggers as a Channel`
+- `( ) Send Triggers as Packets`
+- `( ) Do Not Send Triggers`
+
+## Additional Options
+
+- `[x] Send Packets MeasurementStart and MeasurementEnd`
+- `[ ] Send HardwareState Packets`
+  - `(This includes ClockSourceState Packets)`
+- `[ ] Trigger delivery on rising edge`
+  - `(trigger sample channel)`
+
 ## Site-Specific Configurations
 
 ### MATLAB License Configuration
