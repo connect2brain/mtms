@@ -390,7 +390,7 @@ bool RemoteController::build_trial_from_message(
     target.algorithm = mtms_targeting_interfaces::msg::ElectricTarget::LEAST_SQUARES;
 
     trial_out.targets.push_back(target);
-    trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time);
+    trial_out.pulse_times_since_trial_start.push_back(mapping.scale * pulse.time_offset);
   }
 
   return true;
