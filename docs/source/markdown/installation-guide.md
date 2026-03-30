@@ -73,7 +73,7 @@ Note that the software installation steps are in `README.md`, while the hardware
 
 3. Partition Setup
    - Create root partition:
-     - Size: 150000 MB
+     - Size: 250000 MB
      - Type: Primary
      - Location: Beginning
      - File system: Ext4
