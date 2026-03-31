@@ -365,6 +365,10 @@ bool RemoteController::stop_session()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
+
+  /* Reset health status to ready. */
+  publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY, "");
+
   return true;
 }
 
