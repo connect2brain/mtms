@@ -92,6 +92,7 @@ struct Config {
   double duration_seconds = -1.0;
   bool enable_trigger_b = true;
   bool simulate_dropped_samples = false;
+  bool disable_sync_triggers = false;
 };
 
 void PrintUsage(const char* prog_name) {
@@ -115,6 +116,7 @@ void PrintUsage(const char* prog_name) {
       << "  --duration <float>              Duration seconds (default: run until interrupted)\n"
       << "  --disable-trigger-b             Disable trigger_b in trigger channel\n"
       << "  --simulate-dropped-samples      Skip sample packets in increasing bursts\n"
+      << "  --disable-sync-triggers         Disable trigger_b sync pulses every 1 second\n"
       << "  --help                          Show this help\n";
 }
 
@@ -168,6 +170,8 @@ ParseResult ParseArgs(int argc, char** argv, Config& cfg) {
       cfg.enable_trigger_b = false;
     } else if (arg == "--simulate-dropped-samples") {
       cfg.simulate_dropped_samples = true;
+    } else if (arg == "--disable-sync-triggers") {
+      cfg.disable_sync_triggers = true;
     } else if (arg == "--help" || arg == "-h") {
       PrintUsage(argv[0]);
       return ParseResult::kHelp;
@@ -225,6 +229,11 @@ class NeurOneSimulator {
     }
 
     std::thread trigger_thread(&NeurOneSimulator::HandleTriggerConnections, this);
+    std::thread sync_thread;
+    if (!cfg_.disable_sync_triggers) {
+      std::cout << "Sync triggers enabled: sending trigger_b every 1 second\n";
+      sync_thread = std::thread(&NeurOneSimulator::RunSyncTrigger, this);
+    }
 
     SendMeasurementStartPacket();
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -260,6 +269,9 @@ class NeurOneSimulator {
     Stop();
     if (trigger_thread.joinable()) {
       trigger_thread.join();
+    }
+    if (sync_thread.joinable()) {
+      sync_thread.join();
     }
 
     SendMeasurementEndPacket();
@@ -389,6 +401,17 @@ class NeurOneSimulator {
       return true;
     }
     return false;
+  }
+
+  void RunSyncTrigger() {
+    auto next = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+    while (running_.load(std::memory_order_relaxed)) {
+      std::this_thread::sleep_until(next);
+      next += std::chrono::seconds(1);
+      if (running_.load(std::memory_order_relaxed)) {
+        ScheduleTrigger("trigger_b");
+      }
+    }
   }
 
   void HandleTriggerConnections() {
