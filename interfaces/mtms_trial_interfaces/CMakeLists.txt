@@ -27,9 +27,9 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RemoteControllerState.msg"
   "msg/TargetList.msg"
   "msg/Trial.msg"
+  "msg/TrialState.msg"
 
   "srv/CacheTargetList.srv"
-  "srv/PerformTrial.srv"
   "srv/SetVoltages.srv"
   "srv/StartRemoteController.srv"
 

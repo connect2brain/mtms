@@ -17,8 +17,8 @@
 
 #include "mtms_trial_interfaces/msg/target_list.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
+#include "mtms_trial_interfaces/msg/trial_state.hpp"
 #include "mtms_trial_interfaces/msg/remote_controller_state.hpp"
-#include "mtms_trial_interfaces/srv/perform_trial.hpp"
 #include "mtms_trial_interfaces/srv/cache_target_list.hpp"
 #include "mtms_trial_interfaces/srv/start_remote_controller.hpp"
 
@@ -46,6 +46,7 @@ private:
   void timebase_mapping_callback(const mtms_system_interfaces::msg::TimebaseMapping::SharedPtr msg);
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
   void trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg);
+  void trial_state_callback(const mtms_trial_interfaces::msg::TrialState::SharedPtr msg);
   void session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
   void eeg_device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg);
   void publish_remote_controller_state();
@@ -76,6 +77,7 @@ private:
   rclcpp::Subscription<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr timebase_mapping_subscriber;
   rclcpp::Subscription<shared_stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trial_readiness_subscriber;
+  rclcpp::Subscription<mtms_trial_interfaces::msg::TrialState>::SharedPtr trial_state_subscriber;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscriber;
   rclcpp::Subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>::SharedPtr eeg_device_info_subscriber;
 
@@ -83,8 +85,10 @@ private:
   std::atomic<bool> is_session_started{false};
   std::atomic<bool> is_eeg_streaming{false};
 
+  // Publisher for trial requests
+  rclcpp::Publisher<mtms_trial_interfaces::msg::Trial>::SharedPtr perform_trial_publisher;
+
   // Service clients
-  rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;
   rclcpp::Client<mtms_trial_interfaces::srv::CacheTargetList>::SharedPtr cache_target_list_client;
   rclcpp::Client<mtms_system_interfaces::srv::StartSession>::SharedPtr start_session_client;
   rclcpp::Client<mtms_system_interfaces::srv::StopSession>::SharedPtr stop_session_client;
@@ -109,6 +113,7 @@ private:
 
   // Prevent overlapping trials.
   std::atomic<bool> trial_ongoing{false};
+  std::atomic<uint16_t> trial_id_counter{0};
 
   // Stored target lists for validating trials.
   std::vector<std::vector<mtms_targeting_interfaces::msg::ElectricTarget>> stored_target_lists;

@@ -17,8 +17,8 @@
 #include "std_msgs/msg/bool.hpp"
 #include "std_srvs/srv/trigger.hpp"
 #include "mtms_trial_interfaces/msg/trial.hpp"
+#include "mtms_trial_interfaces/msg/trial_state.hpp"
 #include "mtms_trial_interfaces/srv/cache_target_list.hpp"
-#include "mtms_trial_interfaces/srv/perform_trial.hpp"
 #include "mtms_trial_interfaces/srv/set_voltages.hpp"
 #include "mtms_device_interfaces/msg/device_state.hpp"
 #include "mtms_device_interfaces/msg/system_state.hpp"
@@ -100,19 +100,18 @@ private:
 
   rclcpp::CallbackGroup::SharedPtr callback_group;
 
-  /* Service */
-  rclcpp::Service<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_service;
+  /* Subscription */
+  rclcpp::Subscription<mtms_trial_interfaces::msg::Trial>::SharedPtr perform_trial_subscriber;
 
   /* Service client */
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
 
   /* Publishers */
   rclcpp::Publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>::SharedPtr create_marker_publisher;
+  rclcpp::Publisher<mtms_trial_interfaces::msg::TrialState>::SharedPtr trial_state_publisher;
 
-  /* Service handler */
-  void handle_perform_trial(
-      const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
-      std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
+  /* Topic callback */
+  void handle_perform_trial(const mtms_trial_interfaces::msg::Trial::SharedPtr msg);
 
   /* ROS message creation */
   std::pair<std::vector<mtms_event_interfaces::msg::Pulse>, std::vector<uint16_t>> create_pulses(

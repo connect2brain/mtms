@@ -90,16 +90,15 @@ HotPathNode::HotPathNode(std::shared_ptr<SharedState> shared_state, const rclcpp
       state(std::move(shared_state)),
       callback_group(this->create_callback_group(rclcpp::CallbackGroupType::Reentrant)) {
 
-  /* Service */
-  perform_trial_service = this->create_service<mtms_trial_interfaces::srv::PerformTrial>(
+  /* Subscription */
+  perform_trial_subscriber = this->create_subscription<mtms_trial_interfaces::msg::Trial>(
       "/mtms/trial/perform",
-      std::bind(
-          &HotPathNode::handle_perform_trial,
-          this,
-          std::placeholders::_1,
-          std::placeholders::_2),
-      rmw_qos_profile_services_default,
-      callback_group);
+      10,
+      std::bind(&HotPathNode::handle_perform_trial, this, std::placeholders::_1),
+      rclcpp::SubscriptionOptions());
+
+  /* Publishers */
+  trial_state_publisher = this->create_publisher<mtms_trial_interfaces::msg::TrialState>("/mtms/trial/state", 10);
 
   /* Service client */
   request_events_client = this->create_client<mtms_device_interfaces::srv::RequestEvents>("/mtms/device/events/request");
@@ -248,35 +247,43 @@ void HotPathNode::create_marker(const mtms_trial_interfaces::msg::Trial &trial) 
   create_marker_publisher->publish(*msg);
 }
 
-/* Service handler */
+/* Topic callback */
 
-void HotPathNode::handle_perform_trial(
-    const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
-    std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
-
+void HotPathNode::handle_perform_trial(const mtms_trial_interfaces::msg::Trial::SharedPtr msg) {
   const auto _t_start = std::chrono::system_clock::now();
+  const uint16_t trial_id = msg->id;
 
-  response->success = false;
+  auto publish_state = [this, trial_id](uint8_t state_value) {
+    mtms_trial_interfaces::msg::TrialState state_msg;
+    state_msg.id = trial_id;
+    state_msg.state = state_value;
+    trial_state_publisher->publish(state_msg);
+  };
+
   if (state->busy.exchange(true)) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial request received while busy.");
+    publish_state(mtms_trial_interfaces::msg::TrialState::BUSY);
     return;
   }
-  BusyGuard busy_guard{state->busy};
 
   tic();
 
   /* Check that the device and session are started. */
   if (!state->is_device_started()) {
     RCLCPP_WARN(this->get_logger(), "Device not started.");
+    publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
+    state->busy = false;
     return;
   }
 
   if (!state->is_session_started()) {
     RCLCPP_WARN(this->get_logger(), "Session not started.");
+    publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
+    state->busy = false;
     return;
   }
 
-  const auto &trial = request->trial;
+  const auto &trial = *msg;
   auto targets = trial.targets;
 
   /* Look up pre-cached waveforms; fail if the target list has not been cached. */
@@ -286,6 +293,8 @@ void HotPathNode::handle_perform_trial(
     auto it = state->waveform_cache.find(state->targets_to_cache_key(targets));
     if (it == state->waveform_cache.end()) {
       RCLCPP_ERROR(this->get_logger(), "Perform trial failed: target list has not been cached; call cache_target_list first.");
+      publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
+      state->busy = false;
       return;
     }
     waveforms = it->second;
@@ -294,6 +303,8 @@ void HotPathNode::handle_perform_trial(
   /* Check if the trial is ready to be performed. */
   if (!state->is_ready_for_trial(true, get_logger())) {
     RCLCPP_ERROR(this->get_logger(), "Trial not ready to be performed; call prepare_trial first.");
+    publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
+    state->busy = false;
     return;
   }
 
@@ -308,9 +319,12 @@ void HotPathNode::handle_perform_trial(
 
   auto future = request_events_client->async_send_request(request_events_req);
 
-  /* Spawn background thread to handle async event request and waiting. */
+  publish_state(mtms_trial_interfaces::msg::TrialState::ACCEPTED);
+
+  /* Detach background thread to handle async event request and waiting. */
   std::thread([this, future = std::move(future),
-               pulse_ids, trigger_out_ids, trial = request->trial, _t_start, response]() mutable {
+               pulse_ids, trigger_out_ids, trial, _t_start, publish_state]() mutable {
+    BusyGuard busy_guard{state->busy};
     try {
       /* Wait for the request_events call to complete. */
       auto response_ptr = future.get();
@@ -324,18 +338,20 @@ void HotPathNode::handle_perform_trial(
 
       if (!response_ptr || !response_ptr->success) {
         RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
-        response->success = false;
+        publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
         return;
       }
 
       /* Wait for events to finish. */
       bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
-      response->success = success;
 
       /* If trial was successful, create a marker in neuronavigation. */
       if (success) {
         create_marker(trial);
       }
+
+      publish_state(success ? mtms_trial_interfaces::msg::TrialState::SUCCEEDED
+                            : mtms_trial_interfaces::msg::TrialState::FAILED);
 
       RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
       RCLCPP_INFO(this->get_logger(), " ");
@@ -347,9 +363,9 @@ void HotPathNode::handle_perform_trial(
       RCLCPP_INFO(this->get_logger(), "handle_perform_trial: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "Perform trial failed: %s", e.what());
-      response->success = false;
+      publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
     }
-  }).join();
+  }).detach();
 }
 
 /* Logging */

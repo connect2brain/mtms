@@ -25,7 +25,8 @@ using std::placeholders::_1;
 const std::string SESSION_TOPIC = "/mtms/device/session";
 const std::string TIMEBASE_MAPPING_TOPIC = "/mtms/timebase/mapping";
 const std::string TARGETED_PULSES_TOPIC = "/mtms/targeted_pulses";
-const std::string PERFORM_TRIAL_SERVICE = "/mtms/trial/perform";
+const std::string PERFORM_TRIAL_TOPIC = "/mtms/trial/perform";
+const std::string TRIAL_STATE_TOPIC = "/mtms/trial/state";
 const std::string CACHE_TARGET_LIST_SERVICE = "/mtms/trial/cache";
 const std::string PREPARE_TRIAL_SERVICE = "/mtms/trial/prepare";
 const std::string START_SESSION_SERVICE = "/mtms/device/session/start";
@@ -96,13 +97,15 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     latched_qos,
     std::bind(&RemoteController::eeg_device_info_callback, this, _1));
 
-  /* Service client for performing trials. */
-  perform_trial_client =
-    this->create_client<mtms_trial_interfaces::srv::PerformTrial>(PERFORM_TRIAL_SERVICE);
+  /* Publisher for performing trials. */
+  perform_trial_publisher =
+    this->create_publisher<mtms_trial_interfaces::msg::Trial>(PERFORM_TRIAL_TOPIC, 10);
 
-  while (!perform_trial_client->wait_for_service(std::chrono::seconds(2))) {
-    RCLCPP_INFO(this->get_logger(), "Waiting for service '%s' to become available...", PERFORM_TRIAL_SERVICE.c_str());
-  }
+  /* Subscription for trial state feedback. */
+  trial_state_subscriber = this->create_subscription<mtms_trial_interfaces::msg::TrialState>(
+    TRIAL_STATE_TOPIC,
+    10,
+    std::bind(&RemoteController::trial_state_callback, this, _1));
 
   /* Service client for caching trials. */
   cache_target_list_client =
@@ -521,33 +524,13 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
   if (trial_ongoing) {
     RCLCPP_ERROR(
       this->get_logger(),
-      "Previous PerformTrial request is still running; skipping TargetedPulses.");
+      "Previous perform trial request is still running; skipping TargetedPulses.");
     return;
   }
   trial_ongoing = true;
 
-  auto request = std::make_shared<mtms_trial_interfaces::srv::PerformTrial::Request>();
-  request->trial = trial;
-
-  auto future = perform_trial_client->async_send_request(request);
-
-  // Detach so we don't block the subscription callback while the trial is executing.
-  std::thread([this, future = std::move(future)]() mutable {
-    try {
-      auto response = future.get();
-      if (response) {
-        RCLCPP_INFO(
-          this->get_logger(),
-          "PerformTrial completed (success=%s).",
-          response->success ? "true" : "false");
-      } else {
-        RCLCPP_WARN(this->get_logger(), "PerformTrial returned null response.");
-      }
-    } catch (const std::exception & e) {
-      RCLCPP_ERROR(this->get_logger(), "PerformTrial failed: %s", e.what());
-    }
-    trial_ongoing = false;
-  }).detach();
+  trial.id = ++trial_id_counter;
+  perform_trial_publisher->publish(trial);
 
   /* Log the trial after the hot path is completed. */
   RCLCPP_INFO(this->get_logger(), "Trial:");
@@ -567,6 +550,21 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
   const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
   const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
   RCLCPP_INFO(this->get_logger(), "targeted_pulses_callback: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
+}
+
+void RemoteController::trial_state_callback(const mtms_trial_interfaces::msg::TrialState::SharedPtr msg)
+{
+  const bool terminal = msg->state == mtms_trial_interfaces::msg::TrialState::SUCCEEDED
+                     || msg->state == mtms_trial_interfaces::msg::TrialState::FAILED
+                     || msg->state == mtms_trial_interfaces::msg::TrialState::BUSY;
+
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Trial %d state: %d", msg->id, msg->state);
+
+  if (terminal) {
+    trial_ongoing = false;
+  }
 }
 
 void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)

@@ -7,8 +7,8 @@ import uuid
 from mtms_experiment_interfaces.msg import ExperimentFeedback, ExperimentState
 from mtms_experiment_interfaces.srv import CountValidTrials, LogTrial, PerformExperiment
 
-from mtms_trial_interfaces.srv import PerformTrial, CacheTargetList
-from mtms_trial_interfaces.msg import Trial
+from mtms_trial_interfaces.srv import CacheTargetList
+from mtms_trial_interfaces.msg import Trial, TrialState
 
 from std_msgs.msg import Bool, Empty
 from std_srvs.srv import Trigger
@@ -39,7 +39,8 @@ ANALYZE_MEP_STATUS_TO_REASON = {
 
 class ExperimentPerformerNode(Node):
 
-    ROS_SERVICE_PERFORM_TRIAL = ('/mtms/trial/perform', PerformTrial)
+    ROS_TOPIC_PERFORM_TRIAL = '/mtms/trial/perform'
+    ROS_TOPIC_TRIAL_STATE = '/mtms/trial/state'
     ROS_SERVICE_PREPARE_TRIAL = ('/mtms/trial/prepare', Trigger)
 
     FIRST_TRIAL_TIME_S = 2.0
@@ -118,13 +119,20 @@ class ExperimentPerformerNode(Node):
             callback_group=self.callback_group,
         )
 
-        # Create service client for performing a trial.
+        # Publisher for performing a trial and subscriber for trial state feedback.
 
-        service_name, service_type = self.ROS_SERVICE_PERFORM_TRIAL
+        self.perform_trial_publisher = self.create_publisher(Trial, self.ROS_TOPIC_PERFORM_TRIAL, 10)
+        self.trial_id_counter = 0
+        self.trial_state_event = Event()
+        self.trial_state_result = None
 
-        self.perform_trial_client = self.create_client(service_type, service_name, callback_group=self.callback_group)
-        while not self.perform_trial_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('Service {} not available, waiting...'.format(service_name))
+        self.trial_state_subscriber = self.create_subscription(
+            TrialState,
+            self.ROS_TOPIC_TRIAL_STATE,
+            self.trial_state_callback,
+            10,
+            callback_group=self.callback_group,
+        )
 
         # Create service client for preparing a trial.
         service_name, service_type = self.ROS_SERVICE_PREPARE_TRIAL
@@ -332,17 +340,34 @@ class ExperimentPerformerNode(Node):
 
     # Perform trial
 
+    def trial_state_callback(self, msg):
+        self.trial_state_result = msg.state
+        self.trial_state_event.set()
+
     def perform_trial(self, trial):
-        request = PerformTrial.Request()
-        request.trial = trial
+        self.trial_id_counter = (self.trial_id_counter % 65535) + 1
+        trial.id = self.trial_id_counter
 
-        response = self.async_service_call(self.perform_trial_client, request, '/mtms/trial/perform')
+        self.trial_state_result = None
+        self.trial_state_event.clear()
 
-        if response is None:
-            self.logger.error('Service /mtms/trial/perform did not return a response.')
+        self.perform_trial_publisher.publish(trial)
+
+        completed = self.trial_state_event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+        if not completed:
+            self.logger.warning('Topic /mtms/trial/perform timed out after {:.1f} s.'.format(
+                self.SERVICE_CALL_TIMEOUT_S))
             return None
 
-        return response
+        state = self.trial_state_result
+        if state == TrialState.BUSY:
+            self.logger.warning('Perform trial rejected: trial performer is busy.')
+
+        class _Result:
+            def __init__(self, success):
+                self.success = success
+
+        return _Result(state == TrialState.SUCCEEDED)
 
     def prepare_trial(self):
         request = Trigger.Request()
