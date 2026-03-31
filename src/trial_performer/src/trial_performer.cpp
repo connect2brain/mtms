@@ -475,11 +475,6 @@ void TrialPerformerNode::handle_perform_trial(
 
   tic();
 
-  RCLCPP_INFO(this->get_logger(), " ");
-  RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
-
-  log_trial(request->trial);
-
   /* Check that the device and session are started. */
   if (!is_device_started()) {
     RCLCPP_WARN(this->get_logger(), "Device not started.");
@@ -515,8 +510,14 @@ void TrialPerformerNode::handle_perform_trial(
   /* Request events. */
   bool request_events_success = request_events(pulses, trigger_outs);
 
-  /* For troubleshooting purposes, log the time passed after requesting events. */
+  /* For profiling, log the time passed after requesting events. */
   toc("Time passed after requesting events");
+
+  /* Only log the trial after the hot path is completed. */
+  RCLCPP_INFO(this->get_logger(), " ");
+  RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
+
+  log_trial(request->trial);
 
   if (!request_events_success) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
