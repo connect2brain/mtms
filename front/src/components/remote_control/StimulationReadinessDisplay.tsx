@@ -7,7 +7,7 @@ import { StyledPanel } from 'styles/General'
 
 const StatusPanel = styled(StyledPanel)`
   width: 125px;
-  padding: 15px 20px;
+  padding: 14px 20px;
   margin-top: 134px;
 `
 

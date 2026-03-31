@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
+import { PrerequisitesDisplay } from 'components/remote_control/PrerequisitesDisplay'
 import { StimulationReadinessDisplay } from 'components/remote_control/StimulationReadinessDisplay'
 import { PulseTable, PulseTableHandle } from 'components/remote_control/PulseTable'
 
@@ -15,6 +16,7 @@ export const RemoteControlView = () => {
           getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null}
           rowsDefined={rowCount > 0}
         />
+        <PrerequisitesDisplay rowsDefined={rowCount > 0} />
         <StimulationReadinessDisplay />
       </ControlRow>
       <PulseTableWrapper>
