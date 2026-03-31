@@ -26,7 +26,7 @@ const NiFpga_mTMS_ControlBool event_aggregation_lock = NiFpga_mTMS_ControlBool_E
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 const NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
-const double MINIMUM_MARGIN_S = 0.003; // 3 ms
+const double MINIMUM_MARGIN_S = 0.001; // 1 ms
 
 class EventHandler : public rclcpp::Node {
 public:
