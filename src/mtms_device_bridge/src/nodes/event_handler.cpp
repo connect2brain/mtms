@@ -9,6 +9,7 @@
 #include "mtms_event_interfaces/msg/charge.hpp"
 #include "mtms_event_interfaces/msg/discharge.hpp"
 #include "mtms_event_interfaces/msg/trigger_out.hpp"
+#include "mtms_event_interfaces/msg/execution_condition.hpp"
 
 #include "realtime_utils/utils.h"
 
@@ -57,15 +58,33 @@ EventHandler::EventHandler() : Node("event_handler") {
 
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                                          std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
+
+  /* Find the earliest event time. */
   double earliest_event_time = std::numeric_limits<double>::max();
-  for (const auto &pulse : request->pulses)
-    earliest_event_time = std::min(earliest_event_time, pulse.event_info.execution_time);
-  for (const auto &charge : request->charges)
-    earliest_event_time = std::min(earliest_event_time, charge.event_info.execution_time);
-  for (const auto &discharge : request->discharges)
-    earliest_event_time = std::min(earliest_event_time, discharge.event_info.execution_time);
-  for (const auto &trigger_out : request->trigger_outs)
-    earliest_event_time = std::min(earliest_event_time, trigger_out.event_info.execution_time);
+
+  for (const auto &pulse : request->pulses) {
+    if (pulse.event_info.execution_condition.value == mtms_event_interfaces::msg::ExecutionCondition::TIMED) {
+      earliest_event_time = std::min(earliest_event_time, pulse.event_info.execution_time);
+    }
+  }
+
+  for (const auto &charge : request->charges) {
+    if (charge.event_info.execution_condition.value == mtms_event_interfaces::msg::ExecutionCondition::TIMED) {
+      earliest_event_time = std::min(earliest_event_time, charge.event_info.execution_time);
+    }
+  }
+
+  for (const auto &discharge : request->discharges) {
+    if (discharge.event_info.execution_condition.value == mtms_event_interfaces::msg::ExecutionCondition::TIMED) {
+      earliest_event_time = std::min(earliest_event_time, discharge.event_info.execution_time);
+    }
+  }
+
+  for (const auto &trigger_out : request->trigger_outs) {
+    if (trigger_out.event_info.execution_condition.value == mtms_event_interfaces::msg::ExecutionCondition::TIMED) {
+      earliest_event_time = std::min(earliest_event_time, trigger_out.event_info.execution_time);
+    }
+  }
 
   /* Read current time from FPGA. */
   auto processing_start = std::chrono::steady_clock::now();
