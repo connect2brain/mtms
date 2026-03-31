@@ -167,6 +167,11 @@ void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Ses
     mapping.valid = false;
     mapping_publisher->publish(mapping);
 
+    /* Reset health status to ready. */
+    publish_health_status(
+      mtms_system_interfaces::msg::ComponentHealth::READY,
+      "");
+
     RCLCPP_INFO(this->get_logger(), "Session no longer active; calibration invalidated.");
   }
 }
