@@ -1,8 +1,6 @@
 #ifndef TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_
 #define TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_
 
-#include <optional>
-
 #include "rclcpp/rclcpp.hpp"
 
 #include "mtms_eeg_interfaces/msg/sample.hpp"
@@ -20,16 +18,14 @@ private:
   /* Session tracking. */
   bool session_active = false;
 
-  /* Sync trigger counting: increments by 1 each time trigger_b is true.
-     Corresponds to mTMS session time in whole seconds. */
-  int sync_trigger_count = -1;
+  /* Window-based sync trigger tracking. */
+  int    expected_trigger_number = 1;
+  int    consecutive_miss_count  = 0;
+  bool   in_error_state          = false;
+  double window_start            = 0.0;
+  double window_end              = 0.0;
 
-  /* EEG device timestamp of the most recent sync trigger (trigger_b),
-     regardless of whether a session is active. Used for the staleness
-     check when a session starts. */
-  std::optional<double> last_sync_trigger_eeg_timestamp;
-
-  /* Latest EEG device timestamp seen (any sample), used to judge staleness. */
+  /* Latest EEG device timestamp seen (any sample), used to set the initial window. */
   double latest_eeg_timestamp = 0.0;
 
   rclcpp::Subscription<mtms_eeg_interfaces::msg::Sample>::SharedPtr eeg_subscription;
