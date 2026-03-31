@@ -55,7 +55,6 @@ private:
   static constexpr int SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
   static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 50;
   static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
-  static constexpr int HEALTH_PUBLISHING_INTERVAL_MS = 800;
 
   static constexpr double CAPACITANCE = 1020e-6;
   static constexpr double TIME_CONSTANT = 1.0;
@@ -130,7 +129,7 @@ private:
 
   void publish_system_state();
   void publish_session();
-  void publish_health() const;
+  void publish_health_status(uint8_t health_level, std::string message) const;
 
   size_t num_of_channels_ {5};
   uint16_t max_voltage_ {1500};

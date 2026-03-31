@@ -13,10 +13,14 @@ const std::string HEALTH_TOPIC = "/mtms/device/health";
 class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
-    this->health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
+    auto health_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+    this->health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, health_qos);
   }
 
-  void publish_health(uint8_t health_level, const std::string &message) {
+  void publish_health_status(uint8_t health_level, const std::string &message) {
     auto health = mtms_system_interfaces::msg::ComponentHealth();
 
     health.health_level = health_level;
@@ -44,11 +48,11 @@ void init_fpga_with_health(std::shared_ptr<FpgaConnection> node, bool first_time
       oss << "Please wait for " << waiting_time_left << " seconds before powering on the mTMS device.";
       std::string msg = oss.str();
 
-      node->publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, msg);
+      node->publish_health_status(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, msg);
 
       waiting_time_left--;
     } else {
-      node->publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, "Please power on the mTMS device.");
+      node->publish_health_status(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, "Please power on the mTMS device.");
     }
 
     rclcpp::spin_some(node);
@@ -67,7 +71,7 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
 
   if (NiFpga_IsError(status)) {
     RCLCPP_ERROR(node->get_logger(), "NiFpga_Run failed with status: %u", status);
-    node->publish_health(
+    node->publish_health_status(
       mtms_system_interfaces::msg::ComponentHealth::ERROR,
       "FPGA run failed: failed to start FPGA operation."
     );
@@ -80,7 +84,7 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
 
     if (NiFpga_IsError(ni_status)) {
       RCLCPP_ERROR(node->get_logger(), "NiFpga_GetFpgaViState failed with status: %u", ni_status);
-      node->publish_health(
+      node->publish_health_status(
         mtms_system_interfaces::msg::ComponentHealth::ERROR,
         "FPGA state check failed: failed to retrieve FPGA state."
       );

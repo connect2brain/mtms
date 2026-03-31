@@ -111,7 +111,11 @@ public:
         "/mtms/device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
 
-    health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
+    auto health_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
+    health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, health_qos);
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
     heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
@@ -120,7 +124,7 @@ public:
   }
 
 private:
-  void publish_health(uint8_t health_level, std::string message) {
+  void publish_health_status(uint8_t health_level, std::string message) {
     auto health = mtms_system_interfaces::msg::ComponentHealth();
 
     health.health_level = health_level;
@@ -255,10 +259,10 @@ private:
     system_state_publisher_->publish(state);
 
     if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-      publish_health(mtms_system_interfaces::msg::ComponentHealth::READY,
+      publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY,
                           "");
     } else {
-      publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED,
+      publish_health_status(mtms_system_interfaces::msg::ComponentHealth::DEGRADED,
                           "Please start the mTMS device.");
     }
   }
