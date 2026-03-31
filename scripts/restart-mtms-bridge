@@ -5,11 +5,11 @@ BOLD=$(tput bold)
 UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
-# Restart core containers.
-echo "${BOLD}Restarting...${RESET}"
-
 # Stop session if active.
 source $MTMS_ROOT/scripts/stop-session
+
+# Restart core containers.
+echo "${BOLD}Restarting...${RESET}"
 
 sudo systemctl restart mtms-bridge
 
