@@ -1,23 +1,19 @@
-import React, { useContext, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import styled from 'styled-components'
 
 import { RemoteControl } from 'components/remote_control/RemoteControl'
 import { StimulationReadinessDisplay } from 'components/remote_control/StimulationReadinessDisplay'
 import { PulseTable, PulseTableHandle } from 'components/remote_control/PulseTable'
-import { SystemContext, SessionState } from 'providers/SystemProvider'
 
 export const RemoteControlView = () => {
   const pulseTableRef = useRef<PulseTableHandle>(null)
   const [rowCount, setRowCount] = useState(0)
-  const { session } = useContext(SystemContext)
-  const isSessionOngoing = session !== null && session.state !== SessionState.STOPPED
-
   return (
     <RemoteControlPage>
       <ControlRow>
         <RemoteControl
           getTargetLists={() => pulseTableRef.current?.getTargetLists() ?? null}
-          canStart={rowCount > 0 && !isSessionOngoing}
+          rowsDefined={rowCount > 0}
         />
         <StimulationReadinessDisplay />
       </ControlRow>

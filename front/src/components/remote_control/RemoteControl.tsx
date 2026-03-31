@@ -5,8 +5,9 @@ import { StyledButton, StyledRedButton, StyledPanel } from 'styles/General'
 import { SmallerTitle } from 'styles/ExperimentStyles'
 import { ElectricTarget, startRemoteController, stopRemoteController } from 'ros/remote_controller'
 
-import { SystemContext, DeviceState } from 'providers/SystemProvider'
+import { SystemContext, DeviceState, SessionState } from 'providers/SystemProvider'
 import { RemoteControllerContext, RemoteControllerState } from 'providers/RemoteControllerProvider'
+import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
 
 const RemoteControlPanel = styled(StyledPanel)`
   width: 280px;
@@ -37,15 +38,17 @@ interface RemoteControlProps {
    * the target lists to cache, or null to abort the start.
    */
   getTargetLists?: () => ElectricTarget[][] | null
-  /** When false, the Start button is disabled. Defaults to true. */
-  canStart?: boolean
+  rowsDefined?: boolean
 }
 
-export const RemoteControl = ({ getTargetLists, canStart = true }: RemoteControlProps) => {
-  const { systemState } = useContext(SystemContext)
+export const RemoteControl = ({ getTargetLists, rowsDefined = false }: RemoteControlProps) => {
+  const { systemState, session } = useContext(SystemContext)
   const { state: remoteControllerState } = useContext(RemoteControllerContext)
+  const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
 
   const isDeviceOperational = systemState?.device_state.value === DeviceState.OPERATIONAL
+  const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
+  const isSessionOngoing = session !== null && session.state !== SessionState.STOPPED
 
   // Debounce visual updates so the button "inertia" doesn't flicker when state changes.
   const [displayRemoteControllerState, setDisplayRemoteControllerState] = useState(remoteControllerState)
@@ -89,7 +92,8 @@ export const RemoteControl = ({ getTargetLists, canStart = true }: RemoteControl
     displayRemoteControllerState === null || displayRemoteControllerState === RemoteControllerState.CACHING || displayRemoteControllerState === RemoteControllerState.STARTING
   const isStopping = displayRemoteControllerState === RemoteControllerState.STOPPING
   const isStarted = displayRemoteControllerState === RemoteControllerState.STARTED
-  const isDisabled = isWaitingOrCachingOrStarting || isStopping || !isDeviceOperational || (!isStarted && !canStart)
+  const readyToStart = rowsDefined && isStreaming && !isSessionOngoing
+  const isDisabled = isWaitingOrCachingOrStarting || isStopping || !isDeviceOperational || (!isStarted && !readyToStart)
 
   return (
     <RemoteControlPanel>
