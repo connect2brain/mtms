@@ -6,7 +6,7 @@ import { SystemContext, DeviceState } from 'providers/SystemProvider'
 import { StyledPanel } from 'styles/General'
 
 const StatusPanel = styled(StyledPanel)`
-  width: 120px;
+  width: 125px;
   padding: 15px 20px;
   margin-top: 134px;
 `
@@ -17,19 +17,12 @@ const StatusRow = styled.div`
   gap: 10px;
 `
 
-const StatusSquare = styled.div<{ $status: 'ready' | 'not_ready' | 'unknown' }>`
+const StatusSquare = styled.div<{ $status: boolean }>`
   width: 16px;
   height: 16px;
   border-radius: 50%;
   background-color: ${({ $status }) => {
-    switch ($status) {
-      case 'ready':
-        return 'green'
-      case 'not_ready':
-        return 'red'
-      default:
-        return 'grey'
-    }
+    return $status ? 'green' : 'red'
   }};
   border: 3px solid black;
 `
@@ -44,10 +37,8 @@ export const StimulationReadinessDisplay: React.FC = () => {
   const { trialReadiness } = useContext(TrialReadinessContext)
   const { systemState } = useContext(SystemContext)
 
-  const status: 'ready' | 'not_ready' | 'unknown' =
-    trialReadiness === null ? 'unknown' : trialReadiness ? 'ready' : 'not_ready'
-
-  const statusText = status === 'ready' ? 'Ready' : status === 'not_ready' ? 'Not ready' : 'Unknown'
+  const charged = trialReadiness === true
+  const statusText = charged ? 'Charged' : 'Not charged'
 
   const isDeviceOn =
     systemState?.device_state?.value !== undefined && systemState.device_state.value !== DeviceState.NOT_OPERATIONAL
@@ -56,7 +47,7 @@ export const StimulationReadinessDisplay: React.FC = () => {
   return (
     <StatusPanel>
       <StatusRow>
-        <StatusSquare $status={status} />
+        <StatusSquare $status={charged} />
         <StatusText $muted={muted}>{statusText}</StatusText>
       </StatusRow>
     </StatusPanel>
