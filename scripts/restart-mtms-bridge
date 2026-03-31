@@ -8,6 +8,9 @@ RESET=$(tput sgr0)
 # Restart core containers.
 echo "${BOLD}Restarting...${RESET}"
 
+# Stop session if active.
+source $MTMS_ROOT/scripts/stop-session
+
 sudo systemctl restart mtms-bridge
 
 echo "${BOLD}Done.${RESET}"
