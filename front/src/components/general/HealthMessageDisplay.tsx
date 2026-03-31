@@ -31,7 +31,7 @@ const Message = styled.div`
 const getHealthDisplay = (health: { health_level: number; message: string } | null): { prefix: string | null; message: string } | null => {
   if (health === null || health.health_level === HealthStatus.READY) return null
   if (health.health_level === HealthStatus.ERROR) return { prefix: 'Error:', message: health.message }
-  return { prefix: 'Degraded:', message: health.message }
+  return { prefix: '', message: health.message }
 }
 
 export const HealthMessageDisplay: React.FC = () => {
