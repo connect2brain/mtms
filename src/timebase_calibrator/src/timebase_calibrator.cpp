@@ -62,7 +62,7 @@ void TimebaseCalibrator::publish_healthcheck()
   if (in_error_state) {
     msg.status = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
     msg.status_message = "Sync trigger error";
-    msg.actionable_message = "Two consecutive sync triggers missed; restart session";
+    msg.actionable_message = "Sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B";
   } else {
     msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
     msg.status_message = "Ready";
