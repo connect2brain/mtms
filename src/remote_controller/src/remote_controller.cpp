@@ -476,7 +476,7 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
-  if (!get_state() == mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
+  if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
       *this->get_clock(),
@@ -547,7 +547,7 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     trial_ongoing = false;
   }).detach();
 
-  /* Log the trial. */
+  /* Log the trial after the hot path is completed. */
   RCLCPP_INFO(this->get_logger(), "Trial:");
   RCLCPP_INFO(this->get_logger(), "  Start time: %.3f s", trial.start_time);
   RCLCPP_INFO(this->get_logger(), "  Number of targets: %zu", trial.targets.size());
