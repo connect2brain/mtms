@@ -460,6 +460,20 @@ bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
   return true;
 }
 
+/* Cache key */
+
+std::string TrialPerformerNode::targets_to_cache_key(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) const {
+  std::ostringstream oss;
+  for (const auto &t : targets) {
+    oss << static_cast<int>(t.displacement_x) << ','
+        << static_cast<int>(t.displacement_y) << ','
+        << t.rotation_angle << ','
+        << static_cast<int>(t.intensity) << ','
+        << static_cast<int>(t.algorithm) << ';';
+  }
+  return oss.str();
+}
+
 /* Service handlers */
 
 void TrialPerformerNode::handle_perform_trial(
@@ -489,13 +503,17 @@ void TrialPerformerNode::handle_perform_trial(
   const auto &trial = request->trial;
   auto targets = trial.targets;
 
-  /* Get desired voltages and waveforms (also warms up the cache). */
-  auto [approximation_success, desired_voltages, waveforms] = get_desired_voltages_and_waveforms(targets);
-  if (!approximation_success) {
-    RCLCPP_ERROR(this->get_logger(), "Perform trial failed: waveform approximation could not be performed.");
-    return;
+  /* Look up pre-cached waveforms; fail if the target list has not been cached. */
+  std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> waveforms;
+  {
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    auto it = waveform_cache.find(targets_to_cache_key(targets));
+    if (it == waveform_cache.end()) {
+      RCLCPP_ERROR(this->get_logger(), "Perform trial failed: target list has not been cached; call cache_target_list first.");
+      return;
+    }
+    waveforms = it->second;
   }
-  (void)desired_voltages;
 
   /* Check if the trial is ready to be performed. */
   if (!is_ready_for_trial(true)) {
@@ -611,7 +629,11 @@ void TrialPerformerNode::handle_cache_target_list(
     return;
   }
   (void)desired_voltages;
-  (void)waveforms;
+
+  {
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    waveform_cache[targets_to_cache_key(targets)] = waveforms;
+  }
 
   response->success = true;
 

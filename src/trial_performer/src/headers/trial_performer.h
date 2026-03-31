@@ -124,6 +124,11 @@ private:
   void log_trial(const mtms_trial_interfaces::msg::Trial &trial);
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
 
+  /* Waveform cache */
+  std::unordered_map<std::string, std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet>> waveform_cache;
+  mutable std::mutex cache_mutex;
+  std::string targets_to_cache_key(const std::vector<mtms_targeting_interfaces::msg::ElectricTarget> &targets) const;
+
   /* Concurrency */
   std::atomic<bool> busy{false};
   mutable std::mutex state_mutex;
