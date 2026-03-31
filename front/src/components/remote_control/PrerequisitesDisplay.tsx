@@ -4,6 +4,7 @@ import styled from 'styled-components'
 import { StyledPanel } from 'styles/General'
 import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
 import { SystemContext, SessionState } from 'providers/SystemProvider'
+import { RemoteControllerContext, RemoteControllerState } from 'providers/RemoteControllerProvider'
 
 interface PrerequisitesDisplayProps {
   rowsDefined: boolean
@@ -12,6 +13,10 @@ interface PrerequisitesDisplayProps {
 export const PrerequisitesDisplay: React.FC<PrerequisitesDisplayProps> = ({ rowsDefined }) => {
   const { eegDeviceInfo } = useContext(EegDeviceInfoContext)
   const { session } = useContext(SystemContext)
+  const { state: remoteControllerState } = useContext(RemoteControllerContext)
+
+  const isRemoteControlActive =
+    remoteControllerState !== null && remoteControllerState !== RemoteControllerState.NOT_STARTED
 
   const isStreaming = Boolean(eegDeviceInfo?.is_streaming)
   const isSessionAvailable = session === null || session.state === SessionState.STOPPED
@@ -27,7 +32,7 @@ export const PrerequisitesDisplay: React.FC<PrerequisitesDisplayProps> = ({ rows
       <Title>Prerequisites</Title>
       {conditions.map(({ label, met }) => (
         <ConditionRow key={label}>
-          <ConditionMark $met={met}>{met ? '✓' : '✗'}</ConditionMark>
+          <ConditionMark $met={met || isRemoteControlActive}>{met || isRemoteControlActive ? '✓' : '✗'}</ConditionMark>
           <ConditionLabel>{label}</ConditionLabel>
         </ConditionRow>
       ))}
