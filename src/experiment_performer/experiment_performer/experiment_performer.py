@@ -371,8 +371,18 @@ class ExperimentPerformerNode(Node):
 
     def prepare_trial(self):
         request = Trigger.Request()
-        response = self.async_service_call(self.prepare_trial_client, request, '/mtms/trial/prepare')
 
+        future = self.prepare_trial_client.call_async(request)
+
+        # Wait for the response.
+        event = Event()
+        future.add_done_callback(lambda f: event.set())
+        completed = event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+        if not completed:
+            self.logger.error('Service /mtms/trial/prepare timed out after {:.1f} s.'.format(self.SERVICE_CALL_TIMEOUT_S))
+            return None
+
+        response = future.result()
         if response is None:
             self.logger.error('Service /mtms/trial/prepare did not return a response.')
             return None
@@ -413,14 +423,22 @@ class ExperimentPerformerNode(Node):
         request = CacheTargetList.Request()
         request.targets = trial.targets
 
-        response = self.async_service_call(self.cache_target_list_client, request, '/mtms/trial/cache')
+        future = self.cache_target_list_client.call_async(request)
 
+        # Wait for the response.
+        event = Event()
+        future.add_done_callback(lambda f: event.set())
+        completed = event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+        if not completed:
+            self.logger.error('Service /mtms/trial/cache timed out after {:.1f} s.'.format(self.SERVICE_CALL_TIMEOUT_S))
+            return None
+
+        response = future.result()
         if response is None:
             self.logger.error('Service /mtms/trial/cache did not return a response.')
             return None
 
-        success = response.success
-        return success
+        return response.success
 
     def get_maximum_intensity(self, displacement_x, displacement_y, rotation_angle, algorithm):
         request = GetMaximumIntensity.Request()
