@@ -89,7 +89,7 @@ void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::Sh
 
       publish_health_status(
         mtms_system_interfaces::msg::ComponentHealth::ERROR,
-        "Error: sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B");
+        "Sync triggers not received");
 
       RCLCPP_ERROR(this->get_logger(),
         "Two consecutive missed sync triggers. Entering error state until session ends.");

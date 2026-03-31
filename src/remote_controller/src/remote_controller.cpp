@@ -510,7 +510,7 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 
     publish_health_status(
       mtms_system_interfaces::msg::ComponentHealth::ERROR,
-      "Error: a non-configured target requested");
+      "A non-configured target requested");
 
     return;
   }

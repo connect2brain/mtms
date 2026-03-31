@@ -28,26 +28,32 @@ const Message = styled.div`
   transition: opacity 0.3s;
 `
 
+const getHealthDisplay = (health: { health_level: number; message: string } | null): { prefix: string | null; message: string } | null => {
+  if (health === null || health.health_level === HealthStatus.READY) return null
+  if (health.health_level === HealthStatus.ERROR) return { prefix: 'Error:', message: health.message }
+  return { prefix: 'Degraded:', message: health.message }
+}
+
 export const HealthMessageDisplay: React.FC = () => {
   const { eegHealth, mtmsDeviceHealth, remoteControllerHealth, timebaseCalibratorHealth } = useContext(HealthContext)
 
-  let displayMessage = 'Ready'
-
   // Prioritize mtmsDeviceHealth > eegHealth > remoteControllerHealth > timebaseCalibratorHealth
-  if (mtmsDeviceHealth !== null && mtmsDeviceHealth.health_level !== HealthStatus.READY) {
-    displayMessage = mtmsDeviceHealth?.message
-  } else if (eegHealth !== null && eegHealth.health_level !== HealthStatus.READY) {
-    displayMessage = eegHealth?.message
-  } else if (remoteControllerHealth !== null && remoteControllerHealth.health_level !== HealthStatus.READY) {
-    displayMessage = remoteControllerHealth?.message
-  } else if (timebaseCalibratorHealth !== null && timebaseCalibratorHealth.health_level !== HealthStatus.READY) {
-    displayMessage = timebaseCalibratorHealth?.message
-  }
+  const healthDisplay =
+    getHealthDisplay(mtmsDeviceHealth) ??
+    getHealthDisplay(eegHealth) ??
+    getHealthDisplay(remoteControllerHealth) ??
+    getHealthDisplay(timebaseCalibratorHealth)
 
   return (
     <HealthMessagePanel>
       <Header>Status</Header>
-      {displayMessage && <Message>{displayMessage}</Message>}
+      <Message>
+        {healthDisplay ? (
+          <><b>{healthDisplay.prefix}</b> {healthDisplay.message}</>
+        ) : (
+          <b>Ready</b>
+        )}
+      </Message>
     </HealthMessagePanel>
   )
 }
