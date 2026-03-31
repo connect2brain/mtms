@@ -100,7 +100,7 @@ private:
       const std::vector<mtms_waveform_interfaces::msg::WaveformsForCoilSet> &target_waveforms);
 
   mtms_waveform_interfaces::msg::Waveform get_default_waveform(uint8_t channel);
-  void request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
+  bool request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
   bool set_voltages(const std::vector<uint16_t> &voltages);
   bool is_ready_for_trial(bool verbose) const;
 

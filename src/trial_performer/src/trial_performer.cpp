@@ -418,7 +418,7 @@ mtms_waveform_interfaces::msg::Waveform TrialPerformerNode::get_default_waveform
   return waveform;
 }
 
-void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs) {
+bool TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs) {
   auto request = std::make_shared<mtms_device_interfaces::srv::RequestEvents::Request>();
   request->pulses = pulses;
   request->trigger_outs = trigger_outs;
@@ -428,13 +428,15 @@ void TrialPerformerNode::request_events(const std::vector<mtms_event_interfaces:
   /* Wait for the response. */
   auto future_status = future.wait_for(10s);
   if (future_status != std::future_status::ready) {
-    throw std::runtime_error("Call to RequestEvents service timed out");
+    return false;
   }
   auto response = future.get();
 
   if (!response->success) {
-    throw std::runtime_error("Call to RequestEvents service failed");
+    return false;
   }
+
+  return true;
 }
 
 bool TrialPerformerNode::set_voltages(const std::vector<uint16_t> &voltages) {
@@ -511,7 +513,12 @@ void TrialPerformerNode::handle_perform_trial(
   auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, trial.start_time);
 
   /* Request events. */
-  request_events(pulses, trigger_outs);
+  bool request_events_success = request_events(pulses, trigger_outs);
+  if (!request_events_success) {
+    RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
+    response->success = false;
+    return;
+  }
 
   /* For troubleshooting purposes, log the time passed after requesting events. */
   toc("Time passed after requesting events");
