@@ -123,8 +123,8 @@ class ExperimentPerformerNode(Node):
 
         self.perform_trial_publisher = self.create_publisher(Trial, self.ROS_TOPIC_PERFORM_TRIAL, 10)
         self.trial_id_counter = 0
-        self.trial_state_event = Event()
-        self.trial_state_result = None
+        self.trial_finished = Event()
+        self.current_trial_state = None
 
         self.trial_state_subscriber = self.create_subscription(
             TrialState,
@@ -341,25 +341,29 @@ class ExperimentPerformerNode(Node):
     # Perform trial
 
     def trial_state_callback(self, msg):
-        self.trial_state_result = msg.state
-        self.trial_state_event.set()
+        self.current_trial_state = msg.state
+
+        # Only signal completion on terminal states; ACCEPTED is an intermediate
+        # acknowledgement and the final outcome (SUCCEEDED, FAILED, BUSY) follows.
+        if msg.state != TrialState.ACCEPTED:
+            self.trial_finished.set()
 
     def perform_trial(self, trial):
         self.trial_id_counter = (self.trial_id_counter % 65535) + 1
         trial.id = self.trial_id_counter
 
-        self.trial_state_result = None
-        self.trial_state_event.clear()
+        self.current_trial_state = None
+        self.trial_finished.clear()
 
         self.perform_trial_publisher.publish(trial)
 
-        completed = self.trial_state_event.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
+        completed = self.trial_finished.wait(timeout=self.SERVICE_CALL_TIMEOUT_S)
         if not completed:
             self.logger.warning('Topic /mtms/trial/perform timed out after {:.1f} s.'.format(
                 self.SERVICE_CALL_TIMEOUT_S))
             return None
 
-        state = self.trial_state_result
+        state = self.current_trial_state
         if state == TrialState.BUSY:
             self.logger.warning('Perform trial rejected: trial performer is busy.')
 
