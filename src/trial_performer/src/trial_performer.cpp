@@ -250,7 +250,6 @@ void HotPathNode::create_marker(const mtms_trial_interfaces::msg::Trial &trial) 
 /* Topic callback */
 
 void HotPathNode::handle_perform_trial(const mtms_trial_interfaces::msg::Trial::SharedPtr msg) {
-  const auto _t_start = std::chrono::system_clock::now();
   const uint16_t trial_id = msg->id;
 
   auto publish_state = [this, trial_id](uint8_t state_value) {
@@ -321,15 +320,15 @@ void HotPathNode::handle_perform_trial(const mtms_trial_interfaces::msg::Trial::
 
   publish_state(mtms_trial_interfaces::msg::TrialState::ACCEPTED);
 
+  toc("handle_perform_trial");
+
   /* Detach background thread to handle async event request and waiting. */
   std::thread([this, future = std::move(future),
-               pulse_ids, trigger_out_ids, trial, _t_start, publish_state]() mutable {
+               pulse_ids, trigger_out_ids, trial, publish_state]() mutable {
     BusyGuard busy_guard{state->busy};
     try {
       /* Wait for the request_events call to complete. */
       auto response_ptr = future.get();
-
-      toc("Time passed after requesting events");
 
       RCLCPP_INFO(this->get_logger(), " ");
       RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
@@ -355,12 +354,6 @@ void HotPathNode::handle_perform_trial(const mtms_trial_interfaces::msg::Trial::
 
       RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
       RCLCPP_INFO(this->get_logger(), " ");
-
-      const auto _t_end = std::chrono::system_clock::now();
-      const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
-      const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
-      const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
-      RCLCPP_INFO(this->get_logger(), "handle_perform_trial: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
     } catch (const std::exception & e) {
       RCLCPP_ERROR(this->get_logger(), "Perform trial failed: %s", e.what());
       publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
@@ -385,16 +378,15 @@ void HotPathNode::log_trial(const mtms_trial_interfaces::msg::Trial &trial) {
 }
 
 void HotPathNode::tic() {
-  start_time = std::chrono::high_resolution_clock::now();
+  start_time = std::chrono::system_clock::now();
 }
 
 void HotPathNode::toc(const std::string &prefix) {
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-
-  double duration_ms = duration.count() / 1000.0;
-
-  RCLCPP_INFO(this->get_logger(), "%s: %.1f ms", prefix.c_str(), duration_ms);
+  const auto end_time = std::chrono::system_clock::now();
+  const double start_s = std::chrono::duration<double>(start_time.time_since_epoch()).count();
+  const double end_s = std::chrono::duration<double>(end_time.time_since_epoch()).count();
+  const double duration_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+  RCLCPP_INFO(this->get_logger(), "%s: start=%.3f s, end=%.3f s, duration=%.1f ms", prefix.c_str(), start_s, end_s, duration_ms);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -704,16 +696,15 @@ void HelperNode::log_voltages(const std::vector<uint16_t> &voltages, const std::
 }
 
 void HelperNode::tic() {
-  start_time = std::chrono::high_resolution_clock::now();
+  start_time = std::chrono::system_clock::now();
 }
 
 void HelperNode::toc(const std::string &prefix) {
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
-
-  double duration_ms = duration.count() / 1000.0;
-
-  RCLCPP_INFO(this->get_logger(), "%s: %.1f ms", prefix.c_str(), duration_ms);
+  const auto end_time = std::chrono::system_clock::now();
+  const double start_s = std::chrono::duration<double>(start_time.time_since_epoch()).count();
+  const double end_s = std::chrono::duration<double>(end_time.time_since_epoch()).count();
+  const double duration_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+  RCLCPP_INFO(this->get_logger(), "%s: start=%.3f s, end=%.3f s, duration=%.1f ms", prefix.c_str(), start_s, end_s, duration_ms);
 }
 
 /* ══════════════════════════════════════════════════════════════════════

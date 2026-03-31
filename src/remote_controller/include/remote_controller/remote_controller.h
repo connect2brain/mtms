@@ -1,10 +1,12 @@
 #ifndef remote_controller__remote_controller_HPP_
 #define remote_controller__remote_controller_HPP_
 
+#include <chrono>
 #include <optional>
 #include <atomic>
 #include <cstdint>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -60,6 +62,11 @@ private:
   void publish_health_status(uint8_t level, const std::string & message);
 
   void prepare_trial();
+
+  // Timing
+  void tic();
+  void toc(const std::string & prefix);
+  std::chrono::time_point<std::chrono::system_clock> start_time;
 
   // Helpers
   bool start_session();

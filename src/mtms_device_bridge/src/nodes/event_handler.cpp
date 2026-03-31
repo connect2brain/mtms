@@ -52,6 +52,10 @@ private:
   SerializedMessage discharge_msg_;
   SerializedMessage trigger_out_msg_;
 
+  void tic();
+  void toc(const std::string & prefix);
+  std::chrono::time_point<std::chrono::system_clock> start_time;
+
   bool safe_mode;
 };
 
@@ -66,7 +70,7 @@ EventHandler::EventHandler() : Node("event_handler") {
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                                          std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
 
-  const auto _t_start = std::chrono::system_clock::now();
+  tic();
 
   /* Find the earliest event time. */
   double earliest_event_time = std::numeric_limits<double>::max();
@@ -152,11 +156,7 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
                 trigger_out.port, trigger_out.event_info.id, trigger_out.event_info.execution_condition.value, trigger_out.event_info.execution_time);
   }
 
-  const auto _t_end = std::chrono::system_clock::now();
-  const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
-  const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
-  const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "handle_request_events: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
+  toc("handle_request_events");
 
   response->success = true;
 }
@@ -305,6 +305,18 @@ void EventHandler::process_trigger_out(const mtms_event_interfaces::msg::Trigger
   NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, trigger_out_fifo));
   NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, trigger_out_fifo, trigger_out_msg_.serialized_message.data(),
                                                  trigger_out_msg_.get_length(), NiFpga_InfiniteTimeout, NULL));
+}
+
+void EventHandler::tic() {
+  start_time = std::chrono::system_clock::now();
+}
+
+void EventHandler::toc(const std::string & prefix) {
+  const auto end_time = std::chrono::system_clock::now();
+  const double start_s = std::chrono::duration<double>(start_time.time_since_epoch()).count();
+  const double end_s = std::chrono::duration<double>(end_time.time_since_epoch()).count();
+  const double duration_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+  RCLCPP_INFO(this->get_logger(), "%s: start=%.3f s, end=%.3f s, duration=%.1f ms", prefix.c_str(), start_s, end_s, duration_ms);
 }
 
 int main(int argc, char **argv) {

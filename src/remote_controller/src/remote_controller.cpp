@@ -479,7 +479,7 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
-  const auto _t_start = std::chrono::system_clock::now();
+  tic();
 
   if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
     RCLCPP_WARN_THROTTLE(
@@ -545,11 +545,7 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     RCLCPP_INFO(this->get_logger(), "    Trigger %zu delay: %.3f s", i, trial.trigger_delay[i]);
   }
 
-  const auto _t_end = std::chrono::system_clock::now();
-  const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
-  const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
-  const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
-  RCLCPP_INFO(this->get_logger(), "targeted_pulses_callback: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
+  toc("targeted_pulses_callback");
 }
 
 void RemoteController::trial_state_callback(const mtms_trial_interfaces::msg::TrialState::SharedPtr msg)
@@ -599,6 +595,18 @@ void RemoteController::prepare_trial()
 
     this->prepare_trial_ongoing = false;
   }).detach();
+}
+
+void RemoteController::tic() {
+  start_time = std::chrono::system_clock::now();
+}
+
+void RemoteController::toc(const std::string & prefix) {
+  const auto end_time = std::chrono::system_clock::now();
+  const double start_s = std::chrono::duration<double>(start_time.time_since_epoch()).count();
+  const double end_s = std::chrono::duration<double>(end_time.time_since_epoch()).count();
+  const double duration_ms = std::chrono::duration<double, std::milli>(end_time - start_time).count();
+  RCLCPP_INFO(this->get_logger(), "%s: start=%.3f s, end=%.3f s, duration=%.1f ms", prefix.c_str(), start_s, end_s, duration_ms);
 }
 
 int main(int argc, char * argv[])

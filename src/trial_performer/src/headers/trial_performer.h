@@ -140,7 +140,7 @@ private:
   void log_trial(const mtms_trial_interfaces::msg::Trial &trial);
 
   /* Timing */
-  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  std::chrono::time_point<std::chrono::system_clock> start_time;
   void tic();
   void toc(const std::string &prefix);
 };
@@ -213,7 +213,7 @@ private:
   void log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix);
 
   /* Timing */
-  std::chrono::time_point<std::chrono::high_resolution_clock> start_time;
+  std::chrono::time_point<std::chrono::system_clock> start_time;
   void tic();
   void toc(const std::string &prefix);
 };
