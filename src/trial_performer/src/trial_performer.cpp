@@ -738,9 +738,9 @@ int main(int argc, char **argv) {
   auto hot_node = std::make_shared<HotPathNode>(shared_state);
   auto helper_node = std::make_shared<HelperNode>(shared_state);
 
-  /* Both executors are multi-threaded for now; the hot-path executor will be
-   * switched to single-threaded in a follow-up step. */
-  rclcpp::executors::MultiThreadedExecutor hot_executor(rclcpp::ExecutorOptions(), 4);
+  /* Hot-path executor is single-threaded for determinism. Event feedback callbacks
+   * run on the helper executor, so blocking on wait_for_events_to_finish is safe. */
+  rclcpp::executors::SingleThreadedExecutor hot_executor;
   rclcpp::executors::MultiThreadedExecutor helper_executor(rclcpp::ExecutorOptions(), 4);
 
   hot_executor.add_node(hot_node);
