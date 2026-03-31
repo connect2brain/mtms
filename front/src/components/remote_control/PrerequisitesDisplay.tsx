@@ -67,6 +67,8 @@ const ConditionMark = styled.span<{ $met: boolean }>`
   font-weight: 700;
   font-size: 1rem;
   width: 14px;
+  line-height: 1;
+  display: inline-block;
   text-align: center;
 `
 
