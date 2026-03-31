@@ -185,7 +185,8 @@ During mTMS installation, a system service is installed that listens for UDP tra
 To run NeuroSimo on the mTMS computer:
 
 1. Install it using the instructions in the NeuroSimo repository.
-2. Configure NeuroSimo to receive EEG data on **UDP port 50002**.
+2. Configure NeuroSimo to receive EEG data on **UDP port 50002** (under "File" -> "Settings").
+3. Configure NeuroSimo to **disable LabJack** (under "File" -> "Settings" -> "LabJack").
 
 ### EEG device configuration
 
