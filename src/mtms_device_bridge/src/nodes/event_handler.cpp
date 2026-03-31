@@ -66,6 +66,8 @@ EventHandler::EventHandler() : Node("event_handler") {
 void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Request> request,
                                          std::shared_ptr<mtms_device_interfaces::srv::RequestEvents::Response> response) {
 
+  const auto _t_start = std::chrono::system_clock::now();
+
   /* Find the earliest event time. */
   double earliest_event_time = std::numeric_limits<double>::max();
 
@@ -149,6 +151,12 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
     RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sent trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
                 trigger_out.port, trigger_out.event_info.id, trigger_out.event_info.execution_condition.value, trigger_out.event_info.execution_time);
   }
+
+  const auto _t_end = std::chrono::system_clock::now();
+  const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
+  const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
+  const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
+  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "handle_request_events: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
 
   response->success = true;
 }

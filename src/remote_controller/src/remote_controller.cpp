@@ -476,6 +476,8 @@ bool RemoteController::build_trial_from_message(
 
 void RemoteController::targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg)
 {
+  const auto _t_start = std::chrono::system_clock::now();
+
   if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::STARTED) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
@@ -559,6 +561,12 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
     RCLCPP_INFO(this->get_logger(), "    Trigger %zu enabled: %s", i, trial.trigger_enabled[i] ? "true" : "false");
     RCLCPP_INFO(this->get_logger(), "    Trigger %zu delay: %.3f s", i, trial.trigger_delay[i]);
   }
+
+  const auto _t_end = std::chrono::system_clock::now();
+  const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
+  const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
+  const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
+  RCLCPP_INFO(this->get_logger(), "targeted_pulses_callback: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
 }
 
 void RemoteController::trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg)

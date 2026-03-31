@@ -480,6 +480,8 @@ void TrialPerformerNode::handle_perform_trial(
     const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
     std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response) {
 
+  const auto _t_start = std::chrono::system_clock::now();
+
   response->success = false;
   if (busy.exchange(true)) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial request received while busy.");
@@ -556,6 +558,12 @@ void TrialPerformerNode::handle_perform_trial(
 
   RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
   RCLCPP_INFO(this->get_logger(), " ");
+
+  const auto _t_end = std::chrono::system_clock::now();
+  const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
+  const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
+  const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
+  RCLCPP_INFO(this->get_logger(), "handle_perform_trial: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
 }
 
 void TrialPerformerNode::log_voltages(const std::vector<uint16_t> &voltages, const std::string &prefix) {
