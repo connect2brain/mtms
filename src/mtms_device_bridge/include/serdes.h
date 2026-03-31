@@ -5,7 +5,7 @@
 #include <vector>
 
 
-#define MAX_SERIALIZED_MESSAGE_LENGTH 100
+#define MAX_SERIALIZED_MESSAGE_LENGTH 256
 
 #define GET_BYTE(var,n) (uint8_t)((var) >> (8 * (n)))
 

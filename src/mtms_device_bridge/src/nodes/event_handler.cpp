@@ -42,15 +42,19 @@ private:
   void process_trigger_out(const mtms_event_interfaces::msg::TriggerOut &trigger_out);
 
   rclcpp::Service<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_service;
-  SerializedMessage serialized_message;
+
+  /* Pre-allocated serialized messages - one per event type to avoid any allocation on the request path. */
+  SerializedMessage pulse_msg_;
+  SerializedMessage charge_msg_;
+  SerializedMessage discharge_msg_;
+  SerializedMessage trigger_out_msg_;
+
   bool safe_mode;
 };
 
 EventHandler::EventHandler() : Node("event_handler") {
   this->declare_parameter<bool>("safe-mode", false);
   this->get_parameter("safe-mode", safe_mode);
-
-  serialized_message = SerializedMessage();
 
   request_events_service = this->create_service<mtms_device_interfaces::srv::RequestEvents>(
       "/mtms/device/events/request", std::bind(&EventHandler::handle_request_events, this, std::placeholders::_1, std::placeholders::_2));
@@ -129,17 +133,14 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
 }
 
 void EventHandler::process_pulse(const mtms_event_interfaces::msg::Pulse &pulse) {
-  /* Unpack and log pulse message. */
-  uint8_t channel = pulse.channel;
-  mtms_event_interfaces::msg::EventInfo event_info = pulse.event_info;
-  uint16_t id = event_info.id;
-  uint8_t execution_condition = event_info.execution_condition.value;
-  double_t execution_time = event_info.execution_time;
+  const auto &event_info = pulse.event_info;
+  const uint16_t id = event_info.id;
+  const uint8_t execution_condition = event_info.execution_condition.value;
+  const double_t execution_time = event_info.execution_time;
 
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
               pulse.channel, id, execution_condition, execution_time);
 
-  /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Tried to execute pulse (id: %d) but FPGA is not in OK state", id);
     return;
@@ -150,24 +151,23 @@ void EventHandler::process_pulse(const mtms_event_interfaces::msg::Pulse &pulse)
     return;
   }
 
-  /* Serialize event info. */
-  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-  serialized_message.init(channel + 1);
-  serialized_message.add_uint16(id);
-  serialized_message.add_byte(execution_condition);
-  serialized_message.add_uint64(execution_time_ticks);
+  /* Serialize into pre-allocated buffer — init() resets cursor, no alloc. */
+  const uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+  pulse_msg_.init(pulse.channel + 1);
+  pulse_msg_.add_uint16(id);
+  pulse_msg_.add_byte(execution_condition);
+  pulse_msg_.add_uint64(execution_time_ticks);
 
-  /* Serialize pulse parameters. */
-  uint8_t num_of_waveform_pieces = (uint8_t) pulse.waveform.pieces.size();
-  serialized_message.add_byte(num_of_waveform_pieces);
+  const uint8_t num_of_waveform_pieces = (uint8_t) pulse.waveform.pieces.size();
+  pulse_msg_.add_byte(num_of_waveform_pieces);
 
   for (uint8_t i = 0; i < num_of_waveform_pieces; i++) {
-    mtms_waveform_interfaces::msg::WaveformPiece piece = pulse.waveform.pieces[i];
-    serialized_message.add_byte(piece.waveform_phase.value);
-    serialized_message.add_uint16(piece.duration_in_ticks);
+    const auto &piece = pulse.waveform.pieces[i];
+    pulse_msg_.add_byte(piece.waveform_phase.value);
+    pulse_msg_.add_uint16(piece.duration_in_ticks);
   }
 
-  serialized_message.finalize();
+  pulse_msg_.finalize();
 
   if (this->safe_mode) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Safe mode is enabled, aborting pulse (id: %d)", id);
@@ -175,22 +175,19 @@ void EventHandler::process_pulse(const mtms_event_interfaces::msg::Pulse &pulse)
   }
 
   NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, channel_pulse_fifo));
-  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, channel_pulse_fifo, serialized_message.serialized_message.data(),
-                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, channel_pulse_fifo, pulse_msg_.serialized_message.data(),
+                                                 pulse_msg_.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
 void EventHandler::process_charge(const mtms_event_interfaces::msg::Charge &charge) {
-  /* Unpack and log charge message. */
-  uint8_t channel = charge.channel;
-  mtms_event_interfaces::msg::EventInfo event_info = charge.event_info;
-  uint16_t id = event_info.id;
-  uint8_t execution_condition = event_info.execution_condition.value;
-  double_t execution_time = event_info.execution_time;
+  const auto &event_info = charge.event_info;
+  const uint16_t id = event_info.id;
+  const uint8_t execution_condition = event_info.execution_condition.value;
+  const double_t execution_time = event_info.execution_time;
 
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Charging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
               charge.channel, charge.target_voltage, id, execution_condition, execution_time);
 
-  /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "FPGA is not in OK state, aborting charge (id: %d)", id);
     return;
@@ -201,17 +198,15 @@ void EventHandler::process_charge(const mtms_event_interfaces::msg::Charge &char
     return;
   }
 
-  /* Serialize event info. */
-  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-  serialized_message.init();
-  serialized_message.add_uint16(id);
-  serialized_message.add_byte(execution_condition);
-  serialized_message.add_uint64(execution_time_ticks);
+  const uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+  charge_msg_.init();
+  charge_msg_.add_uint16(id);
+  charge_msg_.add_byte(execution_condition);
+  charge_msg_.add_uint64(execution_time_ticks);
 
-  /* Serialize charge parameters. */
-  serialized_message.add_byte(channel + 1); // Note: 1-based indexing for LabVIEW
-  serialized_message.add_uint16(charge.target_voltage);
-  serialized_message.finalize();
+  charge_msg_.add_byte(charge.channel + 1);
+  charge_msg_.add_uint16(charge.target_voltage);
+  charge_msg_.finalize();
 
   if (this->safe_mode) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Safe mode is enabled, aborting charge (id: %d)", id);
@@ -219,22 +214,19 @@ void EventHandler::process_charge(const mtms_event_interfaces::msg::Charge &char
   }
 
   NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, charge_fifo));
-  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, charge_fifo, serialized_message.serialized_message.data(),
-                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, charge_fifo, charge_msg_.serialized_message.data(),
+                                                 charge_msg_.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
 void EventHandler::process_discharge(const mtms_event_interfaces::msg::Discharge &discharge) {
-  /* Unpack and log discharge message. */
-  uint8_t channel = discharge.channel;
-  mtms_event_interfaces::msg::EventInfo event_info = discharge.event_info;
-  uint16_t id = event_info.id;
-  uint8_t execution_condition = event_info.execution_condition.value;
-  double_t execution_time = event_info.execution_time;
+  const auto &event_info = discharge.event_info;
+  const uint16_t id = event_info.id;
+  const uint8_t execution_condition = event_info.execution_condition.value;
+  const double_t execution_time = event_info.execution_time;
 
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Discharging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
               discharge.channel, discharge.target_voltage, id, execution_condition, execution_time);
 
-  /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Tried to discharge (id: %d) but FPGA is not in OK state", id);
     return;
@@ -245,16 +237,14 @@ void EventHandler::process_discharge(const mtms_event_interfaces::msg::Discharge
     return;
   }
 
-  /* Serialize event info. */
-  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-  serialized_message.init(channel + 1);
-  serialized_message.add_uint16(id);
-  serialized_message.add_byte(execution_condition);
-  serialized_message.add_uint64(execution_time_ticks);
+  const uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+  discharge_msg_.init(discharge.channel + 1);
+  discharge_msg_.add_uint16(id);
+  discharge_msg_.add_byte(execution_condition);
+  discharge_msg_.add_uint64(execution_time_ticks);
 
-  /* Serialize discharge parameters. */
-  serialized_message.add_uint16(discharge.target_voltage);
-  serialized_message.finalize();
+  discharge_msg_.add_uint16(discharge.target_voltage);
+  discharge_msg_.finalize();
 
   if (this->safe_mode) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Safe mode is enabled, aborting discharge (id: %d)", id);
@@ -262,22 +252,19 @@ void EventHandler::process_discharge(const mtms_event_interfaces::msg::Discharge
   }
 
   NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, discharge_fifo));
-  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, discharge_fifo, serialized_message.serialized_message.data(),
-                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, discharge_fifo, discharge_msg_.serialized_message.data(),
+                                                 discharge_msg_.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
 void EventHandler::process_trigger_out(const mtms_event_interfaces::msg::TriggerOut &trigger_out) {
-  /* Unpack and log trigger out message. */
-  uint8_t port = trigger_out.port;
-  mtms_event_interfaces::msg::EventInfo event_info = trigger_out.event_info;
-  uint16_t id = event_info.id;
-  uint8_t execution_condition = event_info.execution_condition.value;
-  double_t execution_time = event_info.execution_time;
+  const auto &event_info = trigger_out.event_info;
+  const uint16_t id = event_info.id;
+  const uint8_t execution_condition = event_info.execution_condition.value;
+  const double_t execution_time = event_info.execution_time;
 
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              port, id, execution_condition, execution_time);
+              trigger_out.port, id, execution_condition, execution_time);
 
-  /* Check if FPGA is OK. */
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "FPGA is not in OK state, aborting sending trigger out event (id: %d)", id);
     return;
@@ -288,23 +275,19 @@ void EventHandler::process_trigger_out(const mtms_event_interfaces::msg::Trigger
     return;
   }
 
-  /* Serialize event info. */
-  uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
-  serialized_message.init(port);
-  serialized_message.add_uint16(id);
-  serialized_message.add_byte(execution_condition);
-  serialized_message.add_uint64(execution_time_ticks);
+  const uint64_t execution_time_ticks = (uint64_t)(execution_time * CLOCK_FREQUENCY_HZ);
+  trigger_out_msg_.init(trigger_out.port);
+  trigger_out_msg_.add_uint16(id);
+  trigger_out_msg_.add_byte(execution_condition);
+  trigger_out_msg_.add_uint64(execution_time_ticks);
 
-  /* Serialize trigger out parameters. */
-  uint32_t duration_us = trigger_out.duration_us;
-  uint32_t duration_ticks = duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
-  serialized_message.add_uint32(duration_ticks);
-  serialized_message.finalize();
+  const uint32_t duration_ticks = trigger_out.duration_us * (CLOCK_FREQUENCY_HZ / 1e6);
+  trigger_out_msg_.add_uint32(duration_ticks);
+  trigger_out_msg_.finalize();
 
-  /* For consistency with channel indexing, start trigger out indexing from 1. */
   NiFpga_MergeStatus(&status, NiFpga_StartFifo(session, trigger_out_fifo));
-  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, trigger_out_fifo, serialized_message.serialized_message.data(),
-                                                 serialized_message.get_length(), NiFpga_InfiniteTimeout, NULL));
+  NiFpga_MergeStatus(&status, NiFpga_WriteFifoU8(session, trigger_out_fifo, trigger_out_msg_.serialized_message.data(),
+                                                 trigger_out_msg_.get_length(), NiFpga_InfiniteTimeout, NULL));
 }
 
 int main(int argc, char **argv) {
