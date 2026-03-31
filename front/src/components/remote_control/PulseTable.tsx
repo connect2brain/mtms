@@ -70,6 +70,7 @@ const Title = styled.h3`
 
 const Table = styled.table`
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 0.82rem;
   line-height: 1.35;
