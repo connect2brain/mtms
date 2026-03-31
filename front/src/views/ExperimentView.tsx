@@ -227,11 +227,19 @@ const ExperimentPanel = styled(StyledPanel)`
   height: 240px;
 `
 
+const ConditionMark = styled.span<{ $met: boolean }>`
+  color: ${({ $met }) => ($met ? 'green' : 'red')};
+  font-weight: 700;
+  font-size: 1rem;
+  width: 14px;
+  text-align: center;
+`
+
 const StatusPanel = styled(StyledPanel)`
   grid-row: 1 / 2;
   grid-column: 6 / 7;
   width: 240px;
-  height: 300px;
+  height: 330px;
 `
 
 /* Triggers */
@@ -1039,6 +1047,8 @@ export const ExperimentView = () => {
       ? String(feedbackAny.attempt_number)
       : '\u2013'
 
+  const sessionConditionMet = !isSessionOngoing || experimentState !== EXPERIMENT_STATE.NOT_RUNNING
+
   return (
     <>
       <ExperimentMetadata>
@@ -1332,6 +1342,10 @@ export const ExperimentView = () => {
         </ExperimentPanel>
         <StatusPanel>
           <SmallerTitle>Status</SmallerTitle>
+          <ConfigRow>
+            <ConfigLabel>Session:</ConfigLabel>
+            <ConfigLabel><ConditionMark $met={sessionConditionMet}>{sessionConditionMet ? '✓' : '✗'}</ConditionMark></ConfigLabel>
+          </ConfigRow>
           <ConfigRow>
             <ConfigLabel>Experiment:</ConfigLabel>
             <ConfigLabel>{formatExperimentStateLabel(experimentState)} </ConfigLabel>
