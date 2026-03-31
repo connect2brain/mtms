@@ -31,21 +31,17 @@ const Message = styled.div`
 export const HealthMessageDisplay: React.FC = () => {
   const { eegHealth, mtmsDeviceHealth, remoteControllerHealth, timebaseCalibratorHealth } = useContext(HealthContext)
 
-  let displayMessage
+  let displayMessage = 'Ready'
 
   // Prioritize mtmsDeviceHealth > eegHealth > remoteControllerHealth > timebaseCalibratorHealth
-  //
-  // XXX: This whole health logic would need some work.
-  if (mtmsDeviceHealth?.health_level !== HealthStatus.READY) {
+  if (mtmsDeviceHealth !== null && mtmsDeviceHealth.health_level !== HealthStatus.READY) {
     displayMessage = mtmsDeviceHealth?.message
-  } else if (eegHealth?.health_level !== HealthStatus.READY && eegHealth !== null) {
+  } else if (eegHealth !== null && eegHealth.health_level !== HealthStatus.READY) {
     displayMessage = eegHealth?.message
-  } else if (remoteControllerHealth?.health_level !== HealthStatus.READY) {
+  } else if (remoteControllerHealth !== null && remoteControllerHealth.health_level !== HealthStatus.READY) {
     displayMessage = remoteControllerHealth?.message
-  } else if (timebaseCalibratorHealth?.health_level !== HealthStatus.READY && timebaseCalibratorHealth !== null) {
+  } else if (timebaseCalibratorHealth !== null && timebaseCalibratorHealth.health_level !== HealthStatus.READY) {
     displayMessage = timebaseCalibratorHealth?.message
-  } else {
-    displayMessage = 'Ready'
   }
 
   return (
