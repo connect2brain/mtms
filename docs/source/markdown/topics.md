@@ -12,7 +12,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 - `/mtms/device/events/feedback/charge` - Charge event completion/error feedback.
 - `/mtms/device/events/feedback/discharge` - Discharge event completion/error feedback.
 - `/mtms/device/events/feedback/trigger_out` - Trigger-out event completion/error feedback.
-- `/mtms/device/healthcheck` - Health status published by device bridge/simulator.
+- `/mtms/device/health` - Component health status published by device bridge/simulator.
 
 ### Services
 
@@ -68,7 +68,7 @@ This file lists the currently used ROS topics, services, and actions across mTMS
 ### Topics
 
 - `/mtms/eeg/raw` - Incoming raw EEG samples used by EEG gatherer.
-- `/mtms/mep/healthcheck` - MEP analyzer health status.
+- `/mtms/mep/health` - MEP analyzer component health status.
 
 ### Services
 

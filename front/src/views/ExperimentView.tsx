@@ -27,7 +27,7 @@ import { ExperimentControlButtons } from 'components/experiment/ExperimentContro
 import { EXPERIMENT_STATE, ExperimentContext } from 'providers/ExperimentProvider'
 
 import { SystemContext, DeviceState, SessionState } from 'providers/SystemProvider'
-import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
+import { HealthContext, HealthStatus } from 'providers/HealthProvider'
 import { ConfigContext } from 'providers/ConfigProvider'
 import { EegDeviceInfoContext } from 'providers/EegDeviceInfoProvider'
 
@@ -400,8 +400,8 @@ function shouldShowTrialFeedback(state: number | undefined): boolean {
 }
 
 export const ExperimentView = () => {
-  const { mepHealthcheck } = useContext(HealthcheckContext)
-  const [mepHealthcheckOk, setMepHealthcheckOk] = useState(false)
+  const { mepHealth } = useContext(HealthContext)
+  const [mepHealthOk, setMepHealthOk] = useState(false)
 
   const { session, systemState } = useContext(SystemContext)
   const { targetingAlgorithm } = useContext(ConfigContext)
@@ -909,10 +909,10 @@ export const ExperimentView = () => {
     setDuration(duration)
   }, [itiMin, itiMax, numOfValidTrials])
 
-  /* Update MEP healthcheck ok status. */
+  /* Update MEP health ok status. */
   useEffect(() => {
-    setMepHealthcheckOk(mepHealthcheck?.status === HealthcheckStatus.READY)
-  }, [mepHealthcheck])
+    setMepHealthOk(mepHealth?.health_level === HealthStatus.READY)
+  }, [mepHealth])
 
   /* Keep selected EMG channel within the available range from EEG info. */
   useEffect(() => {

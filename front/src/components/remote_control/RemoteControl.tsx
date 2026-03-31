@@ -6,7 +6,6 @@ import { SmallerTitle } from 'styles/ExperimentStyles'
 import { ElectricTarget, startRemoteController, stopRemoteController } from 'ros/remote_controller'
 
 import { SystemContext, DeviceState } from 'providers/SystemProvider'
-import { HealthcheckContext, HealthcheckStatus } from 'providers/HealthcheckProvider'
 import { RemoteControllerContext, RemoteControllerState } from 'providers/RemoteControllerProvider'
 
 const RemoteControlPanel = styled(StyledPanel)`
@@ -44,7 +43,6 @@ interface RemoteControlProps {
 
 export const RemoteControl = ({ getTargetLists, canStart = true }: RemoteControlProps) => {
   const { systemState } = useContext(SystemContext)
-  const { mtmsDeviceHealthcheck } = useContext(HealthcheckContext)
   const { state: remoteControllerState } = useContext(RemoteControllerContext)
 
   const isDeviceOperational = systemState?.device_state.value === DeviceState.OPERATIONAL
@@ -84,10 +82,6 @@ export const RemoteControl = ({ getTargetLists, canStart = true }: RemoteControl
     } else {
       startRemoteController([])
     }
-  }
-
-  if (mtmsDeviceHealthcheck?.status === HealthcheckStatus.DISABLED) {
-    return null
   }
 
   // Use debounced state for button color/text selection.

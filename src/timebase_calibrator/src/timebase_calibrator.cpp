@@ -15,9 +15,9 @@ static const std::string EEG_RAW_TOPIC           = "/mtms/eeg/raw";
 static const std::string SESSION_TOPIC           = "/mtms/device/session";
 static const std::string TIMEBASE_MAPPING_TOPIC  = "/mtms/timebase/mapping";
 static const std::string HEARTBEAT_TOPIC         = "/mtms/timebase_calibrator/heartbeat";
-static const std::string HEALTHCHECK_TOPIC       = "/mtms/timebase_calibrator/healthcheck";
+static const std::string HEALTH_TOPIC       = "/mtms/timebase_calibrator/health";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
-constexpr std::chrono::milliseconds HEALTHCHECK_PUBLISH_PERIOD{800};
+constexpr std::chrono::milliseconds HEALTH_PUBLISH_PERIOD{800};
 
 TimebaseCalibrator::TimebaseCalibrator()
 : Node("timebase_calibrator")
@@ -48,27 +48,25 @@ TimebaseCalibrator::TimebaseCalibrator()
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
-  healthcheck_publisher =
-    this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
-  healthcheck_timer = this->create_wall_timer(
-    HEALTHCHECK_PUBLISH_PERIOD, std::bind(&TimebaseCalibrator::publish_healthcheck, this));
+  health_publisher =
+    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
+  health_timer = this->create_wall_timer(
+    HEALTH_PUBLISH_PERIOD, std::bind(&TimebaseCalibrator::publish_health, this));
 
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized.");
 }
 
-void TimebaseCalibrator::publish_healthcheck()
+void TimebaseCalibrator::publish_health()
 {
-  mtms_system_interfaces::msg::Healthcheck msg;
+  mtms_system_interfaces::msg::ComponentHealth msg;
   if (in_error_state) {
-    msg.status = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
-    msg.status_message = "Sync trigger error";
-    msg.actionable_message = "Sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B";
+    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::ERROR;
+    msg.message = "Error: sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B";
   } else {
-    msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
-    msg.status_message = "Ready";
-    msg.actionable_message = "";
+    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::READY;
+    msg.message = "Ready";
   }
-  healthcheck_publisher->publish(msg);
+  health_publisher->publish(msg);
 }
 
 void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)

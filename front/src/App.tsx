@@ -5,8 +5,8 @@ import './App.css'
 
 import Providers from './providers/Providers'
 
-import { HealthcheckMessageDisplay } from 'components/general/HealthcheckMessageDisplay'
-import { HealthcheckStatusDisplay } from 'components/general/HealthcheckStatusDisplay'
+import { HealthMessageDisplay } from 'components/general/HealthMessageDisplay'
+import { HealthStatusDisplay } from 'components/general/HealthStatusDisplay'
 import { EegInfoDisplay } from 'components/general/EegInfoDisplay'
 import { ChannelVoltageDisplay } from 'components/general/ChannelVoltageDisplay'
 import { RosConnectionOverlay } from 'components/general/RosConnectionOverlay'
@@ -15,8 +15,8 @@ import { MultipleViews } from 'views/MultipleViews'
 const App = () => {
   return (
     <Providers>
-      <HealthcheckStatusDisplay />
-      <HealthcheckMessageDisplay />
+      <HealthStatusDisplay />
+      <HealthMessageDisplay />
       <EegInfoDisplay />
       <ChannelVoltageDisplay />
       <Wrapper>

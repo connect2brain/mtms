@@ -6,7 +6,7 @@ import { RosConnectionProvider } from './RosConnectionProvider'
 import { HeartbeatProvider } from './HeartbeatProvider'
 import { SystemProvider } from './SystemProvider'
 import { ConfigProvider } from './ConfigProvider'
-import { HealthcheckProvider } from './HealthcheckProvider'
+import { HealthProvider } from './HealthProvider'
 import { TrialProvider } from './TrialProvider'
 import { EegDeviceInfoProvider } from './EegDeviceInfoProvider'
 import { ExperimentProvider } from './ExperimentProvider'
@@ -23,7 +23,7 @@ const Providers: React.FC<Props> = ({ children }) => {
         <HeartbeatProvider>
           <SystemProvider>
             <ConfigProvider>
-              <HealthcheckProvider>
+              <HealthProvider>
                 <RemoteControllerProvider>
                 <TrialProvider>
                   <EegDeviceInfoProvider>
@@ -31,7 +31,7 @@ const Providers: React.FC<Props> = ({ children }) => {
                   </EegDeviceInfoProvider>
                 </TrialProvider>
                 </RemoteControllerProvider>
-              </HealthcheckProvider>
+              </HealthProvider>
             </ConfigProvider>
           </SystemProvider>
         </HeartbeatProvider>

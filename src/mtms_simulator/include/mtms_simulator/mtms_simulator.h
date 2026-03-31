@@ -36,7 +36,7 @@
 #include "mtms_device_interfaces/srv/request_events.hpp"
 #include "mtms_device_interfaces/srv/send_settings.hpp"
 
-#include "mtms_system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/component_health.hpp"
 #include "mtms_system_interfaces/msg/session.hpp"
 #include "mtms_system_interfaces/srv/start_session.hpp"
 #include "mtms_system_interfaces/srv/stop_session.hpp"
@@ -55,7 +55,7 @@ private:
   static constexpr int SESSION_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
   static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_MS = 50;
   static constexpr int SYSTEM_STATE_PUBLISHING_INTERVAL_TOLERANCE_MS = 10;
-  static constexpr int HEALTHCHECK_PUBLISHING_INTERVAL_MS = 800;
+  static constexpr int HEALTH_PUBLISHING_INTERVAL_MS = 800;
 
   static constexpr double CAPACITANCE = 1020e-6;
   static constexpr double TIME_CONSTANT = 1.0;
@@ -130,7 +130,7 @@ private:
 
   void publish_system_state();
   void publish_session();
-  void publish_healthcheck() const;
+  void publish_health() const;
 
   size_t num_of_channels_ {5};
   uint16_t max_voltage_ {1500};
@@ -183,14 +183,14 @@ private:
   rclcpp::Publisher<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_publisher_;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
   rclcpp::Publisher<mtms_system_interfaces::msg::Session>::SharedPtr session_publisher_;
-  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher_;
+  rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher_;
 
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr allow_stimulation_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr allow_trigger_out_subscription_;
 
   rclcpp::TimerBase::SharedPtr session_timer_;
   rclcpp::TimerBase::SharedPtr system_state_timer_;
-  rclcpp::TimerBase::SharedPtr healthcheck_timer_;
+  rclcpp::TimerBase::SharedPtr health_timer_;
   rclcpp::TimerBase::SharedPtr heartbeat_timer_;
 
   // Sends trigger tokens to NeurOne. Retries TCP connection in the background.

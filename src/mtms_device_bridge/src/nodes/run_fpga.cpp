@@ -1,40 +1,38 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "std_msgs/msg/string.hpp"
-#include "mtms_system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/component_health.hpp"
 
 #include "fpga.h"
 #include "NiFpga_mTMS.h"
 
 #include <sstream>
 
-const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
+const std::string HEALTH_TOPIC = "/mtms/device/health";
 
 class FpgaConnection : public rclcpp::Node {
 public:
   FpgaConnection(): Node("fpga_connection") {
-    this->healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+    this->health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
   }
 
-  void publish_healthcheck(uint8_t status_value, const std::string &status_message, const std::string &actionable_message) {
-    auto healthcheck = mtms_system_interfaces::msg::Healthcheck();
+  void publish_health(uint8_t health_level, const std::string &message) {
+    auto health = mtms_system_interfaces::msg::ComponentHealth();
 
-    healthcheck.status = status_value;
-    healthcheck.status_message = status_message;
-    healthcheck.actionable_message = actionable_message;
+    health.health_level = health_level;
+    health.message = message;
 
-    this->healthcheck_publisher->publish(healthcheck);
+    this->health_publisher->publish(health);
   }
 
 private:
-  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
 };
 
 /* Initialize FPGA with health checks */
-void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first_time) {
+void init_fpga_with_health(std::shared_ptr<FpgaConnection> node, bool first_time) {
   int waiting_time_left = first_time ? 0 : 60;
 
-  uint8_t status_value;
   while (rclcpp::ok()) {
     if (init_fpga()) {
       RCLCPP_INFO(node->get_logger(), "FPGA initialized successfully.");
@@ -46,13 +44,11 @@ void init_fpga_with_healthcheck(std::shared_ptr<FpgaConnection> node, bool first
       oss << "Please wait for " << waiting_time_left << " seconds before powering on the mTMS device.";
       std::string msg = oss.str();
 
-      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
-      node->publish_healthcheck(status_value, "mTMS device not powered on", msg);
+      node->publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, msg);
 
       waiting_time_left--;
     } else {
-      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
-      node->publish_healthcheck(status_value, "mTMS device not powered on", "Please power on the mTMS device.");
+      node->publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED, "Please power on the mTMS device.");
     }
 
     rclcpp::spin_some(node);
@@ -71,10 +67,9 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
 
   if (NiFpga_IsError(status)) {
     RCLCPP_ERROR(node->get_logger(), "NiFpga_Run failed with status: %u", status);
-    node->publish_healthcheck(
-      mtms_system_interfaces::msg::Healthcheck::ERROR,
-      "FPGA Run Failed",
-      "Failed to start FPGA operation."
+    node->publish_health(
+      mtms_system_interfaces::msg::ComponentHealth::ERROR,
+      "FPGA run failed: failed to start FPGA operation."
     );
     return;
   }
@@ -85,10 +80,9 @@ void run_fpga(std::shared_ptr<FpgaConnection> node) {
 
     if (NiFpga_IsError(ni_status)) {
       RCLCPP_ERROR(node->get_logger(), "NiFpga_GetFpgaViState failed with status: %u", ni_status);
-      node->publish_healthcheck(
-        mtms_system_interfaces::msg::Healthcheck::ERROR,
-        "FPGA State Check Failed",
-        "Failed to retrieve FPGA state."
+      node->publish_health(
+        mtms_system_interfaces::msg::ComponentHealth::ERROR,
+        "FPGA state check failed: failed to retrieve FPGA state."
       );
       break;
     }
@@ -122,7 +116,7 @@ int main(int argc, char **argv) {
   bool first_time = true;
 
   while (rclcpp::ok()) {
-    init_fpga_with_healthcheck(node, first_time);
+    init_fpga_with_health(node, first_time);
     first_time = false;
 
     run_fpga(node);

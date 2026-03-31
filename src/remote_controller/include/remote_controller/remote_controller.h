@@ -23,7 +23,7 @@
 #include "mtms_trial_interfaces/srv/start_remote_controller.hpp"
 
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
-#include "mtms_system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/component_health.hpp"
 #include "mtms_system_interfaces/msg/session.hpp"
 #include "mtms_system_interfaces/srv/start_session.hpp"
 #include "mtms_system_interfaces/srv/stop_session.hpp"
@@ -54,7 +54,7 @@ private:
 
   void set_state(uint8_t new_state);
   uint8_t get_state();
-  void publish_healthcheck();
+  void publish_health();
 
   void prepare_trial();
 
@@ -90,8 +90,8 @@ private:
   rclcpp::Service<mtms_trial_interfaces::srv::StartRemoteController>::SharedPtr start_service;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_service;
   rclcpp::Publisher<mtms_trial_interfaces::msg::RemoteControllerState>::SharedPtr state_publisher;
-  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
-  rclcpp::TimerBase::SharedPtr healthcheck_timer;
+  rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
+  rclcpp::TimerBase::SharedPtr health_timer;
 
   // Latest timebase mapping (EEG device time -> mTMS session time).
   std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_timebase_mapping;
@@ -107,7 +107,7 @@ private:
   // Prevent overlapping trials.
   std::atomic<bool> trial_ongoing{false};
 
-  // Healthcheck: true when the last TargetedPulses was rejected due to target list mismatch.
+  // Health: true when the last TargetedPulses was rejected due to target list mismatch.
   std::atomic<bool> target_list_mismatch{false};
 
   // Stored target lists for validating trials.

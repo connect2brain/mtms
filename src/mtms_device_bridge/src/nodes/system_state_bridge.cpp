@@ -12,7 +12,7 @@
 #include "mtms_device_interfaces/msg/system_state.hpp"
 #include "mtms_device_interfaces/msg/system_error.hpp"
 
-#include "mtms_system_interfaces/msg/healthcheck.hpp"
+#include "mtms_system_interfaces/msg/component_health.hpp"
 
 #include "std_msgs/msg/empty.hpp"
 
@@ -78,7 +78,7 @@ NiFpga_mTMS_IndicatorU8 device_state_indicator = NiFpga_mTMS_IndicatorU8_Devices
 
 NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
 
-const std::string HEALTHCHECK_TOPIC = "/mtms/device/healthcheck";
+const std::string HEALTH_TOPIC = "/mtms/device/health";
 const std::string HEARTBEAT_TOPIC = "/mtms/device/heartbeat";
 const milliseconds HEARTBEAT_PUBLISH_PERIOD = 500ms;
 
@@ -111,7 +111,7 @@ public:
         "/mtms/device/system_state", qos);
     timer_ = this->create_wall_timer(SYSTEM_STATE_PUBLISHING_INTERVAL, std::bind(&SystemStateBridge::publish_system_state, this));
 
-    healthcheck_publisher = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+    health_publisher = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
 
     auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
     heartbeat_timer = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
@@ -120,14 +120,13 @@ public:
   }
 
 private:
-  void publish_healthcheck(uint8_t status_value, std::string status_message, std::string actionable_message) {
-    auto healthcheck = mtms_system_interfaces::msg::Healthcheck();
+  void publish_health(uint8_t health_level, std::string message) {
+    auto health = mtms_system_interfaces::msg::ComponentHealth();
 
-    healthcheck.status = status_value;
-    healthcheck.status_message = status_message;
-    healthcheck.actionable_message = actionable_message;
+    health.health_level = health_level;
+    health.message = message;
 
-    this->healthcheck_publisher->publish(healthcheck);
+    this->health_publisher->publish(health);
   }
 
   mtms_device_interfaces::msg::SystemError system_error_to_msg(uint16_t error) {
@@ -255,16 +254,11 @@ private:
 
     system_state_publisher_->publish(state);
 
-    uint8_t status_value;
     if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
-      status_value = mtms_system_interfaces::msg::Healthcheck::READY;
-      publish_healthcheck(status_value,
-                          "Ready",
-                          "");
+      publish_health(mtms_system_interfaces::msg::ComponentHealth::READY,
+                          "Ready");
     } else {
-      status_value = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
-      publish_healthcheck(status_value,
-                          "mTMS device is not operational",
+      publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED,
                           "Please start the mTMS device.");
     }
   }
@@ -274,7 +268,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr heartbeat_timer;
   rclcpp::Publisher<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_publisher_;
-  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
 };
 
 int main(int argc, char **argv) {

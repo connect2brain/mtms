@@ -73,7 +73,7 @@ MTMSSimulator::MTMSSimulator()
 
   const auto session_period = std::chrono::milliseconds(SESSION_PUBLISHING_INTERVAL_MS);
   const auto system_state_period = std::chrono::milliseconds(SYSTEM_STATE_PUBLISHING_INTERVAL_MS);
-  const auto healthcheck_period = std::chrono::milliseconds(HEALTHCHECK_PUBLISHING_INTERVAL_MS);
+  const auto health_period = std::chrono::milliseconds(HEALTH_PUBLISHING_INTERVAL_MS);
 
   auto session_qos = rclcpp::QoS(rclcpp::KeepLast(1))
     .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -99,8 +99,8 @@ MTMSSimulator::MTMSSimulator()
   system_state_publisher_ = this->create_publisher<mtms_device_interfaces::msg::SystemState>(
     "/mtms/device/system_state", system_state_qos);
 
-  healthcheck_publisher_ = this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(
-    "/mtms/device/healthcheck", 10);
+  health_publisher_ = this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(
+    "/mtms/device/health", 10);
 
   system_state_ = mtms_device_interfaces::msg::SystemState();
   system_state_.channel_states = std::vector<mtms_device_interfaces::msg::ChannelState>(num_of_channels_);
@@ -133,8 +133,8 @@ MTMSSimulator::MTMSSimulator()
     session_period, std::bind(&MTMSSimulator::publish_session, this));
   system_state_timer_ = this->create_wall_timer(
     system_state_period, std::bind(&MTMSSimulator::publish_system_state, this));
-  healthcheck_timer_ = this->create_wall_timer(
-    healthcheck_period, std::bind(&MTMSSimulator::publish_healthcheck, this));
+  health_timer_ = this->create_wall_timer(
+    health_period, std::bind(&MTMSSimulator::publish_health, this));
 
   auto heartbeat_publisher = this->create_publisher<std_msgs::msg::Empty>(HEARTBEAT_TOPIC, 10);
   heartbeat_timer_ = this->create_wall_timer(HEARTBEAT_PUBLISH_PERIOD, [heartbeat_publisher]() {
@@ -697,13 +697,12 @@ void MTMSSimulator::event_worker_loop()
   }
 }
 
-void MTMSSimulator::publish_healthcheck() const
+void MTMSSimulator::publish_health() const
 {
-  mtms_system_interfaces::msg::Healthcheck msg;
-  msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
-  msg.status_message = "Simulator is ready";
-  msg.actionable_message = "";
-  healthcheck_publisher_->publish(msg);
+  mtms_system_interfaces::msg::ComponentHealth msg;
+  msg.health_level = mtms_system_interfaces::msg::ComponentHealth::READY;
+  msg.message = "Simulator is ready";
+  health_publisher_->publish(msg);
 }
 
 int main(int argc, char * argv[])

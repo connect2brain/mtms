@@ -32,10 +32,10 @@ const std::string STOP_SESSION_SERVICE = "/mtms/device/session/stop";
 const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
 const std::string REMOTE_CONTROLLER_STATE_TOPIC = "/mtms/remote_controller/state";
 const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
-const std::string HEALTHCHECK_TOPIC = "/mtms/remote_controller/healthcheck";
+const std::string HEALTH_TOPIC = "/mtms/remote_controller/health";
 
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
-constexpr std::chrono::milliseconds HEALTHCHECK_PUBLISH_PERIOD{800};
+constexpr std::chrono::milliseconds HEALTH_PUBLISH_PERIOD{800};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
@@ -133,10 +133,10 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
-  healthcheck_publisher =
-    this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
-  healthcheck_timer = this->create_wall_timer(
-    HEALTHCHECK_PUBLISH_PERIOD, std::bind(&RemoteController::publish_healthcheck, this));
+  health_publisher =
+    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
+  health_timer = this->create_wall_timer(
+    HEALTH_PUBLISH_PERIOD, std::bind(&RemoteController::publish_health, this));
 
   set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
@@ -160,19 +160,17 @@ uint8_t RemoteController::get_state()
   return this->state.state;
 }
 
-void RemoteController::publish_healthcheck()
+void RemoteController::publish_health()
 {
-  mtms_system_interfaces::msg::Healthcheck msg;
+  mtms_system_interfaces::msg::ComponentHealth msg;
   if (target_list_mismatch) {
-    msg.status = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
-    msg.status_message = "Target list mismatch";
-    msg.actionable_message = "A non-configured target requested";
+    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::ERROR;
+    msg.message = "Error: a non-configured target requested";
   } else {
-    msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
-    msg.status_message = "Ready";
-    msg.actionable_message = "";
+    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::READY;
+    msg.message = "Ready";
   }
-  healthcheck_publisher->publish(msg);
+  health_publisher->publish(msg);
 }
 
 void RemoteController::start_service_handler(

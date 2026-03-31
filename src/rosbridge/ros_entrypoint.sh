@@ -12,10 +12,10 @@ TOPICS_GLOB="\"[\
 '/mtms/experiment/feedback',\
 '/mtms/remote_controller/state',\
 '/mtms/eeg_device/info',\
-'/mtms/eeg/healthcheck',\
-'/mtms/device/healthcheck',\
-'/mtms/mep/healthcheck',\
-'/mtms/remote_controller/healthcheck',\
+'/mtms/eeg/health',\
+'/mtms/device/health',\
+'/mtms/mep/health',\
+'/mtms/remote_controller/health',\
 '/mtms/busylight_manager/heartbeat',\
 '/mtms/experiment_performer/heartbeat',\
 '/mtms/pedal_listener/heartbeat',\
