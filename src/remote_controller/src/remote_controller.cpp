@@ -16,6 +16,7 @@
 
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "mtms_eeg_interfaces/msg/eeg_device_info.hpp"
 
 using namespace std::chrono_literals;
 
@@ -33,6 +34,7 @@ const std::string HEARTBEAT_TOPIC = "/mtms/remote_controller/heartbeat";
 const std::string REMOTE_CONTROLLER_STATE_TOPIC = "/mtms/remote_controller/state";
 const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 const std::string HEALTH_TOPIC = "/mtms/remote_controller/health";
+const std::string EEG_DEVICE_INFO_TOPIC = "/mtms/eeg_device/info";
 
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
 
@@ -87,6 +89,12 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     SESSION_TOPIC,
     session_qos,
     std::bind(&RemoteController::session_state_callback, this, _1));
+
+  /* Subscription for EEG device info. */
+  eeg_device_info_subscriber = this->create_subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>(
+    EEG_DEVICE_INFO_TOPIC,
+    latched_qos,
+    std::bind(&RemoteController::eeg_device_info_callback, this, _1));
 
   /* Service client for performing trials. */
   perform_trial_client =
@@ -174,6 +182,12 @@ void RemoteController::start_service_handler(
   const std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Request> request,
   std::shared_ptr<mtms_trial_interfaces::srv::StartRemoteController::Response> response)
 {
+  if (!is_eeg_streaming) {
+    RCLCPP_ERROR(this->get_logger(), "EEG device is not streaming; cannot start.");
+    response->success = false;
+    return;
+  }
+
   if (get_state() != mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED) {
     RCLCPP_ERROR(this->get_logger(), "Remote controller is not in NOT_STARTED state; cannot start.");
     response->success = false;
@@ -304,6 +318,11 @@ bool RemoteController::is_trial_target_list_compatible(const mtms_trial_interfac
 void RemoteController::session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg)
 {
   is_session_started = (msg->state == mtms_system_interfaces::msg::Session::STARTED || msg->state == mtms_system_interfaces::msg::Session::STOPPING);
+}
+
+void RemoteController::eeg_device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg)
+{
+  is_eeg_streaming = msg->is_streaming;
 }
 
 bool RemoteController::start_session()

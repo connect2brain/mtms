@@ -25,6 +25,7 @@
 #include "mtms_targeting_interfaces/msg/electric_target.hpp"
 #include "mtms_system_interfaces/msg/component_health.hpp"
 #include "mtms_system_interfaces/msg/session.hpp"
+#include "mtms_eeg_interfaces/msg/eeg_device_info.hpp"
 #include "mtms_system_interfaces/srv/start_session.hpp"
 #include "mtms_system_interfaces/srv/stop_session.hpp"
 
@@ -46,6 +47,7 @@ private:
   void targeted_pulses_callback(const shared_stimulation_interfaces::msg::TargetedPulses::SharedPtr msg);
   void trial_readiness_callback(const std_msgs::msg::Bool::SharedPtr msg);
   void session_state_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
+  void eeg_device_info_callback(const mtms_eeg_interfaces::msg::EegDeviceInfo::SharedPtr msg);
   void publish_remote_controller_state();
 
   // Trial caching and validation
@@ -75,9 +77,11 @@ private:
   rclcpp::Subscription<shared_stimulation_interfaces::msg::TargetedPulses>::SharedPtr targeted_pulses_subscriber;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trial_readiness_subscriber;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscriber;
+  rclcpp::Subscription<mtms_eeg_interfaces::msg::EegDeviceInfo>::SharedPtr eeg_device_info_subscriber;
 
   // Session state tracking for blocking start/stop.
   std::atomic<bool> is_session_started{false};
+  std::atomic<bool> is_eeg_streaming{false};
 
   // Service clients
   rclcpp::Client<mtms_trial_interfaces::srv::PerformTrial>::SharedPtr perform_trial_client;

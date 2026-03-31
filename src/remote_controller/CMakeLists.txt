@@ -13,6 +13,7 @@ find_package(mtms_system_interfaces REQUIRED)
 find_package(shared_stimulation_interfaces REQUIRED)
 find_package(mtms_trial_interfaces REQUIRED)
 find_package(mtms_targeting_interfaces REQUIRED)
+find_package(mtms_eeg_interfaces REQUIRED)
 find_package(realtime_utils REQUIRED)
 
 # Install remote_controller executable.
@@ -39,6 +40,7 @@ ament_target_dependencies(
   shared_stimulation_interfaces
   mtms_trial_interfaces
   mtms_targeting_interfaces
+  mtms_eeg_interfaces
   realtime_utils
 )
 
