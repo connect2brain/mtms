@@ -514,14 +514,15 @@ void TrialPerformerNode::handle_perform_trial(
 
   /* Request events. */
   bool request_events_success = request_events(pulses, trigger_outs);
+
+  /* For troubleshooting purposes, log the time passed after requesting events. */
+  toc("Time passed after requesting events");
+
   if (!request_events_success) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
     response->success = false;
     return;
   }
-
-  /* For troubleshooting purposes, log the time passed after requesting events. */
-  toc("Time passed after requesting events");
 
   /* Wait for events to finish. */
   bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
