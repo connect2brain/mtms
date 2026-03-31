@@ -256,7 +256,7 @@ private:
 
     if (state.device_state.value == mtms_device_interfaces::msg::DeviceState::OPERATIONAL) {
       publish_health(mtms_system_interfaces::msg::ComponentHealth::READY,
-                          "Ready");
+                          "");
     } else {
       publish_health(mtms_system_interfaces::msg::ComponentHealth::DEGRADED,
                           "Please start the mTMS device.");

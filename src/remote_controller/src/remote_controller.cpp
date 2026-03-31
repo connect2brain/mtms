@@ -35,7 +35,6 @@ const std::string TRIAL_READINESS_TOPIC = "/mtms/trial/trial_readiness";
 const std::string HEALTH_TOPIC = "/mtms/remote_controller/health";
 
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
-constexpr std::chrono::milliseconds HEALTH_PUBLISH_PERIOD{800};
 
 RemoteController::RemoteController(const rclcpp::NodeOptions & options)
 : Node("remote_controller", options)
@@ -133,10 +132,13 @@ RemoteController::RemoteController(const rclcpp::NodeOptions & options)
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
+  auto health_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
   health_publisher =
-    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
-  health_timer = this->create_wall_timer(
-    HEALTH_PUBLISH_PERIOD, std::bind(&RemoteController::publish_health, this));
+    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, health_qos);
+  publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY, "");
 
   set_state(mtms_trial_interfaces::msg::RemoteControllerState::NOT_STARTED);
 
@@ -160,16 +162,11 @@ uint8_t RemoteController::get_state()
   return this->state.state;
 }
 
-void RemoteController::publish_health()
+void RemoteController::publish_health_status(uint8_t level, const std::string & message)
 {
   mtms_system_interfaces::msg::ComponentHealth msg;
-  if (target_list_mismatch) {
-    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::ERROR;
-    msg.message = "Error: a non-configured target requested";
-  } else {
-    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::READY;
-    msg.message = "Ready";
-  }
+  msg.health_level = level;
+  msg.message = message;
   health_publisher->publish(msg);
 }
 
@@ -234,7 +231,6 @@ void RemoteController::stop_service_handler(
   }
 
   stored_target_lists.clear();
-  target_list_mismatch = false;
 
   std::thread([this]() {
     set_state(mtms_trial_interfaces::msg::RemoteControllerState::STOPPING);
@@ -484,20 +480,25 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
   mtms_trial_interfaces::msg::Trial trial;
   if (!build_trial_from_message(*msg, mapping, trial)) {
     RCLCPP_WARN(this->get_logger(), "Failed to build a valid Trial from incoming TargetedPulses.");
+
     return;
   }
 
   if (!is_trial_target_list_compatible(trial)) {
-    RCLCPP_WARN(
+    RCLCPP_ERROR(
       this->get_logger(),
       "Trial target list does not match any cached target list; skipping TargetedPulses.");
-    target_list_mismatch = true;
+
+    publish_health_status(
+      mtms_system_interfaces::msg::ComponentHealth::ERROR,
+      "Error: a non-configured target requested");
+
     return;
   }
-  target_list_mismatch = false;
+  publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY, "");
 
   if (trial_ongoing) {
-    RCLCPP_WARN(
+    RCLCPP_ERROR(
       this->get_logger(),
       "Previous PerformTrial request is still running; skipping TargetedPulses.");
     return;

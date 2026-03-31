@@ -15,7 +15,7 @@ public:
 private:
   void eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg);
   void session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
-  void publish_health();
+  void publish_health_status(uint8_t level, const std::string & message);
 
   /* Session tracking. */
   bool session_active = false;
@@ -37,7 +37,6 @@ private:
   rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
 
   rclcpp::TimerBase::SharedPtr heartbeat_timer;
-  rclcpp::TimerBase::SharedPtr health_timer;
 };
 
 #endif  // TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_

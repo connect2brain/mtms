@@ -17,7 +17,6 @@ static const std::string TIMEBASE_MAPPING_TOPIC  = "/mtms/timebase/mapping";
 static const std::string HEARTBEAT_TOPIC         = "/mtms/timebase_calibrator/heartbeat";
 static const std::string HEALTH_TOPIC       = "/mtms/timebase_calibrator/health";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
-constexpr std::chrono::milliseconds HEALTH_PUBLISH_PERIOD{800};
 
 TimebaseCalibrator::TimebaseCalibrator()
 : Node("timebase_calibrator")
@@ -48,24 +47,23 @@ TimebaseCalibrator::TimebaseCalibrator()
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
+  auto health_qos = rclcpp::QoS(rclcpp::KeepLast(1))
+    .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
+    .durability(RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL);
+
   health_publisher =
-    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, 10);
-  health_timer = this->create_wall_timer(
-    HEALTH_PUBLISH_PERIOD, std::bind(&TimebaseCalibrator::publish_health, this));
+    this->create_publisher<mtms_system_interfaces::msg::ComponentHealth>(HEALTH_TOPIC, health_qos);
+
+  publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY, "");
 
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized.");
 }
 
-void TimebaseCalibrator::publish_health()
+void TimebaseCalibrator::publish_health_status(uint8_t level, const std::string & message)
 {
   mtms_system_interfaces::msg::ComponentHealth msg;
-  if (in_error_state) {
-    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::ERROR;
-    msg.message = "Error: sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B";
-  } else {
-    msg.health_level = mtms_system_interfaces::msg::ComponentHealth::READY;
-    msg.message = "Ready";
-  }
+  msg.health_level = level;
+  msg.message = message;
   health_publisher->publish(msg);
 }
 
@@ -88,6 +86,11 @@ void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::Sh
 
     if (consecutive_miss_count >= 2) {
       in_error_state = true;
+
+      publish_health_status(
+        mtms_system_interfaces::msg::ComponentHealth::ERROR,
+        "Error: sync triggers not received; check that the mTMS sync port is connected to the EEG device Trigger B");
+
       RCLCPP_ERROR(this->get_logger(),
         "Two consecutive missed sync triggers. Entering error state until session ends.");
       break;
@@ -149,6 +152,8 @@ void TimebaseCalibrator::session_callback(const mtms_system_interfaces::msg::Ses
     expected_trigger_number = 1;
     consecutive_miss_count  = 0;
     in_error_state          = false;
+
+    publish_health_status(mtms_system_interfaces::msg::ComponentHealth::READY, "");
 
     RCLCPP_INFO(this->get_logger(),
       "Session started. Expecting first sync trigger in window [%.3f, %.3f] s.",

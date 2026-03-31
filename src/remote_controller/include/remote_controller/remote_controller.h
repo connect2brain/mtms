@@ -54,7 +54,7 @@ private:
 
   void set_state(uint8_t new_state);
   uint8_t get_state();
-  void publish_health();
+  void publish_health_status(uint8_t level, const std::string & message);
 
   void prepare_trial();
 
@@ -91,7 +91,6 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr stop_service;
   rclcpp::Publisher<mtms_trial_interfaces::msg::RemoteControllerState>::SharedPtr state_publisher;
   rclcpp::Publisher<mtms_system_interfaces::msg::ComponentHealth>::SharedPtr health_publisher;
-  rclcpp::TimerBase::SharedPtr health_timer;
 
   // Latest timebase mapping (EEG device time -> mTMS session time).
   std::optional<mtms_system_interfaces::msg::TimebaseMapping> latest_timebase_mapping;
@@ -106,9 +105,6 @@ private:
 
   // Prevent overlapping trials.
   std::atomic<bool> trial_ongoing{false};
-
-  // Health: true when the last TargetedPulses was rejected due to target list mismatch.
-  std::atomic<bool> target_list_mismatch{false};
 
   // Stored target lists for validating trials.
   std::vector<std::vector<mtms_targeting_interfaces::msg::ElectricTarget>> stored_target_lists;
