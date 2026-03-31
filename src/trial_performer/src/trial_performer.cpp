@@ -107,51 +107,8 @@ HotPathNode::HotPathNode(std::shared_ptr<SharedState> shared_state, const rclcpp
     RCLCPP_INFO(get_logger(), "Service /mtms/device/events/request not available, waiting...");
   }
 
-  /* Subscribers */
-  pulse_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::PulseFeedback>(
-      "/mtms/device/events/feedback/pulse", 10,
-      std::bind(&HotPathNode::update_pulse_feedback, this, std::placeholders::_1));
-
-  trigger_out_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::TriggerOutFeedback>(
-      "/mtms/device/events/feedback/trigger_out", 10,
-      std::bind(&HotPathNode::update_trigger_out_feedback, this, std::placeholders::_1));
-
   /* Publishers */
   create_marker_publisher = this->create_publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>("/neuronavigation/create_marker", 10);
-}
-
-/* Subscriber callbacks */
-
-void HotPathNode::update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg) {
-  {
-    std::lock_guard<std::mutex> lock(state->feedback_mutex);
-    state->pulse_feedback[msg->id] = msg;
-  }
-
-  auto error_code = msg->error.value;
-
-  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
-  if (error_code == 0) {
-    RCLCPP_INFO(get_logger(), "Pulse event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
-  } else {
-    RCLCPP_WARN(get_logger(), "Pulse event %d finished with error code %d", msg->id, msg->error.value);
-  }
-}
-
-void HotPathNode::update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
-  {
-    std::lock_guard<std::mutex> lock(state->feedback_mutex);
-    state->trigger_out_feedback[msg->id] = msg;
-  }
-
-  auto error_code = msg->error.value;
-
-  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
-  if (error_code == 0) {
-    RCLCPP_INFO(get_logger(), "Trigger out event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
-  } else {
-    RCLCPP_WARN(get_logger(), "Trigger out event %d finished with error code %d", msg->id, msg->error.value);
-  }
 }
 
 /* ROS message creation */
@@ -491,6 +448,14 @@ HelperNode::HelperNode(std::shared_ptr<SharedState> shared_state, const rclcpp::
       1,
       std::bind(&HelperNode::handle_session, this, std::placeholders::_1));
 
+  pulse_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::PulseFeedback>(
+      "/mtms/device/events/feedback/pulse", 10,
+      std::bind(&HelperNode::update_pulse_feedback, this, std::placeholders::_1));
+
+  trigger_out_feedback_subscriber = this->create_subscription<mtms_event_interfaces::msg::TriggerOutFeedback>(
+      "/mtms/device/events/feedback/trigger_out", 10,
+      std::bind(&HelperNode::update_trigger_out_feedback, this, std::placeholders::_1));
+
   /* Publishers */
   auto qos_persist_latest = rclcpp::QoS(rclcpp::KeepLast(1))
       .reliability(RMW_QOS_POLICY_RELIABILITY_RELIABLE)
@@ -520,6 +485,38 @@ void HelperNode::handle_system_state(const mtms_device_interfaces::msg::SystemSt
 void HelperNode::handle_session(const mtms_system_interfaces::msg::Session::SharedPtr msg) {
   std::lock_guard<std::mutex> lock(state->session_mutex);
   state->session = msg;
+}
+
+void HelperNode::update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg) {
+  {
+    std::lock_guard<std::mutex> lock(state->feedback_mutex);
+    state->pulse_feedback[msg->id] = msg;
+  }
+
+  auto error_code = msg->error.value;
+
+  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
+  if (error_code == 0) {
+    RCLCPP_INFO(get_logger(), "Pulse event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+  } else {
+    RCLCPP_WARN(get_logger(), "Pulse event %d finished with error code %d", msg->id, msg->error.value);
+  }
+}
+
+void HelperNode::update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg) {
+  {
+    std::lock_guard<std::mutex> lock(state->feedback_mutex);
+    state->trigger_out_feedback[msg->id] = msg;
+  }
+
+  auto error_code = msg->error.value;
+
+  /* If the event fails, the execution time will be 0; to avoid confusion, do not log it in that case. */
+  if (error_code == 0) {
+    RCLCPP_INFO(get_logger(), "Trigger out event %d finished with error code %d at %.3f s", msg->id, msg->error.value, msg->execution_time);
+  } else {
+    RCLCPP_WARN(get_logger(), "Trigger out event %d finished with error code %d", msg->id, msg->error.value);
+  }
 }
 
 /* Service handlers */

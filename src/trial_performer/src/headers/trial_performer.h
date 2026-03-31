@@ -51,7 +51,7 @@ struct SharedState {
   mtms_system_interfaces::msg::Session::SharedPtr session;
   mutable std::mutex session_mutex;
 
-  /* Event feedback (written by HotPathNode subscribers, read by HotPathNode) */
+  /* Event feedback (written by HelperNode subscribers, read by HotPathNode) */
   std::unordered_map<uint16_t, mtms_event_interfaces::msg::PulseFeedback::SharedPtr> pulse_feedback;
   std::unordered_map<uint16_t, mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr> trigger_out_feedback;
   mutable std::mutex feedback_mutex;
@@ -86,8 +86,8 @@ struct BusyGuard {
 };
 
 /* ──────────────────────────────────────────────────────────────────────
- * HotPathNode — owns the perform_trial service, event feedback
- * subscriptions, the request_events client, and the marker publisher.
+ * HotPathNode — owns the perform_trial service, the request_events
+ * client, and the marker publisher.
  * ────────────────────────────────────────────────────────────────────── */
 class HotPathNode : public rclcpp::Node {
 public:
@@ -105,10 +105,6 @@ private:
   /* Service client */
   rclcpp::Client<mtms_device_interfaces::srv::RequestEvents>::SharedPtr request_events_client;
 
-  /* Subscribers */
-  rclcpp::Subscription<mtms_event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
-  rclcpp::Subscription<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
-
   /* Publishers */
   rclcpp::Publisher<mtms_neuronavigation_interfaces::msg::CreateMarker>::SharedPtr create_marker_publisher;
 
@@ -116,10 +112,6 @@ private:
   void handle_perform_trial(
       const std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Request> request,
       std::shared_ptr<mtms_trial_interfaces::srv::PerformTrial::Response> response);
-
-  /* Subscriber callbacks */
-  void update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg);
-  void update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg);
 
   /* ROS message creation */
   std::pair<std::vector<mtms_event_interfaces::msg::Pulse>, std::vector<uint16_t>> create_pulses(
@@ -158,8 +150,9 @@ private:
 
 /* ──────────────────────────────────────────────────────────────────────
  * HelperNode — owns cache_target_list and prepare_trial services,
- * system-state / session subscriptions, waveform service clients,
- * voltage setter, heartbeat, and trial-readiness publisher.
+ * system-state / session subscriptions, event feedback subscriptions,
+ * waveform service clients, voltage setter, heartbeat, and
+ * trial-readiness publisher.
  * ────────────────────────────────────────────────────────────────────── */
 class HelperNode : public rclcpp::Node {
 public:
@@ -184,6 +177,8 @@ private:
   /* Subscribers */
   rclcpp::Subscription<mtms_device_interfaces::msg::SystemState>::SharedPtr system_state_subscriber;
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscriber;
+  rclcpp::Subscription<mtms_event_interfaces::msg::PulseFeedback>::SharedPtr pulse_feedback_subscriber;
+  rclcpp::Subscription<mtms_event_interfaces::msg::TriggerOutFeedback>::SharedPtr trigger_out_feedback_subscriber;
 
   /* Publishers */
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr trial_readiness_publisher;
@@ -194,6 +189,8 @@ private:
   /* Subscriber callbacks */
   void handle_system_state(const mtms_device_interfaces::msg::SystemState::SharedPtr msg);
   void handle_session(const mtms_system_interfaces::msg::Session::SharedPtr msg);
+  void update_pulse_feedback(const mtms_event_interfaces::msg::PulseFeedback::SharedPtr msg);
+  void update_trigger_out_feedback(const mtms_event_interfaces::msg::TriggerOutFeedback::SharedPtr msg);
 
   /* Service handlers */
   void handle_cache_target_list(
