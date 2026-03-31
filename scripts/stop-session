@@ -6,14 +6,14 @@ UNDERLINE=$(tput smul)
 RESET=$(tput sgr0)
 
 # Stop session if active (STOPPED=0, STARTING=1, STARTED=2, STOPPING=3).
-SESSION_STATE=$(ros2 topic echo --once --no-arr /mtms/device/session 2>/dev/null | grep "^state:" | awk '{print $2}')
+SESSION_STATE=$(timeout 3 ros2 topic echo --once --no-arr /mtms/device/session 2>/dev/null | grep "^state:" | awk '{print $2}')
 
 if [ -n "$SESSION_STATE" ] && [ "$SESSION_STATE" != "0" ]; then
     echo "${BOLD}Stopping session...${RESET}"
     ros2 service call /mtms/device/session/stop mtms_system_interfaces/srv/StopSession "{}" > /dev/null 2>&1
 
     while true; do
-        STATE=$(ros2 topic echo --once --no-arr /mtms/device/session 2>/dev/null | grep "^state:" | awk '{print $2}')
+        STATE=$(timeout 3 ros2 topic echo --once --no-arr /mtms/device/session 2>/dev/null | grep "^state:" | awk '{print $2}')
         [ "$STATE" = "0" ] && break
         sleep 0.5
     done
