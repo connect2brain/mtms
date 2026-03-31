@@ -26,7 +26,10 @@ const NiFpga_mTMS_ControlBool event_aggregation_lock = NiFpga_mTMS_ControlBool_E
 const uint32_t CLOCK_FREQUENCY_HZ = 4e7;
 
 const NiFpga_mTMS_IndicatorU64 time_indicator = NiFpga_mTMS_IndicatorU64_Time;
-const double MINIMUM_MARGIN_S = 0.001; // 1 ms
+
+/* Set minimum margin to 1 ms. Sending a paired pulse with two triggers to the mTMS device takes 0.12-0.15 ms on the average,
+   so there is plenty of extra time to process the events.*/
+const double MINIMUM_MARGIN_S = 0.001;
 
 class EventHandler : public rclcpp::Node {
 public:
