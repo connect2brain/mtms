@@ -549,8 +549,6 @@ void TrialPerformerNode::handle_perform_trial(
   bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
   response->success = success;
 
-  auto voltages_after_trial = get_actual_voltages();
-
   /* If trial was successful, create a marker in neuronavigation. */
   if (success) {
     create_marker(trial);
