@@ -129,9 +129,6 @@ private:
   mtms_event_interfaces::msg::TriggerOut create_trigger_out(
       uint16_t id, double time, uint8_t execution_condition, uint8_t port);
 
-  /* Service calls */
-  std::future<bool> request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses,
-                                    const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs);
 
   /* Events */
   bool wait_for_events_to_finish(const std::vector<uint16_t> &pulse_ids,

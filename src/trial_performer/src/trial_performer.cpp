@@ -182,29 +182,6 @@ mtms_event_interfaces::msg::TriggerOut HotPathNode::create_trigger_out(uint16_t 
 
 /* Service calls */
 
-std::future<bool> HotPathNode::request_events(const std::vector<mtms_event_interfaces::msg::Pulse> &pulses, const std::vector<mtms_event_interfaces::msg::TriggerOut> &trigger_outs) {
-  auto request = std::make_shared<mtms_device_interfaces::srv::RequestEvents::Request>();
-  request->pulses = pulses;
-  request->trigger_outs = trigger_outs;
-
-  auto future = request_events_client->async_send_request(request);
-
-  /* Return a future that wraps the service response. */
-  return std::async(std::launch::deferred, [future = std::move(future)]() mutable {
-    /* Wait for the response. */
-    auto future_status = future.wait_for(10s);
-    if (future_status != std::future_status::ready) {
-      return false;
-    }
-    auto response = future.get();
-
-    if (!response->success) {
-      return false;
-    }
-
-    return true;
-  });
-}
 
 /* Events */
 
@@ -324,44 +301,54 @@ void HotPathNode::handle_perform_trial(
   auto [pulses, pulse_ids] = create_pulses(waveforms, trial, trial.start_time);
   auto [trigger_outs, trigger_out_ids] = create_trigger_outs(trial, trial.start_time);
 
+  /* Request events. */
+  auto request_events_req = std::make_shared<mtms_device_interfaces::srv::RequestEvents::Request>();
+  request_events_req->pulses = pulses;
+  request_events_req->trigger_outs = trigger_outs;
+
+  auto future = request_events_client->async_send_request(request_events_req);
+
   /* Spawn background thread to handle async event request and waiting. */
-  std::thread([this, request_events_future = request_events(pulses, trigger_outs),
+  std::thread([this, future = std::move(future),
                pulse_ids, trigger_out_ids, trial = request->trial, _t_start, response]() mutable {
-    /* Wait for the request_events call to complete. */
-    bool request_events_success = request_events_future.get();
+    try {
+      /* Wait for the request_events call to complete. */
+      auto response_ptr = future.get();
 
-    /* For profiling, log the time passed after requesting events. */
-    toc("Time passed after requesting events");
+      toc("Time passed after requesting events");
 
-    /* Only log the trial after the hot path is completed. */
-    RCLCPP_INFO(this->get_logger(), " ");
-    RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
+      RCLCPP_INFO(this->get_logger(), " ");
+      RCLCPP_INFO(this->get_logger(), "Received perform trial request, executing...");
 
-    log_trial(trial);
+      log_trial(trial);
 
-    if (!request_events_success) {
-      RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
+      if (!response_ptr || !response_ptr->success) {
+        RCLCPP_ERROR(this->get_logger(), "Perform trial failed: failed to request events.");
+        response->success = false;
+        return;
+      }
+
+      /* Wait for events to finish. */
+      bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
+      response->success = success;
+
+      /* If trial was successful, create a marker in neuronavigation. */
+      if (success) {
+        create_marker(trial);
+      }
+
+      RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
+      RCLCPP_INFO(this->get_logger(), " ");
+
+      const auto _t_end = std::chrono::system_clock::now();
+      const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
+      const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
+      const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
+      RCLCPP_INFO(this->get_logger(), "handle_perform_trial: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR(this->get_logger(), "Perform trial failed: %s", e.what());
       response->success = false;
-      return;
     }
-
-    /* Wait for events to finish. */
-    bool success = wait_for_events_to_finish(pulse_ids, trigger_out_ids);
-    response->success = success;
-
-    /* If trial was successful, create a marker in neuronavigation. */
-    if (success) {
-      create_marker(trial);
-    }
-
-    RCLCPP_INFO(this->get_logger(), "Trial completed %s.", success ? "successfully" : "with errors");
-    RCLCPP_INFO(this->get_logger(), " ");
-
-    const auto _t_end = std::chrono::system_clock::now();
-    const double _t_start_s = std::chrono::duration<double>(_t_start.time_since_epoch()).count();
-    const double _t_end_s = std::chrono::duration<double>(_t_end.time_since_epoch()).count();
-    const double _duration_ms = std::chrono::duration<double, std::milli>(_t_end - _t_start).count();
-    RCLCPP_INFO(this->get_logger(), "handle_perform_trial: start=%.3f s, end=%.3f s, duration=%.1f ms", _t_start_s, _t_end_s, _duration_ms);
   }).join();
 }
 
