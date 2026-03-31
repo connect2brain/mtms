@@ -146,7 +146,7 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
                 discharge.channel, discharge.target_voltage, discharge.event_info.id, discharge.event_info.execution_condition.value, discharge.event_info.execution_time);
   }
   for (const auto &trigger_out : request->trigger_outs) {
-    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sent trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
                 trigger_out.port, trigger_out.event_info.id, trigger_out.event_info.execution_condition.value, trigger_out.event_info.execution_time);
   }
 
