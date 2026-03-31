@@ -21,6 +21,7 @@ interface HealthcheckContextType {
   mtmsDeviceHealthcheck: Healthcheck | null
   mepHealthcheck: Healthcheck | null
   remoteControllerHealthcheck: Healthcheck | null
+  timebaseCalibratorHealthcheck: Healthcheck | null
 }
 
 const defaultHealthcheckState: HealthcheckContextType = {
@@ -28,6 +29,7 @@ const defaultHealthcheckState: HealthcheckContextType = {
   mtmsDeviceHealthcheck: null,
   mepHealthcheck: null,
   remoteControllerHealthcheck: null,
+  timebaseCalibratorHealthcheck: null,
 }
 
 export const HealthcheckContext = React.createContext<HealthcheckContextType>(defaultHealthcheckState)
@@ -41,6 +43,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
   const [mtmsDeviceHealthcheck, setMtmsDeviceHealthcheck] = useState<Healthcheck | null>(null)
   const [mepHealthcheck, setMepHealthcheck] = useState<Healthcheck | null>(null)
   const [remoteControllerHealthcheck, setRemoteControllerHealthcheck] = useState<Healthcheck | null>(null)
+  const [timebaseCalibratorHealthcheck, setTimebaseCalibratorHealthcheck] = useState<Healthcheck | null>(null)
 
   useEffect(() => {
     const eegSubscriber = new ROSLIB.Topic<Healthcheck>({
@@ -67,10 +70,17 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       messageType: 'mtms_system_interfaces/Healthcheck',
     })
 
+    const timebaseCalibratorSubscriber = new ROSLIB.Topic<Healthcheck>({
+      ros: ros,
+      name: '/mtms/timebase_calibrator/healthcheck',
+      messageType: 'mtms_system_interfaces/Healthcheck',
+    })
+
     let eegTimeout: NodeJS.Timeout | null = null
     let mtmsTimeout: NodeJS.Timeout | null = null
     let mepTimeout: NodeJS.Timeout | null = null
     let remoteControllerTimeout: NodeJS.Timeout | null = null
+    let timebaseCalibratorTimeout: NodeJS.Timeout | null = null
 
     eegSubscriber.subscribe((message) => {
       setEegHealthcheck(message)
@@ -112,11 +122,22 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       }, 1200)
     })
 
+    timebaseCalibratorSubscriber.subscribe((message) => {
+      setTimebaseCalibratorHealthcheck(message)
+      if (timebaseCalibratorTimeout) {
+        clearTimeout(timebaseCalibratorTimeout)
+      }
+      timebaseCalibratorTimeout = setTimeout(() => {
+        setTimebaseCalibratorHealthcheck(null)
+      }, 1200)
+    })
+
     return () => {
       eegSubscriber.unsubscribe()
       mtmsSubscriber.unsubscribe()
       mepSubscriber.unsubscribe()
       remoteControllerSubscriber.unsubscribe()
+      timebaseCalibratorSubscriber.unsubscribe()
       if (eegTimeout) {
         clearTimeout(eegTimeout)
       }
@@ -129,6 +150,9 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
       if (remoteControllerTimeout) {
         clearTimeout(remoteControllerTimeout)
       }
+      if (timebaseCalibratorTimeout) {
+        clearTimeout(timebaseCalibratorTimeout)
+      }
     }
   }, [])
 
@@ -139,6 +163,7 @@ export const HealthcheckProvider: React.FC<HealthcheckProviderProps> = ({ childr
         mtmsDeviceHealthcheck,
         mepHealthcheck,
         remoteControllerHealthcheck,
+        timebaseCalibratorHealthcheck,
       }}
     >
       {children}

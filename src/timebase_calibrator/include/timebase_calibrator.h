@@ -4,6 +4,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "mtms_eeg_interfaces/msg/sample.hpp"
+#include "mtms_system_interfaces/msg/healthcheck.hpp"
 #include "mtms_system_interfaces/msg/session.hpp"
 #include "mtms_system_interfaces/msg/timebase_mapping.hpp"
 
@@ -14,6 +15,7 @@ public:
 private:
   void eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg);
   void session_callback(const mtms_system_interfaces::msg::Session::SharedPtr msg);
+  void publish_healthcheck();
 
   /* Session tracking. */
   bool session_active = false;
@@ -32,8 +34,10 @@ private:
   rclcpp::Subscription<mtms_system_interfaces::msg::Session>::SharedPtr session_subscription;
 
   rclcpp::Publisher<mtms_system_interfaces::msg::TimebaseMapping>::SharedPtr mapping_publisher;
+  rclcpp::Publisher<mtms_system_interfaces::msg::Healthcheck>::SharedPtr healthcheck_publisher;
 
   rclcpp::TimerBase::SharedPtr heartbeat_timer;
+  rclcpp::TimerBase::SharedPtr healthcheck_timer;
 };
 
 #endif  // TIMEBASE_CALIBRATOR__TIMEBASE_CALIBRATOR_H_

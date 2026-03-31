@@ -15,7 +15,9 @@ static const std::string EEG_RAW_TOPIC           = "/mtms/eeg/raw";
 static const std::string SESSION_TOPIC           = "/mtms/device/session";
 static const std::string TIMEBASE_MAPPING_TOPIC  = "/mtms/timebase/mapping";
 static const std::string HEARTBEAT_TOPIC         = "/mtms/timebase_calibrator/heartbeat";
+static const std::string HEALTHCHECK_TOPIC       = "/mtms/timebase_calibrator/healthcheck";
 constexpr std::chrono::milliseconds HEARTBEAT_PUBLISH_PERIOD{500};
+constexpr std::chrono::milliseconds HEALTHCHECK_PUBLISH_PERIOD{800};
 
 TimebaseCalibrator::TimebaseCalibrator()
 : Node("timebase_calibrator")
@@ -46,7 +48,27 @@ TimebaseCalibrator::TimebaseCalibrator()
     heartbeat_publisher->publish(std_msgs::msg::Empty());
   });
 
+  healthcheck_publisher =
+    this->create_publisher<mtms_system_interfaces::msg::Healthcheck>(HEALTHCHECK_TOPIC, 10);
+  healthcheck_timer = this->create_wall_timer(
+    HEALTHCHECK_PUBLISH_PERIOD, std::bind(&TimebaseCalibrator::publish_healthcheck, this));
+
   RCLCPP_INFO(this->get_logger(), "Timebase calibrator initialized.");
+}
+
+void TimebaseCalibrator::publish_healthcheck()
+{
+  mtms_system_interfaces::msg::Healthcheck msg;
+  if (in_error_state) {
+    msg.status = mtms_system_interfaces::msg::Healthcheck::NOT_READY;
+    msg.status_message = "Sync trigger error";
+    msg.actionable_message = "Two consecutive sync triggers missed; restart session";
+  } else {
+    msg.status = mtms_system_interfaces::msg::Healthcheck::READY;
+    msg.status_message = "Ready";
+    msg.actionable_message = "";
+  }
+  healthcheck_publisher->publish(msg);
 }
 
 void TimebaseCalibrator::eeg_callback(const mtms_eeg_interfaces::msg::Sample::SharedPtr msg)
