@@ -1,3 +1,4 @@
+#include <chrono>
 #include <limits>
 
 #include "rclcpp/rclcpp.hpp"
@@ -67,6 +68,7 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
     earliest_event_time = std::min(earliest_event_time, trigger_out.event_info.execution_time);
 
   /* Read current time from FPGA. */
+  auto processing_start = std::chrono::steady_clock::now();
   uint64_t current_time_ticks;
   NiFpga_MergeStatus(&status, NiFpga_ReadU64(session, time_indicator, &current_time_ticks));
   double current_mtms_time = (double)current_time_ticks / CLOCK_FREQUENCY_HZ;
@@ -100,6 +102,9 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
 
   /* Reset event aggregation lock after processing events. */
   NiFpga_MergeStatus(&status, NiFpga_WriteBool(session, event_aggregation_lock, NiFpga_False));
+
+  double processing_duration_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - processing_start).count();
+  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Event batch processing took %.2f ms", processing_duration_ms);
 
   response->success = true;
 }
