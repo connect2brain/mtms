@@ -129,6 +129,24 @@ void EventHandler::handle_request_events(const std::shared_ptr<mtms_device_inter
   double processing_duration_ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - processing_start).count();
   RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Event batch processing took %.2f ms", processing_duration_ms);
 
+  /* Log each pulse, charge, discharge and trigger out event. */
+  for (const auto &pulse : request->pulses) {
+    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+                pulse.channel, pulse.event_info.id, pulse.event_info.execution_condition.value, pulse.event_info.execution_time);
+  }
+  for (const auto &charge : request->charges) {
+    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Charging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
+                charge.channel, charge.target_voltage, charge.event_info.id, charge.event_info.execution_condition.value, charge.event_info.execution_time);
+  }
+  for (const auto &discharge : request->discharges) {
+    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Discharging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
+                discharge.channel, discharge.target_voltage, discharge.event_info.id, discharge.event_info.execution_condition.value, discharge.event_info.execution_time);
+  }
+  for (const auto &trigger_out : request->trigger_outs) {
+    RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
+                trigger_out.port, trigger_out.event_info.id, trigger_out.event_info.execution_condition.value, trigger_out.event_info.execution_time);
+  }
+
   response->success = true;
 }
 
@@ -137,9 +155,6 @@ void EventHandler::process_pulse(const mtms_event_interfaces::msg::Pulse &pulse)
   const uint16_t id = event_info.id;
   const uint8_t execution_condition = event_info.execution_condition.value;
   const double_t execution_time = event_info.execution_time;
-
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Executing pulse on channel %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              pulse.channel, id, execution_condition, execution_time);
 
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Tried to execute pulse (id: %d) but FPGA is not in OK state", id);
@@ -185,9 +200,6 @@ void EventHandler::process_charge(const mtms_event_interfaces::msg::Charge &char
   const uint8_t execution_condition = event_info.execution_condition.value;
   const double_t execution_time = event_info.execution_time;
 
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Charging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              charge.channel, charge.target_voltage, id, execution_condition, execution_time);
-
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "FPGA is not in OK state, aborting charge (id: %d)", id);
     return;
@@ -224,9 +236,6 @@ void EventHandler::process_discharge(const mtms_event_interfaces::msg::Discharge
   const uint8_t execution_condition = event_info.execution_condition.value;
   const double_t execution_time = event_info.execution_time;
 
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Discharging channel %d to %d V (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              discharge.channel, discharge.target_voltage, id, execution_condition, execution_time);
-
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "Tried to discharge (id: %d) but FPGA is not in OK state", id);
     return;
@@ -261,9 +270,6 @@ void EventHandler::process_trigger_out(const mtms_event_interfaces::msg::Trigger
   const uint16_t id = event_info.id;
   const uint8_t execution_condition = event_info.execution_condition.value;
   const double_t execution_time = event_info.execution_time;
-
-  RCLCPP_INFO(rclcpp::get_logger("event_handler"), "Sending trigger out to port %d (id: %d, execution_condition: %d, execution_time: %.4f s)",
-              trigger_out.port, id, execution_condition, execution_time);
 
   if (!is_fpga_ok()) {
     RCLCPP_WARN(rclcpp::get_logger("event_handler"), "FPGA is not in OK state, aborting sending trigger out event (id: %d)", id);
