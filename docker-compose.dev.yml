@@ -21,6 +21,7 @@ services:
               count: 1
               capabilities: [gpu]
 
+  # Doesn't work as of Mar 2026; needs to be run outside of Docker.
   mtms_device_bridge:
     build:
       context: .
@@ -31,23 +32,4 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    network_mode: host
-
-  neuronavigation:
-    build:
-      context: .
-      dockerfile: src/neuronavigation/Dockerfile
-    env_file:
-      - ${MTMS_ENV_FILE}
-    environment:
-      - DISPLAY
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - './data/neuronavigation:/app/data/neuronavigation/'
-      # Mount the configuration to local filesystem so that it is retained when the container is restarted.
-      - './.config/invesalius:/root/.config/invesalius'
-
-    # Required by Linux when opening projects in neuronavigation, otherwise segfaults.
-    privileged: true
     network_mode: host
