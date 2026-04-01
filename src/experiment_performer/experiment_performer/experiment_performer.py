@@ -344,7 +344,7 @@ class ExperimentPerformerNode(Node):
         self.current_trial_state = msg.state
 
         # Only signal completion on terminal states; ACCEPTED is an intermediate
-        # acknowledgement and the final outcome (SUCCEEDED, FAILED, BUSY) follows.
+        # acknowledgement and the final outcome (SUCCEEDED, FAILED) follows.
         if msg.state != TrialState.ACCEPTED:
             self.trial_finished.set()
 
@@ -364,8 +364,6 @@ class ExperimentPerformerNode(Node):
             return None
 
         state = self.current_trial_state
-        if state == TrialState.BUSY:
-            self.logger.warning('Perform trial rejected: trial performer is busy.')
 
         class _Result:
             def __init__(self, success):

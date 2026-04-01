@@ -261,7 +261,7 @@ void HotPathNode::handle_perform_trial(const mtms_trial_interfaces::msg::Trial::
 
   if (state->busy.exchange(true)) {
     RCLCPP_ERROR(this->get_logger(), "Perform trial request received while busy.");
-    publish_state(mtms_trial_interfaces::msg::TrialState::BUSY);
+    publish_state(mtms_trial_interfaces::msg::TrialState::FAILED);
     return;
   }
 
