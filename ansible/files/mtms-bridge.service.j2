@@ -9,6 +9,10 @@ User={{ target_user }}
 Environment=MTMS_ROOT={{ repo_root }}
 Environment=MTMS_ENV_FILE={{ repo_root }}/.env
 Environment=RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+# Always use localhost-only discovery; this service does not need network access.
+Environment=ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
+
 Environment=CYCLONEDDS_URI={{ repo_root }}/config/cyclonedds.xml
 
 LimitRTPRIO=99
