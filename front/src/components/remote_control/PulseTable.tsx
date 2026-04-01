@@ -92,7 +92,7 @@ const Th = styled.th`
 `
 
 const ThSpacer = styled(Th)`
-  width: 6px;
+  width: 28px;
   border-left: 1px solid #e0e0e0;
 `
 
@@ -120,7 +120,7 @@ const Td = styled.td`
 `
 
 const TdSpacer = styled(Td)`
-  width: 6px;
+  width: 28px;
   border-left: 1px solid #e8e8e8;
 `
 
@@ -419,7 +419,7 @@ export const PulseTable = forwardRef<PulseTableHandle, PulseTableProps>(function
           <col style={{ width: 28 }} />
           {[0, 1, 2].map((pi) => (
             <React.Fragment key={pi}>
-              {pi > 0 && <col style={{ width: 6 }} />}
+              {pi > 0 && <col style={{ width: 28 }} />}
               {FIELDS.map((f) => (
                 <col key={f.key} style={{ width: 50 }} />
               ))}
