@@ -555,8 +555,7 @@ void RemoteController::targeted_pulses_callback(const shared_stimulation_interfa
 void RemoteController::trial_state_callback(const mtms_trial_interfaces::msg::TrialState::SharedPtr msg)
 {
   const bool terminal = msg->state == mtms_trial_interfaces::msg::TrialState::SUCCEEDED
-                     || msg->state == mtms_trial_interfaces::msg::TrialState::FAILED
-                     || msg->state == mtms_trial_interfaces::msg::TrialState::BUSY;
+                     || msg->state == mtms_trial_interfaces::msg::TrialState::FAILED;
 
   RCLCPP_INFO(
     this->get_logger(),
