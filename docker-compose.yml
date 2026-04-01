@@ -7,6 +7,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
     # The container needs to be privileged to access the USB device.
     #
@@ -21,6 +22,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   mtms_simulator:
@@ -31,6 +33,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   pedal_listener:
@@ -43,6 +46,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
   
   remote_controller:
@@ -55,6 +59,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   stimulation_allower:
@@ -65,6 +70,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   targeting:
@@ -75,6 +81,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   trial_logger:
@@ -84,8 +91,10 @@ services:
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - MTMS_EXPERIMENT_LOGS_DIR=/app/mtms_experiment_logs
+      # ROS configuration
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     volumes:
       - '$MTMS_EXPERIMENT_LOGS_DIR:/app/mtms_experiment_logs'
     network_mode: host
@@ -98,6 +107,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     # The container needs to be privileged to set real-time priority.
     privileged: true
     network_mode: host
@@ -110,6 +120,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   waveform_utils:
@@ -120,6 +131,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   waveform_approximator:
@@ -130,6 +142,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     volumes:
       # Mount the whole MATLAB installation into the container; this is needed for the container
       # to be able to find MATLAB license (located in /usr/local/MATLAB/[version]/licenses/).
@@ -148,9 +161,11 @@ services:
     env_file:
       - ${MTMS_ENV_FILE}
     environment:
-      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
       - EEG_PORT=50001
       - EEG_DEVICE=neurone
+      # ROS configuration
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   timebase_calibrator:
@@ -161,6 +176,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   trigger_processor:
@@ -171,6 +187,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
 
   rosbridge:
@@ -183,5 +200,7 @@ services:
       - ${MTMS_ENV_FILE}
     environment:
       - ROSBRIDGE_PORT=9091
+      # ROS configuration
       - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+      - ROS_AUTOMATIC_DISCOVERY_RANGE
     network_mode: host
