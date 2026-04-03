@@ -429,27 +429,23 @@
         update_cache: yes
 
     ########################################################################
-    # 12. Configure log rotation for rsyslog
-    #
-    # Allows at most four rotated log files, each sized at most 5G, resulting
-    # in at most 20G of each log and its rotations, and checks daily if the logs
-    # should be rotated.
+    # 12. Configure log rotation
     ########################################################################
-    - name: Ensure logrotate configuration for rsyslog has 'rotate 4'
+    - name: Ensure logrotate configuration has 'rotate 4'
       ansible.builtin.lineinfile:
         path: /etc/logrotate.d/rsyslog
         regexp: '^\s*rotate\s+\d+'
         line: '        rotate 4'
         backup: yes
 
-    - name: Ensure logrotate configuration for rsyslog has 'daily'
+    - name: Ensure logrotate configuration has 'daily'
       ansible.builtin.lineinfile:
         path: /etc/logrotate.d/rsyslog
         regexp: '^\s*weekly'
         line: '        daily'
         backup: yes
 
-    - name: Ensure logrotate configuration for rsyslog has 'size 5G'
+    - name: Ensure logrotate configuration has 'size 5G'
       ansible.builtin.lineinfile:
         path: /etc/logrotate.d/rsyslog
         regexp: '^\s*size\s+\d+[KMG]?'
