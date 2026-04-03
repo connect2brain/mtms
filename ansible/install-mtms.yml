@@ -310,6 +310,15 @@
               fi
           fi
 
+          # Warn if available disk space is below 50 GiB.
+          available_kib=$(df --output=avail "$HOME" | tail -1)
+          threshold_kib=$((50 * 1024 * 1024))  # 50 GiB in KiB
+          if [ "${available_kib}" -lt "${threshold_kib}" ]; then
+              available_gib=$(awk "BEGIN {printf \"%.1f\", ${available_kib}/1048576}")
+              echo "WARNING: Low disk space in $HOME: ${available_gib} GiB available (threshold: 50 GiB)."
+          fi
+          unset available_kib threshold_kib available_gib
+
     - name: Ensure ROS2 base installation is sourced in .bashrc
       lineinfile:
         dest: "{{ target_home }}/.bashrc"
