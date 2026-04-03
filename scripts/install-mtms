@@ -26,10 +26,17 @@ fi
 echo "Installing required Ansible collections..."
 ansible-galaxy collection install -r ansible/requirements.yml
 
+read -r -p "Configure static network settings? (only for production systems) (y/N): " network_response
+if [[ "$network_response" =~ ^[Yy]$ ]]; then
+    configure_network=true
+else
+    configure_network=false
+fi
+
 read -r -s -p "Enter sudo password: " SUDO_PASS
 echo ""
 
-ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml
+ANSIBLE_BECOME_PASS="$SUDO_PASS" ansible-playbook -i 'localhost,' ansible/install-mtms.yml -e "configure_network=${configure_network}"
 
 source $HOME/.bash_mtms
 

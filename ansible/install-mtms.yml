@@ -20,6 +20,9 @@
     ros_distro: "jazzy"
     pip_extra_args: "--break-system-packages"
 
+    # Whether to configure static network settings (production systems only).
+    configure_network: false
+
     # EEG UDP fanout settings
     eeg_udp_fanout_source_port: 50000
     eeg_udp_fanout_destinations:
@@ -56,17 +59,20 @@
         dns4: "192.168.200.1"
         method4: manual
         autoconnect: yes
+      when: configure_network | bool
 
     - name: Disable automatic DNS and routes
       ansible.builtin.command:
         cmd: nmcli con modify 'Wired connection 1' ipv4.ignore-auto-dns yes ipv4.ignore-auto-routes yes
       become: yes
+      when: configure_network | bool
 
     - name: Activate Wired connection 1
       community.general.nmcli:
         conn_name: Wired connection 1
         state: up
       become: yes
+      when: configure_network | bool
 
     ########################################################################
     # 2. Update sudoers for systemd service restart without password
