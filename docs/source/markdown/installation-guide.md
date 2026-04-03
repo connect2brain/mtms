@@ -91,6 +91,10 @@ Note that the software installation steps are in `README.md`, while the hardware
    - Password: multilocus
    - Enable "Require password to log in"
 
+## Ubuntu Configuration
+
+> **Warning:** Do not run `apt upgrade` or `apt dist-upgrade` after installation. The National Instruments drivers are built against a specific kernel version, and upgrading the kernel will break them.
+
 ## Software Installation
 
 ### Git Setup
