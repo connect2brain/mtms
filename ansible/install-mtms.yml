@@ -86,7 +86,56 @@
         mode: '0440'
 
     ########################################################################
-    # 3. Install NI drivers
+    # 3. Disable automatic upgrades and unattended updates
+    ########################################################################
+    - name: Stop and disable apt-daily timers
+      systemd:
+        name: "{{ item }}"
+        enabled: no
+        state: stopped
+        masked: yes
+      loop:
+        - apt-daily.timer
+        - apt-daily-upgrade.timer
+        - apt-daily.service
+        - apt-daily-upgrade.service
+
+    - name: Disable unattended-upgrades service
+      systemd:
+        name: unattended-upgrades
+        enabled: no
+        state: stopped
+        masked: yes
+
+    - name: Configure APT periodic to disable all automatic updates
+      copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          APT::Periodic::Update-Package-Lists "0";
+          APT::Periodic::Unattended-Upgrade "0";
+          APT::Periodic::Download-Upgradeable-Packages "0";
+          APT::Periodic::AutocleanInterval "0";
+
+    - name: Disable unattended-upgrades in config
+      copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades-override
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          Unattended-Upgrade::Allowed-Origins {};
+
+    - name: Remove update-notifier if installed
+      apt:
+        name: update-notifier
+        state: absent
+      ignore_errors: yes
+
+    ########################################################################
+    # 4. Install NI drivers
     ########################################################################
     - name: Ensure target directory exists
       ansible.builtin.file:
@@ -126,7 +175,7 @@
         cmd: dkms autoinstall
 
     ########################################################################
-    # 4. Copy & enable systemd services (mtms & mtms-bridge)
+    # 5. Copy & enable systemd services (mtms, mtms-bridge, and eeg-udp-fanout)
     ########################################################################
     - name: Copy mtms.service
       template:
@@ -187,7 +236,7 @@
         state: restarted
 
     ########################################################################
-    # Create directory for mTMS experiment logs
+    # 6. Create directory for mTMS experiment logs
     ########################################################################
     - name: Create mTMS experiment logs directory
       file:
@@ -198,7 +247,7 @@
         mode: '0755'
         
     ########################################################################
-    # 5. Create .bash_mtms and ensure it is sourced in .bashrc
+    # 7. Create .bash_mtms and ensure it is sourced in .bashrc
     ########################################################################
     - name: Create fresh .bash_mtms file
       copy:
@@ -270,7 +319,7 @@
         insertafter: EOF
 
     ########################################################################
-    # 6. Install busylight-for-humans
+    # 8. Install busylight-for-humans
     ########################################################################
     - name: Install python3-pip (provides pip3)
       apt:
@@ -299,7 +348,7 @@
       shell: udevadm control -R
 
     ########################################################################
-    # 7. Install extra packages
+    # 9. Install extra packages
     ########################################################################
     - name: Install software-properties-common (for apt repository management)
       apt:
@@ -330,7 +379,7 @@
         extra_args: "{{ pip_extra_args }}"
 
     ########################################################################
-    # 8. Install Sphinx requirements
+    # 10. Install Sphinx requirements
     ########################################################################
     - name: Install Sphinx requirements
       pip:
@@ -338,7 +387,7 @@
         extra_args: "{{ pip_extra_args }}"
 
     ########################################################################
-    # 9. Install Node.js 18 LTS for Electron app build
+    # 11. Install Node.js 18 LTS for Electron app build
     ########################################################################
     - name: Remove old Node.js packages
       apt:
@@ -366,7 +415,7 @@
         update_cache: yes
 
     ########################################################################
-    # 10. Configure GRUB timeout
+    # 12. Configure GRUB timeout
     ########################################################################
     - name: Ensure GRUB timeout is set to 1
       ansible.builtin.lineinfile:
@@ -379,7 +428,7 @@
         cmd: update-grub
 
     ########################################################################
-    # 11. Configure log rotation for rsyslog
+    # 13. Configure log rotation for rsyslog
     #
     # Allows at most four rotated log files, each sized at most 5G, resulting
     # in at most 20G of each log and its rotations, and checks daily if the logs
@@ -407,7 +456,7 @@
         backup: yes
 
     ########################################################################
-    # 12. Configure MATLAB startup path
+    # 14. Configure MATLAB startup path
     ########################################################################
     - name: Ensure MATLAB startup directory exists
       file:
@@ -429,7 +478,7 @@
         insertafter: EOF
 
     ########################################################################
-    # 13. Configure kernel network buffer sizes for EEG UDP socket
+    # 15. Configure kernel network buffer sizes for EEG UDP socket
     ########################################################################
     - name: Configure kernel UDP receive buffer sizes
       ansible.builtin.copy:
@@ -447,7 +496,7 @@
         cmd: sysctl -p /etc/sysctl.d/99-mtms.conf
 
     ########################################################################
-    # 14. Create a desktop link to the documentation
+    # 16. Create a desktop link to the documentation
     ########################################################################
     - name: Create a desktop link to the documentation
       copy:
