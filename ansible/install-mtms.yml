@@ -429,20 +429,7 @@
         update_cache: yes
 
     ########################################################################
-    # 12. Configure GRUB timeout
-    ########################################################################
-    - name: Ensure GRUB timeout is set to 1
-      ansible.builtin.lineinfile:
-        path: /etc/default/grub
-        regexp: '^GRUB_TIMEOUT='
-        line: 'GRUB_TIMEOUT=1'
-
-    - name: Update GRUB configuration
-      ansible.builtin.command:
-        cmd: update-grub
-
-    ########################################################################
-    # 13. Configure log rotation for rsyslog
+    # 12. Configure log rotation for rsyslog
     #
     # Allows at most four rotated log files, each sized at most 5G, resulting
     # in at most 20G of each log and its rotations, and checks daily if the logs
@@ -470,7 +457,7 @@
         backup: yes
 
     ########################################################################
-    # 14. Configure MATLAB startup path
+    # 13. Configure MATLAB startup path
     ########################################################################
     - name: Ensure MATLAB startup directory exists
       file:
@@ -492,7 +479,7 @@
         insertafter: EOF
 
     ########################################################################
-    # 15. Configure kernel network buffer sizes for EEG UDP socket
+    # 14. Configure kernel network buffer sizes for EEG UDP socket
     ########################################################################
     - name: Configure kernel UDP receive buffer sizes
       ansible.builtin.copy:
@@ -510,7 +497,7 @@
         cmd: sysctl -p /etc/sysctl.d/99-mtms.conf
 
     ########################################################################
-    # 16. Create a desktop link to the documentation
+    # 15. Create a desktop link to the documentation
     ########################################################################
     - name: Create a desktop link to the documentation
       copy:
