@@ -23,8 +23,7 @@ if ! command -v ansible-playbook &> /dev/null; then
     sudo apt install -y ansible
 fi
 
-echo "Installing required Ansible collections..."
-ansible-galaxy collection install -r ansible/requirements.yml
+ansible-galaxy collection install -r ansible/requirements.yml > /dev/null
 
 read -r -p "Configure static network settings? (only for production systems) (y/N): " network_response
 if [[ "$network_response" =~ ^[Yy]$ ]]; then
