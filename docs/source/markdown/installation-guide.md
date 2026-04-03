@@ -11,6 +11,8 @@ Note that the software installation steps are in `README.md`, while the hardware
 - Internet connection
 - Required hardware components (Edgerouter X, Bittium NeurOne)
 
+Important: Use exactly the 24.04.4 LTS release listed above. Each Ubuntu point release ships a different kernel version, and the NI drivers are compiled against the exact kernel version. Using a different point release may cause driver compilation failures or instability.
+
 ## Table of Contents
 
 1. [Router Configuration](#router-configuration)
@@ -65,6 +67,7 @@ Note that the software installation steps are in `README.md`, while the hardware
      ```
 
 2. Installation Configuration
+   - When the installer offers to update to a newer version, decline it.
    - Select "Minimal installation"
    - Enable:
      - Download updates while installing
