@@ -5,9 +5,20 @@ REM in the lab in Aalto and Tubingen, including the neuronavigation package itse
 REM
 REM To just build neuronavigation without its dependencies (i.e., the ROS interfaces), use build_neuronavigation.bat.
 
-call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
+call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
 
-call C:\dev\ros2_jazzy\local_setup.bat
+REM call C:\dev\ros2_jazzy\local_setup.bat
+
+REM ==================================================
+REM 2) Activate Conda Environment (ros_env)
+REM ==================================================
+call "C:\Users\Admin\miniforge3\Scripts\activate.bat" "C:\Users\Admin\miniforge3\envs\ros_env"
+ 
+IF %ERRORLEVEL% NEQ 0 (
+    echo ❌ Failed to activate Conda environment
+    pause
+    exit /b 1
+)
 
 cd %MTMS_ROOT%
 
@@ -23,8 +34,6 @@ if not exist "%pkg_dir%" (
 if not exist "%init_file%" (
   echo Creating __init__.py: "%init_file%"
   type nul > "%init_file%"
-) else (
-  echo __init__.py already exists: "%init_file%"
 )
 
 colcon build --base-paths interfaces
