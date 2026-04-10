@@ -1,4 +1,4 @@
-FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cdb5d717e87ef46f39
+FROM docker.io/ros:jazzy@sha256:be7350a0efd17925415a6a3a076d6009b425af7500b0a5cdb5d717e87ef46f39 as base
 FROM base as base-amd64
 
 ENV NVARCH x86_64
@@ -62,13 +62,15 @@ ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 # Add NVIDIA package repositories
 RUN apt-get update && apt-get install -y curl
 RUN curl -sL https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
-RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-RUN curl -sL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | \
-    tee /etc/apt/sources.list.d/nvidia-docker.list
+RUN distribution=$(. /etc/os-release;echo $ID$VERSION_ID) && \
+    curl -sL https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list > \
+    /etc/apt/sources.list.d/nvidia-docker.list
 
 # Install CUDA toolkit
 RUN apt-get update
-RUN apt-get install -y --no-install-recommends cuda-toolkit-11-7
+RUN apt-get install -y --no-install-recommends \
+    cuda-nvcc-11-7 \
+    cuda-libraries-dev-11-7
 
 SHELL ["/bin/bash", "-c"]
 
@@ -85,7 +87,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.26.3/cmake-3.26.3
 
 RUN tar xf cmake-3.26.3-linux-x86_64.tar.gz
 
-WORKDIR /ap
+WORKDIR /app
 
 
 # Build interfaces
@@ -106,7 +108,7 @@ COPY src/efield src/efield/
 
 # Required so efield and efield_library can find their dependencies
 ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/app/src/efield/efield_libraries/lib"
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/cuda-11.7/lib64:usr/local/cuda-11.7/targets/x86_64-linux/include/"
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/cuda-11.7/lib64:/usr/local/cuda-11.7/targets/x86_64-linux/include/"
 ENV CPATH="/usr/local/cuda-11.7/targets/x86_64-linux/include/:${CPATH}"
 ENV PATH="/usr/local/nvidia/bin:/usr/local/cuda/bin:/usr/local/cuda-11.7/bin/nvcc/:/usr/local/cuda-11.7/lib64/:/usr/local/cuda-11.7/bin/:${PATH}"
 ENV PATH="/cmake-3.26.3-linux-x86_64/bin:${PATH}"
