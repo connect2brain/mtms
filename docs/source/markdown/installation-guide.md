@@ -178,17 +178,17 @@ After this phase, the computer needs to be rebooted again.
 
 * [Follow latest robostack instructions for installation](https://robostack.github.io/GettingStarted.html#__tabbed_1_2):
 
-  * Install Anaconda (Robostack recommends Miniforge installation)
-  * **Note**: After reinstalling with Miniforge the ROS environment worked properly on Windows 11 
+  * Install Miniforge
   * Do not install Python separately and make sure there are no entries to PATH (could be a source of bugs during installation/building) 
   * Remove default anaconda channels 
 
     * might need to edit .condarc files to get rid of them
-  - Run the commands from the instructions
+  - Run the commands from the RoboStack instructions
 
  
 
 #### Clone repositories
+Clone all repositories into `C:\Users\<username>`:
 * Clone latest tms-robot-control to `C:\Users\<username>` (https://github.com/biomaglab/tms-robot-control)
 * Clone latest mtms software to `C:\Users\<username>` (https://github.com/connect2brain/mtms)
   * `git clone --recurse-submodules` to automatically clone latest invesalius3 as well
@@ -196,27 +196,36 @@ After this phase, the computer needs to be rebooted again.
 
 
 #### Build ROS2 workspace
-* Note!!!!: Turn windows smart app control off, will prevent the build
+* Important: Turn windows smart app control off, will prevent the build
 * Set Windows system/user environment varialbe `MTMS_ROOT` to `C:\Users\<username>\mtms`
-* Use `mtms\scripts\build_ros_workspace.bat` script if possible (run it in the conda environment)
-  * Check that the paths are set correctly in the script
-    * Visual Studio path (BuildTools vs Community)
-    * Conda/Miniforge installation
+* Preferred Method (Script)
+   * Use `mtms\scripts\build_ros_workspace.bat` script if possible (run it in the ros_env environment)
+     * Check that the paths are set correctly in the script
+       * Visual Studio path (BuildTools vs Community)
+       * Conda/Miniforge installation
 * If doesn't work try manually 
   * create empty `__init__.py` file in invesaulius3
   * `conda activate ros_env`
   * `cd %MTMS_ROOT%` 
   * `colcon build --base-paths interfaces`
 
+#### Setup robot control
+Before building invesalius need to set robot environment variables 
+
+Copy and paste `c:\Users\<username>\tms-robot-control\.env.example` and set the robot variables in the file.
+Change filename to `.env`.
+
+Open conda cmd and activate ros_env and run 
+```
+pip install pynput websocket-client websockets requests nest-asyncio==1.6.0 uvicorn[standard]==0.30.1 python-socketio==5.11.3
+```
+
 #### Build invesalius3
-
-Before building need to set environment variables 
-
-Copy and paste `c:\Users\<username>\Tms-robot-control\.env.example` and set the variables in the file
-Change filename to `.env`
-
-In the ros_env navigate to invesalius folder and run the commands:
-
+Activate the environment and navigate to the invesalius3 directory:
+```
+conda activate ros_env
+```
+Install build tools:
 ```
 pip install uv
 ```
@@ -224,16 +233,9 @@ pip install uv
 pip install maturin
 ```
 ```
-uv sync
+uv sync --all-extras
 ```
-```
-maturin develop --release
-```
-If develop doesn't work (currently a known bug):
-```
-maturin build --release
-```
-Install dependencies to the ros_env (currently needed to change `pyproject.toml` -> "vtk>=9.3.0", "setuptools>=68")
+Install dependencies to the ros_env (currently needed to change `/invesalius3/pyproject.toml` -> "vtk>=9.3.0")
 ```
 pip install .
 ```
