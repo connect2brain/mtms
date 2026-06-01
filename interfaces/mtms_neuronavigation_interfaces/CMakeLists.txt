@@ -45,4 +45,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   DEPENDENCIES geometry_msgs mtms_targeting_interfaces
  )
 
+ament_export_dependencies(rosidl_default_runtime)
+
 ament_package()
