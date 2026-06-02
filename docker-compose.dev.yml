@@ -1,5 +1,3 @@
-version: '2'
-
 services:
   efield:
     build:
@@ -21,12 +19,29 @@ services:
               count: 1
               capabilities: [gpu]
 
+  neuronavigation:
+    build:
+      context: .
+      dockerfile: src/neuronavigation/Dockerfile
+    image: neuronavigation
+    env_file:
+      - ${MTMS_ENV_FILE}
+    environment:
+      DISPLAY: ${DISPLAY}
+      ELECTRIC_FIELD_ENABLE: "true"
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - './data/neuronavigation:/app/data/neuronavigation/'
+      - './.config/invesalius:/root/.config/invesalius'
+    privileged: true
+    network_mode: host
+    command: python invesalius3/app.py
   # Doesn't work as of Mar 2026; needs to be run outside of Docker.
   mtms_device_bridge:
     build:
       context: .
       dockerfile: src/mtms_device_bridge/Dockerfile
-    # The container needs to be privileged to access FPGA.
     privileged: true
     env_file:
       - ${MTMS_ENV_FILE}

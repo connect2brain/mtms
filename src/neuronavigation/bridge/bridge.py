@@ -154,6 +154,17 @@ class NeuronavigationNode(Node):
                 self.get_logger().info('efield service /mtms/efield/set_dIperdt not available, waiting...')
             self.get_logger().info('efield set dIperdt')
 
+    def _wait_for_future(self, future, service_name, timeout_sec=30.0):
+        start = time.monotonic()
+        while not future.done():
+            if timeout_sec is not None and time.monotonic() - start > timeout_sec:
+                self.get_logger().error(
+                    f"Timed out waiting for {service_name} after {timeout_sec:.1f}s"
+                )
+                return None
+            time.sleep(0.001)
+        return future.result()
+
     def set_callback__set_markers(self, callback):
         self._set_markers = callback
 
@@ -259,10 +270,10 @@ class NeuronavigationNode(Node):
         request.conductivities_outside = conductivities_outside
         request.set_di_per_dt = dI_per_dt
         future = self.client_init_efield.call_async(request)
-        while future.done() is False:
-            pass
         try:
-            response= future.result()
+            response = self._wait_for_future(future, "/mtms/efield/initialize", timeout_sec=None)
+            if response is None:
+                return False
             self.get_logger().info("Responding to the service request /neuronavigation/efield/init")
             return response.success
         except Exception as e:
@@ -274,10 +285,10 @@ class NeuronavigationNode(Node):
         request.coil_model_path=coil_model_path
         request.coil_set = coil_set
         future = self.client_set_coil.call_async(request)
-        while future.done() is False:
-            pass
         try:
-            response= future.result()
+            response = self._wait_for_future(future, "/mtms/efield/set_coil")
+            if response is None:
+                return False
             self.get_logger().info("Responding to the service request /neuronavigation/efield/coil")
             return response.success
         except Exception as e:
@@ -288,10 +299,10 @@ class NeuronavigationNode(Node):
         request = Setdiperdt.Request()
         request.set_di_per_dt = dIperdt
         future = self.client_set_dIperdt.call_async(request)
-        while future.done() is False:
-            pass
         try:
-            response = future.result()
+            response = self._wait_for_future(future, "/mtms/efield/set_dIperdt")
+            if response is None:
+                return False
             self.get_logger().info("Responding to the service request /neuronavigation/efield/dIperdt")
             return response.success
         except Exception as e:
@@ -305,11 +316,10 @@ class NeuronavigationNode(Node):
         request.transducer_rotation = T_rot
 
         future = self.client_get_efield_norm.call_async(request)
-
-        while future.done() is False:
-            pass
         try:
-            response = future.result()
+            response = self._wait_for_future(future, "/mtms/efield/get_norm")
+            if response is None:
+                return None
             self.get_logger().info("Responding to the service request /neuronavigation/efield")
             return response.efield_norm
         except Exception as e:
@@ -323,11 +333,10 @@ class NeuronavigationNode(Node):
         request.transducer_rotation = T_rot
 
         future = self.client_get_efield_vector.call_async(request)
-
-        while future.done() is False:
-            pass
         try:
-            response = future.result()
+            response = self._wait_for_future(future, "/mtms/efield/get_efieldvector")
+            if response is None:
+                return None
             self.get_logger().info("Responding to the service request /neuronavigation/efield_vector")
             return response.efield_data
         except Exception as e:
@@ -341,10 +350,10 @@ class NeuronavigationNode(Node):
         request.transducer_rotation = T_rot
         request.id_list=id_list
         future = self.client_get_efield_vectorROI.call_async(request)
-        while future.done() is False:
-            pass
         try:
-            response = future.result()
+            response = self._wait_for_future(future, "/mtms/efield/get_ROIefieldvector")
+            if response is None:
+                return None
             self.get_logger().info("Responding to the service request /neuronavigation/efield_vector")
             return response.efield_data
         except Exception as e:
@@ -358,10 +367,10 @@ class NeuronavigationNode(Node):
         request.transducer_rotation = T_rot
         request.id_list=id_list
         future = self.client_get_efield_vectorROIMax.call_async(request)
-        while future.done() is False:
-            pass
         try:
-            response = future.result()
+            response = self._wait_for_future(future, "/mtms/efield/get_ROIefieldvectorMax")
+            if response is None:
+                return None
             self.get_logger().info("Responding to the service request /neuronavigation/efield_vector")
             return response.efield_data
         except Exception as e:
