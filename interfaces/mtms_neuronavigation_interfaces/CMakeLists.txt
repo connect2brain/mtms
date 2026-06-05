@@ -31,7 +31,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ElectricField.msg"
   "msg/CreateMarker.msg"
 
-  "srv/Efield.srv"
   "srv/InitializeEfield.srv"
   "srv/SetCoil.srv"
   "srv/OpenOrientationDialog.srv"
