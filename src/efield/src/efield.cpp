@@ -67,7 +67,15 @@ public:
 
         RCLCPP_INFO(rclcpp::get_logger("efield_initialize"), "Request received from /mtms/efield/initialize");
         init_efield(request->cortex_model_path, request->mesh_models_paths,request->conductivities_inside, request->conductivities_outside, response->success);
+        if (!response->success) {
+            RCLCPP_ERROR(rclcpp::get_logger("efield_initialize"), "E-field mesh initialization failed");
+            return;
+        }
         set_coil(request->coil_model_path, request->coil_set, response->success);
+        if (!response->success) {
+            RCLCPP_ERROR(rclcpp::get_logger("efield_initialize"), "E-field coil initialization failed");
+            return;
+        }
         set_dIperdt(request->set_di_per_dt, response->success);
 
     };

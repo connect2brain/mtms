@@ -77,12 +77,16 @@ RUN source /opt/ros/jazzy/setup.bash && \
 COPY src/neuronavigation/invesalius3 src/neuronavigation/invesalius3/
 
 # Build invesalius_rs native extension
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    source /root/.cargo/env && \
+    cargo --version
 ENV PATH="/root/.cargo/bin:$PATH"
 
 RUN python3 -m pip install --break-system-packages maturin
 
-RUN cd /app/src/neuronavigation/invesalius3/invesalius_rs && maturin build --release
+RUN source /root/.cargo/env && \
+    cd /app/src/neuronavigation/invesalius3/invesalius_rs && \
+    maturin build --release
 RUN python3 -m pip install --break-system-packages /app/src/neuronavigation/invesalius3/invesalius_rs/target/wheels/*.whl
 RUN mkdir -p /app/src/neuronavigation/invesalius3/invesalius_rs && \
     NATIVE_SO=$(find / -name "_native*.so" 2>/dev/null | head -n 1) && \
