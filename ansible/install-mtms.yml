@@ -94,24 +94,50 @@
     ########################################################################
     # 3. Disable automatic upgrades and unattended updates
     ########################################################################
-    - name: Stop and disable apt-daily timers
-      systemd:
-        name: "{{ item }}"
-        enabled: no
-        state: stopped
-        masked: yes
-      loop:
-        - apt-daily.timer
-        - apt-daily-upgrade.timer
-        - apt-daily.service
-        - apt-daily-upgrade.service
+    - name: Define update-related units to disable
+      set_fact:
+        update_units:
+          - apt-daily.timer
+          - apt-daily-upgrade.timer
+          - apt-daily.service
+          - apt-daily-upgrade.service
+          - unattended-upgrades.service
+          - fwupd-refresh.timer
+          - packagekit.service
 
-    - name: Disable unattended-upgrades service
-      systemd:
-        name: unattended-upgrades
-        enabled: no
+    - name: Enumerate installed unit files
+      ansible.builtin.command: systemctl list-unit-files --type=timer,service --no-legend --no-pager
+      changed_when: false
+      register: _unit_files
+
+    - name: Build set of units present on this host
+      set_fact:
+        present_units: "{{ _unit_files.stdout_lines | map('split', ' ') | map('first') | list }}"
+
+    - name: Stop, disable, and mask present update units
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        enabled: false
         state: stopped
-        masked: yes
+        masked: true
+      loop: "{{ update_units | intersect(present_units) }}"
+
+    - name: Preemptively mask absent update units
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        masked: true
+      loop: "{{ update_units | difference(present_units) }}"
+
+    - name: Check whether snapd is present
+      ansible.builtin.command: which snap
+      changed_when: false
+      failed_when: false
+      register: _snap
+
+    - name: Hold all snap auto-refreshes indefinitely
+      ansible.builtin.command: snap refresh --hold
+      changed_when: true
+      when: _snap.rc == 0
 
     - name: Configure APT periodic to disable all automatic updates
       copy:
@@ -125,20 +151,31 @@
           APT::Periodic::Download-Upgradeable-Packages "0";
           APT::Periodic::AutocleanInterval "0";
 
-    - name: Disable unattended-upgrades in config
+    - name: Neutralize unattended-upgrades allowed-origins
       copy:
         dest: /etc/apt/apt.conf.d/50unattended-upgrades-override
         owner: root
         group: root
         mode: '0644'
         content: |
+          #clear Unattended-Upgrade::Allowed-Origins;
           Unattended-Upgrade::Allowed-Origins {};
 
-    - name: Remove update-notifier if installed
-      apt:
-        name: update-notifier
-        state: absent
-      ignore_errors: yes
+    - name: Set system-wide dconf default to disable GNOME Software auto-download
+      copy:
+        dest: /etc/dconf/db/local.d/00-no-auto-updates
+        owner: root
+        group: root
+        mode: '0644'
+        content: |
+          [org/gnome/software]
+          download-updates=false
+          download-updates-notify=false
+      register: _dconf_default
+
+    - name: Update dconf system database
+      ansible.builtin.command: dconf update
+      when: _dconf_default.changed
 
     ########################################################################
     # 4. Install NI drivers
