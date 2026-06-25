@@ -161,8 +161,21 @@
           #clear Unattended-Upgrade::Allowed-Origins;
           Unattended-Upgrade::Allowed-Origins {};
 
+    - name: Ensure dconf tools are installed
+      ansible.builtin.apt:
+        name: dconf-cli
+        state: present
+
+    - name: Ensure dconf local defaults directory exists
+      ansible.builtin.file:
+        path: /etc/dconf/db/local.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Set system-wide dconf default to disable GNOME Software auto-download
-      copy:
+      ansible.builtin.copy:
         dest: /etc/dconf/db/local.d/00-no-auto-updates
         owner: root
         group: root
@@ -174,7 +187,8 @@
       register: _dconf_default
 
     - name: Update dconf system database
-      ansible.builtin.command: dconf update
+      ansible.builtin.command:
+        cmd: dconf update
       when: _dconf_default.changed
 
     ########################################################################
@@ -381,7 +395,7 @@
     - name: Install busylight-for-humans
       pip:
         name: busylight-for-humans
-        extra_args: "{{ pip_extra_args }}"
+        extra_args: "--break-system-packages --ignore-installed rich"
 
     - name: Generate Busylight udev rules (locally)
       shell: busylight udev-rules -o /tmp/99-busylights.rules
