@@ -240,7 +240,7 @@ Install dependencies to the ros_env (currently needed to change `/invesalius3/py
 pip install .
 ```
 
-To run invesalius, use the new .bat file in scripts folder `run_invesalius.bat`
+To run invesalius, use the new .bat file in scripts folder `start_invesalius.bat`
 Note: Check that the paths are set correctly in the script:
 * Visual Studio path (BuildTools vs Community)
 * Conda/Miniforge installation path
