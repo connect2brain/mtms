@@ -245,6 +245,106 @@ Note: Check that the paths are set correctly in the script:
 * Visual Studio path (BuildTools vs Community)
 * Conda/Miniforge installation path
 
+#### Rebuild after updating InVesalius
+## Rebuilding neuronavigation after updating repositories
+
+After updating the `mtms` repository or the `invesalius3` submodule, the neuronavigation installation may need to be rebuilt. This is especially important if InVesalius has changed, because the compiled `invesalius_rs` native module may become outdated.
+
+Use the helper script:
+
+```bat
+C:\Users\mtms\mtms\scripts\rebuild_neuronavigation_after_update.bat
+```
+
+Run this script from CMD, Anaconda Prompt, or Visual Studio Developer Command Prompt. Do not run it from PowerShell, as some `.bat` activation steps may not work correctly there.
+
+After the script finishes, run:
+
+```bat
+cd C:\Users\mtms\mtms
+call install\setup.bat
+ros2 run neuronavigation start
+```
+
+### Checking `invesalius_rs`
+
+Before sourcing the ROS workspace, verify that the Conda environment has the correct `invesalius_rs` native module:
+
+```bat
+conda activate ros_env
+cd C:\Users\mtms
+
+python -c "import invesalius_rs, invesalius_rs._native as n; print(invesalius_rs.__file__); print(n.__file__); print(hasattr(n, 'polygon2mask_rs'))"
+```
+
+The last line of the output should be:
+
+```text
+True
+```
+
+Then source the ROS workspace:
+
+```bat
+cd C:\Users\mtms\mtms
+call install\setup.bat
+```
+
+Run the same test again:
+
+```bat
+python -c "import invesalius_rs, invesalius_rs._native as n; print(invesalius_rs.__file__); print(n.__file__); print(hasattr(n, 'polygon2mask_rs'))"
+```
+
+The last line of the output should be:
+
+```text
+True
+```
+
+If the result becomes `False` after running `call install\setup.bat`, ROS is using a stale copy of `invesalius_rs` from:
+
+```text
+C:\Users\mtms\mtms\install\neuronavigation\Lib\site-packages\invesalius_rs
+```
+
+Copy the correct Conda-built native module into the ROS-installed package:
+
+```bat
+copy /Y "C:\Users\mtms\anaconda3\envs\ros_env\Lib\site-packages\invesalius_rs\_native.cp312-win_amd64.pyd" "C:\Users\mtms\mtms\install\neuronavigation\Lib\site-packages\invesalius_rs\_native.cp312-win_amd64.pyd"
+```
+
+Run the test again:
+
+```bat
+python -c "import invesalius_rs, invesalius_rs._native as n; print(invesalius_rs.__file__); print(n.__file__); print(hasattr(n, 'polygon2mask_rs'))"
+```
+
+The last line of the output should be:
+
+```text
+True
+```
+
+Then start neuronavigation:
+
+```bat
+ros2 run neuronavigation start
+```
+
+### Notes
+
+After updating `invesalius3`, rebuild `invesalius_rs` with `maturin`, reinstall InVesalius with:
+
+```bat
+python -m pip install --no-deps .
+```
+
+Then rebuild `neuronavigation`, and ensure that the Conda-built `_native.cp312-win_amd64.pyd` is also present in:
+
+```text
+C:\Users\mtms\mtms\install\neuronavigation\Lib\site-packages\invesalius_rs
+```
 
 
 #### Network settings
