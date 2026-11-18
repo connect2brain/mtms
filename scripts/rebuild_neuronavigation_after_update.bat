@@ -24,8 +24,8 @@ echo === Go to MTMS repository ===
 cd /d "%MTMS_ROOT%"
 
 echo.
-echo === Optional: update submodules ===
-git submodule update --init --recursive
+echo === Checking submodule status (without updating) ===
+git submodule status
 
 echo.
 echo === Build ROS interfaces ===
